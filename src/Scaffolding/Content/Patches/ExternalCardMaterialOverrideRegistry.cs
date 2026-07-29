@@ -197,6 +197,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (value == null)
                     continue;
 
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External frame material provider returned an invalid Material for '{card.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
+
                 material = value;
                 return true;
             }
@@ -223,6 +230,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
                 if (value == null)
                     continue;
+
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External portrait material provider returned an invalid Material for '{card.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
 
                 material = value;
                 return true;
@@ -251,6 +265,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (value == null)
                     continue;
 
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External banner material provider returned an invalid Material for '{card.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
+
                 material = value;
                 return true;
             }
@@ -277,6 +298,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
                 if (value == null)
                     continue;
+
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External pool frame material provider returned an invalid Material for '{pool.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
 
                 material = value;
                 return true;

@@ -99,15 +99,34 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         internal static bool TryUseDirectMaterialOverride<TOverrides>(
             object instance,
             ref Material __result,
-            Func<TOverrides, Material?> selector)
+            Func<TOverrides, Material?> selector,
+            string memberName)
             where TOverrides : class
         {
             if (instance is not TOverrides overrides)
                 return true;
 
-            var material = selector(overrides);
+            Material? material;
+            try
+            {
+                material = selector(overrides);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] Direct material override failed for {DescribeOwner(instance)}.{memberName}: {ex.Message}. Falling back.");
+                return true;
+            }
+
             if (material == null)
                 return true;
+
+            if (!GodotObject.IsInstanceValid(material))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] Direct material override is invalid for {DescribeOwner(instance)}.{memberName}. Falling back.");
+                return true;
+            }
 
             __result = material;
             return false;
@@ -1426,15 +1445,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
         {
-            if (__instance is IModCardBannerMaterialOverride bannerOverride)
-            {
-                var directBannerMaterial = bannerOverride.CustomBannerMaterial;
-                if (directBannerMaterial != null)
-                {
-                    __result = directBannerMaterial;
-                    return false;
-                }
-            }
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardBannerMaterialOverride>(
+                    __instance,
+                    ref __result,
+                    static overrides => overrides.CustomBannerMaterial,
+                    nameof(IModCardBannerMaterialOverride.CustomBannerMaterial)))
+                return false;
 
             if (ExternalCardMaterialOverrideRegistry.TryGetBannerMaterial(__instance,
                     out var externalBannerMaterial))

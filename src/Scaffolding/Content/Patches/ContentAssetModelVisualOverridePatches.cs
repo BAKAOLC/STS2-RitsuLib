@@ -410,7 +410,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Material __result)
         {
             if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardFrameMaterialOverride>(
-                    __instance, ref __result, static o => o.CustomFrameMaterial))
+                    __instance,
+                    ref __result,
+                    static overrides => overrides.CustomFrameMaterial,
+                    nameof(IModCardFrameMaterialOverride.CustomFrameMaterial)))
                 return false;
 
             if (ExternalCardMaterialOverrideRegistry.TryGetFrameMaterial(__instance, out var externalFrameMaterial))
@@ -452,21 +455,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardPoolModel __instance, ref Material __result)
         {
-            if (__instance is not IModCardPoolFrameMaterial pool)
-            {
-                if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance, out var externalMaterial))
-                    return true;
-
-                __result = externalMaterial;
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardPoolFrameMaterial>(
+                    __instance,
+                    ref __result,
+                    static overrides => overrides.PoolFrameMaterial,
+                    nameof(IModCardPoolFrameMaterial.PoolFrameMaterial)))
                 return false;
-            }
-
-            var material = pool.PoolFrameMaterial;
-            if (material != null)
-            {
-                __result = material;
-                return false;
-            }
 
             if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance,
                     out var externalFrameMaterial))
@@ -644,8 +638,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static Material ResolveStandardBannerMaterial(CardModel model)
         {
             Material material = null!;
-            if (model is IModCardBannerMaterialOverride { CustomBannerMaterial: { } directBannerMaterial })
-                return directBannerMaterial;
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardBannerMaterialOverride>(
+                    model,
+                    ref material,
+                    static overrides => overrides.CustomBannerMaterial,
+                    nameof(IModCardBannerMaterialOverride.CustomBannerMaterial)))
+                return material;
 
             if (ExternalCardMaterialOverrideRegistry.TryGetBannerMaterial(model, out var externalBannerMaterial))
                 return externalBannerMaterial;
@@ -797,7 +795,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             material = null!;
             if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardPortraitMaterialOverride>(
-                    card, ref material, static o => o.CustomPortraitMaterial))
+                    card,
+                    ref material,
+                    static overrides => overrides.CustomPortraitMaterial,
+                    nameof(IModCardPortraitMaterialOverride.CustomPortraitMaterial)))
                 return true;
 
             if (ExternalCardMaterialOverrideRegistry.TryGetPortraitMaterial(card, out material))
@@ -867,6 +868,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%PortraitBorder",
                 static o => o.CustomPortraitBorderMaterial,
+                nameof(IModCardPortraitBorderMaterialOverride.CustomPortraitBorderMaterial),
                 static o => o.CustomPortraitBorderMaterialPath,
                 nameof(IModCardAssetOverrides.CustomPortraitBorderMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderMaterial);
@@ -876,6 +878,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%EnergyIcon",
                 static o => o.CustomEnergyIconMaterial,
+                nameof(IModCardEnergyIconMaterialOverride.CustomEnergyIconMaterial),
                 static o => o.CustomEnergyIconMaterialPath,
                 nameof(IModCardAssetOverrides.CustomEnergyIconMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconMaterial);
@@ -885,6 +888,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%AncientBorder",
                 static o => o.CustomAncientBorderMaterial,
+                nameof(IModCardAncientBorderMaterialOverride.CustomAncientBorderMaterial),
                 static o => o.CustomAncientBorderMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientBorderMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderMaterial);
@@ -894,6 +898,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%AncientTextBg",
                 static o => o.CustomAncientTextBgMaterial,
+                nameof(IModCardAncientTextBgMaterialOverride.CustomAncientTextBgMaterial),
                 static o => o.CustomAncientTextBgMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientTextBgMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgMaterial);
@@ -903,6 +908,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%AncientBanner",
                 static o => o.CustomAncientBannerMaterial,
+                nameof(IModCardAncientBannerMaterialOverride.CustomAncientBannerMaterial),
                 static o => o.CustomAncientBannerMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientBannerMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerMaterial);
@@ -931,12 +937,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             CardModel model,
             NodePath nodePath,
             Func<TDirectOverride, Material?> directSelector,
+            string directMemberName,
             Func<IModCardAssetOverrides, string?> pathSelector,
             string memberName,
             TryCharacterOwnedMaterialOverride tryCharacterOwned)
             where TDirectOverride : class
         {
-            if (!TryGetMaterial(model, directSelector, pathSelector, memberName, tryCharacterOwned, out var material))
+            if (!TryGetMaterial(
+                    model,
+                    directSelector,
+                    directMemberName,
+                    pathSelector,
+                    memberName,
+                    tryCharacterOwned,
+                    out var material))
                 return;
 
             var node = card.GetNodeOrNull<CanvasItem>(nodePath);
@@ -949,6 +963,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool TryGetMaterial<TDirectOverride>(
             CardModel model,
             Func<TDirectOverride, Material?> directSelector,
+            string directMemberName,
             Func<IModCardAssetOverrides, string?> pathSelector,
             string memberName,
             TryCharacterOwnedMaterialOverride tryCharacterOwned,
@@ -957,7 +972,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             material = null!;
             if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride(
-                    model, ref material, directSelector))
+                    model,
+                    ref material,
+                    directSelector,
+                    directMemberName))
                 return true;
 
             if (!tryCharacterOwned(model, ref material))
