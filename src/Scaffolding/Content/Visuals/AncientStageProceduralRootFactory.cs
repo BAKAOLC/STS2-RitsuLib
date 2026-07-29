@@ -26,13 +26,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
         {
             get
             {
-                if (_placeholderBackgroundPackedScene != null)
+                if (_placeholderBackgroundPackedScene != null &&
+                    GodotObject.IsInstanceValid(_placeholderBackgroundPackedScene))
                     return _placeholderBackgroundPackedScene;
 
                 var placeholder = new Control { Name = "RitsuAncientStagePlaceholder" };
-                _placeholderBackgroundPackedScene = new();
-                _placeholderBackgroundPackedScene.Pack(placeholder);
-                return _placeholderBackgroundPackedScene;
+                var packedScene = new PackedScene();
+                var error = packedScene.Pack(placeholder);
+                placeholder.Free();
+                if (error != Error.Ok)
+                {
+                    packedScene.Dispose();
+                    throw new InvalidOperationException(
+                        $"Could not pack the Ancient-stage placeholder scene: {error}.");
+                }
+
+                _placeholderBackgroundPackedScene = packedScene;
+                return packedScene;
             }
         }
 
@@ -44,39 +54,57 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
         {
             ArgumentNullException.ThrowIfNull(host);
             ArgumentNullException.ThrowIfNull(stage);
+            if (!GodotObject.IsInstanceValid(host))
+                throw new ObjectDisposedException(nameof(host));
 
             var outer = new Control { Name = "RitsuAncientStageProcedural" };
-            outer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-            outer.OffsetLeft = 0;
-            outer.OffsetTop = 0;
-            outer.OffsetRight = 0;
-            outer.OffsetBottom = 0;
-            outer.MouseFilter = Control.MouseFilterEnum.Ignore;
-
-            if (!string.IsNullOrWhiteSpace(stage.BackgroundVideoPath))
-                MountBackgroundVideo(outer, stage.BackgroundVideoPath.Trim());
-            else if (stage.BackgroundCueSet != null)
-                MountBackgroundCues(outer, stage);
-            else
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    "[AncientStage] StageProcedural has neither BackgroundVideoPath nor BackgroundCueSet.");
-
-            Control? fgLayer = null;
-            if (stage.ForegroundCueSet != null)
+            try
             {
-                fgLayer = CreateSpriteLayer("RitsuAncientStageFg", stage.ForegroundLayerStyle);
-                outer.AddChild(fgLayer);
-            }
+                outer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+                outer.OffsetLeft = 0;
+                outer.OffsetTop = 0;
+                outer.OffsetRight = 0;
+                outer.OffsetBottom = 0;
+                outer.MouseFilter = Control.MouseFilterEnum.Ignore;
 
-            host.AddChildSafely(outer);
+                if (!string.IsNullOrWhiteSpace(stage.BackgroundVideoPath))
+                    MountBackgroundVideo(outer, stage.BackgroundVideoPath.Trim());
+                else if (stage.BackgroundCueSet != null)
+                    MountBackgroundCues(outer, stage);
+                else
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        "[AncientStage] StageProcedural has neither BackgroundVideoPath nor BackgroundCueSet.");
 
-            if (stage.ForegroundCueSet == null || fgLayer == null)
+                Control? fgLayer = null;
+                if (stage.ForegroundCueSet != null)
+                {
+                    fgLayer = CreateSpriteLayer("RitsuAncientStageFg", stage.ForegroundLayerStyle);
+                    outer.AddChild(fgLayer);
+                }
+
+                host.AddChildSafely(outer);
+
+                if (stage.ForegroundCueSet == null || fgLayer == null)
+                    return outer;
+
+                var fgCue = string.IsNullOrWhiteSpace(stage.ForegroundLoopCueName)
+                    ? "loop"
+                    : stage.ForegroundLoopCueName!;
+                ModCreatureVisualPlayback.TryPlayOnVisualRoot(fgLayer, null, fgCue, true, stage.ForegroundCueSet);
+
                 return outer;
+            }
+            catch
+            {
+                if (GodotObject.IsInstanceValid(outer))
+                {
+                    if (outer.GetParent() is { } parent && GodotObject.IsInstanceValid(parent))
+                        parent.RemoveChildSafely(outer);
+                    outer.QueueFreeSafely();
+                }
 
-            var fgCue = string.IsNullOrWhiteSpace(stage.ForegroundLoopCueName) ? "loop" : stage.ForegroundLoopCueName!;
-            ModCreatureVisualPlayback.TryPlayOnVisualRoot(fgLayer, null, fgCue, true, stage.ForegroundCueSet);
-
-            return outer;
+                throw;
+            }
         }
 
         private static void MountBackgroundVideo(Control outer, string path)
@@ -99,7 +127,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             }
 
             var stream = ResourceLoader.Load<VideoStream>(path);
-            if (stream == null)
+            if (stream == null || !GodotObject.IsInstanceValid(stream))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[AncientStage] Could not load VideoStream: '{path}'");
                 outer.AddChild(video);
