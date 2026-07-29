@@ -35,8 +35,9 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 return;
             }
 
-            var clone = mergePatch.DeepClone() as JsonObject ?? new JsonObject();
-            SetNodeAt(documentRoot, jsonPointer, clone);
+            var merged = new JsonObject();
+            MergePatch7386(merged, mergePatch);
+            SetNodeAt(documentRoot, jsonPointer, merged);
         }
 
         internal static void MergePatch7386(JsonObject target, JsonObject patch)
