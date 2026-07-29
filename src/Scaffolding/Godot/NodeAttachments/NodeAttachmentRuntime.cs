@@ -52,19 +52,30 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             var attachParent = ResolveAttachParent(parent, definition);
             var attached = AttachedNodes.GetOrCreate(parent);
             var pending = PendingAttachmentIds.GetOrCreate(parent);
+            if (pending.Contains(definition.Id))
+                return;
+
             if (attached.TryGetValue(definition.Id, out var tracked))
             {
                 if (GodotObject.IsInstanceValid(tracked))
                 {
-                    EnsureAttached(attachParent, tracked, definition);
+                    if (EnsureAttached(attachParent, tracked, definition))
+                        return;
+
+                    pending.Add(definition.Id);
+                    ScheduleDeferredAttachment(
+                        parent,
+                        attachParent,
+                        tracked,
+                        definition,
+                        attached,
+                        pending,
+                        false);
                     return;
                 }
 
                 attached.Remove(definition.Id);
             }
-
-            if (pending.Contains(definition.Id))
-                return;
 
             if (!string.IsNullOrWhiteSpace(definition.Name) &&
                 TryFindDirectChildByName(attachParent, definition.Name, out var existing))
@@ -78,6 +89,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                                 $"Existing child '{definition.Name}' is {existing.GetType().FullName}, expected {definition.NodeType.FullName}.");
                         attached[definition.Id] = existing;
                         ApplyNodeOptions(existing, definition);
+                        if (definition.Options.UniqueNameInOwner)
+                            existing.Owner = attachParent;
                         ApplyInsertion(attachParent, existing, definition);
                         return;
                     case NodeAttachmentDuplicatePolicy.SkipIfExistingByName:
@@ -105,7 +118,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                 if (!EnsureAttached(attachParent, child, definition))
                 {
                     pending.Add(definition.Id);
-                    ScheduleDeferredAttachment(parent, attachParent, child, definition, attached, pending);
+                    ScheduleDeferredAttachment(parent, attachParent, child, definition, attached, pending, true);
                     return;
                 }
 
@@ -179,7 +192,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             Node child,
             NodeAttachmentDefinition definition,
             Dictionary<string, Node> attached,
-            HashSet<string> pending)
+            HashSet<string> pending,
+            bool runAfterAddSetup)
         {
             Callable.From(() =>
             {
@@ -210,7 +224,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
 
                     ApplyInsertion(attachParent, child, definition);
 
-                    if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
+                    if (runAfterAddSetup &&
+                        definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
                         definition.RunSetup(lifecycleParent, child);
 
                     attached[definition.Id] = child;

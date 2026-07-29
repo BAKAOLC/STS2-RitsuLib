@@ -111,8 +111,9 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         internal Node CreateNode(Node parent)
         {
             var node = _factory(parent);
-            if (node == null)
-                throw new InvalidOperationException($"Node attachment '{Id}' factory returned null.");
+            if (!GodotObject.IsInstanceValid(node))
+                throw new InvalidOperationException(
+                    $"Node attachment '{Id}' factory returned a null or invalid Godot node.");
 
             if (!NodeType.IsInstanceOfType(node))
                 throw new InvalidOperationException(
