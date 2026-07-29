@@ -32,14 +32,15 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         public static ModNodeAttachmentRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            var normalizedModId = modId.Trim();
 
             lock (SyncRoot)
             {
-                if (Registries.TryGetValue(modId, out var existing))
+                if (Registries.TryGetValue(normalizedModId, out var existing))
                     return existing;
 
-                var created = new ModNodeAttachmentRegistry(modId);
-                Registries[modId] = created;
+                var created = new ModNodeAttachmentRegistry(normalizedModId);
+                Registries[normalizedModId] = created;
                 return created;
             }
         }
@@ -298,8 +299,10 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             if (node is TNode typed)
                 return typed;
 
+            var actualNodeType = node.GetType();
+            node.Free();
             throw new InvalidOperationException(
-                $"Scene '{scenePath}' instantiated {node.GetType().FullName}, expected {typeof(TNode).FullName}. " +
+                $"Scene '{scenePath}' instantiated {actualNodeType.FullName}, expected {typeof(TNode).FullName}. " +
                 $"Use {nameof(RegisterReadyChildFromConvertedScene)} when the scene root must be converted by RitsuLib factories.");
         }
     }
