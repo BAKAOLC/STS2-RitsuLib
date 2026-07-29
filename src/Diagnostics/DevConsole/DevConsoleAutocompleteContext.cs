@@ -16,7 +16,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             int argumentIndex)
         {
             Command = command ?? throw new ArgumentNullException(nameof(command));
-            CompletedArgs = completedArgs ?? throw new ArgumentNullException(nameof(completedArgs));
+            ArgumentNullException.ThrowIfNull(completedArgs);
+            ArgumentOutOfRangeException.ThrowIfNegative(argumentIndex);
+            CompletedArgs = [.. completedArgs];
             ArgumentIndex = argumentIndex;
         }
 
