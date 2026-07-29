@@ -123,10 +123,12 @@ namespace STS2RitsuLib.Localization.SmartFormat
         private sealed class InjectedFormatterNames
         {
             private readonly HashSet<string> _names = new(StringComparer.OrdinalIgnoreCase);
+            private readonly SmartFormatter _formatter;
             private readonly Lock _syncRoot = new();
 
             public InjectedFormatterNames(SmartFormatter formatter)
             {
+                _formatter = formatter;
                 foreach (var existingFormatter in formatter.GetFormatterExtensions())
                     if (!string.IsNullOrWhiteSpace(existingFormatter.Name))
                         _names.Add(existingFormatter.Name);
@@ -136,6 +138,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
             {
                 lock (_syncRoot)
                 {
+                    foreach (var existingFormatter in _formatter.GetFormatterExtensions())
+                        if (!string.IsNullOrWhiteSpace(existingFormatter.Name))
+                            _names.Add(existingFormatter.Name);
+
                     return _names.Add(formatterName);
                 }
             }

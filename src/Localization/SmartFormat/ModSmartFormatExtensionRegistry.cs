@@ -148,7 +148,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
             lock (SyncRoot)
             {
-                foreach (var definition in Formatters)
+                foreach (var definition in SortSnapshot(Formatters))
                     if (definition.Instance is IFormatter formatter
                         && StringComparer.OrdinalIgnoreCase.Equals(formatter.Name, formatterName))
                     {
