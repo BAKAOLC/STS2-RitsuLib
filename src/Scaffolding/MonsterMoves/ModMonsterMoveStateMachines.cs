@@ -37,9 +37,13 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
         {
             ArgumentNullException.ThrowIfNull(moves);
             var n = moves.Count;
-            if (n == 0) throw new ArgumentException("At least one move is required.", nameof(moves));
+            if (n == 0)
+                throw new ArgumentException("At least one move is required.", nameof(moves));
+            if (moves.Any(static move => move == null))
+                throw new ArgumentException("Move lists cannot contain null entries.", nameof(moves));
 
-            for (var i = 0; i < n; i++) moves[i].FollowUpState = moves[(i + 1) % n];
+            for (var i = 0; i < n; i++)
+                moves[i].FollowUpState = moves[(i + 1) % n];
 
             return new([.. moves], moves[0]);
         }
@@ -72,8 +76,10 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
             Action<RandomBranchState> configureBranches,
             IReadOnlyList<MonsterState> allStatesIncludingMoves)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(branchId);
             ArgumentNullException.ThrowIfNull(configureBranches);
             ArgumentNullException.ThrowIfNull(allStatesIncludingMoves);
+            ValidateStates(allStatesIncludingMoves, nameof(allStatesIncludingMoves));
             var branch = new RandomBranchState(branchId);
             configureBranches(branch);
             var list = new List<MonsterState>(1 + allStatesIncludingMoves.Count) { branch };
@@ -90,13 +96,21 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
             Action<ConditionalBranchState> configureBranches,
             IReadOnlyList<MonsterState> allStatesIncludingMoves)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(branchId);
             ArgumentNullException.ThrowIfNull(configureBranches);
             ArgumentNullException.ThrowIfNull(allStatesIncludingMoves);
+            ValidateStates(allStatesIncludingMoves, nameof(allStatesIncludingMoves));
             var branch = new ConditionalBranchState(branchId);
             configureBranches(branch);
             var list = new List<MonsterState>(1 + allStatesIncludingMoves.Count) { branch };
             list.AddRange(allStatesIncludingMoves);
             return new(list, branch);
+        }
+
+        private static void ValidateStates(IReadOnlyList<MonsterState> states, string paramName)
+        {
+            if (states.Any(static state => state == null))
+                throw new ArgumentException("Monster-state lists cannot contain null entries.", paramName);
         }
     }
 }
