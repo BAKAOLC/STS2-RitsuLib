@@ -135,6 +135,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 return;
 
             var active = _currentId!;
+            _currentId = null;
             Completed?.Invoke(active);
 
             if (_queuedId is not { } next)

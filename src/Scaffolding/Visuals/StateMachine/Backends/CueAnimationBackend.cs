@@ -87,7 +87,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         /// <inheritdoc />
         public void Play(string id, bool loop)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (!HasAnimation(id))
                 return;
 
             if (_currentId != null)
@@ -104,7 +104,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 sequence is { Frames.Count: > 0 })
             {
                 var player = CueFrameSequencePlayer.EnsureUnder(OwnerNode);
-                if (!player.TryStart(_sprite, sequence))
+                var playbackSequence = sequence.Loop == loop ? sequence : sequence with { Loop = loop };
+                if (!player.TryStart(_sprite, playbackSequence))
                     return;
 
                 SubscribePlayer(player);
@@ -175,7 +176,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         public bool TryGetCurrentAnimationRemaining(out float seconds)
         {
             seconds = 0f;
-            return _currentId != null && TryGetAnimationDuration(_currentId, out seconds);
+            return GodotObject.IsInstanceValid(_subscribedPlayer) &&
+                   _subscribedPlayer!.TryGetRemaining(out seconds);
         }
 
         /// <summary>

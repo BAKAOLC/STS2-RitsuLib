@@ -62,6 +62,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             if (animation != null)
                 animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
 
+            _player.ClearQueue();
             if (_player.CurrentAnimation == id)
                 _player.Stop();
 
@@ -73,6 +74,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         {
             if (!HasAnimation(id))
                 return;
+
+            if (!_player.IsPlaying())
+            {
+                Play(id, loop);
+                return;
+            }
 
             var animation = _player.GetAnimation(id);
             if (animation != null)

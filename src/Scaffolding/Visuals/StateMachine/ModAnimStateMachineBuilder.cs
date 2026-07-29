@@ -76,6 +76,9 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         public ModAnimStateMachineBuilder AddBranch(string fromId, string trigger, string toId,
             Func<bool>? condition = null)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(fromId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(trigger);
+            ArgumentException.ThrowIfNullOrWhiteSpace(toId);
             if (!_states.TryGetValue(fromId, out var draft))
                 throw new InvalidOperationException($"Source state '{fromId}' not declared.");
 
@@ -91,6 +94,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         /// </summary>
         public ModAnimStateMachineBuilder AddAnyState(string trigger, string toId, Func<bool>? condition = null)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(trigger);
+            ArgumentException.ThrowIfNullOrWhiteSpace(toId);
             _anyBranches.Add(new(trigger, toId, condition));
             return this;
         }
@@ -160,13 +165,17 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             foreach (var (id, draft) in _states)
             {
                 var state = materialised[id];
-                if (draft.NextStateId != null && materialised.TryGetValue(draft.NextStateId, out var next))
-                    state.NextState = next;
+                if (draft.NextStateId != null)
+                    state.NextState = materialised.TryGetValue(draft.NextStateId, out var next)
+                        ? next
+                        : throw new InvalidOperationException(
+                            $"Next state '{draft.NextStateId}' referenced by '{id}' was not declared.");
 
                 foreach (var branch in draft.Branches)
                 {
                     if (!materialised.TryGetValue(branch.ToId, out var target))
-                        continue;
+                        throw new InvalidOperationException(
+                            $"Branch target state '{branch.ToId}' referenced by '{id}' was not declared.");
 
                     state.AddBranch(branch.Trigger, target, branch.Condition);
                 }
@@ -177,7 +186,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             foreach (var branch in _anyBranches)
             {
                 if (!materialised.TryGetValue(branch.ToId, out var target))
-                    continue;
+                    throw new InvalidOperationException(
+                        $"Any-state branch target '{branch.ToId}' was not declared.");
 
                 machine.AddAnyState(branch.Trigger, target, branch.Condition);
             }
@@ -219,6 +229,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             /// </summary>
             public StateScope WithNext(string nextStateId)
             {
+                ArgumentException.ThrowIfNullOrWhiteSpace(nextStateId);
                 _draft.NextStateId = nextStateId;
                 return this;
             }
@@ -231,6 +242,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             /// </summary>
             public StateScope WithBounds(string boundsContainer)
             {
+                ArgumentException.ThrowIfNullOrWhiteSpace(boundsContainer);
                 _draft.BoundsContainer = boundsContainer;
                 return this;
             }

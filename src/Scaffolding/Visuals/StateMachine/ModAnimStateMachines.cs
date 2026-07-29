@@ -62,6 +62,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             string? relaxedName = null, bool relaxedLoop = true)
         {
             ArgumentNullException.ThrowIfNull(controller);
+            ArgumentException.ThrowIfNullOrWhiteSpace(idleName);
+            ValidateOptionalAnimationName(deadName, nameof(deadName));
+            ValidateOptionalAnimationName(hitName, nameof(hitName));
+            ValidateOptionalAnimationName(attackName, nameof(attackName));
+            ValidateOptionalAnimationName(castName, nameof(castName));
+            ValidateOptionalAnimationName(relaxedName, nameof(relaxedName));
 
             var idle = new AnimState(idleName, true);
             var dead = deadName == null ? idle : new(deadName, deadLoop);
@@ -169,6 +175,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         {
             ArgumentNullException.ThrowIfNull(visualsRoot);
             ArgumentException.ThrowIfNullOrWhiteSpace(idleName);
+            ValidateOptionalAnimationName(deadName, nameof(deadName));
+            ValidateOptionalAnimationName(hitName, nameof(hitName));
+            ValidateOptionalAnimationName(attackName, nameof(attackName));
+            ValidateOptionalAnimationName(castName, nameof(castName));
+            ValidateOptionalAnimationName(relaxedName, nameof(relaxedName));
 
             var builder = ModAnimStateMachineBuilder.Create()
                 .AddState(idleName, true).AsInitial().Done();
@@ -265,6 +276,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             var scope = builder.AddState(name, loop);
             if (hasNext)
                 scope.WithNext(idleName);
+        }
+
+        private static void ValidateOptionalAnimationName(string? name, string paramName)
+        {
+            if (name != null && string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Optional animation names must not be empty or whitespace.", paramName);
         }
 
         private static VisualCueSet? TryGetMerchantCueSet(CharacterModel? character)

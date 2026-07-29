@@ -24,6 +24,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
     {
         private readonly ModAnimState _anyState = new("__anyState");
         private bool _disposed;
+        private bool _nextStateQueued;
+        private ModAnimState? _queuedFromState;
 
         /// <summary>
         ///     Wraps <paramref name="backend" />; subscribes to its event surface.
@@ -171,31 +173,37 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             }
 
             Current = state;
+            _nextStateQueued = false;
+            _queuedFromState = null;
             Backend.Play(state.Id, state.IsLooping);
+            if (Current != state)
+                return;
 
             if (state.BoundsContainer != null)
                 BoundsUpdated?.Invoke(state.BoundsContainer);
 
-            if (state.NextState != null)
-                QueueChain(state.NextState);
+            QueueNextState(state);
         }
 
-        private void QueueChain(ModAnimState state)
+        private void QueueNextState(ModAnimState state)
         {
-            while (true)
+            if (ReferenceEquals(_queuedFromState, state))
+                return;
+
+            _queuedFromState = state;
+            if (state.NextState is not { } next)
+                return;
+
+            if (!Backend.HasAnimation(next.Id))
             {
-                if (!Backend.HasAnimation(state.Id)) return;
-
-                Backend.Queue(state.Id, state.IsLooping);
-
-                if (state.NextState != null)
-                {
-                    state = state.NextState;
-                    continue;
-                }
-
-                break;
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModAnimStateMachine] Backend has no queued animation '{next.Id}' " +
+                    $"(owner={Backend.OwnerNode?.Name})");
+                return;
             }
+
+            Backend.Queue(next.Id, next.IsLooping);
+            _nextStateQueued = true;
         }
 
         private void OnBackendStarted(string _)
@@ -207,6 +215,9 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
                 BoundsUpdated?.Invoke(state.BoundsContainer);
 
             AnimationStarted?.Invoke(state);
+
+            if (Current == state)
+                QueueNextState(state);
         }
 
         private void OnBackendCompleted(string _)
@@ -225,8 +236,14 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             if (Current != state)
                 return;
 
-            if (state.NextState != null)
-                Current = state.NextState;
+            if (state.NextState == null ||
+                !ReferenceEquals(_queuedFromState, state) ||
+                !_nextStateQueued)
+                return;
+
+            Current = state.NextState;
+            _nextStateQueued = false;
+            _queuedFromState = null;
         }
 
         private void OnBackendInterrupted(string _)

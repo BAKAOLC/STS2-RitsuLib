@@ -109,6 +109,23 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             return true;
         }
 
+        internal bool TryGetRemaining(out float seconds)
+        {
+            seconds = 0f;
+            if (!_active || _frames.Length == 0 || _index < 0 || _index >= _frames.Length)
+                return false;
+
+            var remaining = Math.Max(0.0, _frameDurationSeconds - _carry);
+            for (var i = _index + 1; i < _frames.Length; i++)
+                remaining += ClampFrameDuration(_frames[i].DurationSeconds);
+
+            if (!double.IsFinite(remaining) || remaining < 0.0 || remaining > float.MaxValue)
+                return false;
+
+            seconds = (float)remaining;
+            return true;
+        }
+
         private void Advance()
         {
             _index++;

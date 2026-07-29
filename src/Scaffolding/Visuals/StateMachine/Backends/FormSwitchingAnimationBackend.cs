@@ -38,6 +38,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private readonly Dictionary<string, bool> _loopByAnimationId = new(StringComparer.Ordinal);
         private string? _currentId;
         private bool _currentLoop;
+        private string? _queuedId;
+        private bool _queuedLoop;
 
         /// <summary>
         ///     Creates a switchable backend over prebuilt per-form backends.
@@ -118,6 +120,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         /// <inheritdoc />
         public void Play(string id, bool loop)
         {
+            if (!CurrentBackend.HasAnimation(id))
+                return;
+
+            _queuedId = null;
             _currentId = id;
             _currentLoop = loop;
             _loopByAnimationId[id] = loop;
@@ -127,6 +133,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         /// <inheritdoc />
         public void Queue(string id, bool loop)
         {
+            if (!CurrentBackend.HasAnimation(id))
+                return;
+
+            _queuedId = id;
+            _queuedLoop = loop;
             _loopByAnimationId[id] = loop;
             CurrentBackend.Queue(id, loop);
         }
@@ -135,6 +146,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         public void Stop()
         {
             _currentId = null;
+            _queuedId = null;
             CurrentBackend.Stop();
         }
 
@@ -183,12 +195,31 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             previous.Stop();
 
             if (!replayCurrent || _currentId == null)
+            {
+                _queuedId = null;
                 return true;
+            }
 
             if (!CurrentBackend.HasAnimation(_currentId))
+            {
+                _queuedId = null;
                 return true;
+            }
 
+            var queuedId = _queuedId;
+            var queuedLoop = _queuedLoop;
             CurrentBackend.Play(_currentId, _currentLoop);
+            if (queuedId != null && CurrentBackend.HasAnimation(queuedId))
+            {
+                _queuedId = queuedId;
+                _queuedLoop = queuedLoop;
+                CurrentBackend.Queue(queuedId, queuedLoop);
+            }
+            else
+            {
+                _queuedId = null;
+            }
+
             return true;
         }
 
@@ -200,6 +231,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             _currentId = id;
             if (_loopByAnimationId.TryGetValue(id, out var loop))
                 _currentLoop = loop;
+            if (string.Equals(_queuedId, id, StringComparison.Ordinal))
+                _queuedId = null;
             Started?.Invoke(id);
         }
 
