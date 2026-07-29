@@ -40,14 +40,21 @@ namespace STS2RitsuLib.Platform.Patches
 
         private static ulong? TryReadItemId(object ev)
         {
-            var publishedFileId = ev.GetType()
-                .GetField("m_nPublishedFileId")
-                ?.GetValue(ev);
-            var value = publishedFileId?
-                .GetType()
-                .GetField("m_PublishedFileId")
-                ?.GetValue(publishedFileId);
-            return value == null ? null : Convert.ToUInt64(value);
+            try
+            {
+                var publishedFileId = ev.GetType()
+                    .GetField("m_nPublishedFileId")
+                    ?.GetValue(ev);
+                var value = publishedFileId?
+                    .GetType()
+                    .GetField("m_PublishedFileId")
+                    ?.GetValue(publishedFileId);
+                return value == null ? null : Convert.ToUInt64(value);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
