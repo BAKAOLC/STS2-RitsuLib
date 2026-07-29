@@ -2020,6 +2020,11 @@ namespace STS2RitsuLib.Content
 
         private void RememberOwner(Type type)
         {
+            if (RegisteredTypeOwners.TryGetValue(type, out var existingOwner) &&
+                !string.Equals(existingOwner, ModId, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException(
+                    $"Model type '{type.FullName}' is already owned by mod '{existingOwner}' and cannot be registered by '{ModId}'.");
+
             RegisteredTypeOwners[type] = ModId;
         }
 
@@ -2029,7 +2034,7 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                RegisteredTypeOwners[type] = ModId;
+                RememberOwner(type);
             }
 
             RegistrationConflictDetector.UpdateModelIdIndex(type, previousId, ModelDb.GetId(type));
