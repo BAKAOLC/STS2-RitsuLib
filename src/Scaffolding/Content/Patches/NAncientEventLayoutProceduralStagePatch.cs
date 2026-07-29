@@ -40,6 +40,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (stage == null)
                 return;
 
+            if (string.IsNullOrWhiteSpace(stage.BackgroundVideoPath) && stage.BackgroundCueSet == null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[AncientStage] Could not mount StageProcedural for '{ancient.Id}' because no background video or cue set was configured.");
+                return;
+            }
+
             var container = AncientBgContainer(__instance);
             if (container == null || !GodotObject.IsInstanceValid(container))
             {
@@ -48,13 +55,44 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return;
             }
 
-            foreach (var child in container.GetChildren().ToList())
+            var originalChildren = container.GetChildren().ToList();
+            var originalInstanceIds = originalChildren
+                .Where(GodotObject.IsInstanceValid)
+                .Select(static child => child.GetInstanceId())
+                .ToHashSet();
+
+            try
             {
+                AncientStageProceduralRootFactory.BuildAndMount(container, stage);
+            }
+            catch (Exception ex)
+            {
+                RemoveNewChildren(container, originalInstanceIds);
+                RitsuLibFramework.Logger.Warn(
+                    $"[AncientStage] Failed to mount StageProcedural for '{ancient.Id}': {ex.Message}. Keeping the existing background.");
+                return;
+            }
+
+            foreach (var child in originalChildren)
+            {
+                if (!GodotObject.IsInstanceValid(child) || child.GetParent() != container)
+                    continue;
+
                 container.RemoveChildSafely(child);
                 child.QueueFreeSafely();
             }
+        }
 
-            AncientStageProceduralRootFactory.BuildAndMount(container, stage);
+        private static void RemoveNewChildren(NAncientBgContainer container, HashSet<ulong> originalInstanceIds)
+        {
+            foreach (var child in container.GetChildren().ToList())
+            {
+                if (!GodotObject.IsInstanceValid(child) || originalInstanceIds.Contains(child.GetInstanceId()))
+                    continue;
+
+                container.RemoveChildSafely(child);
+                child.QueueFreeSafely();
+            }
         }
 
         [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_ancientEvent")]
