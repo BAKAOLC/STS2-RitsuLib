@@ -44,11 +44,19 @@ namespace STS2RitsuLib.Utils.Json
                     continue;
                 }
 
-                if (TryGetObject(kv.Value, out var patchChild) &&
-                    target.TryGetPropertyValue(kv.Key, out var existing) &&
-                    TryGetObject(existing, out var existingObj))
+                if (TryGetObject(kv.Value, out var patchChild))
                 {
-                    ApplyInPlace(existingObj, patchChild);
+                    JsonObject targetChild;
+                    if (target.TryGetPropertyValue(kv.Key, out var existing) &&
+                        TryGetObject(existing, out var existingObj))
+                        targetChild = existingObj;
+                    else
+                    {
+                        targetChild = new();
+                        target[kv.Key] = targetChild;
+                    }
+
+                    ApplyInPlace(targetChild, patchChild);
                     continue;
                 }
 
