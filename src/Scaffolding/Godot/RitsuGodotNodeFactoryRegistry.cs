@@ -87,7 +87,10 @@ namespace STS2RitsuLib.Scaffolding.Godot
                 throw new InvalidOperationException($"No node factory registered for {typeof(TNode).Name}");
 
             var root = editState is { } state ? scene.Instantiate(state) : scene.Instantiate();
-            return (TNode)factory.CreateFromNode(root!, style);
+            if (root == null)
+                throw new InvalidOperationException(
+                    $"PackedScene.Instantiate returned null for '{scene.ResourcePath}'.");
+            return (TNode)factory.CreateFromNode(root, style);
         }
 
         internal static TNode CreateFromScenePath<TNode>(string scenePath) where TNode : Node, new()
