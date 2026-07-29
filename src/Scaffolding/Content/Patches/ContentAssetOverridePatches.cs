@@ -196,6 +196,26 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return false;
         }
 
+        internal static bool TryUseExternalCompressedTexturePathOverride(
+            object instance,
+            ref CompressedTexture2D __result,
+            Func<string?> externalPathFactory,
+            string memberName)
+        {
+            var path = externalPathFactory();
+            if (string.IsNullOrWhiteSpace(path))
+                return true;
+
+            if (!GodotResourcePath.TryLoad<CompressedTexture2D>(path, out var texture))
+            {
+                WarnOverrideUnavailable(instance, memberName, path, nameof(CompressedTexture2D));
+                return true;
+            }
+
+            __result = texture;
+            return false;
+        }
+
         internal static string[] CollectExternalExistingPaths(
             object instance,
             params (string? Path, string MemberName)[] candidates)
@@ -1067,13 +1087,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return false;
             }
 
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetOrbIconPath(__instance, out var externalPath) &&
-                AssetPathDiagnostics.Exists(externalPath, __instance, "ExternalAssetOverrideRegistry.OrbIconPath"))
-            {
-                __result = ResourceLoader.Load<CompressedTexture2D>(externalPath);
+            if (!ContentAssetOverridePatchHelper.TryUseExternalCompressedTexturePathOverride(
+                    __instance,
+                    ref __result,
+                    () => ExternalAssetOverrideRegistry.TryGetOrbIconPath(__instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.OrbIconPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseCompressedTextureOverride<IModOrbAssetOverrides>(
                 __instance,
@@ -1211,12 +1230,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionImagePath(instance, ref result))
                 return false;
 
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetPotionImagePath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetPotionImagePath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.PotionImagePath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
                 instance, ref result, o => o.CustomImagePath, nameof(IModPotionAssetOverrides.CustomImagePath));
@@ -1227,12 +1246,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryPotionOutlinePath(instance, ref result))
                 return false;
 
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetPotionOutlinePath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetPotionOutlinePath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.PotionOutlinePath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPotionAssetOverrides>(
                 instance, ref result, o => o.CustomOutlinePath, nameof(IModPotionAssetOverrides.CustomOutlinePath));
@@ -1810,12 +1829,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     __result = true;
                     return false;
                 }
-
-                if (__instance is not IModEventAssetOverrides)
-                {
-                    __result = false;
-                    return false;
-                }
             }
 
             if (__instance is not IModEventAssetOverrides overrides)
@@ -2237,14 +2250,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var vanillaMain = ImageHelper.GetImagePath($"packed/map/ancients/ancient_node_{entry}.png");
             var vanillaOutline = ImageHelper.GetImagePath($"packed/map/ancients/ancient_node_{entry}_outline.png");
 
-            var extra = AssetPathDiagnostics.CollectExistingPaths(
-                __instance,
-                (mapIconPath, nameof(IModAncientEventAssetOverrides.CustomMapIconPath)),
-                (mapIconOutlinePath, nameof(IModAncientEventAssetOverrides.CustomMapIconOutlinePath)));
-            if (extra.Length == 0)
+            var customMainExists = !string.IsNullOrWhiteSpace(mapIconPath) &&
+                                   AssetPathDiagnostics.Exists(
+                                       mapIconPath,
+                                       __instance,
+                                       nameof(IModAncientEventAssetOverrides.CustomMapIconPath));
+            var customOutlineExists = !string.IsNullOrWhiteSpace(mapIconOutlinePath) &&
+                                      AssetPathDiagnostics.Exists(
+                                          mapIconOutlinePath,
+                                          __instance,
+                                          nameof(IModAncientEventAssetOverrides.CustomMapIconOutlinePath));
+            if (!customMainExists && !customOutlineExists)
                 return;
 
-            __result = __result.Where(p => p != vanillaMain && p != vanillaOutline).Concat(extra);
+            var retained = __result.Where(path =>
+                (!customMainExists || path != vanillaMain) &&
+                (!customOutlineExists || path != vanillaOutline));
+            var replacements = new List<string>(2);
+            if (customMainExists)
+                replacements.Add(mapIconPath!);
+            if (customOutlineExists)
+                replacements.Add(mapIconOutlinePath!);
+            __result = retained.Concat(replacements);
         }
     }
 
@@ -2337,23 +2364,25 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
         {
             if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene,
-                    out var externalSceneProviderKey))
-            {
-                __result = ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                    out var externalSceneProviderKey) &&
+                ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
                     __instance,
                     externalScene,
                     "ExternalAssetOverrideRegistry.AfflictionOverlayScene",
-                    $"provider '{externalSceneProviderKey}'");
+                    $"provider '{externalSceneProviderKey}'"))
+            {
+                __result = true;
                 return false;
             }
 
             if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalOverlayPath,
-                    out var externalPathProviderKey))
-            {
-                __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    out var externalPathProviderKey) &&
+                ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
                     __instance,
                     externalOverlayPath,
-                    $"ExternalAssetOverrideRegistry.AfflictionOverlayPath[{externalPathProviderKey}]");
+                    $"ExternalAssetOverrideRegistry.AfflictionOverlayPath[{externalPathProviderKey}]"))
+            {
+                __result = true;
                 return false;
             }
 
