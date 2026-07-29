@@ -286,6 +286,89 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
         }
 
+        private static bool TryInvokeGodotFactory<TResult>(
+            object owner,
+            string memberName,
+            Func<TResult?> factory,
+            out TResult created)
+            where TResult : GodotObject
+        {
+            created = null!;
+
+            TResult? candidate;
+            try
+            {
+                candidate = factory();
+            }
+            catch (Exception ex)
+            {
+                LogRuntimeFactoryFailure(owner, memberName, ex);
+                return false;
+            }
+
+            if (candidate == null)
+                return false;
+
+            if (!GodotObject.IsInstanceValid(candidate))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Godot] Runtime factory {DescribeFactoryOwner(owner)}.{memberName} returned an invalid {typeof(TResult).Name}. Falling back.");
+                return false;
+            }
+
+            created = candidate;
+            return true;
+        }
+
+        private static bool TryInvokeFactory<TResult>(
+            object owner,
+            string memberName,
+            Func<TResult?> factory,
+            out TResult created)
+            where TResult : class
+        {
+            created = null!;
+
+            try
+            {
+                var candidate = factory();
+                if (candidate == null)
+                    return false;
+
+                created = candidate;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogRuntimeFactoryFailure(owner, memberName, ex);
+                return false;
+            }
+        }
+
+        private static bool TryGetFactoryFlag(object owner, string memberName, Func<bool> accessor)
+        {
+            try
+            {
+                return accessor();
+            }
+            catch (Exception ex)
+            {
+                LogRuntimeFactoryFailure(owner, memberName, ex);
+                return false;
+            }
+        }
+
+        private static void LogRuntimeFactoryFailure(object owner, string memberName, Exception ex)
+        {
+            RitsuLibFramework.Logger.Warn(
+                $"[Godot] Runtime factory {DescribeFactoryOwner(owner)}.{memberName} failed: {ex.Message}. Falling back.");
+        }
+
+        private static string DescribeFactoryOwner(object owner)
+        {
+            return owner.GetType().FullName ?? owner.GetType().Name;
+        }
+
         /// <summary>
         ///     Patches <see cref="MonsterModel.CreateVisuals" /> for <see cref="IModCreatureVisualsFactory" />.
         ///     为 <see cref="IModCreatureVisualsFactory" /> 修补<see cref="MonsterModel.CreateVisuals" />。
@@ -312,21 +395,32 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(MonsterModel __instance, ref NCreatureVisuals __result)
             {
-                NCreatureVisuals? created = null;
-                if (__instance is IModCreatureVisualsFactory factory)
-                    created = factory.TryCreateCreatureVisuals();
+                if (__instance is IModCreatureVisualsFactory factory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        factory.TryCreateCreatureVisuals,
+                        out NCreatureVisuals created))
+                    return UseCreatedVisuals(created, ref __result);
 
 #pragma warning disable CS0618
-                if (created == null && __instance is IModMonsterCreatureVisualsFactory legacyFactory)
-                    created = legacyFactory.TryCreateCreatureVisuals();
+                if (__instance is IModMonsterCreatureVisualsFactory legacyFactory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModMonsterCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        legacyFactory.TryCreateCreatureVisuals,
+                        out created))
+                    return UseCreatedVisuals(created, ref __result);
 #pragma warning restore CS0618
 
-                if (created == null)
-                    return true;
+                return true;
 
-                ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
-                __result = created;
-                return false;
+                static bool UseCreatedVisuals(NCreatureVisuals created, ref NCreatureVisuals result)
+                {
+                    ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
+                    result = created;
+                    return false;
+                }
             }
         }
 
@@ -356,20 +450,37 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, ref NCreatureVisuals __result)
             {
-                NCreatureVisuals? created = null;
-                if (__instance is IModCreatureVisualsFactory factory)
-                    created = factory.TryCreateCreatureVisuals();
+                NCreatureVisuals created;
+                if (__instance is IModCreatureVisualsFactory factory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        factory.TryCreateCreatureVisuals,
+                        out created))
+                    return UseCreatedVisuals(created, ref __result);
 
 #pragma warning disable CS0618
-                if (created == null && __instance is IModCharacterCreatureVisualsFactory legacyFactory)
-                    created = legacyFactory.TryCreateCreatureVisuals();
+                if (__instance is IModCharacterCreatureVisualsFactory legacyFactory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        legacyFactory.TryCreateCreatureVisuals,
+                        out created))
+                    return UseCreatedVisuals(created, ref __result);
 #pragma warning restore CS0618
 
-                if (created == null && !TryCreateCharacterResourceVisuals(__instance, out created)) return true;
-                RitsuNCreatureVisualsNodeFactory.EnsureFormVfxHolder(created);
-                ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
-                __result = created;
-                return false;
+                if (!TryCreateCharacterResourceVisuals(__instance, out created))
+                    return true;
+
+                return UseCreatedVisuals(created, ref __result);
+
+                static bool UseCreatedVisuals(NCreatureVisuals created, ref NCreatureVisuals result)
+                {
+                    RitsuNCreatureVisualsNodeFactory.EnsureFormVfxHolder(created);
+                    ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
+                    result = created;
+                    return false;
+                }
             }
         }
 
@@ -440,20 +551,31 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
             {
-                CreatureAnimator? created = null;
-                if (__instance is IModCreatureAnimatorFactory factory)
-                    created = factory.TryCreateCreatureAnimator(controller);
+                if (__instance is IModCreatureAnimatorFactory factory &&
+                    TryInvokeFactory(
+                        __instance,
+                        nameof(IModCreatureAnimatorFactory.TryCreateCreatureAnimator),
+                        () => factory.TryCreateCreatureAnimator(controller),
+                        out CreatureAnimator created))
+                {
+                    __result = created;
+                    return false;
+                }
 
 #pragma warning disable CS0618
-                if (created == null && __instance is IModCharacterCreatureAnimatorFactory legacyFactory)
-                    created = legacyFactory.TryCreateCreatureAnimator(controller);
+                if (__instance is IModCharacterCreatureAnimatorFactory legacyFactory &&
+                    TryInvokeFactory(
+                        __instance,
+                        nameof(IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator),
+                        () => legacyFactory.TryCreateCreatureAnimator(controller),
+                        out created))
+                {
+                    __result = created;
+                    return false;
+                }
 #pragma warning restore CS0618
 
-                if (created == null)
-                    return true;
-
-                __result = created;
-                return false;
+                return true;
             }
         }
 
@@ -484,8 +606,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModCreatureAnimatorFactory factory)
                     return true;
 
-                var created = factory.TryCreateCreatureAnimator(controller);
-                if (created == null)
+                if (!TryInvokeFactory(
+                        __instance,
+                        nameof(IModCreatureAnimatorFactory.TryCreateCreatureAnimator),
+                        () => factory.TryCreateCreatureAnimator(controller),
+                        out CreatureAnimator created))
                     return true;
 
                 __result = created;
@@ -520,8 +645,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModEncounterCombatSceneFactory factory)
                     return true;
 
-                var created = factory.TryCreateEncounterCombatScene();
-                if (created == null)
+                if (!TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModEncounterCombatSceneFactory.TryCreateEncounterCombatScene),
+                        factory.TryCreateEncounterCombatScene,
+                        out Control created))
                     return true;
 
                 __result = created;
@@ -556,15 +684,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModEventLayoutPackedSceneFactory factory)
                     return true;
 
-                var created = factory.TryCreateLayoutPackedScene();
-                if (created == null)
-                    return true;
-
-                if (!ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                if (!TryInvokeGodotFactory(
                         __instance,
-                        created,
                         nameof(IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene),
-                        $"runtime factory '{factory.GetType().FullName}'"))
+                        factory.TryCreateLayoutPackedScene,
+                        out PackedScene created))
                     return true;
 
                 __result = created;
@@ -609,15 +733,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModEventBackgroundPackedSceneFactory factory)
                     return true;
 
-                var created = factory.TryCreateBackgroundPackedScene();
-                if (created == null)
-                    return true;
-
-                if (!ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                if (!TryInvokeGodotFactory(
                         __instance,
-                        created,
                         nameof(IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene),
-                        $"runtime factory '{factory.GetType().FullName}'"))
+                        factory.TryCreateBackgroundPackedScene,
+                        out PackedScene created))
                     return true;
 
                 __result = created;
@@ -647,7 +767,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref bool __result)
             {
-                if (__instance is not IModEventVfxFactory { SuppliesCustomEventVfx: true })
+                if (__instance is not IModEventVfxFactory factory ||
+                    !TryGetFactoryFlag(
+                        __instance,
+                        nameof(IModEventVfxFactory.SuppliesCustomEventVfx),
+                        () => factory.SuppliesCustomEventVfx))
                     return true;
 
                 __result = true;
@@ -677,11 +801,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref Node2D __result)
             {
-                if (__instance is not IModEventVfxFactory { SuppliesCustomEventVfx: true } factory)
+                if (__instance is not IModEventVfxFactory factory ||
+                    !TryGetFactoryFlag(
+                        __instance,
+                        nameof(IModEventVfxFactory.SuppliesCustomEventVfx),
+                        () => factory.SuppliesCustomEventVfx))
                     return true;
 
-                var created = factory.TryCreateEventVfx();
-                if (created == null)
+                if (!TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModEventVfxFactory.TryCreateEventVfx),
+                        factory.TryCreateEventVfx,
+                        out Node2D created))
                     return true;
 
                 __result = created;
@@ -715,8 +846,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             {
                 if (__instance is IModOrbSpriteFactory spriteFactory)
                 {
-                    var fromFactory = spriteFactory.TryCreateOrbSprite();
-                    if (fromFactory != null)
+                    if (TryInvokeGodotFactory(
+                            __instance,
+                            nameof(IModOrbSpriteFactory.TryCreateOrbSprite),
+                            spriteFactory.TryCreateOrbSprite,
+                            out Node2D fromFactory))
                     {
                         __result = fromFactory;
                         return false;
@@ -738,7 +872,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     return true;
                 }
 
-                var node2D = RitsuGodotNodeFactories.CreateFromScene<Node2D>(scene, PackedScene.GenEditState.Disabled);
+                Node2D node2D;
+                try
+                {
+                    node2D = RitsuGodotNodeFactories.CreateFromScene<Node2D>(
+                        scene,
+                        PackedScene.GenEditState.Disabled);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Godot] Failed to instantiate {__instance.GetType().Name}.{nameof(IModOrbAssetOverrides.CustomVisualsScenePath)} '{path}' as {nameof(Node2D)}: {ex.Message}. Falling back.");
+                    return true;
+                }
+
+                if (!GodotObject.IsInstanceValid(node2D))
+                {
+                    ContentAssetOverridePatchHelper.LogLoadFailure(
+                        __instance,
+                        nameof(IModOrbAssetOverrides.CustomVisualsScenePath),
+                        path,
+                        nameof(Node2D));
+                    return true;
+                }
+
                 if (node2D.GetNodeOrNull("SpineSkeleton") is { } spineNode)
                     new MegaSprite(spineNode).GetAnimationState().SetAnimation("idle_loop");
 
