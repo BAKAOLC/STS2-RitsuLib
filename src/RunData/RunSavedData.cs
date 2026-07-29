@@ -82,10 +82,10 @@ namespace STS2RitsuLib.RunData
     {
         private readonly RunSavedDataPlayerSlot<T> _slot;
 
-        internal PlayerRunSavedData(RunSavedDataPlayerSlot<T> slot, Func<T>? defaultFactory)
+        internal PlayerRunSavedData(RunSavedDataPlayerSlot<T> slot)
         {
             _slot = slot;
-            Lobby = new(slot, defaultFactory);
+            Lobby = new(slot);
         }
 
         /// <summary>

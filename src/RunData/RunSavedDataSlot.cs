@@ -110,9 +110,16 @@ namespace STS2RitsuLib.RunData
             if (bag.TryGet(SlotKey, out var value) && value is T typed)
                 return typed;
 
-            var created = _defaultFactory();
+            var created = CreateDefaultValue();
             bag.Set(SlotKey, created, false);
             return created;
+        }
+
+        internal T CreateDefaultValue()
+        {
+            return _defaultFactory() ??
+                   throw new InvalidOperationException(
+                       $"RunSavedData default factory returned null: {ModId}::{Key}");
         }
 
         public bool TryGet(RunState runState, out T value)
@@ -339,9 +346,16 @@ namespace STS2RitsuLib.RunData
             if (values.TryGetValue(netId, out var value))
                 return value;
 
-            value = _defaultFactory();
+            value = CreatePlayerDefaultValue();
             values[netId] = value;
             return value;
+        }
+
+        internal T CreatePlayerDefaultValue()
+        {
+            return _defaultFactory() ??
+                   throw new InvalidOperationException(
+                       $"RunSavedData player default factory returned null: {ModId}::{Key}");
         }
 
         public bool TryGet(RunState runState, ulong netId, out T value)

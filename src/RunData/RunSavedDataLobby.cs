@@ -97,7 +97,7 @@ namespace STS2RitsuLib.RunData
             if (session.TryGetRun(_slot.SlotKey, out var raw) && raw is T typed)
                 return typed;
 
-            var created = new T();
+            var created = _slot.CreateDefaultValue();
             session.SetRun(_slot.SlotKey, created);
             return created;
         }
@@ -164,13 +164,11 @@ namespace STS2RitsuLib.RunData
     /// </summary>
     public sealed class PlayerRunSavedDataLobbyScope<T> where T : class, new()
     {
-        private readonly Func<T> _defaultFactory;
         private readonly RunSavedDataPlayerSlot<T> _slot;
 
-        internal PlayerRunSavedDataLobbyScope(RunSavedDataPlayerSlot<T> slot, Func<T>? defaultFactory)
+        internal PlayerRunSavedDataLobbyScope(RunSavedDataPlayerSlot<T> slot)
         {
             _slot = slot;
-            _defaultFactory = defaultFactory ?? (() => new());
         }
 
         private void MaybeSync(StartRunLobby lobby)
@@ -189,7 +187,7 @@ namespace STS2RitsuLib.RunData
             if (session.TryGetPlayer(_slot.SlotKey, netId, out var raw) && raw is T typed)
                 return typed;
 
-            var created = _defaultFactory();
+            var created = _slot.CreatePlayerDefaultValue();
             session.SetPlayer(_slot.SlotKey, netId, created);
             return created;
         }
