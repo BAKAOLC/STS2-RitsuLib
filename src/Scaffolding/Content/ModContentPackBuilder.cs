@@ -164,7 +164,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         public static ModContentPackBuilder For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
-            return new(modId);
+            return new(modId.Trim());
         }
 
         /// <summary>

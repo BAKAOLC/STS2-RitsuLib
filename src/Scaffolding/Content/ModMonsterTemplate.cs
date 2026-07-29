@@ -137,7 +137,7 @@ namespace STS2RitsuLib.Scaffolding.Content
         protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
             MonsterModel monster)
         {
-            return SetupCustomCombatAnimationStateMachine(visualsRoot, monster);
+            return null;
         }
     }
 }

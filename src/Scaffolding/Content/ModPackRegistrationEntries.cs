@@ -24,6 +24,18 @@ namespace STS2RitsuLib.Scaffolding.Content
                 throw new ArgumentException(
                     $"Epoch gated content for '{epochType.Name}' needs at least one card or relic type.");
 
+            foreach (var type in cards)
+                if (type == null || !typeof(CardModel).IsAssignableFrom(type))
+                    throw new ArgumentException(
+                        $"Type '{type?.Name ?? "<null>"}' must derive from CardModel.",
+                        nameof(cardTypes));
+
+            foreach (var type in relics)
+                if (type == null || !typeof(RelicModel).IsAssignableFrom(type))
+                    throw new ArgumentException(
+                        $"Type '{type?.Name ?? "<null>"}' must derive from RelicModel.",
+                        nameof(relicTypes));
+
             var epochId = ModTimelineRegistry.GetEpochId(epochType);
             ModEpochGatedContentRegistry.Register(context.ModId, epochId, cards, relics);
             foreach (var t in cards)
