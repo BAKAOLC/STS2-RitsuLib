@@ -46,14 +46,9 @@ namespace STS2RitsuLib.RuntimeInput
             if (!ModifiersMatch(keyEvent))
                 return false;
 
-            if (!PrimaryKeyMatches(keyEvent))
-                return false;
-
-            if (!IsModifierOnly)
-                return true;
-
-            return RuntimeHotkeyParser.GetModifierKindForKeyEvent(keyEvent) ==
-                   RuntimeHotkeyParser.GetModifierKind(PrimaryKey);
+            return IsModifierOnly
+                ? IsRequiredModifierEvent(keyEvent)
+                : PrimaryKeyMatches(keyEvent);
         }
 
         public bool Matches(InputEventAction actionEvent)
@@ -74,10 +69,19 @@ namespace STS2RitsuLib.RuntimeInput
 
         private bool PrimaryKeyMatches(InputEventKey keyEvent)
         {
-            if (!IsModifierOnly)
-                return keyEvent.Keycode == PrimaryKey || keyEvent.PhysicalKeycode == PrimaryKey;
+            return keyEvent.Keycode == PrimaryKey || keyEvent.PhysicalKeycode == PrimaryKey;
+        }
 
-            return RuntimeHotkeyParser.ModifierKeyMatches(PrimaryKey, keyEvent);
+        private bool IsRequiredModifierEvent(InputEventKey keyEvent)
+        {
+            return RuntimeHotkeyParser.GetModifierKindForKeyEvent(keyEvent) switch
+            {
+                ModifierKind.Ctrl => Ctrl != ModifierRequirement.NotPressed,
+                ModifierKind.Alt => Alt != ModifierRequirement.NotPressed,
+                ModifierKind.Shift => Shift != ModifierRequirement.NotPressed,
+                ModifierKind.Meta => Meta != ModifierRequirement.NotPressed,
+                _ => false,
+            };
         }
     }
 }

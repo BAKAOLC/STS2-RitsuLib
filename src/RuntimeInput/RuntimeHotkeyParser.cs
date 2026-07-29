@@ -17,8 +17,8 @@ namespace STS2RitsuLib.RuntimeInput
             if (TryParseActionBinding(text, out binding, out normalized))
                 return true;
 
-            var parts = text.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            if (parts.Length == 0)
+            var parts = text.Split('+', StringSplitOptions.TrimEntries);
+            if (parts.Length == 0 || parts.Any(string.IsNullOrEmpty))
                 return false;
 
             var ctrl = ModifierRequirement.NotPressed;
@@ -26,12 +26,16 @@ namespace STS2RitsuLib.RuntimeInput
             var shift = ModifierRequirement.NotPressed;
             var meta = ModifierRequirement.NotPressed;
             Key? primaryKey = null;
+            var seenModifiers = new HashSet<ModifierKind>();
 
             foreach (var rawPart in parts)
             {
                 var token = rawPart.Trim();
                 if (TryParseModifierToken(token, out var kind, out var requirement))
                 {
+                    if (!seenModifiers.Add(kind))
+                        return false;
+
                     switch (kind)
                     {
                         case ModifierKind.Ctrl:
@@ -53,7 +57,7 @@ namespace STS2RitsuLib.RuntimeInput
                     continue;
                 }
 
-                if (!TryParseKeyToken(token, out var parsedKey))
+                if (primaryKey != null || !TryParseKeyToken(token, out var parsedKey))
                     return false;
                 primaryKey = parsedKey;
             }
@@ -180,14 +184,14 @@ namespace STS2RitsuLib.RuntimeInput
                 case "lctrl":
                 case "lcontrol":
                     kind = ModifierKind.Ctrl;
-                    requirement = ModifierRequirement.LeftOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 case "rightctrl":
                 case "rightcontrol":
                 case "rctrl":
                 case "rcontrol":
                     kind = ModifierKind.Ctrl;
-                    requirement = ModifierRequirement.RightOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 case "alt":
                     kind = ModifierKind.Alt;
@@ -196,12 +200,12 @@ namespace STS2RitsuLib.RuntimeInput
                 case "leftalt":
                 case "lalt":
                     kind = ModifierKind.Alt;
-                    requirement = ModifierRequirement.LeftOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 case "rightalt":
                 case "ralt":
                     kind = ModifierKind.Alt;
-                    requirement = ModifierRequirement.RightOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 case "shift":
                     kind = ModifierKind.Shift;
@@ -210,12 +214,12 @@ namespace STS2RitsuLib.RuntimeInput
                 case "leftshift":
                 case "lshift":
                     kind = ModifierKind.Shift;
-                    requirement = ModifierRequirement.LeftOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 case "rightshift":
                 case "rshift":
                     kind = ModifierKind.Shift;
-                    requirement = ModifierRequirement.RightOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 case "meta":
                 case "cmd":
@@ -229,7 +233,7 @@ namespace STS2RitsuLib.RuntimeInput
                 case "lmeta":
                 case "lcmd":
                     kind = ModifierKind.Meta;
-                    requirement = ModifierRequirement.LeftOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 case "rightmeta":
                 case "rightcmd":
@@ -237,7 +241,7 @@ namespace STS2RitsuLib.RuntimeInput
                 case "rmeta":
                 case "rcmd":
                     kind = ModifierKind.Meta;
-                    requirement = ModifierRequirement.RightOnly;
+                    requirement = ModifierRequirement.AnySide;
                     return true;
                 default:
                     kind = ModifierKind.None;
@@ -371,13 +375,13 @@ namespace STS2RitsuLib.RuntimeInput
         private static bool IsLeftSpecific(Key key)
         {
             var name = key.ToString().ToLowerInvariant();
-            return name.Contains("left") || name.StartsWith('l');
+            return GetModifierKind(key) != ModifierKind.None && name.Contains("left");
         }
 
         private static bool IsRightSpecific(Key key)
         {
             var name = key.ToString().ToLowerInvariant();
-            return name.Contains("right") || name.StartsWith('r');
+            return GetModifierKind(key) != ModifierKind.None && name.Contains("right");
         }
     }
 }
