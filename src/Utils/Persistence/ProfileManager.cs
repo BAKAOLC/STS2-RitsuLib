@@ -228,7 +228,14 @@ namespace STS2RitsuLib.Utils.Persistence
 
             try
             {
-                FileOperations.DeleteDirectoryRecursive(profilePath);
+                var result = FileOperations.DeleteDirectoryRecursive(profilePath);
+                if (!result.Success)
+                {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Persistence] Failed to delete mod data for profile {profileId}: {result.ErrorMessage}");
+                    return;
+                }
+
                 RitsuLibFramework.Logger.Info($"[Persistence] Successfully deleted mod data for profile {profileId}");
             }
             catch (Exception ex)

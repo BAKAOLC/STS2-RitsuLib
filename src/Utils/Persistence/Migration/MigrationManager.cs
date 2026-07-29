@@ -89,37 +89,37 @@ namespace STS2RitsuLib.Utils.Persistence.Migration
                         ErrorMessage = $"Data version {version} is newer than current version {config.CurrentVersion}",
                     };
 
-                if (_migrations.TryGetValue(type, out var migrations) && migrations.Count > 0)
+                var migrations = _migrations.TryGetValue(type, out var registeredMigrations)
+                    ? registeredMigrations
+                    : [];
+                if (!TryBuildShortestMigrationPath(
+                        version,
+                        config.CurrentVersion,
+                        migrations,
+                        out var plan))
+                    return new()
+                    {
+                        Success = false,
+                        ErrorMessage =
+                            $"No migration path from data version {version} to current version {config.CurrentVersion} for {type.Name}.",
+                    };
+
+                for (var i = 0; i < plan.Count; i++)
                 {
-                    if (!TryBuildShortestMigrationPath(
-                            version,
-                            config.CurrentVersion,
-                            migrations,
-                            out var plan))
+                    var migration = plan[i];
+                    RitsuLibFramework.Logger.Info(
+                        $"Applying migration {migration.FromVersion} -> {migration.ToVersion} for {type.Name} (shortest path: step {i + 1}/{plan.Count})");
+
+                    if (!migration.Migrate(jsonObject))
                         return new()
                         {
                             Success = false,
                             ErrorMessage =
-                                $"No migration path from data version {version} to current version {config.CurrentVersion} for {type.Name}.",
+                                $"Migration {migration.FromVersion} -> {migration.ToVersion} failed",
                         };
 
-                    for (var i = 0; i < plan.Count; i++)
-                    {
-                        var migration = plan[i];
-                        RitsuLibFramework.Logger.Info(
-                            $"Applying migration {migration.FromVersion} -> {migration.ToVersion} for {type.Name} (shortest path: step {i + 1}/{plan.Count})");
-
-                        if (!migration.Migrate(jsonObject))
-                            return new()
-                            {
-                                Success = false,
-                                ErrorMessage =
-                                    $"Migration {migration.FromVersion} -> {migration.ToVersion} failed",
-                            };
-
-                        version = migration.ToVersion;
-                        SetVersion(jsonObject, config.SchemaVersionProperty, version);
-                    }
+                    version = migration.ToVersion;
+                    SetVersion(jsonObject, config.SchemaVersionProperty, version);
                 }
 
                 var migratedJson = jsonObject.ToJsonString();
