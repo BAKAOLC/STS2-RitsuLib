@@ -255,7 +255,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
             var n = Math.Min(ordered.Count, players.Count);
             for (var i = 0; i < n; i++)
+            {
+                FakeMerchantBoothCharacter.Remove(ordered[i]);
                 FakeMerchantBoothCharacter.Add(ordered[i], players[i].Character);
+            }
         }
 
         internal static IReadOnlyList<NMerchantCharacter>? TryGetFakeMerchantPlayerVisuals(NFakeMerchant screen)
