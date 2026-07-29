@@ -42,6 +42,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         /// </summary>
         public static ModCardHandGlowRules Gold(Func<CardModel, bool> whenBonusActive)
         {
+            ArgumentNullException.ThrowIfNull(whenBonusActive);
             return new() { GoldWhenBonusActive = whenBonusActive };
         }
 
@@ -51,6 +52,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         /// </summary>
         public static ModCardHandGlowRules Red(Func<CardModel, bool> whenHandWarning)
         {
+            ArgumentNullException.ThrowIfNull(whenHandWarning);
             return new() { RedWhenHandWarning = whenHandWarning };
         }
 

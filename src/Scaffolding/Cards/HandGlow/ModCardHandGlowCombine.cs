@@ -14,7 +14,11 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         /// </summary>
         public static Func<CardModel, bool> Or(params Func<CardModel, bool>?[] parts)
         {
-            return card => { return parts.OfType<Func<CardModel, bool>>().Any(p => p(card)); };
+            ArgumentNullException.ThrowIfNull(parts);
+            var filtered = parts.OfType<Func<CardModel, bool>>().ToArray();
+            return filtered.Length == 0
+                ? static _ => false
+                : card => filtered.Any(predicate => predicate(card));
         }
 
         /// <summary>
@@ -23,6 +27,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         /// </summary>
         public static Func<CardModel, bool> And(params Func<CardModel, bool>?[] parts)
         {
+            ArgumentNullException.ThrowIfNull(parts);
             var filtered = parts.Where(static p => p != null).Cast<Func<CardModel, bool>>().ToArray();
             if (filtered.Length == 0)
                 return static _ => true;
