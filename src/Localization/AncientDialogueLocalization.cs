@@ -1,3 +1,4 @@
+using System.Globalization;
 using MegaCrit.Sts2.Core.Entities.Ancients;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
@@ -200,9 +201,18 @@ namespace STS2RitsuLib.Localization
                 };
 
             var visitLoc = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{VisitIndexKeySuffix}");
-            if (visitLoc != null)
-                currentVisitIndex = int.Parse(visitLoc.GetRawText());
+            if (visitLoc == null)
+                return currentVisitIndex;
 
+            var rawVisitIndex = visitLoc.GetRawText();
+            if (int.TryParse(rawVisitIndex, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedVisitIndex)
+                && parsedVisitIndex >= 0)
+                return parsedVisitIndex;
+
+            AncientDialogueMissingWarnings.WarnOnce(
+                $"invalid_visit:{locTable}:{visitLoc.LocEntryKey}:{rawVisitIndex}",
+                $"[Ancient] Ignoring invalid visit index '{rawVisitIndex}' in " +
+                $"'{locTable}:{visitLoc.LocEntryKey}'; expected a non-negative integer.");
             return currentVisitIndex;
         }
 
@@ -218,19 +228,43 @@ namespace STS2RitsuLib.Localization
             var startAttackers = ArchitectAttackers.None;
             var endAttackers = ArchitectAttackers.Architect;
 
-            var attackString = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{AttackKeySuffix}");
-            if (Enum.TryParse(attackString?.GetRawText(), true, out ArchitectAttackers result))
-                endAttackers = result;
-
-            attackString = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{StartAttackKeySuffix}");
-            if (Enum.TryParse(attackString?.GetRawText(), true, out result))
-                startAttackers = result;
-
-            attackString = LocString.GetIfExists(locTable, $"{baseKey}{dialogueIndex}{EndAttackKeySuffix}");
-            if (Enum.TryParse(attackString?.GetRawText(), true, out result))
-                endAttackers = result;
+            TryOverrideAttackers(
+                locTable,
+                $"{baseKey}{dialogueIndex}{AttackKeySuffix}",
+                ref endAttackers);
+            TryOverrideAttackers(
+                locTable,
+                $"{baseKey}{dialogueIndex}{StartAttackKeySuffix}",
+                ref startAttackers);
+            TryOverrideAttackers(
+                locTable,
+                $"{baseKey}{dialogueIndex}{EndAttackKeySuffix}",
+                ref endAttackers);
 
             return (startAttackers, endAttackers);
+        }
+
+        private static void TryOverrideAttackers(
+            string locTable,
+            string key,
+            ref ArchitectAttackers attackers)
+        {
+            var locString = LocString.GetIfExists(locTable, key);
+            if (locString == null)
+                return;
+
+            var rawAttackers = locString.GetRawText();
+            if (Enum.TryParse(rawAttackers, true, out ArchitectAttackers parsed)
+                && Enum.IsDefined(parsed))
+            {
+                attackers = parsed;
+                return;
+            }
+
+            AncientDialogueMissingWarnings.WarnOnce(
+                $"invalid_attackers:{locTable}:{key}:{rawAttackers}",
+                $"[Ancient] Ignoring invalid Architect attackers value '{rawAttackers}' in '{locTable}:{key}'. " +
+                $"Expected one of: {string.Join(", ", Enum.GetNames<ArchitectAttackers>())}.");
         }
 
         private static bool DialogueExists(string locTable, string baseKey, int index)
