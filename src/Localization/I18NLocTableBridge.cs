@@ -13,9 +13,6 @@ namespace STS2RitsuLib.Localization
     /// </summary>
     public static class I18NLocTableBridge
     {
-        private static readonly ConcurrentDictionary<string, I18N> Tables =
-            new(StringComparer.OrdinalIgnoreCase);
-
         private static readonly ConcurrentDictionary<string, I18NLocTable> LocTables =
             new(StringComparer.OrdinalIgnoreCase);
 
@@ -43,17 +40,11 @@ namespace STS2RitsuLib.Localization
 
             var tableId = GetTableId(modId, stem);
 
+            var locTable = new I18NLocTable(tableId, i18N);
             if (!replaceExisting)
-            {
-                var added = Tables.TryAdd(tableId, i18N);
-                if (added)
-                    LocTables.TryAdd(tableId, new(tableId, i18N));
+                return LocTables.TryAdd(tableId, locTable);
 
-                return added;
-            }
-
-            Tables[tableId] = i18N;
-            LocTables[tableId] = new(tableId, i18N);
+            LocTables[tableId] = locTable;
             return true;
         }
 
@@ -67,27 +58,31 @@ namespace STS2RitsuLib.Localization
             ArgumentException.ThrowIfNullOrWhiteSpace(stem);
 
             var tableId = GetTableId(modId, stem);
-            var removed = Tables.TryRemove(tableId, out _);
-            if (removed)
-                LocTables.TryRemove(tableId, out _);
-
-            return removed;
+            return LocTables.TryRemove(tableId, out _);
         }
 
         internal static bool TryGet(string tableId, out I18N i18N)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(tableId);
-            return Tables.TryGetValue(tableId, out i18N!);
+            if (LocTables.TryGetValue(tableId, out var locTable))
+            {
+                i18N = locTable.I18N;
+                return true;
+            }
+
+            i18N = null!;
+            return false;
         }
 
         internal static bool TryGetLocTable(string tableId, out LocTable locTable)
         {
-            locTable = null!;
-
-            if (!Tables.TryGetValue(tableId, out var i18N))
+            if (!LocTables.TryGetValue(tableId, out var i18NLocTable))
+            {
+                locTable = null!;
                 return false;
+            }
 
-            locTable = LocTables.GetOrAdd(tableId, static (id, backingI18N) => new(id, backingI18N), i18N);
+            locTable = i18NLocTable;
             return true;
         }
     }

@@ -79,7 +79,7 @@ namespace STS2RitsuLib.Localization.Patches
             if (!I18NLocTablePatchHelper.TryGetBackingI18N(__instance, out var i18N))
                 return true;
 
-            __result = i18N.ContainsLocalKey(key);
+            __result = i18N.ContainsKey(key);
             return false;
         }
     }
@@ -114,7 +114,7 @@ namespace STS2RitsuLib.Localization.Patches
             if (!I18NLocTablePatchHelper.TryGetBackingI18N(__instance, out var i18N))
                 return true;
 
-            __result = i18N.ContainsKey(key);
+            __result = i18N.ContainsLocalKey(key);
             return false;
         }
     }
