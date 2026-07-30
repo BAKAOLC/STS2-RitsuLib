@@ -141,7 +141,7 @@ namespace STS2RitsuLib.Utils
                 if (owner is AbstractModel model && !string.IsNullOrWhiteSpace(model.Id.Entry))
                     return $"{owner.GetType().Name}<{model.Id.Entry}>";
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 // Ignore model identity lookup failures and fall back to the CLR type name.
             }

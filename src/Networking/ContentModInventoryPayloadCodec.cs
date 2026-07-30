@@ -84,7 +84,7 @@ namespace STS2RitsuLib.Networking
                 entries = Expand(compact);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[ContentModInventoryPayload] Failed to decode payload: {ex.Message}");
                 return false;

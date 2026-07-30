@@ -633,7 +633,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 _countLabel.Visible = visible;
                 _countLabel.SetTextAutoSize(string.IsNullOrEmpty(text) ? "0" : text);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 _countContainer?.QueueFree();
                 _countContainer = null;
@@ -739,7 +739,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 count = def.CountProvider(new(def, _player, this));
                 _actionCountProviderFailed = false;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 if (!_actionCountProviderFailed)
                     RitsuLibFramework.Logger.Warn(
@@ -792,7 +792,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                     visible = def.VisibleWhen(new(def, _player, this));
                     _actionVisibilityPredicateFailed = false;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     if (!_actionVisibilityPredicateFailed)
                         RitsuLibFramework.Logger.Warn(
@@ -822,7 +822,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                     isOpen = def.IsOpenWhen(new(def, _player, this));
                     _actionOpenPredicateFailed = false;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     if (!_actionOpenPredicateFailed)
                         RitsuLibFramework.Logger.Warn(
@@ -862,7 +862,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 visible = def.VisibleWhen(new(def, _player, this, _pile));
                 _pileVisibilityPredicateFailed = false;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 if (!_pileVisibilityPredicateFailed)
                     RitsuLibFramework.Logger.Warn(

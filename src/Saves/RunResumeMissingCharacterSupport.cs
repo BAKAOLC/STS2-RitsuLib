@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Saves
                 NModalContainer.Instance.Add(modal);
                 NModalContainer.Instance.ShowBackstop();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[Saves] Failed to show invalid-run modal: {ex.Message}");
             }

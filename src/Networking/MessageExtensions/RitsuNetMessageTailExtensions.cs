@@ -93,7 +93,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                 {
                     payload = registration.WritePayload(message!);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[NetMessageTailExtensions] Writer '{id}' failed for {typeof(TMessage).Name}: {ex.Message}");
@@ -222,14 +222,14 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                     {
                         registration.ReadPayload(version, payload);
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                     {
                         RitsuLibFramework.Logger.Warn(
                             $"[NetMessageTailExtensions] Reader '{id}' failed for {typeof(TMessage).Name}: {ex.Message}");
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[NetMessageTailExtensions] Failed to read trailer for {typeof(TMessage).Name}: {ex.Message}");
@@ -332,7 +332,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                     $"[NetMessageTailExtensions] Unsupported legacy trailer version {version} for '{extensionId}'.");
                 return null;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[NetMessageTailExtensions] Failed to read legacy trailer '{extensionId}': {ex.Message}");
@@ -381,7 +381,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                     $"[NetMessageTailExtensions] Unsupported legacy trailer version {version} for '{extensionId}'.");
                 return null;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[NetMessageTailExtensions] Failed to read legacy trailer '{extensionId}': {ex.Message}");

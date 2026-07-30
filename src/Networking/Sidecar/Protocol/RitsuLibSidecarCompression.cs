@@ -66,7 +66,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 decompressed = output.ToArray();
                 return true;
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return false;
             }
@@ -95,7 +95,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 decompressed = output.ToArray();
                 return true;
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return false;
             }

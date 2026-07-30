@@ -160,7 +160,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     : CreateLocalSnapshot(message.senderChecksum);
                 return EncodeWithinBudget(payload);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[State divergence diagnostics] Failed to create supplement payload: {ex.Message}");
@@ -215,7 +215,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 if (payload != null)
                     StateDivergenceSupplementStore.Store(payload);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[State divergence diagnostics] Failed to read supplement payload: {ex.Message}");

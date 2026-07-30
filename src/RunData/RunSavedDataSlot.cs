@@ -57,7 +57,7 @@ namespace STS2RitsuLib.RunData
             {
                 ImportCore(runState, entry);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[RunSavedData] Failed to import '{ModId}'::{Key}: {ex.Message}");
@@ -274,7 +274,7 @@ namespace STS2RitsuLib.RunData
                 var right = JsonSerializer.SerializeToNode(_defaultFactory(), RunSavedDataJson.Options)?.ToJsonString();
                 return string.Equals(left, right, StringComparison.Ordinal);
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return false;
             }

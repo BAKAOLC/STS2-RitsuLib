@@ -121,7 +121,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable);
                 return EncodeCompressed(payload);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Failed to create payload: {ex.Message}");
                 return null;
@@ -154,7 +154,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     : JsonSerializer.Deserialize<JoinDiagnosticsPayload>(json, JsonOptions);
                 JoinFailureDiagnosticsService.ObserveHostPayload(parsed);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Failed to read payload: {ex.Message}");
             }

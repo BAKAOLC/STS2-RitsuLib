@@ -141,7 +141,7 @@ namespace STS2RitsuLib.Interop.Internal
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop type {type.FullName}");
                 return GenInteropMembers(type.GetMembers(ValidMemberFlags), harmony, targetContext, targetName, false);
             }
-            catch (Exception e)
+            catch (Exception e) when (RitsuLibExceptionPolicy.IsRecoverable(e))
             {
                 RitsuLibFramework.Logger.Warn($"[ModInterop] {e}");
                 return false;
@@ -228,7 +228,7 @@ namespace STS2RitsuLib.Interop.Internal
                 PatchReturnInsertion(harmony, method, loadParams);
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop method {method.Name}");
             }
-            catch (Exception e)
+            catch (Exception e) when (RitsuLibExceptionPolicy.IsRecoverable(e))
             {
                 RitsuLibFramework.Logger.Warn($"[ModInterop] {e}");
                 return false;
@@ -365,7 +365,7 @@ namespace STS2RitsuLib.Interop.Internal
                     return true;
                 }
             }
-            catch (Exception e)
+            catch (Exception e) when (RitsuLibExceptionPolicy.IsRecoverable(e))
             {
                 RitsuLibFramework.Logger.Warn($"[ModInterop] {e}");
                 return false;

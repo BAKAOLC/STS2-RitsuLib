@@ -274,7 +274,7 @@ namespace STS2RitsuLib.Utils.Json
             {
                 return v.GetValue<string>();
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 throw new JsonPatchException($"Member '{key}' must be a string.");
             }
@@ -292,7 +292,7 @@ namespace STS2RitsuLib.Utils.Json
             {
                 return v.GetValue<string>();
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 throw new JsonPatchException($"Member '{key}' must be a string when present.");
             }

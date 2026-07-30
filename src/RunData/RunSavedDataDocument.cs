@@ -39,7 +39,7 @@ namespace STS2RitsuLib.RunData
 
                 return document.IsEmpty ? null : document;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to parse run extension data: {ex.Message}");
                 return null;
@@ -134,7 +134,7 @@ namespace STS2RitsuLib.RunData
                 root[RootPropertyName] = document.ToRootObject()[RootPropertyName]!.DeepClone();
                 return root.ToJsonString(new() { WriteIndented = true });
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to inject run extension data: {ex.Message}");
                 return json;

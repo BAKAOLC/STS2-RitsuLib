@@ -100,7 +100,7 @@ namespace STS2RitsuLib.RunData
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to push lobby contribution: {ex.Message}");
                 return false;

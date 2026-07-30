@@ -285,7 +285,7 @@ namespace STS2RitsuLib.Utils
                 _subscribed = true;
                 RitsuLibFramework.Logger.Info($"[{_instanceName}] Subscribed to locale change notifications");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[{_instanceName}] Unable to subscribe to locale changes, falling back to lazy detection: {ex.Message}");
@@ -307,7 +307,7 @@ namespace STS2RitsuLib.Utils
                 RitsuLibFramework.Logger.Info(
                     $"[{_instanceName}] Successfully unsubscribed from locale change notifications");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{_instanceName}] Error during locale change unsubscription: {ex.Message}");
@@ -472,7 +472,7 @@ namespace STS2RitsuLib.Utils
                     where !string.IsNullOrWhiteSpace(name)
                     select name);
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return [];
             }
@@ -489,7 +489,7 @@ namespace STS2RitsuLib.Utils
             {
                 names = _resourceAssembly.GetManifestResourceNames();
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return [];
             }
@@ -537,7 +537,7 @@ namespace STS2RitsuLib.Utils
                     $"[{_instanceName}] JSON parsing error in embedded resource '{resourceName}': {ex.Message}");
                 return null;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{_instanceName}] Unexpected error loading embedded resource '{resourceName}': {ex.Message}");
@@ -609,7 +609,7 @@ namespace STS2RitsuLib.Utils
                 // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
                 language = instance?.Language;
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 // Silently ignore LocManager access errors
             }
@@ -620,7 +620,7 @@ namespace STS2RitsuLib.Utils
             {
                 language = TranslationServer.GetLocale();
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 // Silently ignore TranslationServer access errors
             }

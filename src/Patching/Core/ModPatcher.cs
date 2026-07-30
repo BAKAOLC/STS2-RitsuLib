@@ -469,7 +469,7 @@ namespace STS2RitsuLib.Patching.Core
                     _patchedStatus[patchInfo.Id] = false;
                     logger.Debug($"{_logPrefix}✓ Removed patch: {patchInfo.Id}");
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     failureCount++;
                     logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - {ex}");
@@ -483,7 +483,7 @@ namespace STS2RitsuLib.Patching.Core
                     _patchedStatus[patchInfo.Id] = false;
                     logger.Debug($"{_logPrefix}✓ Removed dynamic patch: {patchInfo.Id}");
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     failureCount++;
                     logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove dynamic patch: {patchInfo.Id} - {ex}");
@@ -545,7 +545,7 @@ namespace STS2RitsuLib.Patching.Core
                     $"{_logPrefix}[{(modPatchInfo.IsCritical ? "Critical" : "Optional")}] {modPatchInfo.Id} - Success ✓");
                 return ModPatchResult.CreateSuccess(modPatchInfo);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 _patchedStatus[modPatchInfo.Id] = false;
                 return ModPatchResult.CreateFailure(modPatchInfo, ex.Message, ex);
@@ -575,7 +575,7 @@ namespace STS2RitsuLib.Patching.Core
                     $"{_logPrefix}[{(dynamicPatchInfo.IsCritical ? "Critical" : "Optional")}] {dynamicPatchInfo.Id} - Success ✓");
                 return (true, string.Empty, null);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 _patchedStatus[dynamicPatchInfo.Id] = false;
                 return (false, ex.Message, ex);

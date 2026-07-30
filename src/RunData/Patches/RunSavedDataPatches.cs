@@ -62,7 +62,7 @@ namespace STS2RitsuLib.RunData.Patches
                     .ReadFile(GetRunSavePath(manager, isMultiplayer));
                 RunSavedDataRegistry.AttachDocumentFromJson(save, json);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to read run extension data: {ex.Message}");
             }
@@ -113,7 +113,7 @@ namespace STS2RitsuLib.RunData.Patches
                 injectedBytes = Encoding.UTF8.GetBytes(injectedJson);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to inject run extension data: {ex.Message}");
                 return false;
@@ -153,7 +153,7 @@ namespace STS2RitsuLib.RunData.Patches
             {
                 return RunManager.Instance.ShouldSave && RunManager.Instance.NetService.Type == NetGameType.Host;
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return false;
             }
@@ -175,7 +175,7 @@ namespace STS2RitsuLib.RunData.Patches
                             $"maximum is {MaxPayloadBytes} bytes.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[RunSavedData] Failed to write synchronized payload: {ex.Message}");
@@ -196,7 +196,7 @@ namespace STS2RitsuLib.RunData.Patches
                 RunSavedDataLobby.PublishStagingEvent(lobby, RunSavedDataLobbyStagingReason.Committing);
                 return RunSavedDataRegistry.BuildLobbyStagingPayload(lobby);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to prepare new-run payload: {ex.Message}");
                 return null;

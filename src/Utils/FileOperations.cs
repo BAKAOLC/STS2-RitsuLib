@@ -70,7 +70,7 @@ namespace STS2RitsuLib.Utils
                     Content = content,
                 };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error reading file '{filePath}': {ex.Message}");
@@ -131,7 +131,7 @@ namespace STS2RitsuLib.Utils
                 RitsuLibFramework.Logger.Debug($"[{context}] Atomic write completed for '{filePath}'");
                 return new() { Success = true };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error during atomic write to '{filePath}': {ex.Message}");
@@ -172,7 +172,7 @@ namespace STS2RitsuLib.Utils
                     $"[{context}] Successfully wrote to file '{filePath}' ({content.Length} characters)");
                 return new() { Success = true };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error writing to file '{filePath}': {ex.Message}");
@@ -200,7 +200,7 @@ namespace STS2RitsuLib.Utils
                 if (result.Success)
                     RitsuLibFramework.Logger.Debug($"[{context}] Rotated '{filePath}' to backup");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[{context}] Failed to rotate backup: {ex.Message}");
             }
@@ -220,7 +220,7 @@ namespace STS2RitsuLib.Utils
                 if (result.Success)
                     RitsuLibFramework.Logger.Info($"[{context}] Restored '{filePath}' from backup");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[{context}] Failed to restore from backup: {ex.Message}");
             }
@@ -255,7 +255,7 @@ namespace STS2RitsuLib.Utils
 
                 return new() { Success = true };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return new()
                 {
@@ -300,7 +300,7 @@ namespace STS2RitsuLib.Utils
                 using var dirAccess = DirAccess.Open(dir);
                 dirAccess?.Remove(filePath);
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 // Ignore errors in silent delete
             }
@@ -379,7 +379,7 @@ namespace STS2RitsuLib.Utils
                     ErrorMessage = $"JSON parsing error: {ex.Message}",
                 };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error deserializing file '{filePath}': {ex.Message}");
@@ -414,7 +414,7 @@ namespace STS2RitsuLib.Utils
                     ErrorMessage = $"JSON serialization error: {ex.Message}",
                 };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[{context}] Unexpected error serializing data: {ex.Message}");
                 return new()
@@ -481,7 +481,7 @@ namespace STS2RitsuLib.Utils
                 RitsuLibFramework.Logger.Info($"[{context}] Successfully deleted file '{filePath}'");
                 return new() { Success = true };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error deleting file '{filePath}': {ex.Message}");
@@ -557,7 +557,7 @@ namespace STS2RitsuLib.Utils
                 RitsuLibFramework.Logger.Info($"[{context}] Successfully deleted directory '{directoryPath}'");
                 return new() { Success = true };
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[{context}] Unexpected error deleting directory '{directoryPath}': {ex.Message}");
