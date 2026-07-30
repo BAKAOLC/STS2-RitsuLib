@@ -3,8 +3,12 @@ using Godot;
 namespace STS2RitsuLib.Ui.Toast
 {
     /// <summary>
-    ///     Handle returned by tracked toast requests for later updates or manual closing.
-    ///     可跟踪 toast 请求返回的句柄，用于后续更新或主动关闭。
+    ///     <para xml:lang="en">
+    ///         Identifies a tracked toast and provides operations for querying, updating, or closing it.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         标识一条可跟踪的 toast，并提供查询、更新及关闭操作。
+    ///     </para>
     /// </summary>
     public sealed class RitsuToastHandle
     {
@@ -14,78 +18,174 @@ namespace STS2RitsuLib.Ui.Toast
         }
 
         /// <summary>
-        ///     Stable identifier for this toast request.
-        ///     此 toast 请求的稳定标识。
+        ///     <para xml:lang="en">Gets the stable identifier assigned to the tracked toast.</para>
+        ///     <para xml:lang="zh-CN">获取分配给该可跟踪 toast 的稳定标识符。</para>
         /// </summary>
         public Guid Id { get; }
 
         /// <summary>
-        ///     Returns whether the toast is still pending or visible.
-        ///     返回 toast 是否仍在等待显示或已经可见。
+        ///     <para xml:lang="en">Determines whether the toast is queued or active and has not begun closing.</para>
+        ///     <para xml:lang="zh-CN">确定该 toast 是否仍在队列中或处于活动状态，且尚未开始关闭。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the toast is still alive; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若该 toast 仍然存活则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public bool IsAlive()
         {
             return RitsuToastService.IsAlive(this);
         }
 
         /// <summary>
-        ///     Closes the toast if it is still pending or visible.
-        ///     如果 toast 仍在等待显示或已经可见，则关闭它。
+        ///     <para xml:lang="en">Removes a queued toast or requests that an active toast close.</para>
+        ///     <para xml:lang="zh-CN">移除队列中的 toast，或请求关闭活动中的 toast。</para>
         /// </summary>
+        /// <param name="immediate">
+        ///     <para xml:lang="en">Whether an active toast should close without playing its exit animation.</para>
+        ///     <para xml:lang="zh-CN">活动中的 toast 是否应跳过退出动画并立即关闭。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the service found the toast; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若服务找到了该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public bool Close(bool immediate = false)
         {
             return RitsuToastService.Close(this, immediate);
         }
 
         /// <summary>
-        ///     Alias for <see cref="Close" />.
-        ///     <see cref="Close" /> 的别名。
+        ///     <para xml:lang="en">Provides an alias for <see cref="Close" />.</para>
+        ///     <para xml:lang="zh-CN">提供 <see cref="Close" /> 的别名。</para>
         /// </summary>
+        /// <param name="immediate">
+        ///     <para xml:lang="en">Whether an active toast should close without playing its exit animation.</para>
+        ///     <para xml:lang="zh-CN">活动中的 toast 是否应跳过退出动画并立即关闭。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the service found the toast; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若服务找到了该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public bool Dismiss(bool immediate = false)
         {
             return Close(immediate);
         }
 
         /// <summary>
-        ///     Replaces the toast request while preserving the same handle.
-        ///     在保留同一句柄的同时替换 toast 请求。
+        ///     <para xml:lang="en">Replaces the request associated with this handle.</para>
+        ///     <para xml:lang="zh-CN">替换与该句柄关联的请求。</para>
         /// </summary>
+        /// <param name="request">
+        ///     <para xml:lang="en">The replacement request.</para>
+        ///     <para xml:lang="zh-CN">替换后的请求。</para>
+        /// </param>
+        /// <param name="resetDuration">
+        ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
+        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="request" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="request" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public bool Update(RitsuToastRequest request, bool resetDuration = true)
         {
             return RitsuToastService.Update(this, request, resetDuration);
         }
 
         /// <summary>
-        ///     Updates only the body text.
-        ///     仅更新正文文本。
+        ///     <para xml:lang="en">Updates the body while preserving the other request values.</para>
+        ///     <para xml:lang="zh-CN">更新正文并保留请求中的其他值。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The replacement body text.</para>
+        ///     <para xml:lang="zh-CN">替换后的正文文本。</para>
+        /// </param>
+        /// <param name="resetDuration">
+        ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
+        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public bool UpdateBody(string body, bool resetDuration = true)
         {
             return RitsuToastService.UpdateBody(this, body, resetDuration);
         }
 
         /// <summary>
-        ///     Updates the body and title text.
-        ///     更新正文和标题文本。
+        ///     <para xml:lang="en">Updates the body and title while preserving the other request values.</para>
+        ///     <para xml:lang="zh-CN">更新正文和标题，并保留请求中的其他值。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The replacement body text.</para>
+        ///     <para xml:lang="zh-CN">替换后的正文文本。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The replacement title, or <see langword="null" /> to hide it.</para>
+        ///     <para xml:lang="zh-CN">替换后的标题；传入 <see langword="null" /> 可隐藏标题。</para>
+        /// </param>
+        /// <param name="resetDuration">
+        ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
+        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public bool UpdateText(string body, string? title, bool resetDuration = true)
         {
             return RitsuToastService.UpdateText(this, body, title, resetDuration);
         }
 
         /// <summary>
-        ///     Updates the title while preserving the body text.
-        ///     更新标题并保留正文文本。
+        ///     <para xml:lang="en">Updates the title while preserving the other request values.</para>
+        ///     <para xml:lang="zh-CN">更新标题并保留请求中的其他值。</para>
         /// </summary>
+        /// <param name="title">
+        ///     <para xml:lang="en">The replacement title, or <see langword="null" /> to hide it.</para>
+        ///     <para xml:lang="zh-CN">替换后的标题；传入 <see langword="null" /> 可隐藏标题。</para>
+        /// </param>
+        /// <param name="resetDuration">
+        ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
+        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public bool UpdateTitle(string? title, bool resetDuration = false)
         {
             return RitsuToastService.UpdateTitle(this, title, resetDuration);
         }
 
         /// <summary>
-        ///     Restarts the remaining display time, optionally overriding the toast duration.
-        ///     重新开始剩余显示时间，并可选覆盖 toast 持续时间。
+        ///     <para xml:lang="en">Restarts the timer and optionally replaces the per-toast duration.</para>
+        ///     <para xml:lang="zh-CN">重新开始计时，并可选择替换该 toast 的持续时间。</para>
         /// </summary>
+        /// <param name="durationSeconds">
+        ///     <para xml:lang="en">
+        ///         The new duration in seconds, or <see langword="null" /> to reuse the request or global duration.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         新的持续时间（秒）；传入 <see langword="null" /> 可继续使用请求值或全局值。
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the service found the toast; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">若服务找到了该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public bool ResetDuration(double? durationSeconds = null)
         {
             return RitsuToastService.ResetDuration(this, durationSeconds);
@@ -93,112 +193,112 @@ namespace STS2RitsuLib.Ui.Toast
     }
 
     /// <summary>
-    ///     Semantic toast category used for default styling.
-    ///     用于默认样式的语义 toast 类别。
+    ///     <para xml:lang="en">Specifies the semantic level used to select default toast colors.</para>
+    ///     <para xml:lang="zh-CN">指定用于选择 toast 默认颜色的语义级别。</para>
     /// </summary>
     public enum RitsuToastLevel
     {
         /// <summary>
-        ///     Informational message.
-        ///     信息消息。
+        ///     <para xml:lang="en">An informational message.</para>
+        ///     <para xml:lang="zh-CN">信息消息。</para>
         /// </summary>
         Info,
 
         /// <summary>
-        ///     Warning message.
-        ///     警告消息。
+        ///     <para xml:lang="en">A warning message.</para>
+        ///     <para xml:lang="zh-CN">警告消息。</para>
         /// </summary>
         Warning,
 
         /// <summary>
-        ///     Error message.
-        ///     错误消息。
+        ///     <para xml:lang="en">An error message.</para>
+        ///     <para xml:lang="zh-CN">错误消息。</para>
         /// </summary>
         Error,
     }
 
     /// <summary>
-    ///     Built-in toast enter/exit animation presets.
-    ///     内置 toast 进入 / 退出动画预设。
+    ///     <para xml:lang="en">Specifies a built-in animation used when a toast enters or exits.</para>
+    ///     <para xml:lang="zh-CN">指定 toast 进入或退出时使用的内置动画。</para>
     /// </summary>
     public enum RitsuToastAnimationPreset
     {
         /// <summary>
-        ///     Fade only.
-        ///     仅淡入淡出。
+        ///     <para xml:lang="en">Fades the toast without sliding or scaling it.</para>
+        ///     <para xml:lang="zh-CN">仅使 toast 淡入淡出，不进行滑动或缩放。</para>
         /// </summary>
         Fade,
 
         /// <summary>
-        ///     Fade combined with directional slide.
-        ///     淡入淡出并带方向滑动。
+        ///     <para xml:lang="en">Combines fading with a slide based on the toast anchor.</para>
+        ///     <para xml:lang="zh-CN">将淡入淡出与基于 toast 锚点方向的滑动结合。</para>
         /// </summary>
         FadeSlide,
 
         /// <summary>
-        ///     Fade combined with scale.
-        ///     淡入淡出并带缩放。
+        ///     <para xml:lang="en">Combines fading with a scale animation.</para>
+        ///     <para xml:lang="zh-CN">将淡入淡出与缩放动画结合。</para>
         /// </summary>
         FadeScale,
     }
 
     /// <summary>
-    ///     Toast anchor point on a 3x3 screen grid.
-    ///     3x3 屏幕网格上的 toast 锚点。
+    ///     <para xml:lang="en">Specifies the toast stack anchor on a three-by-three viewport grid.</para>
+    ///     <para xml:lang="zh-CN">指定 toast 堆栈在视口三乘三网格上的锚点。</para>
     /// </summary>
     public enum RitsuToastAnchor
     {
         /// <summary>
-        ///     Top-left corner.
-        ///     左上角。
+        ///     <para xml:lang="en">The top-left anchor.</para>
+        ///     <para xml:lang="zh-CN">左上锚点。</para>
         /// </summary>
         TopLeft,
 
         /// <summary>
-        ///     Top-center anchor.
-        ///     顶部居中锚点。
+        ///     <para xml:lang="en">The top-center anchor.</para>
+        ///     <para xml:lang="zh-CN">顶部居中锚点。</para>
         /// </summary>
         TopCenter,
 
         /// <summary>
-        ///     Top-right corner.
-        ///     右上角。
+        ///     <para xml:lang="en">The top-right anchor.</para>
+        ///     <para xml:lang="zh-CN">右上锚点。</para>
         /// </summary>
         TopRight,
 
         /// <summary>
-        ///     Middle-left anchor.
-        ///     中部靠左锚点。
+        ///     <para xml:lang="en">The middle-left anchor.</para>
+        ///     <para xml:lang="zh-CN">中部靠左锚点。</para>
         /// </summary>
         MiddleLeft,
 
         /// <summary>
-        ///     Screen center.
-        ///     屏幕中心。
+        ///     <para xml:lang="en">The middle-center anchor.</para>
+        ///     <para xml:lang="zh-CN">中部居中锚点。</para>
         /// </summary>
         MiddleCenter,
 
         /// <summary>
-        ///     Middle-right anchor.
-        ///     中部靠右锚点。
+        ///     <para xml:lang="en">The middle-right anchor.</para>
+        ///     <para xml:lang="zh-CN">中部靠右锚点。</para>
         /// </summary>
         MiddleRight,
 
         /// <summary>
-        ///     Bottom-left corner.
-        ///     左下角。
+        ///     <para xml:lang="en">The bottom-left anchor.</para>
+        ///     <para xml:lang="zh-CN">左下锚点。</para>
         /// </summary>
         BottomLeft,
 
         /// <summary>
-        ///     Bottom-center anchor.
-        ///     底部居中锚点。
+        ///     <para xml:lang="en">The bottom-center anchor.</para>
+        ///     <para xml:lang="zh-CN">底部居中锚点。</para>
         /// </summary>
         BottomCenter,
 
         /// <summary>
-        ///     Bottom-right corner.
-        ///     右下角。
+        ///     <para xml:lang="en">The bottom-right anchor.</para>
+        ///     <para xml:lang="zh-CN">右下锚点。</para>
         /// </summary>
         BottomRight,
     }
@@ -275,17 +375,57 @@ namespace STS2RitsuLib.Ui.Toast
         float EnterScale);
 
     /// <summary>
-    ///     Toast payload used by <see cref="RitsuToastService.Show" />.
-    ///     <see cref="RitsuToastService.Show" /> 使用的 toast 载荷。
+    ///     <para xml:lang="en">
+    ///         Describes the content, lifetime, interaction, and presentation options of a toast.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述 toast 的内容、生命周期、交互方式及呈现选项。
+    ///     </para>
     /// </summary>
     public sealed record RitsuToastRequest
     {
         private string _body = string.Empty;
 
         /// <summary>
-        ///     Creates a toast request.
-        ///     创建 toast 请求。
+        ///     <para xml:lang="en">Initializes a toast request.</para>
+        ///     <para xml:lang="zh-CN">初始化一个 toast 请求。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The required body text.</para>
+        ///     <para xml:lang="zh-CN">必需的正文文本。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The optional title displayed above the body.</para>
+        ///     <para xml:lang="zh-CN">显示在正文上方的可选标题。</para>
+        /// </param>
+        /// <param name="image">
+        ///     <para xml:lang="en">The optional image displayed beside the text.</para>
+        ///     <para xml:lang="zh-CN">显示在文本旁的可选图像。</para>
+        /// </param>
+        /// <param name="level">
+        ///     <para xml:lang="en">The semantic level used to select default colors.</para>
+        ///     <para xml:lang="zh-CN">用于选择默认颜色的语义级别。</para>
+        /// </param>
+        /// <param name="durationSeconds">
+        ///     <para xml:lang="en">
+        ///         The optional display duration in seconds. <see langword="null" /> uses the global setting.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的显示持续时间（秒）；<see langword="null" /> 表示使用全局设置。
+        ///     </para>
+        /// </param>
+        /// <param name="onClick">
+        ///     <para xml:lang="en">The optional callback invoked when the toast is clicked.</para>
+        ///     <para xml:lang="zh-CN">点击 toast 时调用的可选回调。</para>
+        /// </param>
+        /// <param name="animationOverride">
+        ///     <para xml:lang="en">The optional animation preset used instead of the global setting.</para>
+        ///     <para xml:lang="zh-CN">用于替代全局设置的可选动画预设。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public RitsuToastRequest(string body, string? title = null, Texture2D? image = null,
             RitsuToastLevel level = RitsuToastLevel.Info, double? durationSeconds = null, Action? onClick = null,
             RitsuToastAnimationPreset? animationOverride = null)
@@ -300,9 +440,13 @@ namespace STS2RitsuLib.Ui.Toast
         }
 
         /// <summary>
-        ///     Body text rendered in the toast.
-        ///     toast 中渲染的正文文本。
+        ///     <para xml:lang="en">Gets or initializes the required body text.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化必需的正文文本。</para>
         /// </summary>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The assigned value is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">赋予的值为 <see langword="null" />。</para>
+        /// </exception>
         public string Body
         {
             get => _body;
@@ -314,184 +458,372 @@ namespace STS2RitsuLib.Ui.Toast
         }
 
         /// <summary>
-        ///     Optional title shown above the body.
-        ///     显示在正文上方的可选标题。
+        ///     <para xml:lang="en">Gets or initializes the optional title displayed above the body.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化显示在正文上方的可选标题。</para>
         /// </summary>
         public string? Title { get; init; }
 
         /// <summary>
-        ///     Optional image shown on the leading side.
-        ///     显示在起始侧的可选图像。
+        ///     <para xml:lang="en">Gets or initializes the optional image displayed beside the text.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化显示在文本旁的可选图像。</para>
         /// </summary>
         public Texture2D? Image { get; init; }
 
         /// <summary>
-        ///     Semantic level used for default visuals.
-        ///     用于默认视觉效果的语义级别。
+        ///     <para xml:lang="en">Gets or initializes the semantic level used to select default colors.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化用于选择默认颜色的语义级别。</para>
         /// </summary>
         public RitsuToastLevel Level { get; init; }
 
         /// <summary>
-        ///     Optional per-toast duration override in seconds.
-        ///     单个 toast 的可选持续时间覆盖值，单位为秒。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional display duration in seconds. <see langword="null" /> or a
+        ///         non-finite value uses the global setting; zero or a negative value disables automatic closing.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化可选的显示持续时间（秒）。<see langword="null" /> 或非有限值表示使用全局设置；
+        ///         零或负值表示不自动关闭。
+        ///     </para>
         /// </summary>
         public double? DurationSeconds { get; init; }
 
         /// <summary>
-        ///     Optional click callback for the toast body.
-        ///     toast 正文的可选点击回调。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional callback invoked when the toast surface is clicked. Callback
+        ///         exceptions are logged and do not escape the toast input handler.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化点击 toast 表面时调用的可选回调。回调异常会被记录，不会逸出 toast 输入处理器。
+        ///     </para>
         /// </summary>
         public Action? OnClick { get; init; }
 
         /// <summary>
-        ///     Optional animation override for this request.
-        ///     此请求的可选动画覆盖。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional animation preset used instead of the global setting.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或初始化用于替代全局设置的可选动画预设。</para>
         /// </summary>
         public RitsuToastAnimationPreset? AnimationOverride { get; init; }
 
         /// <summary>
-        ///     Keeps the toast visible until the user clicks it or toast settings are disabled.
-        ///     让 toast 保持显示，直到用户点击或 toast 设置被禁用。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether automatic closing is disabled. A persistent toast remains closable
+        ///         through the service, its handle, click-to-dismiss behavior, or disabling toast settings.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化是否禁用自动关闭。持久 toast 仍可通过服务、句柄、点击关闭行为或禁用 toast 设置来关闭。
+        ///     </para>
         /// </summary>
         public bool IsPersistent { get; init; }
 
         /// <summary>
-        ///     Optional explicit progress value rendered in the toast progress bar. When unset, timed toasts use the
-        ///     progress bar as a remaining-duration indicator.
-        ///     可选显式进度值，用 toast 进度条渲染。未设置时，限时 toast 使用进度条表示剩余显示时间。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional explicit progress value. Finite values are clamped to the range
+        ///         from zero to one, and non-finite values are treated as zero. When unset, timed toasts show their
+        ///         remaining-time progress.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化可选的显式进度值。有限值会限制在零到一之间，非有限值按零处理；
+        ///         未设置时，限时 toast 会显示剩余时间进度。
+        ///     </para>
         /// </summary>
         public float? ProgressFraction { get; init; }
 
         /// <summary>
-        ///     Whether clicking the toast dismisses it. Defaults to true to preserve normal toast behavior.
-        ///     点击 toast 是否关闭它。默认为 true，以保持普通 toast 的既有行为。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether clicking the toast requests that it close. The default is
+        ///         <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化点击 toast 时是否请求将其关闭。默认值为 <see langword="true" />。
+        ///     </para>
         /// </summary>
         public bool DismissOnClick { get; init; } = true;
 
         internal RitsuToastVisualStyle? StyleOverride { get; init; }
 
         /// <summary>
-        ///     Creates an informational toast payload.
-        ///     创建信息 toast 载荷。
+        ///     <para xml:lang="en">Creates an informational toast request.</para>
+        ///     <para xml:lang="zh-CN">创建一条信息 toast 请求。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The required body text.</para>
+        ///     <para xml:lang="zh-CN">必需的正文文本。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The optional title.</para>
+        ///     <para xml:lang="zh-CN">可选标题。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The new informational request.</para>
+        ///     <para xml:lang="zh-CN">新建的信息请求。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public static RitsuToastRequest Info(string body, string? title = null)
         {
             return new(body, title);
         }
 
         /// <summary>
-        ///     Creates a warning toast payload.
-        ///     创建警告 toast 载荷。
+        ///     <para xml:lang="en">Creates a warning toast request.</para>
+        ///     <para xml:lang="zh-CN">创建一条警告 toast 请求。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The required body text.</para>
+        ///     <para xml:lang="zh-CN">必需的正文文本。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The optional title.</para>
+        ///     <para xml:lang="zh-CN">可选标题。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The new warning request.</para>
+        ///     <para xml:lang="zh-CN">新建的警告请求。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public static RitsuToastRequest Warning(string body, string? title = null)
         {
             return new(body, title, null, RitsuToastLevel.Warning);
         }
 
         /// <summary>
-        ///     Creates an error toast payload.
-        ///     创建错误 toast 载荷。
+        ///     <para xml:lang="en">Creates an error toast request.</para>
+        ///     <para xml:lang="zh-CN">创建一条错误 toast 请求。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The required body text.</para>
+        ///     <para xml:lang="zh-CN">必需的正文文本。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The optional title.</para>
+        ///     <para xml:lang="zh-CN">可选标题。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The new error request.</para>
+        ///     <para xml:lang="zh-CN">新建的错误请求。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public static RitsuToastRequest Error(string body, string? title = null)
         {
             return new(body, title, null, RitsuToastLevel.Error);
         }
 
         /// <summary>
-        ///     Returns a copy with updated body text.
-        ///     返回更新正文文本后的副本。
+        ///     <para xml:lang="en">Creates a copy with different body text.</para>
+        ///     <para xml:lang="zh-CN">创建正文文本不同的副本。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The replacement body text.</para>
+        ///     <para xml:lang="zh-CN">替换后的正文文本。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public RitsuToastRequest WithBody(string body)
         {
             return this with { Body = body };
         }
 
         /// <summary>
-        ///     Returns a copy with an updated title.
-        ///     返回更新标题后的副本。
+        ///     <para xml:lang="en">Creates a copy with a different title.</para>
+        ///     <para xml:lang="zh-CN">创建标题不同的副本。</para>
         /// </summary>
+        /// <param name="title">
+        ///     <para xml:lang="en">The replacement title, or <see langword="null" /> to hide it.</para>
+        ///     <para xml:lang="zh-CN">替换后的标题；传入 <see langword="null" /> 可隐藏标题。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithTitle(string? title)
         {
             return this with { Title = title };
         }
 
         /// <summary>
-        ///     Returns a copy with updated body and title text.
-        ///     返回更新正文和标题文本后的副本。
+        ///     <para xml:lang="en">Creates a copy with different body and title text.</para>
+        ///     <para xml:lang="zh-CN">创建正文和标题文本不同的副本。</para>
         /// </summary>
+        /// <param name="body">
+        ///     <para xml:lang="en">The replacement body text.</para>
+        ///     <para xml:lang="zh-CN">替换后的正文文本。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The replacement title, or <see langword="null" /> to hide it.</para>
+        ///     <para xml:lang="zh-CN">替换后的标题；传入 <see langword="null" /> 可隐藏标题。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="body" /> 为 <see langword="null" />。</para>
+        /// </exception>
         public RitsuToastRequest WithText(string body, string? title)
         {
             return this with { Body = body, Title = title };
         }
 
         /// <summary>
-        ///     Returns a copy with an updated leading image.
-        ///     返回更新起始侧图像后的副本。
+        ///     <para xml:lang="en">Creates a copy with a different image.</para>
+        ///     <para xml:lang="zh-CN">创建图像不同的副本。</para>
         /// </summary>
+        /// <param name="image">
+        ///     <para xml:lang="en">The replacement image, or <see langword="null" /> to hide it.</para>
+        ///     <para xml:lang="zh-CN">替换后的图像；传入 <see langword="null" /> 可隐藏图像。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithImage(Texture2D? image)
         {
             return this with { Image = image };
         }
 
         /// <summary>
-        ///     Returns a copy with an updated semantic level.
-        ///     返回更新语义级别后的副本。
+        ///     <para xml:lang="en">Creates a copy with a different semantic level.</para>
+        ///     <para xml:lang="zh-CN">创建语义级别不同的副本。</para>
         /// </summary>
+        /// <param name="level">
+        ///     <para xml:lang="en">The replacement semantic level.</para>
+        ///     <para xml:lang="zh-CN">替换后的语义级别。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithLevel(RitsuToastLevel level)
         {
             return this with { Level = level };
         }
 
         /// <summary>
-        ///     Returns a copy with an updated per-toast duration override.
-        ///     返回更新单个 toast 持续时间覆盖值后的副本。
+        ///     <para xml:lang="en">Creates a copy with a different per-toast duration.</para>
+        ///     <para xml:lang="zh-CN">创建单条 toast 持续时间不同的副本。</para>
         /// </summary>
+        /// <param name="durationSeconds">
+        ///     <para xml:lang="en">
+        ///         The replacement duration in seconds, or <see langword="null" /> to use the global setting.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         替换后的持续时间（秒）；传入 <see langword="null" /> 可使用全局设置。
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithDuration(double? durationSeconds)
         {
             return this with { DurationSeconds = durationSeconds };
         }
 
         /// <summary>
-        ///     Returns a copy with an updated click callback.
-        ///     返回更新点击回调后的副本。
+        ///     <para xml:lang="en">Creates a copy with a different click callback.</para>
+        ///     <para xml:lang="zh-CN">创建点击回调不同的副本。</para>
         /// </summary>
+        /// <param name="onClick">
+        ///     <para xml:lang="en">The replacement callback, or <see langword="null" /> to remove it.</para>
+        ///     <para xml:lang="zh-CN">替换后的回调；传入 <see langword="null" /> 可移除回调。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithClick(Action? onClick)
         {
             return this with { OnClick = onClick };
         }
 
         /// <summary>
-        ///     Returns a copy with an updated animation override.
-        ///     返回更新动画覆盖后的副本。
+        ///     <para xml:lang="en">Creates a copy with a different animation override.</para>
+        ///     <para xml:lang="zh-CN">创建动画覆盖不同的副本。</para>
         /// </summary>
+        /// <param name="animationOverride">
+        ///     <para xml:lang="en">
+        ///         The replacement preset, or <see langword="null" /> to use the global setting.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         替换后的预设；传入 <see langword="null" /> 可使用全局设置。
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithAnimation(RitsuToastAnimationPreset? animationOverride)
         {
             return this with { AnimationOverride = animationOverride };
         }
 
         /// <summary>
-        ///     Returns a copy that is kept visible until clicked, closed, or disabled by settings.
-        ///     返回会保持显示直到被点击、关闭或被设置禁用的副本。
+        ///     <para xml:lang="en">Creates a copy with a different persistent flag.</para>
+        ///     <para xml:lang="zh-CN">创建持久标志不同的副本。</para>
         /// </summary>
+        /// <param name="isPersistent">
+        ///     <para xml:lang="en"><see langword="true" /> to disable automatic closing.</para>
+        ///     <para xml:lang="zh-CN">传入 <see langword="true" /> 可禁用自动关闭。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest Persistent(bool isPersistent = true)
         {
             return this with { IsPersistent = isPersistent };
         }
 
         /// <summary>
-        ///     Returns a copy with an explicit progress value. Pass <see langword="null" /> to return to duration-based
-        ///     progress.
-        ///     返回设置显式进度值后的副本。传入 <see langword="null" /> 可恢复为基于持续时间的进度。
+        ///     <para xml:lang="en">Creates a copy with a different explicit progress value.</para>
+        ///     <para xml:lang="zh-CN">创建显式进度值不同的副本。</para>
         /// </summary>
+        /// <param name="progressFraction">
+        ///     <para xml:lang="en">
+        ///         The replacement progress value, or <see langword="null" /> to use remaining-time progress.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         替换后的进度值；传入 <see langword="null" /> 可使用剩余时间进度。
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithProgress(float? progressFraction)
         {
             return this with { ProgressFraction = progressFraction };
         }
 
         /// <summary>
-        ///     Returns a copy with click-to-dismiss behavior configured.
-        ///     返回设置点击关闭行为后的副本。
+        ///     <para xml:lang="en">Creates a copy with click-to-dismiss behavior enabled or disabled.</para>
+        ///     <para xml:lang="zh-CN">创建启用或禁用点击关闭行为的副本。</para>
         /// </summary>
+        /// <param name="dismissOnClick">
+        ///     <para xml:lang="en"><see langword="true" /> to request closing when the toast is clicked.</para>
+        ///     <para xml:lang="zh-CN">传入 <see langword="true" /> 可在点击 toast 时请求关闭。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The updated request.</para>
+        ///     <para xml:lang="zh-CN">更新后的请求。</para>
+        /// </returns>
         public RitsuToastRequest WithDismissOnClick(bool dismissOnClick)
         {
             return this with { DismissOnClick = dismissOnClick };
