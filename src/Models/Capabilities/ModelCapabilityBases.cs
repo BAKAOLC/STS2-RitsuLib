@@ -10,9 +10,13 @@ using STS2RitsuLib.Cards;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Typed model capability base that opts into the owning model's vanilla hook listener stream when that owner
-    ///     participates in vanilla hooks.
-    ///     当 owner 参与原版 hook 时，会插入所属模型原版 hook listener 流的类型化模型能力基类。
+    ///     <para xml:lang="en">
+    ///         Typed model capability base that opts into the owning model's vanilla hook listener stream when that owner
+    ///         participates in vanilla hooks.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当所属模型参与游戏原版钩子时，此类型化模型能力基类会加入所属模型的原版钩子监听器流。
+    ///     </para>
     /// </summary>
     public abstract class OwnerHookCapability<TModel> : ModelCapability<TModel>, IModelCapabilityHookListener
         where TModel : AbstractModel
@@ -25,46 +29,46 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Capability base for card-owned behavior and capability-owned card dynamic vars.
-    ///     卡牌 owner 行为与能力自有卡牌动态变量基类。
+    ///     <para xml:lang="en">Capability base for card-owned behavior and capability-owned card dynamic vars.</para>
+    ///     <para xml:lang="zh-CN">用于所属卡牌行为及能力自有卡牌动态变量的能力基类。</para>
     /// </summary>
     public abstract class CardCapability : OwnerHookCapability<CardModel>
     {
         /// <summary>
-        ///     Called after the owning card's vanilla upgrade body has run.
-        ///     所属卡牌的原版升级主体执行后调用。
+        ///     <para xml:lang="en">Called after the owning card's vanilla upgrade body has run.</para>
+        ///     <para xml:lang="zh-CN">所属卡牌的原版升级主体执行后调用。</para>
         /// </summary>
         protected virtual void OnOwnerCardUpgraded(CardModel card)
         {
         }
 
         /// <summary>
-        ///     Called after the owning card finalizes upgrade highlights.
-        ///     所属卡牌完成升级高亮收尾后调用。
+        ///     <para xml:lang="en">Called after the owning card finalizes upgrade highlights.</para>
+        ///     <para xml:lang="zh-CN">所属卡牌完成升级高亮收尾后调用。</para>
         /// </summary>
         protected virtual void OnOwnerCardUpgradeFinalized(CardModel card)
         {
         }
 
         /// <summary>
-        ///     Called after the owning card's vanilla downgrade hook has run.
-        ///     所属卡牌的原版降级钩子执行后调用。
+        ///     <para xml:lang="en">Called after the owning card's vanilla downgrade hook has run.</para>
+        ///     <para xml:lang="zh-CN">所属卡牌的原版降级钩子执行后调用。</para>
         /// </summary>
         protected virtual void OnOwnerCardDowngraded(CardModel card)
         {
         }
 
         /// <summary>
-        ///     Called after the owning card has been transformed from.
-        ///     所属卡牌被转化离开后调用。
+        ///     <para xml:lang="en">Called after the owning card has been transformed from.</para>
+        ///     <para xml:lang="zh-CN">所属卡牌被转化离开后调用。</para>
         /// </summary>
         protected virtual void OnOwnerCardTransformedFrom(CardModel card)
         {
         }
 
         /// <summary>
-        ///     Called after the owning card has been transformed to.
-        ///     所属卡牌作为转化结果进入后调用。
+        ///     <para xml:lang="en">Called after the owning card has been transformed to.</para>
+        ///     <para xml:lang="zh-CN">所属卡牌作为转化结果进入后调用。</para>
         /// </summary>
         protected virtual void OnOwnerCardTransformedTo(CardModel card)
         {
@@ -97,14 +101,14 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Card base with a protected default-capability hook.
-    ///     带受保护默认能力钩子的卡牌基类。
+    ///     <para xml:lang="en">Card base with a protected default-capability hook.</para>
+    ///     <para xml:lang="zh-CN">带受保护默认能力钩子的卡牌基类。</para>
     /// </summary>
     public abstract class CapabilityCardModel : CardModel, IModelCapabilitySource
     {
         /// <summary>
-        ///     Creates a card model with default-capability support.
-        ///     创建支持默认能力的卡牌模型。
+        ///     <para xml:lang="en">Creates a card model with default-capability support.</para>
+        ///     <para xml:lang="zh-CN">创建支持默认能力的卡牌模型。</para>
         /// </summary>
         protected CapabilityCardModel(
             int canonicalEnergyCost,
@@ -122,8 +126,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Adds this card's own default capabilities.
-        ///     添加此卡牌自身的默认能力。
+        ///     <para xml:lang="en">Adds this card's own default capabilities.</para>
+        ///     <para xml:lang="zh-CN">添加此卡牌自身的默认能力。</para>
         /// </summary>
         protected virtual void BuildDefaultCapabilities(ModelCapabilityList capabilities)
         {
@@ -131,26 +135,26 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Capability base for relic-owned behavior.
-    ///     遗物 owner 行为能力基类。
+    ///     <para xml:lang="en">Capability base for relic-owned behavior.</para>
+    ///     <para xml:lang="zh-CN">用于所属遗物行为的能力基类。</para>
     /// </summary>
     public abstract class RelicCapability : OwnerHookCapability<RelicModel>;
 
     /// <summary>
-    ///     Capability base for potion-owned behavior.
-    ///     药水 owner 行为能力基类。
+    ///     <para xml:lang="en">Capability base for potion-owned behavior.</para>
+    ///     <para xml:lang="zh-CN">用于所属药水行为的能力基类。</para>
     /// </summary>
     public abstract class PotionCapability : OwnerHookCapability<PotionModel>;
 
     /// <summary>
-    ///     Capability base for power-owned behavior.
-    ///     能力 owner 行为能力基类。
+    ///     <para xml:lang="en">Capability base for power-owned behavior.</para>
+    ///     <para xml:lang="zh-CN">用于所属能力行为的能力基类。</para>
     /// </summary>
     public abstract class PowerCapability : OwnerHookCapability<PowerModel>;
 
     /// <summary>
-    ///     Context passed after the owning orb's passive has triggered.
-    ///     所属充能球被动触发后传入的上下文。
+    ///     <para xml:lang="en">Context passed after the owning orb's passive has triggered.</para>
+    ///     <para xml:lang="zh-CN">所属充能球被动触发后传入的上下文。</para>
     /// </summary>
     public readonly record struct OrbPassiveTriggerContext(
         OrbModel Orb,
@@ -158,24 +162,24 @@ namespace STS2RitsuLib.Models.Capabilities
         Creature? Target);
 
     /// <summary>
-    ///     Context passed after the owning orb's before-turn-end trigger method has run.
-    ///     所属充能球的回合结束前触发方法运行后传入的上下文。
+    ///     <para xml:lang="en">Context passed after the owning orb's before-turn-end trigger method has run.</para>
+    ///     <para xml:lang="zh-CN">所属充能球的回合结束前触发方法运行后传入的上下文。</para>
     /// </summary>
     public readonly record struct OrbBeforeTurnEndTriggerContext(
         OrbModel Orb,
         PlayerChoiceContext ChoiceContext);
 
     /// <summary>
-    ///     Context passed after the owning orb's after-turn-start trigger method has run.
-    ///     所属充能球的回合开始后触发方法运行后传入的上下文。
+    ///     <para xml:lang="en">Context passed after the owning orb's after-turn-start trigger method has run.</para>
+    ///     <para xml:lang="zh-CN">所属充能球的回合开始后触发方法运行后传入的上下文。</para>
     /// </summary>
     public readonly record struct OrbAfterTurnStartTriggerContext(
         OrbModel Orb,
         PlayerChoiceContext ChoiceContext);
 
     /// <summary>
-    ///     Context passed after the owning orb has been evoked.
-    ///     所属充能球被激发后传入的上下文。
+    ///     <para xml:lang="en">Context passed after the owning orb has been evoked.</para>
+    ///     <para xml:lang="zh-CN">所属充能球被激发后传入的上下文。</para>
     /// </summary>
     public readonly record struct OrbEvokeContext(
         OrbModel Orb,
@@ -183,8 +187,8 @@ namespace STS2RitsuLib.Models.Capabilities
         IReadOnlyList<Creature> Targets);
 
     /// <summary>
-    ///     Capability base for orb-owned behavior.
-    ///     充能球 owner 行为能力基类。
+    ///     <para xml:lang="en">Capability base for orb-owned behavior.</para>
+    ///     <para xml:lang="zh-CN">用于所属充能球行为的能力基类。</para>
     /// </summary>
     public abstract class OrbCapability : OwnerHookCapability<OrbModel>
     {
@@ -209,8 +213,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called after this capability's owning orb passive has triggered.
-        ///     此能力所属充能球被动触发后调用。
+        ///     <para xml:lang="en">Called after this capability's owning orb passive has triggered.</para>
+        ///     <para xml:lang="zh-CN">此能力所属充能球被动触发后调用。</para>
         /// </summary>
         protected virtual Task OnOwnerOrbPassiveTriggered(OrbPassiveTriggerContext context)
         {
@@ -218,8 +222,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called after this capability's owning orb has been evoked.
-        ///     此能力所属充能球被激发后调用。
+        ///     <para xml:lang="en">Called after this capability's owning orb has been evoked.</para>
+        ///     <para xml:lang="zh-CN">此能力所属充能球被激发后调用。</para>
         /// </summary>
         protected virtual Task OnOwnerOrbEvoked(OrbEvokeContext context)
         {
@@ -227,8 +231,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called after this capability's owning orb before-turn-end trigger method has run.
-        ///     此能力所属充能球的回合结束前触发方法运行后调用。
+        ///     <para xml:lang="en">Called after this capability's owning orb before-turn-end trigger method has run.</para>
+        ///     <para xml:lang="zh-CN">此能力所属充能球的回合结束前触发方法运行后调用。</para>
         /// </summary>
         protected virtual Task OnOwnerOrbBeforeTurnEndTriggered(OrbBeforeTurnEndTriggerContext context)
         {
@@ -236,8 +240,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called after this capability's owning orb after-turn-start trigger method has run.
-        ///     此能力所属充能球的回合开始后触发方法运行后调用。
+        ///     <para xml:lang="en">Called after this capability's owning orb after-turn-start trigger method has run.</para>
+        ///     <para xml:lang="zh-CN">此能力所属充能球的回合开始后触发方法运行后调用。</para>
         /// </summary>
         protected virtual Task OnOwnerOrbAfterTurnStartTriggered(OrbAfterTurnStartTriggerContext context)
         {
@@ -246,32 +250,32 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Capability base for enchantment-owned behavior.
-    ///     附魔 owner 行为能力基类。
+    ///     <para xml:lang="en">Capability base for enchantment-owned behavior.</para>
+    ///     <para xml:lang="zh-CN">用于所属附魔行为的能力基类。</para>
     /// </summary>
     public abstract class EnchantmentCapability : OwnerHookCapability<EnchantmentModel>;
 
     /// <summary>
-    ///     Capability base for affliction-owned behavior.
-    ///     苦痛 owner 行为能力基类。
+    ///     <para xml:lang="en">Capability base for affliction-owned behavior.</para>
+    ///     <para xml:lang="zh-CN">用于所属苦痛行为的能力基类。</para>
     /// </summary>
     public abstract class AfflictionCapability : OwnerHookCapability<AfflictionModel>;
 
     /// <summary>
-    ///     Capability base for monster-owned behavior.
-    ///     怪物 owner 行为能力基类。
+    ///     <para xml:lang="en">Capability base for monster-owned behavior.</para>
+    ///     <para xml:lang="zh-CN">用于所属怪物行为的能力基类。</para>
     /// </summary>
     public abstract class MonsterCapability : OwnerHookCapability<MonsterModel>;
 
     /// <summary>
-    ///     Capability base for character-owned state and display capabilities.
-    ///     角色 owner 状态与展示能力基类。
+    ///     <para xml:lang="en">Capability base for character-owned state and display capabilities.</para>
+    ///     <para xml:lang="zh-CN">用于所属角色状态及显示行为的能力基类。</para>
     /// </summary>
     public abstract class CharacterCapability : ModelCapability<CharacterModel>;
 
     /// <summary>
-    ///     Card capability base that handles plays of its owning card.
-    ///     处理所属卡牌打出事件的卡牌能力基类。
+    ///     <para xml:lang="en">Card capability base that handles plays of its owning card.</para>
+    ///     <para xml:lang="zh-CN">处理所属卡牌打出事件的卡牌能力基类。</para>
     /// </summary>
     public abstract class CardPlayCapability : CardCapability, ICardOnPlayHookListener
     {
@@ -307,8 +311,10 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns true when this capability should handle <paramref name="cardPlay" />.
-        ///     返回此能力是否应处理 <paramref name="cardPlay" />。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when this capability should handle <paramref name="cardPlay" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回此能力是否应处理 <paramref name="cardPlay" />。</para>
         /// </summary>
         protected virtual bool ShouldHandleCardPlay(CardPlay cardPlay)
         {
@@ -316,14 +322,18 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called after the owning card's OnPlay body completes.
-        ///     所属卡牌的 OnPlay 主体完成后调用。
+        ///     <para xml:lang="en">Called after the owning card's <c>OnPlay</c> body completes.</para>
+        ///     <para xml:lang="zh-CN">所属卡牌的 <c>OnPlay</c> 主体完成后调用。</para>
         /// </summary>
         protected abstract Task OnOwnerCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay);
 
         /// <summary>
-        ///     Called after the owning card's OnPlay body point.
-        ///     所属卡牌的 OnPlay 主体位置后调用。
+        ///     <para xml:lang="en">
+        ///         Called after the point where the owning card's <c>OnPlay</c> body would run.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在所属卡牌的 <c>OnPlay</c> 主体原本应运行的位置之后调用。
+        ///     </para>
         /// </summary>
         protected virtual Task OnOwnerCardPlayed(
             PlayerChoiceContext choiceContext,
@@ -336,8 +346,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Runs before the owning card's OnPlay body. Return true to suppress the original body.
-        ///     在所属卡牌的 OnPlay 主体前运行。返回 true 可阻止原始主体执行。
+        ///     <para xml:lang="en">
+        ///         Runs before the owning card's <c>OnPlay</c> body. Return <see langword="true" /> to suppress the
+        ///         original body.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在所属卡牌的 <c>OnPlay</c> 主体前运行。返回 <see langword="true" /> 可阻止原始主体执行。
+        ///     </para>
         /// </summary>
         protected virtual Task<bool> BeforeOwnerCardOnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
         {
@@ -346,8 +361,8 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Card capability that removes itself after the owning card is played once.
-    ///     所属卡牌打出一次后自动移除自身的卡牌能力。
+    ///     <para xml:lang="en">Card capability that removes itself after the owning card is played once.</para>
+    ///     <para xml:lang="zh-CN">所属卡牌打出一次后自动移除自身的卡牌能力。</para>
     /// </summary>
     public abstract class OneShotCardPlayCapability : CardPlayCapability
     {
@@ -365,15 +380,17 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called once after the owning card's OnPlay body completes, before the capability removes itself.
-        ///     所属卡牌的 OnPlay 主体完成后调用一次，随后能力会移除自身。
+        ///     <para xml:lang="en">
+        ///         Called once after the owning card's <c>OnPlay</c> body completes, before the capability removes itself.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">所属卡牌的 <c>OnPlay</c> 主体完成后调用一次，随后能力会移除自身。</para>
         /// </summary>
         protected abstract Task OnOwnerCardPlayedOnce(PlayerChoiceContext choiceContext, CardPlay cardPlay);
     }
 
     /// <summary>
-    ///     Owner-hook capability that removes itself after combat ends.
-    ///     战斗结束后自动移除自身的 owner-hook 能力。
+    ///     <para xml:lang="en">Owner-hook capability that removes itself after combat ends.</para>
+    ///     <para xml:lang="zh-CN">战斗结束后自动移除自身的所属模型钩子能力。</para>
     /// </summary>
     public abstract class UntilCombatEndCapability<TModel> : OwnerHookCapability<TModel>
         where TModel : AbstractModel
@@ -392,8 +409,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called when combat ends, before the capability removes itself.
-        ///     战斗结束时调用，随后能力会移除自身。
+        ///     <para xml:lang="en">Called when combat ends, before the capability removes itself.</para>
+        ///     <para xml:lang="zh-CN">战斗结束时调用，随后能力会移除自身。</para>
         /// </summary>
         protected virtual Task OnCombatEnded(CombatRoom room)
         {
@@ -402,8 +419,8 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Owner-hook capability with a saved turn counter that removes itself when the counter reaches zero.
-    ///     带保存回合计数、计数归零后自动移除自身的 owner-hook 能力。
+    ///     <para xml:lang="en">Owner-hook capability with a saved turn counter that removes itself when the counter reaches zero.</para>
+    ///     <para xml:lang="zh-CN">保存回合计数并在计数归零后自动移除自身的所属模型钩子能力。</para>
     /// </summary>
     public abstract class TurnLimitedCapability<TModel> : OwnerHookCapability<TModel>
         where TModel : AbstractModel
@@ -411,16 +428,16 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string RemainingTurnsKey = "remainingTurns";
 
         /// <summary>
-        ///     Creates a capability with one remaining turn.
-        ///     创建剩余一回合的能力。
+        ///     <para xml:lang="en">Creates a capability with one remaining turn.</para>
+        ///     <para xml:lang="zh-CN">创建剩余一回合的能力。</para>
         /// </summary>
         protected TurnLimitedCapability()
         {
         }
 
         /// <summary>
-        ///     Creates a capability with <paramref name="remainingTurns" /> remaining turns.
-        ///     创建剩余 <paramref name="remainingTurns" /> 回合的能力。
+        ///     <para xml:lang="en">Creates a capability with <paramref name="remainingTurns" /> remaining turns.</para>
+        ///     <para xml:lang="zh-CN">创建剩余 <paramref name="remainingTurns" /> 回合的能力。</para>
         /// </summary>
         protected TurnLimitedCapability(int remainingTurns)
         {
@@ -428,8 +445,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Remaining turn ticks before this capability removes itself.
-        ///     此能力移除自身前剩余的回合 tick 数。
+        ///     <para xml:lang="en">Remaining turn ticks before this capability removes itself.</para>
+        ///     <para xml:lang="zh-CN">此能力移除自身前剩余的回合计数。</para>
         /// </summary>
         public int RemainingTurns { get; private set; } = 1;
 
@@ -492,8 +509,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Sets the remaining turn count and marks the capability dirty when attached.
-        ///     设置剩余回合数，并在已附加时标记能力变更。
+        ///     <para xml:lang="en">Sets the remaining turn count and marks the capability dirty when attached.</para>
+        ///     <para xml:lang="zh-CN">设置剩余回合数，并在已附加时标记能力变更。</para>
         /// </summary>
         protected void SetRemainingTurns(int remainingTurns)
         {
@@ -506,8 +523,10 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns true when this turn-end hook should decrement the remaining count.
-        ///     返回此 turn-end hook 是否应减少剩余计数。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when this turn-end hook should decrement the remaining count.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">确定此回合结束钩子是否应减少剩余计数。</para>
         /// </summary>
         protected virtual bool ShouldTickTurnLimit(PlayerChoiceContext choiceContext, CombatSide side)
         {
@@ -515,8 +534,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called after a turn tick decrements the remaining count.
-        ///     回合 tick 减少剩余计数后调用。
+        ///     <para xml:lang="en">Called after a turn tick decrements the remaining count.</para>
+        ///     <para xml:lang="zh-CN">每次回合计数减少后调用。</para>
         /// </summary>
         protected virtual Task OnTurnLimitTicked(
             PlayerChoiceContext choiceContext,
@@ -527,8 +546,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called when the turn counter reaches zero, before the capability removes itself.
-        ///     回合计数归零时调用，随后能力会移除自身。
+        ///     <para xml:lang="en">Called when the turn counter reaches zero, before the capability removes itself.</para>
+        ///     <para xml:lang="zh-CN">回合计数归零时调用，随后能力会移除自身。</para>
         /// </summary>
         protected virtual Task OnTurnLimitExpired(PlayerChoiceContext choiceContext, CombatSide side)
         {

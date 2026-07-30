@@ -7,22 +7,26 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Stable LocString variable naming for capability-owned dynamic vars used on shared model text surfaces.
-    ///     共享模型文本 surface 中能力自有动态变量使用的稳定 LocString 变量命名。
+    ///     <para xml:lang="en">Stable LocString variable names for capability-owned dynamic variables used in shared model text.</para>
+    ///     <para xml:lang="zh-CN">共享模型文本中能力自有动态变量的稳定 LocString 变量名。</para>
     /// </summary>
     public static class ModelCapabilityDynamicVarNames
     {
         /// <summary>
-        ///     Root selector used for capability-scoped variables.
-        ///     能力作用域变量使用的根 selector。
+        ///     <para xml:lang="en">Root selector for capability-scoped variables.</para>
+        ///     <para xml:lang="zh-CN">能力作用域变量使用的根选择器。</para>
         /// </summary>
         public const string RootName = "Capabilities";
 
         /// <summary>
-        ///     Returns a selector-safe scope name. <paramref name="requestedScope" /> takes precedence over the
-        ///     capability id. Characters that are not letters, digits, or underscores are replaced with underscores.
-        ///     返回 selector 安全的 scope 名称。<paramref name="requestedScope" /> 优先于 capability ID；
-        ///     字母、数字和下划线以外的字符会替换为下划线。
+        ///     <para xml:lang="en">
+        ///         Returns a selector-safe scope name. <paramref name="requestedScope" /> takes precedence over the
+        ///         capability ID. Characters other than letters, digits, and underscores are replaced with underscores.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回可安全用于选择器的作用域名称。<paramref name="requestedScope" /> 优先于能力 ID；
+        ///         字母、数字和下划线以外的字符会替换为下划线。
+        ///     </para>
         /// </summary>
         public static string GetScopeName(string capabilityId, string? requestedScope = null)
         {
@@ -32,8 +36,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns a selector-safe dynamic-var name within a capability scope.
-        ///     返回能力 scope 内 selector 安全的动态变量名称。
+        ///     <para xml:lang="en">Returns a selector-safe dynamic-variable name within a capability scope.</para>
+        ///     <para xml:lang="zh-CN">返回能力作用域内可安全用于选择器的动态变量名称。</para>
         /// </summary>
         public static string GetVariableName(string dynamicVarName)
         {
@@ -49,45 +53,45 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Known model asset path query scopes used by framework adapters.
-    ///     框架 adapter 使用的已知模型资源路径查询作用域。
+    ///     <para xml:lang="en">Known model asset-path query scopes used by framework adapters.</para>
+    ///     <para xml:lang="zh-CN">框架适配器使用的已知模型资源路径查询作用域。</para>
     /// </summary>
     public enum ModelAssetPathScope
     {
         /// <summary>
-        ///     General model assets.
-        ///     通用模型资源。
+        ///     <para xml:lang="en">General model assets.</para>
+        ///     <para xml:lang="zh-CN">通用模型资源。</para>
         /// </summary>
         General,
 
         /// <summary>
-        ///     Assets needed while a run is active.
-        ///     跑局中需要的资源。
+        ///     <para xml:lang="en">Assets needed while a run is active.</para>
+        ///     <para xml:lang="zh-CN">一局游戏进行期间需要的资源。</para>
         /// </summary>
         Run,
 
         /// <summary>
-        ///     Assets needed by combat-facing views.
-        ///     战斗侧视图需要的资源。
+        ///     <para xml:lang="en">Assets needed by combat-facing views.</para>
+        ///     <para xml:lang="zh-CN">战斗界面需要的资源。</para>
         /// </summary>
         Combat,
 
         /// <summary>
-        ///     Assets needed by map or route views.
-        ///     地图或路线视图需要的资源。
+        ///     <para xml:lang="en">Assets needed by map or route views.</para>
+        ///     <para xml:lang="zh-CN">地图或路线视图需要的资源。</para>
         /// </summary>
         Map,
 
         /// <summary>
-        ///     Assets needed by character selection views.
-        ///     选角视图需要的资源。
+        ///     <para xml:lang="en">Assets needed by character selection views.</para>
+        ///     <para xml:lang="zh-CN">选角视图需要的资源。</para>
         /// </summary>
         CharacterSelect,
     }
 
     /// <summary>
-    ///     Context passed to model asset path capabilities.
-    ///     传给模型资源路径能力的上下文。
+    ///     <para xml:lang="en">Context passed to model asset path capabilities.</para>
+    ///     <para xml:lang="zh-CN">传给模型资源路径能力的上下文。</para>
     /// </summary>
     public readonly record struct ModelAssetPathContext(
         AbstractModel Model,
@@ -95,80 +99,79 @@ namespace STS2RitsuLib.Models.Capabilities
         object? RuntimeContext = null);
 
     /// <summary>
-    ///     Optional model capability that contributes a capability-owned dynamic-var set to supported model text
-    ///     surfaces. The returned set remains separate from the owning model's own dynamic vars. Capability variables
-    ///     are available through <c>{Capabilities.Scope.Variable}</c>. Unscoped short names remain compatibility aliases
-    ///     and must not be used when more than one contributor can provide the same name.
-    ///     可选能力：向支持的模型文本 surface 贡献能力自有动态变量集合。该集合与 owner 模型自身的动态变量保持分离；
-    ///     能力变量可通过 <c>{Capabilities.Scope.Variable}</c> 使用。无 scope 的短名称仅作为兼容别名保留；
-    ///     多个 contributor 可能提供同名变量时，不应使用短名称。
+    ///     <para xml:lang="en">Optional model capability that contributes a capability-owned dynamic-variable set to supported model text surfaces. The set remains separate from the model's own dynamic variables. Access capability variables through <c>{Capabilities.Scope.Variable}</c>; unscoped short names are compatibility aliases and must not be used when multiple contributors can provide the same name.</para>
+    ///     <para xml:lang="zh-CN">可选的模型能力，可向受支持的模型文本呈现位置提供能力自有的动态变量集合。该集合与模型自身的动态变量保持分离。通过 <c>{Capabilities.Scope.Variable}</c> 访问能力变量；无作用域短名称仅是兼容别名，多个贡献者可能提供同名变量时不得使用。</para>
     /// </summary>
     public interface IModelDynamicVarContributor
     {
         /// <summary>
-        ///     Optional stable selector scope used by localized text. For example, scope <c>Burning</c> and variable
-        ///     <c>Damage</c> are addressed as <c>{Capabilities.Burning.Damage}</c>. Distinct instances that must be
-        ///     addressed separately should return distinct stable scopes.
-        ///     本地化文本使用的可选稳定 selector scope。例如 scope 为 <c>Burning</c>、变量为 <c>Damage</c> 时，
-        ///     使用 <c>{Capabilities.Burning.Damage}</c>。需要分别寻址的不同实例应返回不同且稳定的 scope。
+        ///     <para xml:lang="en">
+        ///         Optional stable selector scope used by localized text. For example, scope <c>Burning</c> and variable
+        ///         <c>Damage</c> are addressed as <c>{Capabilities.Burning.Damage}</c>. Distinct instances that must be
+        ///         addressed separately should return distinct stable scopes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         本地化文本使用的可选稳定选择器作用域。例如作用域为 <c>Burning</c>、变量为 <c>Damage</c> 时，
+        ///         使用 <c>{Capabilities.Burning.Damage}</c>。需要分别寻址的不同实例应返回不同且稳定的作用域。
+        ///     </para>
         /// </summary>
         string? LocStringVariableScope => null;
 
         /// <summary>
-        ///     Returns the capability-owned dynamic-var set for <paramref name="model" />.
-        ///     返回 <paramref name="model" /> 对应的能力自有动态变量集合。
+        ///     <para xml:lang="en">Returns the capability-owned dynamic-var set for <paramref name="model" />.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="model" /> 对应的能力自有动态变量集合。</para>
         /// </summary>
         DynamicVarSet GetDynamicVars(AbstractModel model);
     }
 
     /// <summary>
-    ///     Optional model capability that contributes hover tips for any model.
-    ///     可选能力：为任意模型贡献悬停提示。
+    ///     <para xml:lang="en">Optional model capability that contributes hover tips for any model.</para>
+    ///     <para xml:lang="zh-CN">可选能力：为任意模型贡献悬停提示。</para>
     /// </summary>
     public interface IModelHoverTipContributor
     {
         /// <summary>
-        ///     Returns additional hover tips for <paramref name="model" />.
-        ///     返回 <paramref name="model" /> 的额外悬停提示。
+        ///     <para xml:lang="en">Returns additional hover tips for <paramref name="model" />.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="model" /> 的额外悬停提示。</para>
         /// </summary>
         IEnumerable<IHoverTip> GetHoverTips(AbstractModel model);
     }
 
     /// <summary>
-    ///     Optional typed model capability that contributes hover tips for <typeparamref name="TModel" />.
-    ///     可选类型化能力：为 <typeparamref name="TModel" /> 贡献悬停提示。
+    ///     <para xml:lang="en">Optional typed model capability that contributes hover tips for <typeparamref name="TModel" />.</para>
+    ///     <para xml:lang="zh-CN">可选类型化能力：为 <typeparamref name="TModel" /> 贡献悬停提示。</para>
     /// </summary>
     public interface IModelHoverTipContributor<in TModel> where TModel : AbstractModel
     {
         /// <summary>
-        ///     Returns additional hover tips for <paramref name="model" />.
-        ///     返回 <paramref name="model" /> 的额外悬停提示。
+        ///     <para xml:lang="en">Returns additional hover tips for <paramref name="model" />.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="model" /> 的额外悬停提示。</para>
         /// </summary>
         IEnumerable<IHoverTip> GetHoverTips(TModel model);
     }
 
     /// <summary>
-    ///     Optional model capability that contributes asset paths for any model.
-    ///     可选能力：为任意模型贡献资源路径。
+    ///     <para xml:lang="en">Optional model capability that contributes asset paths for any model.</para>
+    ///     <para xml:lang="zh-CN">可选能力：为任意模型贡献资源路径。</para>
     /// </summary>
     public interface IModelAssetPathContributor
     {
         /// <summary>
-        ///     Returns additional asset paths.
-        ///     返回额外资源路径。
+        ///     <para xml:lang="en">Returns additional asset paths.</para>
+        ///     <para xml:lang="zh-CN">返回额外资源路径。</para>
         /// </summary>
         IEnumerable<string> GetAssetPaths(ModelAssetPathContext context);
     }
 
     /// <summary>
-    ///     Optional typed model capability that contributes asset paths for <typeparamref name="TModel" />.
-    ///     可选类型化能力：为 <typeparamref name="TModel" /> 贡献资源路径。
+    ///     <para xml:lang="en">Optional typed model capability that contributes asset paths for <typeparamref name="TModel" />.</para>
+    ///     <para xml:lang="zh-CN">可选类型化能力：为 <typeparamref name="TModel" /> 贡献资源路径。</para>
     /// </summary>
     public interface IModelAssetPathContributor<in TModel> where TModel : AbstractModel
     {
         /// <summary>
-        ///     Returns additional asset paths.
-        ///     返回额外资源路径。
+        ///     <para xml:lang="en">Returns additional asset paths.</para>
+        ///     <para xml:lang="zh-CN">返回额外资源路径。</para>
         /// </summary>
         IEnumerable<string> GetAssetPaths(TModel model, ModelAssetPathContext context);
     }

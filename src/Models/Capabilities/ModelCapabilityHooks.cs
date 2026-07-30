@@ -4,22 +4,26 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Opt-in contract for model-backed capabilities that should receive the owner's vanilla model hook callbacks.
-    ///     Gameplay-affecting multiplayer logic should use this path because vanilla hooks await model callbacks.
-    ///     基于模型的能力可实现此协定，以接收 owner 的原版模型 hook 回调。
-    ///     影响多人同步的 gameplay 逻辑应使用此路径，因为原版 hook 会 await 模型回调。
+    ///     <para xml:lang="en">
+    ///         Opt-in contract for model-backed capabilities that should receive the owner's vanilla model hook callbacks.
+    ///         Gameplay-affecting multiplayer logic should use this path because vanilla hooks await model callbacks.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         基于模型的能力可实现此契约，以接收所属模型的游戏原版模型钩子回调。
+    ///         影响多人同步的游戏逻辑应使用此路径，因为游戏原版钩子会等待模型回调完成。
+    ///     </para>
     /// </summary>
     public interface IModelCapabilityHookListener
     {
         /// <summary>
-        ///     Whether this capability should be inserted into the owning model's vanilla hook listener stream.
-        ///     此能力是否应插入所属模型的原版 hook listener 流。
+        ///     <para xml:lang="en">Whether this capability should be inserted into the owning model's vanilla hook listener stream.</para>
+        ///     <para xml:lang="zh-CN">获取此能力是否应插入所属模型的游戏原版钩子监听器流。</para>
         /// </summary>
         bool ShouldReceiveOwnerHooks => true;
 
         /// <summary>
-        ///     Ordering relative to the owner. Negative values run before the owner, zero and positive values after.
-        ///     相对 owner 的顺序。负值在 owner 前运行，零和正值在 owner 后运行。
+        ///     <para xml:lang="en">Ordering relative to the owner. Negative values run before the owner, zero and positive values after.</para>
+        ///     <para xml:lang="zh-CN">相对所属模型的顺序。负值先于所属模型运行，零和正值在其后运行。</para>
         /// </summary>
         int OwnerHookOrder => 0;
     }

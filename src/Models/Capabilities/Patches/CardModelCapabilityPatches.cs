@@ -26,8 +26,8 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Models.Capabilities.Patches
 {
     /// <summary>
-    ///     Bridges model capabilities into card-facing behavior and display surfaces.
-    ///     将模型能力桥接到卡牌侧行为与展示 surface。
+    ///     <para xml:lang="en">Integrates model capabilities with card behavior and display.</para>
+    ///     <para xml:lang="zh-CN">将模型能力接入卡牌行为与显示。</para>
     /// </summary>
     internal static class CardModelCapabilityPatches
     {
@@ -35,8 +35,8 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             "[ModelCapabilities] Card lifecycle patch did not find the expected IL call site.";
 
         /// <summary>
-        ///     Updates capability dynamic vars through the same card preview path as vanilla card dynamic vars.
-        ///     通过与原版卡牌动态变量相同的卡牌预览路径更新能力动态变量。
+        ///     <para xml:lang="en">Updates capability dynamic vars through the same card preview path as vanilla card dynamic vars.</para>
+        ///     <para xml:lang="zh-CN">通过与原版卡牌动态变量相同的卡牌预览路径更新能力动态变量。</para>
         /// </summary>
         internal sealed class UpdateDynamicVarPreviewPatch : IPatchMethod
         {
@@ -65,8 +65,8 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         }
 
         /// <summary>
-        ///     Applies capability title fragments after CardModel formats the base title.
-        ///     在 CardModel 格式化基础标题后应用能力标题片段。
+        ///     <para xml:lang="en">Applies capability title fragments after CardModel formats the base title.</para>
+        ///     <para xml:lang="zh-CN">在 CardModel 格式化基础标题后应用能力标题片段。</para>
         /// </summary>
         internal sealed class TitlePatch : IPatchMethod
         {
@@ -107,8 +107,8 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         }
 
         /// <summary>
-        ///     Applies BaseLib-compatible type text modifiers before the plaque LocString is formatted.
-        ///     在类型牌匾 LocString 格式化前应用与 BaseLib 兼容的类型文本修改器。
+        ///     <para xml:lang="en">Applies BaseLib-compatible type-text modifiers before the plaque LocString is formatted.</para>
+        ///     <para xml:lang="zh-CN">在类型牌匾 LocString 格式化前应用与 BaseLib 兼容的类型文本修改器。</para>
         /// </summary>
         internal sealed class TypeTextPatch : IPatchMethod
         {
@@ -697,8 +697,8 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         }
 
         /// <summary>
-        ///     Applies capability description modifiers to normal card description rendering.
-        ///     将能力描述修改器应用到常规卡牌描述渲染。
+        ///     <para xml:lang="en">Applies capability description modifiers to normal card description rendering.</para>
+        ///     <para xml:lang="zh-CN">将能力描述修改器应用到常规卡牌描述渲染。</para>
         /// </summary>
         internal sealed class DescriptionPatch : IPatchMethod
         {
@@ -755,8 +755,8 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         }
 
         /// <summary>
-        ///     Appends capability hover tips to card hover tips.
-        ///     将能力悬停提示追加到卡牌悬停提示。
+        ///     <para xml:lang="en">Appends capability hover tips to card hover tips.</para>
+        ///     <para xml:lang="zh-CN">将能力悬停提示追加到卡牌悬停提示。</para>
         /// </summary>
         internal sealed class HoverTipsPatch : IPatchMethod
         {
@@ -780,8 +780,8 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         }
 
         /// <summary>
-        ///     ORs capability glow predicates into gold hand glow.
-        ///     将能力发光判定 OR 到金色手牌发光。
+        ///     <para xml:lang="en">Combines capability glow predicates with the gold hand-glow condition using logical OR.</para>
+        ///     <para xml:lang="zh-CN">以逻辑或合并能力发光谓词与金色手牌发光条件。</para>
         /// </summary>
         internal sealed class ShouldGlowGoldPatch : IPatchMethod
         {
@@ -802,8 +802,8 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         }
 
         /// <summary>
-        ///     ORs capability glow predicates into red hand glow.
-        ///     将能力发光判定 OR 到红色手牌发光。
+        ///     <para xml:lang="en">Combines capability glow predicates with the red hand-glow condition using logical OR.</para>
+        ///     <para xml:lang="zh-CN">以逻辑或合并能力发光谓词与红色手牌发光条件。</para>
         /// </summary>
         internal sealed class ShouldGlowRedPatch : IPatchMethod
         {

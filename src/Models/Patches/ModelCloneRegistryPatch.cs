@@ -5,8 +5,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Models.Patches
 {
     /// <summary>
-    ///     Dispatches vanilla model clone operations to <see cref="ModelCloneRegistry" />.
-    ///     将原版模型复制操作分发到 <see cref="ModelCloneRegistry" />。
+    ///     <para xml:lang="en">
+    ///         Dispatches base-game model clone operations to model saved data, capabilities, and
+    ///         <see cref="ModelCloneRegistry" /> listeners.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将游戏原版模型复制操作分发给模型保存数据、模型能力及
+    ///         <see cref="ModelCloneRegistry" /> 监听器。
+    ///     </para>
     /// </summary>
     internal sealed class ModelCloneRegistryPatch : IPatchMethod
     {

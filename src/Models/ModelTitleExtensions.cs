@@ -6,8 +6,12 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models
 {
     /// <summary>
-    ///     Helpers for resolving display titles from registered resolvers and known vanilla model families.
-    ///     用于从已注册解析器和已知原版模型族解析显示标题的辅助方法。
+    ///     <para xml:lang="en">
+    ///         Resolves display titles through registered resolvers and known base-game model families.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过已注册的解析器和已知游戏原版模型族解析显示标题。
+    ///     </para>
     /// </summary>
     public static class ModelTitleExtensions
     {
@@ -41,15 +45,25 @@ namespace STS2RitsuLib.Models
             Array.AsReadOnly(TitleSources);
 
         /// <summary>
-        ///     Known title LocString sources, ordered from more-specific model families to broader ones.
-        ///     已知标题 LocString 来源，按更具体到更宽泛的模型族排序。
+        ///     <para xml:lang="en">
+        ///         Gets the known title <see cref="LocString" /> sources, ordered from more specific model families
+        ///         to broader ones.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已知的标题 <see cref="LocString" /> 来源，并按模型族由具体到宽泛排列。
+        ///     </para>
         /// </summary>
         public static IReadOnlyList<ModelLocStringSource> KnownTitleSources => ReadOnlyTitleSources;
 
         /// <summary>
-        ///     Registers or replaces the title resolver for <typeparamref name="TModel" /> and its derived types.
-        ///     More-specific registered model types take precedence.
-        ///     为 <typeparamref name="TModel" /> 及其派生类型注册或替换标题解析器；更具体的已注册模型类型优先。
+        ///     <para xml:lang="en">
+        ///         Registers or replaces the title resolver for <typeparamref name="TModel" /> and its derived types.
+        ///         More specific registered model types take precedence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TModel" /> 及其派生类型注册或替换标题解析器。
+        ///         更具体的已注册模型类型优先。
+        ///     </para>
         /// </summary>
         public static void RegisterTitleResolver<TModel>(Func<TModel, LocString?> resolver)
             where TModel : AbstractModel
@@ -60,9 +74,14 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Registers or replaces the title resolver for <paramref name="modelType" /> and its derived types.
-        ///     More-specific registered model types take precedence.
-        ///     为 <paramref name="modelType" /> 及其派生类型注册或替换标题解析器；更具体的已注册模型类型优先。
+        ///     <para xml:lang="en">
+        ///         Registers or replaces the title resolver for <paramref name="modelType" /> and its derived types.
+        ///         More specific registered model types take precedence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="modelType" /> 及其派生类型注册或替换标题解析器。
+        ///         更具体的已注册模型类型优先。
+        ///     </para>
         /// </summary>
         public static void RegisterTitleResolver(
             Type modelType,
@@ -85,8 +104,8 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Unregisters the title resolver for exactly <typeparamref name="TModel" />.
-        ///     反注册精确对应 <typeparamref name="TModel" /> 的标题解析器。
+        ///     <para xml:lang="en">Unregisters the title resolver for exactly <typeparamref name="TModel" />.</para>
+        ///     <para xml:lang="zh-CN">注销仅对应 <typeparamref name="TModel" /> 的标题解析器。</para>
         /// </summary>
         public static bool UnregisterTitleResolver<TModel>()
             where TModel : AbstractModel
@@ -95,8 +114,8 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Unregisters the title resolver for exactly <paramref name="modelType" />.
-        ///     反注册精确对应 <paramref name="modelType" /> 的标题解析器。
+        ///     <para xml:lang="en">Unregisters the title resolver for exactly <paramref name="modelType" />.</para>
+        ///     <para xml:lang="zh-CN">注销仅对应 <paramref name="modelType" /> 的标题解析器。</para>
         /// </summary>
         public static bool UnregisterTitleResolver(Type modelType)
         {
@@ -114,11 +133,15 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Resolves a display title for <paramref name="model" />, or returns <paramref name="fallback" /> when the
-        ///     model has no registered resolver and its family has no known title surface.
-        ///     解析 <paramref name="model" /> 的显示标题；若该模型没有已注册解析器，且所属模型族没有已知标题
-        ///     surface，则返回
-        ///     <paramref name="fallback" />。
+        ///     <para xml:lang="en">
+        ///         Resolves a display title for <paramref name="model" />, or returns
+        ///         <paramref name="fallback" /> when the model has no registered resolver and its family has no
+        ///         known title source.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析 <paramref name="model" /> 的显示标题。若该模型没有已注册解析器，且所属模型族没有
+        ///         已知标题来源，则返回 <paramref name="fallback" />。
+        ///     </para>
         /// </summary>
         public static LocString ResolveTitleOr(this AbstractModel model, LocString fallback)
         {
@@ -129,8 +152,13 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Attempts to resolve a display title from a registered resolver, then from a known vanilla model family.
-        ///     尝试从已注册解析器解析显示标题；若未解析到标题，再尝试已知原版模型族。
+        ///     <para xml:lang="en">
+        ///         Attempts to resolve a display title from a registered resolver, then from a known base-game
+        ///         model family.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从已注册解析器获取显示标题；若未取得标题，再尝试已知的游戏原版模型族。
+        ///     </para>
         /// </summary>
         public static bool TryResolveTitle(this AbstractModel model, [NotNullWhen(true)] out LocString? title)
         {
@@ -154,8 +182,13 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Attempts to resolve the title LocString source mapping for <paramref name="model" />.
-        ///     尝试解析 <paramref name="model" /> 的标题 LocString 来源映射。
+        ///     <para xml:lang="en">
+        ///         Attempts to resolve the title <see cref="LocString" /> source mapping for
+        ///         <paramref name="model" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试解析 <paramref name="model" /> 的标题 <see cref="LocString" /> 来源映射。
+        ///     </para>
         /// </summary>
         public static bool TryGetTitleLocStringSource(
             this AbstractModel model,
@@ -168,8 +201,13 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Creates the default title LocString from the mapped table and key, ignoring model property overrides.
-        ///     从映射的表和 key 创建默认标题 LocString，不读取模型属性覆写。
+        ///     <para xml:lang="en">
+        ///         Creates the default title <see cref="LocString" /> from the mapped table and key without reading
+        ///         model property overrides.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从映射的表与键创建默认标题 <see cref="LocString" />，不读取模型属性重写。
+        ///     </para>
         /// </summary>
         public static LocString CreateDefaultTitleLocString(this AbstractModel model)
         {

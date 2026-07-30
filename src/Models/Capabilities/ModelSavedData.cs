@@ -3,8 +3,8 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Handle for a typed model-saved data slot.
-    ///     类型化模型保存数据槽位的句柄。
+    ///     <para xml:lang="en">Provides a handle for a typed model-saved-data slot.</para>
+    ///     <para xml:lang="zh-CN">提供类型化模型保存数据槽位的句柄。</para>
     /// </summary>
     public sealed class ModelSavedData<TTarget, TPayload>
         where TTarget : AbstractModel
@@ -18,8 +18,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets the current value, creating it from the default factory if necessary.
-        ///     获取当前值；必要时通过默认工厂创建。
+        ///     <para xml:lang="en">
+        ///         Gets the current value, creating it with the default factory when necessary.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取当前值；必要时使用默认工厂创建。
+        ///     </para>
         /// </summary>
         public TPayload Get(TTarget model)
         {
@@ -27,8 +31,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Attempts to get an existing value without creating one.
-        ///     尝试获取已有值，但不创建新值。
+        ///     <para xml:lang="en">Attempts to get an existing value without creating one.</para>
+        ///     <para xml:lang="zh-CN">尝试获取已有值，但不创建新值。</para>
         /// </summary>
         public bool TryGet(TTarget model, out TPayload value)
         {
@@ -36,8 +40,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Sets the value for <paramref name="model" />.
-        ///     设置 <paramref name="model" /> 的值。
+        ///     <para xml:lang="en">Sets the value for <paramref name="model" />.</para>
+        ///     <para xml:lang="zh-CN">设置 <paramref name="model" /> 的值。</para>
         /// </summary>
         public void Set(TTarget model, TPayload value)
         {
@@ -45,8 +49,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Marks the current value dirty after an in-place mutation.
-        ///     在原地修改后将当前值标记为已变更。
+        ///     <para xml:lang="en">Marks the current value dirty after an in-place mutation.</para>
+        ///     <para xml:lang="zh-CN">在原地修改后将当前值标记为脏。</para>
         /// </summary>
         public void MarkDirty(TTarget model)
         {
@@ -54,8 +58,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes the saved value from <paramref name="model" />.
-        ///     从 <paramref name="model" /> 移除保存值。
+        ///     <para xml:lang="en">Removes the saved value from <paramref name="model" />.</para>
+        ///     <para xml:lang="zh-CN">从 <paramref name="model" /> 移除保存值。</para>
         /// </summary>
         public bool Remove(TTarget model)
         {
@@ -63,8 +67,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Mutates the value and marks it dirty.
-        ///     修改值并标记为已变更。
+        ///     <para xml:lang="en">
+        ///         Invokes <paramref name="mutate" /> and writes the value back as dirty even if the callback throws.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         调用 <paramref name="mutate" />；即使回调抛出异常，也会将该值写回并标记为脏。
+        ///     </para>
         /// </summary>
         public TPayload Modify(TTarget model, Action<TPayload> mutate)
         {

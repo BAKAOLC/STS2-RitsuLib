@@ -12,8 +12,8 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Context passed to card-description contributors.
-    ///     传给卡牌描述贡献者的上下文。
+    ///     <para xml:lang="en">Context passed to card-description contributors.</para>
+    ///     <para xml:lang="zh-CN">传给卡牌描述贡献者的上下文。</para>
     /// </summary>
     public readonly record struct CardDescriptionContext(
         CardModel Card,
@@ -22,27 +22,27 @@ namespace STS2RitsuLib.Models.Capabilities
         bool IsUpgradePreview);
 
     /// <summary>
-    ///     Placement for capability-provided card description fragments.
-    ///     能力提供的卡牌描述片段插入位置。
+    ///     <para xml:lang="en">Placement for capability-provided card description fragments.</para>
+    ///     <para xml:lang="zh-CN">能力提供的卡牌描述片段插入位置。</para>
     /// </summary>
     public enum CardDescriptionFragmentPlacement
     {
         /// <summary>
-        ///     Insert before the card's own description.
-        ///     插入到卡牌自身描述之前。
+        ///     <para xml:lang="en">Insert before the card's own description.</para>
+        ///     <para xml:lang="zh-CN">插入到卡牌自身描述之前。</para>
         /// </summary>
         BeforeBase,
 
         /// <summary>
-        ///     Insert after the card's own description.
-        ///     插入到卡牌自身描述之后。
+        ///     <para xml:lang="en">Insert after the card's own description.</para>
+        ///     <para xml:lang="zh-CN">插入到卡牌自身描述之后。</para>
         /// </summary>
         AfterBase,
     }
 
     /// <summary>
-    ///     Localized card description fragment contributed by a capability.
-    ///     由能力贡献的本地化卡牌描述片段。
+    ///     <para xml:lang="en">Localized card description fragment contributed by a capability.</para>
+    ///     <para xml:lang="zh-CN">由能力贡献的本地化卡牌描述片段。</para>
     /// </summary>
     public readonly record struct CardDescriptionFragment(
         LocString Text,
@@ -50,35 +50,40 @@ namespace STS2RitsuLib.Models.Capabilities
         int Order = 0);
 
     /// <summary>
-    ///     Optional model capability that contributes localized card-description fragments.
-    ///     可选能力：贡献本地化卡牌描述片段。
+    ///     <para xml:lang="en">Optional model capability that contributes localized card-description fragments.</para>
+    ///     <para xml:lang="zh-CN">可选能力：贡献本地化卡牌描述片段。</para>
     /// </summary>
     public interface ICardDescriptionContributor
     {
         /// <summary>
-        ///     Returns extra localized description fragments. Fragments are formatted through the game
-        ///     <see cref="LocString" /> pipeline with the owning card's dynamic vars.
-        ///     返回额外的本地化描述片段。片段会带所属卡牌动态变量进入游戏原生 <see cref="LocString" /> 格式化管线。
+        ///     <para xml:lang="en">
+        ///         Returns extra localized description fragments. Fragments are formatted through the game
+        ///         <see cref="LocString" /> formatting process with the owning card's dynamic vars.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回额外的本地化描述片段。片段会携带所属卡牌的动态变量，经由游戏原版
+        ///         <see cref="LocString" /> 格式化流程处理。
+        ///     </para>
         /// </summary>
         IEnumerable<CardDescriptionFragment> GetDescriptionFragments(CardDescriptionContext context);
     }
 
     /// <summary>
-    ///     Optional model capability that contributes card hover tips.
-    ///     可选能力：贡献卡牌悬停提示。
+    ///     <para xml:lang="en">Optional model capability that contributes card hover tips.</para>
+    ///     <para xml:lang="zh-CN">可选能力：贡献卡牌悬停提示。</para>
     /// </summary>
     public interface ICardHoverTipContributor
     {
         /// <summary>
-        ///     Returns additional hover tips for <paramref name="card" />.
-        ///     返回 <paramref name="card" /> 的额外悬停提示。
+        ///     <para xml:lang="en">Returns additional hover tips for <paramref name="card" />.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="card" /> 的额外悬停提示。</para>
         /// </summary>
         IEnumerable<IHoverTip> GetHoverTips(CardModel card);
     }
 
     /// <summary>
-    ///     Runtime context for capability-provided card overlays.
-    ///     能力提供卡牌覆盖层时的运行时上下文。
+    ///     <para xml:lang="en">Runtime context for capability-provided card overlays.</para>
+    ///     <para xml:lang="zh-CN">能力提供卡牌覆盖层时的运行时上下文。</para>
     /// </summary>
     public readonly record struct CardOverlayContext(
         CardModel Card,
@@ -86,54 +91,71 @@ namespace STS2RitsuLib.Models.Capabilities
         Node OverlayContainer);
 
     /// <summary>
-    ///     One visual overlay contributed by a card capability. Exactly one creation source should be set:
-    ///     <see cref="ScenePath" />, <see cref="Scene" />, or <see cref="Factory" />.
-    ///     卡牌能力贡献的一个可视覆盖层。应且仅应设置一个创建来源：
-    ///     <see cref="ScenePath" />、<see cref="Scene" /> 或 <see cref="Factory" />。
+    ///     <para xml:lang="en">
+    ///         One visual overlay contributed by a card capability. Exactly one creation source should be set:
+    ///         <see cref="ScenePath" />, <see cref="Scene" />, or <see cref="Factory" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         卡牌能力贡献的一个可视覆盖层。应且仅应设置一个创建来源：
+    ///         <see cref="ScenePath" />、<see cref="Scene" /> 或 <see cref="Factory" />。
+    ///     </para>
     /// </summary>
     public sealed record CardOverlayContribution
     {
         /// <summary>
-        ///     Stable id for diagnostics and ordering within the contributing capability.
-        ///     用于诊断以及贡献能力内部排序的稳定 ID。
+        ///     <para xml:lang="en">Stable ID for diagnostics and ordering within the contributing capability.</para>
+        ///     <para xml:lang="zh-CN">用于诊断以及贡献能力内部排序的稳定 ID。</para>
         /// </summary>
         public required string Id { get; init; }
 
         /// <summary>
-        ///     Draw order among capability overlays. Larger values are added later and render above smaller values.
-        ///     能力覆盖层之间的绘制顺序。数值越大越晚加入，因此显示在更上层。
+        ///     <para xml:lang="en">Draw order among capability overlays. Larger values are added later and render above smaller values.</para>
+        ///     <para xml:lang="zh-CN">能力覆盖层之间的绘制顺序。数值越大越晚加入，因此显示在更上层。</para>
         /// </summary>
         public int Order { get; init; }
 
         /// <summary>
-        ///     When true, RitsuLib applies a full-rect layout preset after the overlay node is created.
-        ///     为 true 时，RitsuLib 会在覆盖层节点创建后应用 full-rect 布局预设。
+        ///     <para xml:lang="en">
+        ///         When <see langword="true" />, RitsuLib applies a full-rectangle layout preset after creating the
+        ///         overlay node.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <see langword="true" /> 时，RitsuLib 会在创建覆盖层节点后应用全矩形布局预设。
+        ///     </para>
         /// </summary>
         public bool FullRect { get; init; } = true;
 
         /// <summary>
-        ///     Packed scene path loaded through the game preload cache, matching vanilla card overlay creation.
-        ///     通过游戏 preload cache 加载的 PackedScene 路径，与原版卡牌覆盖层创建行为一致。
+        ///     <para xml:lang="en">
+        ///         Packed-scene path loaded through the game's preload cache, matching base-game card-overlay creation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过游戏预加载缓存加载的 <see cref="PackedScene" /> 路径，与游戏原版卡牌覆盖层的创建行为一致。
+        ///     </para>
         /// </summary>
         public string? ScenePath { get; init; }
 
         /// <summary>
-        ///     Already resolved packed scene.
-        ///     已解析的 PackedScene。
+        ///     <para xml:lang="en">Already resolved packed scene.</para>
+        ///     <para xml:lang="zh-CN">已解析的 PackedScene。</para>
         /// </summary>
         public PackedScene? Scene { get; init; }
 
         /// <summary>
-        ///     Factory for creating a fresh overlay control. It must return a new node each time because one
-        ///     <see cref="CardModel" /> can be displayed by multiple <see cref="NCard" /> nodes.
-        ///     用于创建全新覆盖层 Control 的工厂。每次必须返回新的节点，因为同一个
-        ///     <see cref="CardModel" /> 可能同时由多个 <see cref="NCard" /> 节点显示。
+        ///     <para xml:lang="en">
+        ///         Factory for creating a fresh overlay control. It must return a new node each time because one
+        ///         <see cref="CardModel" /> can be displayed by multiple <see cref="NCard" /> nodes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         用于创建全新覆盖层 <see cref="Control" /> 的工厂。每次必须返回新的节点，因为同一个
+        ///         <see cref="CardModel" /> 可能同时由多个 <see cref="NCard" /> 节点显示。
+        ///     </para>
         /// </summary>
         public Func<CardOverlayContext, Control?>? Factory { get; init; }
 
         /// <summary>
-        ///     Creates a contribution from a packed scene path.
-        ///     从 PackedScene 路径创建贡献项。
+        ///     <para xml:lang="en">Creates a contribution from a packed scene path.</para>
+        ///     <para xml:lang="zh-CN">从 PackedScene 路径创建贡献项。</para>
         /// </summary>
         public static CardOverlayContribution FromScenePath(
             string id,
@@ -151,8 +173,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a contribution from an already resolved packed scene.
-        ///     从已解析的 PackedScene 创建贡献项。
+        ///     <para xml:lang="en">Creates a contribution from an already resolved packed scene.</para>
+        ///     <para xml:lang="zh-CN">从已解析的 PackedScene 创建贡献项。</para>
         /// </summary>
         public static CardOverlayContribution FromScene(
             string id,
@@ -170,8 +192,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a contribution from a control factory.
-        ///     从 Control 工厂创建贡献项。
+        ///     <para xml:lang="en">Creates a contribution from a control factory.</para>
+        ///     <para xml:lang="zh-CN">从 <see cref="Control" /> 工厂创建贡献项。</para>
         /// </summary>
         public static CardOverlayContribution FromFactory(
             string id,
@@ -190,40 +212,48 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card model or capability hook that contributes visual overlays to the owning card node.
-    ///     Contributions are added after vanilla affliction/built-in overlay handling, so they stack without replacing
-    ///     the vanilla overlay slot.
-    ///     可选卡牌模型或能力钩子：向所属卡牌节点贡献可视覆盖层。贡献项会在原版 affliction / built-in 覆盖层处理后加入，
-    ///     因此会叠加显示，而不会替换原版覆盖层槽位。
+    ///     <para xml:lang="en">
+    ///         Optional card model or capability hook that contributes visual overlays to the owning card node.
+    ///         Contributions are added after base-game affliction and built-in overlay handling, so they stack without
+    ///         replacing the base-game overlay slot.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的卡牌模型或能力钩子，用于向所属卡牌节点提供可视覆盖层。贡献项会在游戏原版的苦痛及内置
+    ///         覆盖层处理完成后加入，因此会叠加显示，而不会替换原版覆盖层槽位。
+    ///     </para>
     /// </summary>
     public interface ICardOverlayContributor
     {
         /// <summary>
-        ///     Returns overlays for the current card node. Return an empty sequence when no overlay should be shown.
-        ///     返回当前卡牌节点的覆盖层。不需要显示覆盖层时返回空序列。
+        ///     <para xml:lang="en">Returns overlays for the current card node. Return an empty sequence when no overlay should be shown.</para>
+        ///     <para xml:lang="zh-CN">返回当前卡牌节点的覆盖层。不需要显示覆盖层时返回空序列。</para>
         /// </summary>
         IEnumerable<CardOverlayContribution> GetCardOverlays(CardOverlayContext context);
     }
 
     /// <summary>
-    ///     Optional card capability that contributes overlay asset paths for preload/diagnostics. Factory-created
-    ///     overlays that load resources internally should report those paths here or through
-    ///     <see cref="IModelAssetPathContributor{TModel}" />.
-    ///     可选卡牌能力：为覆盖层贡献预加载/诊断用资源路径。通过工厂创建且内部加载资源的覆盖层，应在这里或通过
-    ///     <see cref="IModelAssetPathContributor{TModel}" /> 报告这些路径。
+    ///     <para xml:lang="en">
+    ///         Optional card capability that contributes overlay asset paths for preload/diagnostics. Factory-created
+    ///         overlays that load resources internally should report those paths here or through
+    ///         <see cref="IModelAssetPathContributor{TModel}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选卡牌能力：为覆盖层贡献预加载/诊断用资源路径。通过工厂创建且内部加载资源的覆盖层，应在这里或通过
+    ///         <see cref="IModelAssetPathContributor{TModel}" /> 报告这些路径。
+    ///     </para>
     /// </summary>
     public interface ICardOverlayAssetPathContributor
     {
         /// <summary>
-        ///     Returns additional card overlay asset paths.
-        ///     返回额外的卡牌覆盖层资源路径。
+        ///     <para xml:lang="en">Returns additional card overlay asset paths.</para>
+        ///     <para xml:lang="zh-CN">返回额外的卡牌覆盖层资源路径。</para>
         /// </summary>
         IEnumerable<string> GetCardOverlayAssetPaths(CardModel card);
     }
 
     /// <summary>
-    ///     Context passed to card-title contributors.
-    ///     传给卡牌标题贡献者的上下文。
+    ///     <para xml:lang="en">Context passed to card-title contributors.</para>
+    ///     <para xml:lang="zh-CN">传给卡牌标题贡献者的上下文。</para>
     /// </summary>
     public readonly record struct CardTitleContext(
         CardModel Card,
@@ -233,39 +263,39 @@ namespace STS2RitsuLib.Models.Capabilities
         string VanillaTitle);
 
     /// <summary>
-    ///     Placement for capability-provided card title fragments.
-    ///     能力提供的卡牌标题片段插入位置。
+    ///     <para xml:lang="en">Placement for capability-provided card title fragments.</para>
+    ///     <para xml:lang="zh-CN">能力提供的卡牌标题片段插入位置。</para>
     /// </summary>
     public enum CardTitleFragmentPlacement
     {
         /// <summary>
-        ///     Insert before the card's base title.
-        ///     插入到卡牌基础标题之前。
+        ///     <para xml:lang="en">Insert before the card's base title.</para>
+        ///     <para xml:lang="zh-CN">插入到卡牌基础标题之前。</para>
         /// </summary>
         BeforeBase,
 
         /// <summary>
-        ///     Replace the card's base title. The first replacement wins.
-        ///     替换卡牌基础标题；第一个替换胜出。
+        ///     <para xml:lang="en">Replace the card's base title. The first replacement wins.</para>
+        ///     <para xml:lang="zh-CN">替换卡牌基础标题；第一个替换胜出。</para>
         /// </summary>
         ReplaceBase,
 
         /// <summary>
-        ///     Insert after the selected base title and before the vanilla upgrade suffix.
-        ///     插入到选定基础标题之后、原版升级后缀之前。
+        ///     <para xml:lang="en">Insert after the selected base title and before the vanilla upgrade suffix.</para>
+        ///     <para xml:lang="zh-CN">插入到选定基础标题之后、原版升级后缀之前。</para>
         /// </summary>
         AfterBase,
 
         /// <summary>
-        ///     Insert after the vanilla upgrade suffix.
-        ///     插入到原版升级后缀之后。
+        ///     <para xml:lang="en">Insert after the vanilla upgrade suffix.</para>
+        ///     <para xml:lang="zh-CN">插入到原版升级后缀之后。</para>
         /// </summary>
         AfterTitle,
     }
 
     /// <summary>
-    ///     Localized card title fragment contributed by a capability.
-    ///     由能力贡献的本地化卡牌标题片段。
+    ///     <para xml:lang="en">Localized card title fragment contributed by a capability.</para>
+    ///     <para xml:lang="zh-CN">由能力贡献的本地化卡牌标题片段。</para>
     /// </summary>
     public readonly record struct CardTitleFragment(
         LocString Text,
@@ -273,62 +303,75 @@ namespace STS2RitsuLib.Models.Capabilities
         int Order = 0);
 
     /// <summary>
-    ///     Optional model capability that contributes localized card-title fragments.
-    ///     可选能力：贡献本地化卡牌标题片段。
+    ///     <para xml:lang="en">Optional model capability that contributes localized card-title fragments.</para>
+    ///     <para xml:lang="zh-CN">可选能力：贡献本地化卡牌标题片段。</para>
     /// </summary>
     public interface ICardTitleContributor
     {
         /// <summary>
-        ///     Returns title fragments for the owning card. Fragments are formatted through the game
-        ///     <see cref="LocString" /> pipeline with the owning card's dynamic vars. Multiple prefix/suffix
-        ///     fragments compose by order; multiple base replacements are reported when
-        ///     <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
-        ///     返回所属卡牌的标题片段。片段会带所属卡牌动态变量进入游戏原生 <see cref="LocString" /> 格式化管线。
-        ///     多个前缀/后缀片段按顺序组合；多个基础标题替换会按冲突诊断设置记录。
+        ///     <para xml:lang="en">
+        ///         Returns title fragments for the owning card. Fragments are formatted through the game
+        ///         <see cref="LocString" /> formatting process with the owning card's dynamic vars. Multiple prefix/suffix
+        ///         fragments compose by order; multiple base replacements are reported when
+        ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回所属卡牌的标题片段。片段会携带所属卡牌的动态变量，经由游戏原版
+        ///         <see cref="LocString" /> 格式化流程处理。
+        ///         多个前缀/后缀片段按顺序组合；多个基础标题替换会按冲突诊断设置记录。
+        ///     </para>
         /// </summary>
         IEnumerable<CardTitleFragment> GetTitleFragments(CardTitleContext context);
     }
 
     /// <summary>
-    ///     Optional card interface for visually modifying its own type text. Returned strings use the same composition
-    ///     contract as BaseLib: entries containing <c>{Type}</c> wrap the selected base text, while entries without it
-    ///     replace the base text.
-    ///     可选卡牌接口：修改自身显示的类型文本。返回文本使用与 BaseLib 相同的组合契约：包含 <c>{Type}</c> 的条目
-    ///     包裹选定的基础文本，不包含它的条目替换基础文本。
+    ///     <para xml:lang="en">
+    ///         Optional card interface for visually modifying its own type text. Returned strings use the same composition
+    ///         contract as BaseLib: entries containing <c>{Type}</c> wrap the selected base text, while entries without it
+    ///         replace the base text.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选卡牌接口：修改自身显示的类型文本。返回文本使用与 BaseLib 相同的组合契约：包含 <c>{Type}</c> 的条目
+    ///         包裹选定的基础文本，不包含它的条目替换基础文本。
+    ///     </para>
     /// </summary>
     public interface ICustomTypeTextCard
     {
         /// <summary>
-        ///     Returns localized type text modifiers in application order.
-        ///     按应用顺序返回本地化类型文本修改器。
+        ///     <para xml:lang="en">Returns localized type text modifiers in application order.</para>
+        ///     <para xml:lang="zh-CN">按应用顺序返回本地化类型文本修改器。</para>
         /// </summary>
         IEnumerable<LocString> GetTypeModifiers();
     }
 
     /// <summary>
-    ///     Optional model or model-capability hook for visually modifying cards' type text. The method signature and
-    ///     composition contract match BaseLib's <c>ICardTypeTextModifier</c>.
-    ///     可选模型或模型能力 hook：修改卡牌显示的类型文本。方法签名与组合契约和 BaseLib 的
-    ///     <c>ICardTypeTextModifier</c> 一致。
+    ///     <para xml:lang="en">
+    ///         Optional model or model-capability hook for visually modifying cards' type text. The method signature and
+    ///         composition contract match BaseLib's <c>ICardTypeTextModifier</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的模型或模型能力钩子，用于修改卡牌显示的类型文本。方法签名与组合契约和 BaseLib 的
+    ///         <c>ICardTypeTextModifier</c> 一致。
+    ///     </para>
     /// </summary>
     public interface ICardTypeTextModifier
     {
         /// <summary>
-        ///     Returns localized type text modifiers for <paramref name="card" /> in application order.
-        ///     按应用顺序返回 <paramref name="card" /> 的本地化类型文本修改器。
+        ///     <para xml:lang="en">Returns localized type text modifiers for <paramref name="card" /> in application order.</para>
+        ///     <para xml:lang="zh-CN">按应用顺序返回 <paramref name="card" /> 的本地化类型文本修改器。</para>
         /// </summary>
         IEnumerable<LocString> GetTypeModifiers(CardModel card);
     }
 
     /// <summary>
-    ///     Optional model capability that contributes hand glow predicates.
-    ///     可选能力：贡献手牌发光判定。
+    ///     <para xml:lang="en">Optional model capability that contributes hand glow predicates.</para>
+    ///     <para xml:lang="zh-CN">可选能力：贡献手牌发光判定。</para>
     /// </summary>
     public interface ICardGlowContributor
     {
         /// <summary>
-        ///     Returns true to make the card glow gold.
-        ///     返回 true 时让卡牌显示金色发光。
+        ///     <para xml:lang="en">Returns <see langword="true" /> to make the card glow gold.</para>
+        ///     <para xml:lang="zh-CN">返回 <see langword="true" /> 时让卡牌显示金色发光。</para>
         /// </summary>
         bool ShouldGlowGold(CardModel card)
         {
@@ -336,8 +379,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns true to make the card glow red.
-        ///     返回 true 时让卡牌显示红色发光。
+        ///     <para xml:lang="en">Returns <see langword="true" /> to make the card glow red.</para>
+        ///     <para xml:lang="zh-CN">返回 <see langword="true" /> 时让卡牌显示红色发光。</para>
         /// </summary>
         bool ShouldGlowRed(CardModel card)
         {
@@ -346,16 +389,21 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card capability that contributes card-facing property overrides.
-    ///     可选卡牌能力：贡献卡牌侧属性覆盖。
+    ///     <para xml:lang="en">Optional card capability that contributes card-facing property overrides.</para>
+    ///     <para xml:lang="zh-CN">可选卡牌能力：贡献卡牌侧属性覆盖。</para>
     /// </summary>
     public interface ICardPropertyContributor
     {
         /// <summary>
-        ///     Returns a card type override, or null to leave the current value unchanged. The first non-null
-        ///     contributor result wins; additional overrides are reported when
-        ///     <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
-        ///     返回卡牌类型覆盖；返回 null 表示不修改当前值。
+        ///     <para xml:lang="en">
+        ///         Returns a card type override, or <see langword="null" /> to leave the current value unchanged. The first non-null
+        ///         contributor result wins; additional overrides are reported when
+        ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回卡牌类型覆盖；返回 <see langword="null" /> 表示不修改当前值。首个非空结果生效；
+        ///         启用 <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> 后会记录其他覆盖结果。
+        ///     </para>
         /// </summary>
         CardType? GetCardType(CardModel card)
         {
@@ -363,10 +411,15 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns a card rarity override, or null to leave the current value unchanged. The first non-null
-        ///     contributor result wins; additional overrides are reported when
-        ///     <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
-        ///     返回卡牌稀有度覆盖；返回 null 表示不修改当前值。
+        ///     <para xml:lang="en">
+        ///         Returns a card rarity override, or <see langword="null" /> to leave the current value unchanged. The first non-null
+        ///         contributor result wins; additional overrides are reported when
+        ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回卡牌稀有度覆盖；返回 <see langword="null" /> 表示不修改当前值。首个非空结果生效；
+        ///         启用 <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> 后会记录其他覆盖结果。
+        ///     </para>
         /// </summary>
         CardRarity? GetCardRarity(CardModel card)
         {
@@ -374,10 +427,15 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns a target type override, or null to leave the current value unchanged. The first non-null
-        ///     contributor result wins; additional overrides are reported when
-        ///     <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
-        ///     返回目标类型覆盖；返回 null 表示不修改当前值。
+        ///     <para xml:lang="en">
+        ///         Returns a target type override, or <see langword="null" /> to leave the current value unchanged. The first non-null
+        ///         contributor result wins; additional overrides are reported when
+        ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回目标类型覆盖；返回 <see langword="null" /> 表示不修改当前值。首个非空结果生效；
+        ///         启用 <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> 后会记录其他覆盖结果。
+        ///     </para>
         /// </summary>
         TargetType? GetTargetType(CardModel card)
         {
@@ -385,8 +443,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns additional card tags. Tags from all contributors are appended, then de-duplicated.
-        ///     返回额外卡牌标签。
+        ///     <para xml:lang="en">Returns additional card tags. Tags from all contributors are appended, then deduplicated.</para>
+        ///     <para xml:lang="zh-CN">返回额外卡牌标签。所有贡献者的标签会追加到现有标签后，再进行去重。</para>
         /// </summary>
         IEnumerable<CardTag> GetTags(CardModel card)
         {
@@ -395,17 +453,21 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card capability that contributes local energy-cost modifications.
-    ///     可选卡牌能力：贡献卡牌本地能量费用修正。
+    ///     <para xml:lang="en">Optional card capability that contributes local energy-cost modifications.</para>
+    ///     <para xml:lang="zh-CN">可选卡牌能力：贡献卡牌本地能量费用修正。</para>
     /// </summary>
     public interface ICardEnergyCostContributor
     {
         /// <summary>
-        ///     Modifies the owning card's current local energy cost. This runs when
-        ///     <see cref="CostModifiers.Local" /> is requested, including normal
-        ///     <see cref="CostModifiers.All" /> card display and playability checks.
-        ///     修改所属卡牌当前本地能量费用。当请求 <see cref="CostModifiers.Local" /> 时运行，
-        ///     包括常规 <see cref="CostModifiers.All" /> 卡牌显示与可打出检查。
+        ///     <para xml:lang="en">
+        ///         Modifies the owning card's current local energy cost. This runs when
+        ///         <see cref="CostModifiers.Local" /> is requested, including normal
+        ///         <see cref="CostModifiers.All" /> card display and playability checks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         修改所属卡牌当前本地能量费用。当请求 <see cref="CostModifiers.Local" /> 时运行，
+        ///         包括常规 <see cref="CostModifiers.All" /> 卡牌显示与可打出检查。
+        ///     </para>
         /// </summary>
         int ModifyEnergyCost(CardModel card, int currentCost, CostModifiers modifiers)
         {
@@ -414,15 +476,17 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card capability that contributes local star-cost modifications.
-    ///     可选卡牌能力：贡献卡牌本地星星费用修正。
+    ///     <para xml:lang="en">Optional card capability that contributes local star-cost modifications.</para>
+    ///     <para xml:lang="zh-CN">可选卡牌能力：贡献卡牌本地星星费用修正。</para>
     /// </summary>
     public interface ICardStarCostContributor
     {
         /// <summary>
-        ///     Modifies the owning card's current local star cost. Return a negative value to keep the
-        ///     star cost hidden.
-        ///     修改所属卡牌当前本地星星费用。返回负数会保持星星费用隐藏。
+        ///     <para xml:lang="en">
+        ///         Modifies the owning card's current local star cost. Return a negative value to keep the
+        ///         star cost hidden.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">修改所属卡牌当前本地星星费用。返回负数会保持星星费用隐藏。</para>
         /// </summary>
         int ModifyStarCost(CardModel card, int currentCost)
         {
@@ -431,16 +495,22 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card capability that contributes play-state decisions.
-    ///     可选卡牌能力：贡献出牌状态决策。
+    ///     <para xml:lang="en">Optional card capability that contributes play-state decisions.</para>
+    ///     <para xml:lang="zh-CN">可选卡牌能力：贡献出牌状态决策。</para>
     /// </summary>
     public interface ICardPlayStateContributor
     {
         /// <summary>
-        ///     Returns null to leave the current playability unchanged; otherwise overrides it. Contributors run in
-        ///     capability order and later non-null results replace earlier results. Multiple overrides are reported
-        ///     when <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
-        ///     返回 null 表示不修改当前可打出状态；否则覆盖该状态。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="null" /> to leave the current playability unchanged; otherwise overrides it. Contributors run in
+        ///         capability order and later non-null results replace earlier results. Multiple overrides are reported
+        ///         when <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <see langword="null" /> 表示不修改当前可打出状态；否则覆盖该状态。贡献者按能力顺序运行，
+        ///         后续非空结果会替换先前结果。启用 <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> 后会记录
+        ///         多次覆盖。
+        ///     </para>
         /// </summary>
         bool? CanPlay(CardModel card)
         {
@@ -448,8 +518,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns true when the owning card should receive turn-end-in-hand handling. Results are combined with OR.
-        ///     返回 true 时，所属卡牌应接收手牌回合结束处理。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when the owning card should receive turn-end-in-hand handling.
+        ///         Results are combined using logical OR.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <see langword="true" /> 时，所属卡牌应接收手牌回合结束处理。所有结果按逻辑“或”合并。
+        ///     </para>
         /// </summary>
         bool HasTurnEndInHandEffect(CardModel card)
         {
@@ -458,16 +533,21 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card capability that routes the owning card to a custom result pile after play.
-    ///     可选卡牌能力：自定义所属卡牌打出后的目标牌堆。
+    ///     <para xml:lang="en">Optional card capability that routes the owning card to a custom result pile after play.</para>
+    ///     <para xml:lang="zh-CN">可选卡牌能力：自定义所属卡牌打出后的目标牌堆。</para>
     /// </summary>
     public interface ICardPlayResultContributor
     {
         /// <summary>
-        ///     Returns a result pile override, or null to keep the current result. The first non-null contributor
-        ///     result wins; additional overrides are reported when
-        ///     <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
-        ///     返回目标牌堆覆盖；返回 null 表示保持当前结果。
+        ///     <para xml:lang="en">
+        ///         Returns a result pile override, or <see langword="null" /> to keep the current result. The first non-null contributor
+        ///         result wins; additional overrides are reported when
+        ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回目标牌堆覆盖；返回 <see langword="null" /> 表示保持当前结果。首个非空结果生效；
+        ///         启用 <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> 后会记录其他覆盖结果。
+        ///     </para>
         /// </summary>
         PileType? GetResultPileTypeForCardPlay(CardModel card)
         {
@@ -476,14 +556,19 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional card capability that can carry itself from an original card to a transform result.
-    ///     可选卡牌能力：可将自身从转化前卡牌携带到转化结果卡牌。
+    ///     <para xml:lang="en">Optional card capability that can carry itself from an original card to a transform result.</para>
+    ///     <para xml:lang="zh-CN">可选卡牌能力：可将自身从转化前卡牌携带到转化结果卡牌。</para>
     /// </summary>
     public interface ICardTransformCarryOverCapability
     {
         /// <summary>
-        ///     Returns true when this capability should be copied to <paramref name="replacement" />.
-        ///     返回 true 时，此能力会复制到 <paramref name="replacement" />。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when this capability should be copied to
+        ///         <paramref name="replacement" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <see langword="true" /> 时，此能力会复制到 <paramref name="replacement" />。
+        ///     </para>
         /// </summary>
         bool ShouldCarryOverToTransformResult(CardModel original, CardModel replacement)
         {
@@ -491,8 +576,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates the capability instance that should be attached to <paramref name="replacement" />.
-        ///     创建应附加到 <paramref name="replacement" /> 的能力实例。
+        ///     <para xml:lang="en">Creates the capability instance that should be attached to <paramref name="replacement" />.</para>
+        ///     <para xml:lang="zh-CN">创建应附加到 <paramref name="replacement" /> 的能力实例。</para>
         /// </summary>
         IModelCapability CreateCarryOverCapability(CardModel original, CardModel replacement)
         {

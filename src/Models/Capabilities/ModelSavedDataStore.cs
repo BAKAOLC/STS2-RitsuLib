@@ -3,8 +3,8 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Per-mod registry for model-saved data slots.
-    ///     每个 mod 的模型保存数据槽位注册表。
+    ///     <para xml:lang="en">Provides a per-mod registry for model-saved-data slots.</para>
+    ///     <para xml:lang="zh-CN">提供按模组划分的模型保存数据槽位注册表。</para>
     /// </summary>
     public sealed class ModelSavedDataStore
     {
@@ -22,14 +22,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Owning mod id for this store.
-        ///     此存储所属的 mod ID。
+        ///     <para xml:lang="en">Gets the ID of the mod that owns this store.</para>
+        ///     <para xml:lang="zh-CN">获取拥有此存储的模组 ID。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     Returns the process-wide store for <paramref name="modId" />.
-        ///     返回 <paramref name="modId" /> 的进程级存储。
+        ///     <para xml:lang="en">Gets the process-wide store for <paramref name="modId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 的进程级存储。</para>
         /// </summary>
         public static ModelSavedDataStore For(string modId)
         {
@@ -46,8 +46,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Registers saved data attached to mutable model instances.
-        ///     注册附加到可变模型实例上的保存数据。
+        ///     <para xml:lang="en">Registers saved data attached to mutable model instances.</para>
+        ///     <para xml:lang="zh-CN">注册附加到可变模型实例的保存数据。</para>
         /// </summary>
         public ModelSavedData<TTarget, TPayload> Register<TTarget, TPayload>(
             string key,
@@ -62,8 +62,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Registers computed saved data whose value is exported from and imported into the model directly.
-        ///     注册从模型直接导出并导入的计算型保存数据。
+        ///     <para xml:lang="en">
+        ///         Registers computed saved data whose value is exported from and imported into the model directly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册直接从模型导出值并将值导入模型的计算型保存数据。
+        ///     </para>
         /// </summary>
         public void RegisterComputed<TTarget, TPayload>(
             string key,

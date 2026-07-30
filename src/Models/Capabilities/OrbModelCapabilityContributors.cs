@@ -5,8 +5,8 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Current orb value-label display state passed to orb value display contributors.
-    ///     传给充能球数值标签贡献者的当前显示状态。
+    ///     <para xml:lang="en">Current orb value-label display state passed to orb value display contributors.</para>
+    ///     <para xml:lang="zh-CN">传给充能球数值标签贡献者的当前显示状态。</para>
     /// </summary>
     public readonly record struct OrbValueDisplayContext(
         OrbModel Orb,
@@ -16,8 +16,8 @@ namespace STS2RitsuLib.Models.Capabilities
         string EvokeText);
 
     /// <summary>
-    ///     Resolved orb value-label display state.
-    ///     已解析的充能球数值标签显示状态。
+    ///     <para xml:lang="en">Resolved orb value-label display state.</para>
+    ///     <para xml:lang="zh-CN">已解析的充能球数值标签显示状态。</para>
     /// </summary>
     public readonly record struct OrbValueDisplayState(
         ModOrbValueDisplayMode DisplayMode,
@@ -25,8 +25,8 @@ namespace STS2RitsuLib.Models.Capabilities
         string EvokeText);
 
     /// <summary>
-    ///     Context passed to orb hover-tip description contributors.
-    ///     传给充能球悬停说明贡献者的上下文。
+    ///     <para xml:lang="en">Context passed to orb hover-tip description contributors.</para>
+    ///     <para xml:lang="zh-CN">传给充能球悬停说明贡献者的上下文。</para>
     /// </summary>
     public readonly record struct OrbHoverTipDescriptionContext(
         OrbModel Orb,
@@ -34,27 +34,27 @@ namespace STS2RitsuLib.Models.Capabilities
         bool IsSmart);
 
     /// <summary>
-    ///     Placement for capability-provided orb hover-tip description fragments.
-    ///     能力提供的充能球悬停说明片段插入位置。
+    ///     <para xml:lang="en">Placement for capability-provided orb hover-tip description fragments.</para>
+    ///     <para xml:lang="zh-CN">能力提供的充能球悬停说明片段插入位置。</para>
     /// </summary>
     public enum OrbHoverTipDescriptionFragmentPlacement
     {
         /// <summary>
-        ///     Insert before the orb's own description.
-        ///     插入到充能球自身说明之前。
+        ///     <para xml:lang="en">Insert before the orb's own description.</para>
+        ///     <para xml:lang="zh-CN">插入到充能球自身说明之前。</para>
         /// </summary>
         BeforeBase,
 
         /// <summary>
-        ///     Insert after the orb's own description.
-        ///     插入到充能球自身说明之后。
+        ///     <para xml:lang="en">Insert after the orb's own description.</para>
+        ///     <para xml:lang="zh-CN">插入到充能球自身说明之后。</para>
         /// </summary>
         AfterBase,
     }
 
     /// <summary>
-    ///     Orb hover-tip description fragment contributed by a capability.
-    ///     由能力贡献的充能球悬停说明片段。
+    ///     <para xml:lang="en">Orb hover-tip description fragment contributed by a capability.</para>
+    ///     <para xml:lang="zh-CN">由能力贡献的充能球悬停说明片段。</para>
     /// </summary>
     public readonly record struct OrbHoverTipDescriptionFragment(
         string Text,
@@ -62,14 +62,14 @@ namespace STS2RitsuLib.Models.Capabilities
         int Order = 0);
 
     /// <summary>
-    ///     Optional orb capability that contributes passive/evoke value-label display overrides.
-    ///     可选充能球能力：贡献被动/激发数值标签显示覆盖。
+    ///     <para xml:lang="en">Optional orb capability that overrides passive and evoke value-label display.</para>
+    ///     <para xml:lang="zh-CN">可选充能球能力：覆盖被动与激发数值标签的显示方式。</para>
     /// </summary>
     public interface IOrbValueDisplayContributor
     {
         /// <summary>
-        ///     Returns a label visibility override, or null to keep the current mode.
-        ///     返回标签可见性覆盖；返回 null 表示保持当前模式。
+        ///     <para xml:lang="en">Returns a label visibility override, or <see langword="null" /> to keep the current mode.</para>
+        ///     <para xml:lang="zh-CN">返回标签可见性覆盖；返回 <see langword="null" /> 表示保持当前模式。</para>
         /// </summary>
         ModOrbValueDisplayMode? GetValueDisplayMode(OrbValueDisplayContext context)
         {
@@ -77,8 +77,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns passive label text, or null to keep the current text.
-        ///     返回被动标签文本；返回 null 表示保持当前文本。
+        ///     <para xml:lang="en">Returns passive label text, or <see langword="null" /> to keep the current text.</para>
+        ///     <para xml:lang="zh-CN">返回被动标签文本；返回 <see langword="null" /> 表示保持当前文本。</para>
         /// </summary>
         string? GetPassiveValueDisplayText(OrbValueDisplayContext context)
         {
@@ -86,8 +86,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns evoke label text, or null to keep the current text.
-        ///     返回激发标签文本；返回 null 表示保持当前文本。
+        ///     <para xml:lang="en">Returns evoke label text, or <see langword="null" /> to keep the current text.</para>
+        ///     <para xml:lang="zh-CN">返回激发标签文本；返回 <see langword="null" /> 表示保持当前文本。</para>
         /// </summary>
         string? GetEvokeValueDisplayText(OrbValueDisplayContext context)
         {
@@ -96,14 +96,14 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Optional orb capability that contributes text to the owning orb's primary hover tip.
-    ///     可选充能球能力：向所属充能球的主悬停提示贡献文本。
+    ///     <para xml:lang="en">Optional orb capability that contributes text to the owning orb's primary hover tip.</para>
+    ///     <para xml:lang="zh-CN">可选充能球能力：向所属充能球的主悬停提示贡献文本。</para>
     /// </summary>
     public interface IOrbHoverTipDescriptionContributor
     {
         /// <summary>
-        ///     Returns description fragments merged into the primary orb hover tip.
-        ///     返回合并到主充能球悬停提示中的说明片段。
+        ///     <para xml:lang="en">Returns description fragments merged into the primary orb hover tip.</para>
+        ///     <para xml:lang="zh-CN">返回合并到主充能球悬停提示中的说明片段。</para>
         /// </summary>
         IEnumerable<OrbHoverTipDescriptionFragment> GetHoverTipDescriptionFragments(
             OrbHoverTipDescriptionContext context);

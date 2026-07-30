@@ -7,9 +7,13 @@ using STS2RitsuLib.Cards.DynamicVars;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Model-backed capability base class. Register subclasses as model capabilities when they need a stable
-    ///     <see cref="ModelId" /> and persistence identity.
-    ///     基于模型的能力基类。需要稳定 <see cref="ModelId" /> 与持久化身份时，可将子类注册为模型能力。
+    ///     <para xml:lang="en">
+    ///         Base class for model-backed capabilities. Register subclasses as model capabilities when they need a
+    ///         stable <see cref="ModelId" /> and persistence identity.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         基于模型的能力基类。子类需要稳定的 <see cref="ModelId" /> 和持久化身份时，应将其注册为模型能力。
+    ///     </para>
     /// </summary>
     public abstract class ModelCapability : AbstractModel, IModelCapability, IModelCapabilityJsonState,
         IModelCapabilityCloneHandler, IModelDynamicVarContributor
@@ -23,11 +27,15 @@ namespace STS2RitsuLib.Models.Capabilities
             this is IModelCapabilityHookListener { ShouldReceiveOwnerHooks: true };
 
         /// <summary>
-        ///     Capability-owned dynamic vars used by localized text, gameplay commands, and card preview when the
-        ///     owner is a card. This set is independent from the owner's own dynamic-var set; read owner variables
-        ///     through <see cref="Owner" /> when capability behavior depends on them.
-        ///     能力自有动态变量；可用于本地化文本、游戏指令，以及 owner 为卡牌时的卡牌预览。该集合独立于 owner
-        ///     自身的动态变量集合；能力行为依赖 owner 变量时，应通过 <see cref="Owner" /> 读取。
+        ///     <para xml:lang="en">
+        ///         Gets capability-owned dynamic variables used by localized text, gameplay commands, and card previews
+        ///         when the owner is a card. This set is independent of the owner's dynamic variables; read owner
+        ///         variables through <see cref="Owner" /> when capability behavior depends on them.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取能力自有的动态变量；这些变量可用于本地化文本、游戏指令，并在所属模型为卡牌时用于卡牌预览。
+        ///         此集合独立于所属模型的动态变量；能力行为依赖所属模型变量时，应通过 <see cref="Owner" /> 读取。
+        ///     </para>
         /// </summary>
         public DynamicVarSet DynamicVars
         {
@@ -42,13 +50,22 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Applies an in-place mutation to this capability and marks its owning capability set dirty.
-        ///     对此能力应用原地修改，并将其所属能力集合标记为已变更。
+        ///     <para xml:lang="en">
+        ///         Invokes <paramref name="modifier" /> and marks the owning capability set dirty even if the callback
+        ///         throws.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         调用 <paramref name="modifier" />；即使回调抛出异常，也会将所属能力集合标记为脏。
+        ///     </para>
         /// </summary>
         /// <param name="modifier">
-        ///     Mutation to apply. This can be used by external callers to update capability-owned
-        ///     <see cref="DynamicVars" /> without separately marking the owner dirty.
-        ///     要应用的修改。外部调用方可借此更新能力自有的 <see cref="DynamicVars" />，无需另行将 owner 标脏。
+        ///     <para xml:lang="en">
+        ///         The mutation to apply. External callers can use it to update capability-owned
+        ///         <see cref="DynamicVars" /> without separately marking the owner dirty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         要应用的修改。外部调用方可借此更新能力自有的 <see cref="DynamicVars" />，无需另行将所属模型标记为脏。
+        ///     </para>
         /// </param>
         public void Modify(Action<ModelCapability> modifier)
         {
@@ -64,8 +81,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Capability-owned canonical dynamic vars. Override to register vars directly on the capability.
-        ///     能力拥有的动态变量原型。重写此属性即可直接在能力本身注册变量。
+        ///     <para xml:lang="en">
+        ///         Gets the capability's canonical dynamic variables. Override this property to register variables
+        ///         directly on the capability.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取能力的规范动态变量。重写此属性可直接在能力上注册变量。
+        ///     </para>
         /// </summary>
         protected virtual IEnumerable<DynamicVar> CanonicalVars => [];
 
@@ -144,8 +166,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Marks the owning capability set dirty after in-place state changes.
-        ///     在原地状态变更后将所属能力集合标记为已变更。
+        ///     <para xml:lang="en">Marks the owning capability set dirty after an in-place state change.</para>
+        ///     <para xml:lang="zh-CN">在原地修改状态后将所属能力集合标记为脏。</para>
         /// </summary>
         protected void MarkDirty()
         {
@@ -154,8 +176,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Saves extra capability state in addition to the capability dynamic vars.
-        ///     保存能力动态变量以外的额外能力状态。
+        ///     <para xml:lang="en">Saves capability state in addition to its dynamic variables.</para>
+        ///     <para xml:lang="zh-CN">保存能力动态变量之外的额外状态。</para>
         /// </summary>
         protected virtual JsonNode? SaveAdditionalState()
         {
@@ -163,16 +185,16 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Loads extra capability state in addition to the capability dynamic vars.
-        ///     读取能力动态变量以外的额外能力状态。
+        ///     <para xml:lang="en">Loads capability state in addition to its dynamic variables.</para>
+        ///     <para xml:lang="zh-CN">加载能力动态变量之外的额外状态。</para>
         /// </summary>
         protected virtual void LoadAdditionalState(JsonNode? state, int schemaVersion)
         {
         }
 
         /// <summary>
-        ///     Resets capability-owned dynamic vars to their canonical definitions.
-        ///     将能力自有动态变量重置为原型定义。
+        ///     <para xml:lang="en">Resets capability-owned dynamic variables to their canonical definitions.</para>
+        ///     <para xml:lang="zh-CN">将能力自有的动态变量重置为规范定义。</para>
         /// </summary>
         protected void ResetDynamicVarsToCanonical()
         {
@@ -203,8 +225,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes this capability from its owner collection when it is currently attached.
-        ///     当前能力已附加时，将其从所属 collection 中移除。
+        ///     <para xml:lang="en">
+        ///         Removes this capability from its owner's capability set when currently attached.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前能力已附加时，将其从所属模型的能力集合中移除。
+        ///     </para>
         /// </summary>
         public bool RemoveFromOwner()
         {
@@ -213,24 +239,28 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called when this capability is attached.
-        ///     当此能力被附加时调用。
+        ///     <para xml:lang="en">Called when this capability is attached.</para>
+        ///     <para xml:lang="zh-CN">此能力被附加时调用。</para>
         /// </summary>
         protected virtual void OnAttach(AbstractModel owner)
         {
         }
 
         /// <summary>
-        ///     Called when this capability is detached.
-        ///     当此能力被分离时调用。
+        ///     <para xml:lang="en">Called when this capability is detached.</para>
+        ///     <para xml:lang="zh-CN">此能力被分离时调用。</para>
         /// </summary>
         protected virtual void OnDetach(AbstractModel owner)
         {
         }
 
         /// <summary>
-        ///     Called only after this capability's owner has been restored as part of a saved-run load.
-        ///     仅当此能力的 owner 作为跑局读档的一部分恢复后调用。
+        ///     <para xml:lang="en">
+        ///         Called after this capability's owner is restored while loading a saved run.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         读取一局游戏的存档并恢复此能力的所属模型后调用。
+        ///     </para>
         /// </summary>
         protected virtual void OnLoadedFromSave()
         {
@@ -337,8 +367,12 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Typed base class for model-backed capabilities that only attach to <typeparamref name="TModel" />.
-    ///     只附加到 <typeparamref name="TModel" /> 的模型能力类型化基类。
+    ///     <para xml:lang="en">
+    ///         Typed base class for model-backed capabilities that attach only to <typeparamref name="TModel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         仅可附加到 <typeparamref name="TModel" /> 的类型化模型能力基类。
+    ///     </para>
     /// </summary>
     public abstract class ModelCapability<TModel> : ModelCapability, IModelCapability<TModel>
         where TModel : AbstractModel
@@ -359,24 +393,28 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Called when this capability is attached to a typed owner.
-        ///     当此能力附加到类型化 owner 时调用。
+        ///     <para xml:lang="en">Called when this capability is attached to a typed owner.</para>
+        ///     <para xml:lang="zh-CN">此能力附加到类型化所属模型时调用。</para>
         /// </summary>
         protected virtual void OnAttach(TModel owner)
         {
         }
 
         /// <summary>
-        ///     Called when this capability is detached from a typed owner.
-        ///     当此能力从类型化 owner 分离时调用。
+        ///     <para xml:lang="en">Called when this capability is detached from a typed owner.</para>
+        ///     <para xml:lang="zh-CN">此能力从类型化所属模型分离时调用。</para>
         /// </summary>
         protected virtual void OnDetach(TModel owner)
         {
         }
 
         /// <summary>
-        ///     Called only after this capability's typed owner has been restored as part of a saved-run load.
-        ///     仅当此能力的类型化 owner 作为跑局读档的一部分恢复后调用。
+        ///     <para xml:lang="en">
+        ///         Called after this capability's typed owner is restored while loading a saved run.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         读取一局游戏的存档并恢复此能力的类型化所属模型后调用。
+        ///     </para>
         /// </summary>
         protected virtual void OnLoadedFromSave(TModel owner)
         {
@@ -403,15 +441,15 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Model capability base class with a typed JSON state payload.
-    ///     带类型化 JSON 状态 payload 的模型能力基类。
+    ///     <para xml:lang="en">Base class for model capabilities with a typed JSON state payload.</para>
+    ///     <para xml:lang="zh-CN">带类型化 JSON 状态负载的模型能力基类。</para>
     /// </summary>
     public abstract class StatefulModelCapability<TState> : ModelCapability
         where TState : class, new()
     {
         /// <summary>
-        ///     Mutable capability state.
-        ///     可变能力状态。
+        ///     <para xml:lang="en">Gets the mutable capability state.</para>
+        ///     <para xml:lang="zh-CN">获取可变的能力状态。</para>
         /// </summary>
         protected TState State { get; private set; } = new();
 
@@ -428,8 +466,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Replaces state and marks the owning collection dirty.
-        ///     替换状态并将所属 collection 标记为已变更。
+        ///     <para xml:lang="en">Replaces the state and marks the owning capability set dirty.</para>
+        ///     <para xml:lang="zh-CN">替换状态，并将所属能力集合标记为脏。</para>
         /// </summary>
         protected void SetState(TState state)
         {
@@ -439,8 +477,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Mutates state and marks the owning collection dirty.
-        ///     修改状态并将所属 collection 标记为已变更。
+        ///     <para xml:lang="en">
+        ///         Invokes <paramref name="mutate" /> and marks the owning capability set dirty even if the callback
+        ///         throws.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         调用 <paramref name="mutate" />；即使回调抛出异常，也会将所属能力集合标记为脏。
+        ///     </para>
         /// </summary>
         protected void MutateState(Action<TState> mutate)
         {
@@ -456,8 +499,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Reads state, allowing subclasses to migrate old schema versions.
-        ///     读取状态，并允许子类迁移旧 schema 版本。
+        ///     <para xml:lang="en">Reads state, allowing subclasses to migrate older schema versions.</para>
+        ///     <para xml:lang="zh-CN">读取状态，并允许子类迁移旧版架构。</para>
         /// </summary>
         protected virtual TState ReadState(JsonNode? state, int schemaVersion)
         {
@@ -466,16 +509,16 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Typed model capability base class with a typed JSON state payload.
-    ///     带类型化 JSON 状态 payload 的类型化模型能力基类。
+    ///     <para xml:lang="en">Typed base class for model capabilities with a typed JSON state payload.</para>
+    ///     <para xml:lang="zh-CN">带类型化 JSON 状态负载的类型化模型能力基类。</para>
     /// </summary>
     public abstract class StatefulModelCapability<TModel, TState> : ModelCapability<TModel>
         where TModel : AbstractModel
         where TState : class, new()
     {
         /// <summary>
-        ///     Mutable capability state.
-        ///     可变能力状态。
+        ///     <para xml:lang="en">Gets the mutable capability state.</para>
+        ///     <para xml:lang="zh-CN">获取可变的能力状态。</para>
         /// </summary>
         protected TState State { get; private set; } = new();
 
@@ -492,8 +535,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Replaces state and marks the owning collection dirty.
-        ///     替换状态并将所属 collection 标记为已变更。
+        ///     <para xml:lang="en">Replaces the state and marks the owning capability set dirty.</para>
+        ///     <para xml:lang="zh-CN">替换状态，并将所属能力集合标记为脏。</para>
         /// </summary>
         protected void SetState(TState state)
         {
@@ -503,8 +546,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Mutates state and marks the owning collection dirty.
-        ///     修改状态并将所属 collection 标记为已变更。
+        ///     <para xml:lang="en">
+        ///         Invokes <paramref name="mutate" /> and marks the owning capability set dirty even if the callback
+        ///         throws.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         调用 <paramref name="mutate" />；即使回调抛出异常，也会将所属能力集合标记为脏。
+        ///     </para>
         /// </summary>
         protected void MutateState(Action<TState> mutate)
         {
@@ -520,8 +568,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Reads state, allowing subclasses to migrate old schema versions.
-        ///     读取状态，并允许子类迁移旧 schema 版本。
+        ///     <para xml:lang="en">Reads state, allowing subclasses to migrate older schema versions.</para>
+        ///     <para xml:lang="zh-CN">读取状态，并允许子类迁移旧版架构。</para>
         /// </summary>
         protected virtual TState ReadState(JsonNode? state, int schemaVersion)
         {

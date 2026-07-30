@@ -3,8 +3,8 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Registry for capability ids and factories.
-    ///     能力 ID 与工厂的注册表。
+    ///     <para xml:lang="en">Registry for capability ids and factories.</para>
+    ///     <para xml:lang="zh-CN">能力 ID 与工厂的注册表。</para>
     /// </summary>
     public static class ModelCapabilityRegistry
     {
@@ -19,8 +19,8 @@ namespace STS2RitsuLib.Models.Capabilities
         private static readonly Dictionary<Type, string> TypeIds = [];
 
         /// <summary>
-        ///     Registers or replaces a capability factory.
-        ///     注册或替换能力工厂。
+        ///     <para xml:lang="en">Registers or replaces a capability factory.</para>
+        ///     <para xml:lang="zh-CN">注册或替换能力工厂。</para>
         /// </summary>
         public static void Register(string capabilityId, Type capabilityType, Func<IModelCapability> factory)
         {
@@ -49,8 +49,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Registers a capability factory.
-        ///     注册能力工厂。
+        ///     <para xml:lang="en">Registers a capability factory.</para>
+        ///     <para xml:lang="zh-CN">注册能力工厂。</para>
         /// </summary>
         public static void Register<TCapability>(string capabilityId, Func<TCapability> factory)
             where TCapability : IModelCapability
@@ -60,8 +60,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Registers a parameterless capability factory.
-        ///     注册无参能力工厂。
+        ///     <para xml:lang="en">Registers a parameterless capability factory.</para>
+        ///     <para xml:lang="zh-CN">注册无参能力工厂。</para>
         /// </summary>
         public static void Register<TCapability>(string capabilityId)
             where TCapability : IModelCapability, new()
@@ -70,8 +70,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a capability by id.
-        ///     通过 ID 创建能力。
+        ///     <para xml:lang="en">Creates a capability by ID.</para>
+        ///     <para xml:lang="zh-CN">通过 ID 创建能力。</para>
         /// </summary>
         public static bool TryCreate(string capabilityId, out IModelCapability capability)
         {
@@ -103,8 +103,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a capability by registered type, if a matching factory exists.
-        ///     按已注册类型创建能力（如果存在匹配工厂）。
+        ///     <para xml:lang="en">Creates a capability by registered type, if a matching factory exists.</para>
+        ///     <para xml:lang="zh-CN">按已注册类型创建能力（如果存在匹配工厂）。</para>
         /// </summary>
         public static bool TryCreate<TCapability>(out TCapability capability)
             where TCapability : class, IModelCapability
@@ -123,8 +123,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a capability by id or throws when no factory is registered.
-        ///     通过 ID 创建能力；未注册工厂时抛出异常。
+        ///     <para xml:lang="en">Creates a capability by ID or throws when no factory is registered.</para>
+        ///     <para xml:lang="zh-CN">通过 ID 创建能力；未注册工厂时抛出异常。</para>
         /// </summary>
         public static IModelCapability Create(string capabilityId)
         {
@@ -134,8 +134,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a capability by registered type or throws when no matching factory is registered.
-        ///     按已注册类型创建能力；未注册匹配工厂时抛出异常。
+        ///     <para xml:lang="en">Creates a capability by registered type or throws when no matching factory is registered.</para>
+        ///     <para xml:lang="zh-CN">按已注册类型创建能力；未注册匹配工厂时抛出异常。</para>
         /// </summary>
         public static TCapability Create<TCapability>()
             where TCapability : class, IModelCapability
@@ -151,8 +151,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets the registered capability id for a capability type, if any.
-        ///     获取能力类型已注册的能力 ID（如果存在）。
+        ///     <para xml:lang="en">Gets the registered capability ID for a capability type, if any.</para>
+        ///     <para xml:lang="zh-CN">获取能力类型已注册的能力 ID（如果存在）。</para>
         /// </summary>
         public static string? GetCapabilityId(Type capabilityType)
         {
@@ -164,8 +164,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets the registered capability id for <typeparamref name="TCapability" />, if any.
-        ///     获取 <typeparamref name="TCapability" /> 已注册的能力 ID（如果存在）。
+        ///     <para xml:lang="en">Gets the registered capability ID for <typeparamref name="TCapability" />, if any.</para>
+        ///     <para xml:lang="zh-CN">获取 <typeparamref name="TCapability" /> 已注册的能力 ID（如果存在）。</para>
         /// </summary>
         public static string? GetCapabilityId<TCapability>() where TCapability : IModelCapability
         {
@@ -173,8 +173,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Attempts to resolve the capability type registered for <paramref name="capabilityId" />.
-        ///     尝试解析 <paramref name="capabilityId" /> 注册的能力类型。
+        ///     <para xml:lang="en">Attempts to resolve the capability type registered for <paramref name="capabilityId" />.</para>
+        ///     <para xml:lang="zh-CN">尝试解析 <paramref name="capabilityId" /> 注册的能力类型。</para>
         /// </summary>
         public static bool TryGetCapabilityType(string capabilityId, out Type capabilityType)
         {

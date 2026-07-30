@@ -4,8 +4,8 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models
 {
     /// <summary>
-    ///     LocString table/key mapping for a known model family.
-    ///     已知模型族的 LocString 表/key 映射。
+    ///     <para xml:lang="en"><see cref="LocString" /> table-and-key mapping for a known model family.</para>
+    ///     <para xml:lang="zh-CN">已知模型族的 <see cref="LocString" /> 表与键映射。</para>
     /// </summary>
     public sealed record ModelLocStringSource(
         Type ModelType,
@@ -14,8 +14,8 @@ namespace STS2RitsuLib.Models
         Func<AbstractModel, LocString> Resolve)
     {
         /// <summary>
-        ///     Returns whether this source applies to <paramref name="model" />.
-        ///     返回此来源是否适用于 <paramref name="model" />。
+        ///     <para xml:lang="en">Determines whether this source applies to <paramref name="model" />.</para>
+        ///     <para xml:lang="zh-CN">确定此来源是否适用于 <paramref name="model" />。</para>
         /// </summary>
         public bool Matches(AbstractModel model)
         {
@@ -25,8 +25,12 @@ namespace STS2RitsuLib.Models
         }
 
         /// <summary>
-        ///     Creates a LocString from the mapped table and key without reading the model property.
-        ///     仅使用映射的表和 key 创建 LocString，不读取模型属性。
+        ///     <para xml:lang="en">
+        ///         Creates a <see cref="LocString" /> from the mapped table and key without reading the model property.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         仅使用映射的表与键创建 <see cref="LocString" />，不读取模型属性。
+        ///     </para>
         /// </summary>
         public LocString CreateDefault(AbstractModel model)
         {
