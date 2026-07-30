@@ -12,15 +12,33 @@ using STS2RitsuLib.Networking.Sidecar;
 namespace STS2RitsuLib.Networking.ManagedActions
 {
     /// <summary>
-    ///     Describes a RitsuLib-managed action carried by vanilla action enqueue messages.
-    ///     描述一个由原版 action 入队消息承载的 RitsuLib managed action。
+    ///     <para xml:lang="en">Describes a RitsuLib-managed action carried by a vanilla action-enqueue message.</para>
+    ///     <para xml:lang="zh-CN">描述由原版动作入队消息承载的 RitsuLib 托管动作。</para>
     /// </summary>
-    /// <param name="ModuleId">Stable owner id for opcode derivation.</param>
-    /// <param name="ActionKey">Stable action key for opcode derivation.</param>
-    /// <param name="Serialize">Serializes the typed payload.</param>
-    /// <param name="Deserialize">Deserializes the typed payload.</param>
-    /// <param name="Execute">Runs when the vanilla queue action executes.</param>
-    /// <param name="ActionType">Vanilla queue action type.</param>
+    /// <param name="ModuleId">
+    ///     <para xml:lang="en">Stable owner ID used to derive the opcode.</para>
+    ///     <para xml:lang="zh-CN">用于派生操作码的稳定所有者 ID。</para>
+    /// </param>
+    /// <param name="ActionKey">
+    ///     <para xml:lang="en">Stable action key used to derive the opcode.</para>
+    ///     <para xml:lang="zh-CN">用于派生操作码的稳定动作键。</para>
+    /// </param>
+    /// <param name="Serialize">
+    ///     <para xml:lang="en">Serializes the typed payload.</para>
+    ///     <para xml:lang="zh-CN">序列化强类型载荷。</para>
+    /// </param>
+    /// <param name="Deserialize">
+    ///     <para xml:lang="en">Deserializes the typed payload.</para>
+    ///     <para xml:lang="zh-CN">反序列化强类型载荷。</para>
+    /// </param>
+    /// <param name="Execute">
+    ///     <para xml:lang="en">Runs when the vanilla queue action executes.</para>
+    ///     <para xml:lang="zh-CN">在原版队列动作执行时运行。</para>
+    /// </param>
+    /// <param name="ActionType">
+    ///     <para xml:lang="en">Vanilla queue action type.</para>
+    ///     <para xml:lang="zh-CN">原版队列动作类型。</para>
+    /// </param>
     public sealed record RitsuLibManagedNetActionDescriptor<T>(
         string ModuleId,
         string ActionKey,
@@ -30,13 +48,25 @@ namespace STS2RitsuLib.Networking.ManagedActions
         GameActionType ActionType);
 
     /// <summary>
-    ///     Runtime context delivered to a managed net action executor.
-    ///     传递给 managed net action 执行器的运行时上下文。
+    ///     <para xml:lang="en">Provides runtime context to a managed net-action executor.</para>
+    ///     <para xml:lang="zh-CN">向托管网络动作执行器提供运行时上下文。</para>
     /// </summary>
-    /// <param name="Message">Typed action payload.</param>
-    /// <param name="Player">Player that owns the queued action.</param>
-    /// <param name="Action">Underlying vanilla queue action.</param>
-    /// <param name="PlayerChoiceContext">Queue-backed choice context for command APIs.</param>
+    /// <param name="Message">
+    ///     <para xml:lang="en">Typed action payload.</para>
+    ///     <para xml:lang="zh-CN">强类型动作载荷。</para>
+    /// </param>
+    /// <param name="Player">
+    ///     <para xml:lang="en">Player that owns the queued action.</para>
+    ///     <para xml:lang="zh-CN">拥有该队列动作的玩家。</para>
+    /// </param>
+    /// <param name="Action">
+    ///     <para xml:lang="en">Underlying vanilla queue action.</para>
+    ///     <para xml:lang="zh-CN">底层原版队列动作。</para>
+    /// </param>
+    /// <param name="PlayerChoiceContext">
+    ///     <para xml:lang="en">Queue-backed choice context for command APIs.</para>
+    ///     <para xml:lang="zh-CN">供命令 API 使用的队列支持选择上下文。</para>
+    /// </param>
     public readonly record struct RitsuLibManagedNetActionContext<T>(
         T Message,
         Player Player,
@@ -44,14 +74,14 @@ namespace STS2RitsuLib.Networking.ManagedActions
         GameActionPlayerChoiceContext PlayerChoiceContext);
 
     /// <summary>
-    ///     Registers and requests RitsuLib-managed actions through vanilla action enqueue messages.
-    ///     通过原版 action 入队消息注册和请求 RitsuLib managed action。
+    ///     <para xml:lang="en">Registers and requests RitsuLib-managed actions through vanilla action-enqueue messages.</para>
+    ///     <para xml:lang="zh-CN">通过原版动作入队消息注册和请求 RitsuLib 托管动作。</para>
     /// </summary>
     public static class RitsuLibManagedNetActions
     {
         /// <summary>
-        ///     Maximum serialized payload size for one managed queue action.
-        ///     单个 managed queue action 的最大序列化载荷大小。
+        ///     <para xml:lang="en">Maximum serialized payload size for one managed queue action.</para>
+        ///     <para xml:lang="zh-CN">单个托管队列动作的最大序列化载荷大小。</para>
         /// </summary>
         public const int MaxPayloadBytes = 64 * 1024;
 
@@ -66,8 +96,13 @@ namespace STS2RitsuLib.Networking.ManagedActions
         private static readonly Dictionary<ulong, RegistrationBase> Registrations = [];
 
         /// <summary>
-        ///     Registers a managed net action descriptor and returns its stable opcode.
-        ///     注册 managed net action descriptor，并返回其稳定 opcode。
+        ///     <para xml:lang="en">
+        ///         Registers a managed net-action descriptor and returns its stable opcode. Registering the same
+        ///         module, action key, type, and action type is idempotent; an opcode conflict throws.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册托管网络动作描述符并返回其稳定操作码。以相同模块、动作键、类型和动作类型重复注册是幂等的；操作码冲突会抛出异常。
+        ///     </para>
         /// </summary>
         public static ulong Register<T>(RitsuLibManagedNetActionDescriptor<T> descriptor)
         {
@@ -106,8 +141,14 @@ namespace STS2RitsuLib.Networking.ManagedActions
         }
 
         /// <summary>
-        ///     Requests a managed action through the vanilla action queue synchronizer.
-        ///     通过原版 action queue synchronizer 请求一个 managed action。
+        ///     <para xml:lang="en">
+        ///         Serializes and requests a managed action through the vanilla action-queue synchronizer. A
+        ///         <see langword="true" /> result means the enqueue request was issued, not that its executor ran
+        ///         successfully.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         序列化并通过原版动作队列同步器请求托管动作。返回 <see langword="true" /> 表示已发出入队请求，不表示其执行器已经成功运行。
+        ///     </para>
         /// </summary>
         public static bool Request<T>(
             RunManager? runManager,
@@ -399,8 +440,13 @@ namespace STS2RitsuLib.Networking.ManagedActions
     }
 
     /// <summary>
-    ///     Vanilla queue action that executes a RitsuLib-managed payload.
-    ///     执行 RitsuLib managed payload 的原版队列 action。
+    ///     <para xml:lang="en">
+    ///         Represents a vanilla queue action that executes a RitsuLib-managed payload. Missing registrations and
+    ///         executor failures are logged and suppressed, so the vanilla action queue continues.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示执行 RitsuLib 托管载荷的原版队列动作。缺失注册和执行器失败会被记录并抑制，因此原版动作队列将继续运行。
+    ///     </para>
     /// </summary>
     public sealed class RitsuLibManagedGameAction(
         Player player,
@@ -410,20 +456,20 @@ namespace STS2RitsuLib.Networking.ManagedActions
         : GameAction
     {
         /// <summary>
-        ///     Player that owns this queued action.
-        ///     拥有此队列 action 的玩家。
+        ///     <para xml:lang="en">Player that owns this queued action.</para>
+        ///     <para xml:lang="zh-CN">拥有该队列动作的玩家。</para>
         /// </summary>
         public Player Player { get; } = player;
 
         /// <summary>
-        ///     Stable descriptor opcode that identifies the managed action executor.
-        ///     标识 managed action 执行器的稳定 descriptor opcode。
+        ///     <para xml:lang="en">Stable descriptor opcode that identifies the managed-action executor.</para>
+        ///     <para xml:lang="zh-CN">标识托管动作执行器的稳定描述符操作码。</para>
         /// </summary>
         public ulong DescriptorOpcode { get; } = descriptorOpcode;
 
         /// <summary>
-        ///     Serialized payload owned by the descriptor.
-        ///     由 descriptor 管理的序列化载荷。
+        ///     <para xml:lang="en">Serialized payload owned by the descriptor.</para>
+        ///     <para xml:lang="zh-CN">由描述符管理的序列化载荷。</para>
         /// </summary>
         public byte[] Payload { get; } = payload;
 

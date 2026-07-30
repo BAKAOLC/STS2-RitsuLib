@@ -6,18 +6,18 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Sends raw sidecar envelopes on the vanilla transport without using the game INetMessage serialization path.
-    ///     在不使用游戏 INetMessage 序列化路径的情况下，通过原版传输发送原始 sidecar envelope。
+    ///     <para xml:lang="en">Sends raw Sidecar envelopes over the vanilla transport without the game's <c>INetMessage</c> serialization path.</para>
+    ///     <para xml:lang="zh-CN">在不经过游戏 <c>INetMessage</c> 序列化路径的情况下，通过原版传输发送原始 Sidecar 信封。</para>
     /// </summary>
     public static class RitsuLibSidecarSend
     {
         /// <summary>
-        ///     Maps <see cref="NetTransferMode" /> to a recommended ENet channel distinct from vanilla 0/1.
-        ///     将 <see cref="NetTransferMode" /> 映射到区别于原版 0/1 的推荐 ENet channel。
+        ///     <para xml:lang="en">Maps <see cref="NetTransferMode" /> to a recommended ENet channel distinct from vanilla channels 0 and 1.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="NetTransferMode" /> 映射到不同于原版通道 0 和 1 的推荐 ENet 通道。</para>
         /// </summary>
         /// <param name="mode">
-        ///     Reliable or unreliable send mode.
-        ///     可靠或不可靠发送模式。
+        ///     <para xml:lang="en">Reliable or unreliable send mode.</para>
+        ///     <para xml:lang="zh-CN">可靠或不可靠发送模式。</para>
         /// </param>
         public static int RecommendedChannel(NetTransferMode mode)
         {
@@ -31,8 +31,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Client sends one envelope to the host.
-        ///     客户端向主机发送一个 envelope。
+        ///     <para xml:lang="en">Sends one envelope from a client to its host.</para>
+        ///     <para xml:lang="zh-CN">从客户端向其主机发送一个信封。</para>
         /// </summary>
         public static bool TrySendToHost(
             RunManager? runManager,
@@ -44,10 +44,14 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Client sends one envelope to the host using an existing <see cref="INetGameService" /> (e.g. lobby
-        ///     before <see cref="RunManager" /> has <see cref="RunManager.NetService" /> assigned).
-        ///     客户端使用现有 <see cref="INetGameService" /> 向主机发送一个 envelope（例如 lobby
-        ///     阶段，在 <see cref="RunManager" /> 尚未分配 <see cref="RunManager.NetService" /> 之前）。
+        ///     <para xml:lang="en">
+        ///         Sends one envelope from a client to its host through an existing <see cref="INetGameService" />,
+        ///         including during a lobby before <see cref="RunManager.NetService" /> is assigned.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过现有 <see cref="INetGameService" /> 从客户端向其主机发送一个信封，包括尚未分配
+        ///         <see cref="RunManager.NetService" /> 的大厅阶段。
+        ///     </para>
         /// </summary>
         public static bool TrySendToHost(
             INetGameService? netService,
@@ -87,8 +91,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Host sends one envelope to a single peer.
-        ///     主机向单个 peer 发送一个 envelope。
+        ///     <para xml:lang="en">Sends one envelope from a host to a single peer.</para>
+        ///     <para xml:lang="zh-CN">从主机向单个对等方发送一个信封。</para>
         /// </summary>
         public static bool TrySendToPeer(
             RunManager? runManager,
@@ -143,8 +147,15 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Host broadcasts to every peer that is ready for vanilla-style broadcast replication.
-        ///     主机向每个已准备好进行原版式广播复制的 peer 广播。
+        ///     <para xml:lang="en">
+        ///         Attempts to send an envelope from a host to every peer ready for vanilla-style broadcast replication.
+        ///         For a valid host transport, it returns <see langword="true" /> even when no eligible peer receives
+        ///         the envelope or every eligible send fails with <see cref="InvalidOperationException" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从主机向每个已准备好原版式广播复制的对等方发送信封。对于有效的主机传输，即使没有符合条件的对等方收到信封，或每次
+        ///         符合条件的发送都因 <see cref="InvalidOperationException" /> 失败，它仍返回 <see langword="true" />。
+        ///     </para>
         /// </summary>
         public static bool TryBroadcastToReadyPeers(
             RunManager? runManager,
@@ -212,12 +223,18 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Host sends the same raw envelope to every <see cref="NetHostGameService.ConnectedPeers" /> entry, without
-        ///     requiring <see cref="MegaCrit.Sts2.Core.Entities.Multiplayer.NetClientData.readyForBroadcasting" />. Use in lobby
-        ///     (or any phase before vanilla marks peers ready) when ready-only broadcast would skip every peer.
-        ///     主机将同一个原始 envelope 发送给每个 <see cref="NetHostGameService.ConnectedPeers" /> 条目，而不
-        ///     要求 <see cref="MegaCrit.Sts2.Core.Entities.Multiplayer.NetClientData.readyForBroadcasting" />。在 lobby
-        ///     （或原版标记 peer 为 ready 之前的任何阶段）中使用，避免 ready-only broadcast 跳过所有 peer。
+        ///     <para xml:lang="en">
+        ///         Attempts to send the same raw envelope to every <see cref="NetHostGameService.ConnectedPeers" /> entry
+        ///         without requiring <see cref="MegaCrit.Sts2.Core.Entities.Multiplayer.NetClientData.readyForBroadcasting" />.
+        ///         For a valid host transport, it returns <see langword="true" /> even when no peer receives the
+        ///         envelope or every send fails with <see cref="InvalidOperationException" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试向每个 <see cref="NetHostGameService.ConnectedPeers" /> 条目发送同一原始信封，而不要求
+        ///         <see cref="MegaCrit.Sts2.Core.Entities.Multiplayer.NetClientData.readyForBroadcasting" />。对于有效的主机传输，
+        ///         即使没有对等方收到信封，或每次发送都因 <see cref="InvalidOperationException" /> 失败，它仍返回
+        ///         <see langword="true" />。
+        ///     </para>
         /// </summary>
         public static bool TryBroadcastToAllConnectedClients(
             INetGameService? netService,
