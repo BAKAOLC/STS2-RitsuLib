@@ -2249,19 +2249,12 @@ namespace STS2RitsuLib.Settings
 
             if (page.EnabledWhen != null)
             {
-                ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, page.EnabledWhen());
-                ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, page.EnabledWhen());
-                bool enabled;
+                var initiallyEnabled = ModSettingsPredicate.Evaluate(page.EnabledWhen);
+                ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, initiallyEnabled);
+                ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, initiallyEnabled);
                 RegisterRefreshAction(() =>
                 {
-                    try
-                    {
-                        enabled = page.EnabledWhen();
-                    }
-                    catch
-                    {
-                        enabled = true;
-                    }
+                    var enabled = ModSettingsPredicate.Evaluate(page.EnabledWhen);
 
                     ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, enabled);
                     ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, enabled);
