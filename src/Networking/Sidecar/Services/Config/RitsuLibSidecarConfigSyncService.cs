@@ -39,6 +39,7 @@ namespace STS2RitsuLib.Networking.Sidecar
     public static class RitsuLibSidecarConfigSyncService
     {
         private static readonly Lock Gate = new();
+        private static readonly Lock HandlerGate = new();
         private static readonly Dictionary<string, TopicState> Topics = [];
 
         private static readonly RitsuLibSidecarMessageDescriptor<ConfigStateSnapshotMessage> SnapshotDescriptor = new(
@@ -59,7 +60,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             m => JsonSerializer.SerializeToUtf8Bytes(m),
             payload => JsonSerializer.Deserialize<ConfigChangeDecisionMessage>(payload));
 
-        private static int _bootstrapped;
+        private static IDisposable? _handlerSubscriptions;
 
         /// <summary>
         ///     Raised when a topic state is updated locally or from remote snapshot/decision.
@@ -98,7 +99,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                         {
                             RitsuLibSidecarRepeatedWarningLog.Warn(
                                 $"config-can-client-request:topic={topic}:sender={sender}:{ex.GetType().FullName}:{ex.Message}",
-                                $"[Sidecar] Config canClientRequest failed topic={topic}, sender={sender}: {ex.Message}");
+                                $"[Sidecar] Config canClientRequest failed topic={topic}, sender={sender}: {ex}");
                             return false;
                         }
                     },
@@ -106,17 +107,17 @@ namespace STS2RitsuLib.Networking.Sidecar
                     {
                         if (!TryDeserialize(stateJson, out TState state) ||
                             !TryDeserialize(deltaJson, out TDelta delta))
-                            return stateJson;
+                            return new(false, stateJson);
                         try
                         {
-                            return JsonSerializer.Serialize(applyDelta(state, delta));
+                            return new(true, JsonSerializer.Serialize(applyDelta(state, delta)));
                         }
                         catch (Exception ex)
                         {
                             RitsuLibSidecarRepeatedWarningLog.Warn(
                                 $"config-apply-delta:topic={topic}:{ex.GetType().FullName}:{ex.Message}",
-                                $"[Sidecar] Config applyDelta failed topic={topic}: {ex.Message}");
-                            return stateJson;
+                                $"[Sidecar] Config applyDelta failed topic={topic}: {ex}");
+                            return new(false, stateJson);
                         }
                     });
             }
@@ -194,12 +195,32 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private static void EnsureHandlers()
         {
-            if (Interlocked.CompareExchange(ref _bootstrapped, 1, 0) != 0)
+            if (_handlerSubscriptions != null)
                 return;
 
-            RitsuLibSidecarTypedMessageRegistry.Subscribe(RequestDescriptor, OnRequestMessage);
-            RitsuLibSidecarTypedMessageRegistry.Subscribe(SnapshotDescriptor, OnSnapshotMessage);
-            RitsuLibSidecarTypedMessageRegistry.Subscribe(DecisionDescriptor, OnDecisionMessage);
+            lock (HandlerGate)
+            {
+                if (_handlerSubscriptions != null)
+                    return;
+
+                IDisposable? request = null;
+                IDisposable? snapshot = null;
+                IDisposable? decision = null;
+                try
+                {
+                    request = RitsuLibSidecarTypedMessageRegistry.Subscribe(RequestDescriptor, OnRequestMessage);
+                    snapshot = RitsuLibSidecarTypedMessageRegistry.Subscribe(SnapshotDescriptor, OnSnapshotMessage);
+                    decision = RitsuLibSidecarTypedMessageRegistry.Subscribe(DecisionDescriptor, OnDecisionMessage);
+                    _handlerSubscriptions = new HandlerSubscriptionGroup(request, snapshot, decision);
+                }
+                catch
+                {
+                    decision?.Dispose();
+                    snapshot?.Dispose();
+                    request?.Dispose();
+                    throw;
+                }
+            }
         }
 
         private static void OnRequestMessage(RitsuLibSidecarTypedDispatchContext<ConfigChangeRequestMessage> ctx)
@@ -211,33 +232,37 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             bool approved;
             string reason;
-            TopicState? next;
+            long revision;
+            string stateJson;
             lock (Gate)
             {
                 if (!Topics.TryGetValue(ctx.Message.Topic, out var topic))
                 {
                     approved = false;
                     reason = "topic_not_found";
-                    next = null;
+                    revision = 0;
+                    stateJson = string.Empty;
                 }
                 else if (!topic.CanClientRequest(ctx.SenderNetId, ctx.Message.DeltaJson))
                 {
                     approved = false;
                     reason = "client_request_rejected";
-                    next = topic;
+                    revision = topic.Revision;
+                    stateJson = topic.StateJson;
                 }
                 else
                 {
-                    approved = true;
-                    reason = string.IsNullOrWhiteSpace(ctx.Message.Reason) ? "applied" : ctx.Message.Reason;
-                    var nextState = topic.ApplyDelta(topic.StateJson, ctx.Message.DeltaJson);
-                    next = topic with { Revision = topic.Revision + 1, StateJson = nextState };
-                    Topics[ctx.Message.Topic] = next.Value;
+                    var applied = topic.ApplyDelta(topic.StateJson, ctx.Message.DeltaJson);
+                    approved = applied.Succeeded;
+                    reason = approved
+                        ? string.IsNullOrWhiteSpace(ctx.Message.Reason) ? "applied" : ctx.Message.Reason
+                        : "apply_delta_failed";
+                    revision = approved ? topic.Revision + 1 : topic.Revision;
+                    stateJson = approved ? applied.StateJson : topic.StateJson;
+                    if (approved)
+                        Topics[ctx.Message.Topic] = topic with { Revision = revision, StateJson = stateJson };
                 }
             }
-
-            if (next == null)
-                return;
 
             RitsuLibSidecarTypedMessageRegistry.SendToPeer(
                 netService,
@@ -248,8 +273,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                     ctx.Message.RequestId,
                     approved,
                     reason,
-                    next.Value.Revision,
-                    next.Value.StateJson));
+                    revision,
+                    stateJson));
             if (!approved)
                 return;
 
@@ -267,7 +292,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     ctx.Message.Revision,
                     ctx.Message.StateJson,
                     (_, _) => false,
-                    (state, _) => state);
+                    (state, _) => new(true, state));
             }
 
             TopicChanged?.Invoke(
@@ -295,7 +320,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     ctx.Message.Revision,
                     ctx.Message.StateJson,
                     (_, _) => false,
-                    (state, _) => state);
+                    (state, _) => new(true, state));
             }
 
             TopicChanged?.Invoke(
@@ -332,6 +357,21 @@ namespace STS2RitsuLib.Networking.Sidecar
             long Revision,
             string StateJson,
             Func<ulong, string, bool> CanClientRequest,
-            Func<string, string, string> ApplyDelta);
+            Func<string, string, DeltaApplyResult> ApplyDelta);
+
+        private readonly record struct DeltaApplyResult(bool Succeeded, string StateJson);
+
+        private sealed class HandlerSubscriptionGroup(
+            IDisposable request,
+            IDisposable snapshot,
+            IDisposable decision) : IDisposable
+        {
+            public void Dispose()
+            {
+                decision.Dispose();
+                snapshot.Dispose();
+                request.Dispose();
+            }
+        }
     }
 }
