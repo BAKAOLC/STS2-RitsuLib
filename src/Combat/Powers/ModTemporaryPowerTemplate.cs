@@ -84,10 +84,10 @@ namespace STS2RitsuLib.Combat.Powers
 
         /// <inheritdoc />
 #if !STS2_AT_LEAST_0_105_0
-        public override bool IsInstanced => LastForXExtraTurns != 0;
+        public override bool IsInstanced => ValidatedExtraTurnCycles > 0;
 #else
         public override PowerInstanceType InstanceType =>
-            LastForXExtraTurns != 0 ? PowerInstanceType.Instanced : PowerInstanceType.None;
+            ValidatedExtraTurnCycles > 0 ? PowerInstanceType.Instanced : PowerInstanceType.None;
 #endif
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace STS2RitsuLib.Combat.Powers
             }
 
             if (RemainingExtraTurnCycles == 0)
-                RemainingExtraTurnCycles = LastForXExtraTurns;
+                RemainingExtraTurnCycles = ValidatedExtraTurnCycles;
             await ApplyInternalPower(new ThrowingPlayerChoiceContext(), target, SignedAmount(amount), applier,
                 cardSource, true);
         }
@@ -256,6 +256,18 @@ namespace STS2RitsuLib.Combat.Powers
             yield return new IntVar(ExtraTurnCyclesVarName, 0);
             foreach (var dynVar in additionalVars)
                 yield return dynVar;
+        }
+
+        private int ValidatedExtraTurnCycles
+        {
+            get
+            {
+                var extraTurnCycles = LastForXExtraTurns;
+                if (extraTurnCycles < 0)
+                    throw new InvalidOperationException(
+                        $"{nameof(LastForXExtraTurns)} cannot be negative.");
+                return extraTurnCycles;
+            }
         }
 
         private IEnumerable<IHoverTip> ResolveExtraHoverTips()
