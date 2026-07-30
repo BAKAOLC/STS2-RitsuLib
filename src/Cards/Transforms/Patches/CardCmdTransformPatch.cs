@@ -25,18 +25,19 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
 
         public static void Prefix(
             ref IEnumerable<CardTransformation> transformations,
-            out TransformSnapshot[] __state)
+            out TransformCaptureState __state)
         {
-            var snapshot = transformations.ToArray();
-            transformations = snapshot;
-            __state = CaptureSortedOriginals(snapshot);
+            __state = new();
+            transformations = Capture(transformations, __state);
         }
 
         public static void Postfix(
-            TransformSnapshot[] __state,
+            TransformCaptureState __state,
             ref Task<IEnumerable<CardPileAddResult>> __result)
         {
-            __result = LifecyclePatchTaskBridge.After(__result, results => NotifyAsync(__state, results));
+            __result = LifecyclePatchTaskBridge.After(
+                __result,
+                results => NotifyAsync(__state.Snapshots, results));
         }
 
         private static async Task NotifyAsync(TransformSnapshot[] originals, IEnumerable<CardPileAddResult> results)
@@ -65,16 +66,46 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
         private static TransformSnapshot[] CaptureSortedOriginals(IReadOnlyList<CardTransformation> transformations)
         {
             var snapshots = new TransformSnapshot[transformations.Count];
+            var remainingCardsByPile = new Dictionary<CardPile, List<CardModel>>(ReferenceEqualityComparer.Instance);
             for (var i = 0; i < transformations.Count; i++)
             {
                 var original = transformations[i].Original;
                 var pile = original.Pile;
-                var index = pile == null ? -1 : IndexOf(pile.Cards, original);
+                var index = -1;
+                if (pile != null)
+                {
+                    if (!remainingCardsByPile.TryGetValue(pile, out var remainingCards))
+                    {
+                        remainingCards = [.. pile.Cards];
+                        remainingCardsByPile[pile] = remainingCards;
+                    }
+
+                    index = IndexOf(remainingCards, original);
+                    if (index >= 0)
+                        remainingCards.RemoveAt(index);
+                }
+
                 snapshots[i] = new(original, pile, index, i);
             }
 
             Array.Sort(snapshots, Compare);
             return snapshots;
+        }
+
+        private static IEnumerable<CardTransformation> Capture(
+            IEnumerable<CardTransformation> transformations,
+            TransformCaptureState state)
+        {
+            ArgumentNullException.ThrowIfNull(transformations);
+
+            var captured = new List<CardTransformation>();
+            foreach (var transformation in transformations)
+            {
+                captured.Add(transformation);
+                yield return transformation;
+            }
+
+            state.Snapshots = CaptureSortedOriginals(captured);
         }
 
         private static int Compare(TransformSnapshot x, TransformSnapshot y)
@@ -100,5 +131,10 @@ namespace STS2RitsuLib.Cards.Transforms.Patches
             CardPile? Pile,
             int PileIndex,
             int InputIndex);
+
+        internal sealed class TransformCaptureState
+        {
+            public TransformSnapshot[] Snapshots { get; set; } = [];
+        }
     }
 }
