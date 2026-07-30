@@ -110,6 +110,10 @@ namespace STS2RitsuLib.Cards
             PlayerChoiceContext choiceContext,
             CardPlay cardPlay)
         {
+            ArgumentNullException.ThrowIfNull(card);
+            ArgumentNullException.ThrowIfNull(choiceContext);
+            ArgumentNullException.ThrowIfNull(cardPlay);
+
             var combatState = card.CombatState;
             var suppressOriginal = combatState != null &&
                                    await BeforeCardOnPlay(new(combatState, choiceContext, cardPlay));
