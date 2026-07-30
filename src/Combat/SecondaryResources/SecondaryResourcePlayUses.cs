@@ -5,34 +5,41 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Semantic role for a secondary-resource card-play use.
-    ///     次级资源出牌条款的语义角色。
+    ///     <para xml:lang="en">Specifies the payment role of a secondary-resource card-play use.</para>
+    ///     <para xml:lang="zh-CN">指定次级资源出牌支付条款的用途。</para>
     /// </summary>
     public enum SecondaryResourceUseKind
     {
         /// <summary>
-        ///     Required payment. If the player cannot pay it, the card cannot be played.
-        ///     必需支付；玩家无法支付时，卡牌不能打出。
+        ///     <para xml:lang="en">
+        ///         Represents a required payment that prevents card play when it cannot be satisfied, unless its
+        ///         insufficient-payment policy permits the shortfall.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">表示一项必需支付；无法满足时会阻止出牌，除非资源不足支付策略允许该缺口。</para>
         /// </summary>
         RequiredCost,
 
         /// <summary>
-        ///     Optional payment. If the player can pay it, it is spent and activates its ledger line; otherwise the card
-        ///     still plays.
-        ///     可选支付；玩家可支付时消耗并激活 ledger 行，否则卡牌仍可打出。
+        ///     <para xml:lang="en">
+        ///         Represents an optional payment that activates when it can be paid and never prevents card play.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">表示一项可选支付；可支付时激活，且永远不会阻止出牌。</para>
         /// </summary>
         OptionalSpend,
 
         /// <summary>
-        ///     Repeatable extra payment. After required payments are reserved, spends as many full stacks as possible.
-        ///     可重复额外支付；必需支付预留后，按完整份数尽可能额外消耗。
+        ///     <para xml:lang="en">
+        ///         Represents a repeatable extra payment that buys as many complete units as possible after required
+        ///         payments are reserved.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">表示一项可重复额外支付；预留必需支付后，尽可能购买完整的额外支付单位。</para>
         /// </summary>
         ExtraSpend,
     }
 
     /// <summary>
-    ///     Attached secondary-resource card-play use.
-    ///     附加在卡牌上的次级资源出牌条款。
+    ///     <para xml:lang="en">Describes one secondary-resource payment use attached to a card.</para>
+    ///     <para xml:lang="zh-CN">描述附加到卡牌上的一项次级资源支付条款。</para>
     /// </summary>
     public sealed record SecondaryResourcePlayUse(
         string Id,
@@ -41,39 +48,42 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourceUseKind Kind)
     {
         /// <summary>
-        ///     Lifetime of the active use layer that produced this descriptor.
-        ///     产生该条款描述的当前生效层生命周期。
+        ///     <para xml:lang="en">Gets the duration of the active layer that produced this descriptor.</para>
+        ///     <para xml:lang="zh-CN">获取生成该描述的当前生效层的持续时间。</para>
         /// </summary>
         public SecondaryResourceCostDuration Duration { get; init; } = SecondaryResourceCostDuration.Permanent;
 
         /// <summary>
-        ///     Current permanent base cost used for cost-color comparison when this use is temporarily overridden.
-        ///     该条款被临时覆盖时，用于费用颜色比较的当前永久基础费用。
+        ///     <para xml:lang="en">
+        ///         Gets the persistent baseline cost used for display-color comparison, or the active cost when no
+        ///         persistent layer exists.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取用于比较显示颜色的持续生效基础费用；没有持续生效层时则为当前费用。</para>
         /// </summary>
         public SecondaryResourceCost BaseCost { get; init; } = Cost;
 
         /// <summary>
-        ///     Optional per-use policy for required payments that are short on resource.
-        ///     必需支付资源不足时的可选 per-use 策略。
+        ///     <para xml:lang="en">Gets the optional insufficient-payment policy for this required payment use.</para>
+        ///     <para xml:lang="zh-CN">获取该必需支付条款专用的可选资源不足支付策略。</para>
         /// </summary>
         public SecondaryResourceInsufficientPayment? InsufficientPayment { get; init; }
 
         /// <summary>
-        ///     Optional maximum stack count for repeatable extra spends.
-        ///     可重复额外支付的可选最大层数。
+        ///     <para xml:lang="en">Gets the optional maximum number of repeatable extra-payment units.</para>
+        ///     <para xml:lang="zh-CN">获取可重复额外支付单位数的可选上限。</para>
         /// </summary>
         public int? MaxExtraStacks { get; init; }
 
         /// <summary>
-        ///     True when this use can affect play/payment.
-        ///     该条款可能影响出牌/支付时为 true。
+        ///     <para xml:lang="en">Gets whether this use participates in card-play payment planning.</para>
+        ///     <para xml:lang="zh-CN">获取该条款是否参与出牌支付规划。</para>
         /// </summary>
         public bool IsMaterial => Cost.IsMaterial || Kind == SecondaryResourceUseKind.OptionalSpend;
     }
 
     /// <summary>
-    ///     Attached secondary-resource card-play uses for one card.
-    ///     单张卡牌的附加次级资源出牌条款集合。
+    ///     <para xml:lang="en">Stores layered secondary-resource payment uses attached to one card.</para>
+    ///     <para xml:lang="zh-CN">存储附加到一张卡牌上的分层次级资源支付条款。</para>
     /// </summary>
     public sealed class SecondaryResourcePlayUseSet
     {
@@ -81,15 +91,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     True when at least one material use is attached.
-        ///     至少附加了一个实际条款时为 true。
+        ///     <para xml:lang="en">Gets whether at least one active use participates in payment planning.</para>
+        ///     <para xml:lang="zh-CN">获取是否至少有一项当前条款参与支付规划。</para>
         /// </summary>
         public bool HasUses =>
             _uses.Values.SelectMany(static layers => layers).Any(static layer => layer.Use.IsMaterial);
 
         /// <summary>
-        ///     Returns use ids that currently have attached layers.
-        ///     返回当前具有附加层的条款 id。
+        ///     <para xml:lang="en">Gets the use identifiers that currently have attached layers.</para>
+        ///     <para xml:lang="zh-CN">获取当前存在附加层的支付条款标识符。</para>
         /// </summary>
         public IReadOnlyList<string> UseIds =>
             [.. _uses.Keys.OrderBy(static id => id, StringComparer.Ordinal)];
@@ -102,14 +112,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .Any(static layer => layer.Duration == SecondaryResourceCostDuration.Permanent);
 
         /// <summary>
-        ///     Raised after attached secondary-resource uses change.
-        ///     在附加次级资源条款变化后触发。
+        ///     <para xml:lang="en">Occurs after the attached payment uses change.</para>
+        ///     <para xml:lang="zh-CN">在附加支付条款发生变化后触发。</para>
         /// </summary>
         public event Action? Changed;
 
         /// <summary>
-        ///     Attaches a permanent required cost.
-        ///     附加一个永久必需费用。
+        ///     <para xml:lang="en">Attaches a persistent required payment with a fixed cost.</para>
+        ///     <para xml:lang="zh-CN">附加一项具有固定费用且持续生效的必需支付。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet Require(string useId, string resourceId, int amount)
         {
@@ -117,8 +127,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches a required cost.
-        ///     附加一个必需费用。
+        ///     <para xml:lang="en">Attaches a required payment with the specified cost and duration.</para>
+        ///     <para xml:lang="zh-CN">附加一项具有指定费用及持续时间的必需支付。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet Require(
             string useId,
@@ -130,8 +140,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches a required cost with an explicit shortfall policy.
-        ///     附加一个带显式短缺策略的必需费用。
+        ///     <para xml:lang="en">
+        ///         Attaches a required payment with an explicit insufficient-payment policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">附加一项具有显式资源不足支付策略的必需支付。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet Require(
             string useId,
@@ -150,8 +162,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches a required cost that can still be played with a shortfall.
-        ///     附加一个资源不足时仍可打出的必需费用。
+        ///     <para xml:lang="en">Attaches a fixed required payment whose shortfall does not prevent card play.</para>
+        ///     <para xml:lang="zh-CN">附加一项费用缺口不会阻止出牌的固定必需支付。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet RequireAllowingShortfall(
             string useId,
@@ -171,8 +183,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches a required cost that can still be played with a shortfall.
-        ///     附加一个资源不足时仍可打出的必需费用。
+        ///     <para xml:lang="en">Attaches a required payment whose shortfall does not prevent card play.</para>
+        ///     <para xml:lang="zh-CN">附加一项费用缺口不会阻止出牌的必需支付。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet RequireAllowingShortfall(
             string useId,
@@ -192,8 +204,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches a permanent optional spend that activates only when it can be paid.
-        ///     附加一个永久可选支付；仅在可支付时激活。
+        ///     <para xml:lang="en">Attaches a persistent fixed optional payment that activates only when payable.</para>
+        ///     <para xml:lang="zh-CN">附加一项持续生效的固定可选支付；仅在可以支付时激活。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet SpendIfAvailable(string useId, string resourceId, int amount)
         {
@@ -201,8 +213,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches an optional spend that activates only when it can be paid.
-        ///     附加一个可选支付；仅在可支付时激活。
+        ///     <para xml:lang="en">
+        ///         Attaches an optional payment with the specified cost and duration that activates only when payable.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">附加一项具有指定费用及持续时间的可选支付；仅在可以支付时激活。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet SpendIfAvailable(
             string useId,
@@ -214,8 +228,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches a repeatable extra spend that consumes full stacks after required payments are reserved.
-        ///     附加一个可重复额外支付；必需支付预留后按完整份数消耗。
+        ///     <para xml:lang="en">
+        ///         Attaches a repeatable extra payment that buys complete units after required payments are reserved.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">附加一项可重复额外支付；预留必需支付后按完整单位购买。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet SpendExtra(
             string useId,
@@ -239,8 +255,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a use descriptor for one use id and duration.
-        ///     为单个条款 id 和持续时间设置条款描述。
+        ///     <para xml:lang="en">
+        ///         Sets a payment-use descriptor for one use identifier at the specified duration.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为一个支付条款标识符设置具有指定持续时间的条款描述。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet Set(
             string useId,
@@ -253,8 +271,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a use descriptor for one use id and duration with an explicit shortfall policy.
-        ///     为单个条款 id 和持续时间设置带显式短缺策略的条款描述。
+        ///     <para xml:lang="en">
+        ///         Sets a payment-use descriptor with the specified duration and insufficient-payment policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置一项具有指定持续时间及资源不足支付策略的支付条款描述。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet Set(
             string useId,
@@ -268,8 +288,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a use descriptor for one use id and duration with explicit shortfall and extra-spend settings.
-        ///     为单个条款 id 和持续时间设置带显式短缺与额外支付设置的条款描述。
+        ///     <para xml:lang="en">
+        ///         Sets a payment-use descriptor with explicit duration, insufficient-payment, and extra-payment
+        ///         settings.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置一项具有显式持续时间、资源不足支付及额外支付配置的支付条款描述。</para>
         /// </summary>
         public SecondaryResourcePlayUseSet Set(
             string useId,
@@ -310,8 +333,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Clears all layers for one use id.
-        ///     清除单个条款 id 的所有层。
+        ///     <para xml:lang="en">Clears every layer for one payment-use identifier.</para>
+        ///     <para xml:lang="zh-CN">清除一个支付条款标识符的所有附加层。</para>
         /// </summary>
         public bool Clear(string useId)
         {
@@ -324,8 +347,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Clears layers for the specified duration.
-        ///     清除指定持续时间的条款层。
+        ///     <para xml:lang="en">Clears every payment-use layer with the specified duration.</para>
+        ///     <para xml:lang="zh-CN">清除所有具有指定持续时间的支付条款层。</para>
         /// </summary>
         public bool ClearDuration(SecondaryResourceCostDuration duration)
         {
@@ -344,8 +367,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns active uses in deterministic order.
-        ///     按确定性顺序返回当前生效条款。
+        ///     <para xml:lang="en">Returns the active payment uses in deterministic role and identifier order.</para>
+        ///     <para xml:lang="zh-CN">按确定的支付用途及标识符顺序返回当前生效的支付条款。</para>
         /// </summary>
         public IReadOnlyList<SecondaryResourcePlayUse> Snapshot()
         {
@@ -437,8 +460,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static readonly AttachedState<CardModel, SecondaryResourcePlayUseSet> UseSets = new(() => new());
 
         /// <summary>
-        ///     Gets this card's secondary-resource play-use set.
-        ///     获取此卡牌的次级资源出牌条款集合。
+        ///     <para xml:lang="en">Gets or creates the secondary-resource payment-use set attached to this card.</para>
+        ///     <para xml:lang="zh-CN">获取或创建附加到此卡牌的次级资源支付条款集合。</para>
         /// </summary>
         public static SecondaryResourcePlayUseSet SecondaryResourceUses(this CardModel card)
         {
@@ -447,8 +470,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to read existing secondary-resource play uses without creating a set.
-        ///     尝试读取已有次级资源出牌条款，不会创建集合。
+        ///     <para xml:lang="en">Tries to get the attached payment-use set without creating one.</para>
+        ///     <para xml:lang="zh-CN">尝试获取已附加的支付条款集合，且不会创建新集合。</para>
         /// </summary>
         public static bool TryGetSecondaryResourceUses(this CardModel card, out SecondaryResourcePlayUseSet uses)
         {
