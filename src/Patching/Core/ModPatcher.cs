@@ -123,17 +123,24 @@ namespace STS2RitsuLib.Patching.Core
         public void RegisterDynamicPatch(DynamicPatchInfo dynamicPatchInfo)
         {
             ArgumentNullException.ThrowIfNull(dynamicPatchInfo);
+            TryRegisterDynamicPatch(dynamicPatchInfo);
+        }
+
+        private bool TryRegisterDynamicPatch(DynamicPatchInfo dynamicPatchInfo)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicPatchInfo);
 
             if (_registeredDynamicPatches.Any(p => p.Id == dynamicPatchInfo.Id))
             {
                 logger.Warn(
                     $"{_logPrefix}Dynamic patch '{dynamicPatchInfo.Id}' already registered, skipping duplicate");
-                return;
+                return false;
             }
 
             _registeredDynamicPatches.Add(dynamicPatchInfo);
             logger.Debug(
                 $"{_logPrefix}Registered dynamic patch: {dynamicPatchInfo.Id} - {dynamicPatchInfo.Description}");
+            return true;
         }
 
         /// <summary>
@@ -159,11 +166,13 @@ namespace STS2RitsuLib.Patching.Core
         {
             ArgumentNullException.ThrowIfNull(dynamicPatches);
 
-            var patches = dynamicPatches.ToArray();
-            if (patches.Length == 0)
+            var candidates = dynamicPatches.ToArray();
+            if (candidates.Length == 0)
                 return true;
 
-            RegisterDynamicPatches(patches);
+            var patches = candidates.Where(TryRegisterDynamicPatch).ToArray();
+            if (patches.Length == 0)
+                return true;
 
             logger.Info($"{_logPrefix}Applying {patches.Length} dynamic patch(es)...");
 
