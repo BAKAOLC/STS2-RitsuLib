@@ -748,7 +748,7 @@ namespace STS2RitsuLib.Platform.Steam
                         {
                             bytesDownloaded += itemDownloaded;
                             bytesTotal += itemTotal;
-                            active = itemTotal > 0 || itemDownloaded > 0;
+                            active |= itemTotal > 0 || itemDownloaded > 0;
                             observedDownloadActivity |= active;
                             if (itemTotal > 0 && itemDownloaded >= itemTotal)
                                 completed++;
