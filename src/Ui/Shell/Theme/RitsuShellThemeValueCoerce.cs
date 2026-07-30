@@ -175,22 +175,18 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             if (s.Length != 6 && s.Length != 8)
                 return false;
 
-            try
-            {
-                var r = byte.Parse(s[..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-                var g = byte.Parse(s[2..4], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-                var b = byte.Parse(s[4..6], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-                byte a = 255;
-                if (s.Length == 8)
-                    a = byte.Parse(s[6..8], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-
-                color = new(r / 255f, g / 255f, b / 255f, a / 255f);
-                return true;
-            }
-            catch
-            {
+            if (!byte.TryParse(s[..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var r) ||
+                !byte.TryParse(s[2..4], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var g) ||
+                !byte.TryParse(s[4..6], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var b))
                 return false;
-            }
+
+            byte a = 255;
+            if (s.Length == 8 &&
+                !byte.TryParse(s[6..8], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out a))
+                return false;
+
+            color = new(r / 255f, g / 255f, b / 255f, a / 255f);
+            return true;
         }
 
         private static Font TryLoadFont(string? rawPath)
