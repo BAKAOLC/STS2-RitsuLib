@@ -247,19 +247,12 @@ namespace STS2RitsuLib.Ui.RichTextEffects
                 !string.IsNullOrWhiteSpace(propertyValue))
                 return propertyValue;
 
-            try
+            var value = effect.Get("bbcode");
+            if (value.VariantType == Variant.Type.String)
             {
-                var value = effect.Get("bbcode");
-                if (value.VariantType == Variant.Type.String)
-                {
-                    var s = value.AsString();
-                    if (!string.IsNullOrWhiteSpace(s))
-                        return s;
-                }
-            }
-            catch
-            {
-                // Some custom C# effects expose bbcode only through normal CLR members.
+                var s = value.AsString();
+                if (!string.IsNullOrWhiteSpace(s))
+                    return s;
             }
 
             return null;
