@@ -205,6 +205,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
             var errors = new List<string>();
             RitsuShellThemeReferenceResolver.ResolveAll(root, errors);
+            if (errors.Count > 0)
+            {
+                foreach (var error in errors)
+                    RitsuLibFramework.Logger.Warn($"[ShellTheme:{resolvedId}] {error}");
+                return false;
+            }
 
             theme = RitsuShellThemeBuilder.Build(resolvedId, root, extensions);
             return true;
