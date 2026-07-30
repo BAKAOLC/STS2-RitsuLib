@@ -7,12 +7,8 @@ using STS2RitsuLib.Platform.Steam;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     Capability boundary for mod-data cloud sync. The primary contract is the game's own
-    ///     <see cref="CloudSaveStore" />, so compatible launchers can provide cloud storage by injecting a normal
-    ///     <see cref="ICloudSaveStore" /> into <see cref="SaveManager" /> without RitsuLib knowing launcher-specific
-    ///     types.
-    ///     模组数据云同步的能力边界。主合约是游戏自身的 <see cref="CloudSaveStore" />；兼容启动器只要把
-    ///     标准 <see cref="ICloudSaveStore" /> 注入 <see cref="SaveManager" />，RitsuLib 就能复用，不需要识别启动器类型。
+    ///     <para xml:lang="en">Uses the game's <see cref="CloudSaveStore" /> as the capability boundary for mod-data cloud synchronization, avoiding dependencies on launcher-specific cloud-storage types.</para>
+    ///     <para xml:lang="zh-CN">以游戏的 <see cref="CloudSaveStore" /> 作为模组数据云同步的能力边界，从而避免依赖启动器专用的云存储类型。</para>
     /// </summary>
     internal static class ModDataCloudHost
     {

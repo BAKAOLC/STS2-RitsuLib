@@ -3,6 +3,10 @@ using STS2RitsuLib.Utils.Json;
 
 namespace STS2RitsuLib.Utils.Persistence.Interop
 {
+    /// <summary>
+    ///     <para xml:lang="en">Provides JSON Pointer and JSON Merge Patch primitives used by runtime mod-data interoperability.</para>
+    ///     <para xml:lang="zh-CN">提供运行时模组数据互操作所用的 JSON 指针和 JSON 合并补丁基础操作。</para>
+    /// </summary>
     internal static class ModDataJsonInteropPrimitives
     {
         internal static bool IsRootPointer(string? pointer)

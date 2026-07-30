@@ -9,6 +9,10 @@ using STS2RitsuLib.Utils.Persistence.Migration;
 
 namespace STS2RitsuLib.Utils.Persistence.Interop
 {
+    /// <summary>
+    ///     <para xml:lang="en">Discovers runtime mod-data interoperability providers and connects their data slots to RitsuLib persistence.</para>
+    ///     <para xml:lang="zh-CN">发现运行时模组数据互操作提供程序，并将其数据槽接入 RitsuLib 持久化系统。</para>
+    /// </summary>
     internal static class RuntimeModDataInteropSource
     {
         private const string ProviderTypeMetadataKey = "RitsuLib.ModDataInterop.ProviderType";

@@ -1,26 +1,26 @@
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     Defines the scope of save data storage
-    ///     定义保存数据存储的作用域。
+    ///     <para xml:lang="en">Defines the storage scope of saved data.</para>
+    ///     <para xml:lang="zh-CN">定义存档数据的存储作用域。</para>
     /// </summary>
     public enum SaveScope
     {
         /// <summary>
-        ///     Global scope - data is shared across all profiles
-        ///     全局作用域 - 数据在所有档案之间共享。
+        ///     <para xml:lang="en">Data is shared across all profiles.</para>
+        ///     <para xml:lang="zh-CN">数据在所有档案之间共享。</para>
         /// </summary>
         Global,
 
         /// <summary>
-        ///     Profile scope - data is specific to the current profile
-        ///     档案作用域 - 数据专属于当前档案。
+        ///     <para xml:lang="en">Data is specific to one profile.</para>
+        ///     <para xml:lang="zh-CN">数据专属于一个档案。</para>
         /// </summary>
         Profile,
 
         /// <summary>
-        ///     In-memory scope (not persisted).
-        ///     内存作用域（不持久化）。
+        ///     <para xml:lang="en">Data is held only in memory and is not persisted.</para>
+        ///     <para xml:lang="zh-CN">数据仅保留在内存中且不会持久化。</para>
         /// </summary>
         InMemory,
     }

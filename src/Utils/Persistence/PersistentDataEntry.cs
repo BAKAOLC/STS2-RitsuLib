@@ -5,8 +5,8 @@ using STS2RitsuLib.Utils.Persistence.Migration;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     Typed JSON persistence wrapper with optional migrations, backup recovery, and change notifications.
-    ///     带可选迁移、备份恢复和变更通知的类型化 JSON 持久化包装器。
+    ///     <para xml:lang="en">Typed JSON persistence wrapper with optional migrations, backup recovery, and change notifications.</para>
+    ///     <para xml:lang="zh-CN">支持可选迁移、备份恢复和变更通知的强类型 JSON 持久化封装。</para>
     /// </summary>
     public class PersistentDataEntry<T> where T : class, new()
     {
@@ -19,8 +19,8 @@ namespace STS2RitsuLib.Utils.Persistence
         private readonly string _modId;
 
         /// <summary>
-        ///     Initializes in-memory data from <paramref name="defaultValues" /> and captures persistence settings.
-        ///     从 <paramref name="defaultValues" /> 初始化内存数据，并捕获持久化设置。
+        ///     <para xml:lang="en">Configures the persistent entry and initializes its in-memory data with a deep copy of <paramref name="defaultValues" />.</para>
+        ///     <para xml:lang="zh-CN">配置持久化条目，并以 <paramref name="defaultValues" /> 的深层副本初始化其内存数据。</para>
         /// </summary>
         public PersistentDataEntry(
             string modId,
@@ -44,37 +44,37 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     Current deserialized data object (mutate via <see cref="Modify" /> for change notifications).
-        ///     当前 deserialized 数据 object (mutate via <see cref="Modify" /> 用于 change notifications).
+        ///     <para xml:lang="en">Current deserialized data object; mutate it through <see cref="Modify" /> to raise change notifications.</para>
+        ///     <para xml:lang="zh-CN">当前反序列化的数据对象；请通过 <see cref="Modify" /> 修改它以触发变更通知。</para>
         /// </summary>
         public T Data { get; private set; }
 
         /// <summary>
-        ///     Resolved absolute path for this entry using the active profile.
-        ///     使用活动档案解析出的此条目绝对路径。
+        ///     <para xml:lang="en">Resolved Godot user-data path for this entry, using the active profile unless its context supplies another profile ID.</para>
+        ///     <para xml:lang="zh-CN">此条目解析后的 Godot 用户数据路径；除非上下文提供其他档案 ID，否则使用活动档案。</para>
         /// </summary>
         public string FilePath =>
             StoragePathResolver.ResolveFilePathUser(_modId, _fileName, Scope, _contextProvider?.Invoke());
 
         /// <summary>
-        ///     Whether this file lives under global account storage or a profile subdirectory.
-        ///     此文件位于全局账户存储还是档案子目录下。
+        ///     <para xml:lang="en">Configured storage scope for this entry.</para>
+        ///     <para xml:lang="zh-CN">此条目配置的存储作用域。</para>
         /// </summary>
         public SaveScope Scope { get; }
 
         /// <summary>
-        ///     Raised after load/save cycles and in-memory modifications.
-        ///     在加载 / 保存周期和内存修改后触发。
+        ///     <para xml:lang="en">Raised after a load attempt or an in-memory modification through <see cref="Modify" />.</para>
+        ///     <para xml:lang="zh-CN">尝试加载后，或通过 <see cref="Modify" /> 修改内存数据后触发。</para>
         /// </summary>
         public event Action? Changed;
 
         /// <summary>
-        ///     Reads JSON from disk (with backup fallback), applies migrations, and updates <see cref="Data" />.
-        ///     从磁盘读取 JSON（带备份回退），应用迁移，并更新 <see cref="Data" />。
+        ///     <para xml:lang="en">Reads JSON from disk (with backup fallback), applies migrations, and updates <see cref="Data" />.</para>
+        ///     <para xml:lang="zh-CN">从磁盘读取 JSON（带备份回退），应用迁移，并更新 <see cref="Data" />。</para>
         /// </summary>
         /// <returns>
-        ///     False when defaults were used due to missing or invalid files.
-        ///     当因文件缺失或无效而使用默认值时为 false。
+        ///     <para xml:lang="en"><see langword="true" /> if data was loaded successfully; <see langword="false" /> if defaults were used because the file was missing or invalid.</para>
+        ///     <para xml:lang="zh-CN">成功加载数据时为 <see langword="true" />；因文件缺失或无效而使用默认值时为 <see langword="false" />。</para>
         /// </returns>
         public bool Load()
         {
@@ -128,18 +128,26 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     Serializes <see cref="Data" /> to <see cref="FilePath" />.
-        ///     将 <see cref="Data" /> 序列化到 <see cref="FilePath" />。
+        ///     <para xml:lang="en">Serializes <see cref="Data" /> to <see cref="FilePath" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="Data" /> 序列化到 <see cref="FilePath" />。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the file was written successfully; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">文件写入成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public bool Save()
         {
             return SaveTo(FilePath);
         }
 
         /// <summary>
-        ///     Serializes <see cref="Data" /> to an explicit path (for exports or tests).
-        ///     将 <see cref="Data" /> 序列化到显式路径（用于导出或测试）。
+        ///     <para xml:lang="en">Serializes <see cref="Data" /> to an explicit path, such as for an export or test.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="Data" /> 序列化到显式指定的路径，例如用于导出或测试。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if the file was written successfully; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">文件写入成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public bool SaveTo(string path)
         {
             try
@@ -161,8 +169,8 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     Applies an in-place mutation to <see cref="Data" /> and raises <see cref="Changed" />.
-        ///     对 <see cref="Data" /> 应用原地修改，并触发 <see cref="Changed" />。
+        ///     <para xml:lang="en">Applies an in-place mutation to <see cref="Data" /> and raises <see cref="Changed" />.</para>
+        ///     <para xml:lang="zh-CN">对 <see cref="Data" /> 应用原地修改，并触发 <see cref="Changed" />。</para>
         /// </summary>
         public void Modify(Action<T> modifier)
         {

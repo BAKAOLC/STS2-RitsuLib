@@ -4,6 +4,10 @@ using STS2RitsuLib.Data;
 
 namespace STS2RitsuLib.Utils.Persistence.Interop
 {
+    /// <summary>
+    ///     <para xml:lang="en">Installs Harmony prefixes that route compatible provider stub methods through RitsuLib mod-data storage.</para>
+    ///     <para xml:lang="zh-CN">安装 Harmony 前置补丁，将兼容提供程序的存根方法路由到 RitsuLib 模组数据存储。</para>
+    /// </summary>
     internal static class RuntimeModDataStubPatcher
     {
         private const BindingFlags StaticMethodFlags =

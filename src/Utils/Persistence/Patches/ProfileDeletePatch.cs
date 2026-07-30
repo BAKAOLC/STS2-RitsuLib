@@ -5,8 +5,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Utils.Persistence.Patches
 {
     /// <summary>
-    ///     Cleans up mod persistence when the game deletes a save profile.
-    ///     游戏删除存档档案时清理 mod 持久化数据。
+    ///     <para xml:lang="en">Cleans up persistent mod data when the game deletes a save profile.</para>
+    ///     <para xml:lang="zh-CN">游戏删除档案时清理模组持久化数据。</para>
     /// </summary>
     internal class ProfileDeletePatch : IPatchMethod
     {
