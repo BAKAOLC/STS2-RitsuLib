@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Utils.Json
                 return true;
 
             var t = pointer.Trim();
-            return t.Length == 0 || t == "/";
+            return t.Length == 0;
         }
 
         /// <summary>
@@ -30,8 +30,8 @@ namespace STS2RitsuLib.Utils.Json
         public static string Normalize(string rawPointer)
         {
             var t = rawPointer.Trim();
-            if (t.Length == 0 || t == "/")
-                return "/";
+            if (t.Length == 0)
+                return string.Empty;
 
             return t.StartsWith('/') ? t : "/" + t;
         }
@@ -137,9 +137,6 @@ namespace STS2RitsuLib.Utils.Json
 
             if (t[0] == '/')
                 t = t[1..];
-
-            if (t.Length == 0)
-                yield break;
 
             foreach (var seg in t.Split('/'))
                 yield return DecodeSegment(seg);
