@@ -17,10 +17,12 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         private readonly ConcurrentDictionary<RitsuDebugLogSseClient, byte> _clients = new();
         private readonly CancellationTokenSource _cts = new();
+        private readonly CancellationToken _shutdownToken;
         private readonly Func<int, RitsuDebugLogRecord[]> _historyProvider;
         private readonly Func<object> _statusProvider;
         private readonly string _token;
         private Task? _acceptTask;
+        private int _disposed;
         private TcpListener? _listener;
 
         public RitsuDebugLogViewerServer(
@@ -31,6 +33,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
             string? assetRoot)
         {
             _token = token;
+            _shutdownToken = _cts.Token;
             LanAccessEnabled = lanAccessEnabled;
             _historyProvider = historyProvider;
             _statusProvider = statusProvider;
@@ -51,6 +54,9 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         public void Dispose()
         {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+
             _cts.Cancel();
             _listener?.Stop();
             _clients.Clear();
@@ -100,14 +106,18 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         private async Task AcceptLoopAsync()
         {
-            while (!_cts.IsCancellationRequested)
+            while (!_shutdownToken.IsCancellationRequested)
             {
                 TcpClient client;
                 try
                 {
-                    client = await _listener!.AcceptTcpClientAsync(_cts.Token).ConfigureAwait(false);
+                    client = await _listener!.AcceptTcpClientAsync(_shutdownToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (ObjectDisposedException) when (_shutdownToken.IsCancellationRequested)
                 {
                     return;
                 }
@@ -117,7 +127,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     continue;
                 }
 
-                _ = Task.Run(() => HandleClientAsync(client), _cts.Token);
+                _ = Task.Run(() => HandleClientAsync(client));
             }
         }
 
@@ -130,7 +140,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     client.NoDelay = true;
                     await using var stream = client.GetStream();
                     using var reader = new StreamReader(stream, Encoding.ASCII, false, 2048, true);
-                    var requestLine = await reader.ReadLineAsync(_cts.Token).ConfigureAwait(false);
+                    var requestLine = await reader.ReadLineAsync(_shutdownToken).ConfigureAwait(false);
                     if (string.IsNullOrWhiteSpace(requestLine))
                         return;
 
@@ -144,7 +154,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
                     while (true)
                     {
-                        var header = await reader.ReadLineAsync(_cts.Token).ConfigureAwait(false);
+                        var header = await reader.ReadLineAsync(_shutdownToken).ConfigureAwait(false);
                         if (string.IsNullOrEmpty(header))
                             break;
                     }
@@ -232,17 +242,18 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
                 await WriteSseEventAsync(stream, "session", JsonSerializer.Serialize(_statusProvider(), JsonOptions))
                     .ConfigureAwait(false);
-                await stream.FlushAsync(_cts.Token).ConfigureAwait(false);
+                await stream.FlushAsync(_shutdownToken).ConfigureAwait(false);
 
-                while (!_cts.IsCancellationRequested)
+                while (!_shutdownToken.IsCancellationRequested)
                 {
-                    var json = await client.DequeueAsync(TimeSpan.FromSeconds(15), _cts.Token).ConfigureAwait(false);
+                    var json = await client.DequeueAsync(TimeSpan.FromSeconds(15), _shutdownToken)
+                        .ConfigureAwait(false);
                     if (json == null)
                         await WriteUtf8Async(stream, ": keepalive\n\n").ConfigureAwait(false);
                     else
                         await WriteSseEventAsync(stream, "log", json).ConfigureAwait(false);
 
-                    await stream.FlushAsync(_cts.Token).ConfigureAwait(false);
+                    await stream.FlushAsync(_shutdownToken).ConfigureAwait(false);
                 }
             }
             finally
