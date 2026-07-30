@@ -24,7 +24,6 @@ namespace STS2RitsuLib.Data
 
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly Logger _logger;
-        private readonly MigrationManager _migrationManager;
         private bool _profileEventsSubscribed;
         private int _registrationScopeDepth;
         private bool _registrationScopeInitializeProfileIfReady;
@@ -39,8 +38,6 @@ namespace STS2RitsuLib.Data
                 DefaultIgnoreCondition = JsonIgnoreCondition.Never,
                 IncludeFields = false,
             };
-
-            _migrationManager = new();
         }
 
         /// <summary>
@@ -141,7 +138,7 @@ namespace STS2RitsuLib.Data
         {
             foreach (var entry in _entries.Values.Where(e => e is { Scope: SaveScope.Global, IsInitialized: false }))
             {
-                entry.Initialize(_jsonOptions, _migrationManager);
+                entry.Initialize(_jsonOptions);
                 entry.Load();
             }
 
@@ -167,7 +164,7 @@ namespace STS2RitsuLib.Data
             foreach (var entry in _entries.Values.Where(e =>
                          e is { IsInitialized: false, Scope: SaveScope.Profile }))
             {
-                entry.Initialize(_jsonOptions, _migrationManager);
+                entry.Initialize(_jsonOptions);
                 entry.Load();
             }
 
@@ -271,7 +268,7 @@ namespace STS2RitsuLib.Data
             if (_entries.ContainsKey(key))
                 throw new InvalidOperationException($"Data key '{key}' is already registered.");
 
-            ConfigureMigration<T>(migrationConfig, migrations);
+            var migrationManager = CreateMigrationManager<T>(migrationConfig, migrations);
 
             if (scope == SaveScope.InMemory)
             {
@@ -287,6 +284,7 @@ namespace STS2RitsuLib.Data
                 scope,
                 defaultFactory ?? (() => new()),
                 autoCreateIfMissing,
+                migrationManager,
                 _logger
             );
 
@@ -299,7 +297,7 @@ namespace STS2RitsuLib.Data
 
             if (!IsGlobalInitialized && scope == SaveScope.Global) return;
             if (!IsProfileInitialized && scope == SaveScope.Profile) return;
-            registration.Initialize(_jsonOptions, _migrationManager);
+            registration.Initialize(_jsonOptions);
             registration.Load();
         }
 
@@ -389,7 +387,7 @@ namespace STS2RitsuLib.Data
             if (_entries.ContainsKey(key))
                 throw new InvalidOperationException($"Data key '{key}' is already registered.");
 
-            ConfigureMigration<T>(migrationConfig, migrations);
+            var migrationManager = CreateMigrationManager<T>(migrationConfig, migrations);
 
             if (scope == SaveScope.InMemory)
                 throw new InvalidOperationException("SaveScope.InMemory does not support contextProvider overload.");
@@ -401,6 +399,7 @@ namespace STS2RitsuLib.Data
                 scope,
                 defaultFactory ?? (() => new()),
                 autoCreateIfMissing,
+                migrationManager,
                 _logger,
                 contextProvider
             );
@@ -414,31 +413,35 @@ namespace STS2RitsuLib.Data
 
             if (!IsGlobalInitialized && scope == SaveScope.Global) return;
             if (!IsProfileInitialized && scope == SaveScope.Profile) return;
-            registration.Initialize(_jsonOptions, _migrationManager);
+            registration.Initialize(_jsonOptions);
             registration.Load();
         }
 
-        private void ConfigureMigration<T>(
+        private static MigrationManager CreateMigrationManager<T>(
             ModDataMigrationConfig? migrationConfig,
             IEnumerable<IMigration>? migrations)
             where T : class, new()
         {
+            var migrationManager = new MigrationManager();
+
             if (migrationConfig != null)
-                _migrationManager.RegisterConfig<T>(
+                migrationManager.RegisterConfig<T>(
                     migrationConfig.CurrentDataVersion,
                     migrationConfig.MinimumSupportedDataVersion,
                     migrationConfig.SchemaVersionProperty
                 );
 
             if (migrations == null)
-                return;
+                return migrationManager;
 
             if (migrationConfig == null)
                 throw new InvalidOperationException(
                     $"Migration config for type '{typeof(T).Name}' requires a current version.");
 
             foreach (var migration in migrations)
-                _migrationManager.RegisterMigration<T>(migration);
+                migrationManager.RegisterMigration<T>(migration);
+
+            return migrationManager;
         }
 
         /// <summary>
@@ -573,7 +576,7 @@ namespace STS2RitsuLib.Data
                 throw new KeyNotFoundException($"Data key '{key}' is not registered.");
 
             if (entry is not { IsInitialized: false, Scope: SaveScope.Global }) return entry;
-            entry.Initialize(_jsonOptions, _migrationManager);
+            entry.Initialize(_jsonOptions);
             entry.Load();
             RefreshGlobalInitializationState();
 
@@ -654,7 +657,7 @@ namespace STS2RitsuLib.Data
             public bool HadExistingData => false;
             public bool IsInitialized { get; private set; }
 
-            public void Initialize(JsonSerializerOptions jsonOptions, MigrationManager migrationManager)
+            public void Initialize(JsonSerializerOptions jsonOptions)
             {
                 if (IsInitialized) return;
                 _data = defaultFactory();
@@ -697,7 +700,7 @@ namespace STS2RitsuLib.Data
             Type DataType { get; }
             bool HadExistingData { get; }
             bool IsInitialized { get; }
-            void Initialize(JsonSerializerOptions jsonOptions, MigrationManager migrationManager);
+            void Initialize(JsonSerializerOptions jsonOptions);
             void Load();
             void Save();
             void SaveToProfilePath(int profileId);
@@ -711,6 +714,7 @@ namespace STS2RitsuLib.Data
             SaveScope scope,
             Func<T> defaultFactory,
             bool autoCreateIfMissing,
+            MigrationManager migrationManager,
             Logger logger,
             Func<StorageContext>? contextProvider = null)
             : IRegisteredDataEntry where T : class, new()
@@ -726,7 +730,7 @@ namespace STS2RitsuLib.Data
             public bool HadExistingData { get; private set; }
             public bool IsInitialized => _entry != null;
 
-            public void Initialize(JsonSerializerOptions jsonOptions, MigrationManager migrationManager)
+            public void Initialize(JsonSerializerOptions jsonOptions)
             {
                 if (_entry != null) return;
 
