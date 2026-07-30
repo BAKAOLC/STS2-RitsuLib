@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
     internal static class RitsuDebugLogPipeline
     {
         private static readonly Lock InitLock = new();
+        private static readonly Lock DrainLock = new();
         private static readonly ConcurrentQueue<RitsuDebugLogRecord> Queue = new();
         private static readonly SemaphoreSlim QueueSignal = new(0);
         private static readonly TimeSpan InternalWarningInterval = TimeSpan.FromSeconds(30);
@@ -42,8 +43,9 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 {
                     _queueCapacity = Math.Clamp(options.QueueCapacity, 256, 100000);
                     _ring = new(Math.Clamp(options.RingBufferCapacity, 512, 100000));
-                    _cts = new();
-                    _worker = Task.Run(WorkerLoopAsync);
+                    var cts = new CancellationTokenSource();
+                    _cts = cts;
+                    _worker = Task.Run(() => WorkerLoopAsync(cts.Token));
                     ConfigureGodotLogListener(options.MirrorGameLogs);
 
                     if (options.Enabled)
@@ -167,9 +169,8 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 : $"[DebugLogViewer] LAN debug log viewer listening at {server.Url}; LAN URLs: {string.Join(", ", lanUrls)}";
         }
 
-        private static async Task WorkerLoopAsync()
+        private static async Task WorkerLoopAsync(CancellationToken token)
         {
-            var token = _cts!.Token;
             while (!token.IsCancellationRequested)
             {
                 try
@@ -187,11 +188,14 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         private static void DrainQueue()
         {
-            while (Queue.TryDequeue(out var record))
+            lock (DrainLock)
             {
-                Interlocked.Decrement(ref _queued);
-                _ring?.Add(record);
-                _server?.Broadcast(record);
+                while (Queue.TryDequeue(out var record))
+                {
+                    Interlocked.Decrement(ref _queued);
+                    _ring?.Add(record);
+                    _server?.Broadcast(record);
+                }
             }
         }
 
