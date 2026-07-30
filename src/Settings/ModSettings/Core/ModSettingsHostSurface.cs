@@ -4,53 +4,61 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Where the RitsuLib mod settings UI is currently hosted. Used to gate visibility and editability of pages and
-    ///     sections.
-    ///     RitsuLib Mod 设置 UI 当前所在的宿主位置。用于控制页面和 section 的可见性与可编辑性。
+    ///     <para xml:lang="en">
+    ///         Identifies the game context from which the RitsuLib mod settings UI is opened. Pages and sections can use
+    ///         it to control visibility and editability.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         标识打开 RitsuLib 模组设置界面时所在的游戏上下文。页面与节可据此控制可见性和可编辑性。
+    ///     </para>
     /// </summary>
     [Flags]
     public enum ModSettingsHostSurface
     {
         /// <summary>
-        ///     No surface (never use alone for defaults).
-        ///     无 surface（不要单独作为默认值使用）。
+        ///     <para xml:lang="en">No host context. A mask containing only this value never matches a resolved host.</para>
+        ///     <para xml:lang="zh-CN">无宿主上下文。仅包含此值的掩码不会匹配任何已解析的宿主。</para>
         /// </summary>
         None = 0,
 
         /// <summary>
-        ///     Settings opened from the main menu (no run in progress).
-        ///     从主菜单打开的设置（没有进行中的 run）。
+        ///     <para xml:lang="en">Settings opened from the main menu while no run is in progress.</para>
+        ///     <para xml:lang="zh-CN">未进行对局时从主菜单打开的设置。</para>
         /// </summary>
         MainMenu = 1 << 0,
 
         /// <summary>
-        ///     Pause/settings while a run exists but combat is not actively in progress.
-        ///     存在 run 但当前没有进行中战斗时的暂停/设置。
+        ///     <para xml:lang="en">Settings opened during a run while no combat is in progress.</para>
+        ///     <para xml:lang="zh-CN">对局进行中但当前不在战斗内时打开的设置。</para>
         /// </summary>
         RunPause = 1 << 1,
 
         /// <summary>
-        ///     Pause/settings opened while a combat encounter is in progress (paused mid-fight).
-        ///     战斗遭遇进行中打开的暂停/设置（战斗中暂停）。
+        ///     <para xml:lang="en">Settings opened while combat is in progress.</para>
+        ///     <para xml:lang="zh-CN">战斗进行中打开的设置。</para>
         /// </summary>
         CombatPause = 1 << 2,
 
         /// <summary>
-        ///     Convenience mask matching all built-in surfaces.
-        ///     匹配所有内置 surface 的便捷掩码。
+        ///     <para xml:lang="en">A mask containing every built-in host context.</para>
+        ///     <para xml:lang="zh-CN">包含所有内置宿主上下文的掩码。</para>
         /// </summary>
         All = MainMenu | RunPause | CombatPause,
     }
 
     /// <summary>
-    ///     Resolves the active <see cref="ModSettingsHostSurface" /> from run/combat managers.
-    ///     从跑局 / 战斗 manager 解析活动的 <see cref="ModSettingsHostSurface" />。
+    ///     <para xml:lang="en">
+    ///         Resolves the active <see cref="ModSettingsHostSurface" /> from the run and combat managers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         根据对局与战斗管理器解析当前的 <see cref="ModSettingsHostSurface" />。
+    ///     </para>
     /// </summary>
     public static class ModSettingsHostSurfaceResolver
     {
         /// <summary>
-        ///     Returns exactly one surface bit describing where the player opened settings from.
-        ///     返回恰好一个 surface 位，用于描述玩家从哪里打开设置。
+        ///     <para xml:lang="en">Returns exactly one flag describing the current settings host context.</para>
+        ///     <para xml:lang="zh-CN">返回且仅返回一个用于描述当前设置宿主上下文的标志。</para>
         /// </summary>
         public static ModSettingsHostSurface ResolveCurrent()
         {
@@ -63,9 +71,21 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     True when <paramref name="mask" /> includes the surface returned by <see cref="ResolveCurrent" />.
-        ///     当 <paramref name="mask" /> 包含 <see cref="ResolveCurrent" /> 返回的界面时为 true。
+        ///     <para xml:lang="en">
+        ///         Determines whether a host mask includes the context returned by <see cref="ResolveCurrent" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确定宿主掩码是否包含 <see cref="ResolveCurrent" /> 返回的上下文。
+        ///     </para>
         /// </summary>
+        /// <param name="mask">
+        ///     <para xml:lang="en">The allowed host contexts.</para>
+        ///     <para xml:lang="zh-CN">允许的宿主上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">Whether the current host is included.</para>
+        ///     <para xml:lang="zh-CN">当前宿主是否包含在内。</para>
+        /// </returns>
         public static bool IsVisibleOnCurrentHost(ModSettingsHostSurface mask)
         {
             var current = ResolveCurrent();
@@ -73,9 +93,17 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     True when the current host is listed in <paramref name="readOnlyMask" /> (inputs should be read-only).
-        ///     当当前 host 列在 <paramref name="readOnlyMask" /> 中时为 true（输入应为只读）。
+        ///     <para xml:lang="en">Determines whether a read-only mask includes the current host context.</para>
+        ///     <para xml:lang="zh-CN">确定只读掩码是否包含当前宿主上下文。</para>
         /// </summary>
+        /// <param name="readOnlyMask">
+        ///     <para xml:lang="en">The host contexts in which inputs should be read-only.</para>
+        ///     <para xml:lang="zh-CN">输入应为只读的宿主上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">Whether the current host is read-only.</para>
+        ///     <para xml:lang="zh-CN">当前宿主是否为只读。</para>
+        /// </returns>
         public static bool IsReadOnlyOnCurrentHost(ModSettingsHostSurface readOnlyMask)
         {
             var current = ResolveCurrent();
@@ -83,9 +111,29 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     AND-combines an optional predicate with a host-surface rule (either side may be absent).
-        ///     将可选谓词与宿主表面规则做逻辑与组合（任一侧都可以不存在）。
+        ///     <para xml:lang="en">
+        ///         Combines an optional existing predicate and a host-context predicate with logical AND. A missing
+        ///         existing predicate is treated as <see langword="true" />; any evaluated predicate that throws is
+        ///         logged and treated as <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以逻辑与组合可选的现有谓词与宿主上下文谓词。缺少现有谓词时按
+        ///         <see langword="true" /> 处理；任何已求值谓词抛出的异常都会被记录并按
+        ///         <see langword="false" /> 处理。
+        ///     </para>
         /// </summary>
+        /// <param name="existing">
+        ///     <para xml:lang="en">The optional existing visibility predicate.</para>
+        ///     <para xml:lang="zh-CN">可选的现有可见性谓词。</para>
+        /// </param>
+        /// <param name="hostPredicate">
+        ///     <para xml:lang="en">The required host-context predicate.</para>
+        ///     <para xml:lang="zh-CN">必需的宿主上下文谓词。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A predicate that requires both conditions to pass.</para>
+        ///     <para xml:lang="zh-CN">要求两个条件均通过的谓词。</para>
+        /// </returns>
         public static Func<bool> CombineVisibility(Func<bool>? existing, Func<bool> hostPredicate)
         {
             ArgumentNullException.ThrowIfNull(hostPredicate);
