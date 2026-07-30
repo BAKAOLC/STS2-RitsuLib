@@ -21,6 +21,10 @@ namespace STS2RitsuLib.Settings
             Action<TModel, TValue> setter)
             where TModel : class, new()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(dataKey);
+            ArgumentNullException.ThrowIfNull(getter);
+            ArgumentNullException.ThrowIfNull(setter);
             return new(modId, dataKey, scope, getter, setter);
         }
 
@@ -61,6 +65,8 @@ namespace STS2RitsuLib.Settings
             string dataKey,
             TValue initialValue)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(dataKey);
             return new(modId, dataKey, initialValue);
         }
 
@@ -95,6 +101,8 @@ namespace STS2RitsuLib.Settings
             IModSettingsValueBinding<TValue> inner,
             IStructuredModSettingsValueAdapter<TValue> adapter)
         {
+            ArgumentNullException.ThrowIfNull(inner);
+            ArgumentNullException.ThrowIfNull(adapter);
             return new(inner, adapter);
         }
 
@@ -107,6 +115,8 @@ namespace STS2RitsuLib.Settings
             Func<TValue> defaultValueFactory,
             IStructuredModSettingsValueAdapter<TValue>? adapter = null)
         {
+            ArgumentNullException.ThrowIfNull(inner);
+            ArgumentNullException.ThrowIfNull(defaultValueFactory);
             return new(inner, defaultValueFactory, adapter);
         }
 
@@ -121,6 +131,9 @@ namespace STS2RitsuLib.Settings
             Func<TSource, TValue, TSource> setter,
             IStructuredModSettingsValueAdapter<TValue>? adapter = null)
         {
+            ArgumentNullException.ThrowIfNull(parent);
+            ArgumentNullException.ThrowIfNull(getter);
+            ArgumentNullException.ThrowIfNull(setter);
             return new(parent, dataKey, getter, setter, adapter);
         }
     }
