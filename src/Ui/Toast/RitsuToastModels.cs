@@ -280,6 +280,8 @@ namespace STS2RitsuLib.Ui.Toast
     /// </summary>
     public sealed record RitsuToastRequest
     {
+        private string _body = string.Empty;
+
         /// <summary>
         ///     Creates a toast request.
         ///     创建 toast 请求。
@@ -301,7 +303,15 @@ namespace STS2RitsuLib.Ui.Toast
         ///     Body text rendered in the toast.
         ///     toast 中渲染的正文文本。
         /// </summary>
-        public string Body { get; init; }
+        public string Body
+        {
+            get => _body;
+            init
+            {
+                ArgumentNullException.ThrowIfNull(value);
+                _body = value;
+            }
+        }
 
         /// <summary>
         ///     Optional title shown above the body.
