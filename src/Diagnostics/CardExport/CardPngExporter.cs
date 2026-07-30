@@ -19,8 +19,15 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Diagnostics.CardExport
 {
     /// <summary>
-    ///     Batch-exports registered cards to PNG via <see cref="NCard" /> (library models; no run required).
-    ///     通过 <see cref="NCard" /> 批量导出已注册卡牌为 PNG（库模型；无需跑局）。
+    ///     <para xml:lang="en">
+    ///         Batch-exports registered cards through offscreen <see cref="NCard" /> instances; it uses library
+    ///         models and does not require an active run. Each capture attempt releases its temporary scene subtree
+    ///         in a <c>finally</c> path, including after capture or frame-wait failures.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过离屏 <see cref="NCard" /> 实例批量导出已注册卡牌；使用卡牌库模型，无需存在进行中的一局游戏。每次捕获尝试都会在
+    ///         <c>finally</c> 路径中释放临时场景子树，包括捕获或等待帧失败后。
+    ///     </para>
     /// </summary>
     public static class CardPngExporter
     {
@@ -58,8 +65,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         private const string CardScenePath = "res://scenes/cards/card.tscn";
 
         /// <summary>
-        ///     Starts batch PNG export for <paramref name="request" />.
-        ///     为 <paramref name="request" /> 启动批量 PNG 导出。
+        ///     <para xml:lang="en">Starts the requested batch PNG export when no other card export is running.</para>
+        ///     <para xml:lang="zh-CN">在没有其他卡牌导出运行时启动请求的批量 PNG 导出。</para>
         /// </summary>
         public static void BeginExport(CardPngExportRequest request, Player? issuingPlayer, Action<string>? log = null)
         {
@@ -108,8 +115,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         }
 
         /// <summary>
-        ///     Whether export can start (game loaded and cards can be instantiated).
-        ///     导出是否可以开始（游戏已加载且可实例化卡牌）。
+        ///     <para xml:lang="en">Checks whether the game is loaded and card preview nodes can be instantiated.</para>
+        ///     <para xml:lang="zh-CN">检查游戏是否已加载且能实例化卡牌预览节点。</para>
         /// </summary>
         public static bool TryValidateExportEnvironment(out string error)
         {
@@ -130,10 +137,15 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         }
 
         /// <summary>
-        ///     Back-compat shim: always sets <paramref name="runState" /> and <paramref name="player" /> to null; use
-        ///     <see cref="TryValidateExportEnvironment" /> for new code.
-        ///     向后兼容 shim：始终将 <paramref name="runState" /> 和 <paramref name="player" /> 设为 null；新代码请使用
-        ///     <see cref="TryValidateExportEnvironment" />。
+        ///     <para xml:lang="en">
+        ///         Provides the backward-compatible validation entry point. It always sets <paramref name="runState" />
+        ///         and <paramref name="player" /> to <see langword="null" />; new code should call
+        ///         <see cref="TryValidateExportEnvironment" /> instead.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         提供向后兼容的验证入口。它始终将 <paramref name="runState" /> 和 <paramref name="player" /> 设为
+        ///         <see langword="null" />；新代码应改用 <see cref="TryValidateExportEnvironment" />。
+        ///     </para>
         /// </summary>
         public static bool TryResolveContext(Player? _, out RunState? runState, out Player? player, out string error)
         {
@@ -428,11 +440,15 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         }
 
         /// <summary>
-        ///     Frees the capture subtree. Export uses non-pooled <see cref="NCard" /> instances only — never
-        ///     <see cref="NCard.Create" /> / <c>NodePool</c> — so teardown does not race the in-game card pool.
-        ///     释放捕获子树。导出只使用非池化的 <see cref="NCard" /> 实例，绝不使用
-        ///     <see cref="NCard.Create" />
-        ///     <c>NodePool</c>，因此拆卸不会与游戏内卡牌池竞争。
+        ///     <para xml:lang="en">
+        ///         Frees a capture subtree built exclusively from non-pooled <see cref="NCard" /> instances. Export
+        ///         never uses <see cref="NCard.Create" /> or <c>NodePool</c>, so teardown cannot race the in-game card
+        ///         pool.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         释放仅由非池化 <see cref="NCard" /> 实例构成的捕获子树。导出从不使用 <see cref="NCard.Create" /> 或
+        ///         <c>NodePool</c>，因此拆卸不会与游戏内卡牌池发生竞争。
+        ///     </para>
         /// </summary>
         private static void DisposeExportHost(Control host)
         {
@@ -613,10 +629,13 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         }
 
         /// <summary>
-        ///     Instantiates <c>card.tscn</c> without <see cref="NCard.Create" /> so export never competes with the shared
-        ///     <c>NodePool</c>.
-        ///     不通过 <see cref="NCard.Create" /> 实例化 <c>card.tscn</c>，因此导出绝不会与共享
-        ///     <c>NodePool</c> 竞争。
+        ///     <para xml:lang="en">
+        ///         Instantiates <c>card.tscn</c> without <see cref="NCard.Create" />, so export never competes with the
+        ///         shared <c>NodePool</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不通过 <see cref="NCard.Create" /> 实例化 <c>card.tscn</c>，因此导出绝不会与共享 <c>NodePool</c> 竞争。
+        ///     </para>
         /// </summary>
         private static NCard InstantiateExportNCard(CardModel card)
         {
@@ -632,8 +651,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         }
 
         /// <summary>
-        ///     Refreshes card visuals (requires the <see cref="NCard" /> to be in the scene tree).
-        ///     刷新卡牌视觉（要求 <see cref="NCard" /> 已在场景树中）。
+        ///     <para xml:lang="en">Refreshes card visuals after the <see cref="NCard" /> enters the scene tree.</para>
+        ///     <para xml:lang="zh-CN">在 <see cref="NCard" /> 进入场景树后刷新其视觉效果。</para>
         /// </summary>
         private static void RefreshMainExportCardVisuals(NCard nCard)
         {
@@ -690,8 +709,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         }
 
         /// <summary>
-        ///     Adds a referenced-card hover column like the in-game card tooltip.
-        ///     添加类似游戏内卡牌工具提示的引用卡牌悬停列。
+        ///     <para xml:lang="en">Adds a referenced-card hover column matching the in-game card tooltip.</para>
+        ///     <para xml:lang="zh-CN">添加与游戏内卡牌工具提示一致的引用卡牌悬停列。</para>
         /// </summary>
         private static void AddGameCardHoverTip(VBoxContainer refCardsColumn, CardHoverTip refTip,
             List<NCard> refHoverTipCardNodes)

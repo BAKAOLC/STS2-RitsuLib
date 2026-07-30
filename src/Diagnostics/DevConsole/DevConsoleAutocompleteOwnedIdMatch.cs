@@ -7,13 +7,19 @@ using STS2RitsuLib.TopBar;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Tail-aware autocomplete matching for ritsulib-registered public entry ids.
+    ///     <para xml:lang="en">Provides tail-aware autocomplete matching for public-entry IDs registered through RitsuLib.</para>
+    ///     <para xml:lang="zh-CN">为通过 RitsuLib 注册的公共条目 ID 提供感知尾部片段的自动补全匹配。</para>
     /// </summary>
     public static class DevConsoleAutocompleteOwnedIdMatch
     {
         /// <summary>
-        ///     Matches full id prefix or the mod-stem tail segment for owned ids.
+        ///     <para xml:lang="en">Matches a full ID prefix or an owned ID's mod-qualified tail.</para>
+        ///     <para xml:lang="zh-CN">匹配完整 ID 的前缀，或已知所属 ID 中带模组限定的尾部片段。</para>
         /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">Ownership is resolved from current registry snapshots, including registrations added after an earlier match.</para>
+        ///     <para xml:lang="zh-CN">所属关系通过当前注册表快照解析，因此也包含先前匹配之后新增的注册。</para>
+        /// </remarks>
         public static bool Match(string candidate, string partial)
         {
             if (string.IsNullOrWhiteSpace(partial))

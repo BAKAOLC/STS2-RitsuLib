@@ -17,12 +17,15 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Diagnostics.CompendiumExport
 {
     /// <summary>
-    ///     Renders compendium-style detail panels in an offscreen <see cref="SubViewport" />: relic inspect
-    ///     (same <c>inspect_relic_screen</c> <c>Popup</c> subtree) and potion lab focus view
-    ///     (<see cref="NPotion" /> at 1.2x + hover tips, matching focus + tips layout).
-    ///     在离屏 <see cref="SubViewport" /> 中渲染概要风格的详情面板：遗物查看
-    ///     （同一个 <c>inspect_relic_screen</c> <c>Popup</c> 子树）和药水实验室聚焦视图
-    ///     （1.2x 的 <see cref="NPotion" /> + 悬停提示，匹配聚焦 + 提示布局）。
+    ///     <para xml:lang="en">
+    ///         Renders compendium-style relic inspection and potion-lab focus panels in an offscreen
+    ///         <see cref="SubViewport" />. Each capture attempt releases its temporary scene subtree in a
+    ///         <c>finally</c> path, including after capture or frame-wait failures.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在离屏 <see cref="SubViewport" /> 中渲染图鉴风格的遗物查看面板和药水实验室聚焦面板。每次捕获尝试都会在
+    ///         <c>finally</c> 路径中释放临时场景子树，包括捕获或等待帧失败后。
+    ///     </para>
     /// </summary>
     public static class CompendiumDetailPngExporter
     {
@@ -56,8 +59,10 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         private static readonly Vector2 PotionRowMinUnscaledFloor = Vector2.Zero;
 
         /// <summary>
-        ///     Starts a batch export for the requested <see cref="CompendiumPngExportRequest" />.
-        ///     为请求的 <see cref="CompendiumPngExportRequest" /> 启动批量导出。
+        ///     <para xml:lang="en">
+        ///         Starts the requested compendium-detail batch export when no other compendium export is running.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在没有其他图鉴导出运行时启动请求的图鉴详情批量导出。</para>
         /// </summary>
         public static void BeginExport(CompendiumPngExportRequest request, Action<string>? log = null)
         {
