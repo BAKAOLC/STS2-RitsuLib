@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
@@ -15,7 +17,8 @@ namespace STS2RitsuLib.Audio
         ///     Empty parameter set.
         ///     空参数集。
         /// </summary>
-        public static AudioParameterSet Empty { get; } = new(new Dictionary<string, float>());
+        public static AudioParameterSet Empty { get; } =
+            new(new ReadOnlyDictionary<string, float>(new Dictionary<string, float>()));
 
         /// <summary>
         ///     Parameter values carried by this set.
@@ -32,7 +35,7 @@ namespace STS2RitsuLib.Audio
             if (values is null || values.Count == 0)
                 return Empty;
 
-            return new(new Dictionary<string, float>(values));
+            return new(new ReadOnlyDictionary<string, float>(new Dictionary<string, float>(values)));
         }
 
         /// <summary>
@@ -45,7 +48,7 @@ namespace STS2RitsuLib.Audio
             {
                 [name] = value,
             };
-            return new(next);
+            return new(new ReadOnlyDictionary<string, float>(next));
         }
     }
 }
