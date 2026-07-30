@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Ui.Toast
     public static class RitsuToastService
     {
         private static readonly Lock SyncRoot = new();
+        private static readonly Queue<PendingToast> PendingBeforeHost = [];
         private static RitsuToastHost? _host;
         private static IDisposable? _lifecycleSubscription;
         private static bool _initialized;
@@ -27,9 +28,13 @@ namespace STS2RitsuLib.Ui.Toast
                 _settings = RitsuLibSettingsStore.GetToastSettings();
                 _lifecycleSubscription ??= RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
                 {
-                    EnsureHostAttached(evt.Game);
-                });
+                    lock (SyncRoot)
+                    {
+                        EnsureHostAttached(evt.Game);
+                    }
+                }, false);
                 RitsuShellThemeRuntime.ThemeChanged += HandleThemeChanged;
+                EnsureHostAttached(NGame.Instance);
             }
         }
 
@@ -38,6 +43,8 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 _settings = settings;
+                if (!settings.Enabled)
+                    PendingBeforeHost.Clear();
                 EnsureHostAttached(NGame.Instance);
                 _host?.ApplySettings(settings);
             }
@@ -59,7 +66,7 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 EnsureHostAttached(NGame.Instance);
-                _host?.Enqueue(Guid.NewGuid(), request);
+                EnqueueOrStore(Guid.NewGuid(), request);
             }
         }
 
@@ -75,7 +82,7 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 EnsureHostAttached(NGame.Instance);
-                _host?.Enqueue(handle.Id, request);
+                EnqueueOrStore(handle.Id, request);
             }
 
             return handle;
@@ -145,7 +152,7 @@ namespace STS2RitsuLib.Ui.Toast
             ArgumentNullException.ThrowIfNull(handle);
             lock (SyncRoot)
             {
-                return _host?.IsAlive(handle.Id) == true;
+                return FindPending(handle.Id) != null || _host?.IsAlive(handle.Id) == true;
             }
         }
 
@@ -158,6 +165,8 @@ namespace STS2RitsuLib.Ui.Toast
             ArgumentNullException.ThrowIfNull(handle);
             lock (SyncRoot)
             {
+                if (RemovePending(handle.Id))
+                    return true;
                 return _host?.Close(handle.Id, immediate) == true;
             }
         }
@@ -170,7 +179,9 @@ namespace STS2RitsuLib.Ui.Toast
         {
             lock (SyncRoot)
             {
-                return _host?.CloseAll(immediate) ?? 0;
+                var closed = PendingBeforeHost.Count;
+                PendingBeforeHost.Clear();
+                return closed + (_host?.CloseAll(immediate) ?? 0);
             }
         }
 
@@ -184,6 +195,13 @@ namespace STS2RitsuLib.Ui.Toast
             ArgumentNullException.ThrowIfNull(request);
             lock (SyncRoot)
             {
+                var pending = FindPending(handle.Id);
+                if (pending != null)
+                {
+                    pending.Request = request;
+                    return true;
+                }
+
                 return _host?.Update(handle.Id, request, resetDuration) == true;
             }
         }
@@ -197,6 +215,13 @@ namespace STS2RitsuLib.Ui.Toast
             ArgumentNullException.ThrowIfNull(handle);
             lock (SyncRoot)
             {
+                var pending = FindPending(handle.Id);
+                if (pending != null)
+                {
+                    pending.Request = pending.Request.WithBody(body);
+                    return true;
+                }
+
                 return _host?.Update(handle.Id, request => request.WithBody(body), resetDuration) == true;
             }
         }
@@ -211,6 +236,13 @@ namespace STS2RitsuLib.Ui.Toast
             ArgumentNullException.ThrowIfNull(handle);
             lock (SyncRoot)
             {
+                var pending = FindPending(handle.Id);
+                if (pending != null)
+                {
+                    pending.Request = pending.Request.WithText(body, title);
+                    return true;
+                }
+
                 return _host?.Update(handle.Id, request => request.WithText(body, title), resetDuration) == true;
             }
         }
@@ -224,6 +256,13 @@ namespace STS2RitsuLib.Ui.Toast
             ArgumentNullException.ThrowIfNull(handle);
             lock (SyncRoot)
             {
+                var pending = FindPending(handle.Id);
+                if (pending != null)
+                {
+                    pending.Request = pending.Request.WithTitle(title);
+                    return true;
+                }
+
                 return _host?.Update(handle.Id, request => request.WithTitle(title), resetDuration) == true;
             }
         }
@@ -237,6 +276,14 @@ namespace STS2RitsuLib.Ui.Toast
             ArgumentNullException.ThrowIfNull(handle);
             lock (SyncRoot)
             {
+                var pending = FindPending(handle.Id);
+                if (pending != null)
+                {
+                    if (durationSeconds.HasValue)
+                        pending.Request = pending.Request.WithDuration(durationSeconds);
+                    return true;
+                }
+
                 return _host?.ResetDuration(handle.Id, durationSeconds) == true;
             }
         }
@@ -245,11 +292,16 @@ namespace STS2RitsuLib.Ui.Toast
         {
             if (_host != null && GodotObject.IsInstanceValid(_host))
                 return;
-            if (gameNode == null)
+            if (gameNode == null || !GodotObject.IsInstanceValid(gameNode))
                 return;
             _host = new();
             gameNode.AddChild(_host);
             _host.ApplySettings(_settings);
+            while (PendingBeforeHost.Count > 0)
+            {
+                var pending = PendingBeforeHost.Dequeue();
+                _host.Enqueue(pending.Id, pending.Request);
+            }
         }
 
         private static void HandleThemeChanged()
@@ -258,6 +310,50 @@ namespace STS2RitsuLib.Ui.Toast
             {
                 _host?.RefreshTheme();
             }
+        }
+
+        private static void EnqueueOrStore(Guid id, RitsuToastRequest request)
+        {
+            if (!_settings.Enabled)
+                return;
+
+            if (_host != null && GodotObject.IsInstanceValid(_host))
+            {
+                _host.Enqueue(id, request);
+                return;
+            }
+
+            PendingBeforeHost.Enqueue(new(id, request));
+        }
+
+        private static PendingToast? FindPending(Guid id)
+        {
+            return PendingBeforeHost.FirstOrDefault(pending => pending.Id == id);
+        }
+
+        private static bool RemovePending(Guid id)
+        {
+            var removed = false;
+            var count = PendingBeforeHost.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var pending = PendingBeforeHost.Dequeue();
+                if (pending.Id == id)
+                {
+                    removed = true;
+                    continue;
+                }
+
+                PendingBeforeHost.Enqueue(pending);
+            }
+
+            return removed;
+        }
+
+        private sealed class PendingToast(Guid id, RitsuToastRequest request)
+        {
+            public Guid Id { get; } = id;
+            public RitsuToastRequest Request { get; set; } = request;
         }
     }
 }
