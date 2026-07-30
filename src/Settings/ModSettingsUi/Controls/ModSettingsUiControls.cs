@@ -3093,6 +3093,19 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         internal static string GetRecordedKeyName(InputEventKey keyEvent, bool distinguishModifierSides)
         {
+            if (distinguishModifierSides)
+            {
+                var modifierKind = RuntimeHotkeyParser.GetModifierKindForKeyEvent(keyEvent);
+                if (modifierKind != ModifierKind.None)
+                    switch (keyEvent.Location)
+                    {
+                        case KeyLocation.Left:
+                            return $"Left{modifierKind}";
+                        case KeyLocation.Right:
+                            return $"Right{modifierKind}";
+                    }
+            }
+
             var code = distinguishModifierSides ? keyEvent.PhysicalKeycode : keyEvent.Keycode;
             if (code == Key.None)
                 code = keyEvent.Keycode;
