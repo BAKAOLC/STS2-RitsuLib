@@ -330,6 +330,8 @@ namespace STS2RitsuLib.CardTags
 
             lock (SyncRoot)
             {
+                EnsureMutable("register card tags");
+
                 if (Definitions.TryGetValue(normalizedId, out var existing))
                 {
                     if (!StringComparer.OrdinalIgnoreCase.Equals(existing.ModId, definition.ModId))

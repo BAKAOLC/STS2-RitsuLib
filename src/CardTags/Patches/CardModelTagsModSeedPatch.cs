@@ -18,6 +18,7 @@ namespace STS2RitsuLib.CardTags.Patches
     /// </summary>
     internal sealed class CardModelTagsModSeedPatch : IPatchMethod
     {
+        private static readonly Lock SeedGate = new();
         private static readonly ConditionalWeakTable<CardModel, object> SeededCards = new();
         private static readonly object SeededMarker = new();
         public static string PatchId => "ritsulib_card_model_tags_mod_seed";
@@ -37,25 +38,32 @@ namespace STS2RitsuLib.CardTags.Patches
             if (__instance is not ModCardTemplate template)
                 return;
 
-            if (SeededCards.TryGetValue(__instance, out _))
-                return;
-
-            if (__result is not HashSet<CardTag> storage)
+            lock (SeedGate)
             {
+                if (SeededCards.TryGetValue(__instance, out _))
+                    return;
+
+                if (__result is not HashSet<CardTag> storage)
+                    return;
+
+                List<CardTag>? resolvedTags = null;
+                foreach (var id in template.EnumerateRegisteredCardTagIds())
+                {
+                    if (string.IsNullOrWhiteSpace(id))
+                        continue;
+
+                    if (!ModCardTagRegistry.TryResolveCardTag(id, out var value))
+                        return;
+
+                    resolvedTags ??= [];
+                    resolvedTags.Add(value);
+                }
+
+                if (resolvedTags != null)
+                    storage.UnionWith(resolvedTags);
+
                 SeededCards.Add(__instance, SeededMarker);
-                return;
             }
-
-            foreach (var id in template.EnumerateRegisteredCardTagIds())
-            {
-                if (string.IsNullOrWhiteSpace(id))
-                    continue;
-
-                if (ModCardTagRegistry.TryResolveCardTag(id, out var value))
-                    storage.Add(value);
-            }
-
-            SeededCards.Add(__instance, SeededMarker);
         }
     }
 }
