@@ -18,6 +18,7 @@ namespace STS2RitsuLib.Audio
     public static class FmodStudioStreamingFiles
     {
         private static readonly ConcurrentDictionary<string, LoadedKind> Loaded = new(StringComparer.Ordinal);
+        private static readonly Lock LoadedGate = new();
 
         /// <summary>
         ///     Creates a typed handle for a short loose-file sound.
@@ -90,14 +91,17 @@ namespace STS2RitsuLib.Audio
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
                 return false;
 
-            if (Loaded.ContainsKey(resolvedPath))
+            lock (LoadedGate)
+            {
+                if (Loaded.TryGetValue(resolvedPath, out var loadedKind))
+                    return CheckLoadedKind(resolvedPath, loadedKind, LoadedKind.Sound);
+
+                if (!FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadFileAsSound, resolvedPath))
+                    return false;
+
+                Loaded[resolvedPath] = LoadedKind.Sound;
                 return true;
-
-            if (!FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadFileAsSound, resolvedPath))
-                return false;
-
-            Loaded[resolvedPath] = LoadedKind.Sound;
-            return true;
+            }
         }
 
         /// <summary>
@@ -121,14 +125,17 @@ namespace STS2RitsuLib.Audio
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
                 return false;
 
-            if (Loaded.ContainsKey(resolvedPath))
+            lock (LoadedGate)
+            {
+                if (Loaded.TryGetValue(resolvedPath, out var loadedKind))
+                    return CheckLoadedKind(resolvedPath, loadedKind, LoadedKind.MusicStream);
+
+                if (!FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadFileAsMusic, resolvedPath))
+                    return false;
+
+                Loaded[resolvedPath] = LoadedKind.MusicStream;
                 return true;
-
-            if (!FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadFileAsMusic, resolvedPath))
-                return false;
-
-            Loaded[resolvedPath] = LoadedKind.MusicStream;
-            return true;
+            }
         }
 
         /// <summary>
@@ -155,17 +162,10 @@ namespace STS2RitsuLib.Audio
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
                 return null;
 
-            if (Loaded.ContainsKey(resolvedPath))
-                return !FmodStudioGateway.TryCall(out var record, FmodStudioMethodNames.CreateSoundInstance,
-                    resolvedPath)
-                    ? null
-                    : record.AsGodotObject();
             if (!TryPreloadAsSound(resolvedPath))
                 return null;
 
-            return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateSoundInstance, resolvedPath)
-                ? null
-                : v.AsGodotObject();
+            return TryCreateLoadedInstance(resolvedPath);
         }
 
         /// <summary>
@@ -192,17 +192,10 @@ namespace STS2RitsuLib.Audio
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
                 return null;
 
-            if (Loaded.ContainsKey(resolvedPath))
-                return !FmodStudioGateway.TryCall(out var record, FmodStudioMethodNames.CreateSoundInstance,
-                    resolvedPath)
-                    ? null
-                    : record.AsGodotObject();
             if (!TryPreloadAsStreamingMusic(resolvedPath))
                 return null;
 
-            return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateSoundInstance, resolvedPath)
-                ? null
-                : v.AsGodotObject();
+            return TryCreateLoadedInstance(resolvedPath);
         }
 
         /// <summary>
@@ -273,8 +266,17 @@ namespace STS2RitsuLib.Audio
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
                 return false;
 
-            return !Loaded.TryRemove(resolvedPath, out _) ||
-                   FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, resolvedPath);
+            lock (LoadedGate)
+            {
+                if (!Loaded.ContainsKey(resolvedPath))
+                    return true;
+
+                if (!FmodStudioGateway.TryCall(FmodStudioMethodNames.UnloadFile, resolvedPath))
+                    return false;
+
+                Loaded.TryRemove(resolvedPath, out _);
+                return true;
+            }
         }
 
         /// <summary>
@@ -283,7 +285,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryUnloadResourceFile(string resourcePath)
         {
-            return !FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) ||
+            return FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) &&
                    TryUnloadFile(absolutePath);
         }
 
@@ -352,6 +354,25 @@ namespace STS2RitsuLib.Audio
             if (File.Exists(resolvedPath)) return true;
             RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD file playback file not found: {resolvedPath}");
             return false;
+        }
+
+        private static bool CheckLoadedKind(string path, LoadedKind actual, LoadedKind requested)
+        {
+            if (actual == requested)
+                return true;
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Audio] FMOD file is already loaded as {actual} and cannot also be loaded as {requested}: {path}");
+            return false;
+        }
+
+        private static GodotObject? TryCreateLoadedInstance(string resolvedPath)
+        {
+            if (!FmodStudioGateway.TryCall(out var value, FmodStudioMethodNames.CreateSoundInstance, resolvedPath))
+                return null;
+
+            var instance = value.AsGodotObject();
+            return instance is not null && GodotObject.IsInstanceValid(instance) ? instance : null;
         }
 
         private enum LoadedKind : byte
