@@ -3,29 +3,32 @@ using Godot;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Top-level palette of primitive colors that are used directly without component-level scoping.
-    ///     顶层调色板 of primitive 颜色 that are 直接使用 与out 组件级作用域。
+    ///     <para xml:lang="en">Groups primitive colors used without component-level state or variant scoping.</para>
+    ///     <para xml:lang="zh-CN">归组不受组件状态或变体作用域限制的基础颜色。</para>
     /// </summary>
     /// <param name="White">
-    ///     Plain white tint used by overlays and active accents.
-    ///     覆盖层和活动强调色使用的纯白色调。
+    ///     <para xml:lang="en">The plain white tint used by active controls and overlays.</para>
+    ///     <para xml:lang="zh-CN">活动控件及浮层使用的纯白色调。</para>
     /// </param>
     /// <param name="Transparent">
-    ///     Fully transparent color (<c>#00000000</c>).
-    ///     完全透明颜色 (<c>#00000000</c>)。
+    ///     <para xml:lang="en">The fully transparent color.</para>
+    ///     <para xml:lang="zh-CN">完全透明的颜色。</para>
     /// </param>
     /// <param name="Divider">
-    ///     Hairline divider color used between sections.
+    ///     <para xml:lang="en">The thin divider color used between sections.</para>
+    ///     <para xml:lang="zh-CN">分隔各区域所用的细分隔线颜色。</para>
     /// </param>
     /// <param name="UnsetPreview">
-    ///     Highlight tint used to indicate values not yet committed.
+    ///     <para xml:lang="en">The preview tint for a value that has not been committed.</para>
+    ///     <para xml:lang="zh-CN">尚未提交的值所用的预览色调。</para>
     /// </param>
     /// <param name="ModalBackdrop">
-    ///     Dim color used as the backdrop behind modal panels.
+    ///     <para xml:lang="en">The dimming color behind modal panels.</para>
+    ///     <para xml:lang="zh-CN">模态面板后方的变暗背景色。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Shared shadow tones.
-    ///     共享阴影色调。
+    ///     <para xml:lang="en">The shared shadow colors.</para>
+    ///     <para xml:lang="zh-CN">共享的阴影颜色。</para>
     /// </param>
     public sealed record ColorTokens(
         Color White,
@@ -36,66 +39,66 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         ShadowTokens Shadow);
 
     /// <summary>
-    ///     Generic shadow colors not bound to a specific component.
-    ///     未绑定到特定组件的通用阴影颜色。
+    ///     <para xml:lang="en">Groups shadow colors that are not bound to a specific component.</para>
+    ///     <para xml:lang="zh-CN">归组不与特定组件绑定的阴影颜色。</para>
     /// </summary>
     /// <param name="Ambient">
-    ///     Soft ambient drop shadow used by elevated controls.
-    ///     柔和环境投影 used by 抬升控件。
+    ///     <para xml:lang="en">The soft ambient shadow used by elevated controls.</para>
+    ///     <para xml:lang="zh-CN">抬升控件使用的柔和环境阴影。</para>
     /// </param>
     public sealed record ShadowTokens(Color Ambient);
 
     /// <summary>
-    ///     Colors used by typography (rich text, labels, hints).
-    ///     排版使用的颜色 (富文本, 标签, 提示)。
+    ///     <para xml:lang="en">Groups colors used by rich text, labels, hints, and control text.</para>
+    ///     <para xml:lang="zh-CN">归组富文本、标签、提示及控件文本所用的颜色。</para>
     /// </summary>
     /// <param name="RichTitle">
-    ///     Rich text title tone.
-    ///     Rich 文本 标题色调。
+    ///     <para xml:lang="en">The rich-text title color.</para>
+    ///     <para xml:lang="zh-CN">富文本标题颜色。</para>
     /// </param>
     /// <param name="RichBody">
-    ///     Rich text body tone.
-    ///     Rich 文本 正文字调。
+    ///     <para xml:lang="en">The rich-text body color.</para>
+    ///     <para xml:lang="zh-CN">富文本正文颜色。</para>
     /// </param>
     /// <param name="RichSecondary">
-    ///     Secondary rich text (descriptions, sub-titles).
-    ///     次级 富文本 (描述, 副标题)。
+    ///     <para xml:lang="en">The secondary rich-text color used by descriptions and subtitles.</para>
+    ///     <para xml:lang="zh-CN">描述及副标题使用的次要富文本颜色。</para>
     /// </param>
     /// <param name="RichMuted">
-    ///     Muted rich text (low-importance hints).
-    ///     弱化 富文本 (低重要性提示)。
+    ///     <para xml:lang="en">The muted rich-text color used for low-priority information.</para>
+    ///     <para xml:lang="zh-CN">低优先级信息使用的弱化富文本颜色。</para>
     /// </param>
     /// <param name="LabelPrimary">
-    ///     Primary label color.
-    ///     主标签颜色。
+    ///     <para xml:lang="en">The primary label color.</para>
+    ///     <para xml:lang="zh-CN">主要标签颜色。</para>
     /// </param>
     /// <param name="LabelSecondary">
-    ///     Secondary label color (used by subtitles).
-    ///     次级标签颜色 (used by subtitles)。
+    ///     <para xml:lang="en">The secondary label color used by subtitles and disabled text.</para>
+    ///     <para xml:lang="zh-CN">副标题及禁用文本使用的次要标签颜色。</para>
     /// </param>
     /// <param name="SidebarSection">
-    ///     Section header label tone in the sidebar.
-    ///     侧边栏中的分区标题标签色调。
+    ///     <para xml:lang="en">The color of section headings in the sidebar.</para>
+    ///     <para xml:lang="zh-CN">侧边栏分区标题的颜色。</para>
     /// </param>
     /// <param name="HoverHighlight">
-    ///     Foreground color used by buttons in hover/pressed/focus.
-    ///     前景色 used by 按钮 in 悬停/按下/聚焦。
+    ///     <para xml:lang="en">The foreground color for highlighted, hovered, pressed, or focused controls.</para>
+    ///     <para xml:lang="zh-CN">突出、悬停、按下或聚焦控件的前景色。</para>
     /// </param>
     /// <param name="Number">
-    ///     Numeric value label tone.
-    ///     数值标签色调。
+    ///     <para xml:lang="en">The color of numeric value labels.</para>
+    ///     <para xml:lang="zh-CN">数值标签的颜色。</para>
     /// </param>
     /// <param name="Grip">
-    ///     Drag-handle grip glyph tone.
-    ///     拖拽句柄握持字形色调。
+    ///     <para xml:lang="en">The color of drag-handle grip glyphs.</para>
+    ///     <para xml:lang="zh-CN">拖动手柄握持字形的颜色。</para>
     /// </param>
     /// <param name="Hint">
-    ///     Inline hint tone.
-    ///     内联提示色调。
+    ///     <para xml:lang="en">The inline hint and tooltip text color.</para>
+    ///     <para xml:lang="zh-CN">内联提示及工具提示文本的颜色。</para>
     /// </param>
     /// <param name="DropdownRow">
-    ///     Dropdown popup row foreground.
-    ///     下拉弹出行前景色。
+    ///     <para xml:lang="en">The foreground color of rows in a drop-down pop-up.</para>
+    ///     <para xml:lang="zh-CN">下拉弹出框中各行的前景色。</para>
     /// </param>
     public sealed record TextTokens(
         Color RichTitle,
@@ -112,28 +115,28 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         Color DropdownRow);
 
     /// <summary>
-    ///     Surface backgrounds shared by panes and entry chrome.
-    ///     由窗格和条目 chrome 共享的表面背景。
+    ///     <para xml:lang="en">Groups colors shared by panes, entries, and framed surfaces.</para>
+    ///     <para xml:lang="zh-CN">归组窗格、条目及带框表面共享的颜色。</para>
     /// </summary>
     /// <param name="Sidebar">
-    ///     Settings sidebar pane background.
-    ///     设置侧边栏窗格背景。
+    ///     <para xml:lang="en">The settings sidebar background.</para>
+    ///     <para xml:lang="zh-CN">设置侧边栏的背景色。</para>
     /// </param>
     /// <param name="Content">
-    ///     Settings content pane background.
-    ///     设置内容窗格背景。
+    ///     <para xml:lang="en">The settings content-pane background.</para>
+    ///     <para xml:lang="zh-CN">设置内容窗格的背景色。</para>
     /// </param>
     /// <param name="Entry">
-    ///     Standard entry surface (background + border + shadow).
-    ///     标准条目表面 (背景 + 边框 + shadow)。
+    ///     <para xml:lang="en">The background, border, and shadow colors of standard entry surfaces.</para>
+    ///     <para xml:lang="zh-CN">标准条目表面的背景、边框及阴影颜色。</para>
     /// </param>
     /// <param name="Inset">
-    ///     Recessed surface for nested content.
-    ///     用于嵌套内容的凹陷表面。
+    ///     <para xml:lang="en">The colors of recessed surfaces used for nested content.</para>
+    ///     <para xml:lang="zh-CN">嵌套内容所用凹陷表面的颜色。</para>
     /// </param>
     /// <param name="Framed">
-    ///     Large pane chrome (border + shadow).
-    ///     大窗格 chrome (边框 + shadow)。
+    ///     <para xml:lang="en">The border and shadow colors of large framed panes.</para>
+    ///     <para xml:lang="zh-CN">大型带框窗格的边框及阴影颜色。</para>
     /// </param>
     public sealed record SurfaceTokens(
         Color Sidebar,
@@ -143,48 +146,48 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         FramedSurfaceTokens Framed);
 
     /// <summary>
-    ///     Chrome surface used by entry containers (toggle backgrounds, dropdown faces, ...).
-    ///     chrome 表面 used by 条目容器 (toggle 背景, dropdown 正面,...)。
+    ///     <para xml:lang="en">Groups colors used by standard entry containers.</para>
+    ///     <para xml:lang="zh-CN">归组标准条目容器使用的颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Background fill.
-    ///     背景填充。
+    ///     <para xml:lang="en">The background fill color.</para>
+    ///     <para xml:lang="zh-CN">背景填充颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Border tint.
-    ///     边框色调。
+    ///     <para xml:lang="en">The border color.</para>
+    ///     <para xml:lang="zh-CN">边框颜色。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Drop shadow tint.
-    ///     投影色调。
+    ///     <para xml:lang="en">The drop-shadow color.</para>
+    ///     <para xml:lang="zh-CN">投影颜色。</para>
     /// </param>
     public sealed record EntrySurfaceTokens(Color Bg, Color Border, Color Shadow);
 
     /// <summary>
-    ///     Recessed (inset) surface chrome for nested content.
-    ///     用于嵌套内容的凹陷（内嵌）表面 chrome。
+    ///     <para xml:lang="en">Groups colors used by recessed surfaces for nested content.</para>
+    ///     <para xml:lang="zh-CN">归组嵌套内容所用凹陷表面的颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Inset background fill.
-    ///     内嵌背景填充。
+    ///     <para xml:lang="en">The recessed background fill color.</para>
+    ///     <para xml:lang="zh-CN">凹陷背景的填充颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Inset border tint.
-    ///     内嵌边框色调。
+    ///     <para xml:lang="en">The recessed-surface border color.</para>
+    ///     <para xml:lang="zh-CN">凹陷表面的边框颜色。</para>
     /// </param>
     public sealed record InsetSurfaceTokens(Color Bg, Color Border);
 
     /// <summary>
-    ///     Framed pane chrome shared by the large settings panes.
-    ///     大型设置窗格共享的带框窗格 chrome。
+    ///     <para xml:lang="en">Groups colors shared by large framed panes.</para>
+    ///     <para xml:lang="zh-CN">归组大型带框窗格共享的颜色。</para>
     /// </summary>
     /// <param name="Border">
-    ///     Frame border tint.
-    ///     框架边框色调。
+    ///     <para xml:lang="en">The frame border color.</para>
+    ///     <para xml:lang="zh-CN">外框边框颜色。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Frame shadow tint.
-    ///     框架阴影色调。
+    ///     <para xml:lang="en">The frame shadow color.</para>
+    ///     <para xml:lang="zh-CN">外框阴影颜色。</para>
     /// </param>
     public sealed record FramedSurfaceTokens(Color Border, Color Shadow);
 }
