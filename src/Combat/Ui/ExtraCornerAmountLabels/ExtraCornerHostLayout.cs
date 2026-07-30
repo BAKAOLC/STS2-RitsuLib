@@ -47,27 +47,39 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         internal static void ApplySlotAlignment(Control label, ExtraCornerHostKind host,
             in ExtraIconAmountLabelSpec slot)
         {
-            if (label is not Label plainLabel)
-                return;
-
-            if (slot.Corner == ExtraIconAmountLabelCorner.Custom)
+            switch (label)
             {
-                plainLabel.HorizontalAlignment = HorizontalAlignment.Center;
-                plainLabel.VerticalAlignment = VerticalAlignment.Center;
-                return;
+                case Label plainLabel:
+                    plainLabel.HorizontalAlignment = ResolveHorizontalAlignment(slot.Corner);
+                    plainLabel.VerticalAlignment = ResolveVerticalAlignment(host, slot.Corner);
+                    break;
+                case RichTextLabel richTextLabel:
+                    richTextLabel.VerticalAlignment = ResolveVerticalAlignment(host, slot.Corner);
+                    break;
             }
+        }
 
-            plainLabel.HorizontalAlignment = slot.Corner switch
+        private static HorizontalAlignment ResolveHorizontalAlignment(ExtraIconAmountLabelCorner corner)
+        {
+            return corner switch
             {
                 ExtraIconAmountLabelCorner.TopLeft or ExtraIconAmountLabelCorner.BottomLeft => HorizontalAlignment.Left,
                 ExtraIconAmountLabelCorner.TopRight or ExtraIconAmountLabelCorner.BottomRight => HorizontalAlignment
                     .Right,
                 _ => HorizontalAlignment.Center,
             };
+        }
 
-            plainLabel.VerticalAlignment = host switch
+        private static VerticalAlignment ResolveVerticalAlignment(
+            ExtraCornerHostKind host,
+            ExtraIconAmountLabelCorner corner)
+        {
+            if (corner == ExtraIconAmountLabelCorner.Custom)
+                return VerticalAlignment.Center;
+
+            return host switch
             {
-                ExtraCornerHostKind.Relic => slot.Corner switch
+                ExtraCornerHostKind.Relic => corner switch
                 {
                     ExtraIconAmountLabelCorner.TopLeft or ExtraIconAmountLabelCorner.TopRight =>
                         VerticalAlignment.Top,
@@ -75,14 +87,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                         VerticalAlignment.Bottom,
                     _ => VerticalAlignment.Center,
                 },
-                ExtraCornerHostKind.Intent => slot.Corner switch
-                {
-                    ExtraIconAmountLabelCorner.TopLeft or ExtraIconAmountLabelCorner.TopRight =>
-                        VerticalAlignment.Top,
-                    ExtraIconAmountLabelCorner.BottomLeft or ExtraIconAmountLabelCorner.BottomRight =>
-                        VerticalAlignment.Top,
-                    _ => VerticalAlignment.Center,
-                },
+                ExtraCornerHostKind.Intent => VerticalAlignment.Top,
                 _ => VerticalAlignment.Center,
             };
         }
