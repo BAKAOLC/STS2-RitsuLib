@@ -47,10 +47,20 @@ namespace STS2RitsuLib.Combat.HandSize
 
             return IsPatchedByBaseLib(new(typeof(CardPileCmd),
                        nameof(CardPileCmd.CheckIfDrawIsPossibleAndShowThoughtBubbleIfNot), [typeof(Player)]))
-                   || IsPatchedByBaseLib(new(typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
-                       [typeof(Player), typeof(HookPlayerChoiceContext)]))
+                   || IsSetupPlayerTurnPatchedByBaseLib()
                    || IsPatchedByBaseLib(new(typeof(CardConsoleCmd), nameof(CardConsoleCmd.Process),
                        [typeof(Player), typeof(string[])]));
+        }
+
+        private static bool IsSetupPlayerTurnPatchedByBaseLib()
+        {
+#if STS2_AT_LEAST_0_110_0
+            return IsPatchedByBaseLib(new(typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
+                [typeof(CombatTurnState), typeof(Player), typeof(HookPlayerChoiceContext)], MethodType.Async));
+#else
+            return IsPatchedByBaseLib(new(typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
+                [typeof(Player), typeof(HookPlayerChoiceContext)]));
+#endif
         }
 
         internal static bool IsBaseLibBaseAmountConsumer(CodeInstruction instruction)

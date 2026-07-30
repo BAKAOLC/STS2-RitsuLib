@@ -1,4 +1,7 @@
 using MegaCrit.Sts2.Core.Saves;
+#if STS2_AT_LEAST_0_110_0
+using MegaCrit.Sts2.Core.Timeline;
+#endif
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
@@ -46,8 +49,14 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes a lifecycle event when <see cref="SaveManager.IncrementUnlock" /> completes and returns a key.
-    ///     当 <see cref="SaveManager.IncrementUnlock" /> 完成并返回键时发布生命周期事件。
+    ///     <para xml:lang="en">
+    ///         Publishes a lifecycle event after the legacy unlock counter advances or, on game API 0.110.0 and later,
+    ///         after the save manager attempts to grant the next score-based epoch.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在旧版解锁计数推进后发布生命周期事件；从游戏 API 0.110.0 起，则在存档管理器尝试授予
+    ///         下一个基于分数的纪元后发布。
+    ///     </para>
     /// </summary>
     internal class UnlockIncrementLifecyclePatch : IPatchMethod
     {
@@ -59,10 +68,24 @@ namespace STS2RitsuLib.Lifecycle.Patches
         {
             return
             [
+#if STS2_AT_LEAST_0_110_0
+                new(typeof(SaveManager), nameof(SaveManager.GrantNextUnlock), Type.EmptyTypes),
+#else
                 new(typeof(SaveManager), nameof(SaveManager.IncrementUnlock), Type.EmptyTypes),
+#endif
             ];
         }
 
+#if STS2_AT_LEAST_0_110_0
+        public static void Postfix(SaveManager __instance, EpochModel? __result)
+        {
+            RitsuLibFramework.PublishLifecycleEvent(
+                new UnlockIncrementedEvent(__instance, __instance.Progress.TotalUnlocks, __result?.Id,
+                    DateTimeOffset.UtcNow),
+                nameof(UnlockIncrementedEvent)
+            );
+        }
+#else
         public static void Postfix(SaveManager __instance, string? __result)
         {
             RitsuLibFramework.PublishLifecycleEvent(
@@ -71,5 +94,6 @@ namespace STS2RitsuLib.Lifecycle.Patches
                 nameof(UnlockIncrementedEvent)
             );
         }
+#endif
     }
 }

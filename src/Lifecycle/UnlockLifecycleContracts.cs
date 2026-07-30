@@ -52,24 +52,35 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Unlock counter advanced (e.g. after a run).
-    ///     解锁计数已推进（例如跑局结束后）。
+    ///     <para xml:lang="en">
+    ///         Reports legacy unlock-counter advancement or, on game API 0.110.0 and later, the result of attempting to
+    ///         grant the next score-based epoch.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         报告旧版解锁计数推进；从游戏 API 0.110.0 起，则报告尝试授予下一个基于分数的纪元的结果。
+    ///     </para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">The save manager that performed the operation.</para>
+    ///     <para xml:lang="zh-CN">执行该操作的存档管理器。</para>
     /// </param>
     /// <param name="TotalUnlocks">
-    ///     New total unlock count.
-    ///     新的总解锁数量。
+    ///     <para xml:lang="en">The total unlock count after the operation.</para>
+    ///     <para xml:lang="zh-CN">操作后的解锁总数。</para>
     /// </param>
     /// <param name="PendingEpochId">
-    ///     Next epoch id when queued.
-    ///     已排队时的下一个 epoch ID。
+    ///     <para xml:lang="en">
+    ///         On game API 0.110.0 and later, the granted epoch ID, or <see langword="null" /> when none remains.
+    ///         On earlier APIs, the next epoch ID returned by the legacy increment operation.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从游戏 API 0.110.0 起，为本次授予的纪元 ID；没有剩余纪元时为 <see langword="null" />。
+    ///         在更早的 API 中，为旧版计数推进操作返回的下一个纪元 ID。
+    ///     </para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">The UTC time at which the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发时的 UTC 时间。</para>
     /// </param>
     public readonly record struct UnlockIncrementedEvent(
         SaveManager SaveManager,
