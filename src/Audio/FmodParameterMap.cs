@@ -39,6 +39,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static Dictionary<string, float> Of(params (string Name, float Value)[] pairs)
         {
+            ArgumentNullException.ThrowIfNull(pairs);
             if (pairs.Length == 0)
                 return [];
 
