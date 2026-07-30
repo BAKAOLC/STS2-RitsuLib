@@ -1453,6 +1453,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             _style = style ?? SecondaryResourceCounterStyle.Default;
             _row?.AddThemeConstantOverride("separation", _style.RowSeparation);
+            foreach (var counter in _counters.Values)
+                counter.Configure(counter.Definition, _style);
         }
 
         /// <summary>
@@ -1498,14 +1500,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             }
 
             var anyVisible = false;
+            var visibleIndex = 0;
+            var seenDefinitions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var definition in visibleDefinitions)
             {
+                if (!seenDefinitions.Add(definition.Id))
+                    continue;
+
                 var counter = GetOrCreateCounter(definition);
+                _row.MoveChild(counter, visibleIndex++);
                 counter.Bind(player, false);
                 anyVisible |= counter.Visible;
             }
 
             Visible = anyVisible;
+        }
+
+        /// <inheritdoc />
+        public override void _EnterTree()
+        {
+            UpdateStateSubscription();
         }
 
         /// <summary>
@@ -1524,7 +1538,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _row.AddThemeConstantOverride("separation", _style.RowSeparation);
             AddChild(_row);
 
-            if (_pendingDefinitions == null) return;
+            if (_pendingDefinitions == null)
+                return;
+
             var player = _pendingPlayer;
             var definitions = _pendingDefinitions;
             _pendingPlayer = null;
