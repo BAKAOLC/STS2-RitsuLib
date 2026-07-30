@@ -7,6 +7,7 @@ namespace STS2RitsuLib.RuntimeInput
         private static readonly Dictionary<string, object> ActionHandles = new(StringComparer.Ordinal);
         private static readonly Dictionary<string, string> PressedActions = new(StringComparer.Ordinal);
         private static bool _handleCacheDirty = true;
+        private static bool _disabled;
         private static int _unavailableLogged;
 
         static RitsuSteamInputBackend()
@@ -16,6 +17,12 @@ namespace STS2RitsuLib.RuntimeInput
 
         public static void Process()
         {
+            if (_disabled)
+            {
+                ReleaseAll();
+                return;
+            }
+
             if (!RitsuSteamInputManifestInstaller.IsManifestInstalled || !RitsuSteamInputInterop.IsSteamAvailable)
             {
                 ReleaseAll();
@@ -59,6 +66,7 @@ namespace STS2RitsuLib.RuntimeInput
             }
             catch (Exception ex)
             {
+                _disabled = true;
                 ReleaseAll();
                 if (Interlocked.Exchange(ref _unavailableLogged, 1) == 0)
                     RitsuLibFramework.Logger.Warn(
