@@ -3581,23 +3581,12 @@ namespace STS2RitsuLib.Settings
             try
             {
                 def.Action();
+                _afterAction?.Invoke();
             }
-            catch (Exception ex)
+            finally
             {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] action failed: {ex.Message}");
+                CloseDropdown();
             }
-
-            if (_afterAction != null)
-                try
-                {
-                    _afterAction();
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] afterAction failed: {ex.Message}");
-                }
-
-            CloseDropdown();
         }
 
         private static bool IsActionEnabled(ModSettingsMenuAction action)
