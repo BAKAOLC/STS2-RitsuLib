@@ -31,10 +31,47 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (_subscriptions != null)
                     return;
 
-                var a = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(_ => TryAttachProcessFrameWatch());
-                var b = RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => OnRunEnded());
-                _subscriptions = new SubscriptionGroup(a, b);
-                TryAttachProcessFrameWatch();
+                IDisposable? gameReadySubscription = null;
+                IDisposable? runEndedSubscription = null;
+                try
+                {
+                    gameReadySubscription =
+                        RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(_ => TryAttachProcessFrameWatch());
+                    runEndedSubscription = RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => OnRunEnded());
+                    TryAttachProcessFrameWatch();
+                    _subscriptions = new SubscriptionGroup(gameReadySubscription, runEndedSubscription);
+                }
+                catch (Exception installException)
+                {
+                    List<Exception>? cleanupExceptions = null;
+                    TryDispose(runEndedSubscription);
+                    TryDispose(gameReadySubscription);
+                    if (cleanupExceptions != null)
+                    {
+                        cleanupExceptions.Insert(0, installException);
+                        throw new AggregateException(
+                            "Sidecar lifecycle installation and rollback both failed.",
+                            cleanupExceptions);
+                    }
+
+                    throw;
+
+                    void TryDispose(IDisposable? subscription)
+                    {
+                        if (subscription == null)
+                            return;
+
+                        try
+                        {
+                            subscription.Dispose();
+                        }
+                        catch (Exception cleanupException)
+                        {
+                            cleanupExceptions ??= [];
+                            cleanupExceptions.Add(cleanupException);
+                        }
+                    }
+                }
             }
         }
 
