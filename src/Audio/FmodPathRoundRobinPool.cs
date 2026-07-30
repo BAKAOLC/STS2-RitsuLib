@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Audio
     public sealed class FmodPathRoundRobinPool
     {
         private readonly List<string> _entries;
+        private readonly Lock _gate = new();
         private readonly Random _rng = new();
         private int _lastIndex = -1;
 
@@ -35,25 +36,28 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public bool TryPickNext(out string path)
         {
-            path = "";
-            switch (_entries.Count)
+            lock (_gate)
             {
-                case 0:
-                    return false;
-                case 1:
-                    path = _entries[0];
-                    return true;
+                path = "";
+                switch (_entries.Count)
+                {
+                    case 0:
+                        return false;
+                    case 1:
+                        path = _entries[0];
+                        return true;
+                }
+
+                int index;
+                do
+                {
+                    index = _rng.Next(_entries.Count);
+                } while (index == _lastIndex);
+
+                _lastIndex = index;
+                path = _entries[index];
+                return true;
             }
-
-            int index;
-            do
-            {
-                index = _rng.Next(_entries.Count);
-            } while (index == _lastIndex);
-
-            _lastIndex = index;
-            path = _entries[index];
-            return true;
         }
     }
 }
