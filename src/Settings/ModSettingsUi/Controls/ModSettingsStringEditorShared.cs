@@ -4,8 +4,8 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Max-length clamping and string-field theming shared by single-line and multiline controls.
-    ///     单行和多行控件共享的最大长度截断与字符串字段主题设置。
+    ///     <para xml:lang="en">Provides length clamping and value-field theming shared by single-line and multiline string editors.</para>
+    ///     <para xml:lang="zh-CN">提供单行与多行字符串编辑器共用的长度限制和数值字段主题设置。</para>
     /// </summary>
     internal static class ModSettingsStringEditorShared
     {
