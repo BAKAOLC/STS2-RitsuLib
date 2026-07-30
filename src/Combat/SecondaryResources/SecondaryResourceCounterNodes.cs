@@ -13,8 +13,8 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Hover-tip request for one secondary-resource display node.
-    ///     单个次级资源显示节点的悬浮提示请求。
+    ///     <para xml:lang="en">Describes a hover-tip request for one secondary-resource display.</para>
+    ///     <para xml:lang="zh-CN">描述一个次级资源显示节点的悬浮提示请求。</para>
     /// </summary>
     public readonly record struct SecondaryResourceHoverTipRequest(
         SecondaryResourceDefinition Definition,
@@ -22,8 +22,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         int? MaxAmount = null);
 
     /// <summary>
-    ///     Hover-tip placement context for one secondary-resource display node.
-    ///     单个次级资源显示节点的悬浮提示放置上下文。
+    ///     <para xml:lang="en">Provides placement data for a secondary-resource hover tip.</para>
+    ///     <para xml:lang="zh-CN">提供次级资源悬浮提示的放置数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceHoverTipPlacementContext(
         Control Owner,
@@ -33,35 +33,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         int? MaxAmount);
 
     /// <summary>
-    ///     Hover-tip behavior for secondary-resource display nodes.
-    ///     次级资源显示节点的悬浮提示行为。
+    ///     <para xml:lang="en">Configures hover-tip behavior for secondary-resource displays.</para>
+    ///     <para xml:lang="zh-CN">配置次级资源显示节点的悬浮提示行为。</para>
     /// </summary>
     public sealed record SecondaryResourceHoverTipStyle
     {
         private const float DefaultGap = 20f;
 
         /// <summary>
-        ///     Whether the icon shows a hover tip.
-        ///     图标是否显示悬浮提示。
+        ///     <para xml:lang="en">Gets whether the display shows a hover tip.</para>
+        ///     <para xml:lang="zh-CN">获取显示节点是否显示悬浮提示。</para>
         /// </summary>
         public bool Enabled { get; init; } = true;
 
         /// <summary>
-        ///     Resolver for the hover tip's screen-space top-left position.
-        ///     用于决定悬浮提示左上角屏幕空间位置的 resolver。
+        ///     <para xml:lang="en">Gets the resolver for the hover tip's screen-space top-left position.</para>
+        ///     <para xml:lang="zh-CN">获取用于解析悬浮提示左上角屏幕空间位置的函数。</para>
         /// </summary>
         public Func<SecondaryResourceHoverTipPlacementContext, Vector2> ResolveGlobalPosition { get; init; } =
             ResolveAboveOwner;
 
         /// <summary>
-        ///     Extra screen-space pixels added after custom position resolution.
-        ///     自定义位置解析后追加的屏幕空间偏移。
+        ///     <para xml:lang="en">Gets the screen-space offset added after position resolution.</para>
+        ///     <para xml:lang="zh-CN">获取位置解析完成后追加的屏幕空间偏移。</para>
         /// </summary>
         public Vector2 ScreenOffset { get; init; }
 
         /// <summary>
-        ///     Shared default hover-tip style.
-        ///     共享默认悬浮提示样式。
+        ///     <para xml:lang="en">Gets the shared default hover-tip style.</para>
+        ///     <para xml:lang="zh-CN">获取共享的默认悬浮提示样式。</para>
         /// </summary>
         public static SecondaryResourceHoverTipStyle Default { get; } = new();
 
@@ -79,53 +79,53 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Visual and hover-tip style for a secondary-resource icon node.
-    ///     次级资源图标节点的视觉和悬浮提示样式。
+    ///     <para xml:lang="en">Configures the appearance and hover tip of a secondary-resource icon.</para>
+    ///     <para xml:lang="zh-CN">配置次级资源图标的外观与悬浮提示。</para>
     /// </summary>
     public sealed record SecondaryResourceIconStyle
     {
         /// <summary>
-        ///     Root control and icon rectangle size.
-        ///     根 control 和图标矩形尺寸。
+        ///     <para xml:lang="en">Gets the root control and icon rectangle size.</para>
+        ///     <para xml:lang="zh-CN">获取根控件及图标矩形的尺寸。</para>
         /// </summary>
         public Vector2 Size { get; init; } = new(46f, 46f);
 
         /// <summary>
-        ///     Icon offset inside the root control.
-        ///     图标在根 control 内的偏移。
+        ///     <para xml:lang="en">Gets the icon offset within the root control.</para>
+        ///     <para xml:lang="zh-CN">获取图标在根控件内的偏移。</para>
         /// </summary>
         public Vector2 IconOffset { get; init; }
 
         /// <summary>
-        ///     Texture expand mode.
-        ///     贴图 expand mode。
+        ///     <para xml:lang="en">Gets the icon texture's size-expansion mode.</para>
+        ///     <para xml:lang="zh-CN">获取图标贴图的尺寸扩展模式。</para>
         /// </summary>
         public TextureRect.ExpandModeEnum ExpandMode { get; init; } = TextureRect.ExpandModeEnum.IgnoreSize;
 
         /// <summary>
-        ///     Texture stretch mode.
-        ///     贴图 stretch mode。
+        ///     <para xml:lang="en">Gets the icon texture's stretch mode.</para>
+        ///     <para xml:lang="zh-CN">获取图标贴图的拉伸模式。</para>
         /// </summary>
         public TextureRect.StretchModeEnum StretchMode { get; init; } =
             TextureRect.StretchModeEnum.KeepAspectCentered;
 
         /// <summary>
-        ///     Optional hover-tip behavior. Null disables built-in hover-tip wiring.
-        ///     可选悬浮提示行为。为 null 时禁用内建悬浮提示绑定。
+        ///     <para xml:lang="en">Gets the optional hover-tip style; <see langword="null" /> disables hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取可选的悬浮提示样式；为 <see langword="null" /> 时禁用悬浮提示。</para>
         /// </summary>
         public SecondaryResourceHoverTipStyle? HoverTip { get; init; } =
             SecondaryResourceHoverTipStyle.Default;
 
         /// <summary>
-        ///     Shared default icon style.
-        ///     共享默认图标样式。
+        ///     <para xml:lang="en">Gets the shared default icon style.</para>
+        ///     <para xml:lang="zh-CN">获取共享的默认图标样式。</para>
         /// </summary>
         public static SecondaryResourceIconStyle Default { get; } = new();
     }
 
     /// <summary>
-    ///     Optional gain feedback for a secondary-resource counter.
-    ///     次级资源计数器的可选获得反馈。
+    ///     <para xml:lang="en">Configures visual feedback when a secondary-resource counter increases.</para>
+    ///     <para xml:lang="zh-CN">配置次级资源计数器增加时的视觉反馈。</para>
     /// </summary>
     public sealed record SecondaryResourceCounterGainFeedback
     {
@@ -136,28 +136,30 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             "res://scenes/vfx/energy/ironclad/ironclad_energy_vfx_front.tscn";
 
         /// <summary>
-        ///     Ordered effects played when the displayed amount increases.
-        ///     显示数量增加时按顺序播放的效果。
+        ///     <para xml:lang="en">Gets the ordered effects played when the displayed amount increases.</para>
+        ///     <para xml:lang="zh-CN">获取显示数量增加时按顺序播放的效果。</para>
         /// </summary>
         public IReadOnlyList<SecondaryResourceCounterGainEffect> Effects { get; init; } = [];
 
         /// <summary>
-        ///     Empty feedback.
-        ///     空反馈。
+        ///     <para xml:lang="en">Gets feedback with no effects.</para>
+        ///     <para xml:lang="zh-CN">获取不包含任何效果的反馈。</para>
         /// </summary>
         public static SecondaryResourceCounterGainFeedback None { get; } = new();
 
         /// <summary>
-        ///     Star-counter-like gain feedback using the current icon's rendered size as its scale basis.
-        ///     使用当前图标实际渲染尺寸作为缩放基准的辉星计数器类型获得反馈。
+        ///     <para xml:lang="en">
+        ///         Gets Stars-counter-style gain feedback scaled from the current icon's rendered size.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取根据当前图标实际渲染尺寸缩放的辉星计数器式增加反馈。</para>
         /// </summary>
         public static SecondaryResourceCounterGainFeedback StarCounterLike { get; } = From(
             SecondaryResourceCounterGainEffects.IconBrightnessFlash(),
             SecondaryResourceCounterGainEffects.StarCounterLikeBurst());
 
         /// <summary>
-        ///     Energy-counter-like gain feedback using vanilla energy particle scenes.
-        ///     使用原版能量粒子场景的能量计数器类型获得反馈。
+        ///     <para xml:lang="en">Gets energy-counter-style gain feedback using the game's energy particle scenes.</para>
+        ///     <para xml:lang="zh-CN">获取使用游戏能量粒子场景的能量计数器式增加反馈。</para>
         /// </summary>
         public static SecondaryResourceCounterGainFeedback EnergyCounterLike { get; } = From(
             SecondaryResourceCounterGainEffects.EnergyCounterLikeParticles(
@@ -165,8 +167,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 IroncladEnergyFrontVfxPath));
 
         /// <summary>
-        ///     Creates feedback from one or more effects.
-        ///     从一个或多个效果创建反馈。
+        ///     <para xml:lang="en">Creates gain feedback from the supplied non-null effects.</para>
+        ///     <para xml:lang="zh-CN">根据提供的非空效果创建增加反馈。</para>
         /// </summary>
         public static SecondaryResourceCounterGainFeedback From(params SecondaryResourceCounterGainEffect[] effects)
         {
@@ -179,14 +181,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Base type for one secondary-resource counter gain effect.
-    ///     单个次级资源计数器获得效果的基类。
+    ///     <para xml:lang="en">Defines one visual effect played when a secondary-resource counter increases.</para>
+    ///     <para xml:lang="zh-CN">定义次级资源计数器增加时播放的一项视觉效果。</para>
     /// </summary>
     public abstract record SecondaryResourceCounterGainEffect;
 
     /// <summary>
-    ///     Gain effect that flashes the icon with the vanilla HSV brightness shader.
-    ///     使用原版 HSV 亮度 shader 闪烁图标的获得效果。
+    ///     <para xml:lang="en">Flashes the icon with the game's HSV brightness shader.</para>
+    ///     <para xml:lang="zh-CN">使用游戏的 HSV 亮度着色器使图标闪烁。</para>
     /// </summary>
     public sealed record SecondaryResourceCounterIconBrightnessFlashEffect(
         float BrightnessFrom = 2f,
@@ -194,16 +196,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         double DurationSeconds = 0.2) : SecondaryResourceCounterGainEffect;
 
     /// <summary>
-    ///     Star-counter-like one-shot burst generated from the current resource icon.
-    ///     基于当前资源图标生成的一次性辉星计数器类型 burst。
+    ///     <para xml:lang="en">Creates a one-shot Stars-counter-style burst from the current resource icon.</para>
+    ///     <para xml:lang="zh-CN">根据当前资源图标创建一次性的辉星计数器式爆发效果。</para>
     /// </summary>
     public sealed record SecondaryResourceCounterStarCounterLikeBurstEffect(
         Color Color,
         double DurationSeconds = 1.0) : SecondaryResourceCounterGainEffect;
 
     /// <summary>
-    ///     Energy-counter-like particles using vanilla energy VFX scenes.
-    ///     使用原版能量 VFX 场景的能量计数器类型粒子。
+    ///     <para xml:lang="en">Uses the game's energy-effect scenes as energy-counter-style particles.</para>
+    ///     <para xml:lang="zh-CN">使用游戏的能量特效场景生成能量计数器式粒子效果。</para>
     /// </summary>
     public sealed record SecondaryResourceCounterEnergyCounterLikeParticlesEffect(
         string BackScenePath,
@@ -212,8 +214,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         Vector2? Scale = null) : SecondaryResourceCounterGainEffect;
 
     /// <summary>
-    ///     Gain effect that instantiates a caller-supplied one-shot scene.
-    ///     实例化调用方提供的一次性场景的获得效果。
+    ///     <para xml:lang="en">Instantiates a caller-supplied scene as a one-shot gain effect.</para>
+    ///     <para xml:lang="zh-CN">将调用方提供的场景实例化为一次性的增加效果。</para>
     /// </summary>
     public sealed record SecondaryResourceCounterSceneBurstEffect(
         string ScenePath,
@@ -222,14 +224,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         bool BehindCounter = true) : SecondaryResourceCounterGainEffect;
 
     /// <summary>
-    ///     Factory helpers for secondary-resource counter gain effects.
-    ///     次级资源计数器获得效果的工厂辅助方法。
+    ///     <para xml:lang="en">Creates built-in secondary-resource counter gain effects.</para>
+    ///     <para xml:lang="zh-CN">创建内置的次级资源计数器增加效果。</para>
     /// </summary>
     public static class SecondaryResourceCounterGainEffects
     {
         /// <summary>
-        ///     Creates an icon brightness flash effect.
-        ///     创建图标亮度闪光效果。
+        ///     <para xml:lang="en">Creates an icon-brightness flash effect.</para>
+        ///     <para xml:lang="zh-CN">创建图标亮度闪烁效果。</para>
         /// </summary>
         public static SecondaryResourceCounterIconBrightnessFlashEffect IconBrightnessFlash(
             float brightnessFrom = 2f,
@@ -241,8 +243,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates a star-counter-like burst generated from the current resource icon.
-        ///     创建基于当前资源图标生成的辉星计数器类型 burst。
+        ///     <para xml:lang="en">Creates a Stars-counter-style burst from the current resource icon.</para>
+        ///     <para xml:lang="zh-CN">根据当前资源图标创建辉星计数器式爆发效果。</para>
         /// </summary>
         public static SecondaryResourceCounterStarCounterLikeBurstEffect StarCounterLikeBurst(
             Color? color = null,
@@ -254,8 +256,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates an energy-counter-like particle effect using vanilla energy VFX scenes.
-        ///     创建使用原版能量 VFX 场景的能量计数器类型粒子效果。
+        ///     <para xml:lang="en">Creates an energy-counter-style effect from the game's energy particle scenes.</para>
+        ///     <para xml:lang="zh-CN">使用游戏的能量粒子场景创建能量计数器式效果。</para>
         /// </summary>
         public static SecondaryResourceCounterEnergyCounterLikeParticlesEffect EnergyCounterLikeParticles(
             string backScenePath,
@@ -270,8 +272,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates a caller-supplied scene burst effect.
-        ///     创建调用方提供的场景 burst 效果。
+        ///     <para xml:lang="en">Creates a burst effect from a caller-supplied scene.</para>
+        ///     <para xml:lang="zh-CN">使用调用方提供的场景创建爆发效果。</para>
         /// </summary>
         public static SecondaryResourceCounterSceneBurstEffect SceneBurst(
             string scenePath,
@@ -285,100 +287,106 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Visual style for the built-in secondary-resource counter nodes.
-    ///     内建次级资源计数节点的视觉样式。
+    ///     <para xml:lang="en">Configures the appearance and gain feedback of built-in resource counters.</para>
+    ///     <para xml:lang="zh-CN">配置内置次级资源计数器的外观与增加反馈。</para>
     /// </summary>
     public sealed record SecondaryResourceCounterStyle
     {
         /// <summary>
-        ///     Root control size for one counter.
-        ///     单个计数器根节点尺寸。
+        ///     <para xml:lang="en">Gets the root control size of one counter.</para>
+        ///     <para xml:lang="zh-CN">获取一个计数器根控件的尺寸。</para>
         /// </summary>
         public Vector2 CounterSize { get; init; } = new(48f, 48f);
 
         /// <summary>
-        ///     Icon rectangle size inside one counter.
-        ///     单个计数器内图标矩形尺寸。
+        ///     <para xml:lang="en">Gets the icon rectangle size within one counter.</para>
+        ///     <para xml:lang="zh-CN">获取一个计数器内图标矩形的尺寸。</para>
         /// </summary>
         public Vector2 IconSize { get; init; } = new(46f, 46f);
 
         /// <summary>
-        ///     Amount-label font size.
-        ///     数量标签字号。
+        ///     <para xml:lang="en">Gets the amount-label font size.</para>
+        ///     <para xml:lang="zh-CN">获取数量标签的字号。</para>
         /// </summary>
         public int FontSize { get; init; } = 28;
 
         /// <summary>
-        ///     Amount-label outline size.
-        ///     数量标签描边尺寸。
+        ///     <para xml:lang="en">Gets the amount-label outline size.</para>
+        ///     <para xml:lang="zh-CN">获取数量标签的描边尺寸。</para>
         /// </summary>
         public int OutlineSize { get; init; } = 7;
 
         /// <summary>
-        ///     Amount-label color when the resource is positive.
-        ///     资源数量为正时的数量标签颜色。
+        ///     <para xml:lang="en">Gets the amount-label color for a positive resource amount.</para>
+        ///     <para xml:lang="zh-CN">获取资源数量为正数时的数量标签颜色。</para>
         /// </summary>
         public Color PositiveColor { get; init; } = StsColors.cream;
 
         /// <summary>
-        ///     Amount-label color when the resource is zero.
-        ///     资源数量为零时的数量标签颜色。
+        ///     <para xml:lang="en">Gets the amount-label color for a nonpositive resource amount.</para>
+        ///     <para xml:lang="zh-CN">获取资源数量小于或等于零时的数量标签颜色。</para>
         /// </summary>
         public Color ZeroColor { get; init; } = StsColors.red;
 
         /// <summary>
-        ///     Amount-label outline color.
-        ///     数量标签描边颜色。
+        ///     <para xml:lang="en">Gets the amount-label outline color.</para>
+        ///     <para xml:lang="zh-CN">获取数量标签的描边颜色。</para>
         /// </summary>
         public Color OutlineColor { get; init; } = new(0.16f, 0.08f, 0.04f);
 
         /// <summary>
-        ///     Amount-label offset relative to the centered icon rectangle.
-        ///     数量标签相对居中图标矩形的偏移。
+        ///     <para xml:lang="en">Gets the amount-label offset from the centered icon rectangle.</para>
+        ///     <para xml:lang="zh-CN">获取数量标签相对于居中图标矩形的偏移。</para>
         /// </summary>
         public Vector2 AmountLabelOffset { get; init; }
 
         /// <summary>
-        ///     Whether amount gains are displayed with vanilla star-counter-like smoothing.
-        ///     获得数量时是否使用类似原版辉星计数器的平滑显示。
+        ///     <para xml:lang="en">Gets whether increases use the game's Stars-counter-style smoothing.</para>
+        ///     <para xml:lang="zh-CN">获取数量增加时是否使用游戏的辉星计数器式平滑动画。</para>
         /// </summary>
         public bool AnimateAmountGain { get; init; } = true;
 
         /// <summary>
-        ///     Smooth time for gain amount display animation.
-        ///     获得数量显示动画的平滑时间。
+        ///     <para xml:lang="en">Gets the smoothing time for an animated amount increase.</para>
+        ///     <para xml:lang="zh-CN">获取数量增加动画的平滑时间。</para>
         /// </summary>
         public float AmountGainSmoothTime { get; init; } = 0.1f;
 
         /// <summary>
-        ///     Horizontal separation used by <see cref="NSecondaryResourceCounterRow" />.
-        ///     <see cref="NSecondaryResourceCounterRow" /> 使用的水平间距。
+        ///     <para xml:lang="en">Gets the horizontal separation used by <see cref="NSecondaryResourceCounterRow" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="NSecondaryResourceCounterRow" /> 使用的水平间距。</para>
         /// </summary>
         public int RowSeparation { get; init; } = 8;
 
         /// <summary>
-        ///     Optional icon-node style. When null, <see cref="IconSize" /> is used with
-        ///     <see cref="SecondaryResourceIconStyle.Default" />.
-        ///     可选图标节点样式。为 null 时使用 <see cref="IconSize" /> 和
-        ///     <see cref="SecondaryResourceIconStyle.Default" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional icon style. When <see langword="null" />, the default icon style is used with
+        ///         <see cref="IconSize" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取可选的图标样式；为 <see langword="null" /> 时，将默认图标样式与
+        ///         <see cref="IconSize" /> 配合使用。
+        ///     </para>
         /// </summary>
         public SecondaryResourceIconStyle? IconStyle { get; init; }
 
         /// <summary>
-        ///     Optional gain feedback. Null means the built-in counter has no gain feedback.
-        ///     可选获得反馈。null 表示内建计数器没有获得反馈。
+        ///     <para xml:lang="en">
+        ///         Gets the optional gain feedback; <see langword="null" /> disables gain effects.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取可选的增加反馈；为 <see langword="null" /> 时禁用增加效果。</para>
         /// </summary>
         public SecondaryResourceCounterGainFeedback? GainFeedback { get; init; }
 
         /// <summary>
-        ///     Optional amount formatter. Receives current amount and max amount.
-        ///     可选数量格式化器，参数为当前数量和最大数量。
+        ///     <para xml:lang="en">Gets an optional formatter for the current and maximum amount.</para>
+        ///     <para xml:lang="zh-CN">获取用于格式化当前数量及最大数量的可选函数。</para>
         /// </summary>
         public Func<int, int?, string>? FormatAmount { get; init; }
 
         /// <summary>
-        ///     Shared default style instance.
-        ///     共享默认样式实例。
+        ///     <para xml:lang="en">Gets the shared default counter style.</para>
+        ///     <para xml:lang="zh-CN">获取共享的默认计数器样式。</para>
         /// </summary>
         public static SecondaryResourceCounterStyle Default { get; } = new();
 
@@ -390,8 +398,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Built-in single secondary-resource counter with icon, amount label, and hover tip.
-    ///     内建单个次级资源计数节点，包含图标、数量标签和悬浮提示。
+    ///     <para xml:lang="en">Displays one secondary resource with an icon, amount label, and hover tip.</para>
+    ///     <para xml:lang="zh-CN">使用图标、数量标签及悬浮提示显示一种次级资源。</para>
     /// </summary>
     public partial class NSecondaryResourceCounter : Control
     {
@@ -425,8 +433,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _definition ?? throw new InvalidOperationException("The secondary-resource counter is not configured.");
 
         /// <summary>
-        ///     Whether this counter refreshes when the bound player's secondary-resource state changes.
-        ///     该计数器是否在已绑定玩家的次级资源状态变化时刷新。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether the counter refreshes when the bound player's secondary-resource state changes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置已绑定玩家的次级资源状态变化时是否自动刷新计数器。</para>
         /// </summary>
         public bool AutoRefresh
         {
@@ -441,8 +451,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates and configures a counter for <paramref name="definition" />.
-        ///     为 <paramref name="definition" /> 创建并配置计数器。
+        ///     <para xml:lang="en">Creates and configures a counter for <paramref name="definition" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="definition" /> 创建并配置计数器。</para>
         /// </summary>
         public static NSecondaryResourceCounter Create(
             SecondaryResourceDefinition definition,
@@ -454,8 +464,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Configures the counter definition and style.
-        ///     配置计数器定义和样式。
+        ///     <para xml:lang="en">
+        ///         Configures the resource definition and style. Reusing the current definition preserves the
+        ///         counter's displayed state.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">配置资源定义及样式；继续使用当前定义时会保留计数器的显示状态。</para>
         /// </summary>
         public void Configure(SecondaryResourceDefinition definition, SecondaryResourceCounterStyle? style = null)
         {
@@ -495,8 +508,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Binds this counter to a player for automatic or manual refreshes.
-        ///     将该计数器绑定到一名玩家，用于自动或手动刷新。
+        ///     <para xml:lang="en">Binds the counter to a player for automatic or manual refresh.</para>
+        ///     <para xml:lang="zh-CN">将计数器绑定到一名玩家，以便自动或手动刷新。</para>
         /// </summary>
         public void Bind(Player? player, bool autoRefresh = true)
         {
@@ -522,8 +535,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Refreshes the displayed amount from <paramref name="player" />.
-        ///     从 <paramref name="player" /> 刷新显示数量。
+        ///     <para xml:lang="en">Refreshes the displayed amount and visibility from <paramref name="player" />.</para>
+        ///     <para xml:lang="zh-CN">根据 <paramref name="player" /> 刷新显示数量及可见性。</para>
         /// </summary>
         public void Refresh(Player? player)
         {
@@ -541,8 +554,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets the displayed amount directly.
-        ///     直接设置显示数量。
+        ///     <para xml:lang="en">Sets the displayed current and maximum amounts directly.</para>
+        ///     <para xml:lang="zh-CN">直接设置显示的当前数量及最大数量。</para>
         /// </summary>
         public void SetAmount(int amount, int? maxAmount = null)
         {
@@ -580,8 +593,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Initializes child controls and applies the configured definition.
-        ///     初始化子控件并应用已配置的资源定义。
+        ///     <para xml:lang="en">Initializes the child controls and applies the configured definition.</para>
+        ///     <para xml:lang="zh-CN">初始化子控件并应用已配置的资源定义。</para>
         /// </summary>
         public override void _Ready()
         {
@@ -676,8 +689,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Clears the active hover tip when the counter leaves the scene tree.
-        ///     当计数器离开场景树时清理当前悬浮提示。
+        ///     <para xml:lang="en">
+        ///         Releases state subscriptions, gain effects, and the active hover tip when leaving the scene tree.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">离开场景树时释放状态订阅、增加效果及当前悬浮提示。</para>
         /// </summary>
         public override void _ExitTree()
         {
@@ -891,8 +906,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Built-in secondary-resource icon node with consistent texture setup and optional hover-tip wiring.
-    ///     内建次级资源图标节点，统一处理贴图设置和可选悬浮提示绑定。
+    ///     <para xml:lang="en">Displays a secondary-resource icon with optional built-in hover-tip behavior.</para>
+    ///     <para xml:lang="zh-CN">显示次级资源图标，并可选启用内置悬浮提示行为。</para>
     /// </summary>
     public partial class NSecondaryResourceIcon : Control
     {
@@ -905,14 +920,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private TextureRect _texture = null!;
 
         /// <summary>
-        ///     Current texture loaded for this icon.
-        ///     当前图标加载的贴图。
+        ///     <para xml:lang="en">Gets the texture currently loaded for the icon.</para>
+        ///     <para xml:lang="zh-CN">获取图标当前加载的贴图。</para>
         /// </summary>
         public Texture2D? Texture => _texture?.Texture;
 
         /// <summary>
-        ///     Creates and configures a secondary-resource icon.
-        ///     创建并配置次级资源图标。
+        ///     <para xml:lang="en">Creates and configures a secondary-resource icon.</para>
+        ///     <para xml:lang="zh-CN">创建并配置次级资源图标。</para>
         /// </summary>
         public static NSecondaryResourceIcon Create(
             SecondaryResourceDefinition definition,
@@ -927,8 +942,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Configures the resource definition and visual style.
-        ///     配置资源定义和视觉样式。
+        ///     <para xml:lang="en">Configures the resource definition, visual style, and hover-tip binding.</para>
+        ///     <para xml:lang="zh-CN">配置资源定义、视觉样式及悬浮提示绑定。</para>
         /// </summary>
         public void Configure(SecondaryResourceDefinition definition, SecondaryResourceIconStyle? style = null)
         {
@@ -946,8 +961,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Updates the amount displayed in this icon's hover tip.
-        ///     更新该图标悬浮提示中显示的数量。
+        ///     <para xml:lang="en">Updates the current and maximum amounts shown by this icon's hover tip.</para>
+        ///     <para xml:lang="zh-CN">更新该图标悬浮提示显示的当前数量及最大数量。</para>
         /// </summary>
         public void SetAmount(int amount, int? maxAmount = null)
         {
@@ -957,8 +972,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the texture's actual rendered rectangle relative to this icon node.
-        ///     返回贴图相对该图标节点的实际渲染矩形。
+        ///     <para xml:lang="en">Returns the texture's rendered rectangle relative to this icon node.</para>
+        ///     <para xml:lang="zh-CN">返回贴图相对于该图标节点的实际渲染矩形。</para>
         /// </summary>
         public Rect2 GetRenderedTextureRect()
         {
@@ -992,8 +1007,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Ensures the icon texture uses an unmodulated HSV material.
-        ///     确保图标贴图使用未调制的 HSV 材质。
+        ///     <para xml:lang="en">Ensures that the icon texture uses the game's unmodulated HSV material.</para>
+        ///     <para xml:lang="zh-CN">确保图标贴图使用游戏的未调制 HSV 材质。</para>
         /// </summary>
         public void EnsureHsvMaterial()
         {
@@ -1005,8 +1020,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets the HSV brightness parameter used by gain feedback.
-        ///     设置获得反馈使用的 HSV 亮度参数。
+        ///     <para xml:lang="en">Sets the HSV brightness parameter used by gain feedback.</para>
+        ///     <para xml:lang="zh-CN">设置增加反馈使用的 HSV 亮度参数。</para>
         /// </summary>
         public void SetShaderBrightness(float value)
         {
@@ -1245,10 +1260,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Reusable binder that gives any secondary-resource display <see cref="Control" /> the same
-    ///     mouse-enter / mouse-exit hover-tip behavior used by vanilla resource counters.
-    ///     可复用绑定器，为任意次级资源显示 <see cref="Control" /> 提供与原版资源计数器一致的
-    ///     mouse-enter / mouse-exit 悬浮提示行为。
+    ///     <para xml:lang="en">
+    ///         Gives a secondary-resource <see cref="Control" /> the same pointer hover behavior as the game's
+    ///         resource counters.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使次级资源 <see cref="Control" /> 具备与游戏资源计数器一致的指针悬浮行为。
+    ///     </para>
     /// </summary>
     public partial class SecondaryResourceHoverTipBinder : Node
     {
@@ -1260,8 +1278,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private SecondaryResourceHoverTipStyle _style = SecondaryResourceHoverTipStyle.Default;
 
         /// <summary>
-        ///     Creates a binder node.
-        ///     创建绑定器节点。
+        ///     <para xml:lang="en">Creates a hover-tip binder.</para>
+        ///     <para xml:lang="zh-CN">创建悬浮提示绑定器。</para>
         /// </summary>
         public SecondaryResourceHoverTipBinder()
         {
@@ -1270,8 +1288,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Binds a secondary-resource hover tip to any display control.
-        ///     将次级资源悬浮提示绑定到任意显示 control。
+        ///     <para xml:lang="en">Binds a request-driven secondary-resource hover tip to a display control.</para>
+        ///     <para xml:lang="zh-CN">将由请求驱动的次级资源悬浮提示绑定到显示控件。</para>
         /// </summary>
         public static SecondaryResourceHoverTipBinder Bind(
             Control owner,
@@ -1292,8 +1310,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Binds a fixed secondary-resource definition with dynamic amount providers.
-        ///     使用固定次级资源定义和动态数量 provider 绑定悬浮提示。
+        ///     <para xml:lang="en">
+        ///         Binds a fixed resource definition with providers for its current and maximum amounts.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用固定资源定义以及当前数量和最大数量提供函数绑定悬浮提示。</para>
         /// </summary>
         public static SecondaryResourceHoverTipBinder Bind(
             Control owner,
@@ -1312,8 +1332,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Updates the request factory and style used by this binder.
-        ///     更新该绑定器使用的请求 factory 和样式。
+        ///     <para xml:lang="en">Updates the request factory and style, refreshing a tip already shown.</para>
+        ///     <para xml:lang="zh-CN">更新请求工厂及样式，并刷新已显示的提示。</para>
         /// </summary>
         public void Configure(
             Func<SecondaryResourceHoverTipRequest?> requestFactory,
@@ -1342,8 +1362,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Shows the current hover tip, if the request factory returns one.
-        ///     如果请求 factory 返回内容，则显示当前悬浮提示。
+        ///     <para xml:lang="en">Shows the current hover tip when the request factory returns a request.</para>
+        ///     <para xml:lang="zh-CN">请求工厂返回有效请求时显示当前悬浮提示。</para>
         /// </summary>
         public void Show()
         {
@@ -1366,8 +1386,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Removes the active hover tip owned by this binder's control.
-        ///     移除此绑定器 control 拥有的当前悬浮提示。
+        ///     <para xml:lang="en">Removes the active hover tip owned by this binder's control.</para>
+        ///     <para xml:lang="zh-CN">移除此绑定器所属控件当前拥有的悬浮提示。</para>
         /// </summary>
         public void Hide()
         {
@@ -1377,8 +1397,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Recreates the hover tip with current request data when it is already visible.
-        ///     悬浮提示已显示时，使用当前请求数据重新创建提示。
+        ///     <para xml:lang="en">Recreates the hover tip from current request data when it is already visible.</para>
+        ///     <para xml:lang="zh-CN">悬浮提示已显示时，根据当前请求数据重新创建提示。</para>
         /// </summary>
         public void Refresh()
         {
@@ -1410,8 +1430,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Built-in row container for multiple secondary-resource counters.
-    ///     内建多次级资源计数器行容器。
+    ///     <para xml:lang="en">Displays multiple secondary-resource counters in a built-in horizontal row.</para>
+    ///     <para xml:lang="zh-CN">在内置水平行中显示多个次级资源计数器。</para>
     /// </summary>
     public partial class NSecondaryResourceCounterRow : Control
     {
@@ -1430,8 +1450,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
 
         /// <summary>
-        ///     Whether this row refreshes when the bound player's secondary-resource state changes.
-        ///     该行是否在已绑定玩家的次级资源状态变化时刷新。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether the row refreshes when the bound player's secondary-resource state changes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置已绑定玩家的次级资源状态变化时是否自动刷新该行。</para>
         /// </summary>
         public bool AutoRefresh
         {
@@ -1446,8 +1468,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Configures the row style.
-        ///     配置行样式。
+        ///     <para xml:lang="en">Applies the row style to its layout and existing counters.</para>
+        ///     <para xml:lang="zh-CN">将行样式应用于布局及已有计数器。</para>
         /// </summary>
         public void Configure(SecondaryResourceCounterStyle? style = null)
         {
@@ -1458,8 +1480,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Binds this row to a player and definition set for automatic or manual refreshes.
-        ///     将该行绑定到一名玩家和一组资源定义，用于自动或手动刷新。
+        ///     <para xml:lang="en">
+        ///         Binds the row to a player and resource definitions for automatic or manual refresh.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将该行绑定到一名玩家及一组资源定义，以便自动或手动刷新。</para>
         /// </summary>
         public void Bind(
             Player? player,
@@ -1476,8 +1500,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Refreshes visible counters for the supplied definitions.
-        ///     根据传入定义刷新可见计数器。
+        ///     <para xml:lang="en">
+        ///         Refreshes, deduplicates, and orders the visible counters for the supplied definitions.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">根据提供的定义刷新可见计数器，并对其去重及排序。</para>
         /// </summary>
         public void Refresh(Player? player, IReadOnlyList<SecondaryResourceDefinition> visibleDefinitions)
         {
@@ -1523,8 +1549,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Initializes the row container used by child counters.
-        ///     初始化子计数器使用的行容器。
+        ///     <para xml:lang="en">Initializes the horizontal container used by child counters.</para>
+        ///     <para xml:lang="zh-CN">初始化子计数器使用的水平容器。</para>
         /// </summary>
         public override void _Ready()
         {
@@ -1595,8 +1621,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Hover-tip factory for secondary-resource counters.
-    ///     次级资源计数器的悬浮提示工厂。
+    ///     <para xml:lang="en">Creates and displays hover tips for secondary resources.</para>
+    ///     <para xml:lang="zh-CN">创建并显示次级资源的悬浮提示。</para>
     /// </summary>
     public static class SecondaryResourceHoverTipFactory
     {
@@ -1608,8 +1634,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static readonly PropertyInfo IconProperty = typeof(HoverTip).GetProperty(nameof(HoverTip.Icon))!;
 
         /// <summary>
-        ///     Creates a hover tip for a secondary resource.
-        ///     为次级资源创建悬浮提示。
+        ///     <para xml:lang="en">Creates a hover tip for a secondary resource at the supplied amounts.</para>
+        ///     <para xml:lang="zh-CN">根据提供的数量为次级资源创建悬浮提示。</para>
         /// </summary>
         public static HoverTip Create(
             SecondaryResourceDefinition definition,
@@ -1635,8 +1661,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates and shows a secondary-resource hover tip for an icon owner.
-        ///     为图标 owner 创建并显示次级资源悬浮提示。
+        ///     <para xml:lang="en">Creates, positions, and shows a secondary-resource hover tip for its owning control.</para>
+        ///     <para xml:lang="zh-CN">为所属控件创建、定位并显示次级资源悬浮提示。</para>
         /// </summary>
         public static NHoverTipSet? Show(
             Control owner,
