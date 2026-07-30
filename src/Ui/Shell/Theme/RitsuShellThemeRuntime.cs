@@ -16,7 +16,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static readonly Lock Gate = new();
 
         private static readonly Dictionary<string, RitsuShellThemeModRegistration> ModRegistrations =
-            new(StringComparer.Ordinal);
+            new(StringComparer.OrdinalIgnoreCase);
 
         private static RitsuShellTheme? _current;
 
@@ -162,9 +162,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         {
             if (string.IsNullOrWhiteSpace(modId))
                 return;
+
+            var normalizedModId = modId.Trim();
+            var ownedDefaults = defaults?.Clone();
             lock (Gate)
             {
-                ModRegistrations[modId] = new(modId, defaults, onApply);
+                ModRegistrations[normalizedModId] = new(normalizedModId, ownedDefaults, onApply);
             }
 
             ReapplyActiveTheme(false);
@@ -182,9 +185,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         {
             if (string.IsNullOrWhiteSpace(modId))
                 return;
+
+            var normalizedModId = modId.Trim();
             lock (Gate)
             {
-                if (!ModRegistrations.Remove(modId))
+                if (!ModRegistrations.Remove(normalizedModId))
                     return;
             }
 
