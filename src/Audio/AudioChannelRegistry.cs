@@ -144,6 +144,17 @@ namespace STS2RitsuLib.Audio
             if (!_tags.TryGetValue(tag, out var handles))
                 return false;
 
+            return StopHandles(handles, allowFadeOut, false);
+        }
+
+        internal bool TryClearTag(string tag, bool allowFadeOut)
+        {
+            return !_tags.TryGetValue(tag, out var handles) || StopHandles(handles, allowFadeOut, true);
+        }
+
+        private static bool StopHandles(ConcurrentDictionary<IAudioHandle, byte> handles, bool allowFadeOut,
+            bool allowEmpty)
+        {
             var any = false;
             var allReleased = true;
             foreach (var handle in handles.Keys.ToArray())
@@ -159,7 +170,7 @@ namespace STS2RitsuLib.Audio
                 handles.TryRemove(handle, out _);
             }
 
-            return any && allReleased;
+            return allReleased && (any || allowEmpty);
         }
 
         /// <summary>

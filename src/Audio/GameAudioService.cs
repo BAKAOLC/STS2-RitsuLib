@@ -371,8 +371,9 @@ namespace STS2RitsuLib.Audio
                 return string.IsNullOrWhiteSpace(routing.Channel) ||
                        AudioChannelRegistry.Shared.TryClaimChannel(routing.Channel, handle, routing.ChannelMode,
                            routing.AllowFadeOutOnReplace);
-            if (routing.ReplaceTaggedGroup)
-                AudioChannelRegistry.Shared.StopTag(routing.Tag, routing.AllowFadeOutOnReplace);
+            if (routing.ReplaceTaggedGroup &&
+                !AudioChannelRegistry.Shared.TryClearTag(routing.Tag, routing.AllowFadeOutOnReplace))
+                return false;
 
             AudioChannelRegistry.Shared.AttachTag(routing.Tag, handle);
 
