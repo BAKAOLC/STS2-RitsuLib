@@ -415,9 +415,28 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             if (!RitsuShellThemePaths.TryEnsureShellThemesDirectory(out var themesAbs))
                 return false;
 
-            var abs = Path.Combine(themesAbs, path);
-            path = ProjectSettings.LocalizePath(abs);
-            return true;
+            try
+            {
+                if (Path.IsPathRooted(path))
+                    return false;
+
+                var themesRoot = Path.GetFullPath(themesAbs);
+                var absolutePath = Path.GetFullPath(Path.Combine(themesRoot, path));
+                var relativePath = Path.GetRelativePath(themesRoot, absolutePath);
+                if (relativePath == ".." ||
+                    relativePath.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ||
+                    Path.IsPathRooted(relativePath))
+                    return false;
+
+                path = ProjectSettings.LocalizePath(absolutePath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ShellTheme] Could not resolve theme-relative font path '{path}': {ex}");
+                return false;
+            }
         }
     }
 }
