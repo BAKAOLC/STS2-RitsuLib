@@ -62,9 +62,9 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     var cleanupException = CleanupAfterFailedStart();
                     var cleanupMessage = cleanupException == null
                         ? ""
-                        : $" Failed to detach the Godot log listener during cleanup: {cleanupException.Message}";
+                        : $" Failed to detach the Godot log listener during cleanup: {cleanupException}";
                     RitsuLibFramework.Logger.Warn(
-                        $"[DebugLogViewer] Failed to initialize log capture: {ex.Message}{cleanupMessage}");
+                        $"[DebugLogViewer] Failed to initialize log capture: {ex}{cleanupMessage}");
                 }
             }
         }
@@ -132,7 +132,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
             {
                 _server?.Dispose();
                 _server = null;
-                RitsuLibFramework.Logger.Warn($"[DebugLogViewer] Failed to start viewer server: {ex.Message}");
+                RitsuLibFramework.Logger.Warn($"[DebugLogViewer] Failed to start viewer server: {ex}");
             }
         }
 
