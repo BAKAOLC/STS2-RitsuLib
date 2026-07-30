@@ -6,7 +6,6 @@ using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.LobbyPlayer;
 #if STS2_AT_LEAST_0_110_0
 using MegaCrit.Sts2.Core.Multiplayer;
 #endif
-using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
@@ -27,6 +26,7 @@ using MegaCrit.Sts2.Core.Saves.Test;
 using MegaCrit.Sts2.Core.Unlocks;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Networking.MessageExtensions;
+using STS2RitsuLib.Networking.Sidecar;
 using STS2RitsuLib.Patching.Models;
 using GameMode = MegaCrit.Sts2.Core.Runs.GameMode;
 
@@ -37,6 +37,7 @@ namespace STS2RitsuLib.RunData.Patches
         private const string TailExtensionId = "ritsulib.runSavedData";
         private const int PayloadVersion = 2;
         private const int LegacyStringPayloadVersion = 1;
+        private const int MaxPayloadBytes = (int)RitsuLibSidecarWire.MaxPayloadBytes;
         private static readonly AsyncLocal<Stack<RunSavedDataSaveRunCapture>?> ActiveSaveRunCaptures = new();
 
         public static string GetRunSavePath(RunSaveManager manager, bool isMultiplayer)
@@ -160,14 +161,31 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void WritePayload(PacketWriter writer, string? payload)
         {
-            if (string.IsNullOrWhiteSpace(payload))
-                return;
+            byte[]? compressed = null;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(payload))
+                {
+                    var byteCount = Encoding.UTF8.GetByteCount(payload);
+                    if (byteCount <= MaxPayloadBytes)
+                        compressed = RitsuLibSidecarCompression.BrotliCompress(Encoding.UTF8.GetBytes(payload));
+                    else
+                        RitsuLibFramework.Logger.Warn(
+                            $"[RunSavedData] Synchronized payload is {byteCount} UTF-8 bytes; " +
+                            $"maximum is {MaxPayloadBytes} bytes.");
+                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RunSavedData] Failed to write synchronized payload: {ex.Message}");
+            }
 
             RitsuNetMessageTailExtensions.WriteLegacySingleBytes(
                 writer,
                 TailExtensionId,
                 PayloadVersion,
-                Brotli(Encoding.UTF8.GetBytes(payload)));
+                compressed);
         }
 
         public static string? PrepareNewRunPayload(StartRunLobby lobby, string seed,
@@ -210,24 +228,13 @@ namespace STS2RitsuLib.RunData.Patches
             }
         }
 
-        private static byte[] Brotli(byte[] data)
+        private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var output = new MemoryStream();
-            using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, true))
-            {
-                brotli.Write(data, 0, data.Length);
-            }
+            if (RitsuLibSidecarCompression.TryBrotliDecompress(data, out var decompressed))
+                return decompressed;
 
-            return output.ToArray();
-        }
-
-        private static byte[] Unbrotli(byte[] data)
-        {
-            using var input = new MemoryStream(data, false);
-            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            brotli.CopyTo(output);
-            return output.ToArray();
+            throw new InvalidDataException(
+                $"The synchronized payload is invalid or exceeds {MaxPayloadBytes} decompressed bytes.");
         }
     }
 

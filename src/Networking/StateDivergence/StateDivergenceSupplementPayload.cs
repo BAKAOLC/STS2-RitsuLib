@@ -291,6 +291,14 @@ namespace STS2RitsuLib.Networking.StateDivergence
             out int compressedBytes)
         {
             var json = JsonSerializer.Serialize(ToWirePayload(payload), JsonOptions);
+            var uncompressedBytes = Encoding.UTF8.GetByteCount(json);
+            if ((uint)uncompressedBytes > RitsuLibSidecarWire.MaxPayloadBytes)
+            {
+                encoded = [];
+                compressedBytes = 0;
+                return false;
+            }
+
             var compressed = Brotli(Encoding.UTF8.GetBytes(json));
             compressedBytes = compressed.Length;
             if (compressed.Length > MaxCompressedPayloadBytes)

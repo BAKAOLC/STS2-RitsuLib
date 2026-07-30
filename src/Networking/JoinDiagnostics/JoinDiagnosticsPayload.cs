@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,7 +8,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Interop.Patches;
+using STS2RitsuLib.Networking.ManagedActions;
 using STS2RitsuLib.Networking.MessageExtensions;
+using STS2RitsuLib.Networking.Sidecar;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
 {
@@ -60,6 +61,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
         private const int PayloadVersion = 5;
+        private const int MaxCompressedPayloadBytes = RitsuLibManagedNetActions.MaxPayloadBytes;
+        private const int MaxDecompressedPayloadBytes = (int)RitsuLibSidecarWire.MaxPayloadBytes;
         private static readonly Lock RegistrationLock = new();
         private static int _registered;
 
@@ -160,7 +163,17 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static byte[] EncodeCompressed(JoinDiagnosticsPayloadV5 payload)
         {
             var json = JsonSerializer.Serialize(payload, JsonOptions);
-            return Brotli(Encoding.UTF8.GetBytes(json));
+            var data = Encoding.UTF8.GetBytes(json);
+            if (data.Length > MaxDecompressedPayloadBytes)
+                throw new InvalidDataException(
+                    $"Join diagnostics payload exceeds {MaxDecompressedPayloadBytes} uncompressed bytes.");
+
+            var compressed = RitsuLibSidecarCompression.BrotliCompress(data);
+            if (compressed.Length > MaxCompressedPayloadBytes)
+                throw new InvalidDataException(
+                    $"Join diagnostics payload exceeds {MaxCompressedPayloadBytes} compressed bytes.");
+
+            return compressed;
         }
 
         private static JoinDiagnosticsPayload? FromWirePayload(JoinDiagnosticsPayloadV5? payload)
@@ -185,24 +198,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return Encoding.UTF8.GetString(Unbrotli(compressed));
         }
 
-        private static byte[] Brotli(byte[] data)
-        {
-            using var output = new MemoryStream();
-            using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, true))
-            {
-                brotli.Write(data, 0, data.Length);
-            }
-
-            return output.ToArray();
-        }
-
         private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream([.. data], false);
-            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            brotli.CopyTo(output);
-            return output.ToArray();
+            if (!RitsuLibSidecarCompression.TryBrotliDecompress(data, out var decompressed))
+                throw new InvalidDataException(
+                    $"Join diagnostics Brotli data is invalid or exceeds {MaxDecompressedPayloadBytes} decompressed bytes.");
+
+            return decompressed;
         }
 
         public static JoinPeerSnapshot CreateLocalSnapshot()
