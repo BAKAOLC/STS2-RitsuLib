@@ -6,8 +6,8 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
-    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    ///     <para xml:lang="en">Creates the reusable layout, page chrome, and controls used by RitsuLib settings pages.</para>
+    ///     <para xml:lang="zh-CN">创建 RitsuLib 设置页面使用的可复用布局、页面框架与控件。</para>
     /// </summary>
     public static partial class ModSettingsUiFactory
     {
@@ -30,9 +30,33 @@ namespace STS2RitsuLib.Settings
         private const string ContextMenuButtonMetaKey = "_ritsulib_context_menu_button";
 
         /// <summary>
-        ///     Creates a themed settings sidebar navigation button.
-        ///     创建主题化设置侧栏导航按钮。
+        ///     <para xml:lang="en">Creates a themed settings-sidebar button for a page, group, or subpage item.</para>
+        ///     <para xml:lang="zh-CN">创建用于页面、分组或子页面项的主题设置侧边栏按钮。</para>
         /// </summary>
+        /// <param name="text">
+        ///     <para xml:lang="en">The button label.</para>
+        ///     <para xml:lang="zh-CN">按钮标签。</para>
+        /// </param>
+        /// <param name="onPressed">
+        ///     <para xml:lang="en">The action invoked when the button is pressed.</para>
+        ///     <para xml:lang="zh-CN">按钮按下时调用的操作。</para>
+        /// </param>
+        /// <param name="kind">
+        ///     <para xml:lang="en">The sidebar item kind that controls its visual treatment.</para>
+        ///     <para xml:lang="zh-CN">控制视觉表现的侧边栏项类型。</para>
+        /// </param>
+        /// <param name="prefix">
+        ///     <para xml:lang="en">Optional text displayed before the main label.</para>
+        ///     <para xml:lang="zh-CN">显示在主标签之前的可选文本。</para>
+        /// </param>
+        /// <param name="indentLevel">
+        ///     <para xml:lang="en">The hierarchy indentation level; negative values are treated as zero.</para>
+        ///     <para xml:lang="zh-CN">层级缩进级别；负值按零处理。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The configured sidebar button.</para>
+        ///     <para xml:lang="zh-CN">配置完成的侧边栏按钮。</para>
+        /// </returns>
         public static ModSettingsSidebarButton CreateSidebarButton(string text, Action onPressed,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
             string? prefix = null,
@@ -42,9 +66,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a themed divider line.
-        ///     创建主题化分割线。
+        ///     <para xml:lang="en">Creates a noninteractive horizontal divider using the current shell theme.</para>
+        ///     <para xml:lang="zh-CN">使用当前界面主题创建不可交互的水平分隔线。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The themed divider control.</para>
+        ///     <para xml:lang="zh-CN">采用主题样式的分隔线控件。</para>
+        /// </returns>
         public static ColorRect CreateDivider()
         {
             return new()
@@ -522,10 +550,25 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Wraps <paramref name="inner" /> so Godot <c>Control.Visible</c> tracks <paramref name="predicate" /> on
-        ///     each settings UI refresh.
-        ///     包装 <paramref name="inner" />，使 Godot <c>Control.Visible</c> 在每次设置 UI 刷新时跟随 <paramref name="predicate" />。
+        ///     <para xml:lang="en">Synchronizes a control's visibility with a predicate immediately and on each settings refresh, treating predicate failures as hidden.</para>
+        ///     <para xml:lang="zh-CN">立即并在每次设置刷新时根据谓词同步控件可见性；谓词失败时按不可见处理。</para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The UI context that owns refresh registration.</para>
+        ///     <para xml:lang="zh-CN">负责注册刷新操作的界面上下文。</para>
+        /// </param>
+        /// <param name="inner">
+        ///     <para xml:lang="en">The control whose visibility is synchronized.</para>
+        ///     <para xml:lang="zh-CN">要同步可见性的控件。</para>
+        /// </param>
+        /// <param name="predicate">
+        ///     <para xml:lang="en">The optional visibility predicate; <see langword="null" /> leaves the control unchanged.</para>
+        ///     <para xml:lang="zh-CN">可选的可见性谓词；传入 <see langword="null" /> 时保持控件不变。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The same control instance.</para>
+        ///     <para xml:lang="zh-CN">传入的同一控件实例。</para>
+        /// </returns>
         internal static Control MaybeWrapDynamicVisibility(ModSettingsUiContext context, Control inner,
             Func<bool>? predicate)
         {
@@ -888,9 +931,33 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a themed rich-text header label.
-        ///     创建主题化富文本标题标签。
+        ///     <para xml:lang="en">Creates a BBCode-enabled, horizontally bound rich-text label using the settings fonts.</para>
+        ///     <para xml:lang="zh-CN">使用设置界面字体创建支持 BBCode、受水平宽度约束的富文本标签。</para>
         /// </summary>
+        /// <param name="text">
+        ///     <para xml:lang="en">The initial BBCode text.</para>
+        ///     <para xml:lang="zh-CN">初始 BBCode 文本。</para>
+        /// </param>
+        /// <param name="fontSize">
+        ///     <para xml:lang="en">The maximum font size used by normal and emphasized text.</para>
+        ///     <para xml:lang="zh-CN">普通与强调文本使用的最大字号。</para>
+        /// </param>
+        /// <param name="alignment">
+        ///     <para xml:lang="en">The horizontal text alignment.</para>
+        ///     <para xml:lang="zh-CN">文本的水平对齐方式。</para>
+        /// </param>
+        /// <param name="scrollViewportHeight">
+        ///     <para xml:lang="en">An optional finite positive viewport height that enables internal scrolling; other values use fit-to-content layout.</para>
+        ///     <para xml:lang="zh-CN">用于启用内部滚动的可选有限正数视口高度；其他值使用适应内容的布局。</para>
+        /// </param>
+        /// <param name="textModulate">
+        ///     <para xml:lang="en">An optional modulation color; white is used when omitted.</para>
+        ///     <para xml:lang="zh-CN">可选的调制颜色；未指定时使用白色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The configured rich-text label.</para>
+        ///     <para xml:lang="zh-CN">配置完成的富文本标签。</para>
+        /// </returns>
         public static MegaRichTextLabel CreateHeaderLabel(string text, int fontSize, HorizontalAlignment alignment,
             float? scrollViewportHeight = null, Color? textModulate = null)
         {
@@ -1001,9 +1068,17 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a themed inline description label.
-        ///     创建主题化行内说明标签。
+        ///     <para xml:lang="en">Creates a left-aligned inline description label using the secondary text color.</para>
+        ///     <para xml:lang="zh-CN">创建使用次要文本颜色、左对齐的行内说明标签。</para>
         /// </summary>
+        /// <param name="text">
+        ///     <para xml:lang="en">The description text.</para>
+        ///     <para xml:lang="zh-CN">说明文本。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The configured description label.</para>
+        ///     <para xml:lang="zh-CN">配置完成的说明标签。</para>
+        /// </returns>
         public static MegaRichTextLabel CreateInlineDescription(string text)
         {
             var label = CreateHeaderLabel(text, 16, HorizontalAlignment.Left, null,
@@ -1063,29 +1138,43 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the standard settings surface style.
-        ///     创建标准设置表面样式。
+        ///     <para xml:lang="en">Creates the standard settings surface style from the current shell theme.</para>
+        ///     <para xml:lang="zh-CN">根据当前界面主题创建标准设置表面样式。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached surface style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存表面样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateSurfaceStyle()
         {
             return RitsuShellChromeStyles.CreateSurfaceStyle();
         }
 
         /// <summary>
-        ///     Creates the standard settings value-field frame style.
-        ///     创建标准设置值字段边框样式。
+        ///     <para xml:lang="en">Creates the standard settings value-field frame for a normal or emphasized state.</para>
+        ///     <para xml:lang="zh-CN">创建标准设置数值字段在普通或强调状态下使用的边框样式。</para>
         /// </summary>
+        /// <param name="emphasized">
+        ///     <para xml:lang="en">Whether to use the emphasized border and background state.</para>
+        ///     <para xml:lang="zh-CN">是否使用强调的边框与背景状态。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached value-field frame style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存数值字段边框样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
         {
             return RitsuShellChromeStyles.CreateEntryFieldFrameStyle(emphasized);
         }
 
         /// <summary>
-        ///     Frame for <see cref="ColorPickerButton" />: same border/bg language as <see cref="CreateSurfaceStyle" />,
-        ///     but <b>equal</b> content margins so the inner color swatch stays square inside a square button.
-        ///     <see cref="ColorPickerButton" /> 的边框：边框/bg 语言与 <see cref="CreateSurfaceStyle" /> 相同，但内容边距<b>相等</b>
-        ///     ，让内部色块在方形按钮内保持正方形。
+        ///     <para xml:lang="en">Creates a color-picker frame with equal content margins so the inner swatch remains square.</para>
+        ///     <para xml:lang="zh-CN">创建内容边距相等的颜色选择器边框，使内部色样保持正方形。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached color-picker swatch-frame style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存颜色选择器色样边框样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
         {
             return RitsuShellChromeStyles.CreateColorPickerSwatchFrameStyle();
@@ -1097,27 +1186,43 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the standard inset settings surface style.
-        ///     创建标准内嵌设置表面样式。
+        ///     <para xml:lang="en">Creates the standard inset settings surface from the current shell theme.</para>
+        ///     <para xml:lang="zh-CN">根据当前界面主题创建标准内嵌设置表面样式。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached inset surface style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存内嵌表面样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateInsetSurfaceStyle()
         {
             return RitsuShellChromeStyles.CreateInsetSurfaceStyle();
         }
 
         /// <summary>
-        ///     Creates the standard chrome actions menu style.
-        ///     创建标准 chrome 操作菜单样式。
+        ///     <para xml:lang="en">Creates the standard page-chrome actions-menu style for its normal or highlighted state.</para>
+        ///     <para xml:lang="zh-CN">创建标准页面框架操作菜单在普通或高亮状态下使用的样式。</para>
         /// </summary>
+        /// <param name="highlighted">
+        ///     <para xml:lang="en">Whether to use the highlighted menu state.</para>
+        ///     <para xml:lang="zh-CN">是否使用高亮菜单状态。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached actions-menu style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存操作菜单样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
             return RitsuShellChromeStyles.CreateChromeActionsMenuStyle(highlighted);
         }
 
         /// <summary>
-        ///     Creates the standard page toolbar tray style.
-        ///     创建标准页面工具栏托盘样式。
+        ///     <para xml:lang="en">Creates the standard page-toolbar tray style from the current shell theme.</para>
+        ///     <para xml:lang="zh-CN">根据当前界面主题创建标准页面工具栏托盘样式。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached page-toolbar tray style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存页面工具栏托盘样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreatePageToolbarTrayStyle()
         {
             return RitsuShellChromeStyles.CreatePageToolbarTrayStyle();
@@ -1180,36 +1285,60 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the standard scrollable list shell style.
-        ///     创建标准可滚动列表外壳样式。
+        ///     <para xml:lang="en">Creates the standard scrollable-list shell style from the current shell theme.</para>
+        ///     <para xml:lang="zh-CN">根据当前界面主题创建标准可滚动列表外框样式。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached list-shell style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存列表外框样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateListShellStyle()
         {
             return RitsuShellChromeStyles.CreateListShellStyle();
         }
 
         /// <summary>
-        ///     Creates the standard list item card style.
-        ///     创建标准列表项卡片样式。
+        ///     <para xml:lang="en">Creates the standard list-item card style with an optional accent treatment.</para>
+        ///     <para xml:lang="zh-CN">创建标准列表项卡片样式，并可选择使用强调外观。</para>
         /// </summary>
+        /// <param name="accent">
+        ///     <para xml:lang="en">Whether to use the accent card state.</para>
+        ///     <para xml:lang="zh-CN">是否使用强调卡片状态。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached list-item card style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存列表项卡片样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateListItemCardStyle(bool accent = false)
         {
             return RitsuShellChromeStyles.CreateListItemCardStyle(accent);
         }
 
         /// <summary>
-        ///     Creates the standard inline list-editor surface style.
-        ///     创建标准行内列表编辑器表面样式。
+        ///     <para xml:lang="en">Creates the standard inline list-editor surface from the current shell theme.</para>
+        ///     <para xml:lang="zh-CN">根据当前界面主题创建标准行内列表编辑器表面样式。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached list-editor surface style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存列表编辑器表面样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreateListEditorSurfaceStyle()
         {
             return RitsuShellChromeStyles.CreateListEditorSurfaceStyle();
         }
 
         /// <summary>
-        ///     Creates the standard compact pill style.
-        ///     创建标准紧凑胶囊样式。
+        ///     <para xml:lang="en">Creates the standard compact pill style for its normal or highlighted state.</para>
+        ///     <para xml:lang="zh-CN">创建标准紧凑胶囊在普通或高亮状态下使用的样式。</para>
         /// </summary>
+        /// <param name="highlighted">
+        ///     <para xml:lang="en">Whether to use the highlighted pill state.</para>
+        ///     <para xml:lang="zh-CN">是否使用高亮胶囊状态。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The shared cached compact pill style.</para>
+        ///     <para xml:lang="zh-CN">共享的缓存紧凑胶囊样式。</para>
+        /// </returns>
         public static StyleBoxFlat CreatePillStyle(bool highlighted = false)
         {
             return RitsuShellChromeStyles.CreatePillStyle(highlighted);
