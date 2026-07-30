@@ -5,10 +5,13 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     Base <see cref="EpochModel" /> for mods with optional <see cref="IModEpochAssetOverrides" /> timeline portrait
-    ///     paths. Unlock-epoch templates in this namespace inherit from this type.
-    ///     基类 <see cref="EpochModel" /> 供 mod 使用 与 可选 <see cref="IModEpochAssetOverrides" /> timeline portrait
-    ///     路径s. 此命名空间中的解锁纪元模板继承自该类型。
+    ///     <para xml:lang="en">
+    ///         Provides a mod <see cref="EpochModel" /> base with optional timeline portrait overrides. The unlock-epoch
+    ///         templates in this namespace inherit from it.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供可选时间线肖像覆盖的模组 <see cref="EpochModel" /> 基类。此命名空间中的解锁纪元模板均继承此类。
+    ///     </para>
     /// </summary>
     public abstract class ModEpochTemplate : EpochModel, IModEpochAssetOverrides
     {

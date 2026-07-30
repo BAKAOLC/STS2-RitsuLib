@@ -7,26 +7,15 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Timeline.Patches
 {
     /// <summary>
-    ///     Vanilla <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.InitScreen" /> only passes epochs
-    ///     that already exist in <see cref="MegaCrit.Sts2.Core.Saves.ProgressState.Epochs" /> into
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" />.
-    ///     Mod story lines are not inserted into the save until gameplay or expansion runs
-    ///     <see cref="MegaCrit.Sts2.Core.Saves.ProgressState.UnlockSlot" />, so mod columns would stay missing while the
-    ///     underlying unlock flow stays correct. Cold open (<c>isAnimated: false</c>) merges only after vanilla Neow&apos;s
-    ///     primary expansion has started (see <see cref="ModTimelineNeowCoExpansion.HasVanillaNeowTimelineExpansionStarted" />
-    ///     ).
-    ///     Animated expansion merges only when <see cref="NeowEpoch.QueueUnlocks" /> just queued that batch (pending flag from
-    ///     <see cref="QueueTimelineExpansionUnlockModSlotsAfterNeowPatch" />).
-    ///     原版 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.InitScreen" /> 只会把纪元
-    ///     中已经存在于 <see cref="MegaCrit.Sts2.Core.Saves.ProgressState.Epochs" /> 的内容传给
-    ///     在游戏流程或扩展运行
-    ///     <see cref="MegaCrit.Sts2.Core.Saves.ProgressState.UnlockSlot" /> 之前，mod 故事线不会插入存档，因此 mod 列会保持缺失，而
-    ///     底层解锁流程仍然正确。冷打开（<c>isAnimated: false</c>）只会在原版 Neow 的
-    ///     主扩展开始后合并（见 <see cref="ModTimelineNeowCoExpansion.HasVanillaNeowTimelineExpansionStarted" />
-    ///     主扩展开始后（见 <c>ModTimelineNeowCoExpansion.HasVanillaNeowTimelineExpansionStarted</c>
-    ///     ）。
-    ///     动画扩展只会在 <see cref="NeowEpoch.QueueUnlocks" /> 刚刚将该批次入队时合并（pending 标志来自
-    ///     <see cref="QueueTimelineExpansionUnlockModSlotsAfterNeowPatch" />）。
+    ///     <para xml:lang="en">
+    ///         Merges eligible mod epoch slots into <c>NTimelineScreen.AddEpochSlots</c>. On a nonanimated screen open,
+    ///         merging begins only after Neow's primary expansion has started. During an animated expansion, merging
+    ///         occurs only for the batch queued by <see cref="NeowEpoch.QueueUnlocks" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将符合条件的模组纪元槽位合并到 <c>NTimelineScreen.AddEpochSlots</c>。非动画方式打开界面时，仅在涅奥的
+    ///         主扩展开始后合并；播放扩展动画时，则只合并由 <see cref="NeowEpoch.QueueUnlocks" /> 入队的批次。
+    ///     </para>
     /// </summary>
     internal sealed class NTimelineScreenAddEpochSlotsMergeModTemplatesPatch : IPatchMethod
     {

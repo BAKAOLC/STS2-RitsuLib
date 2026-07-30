@@ -7,16 +7,15 @@ using STS2RitsuLib.Timeline.Scaffolding;
 namespace STS2RitsuLib.Timeline.Patches
 {
     /// <summary>
-    ///     Before the timeline queues expansion slots, align <see cref="EpochModel.AllEpochIds" /> with
-    ///     <c>EpochModel._epochTypeDictionary</c>. Otherwise <see cref="MegaCrit.Sts2.Core.Saves.ProgressState" />
-    ///     <c>FilterAndSortEpochs</c> may strip mod expansion ids (IsValid false) immediately after
-    ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" />, so the live expansion UI breaks while a cold
-    ///     reload still shows slots once the cache matches the dictionary.
-    ///     在 timeline 将扩展槽入队前，将 <see cref="EpochModel.AllEpochIds" /> 与
-    ///     <c>EpochModel._epochTypeDictionary</c> 对齐。否则 <see cref="MegaCrit.Sts2.Core.Saves.ProgressState" />
-    ///     <c>FilterAndSortEpochs</c> 可能会在
-    ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" /> 后立即剔除 mod 扩展 id（IsValid false），导致实时扩展 UI 损坏，而冷
-    ///     重载在缓存与字典匹配后仍会显示槽。
+    ///     <para xml:lang="en">
+    ///         Synchronizes <see cref="EpochModel.AllEpochIds" /> with the live epoch-type dictionary before timeline
+    ///         expansion queues slots. This prevents progression filtering from discarding newly registered mod epoch
+    ///         IDs immediately after their slots are unlocked.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在时间线扩展将槽位入队前，使 <see cref="EpochModel.AllEpochIds" /> 与实时纪元类型字典同步，防止进度筛选在
+    ///         新注册的模组纪元槽位刚解锁后便丢弃其 ID。
+    ///     </para>
     /// </summary>
     internal class QueueTimelineExpansionSyncEpochIdListPatch : IPatchMethod
     {
@@ -43,14 +42,14 @@ namespace STS2RitsuLib.Timeline.Patches
     }
 
     /// <summary>
-    ///     Vanilla <see cref="NUnlockTimelineScreen.SetUnlocks" /> sorts only by <see cref="EpochSlotData.EraPosition" />,
-    ///     which collides across <see cref="EpochEra" /> values — common for mod timelines. Expansion animation then
-    ///     feeds <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" /> in the wrong era
-    ///     order.
-    ///     原版 <see cref="NUnlockTimelineScreen.SetUnlocks" /> 只按 <see cref="EpochSlotData.EraPosition" /> 排序，
-    ///     该值会在不同 <see cref="EpochEra" /> 间冲突，这在 mod timeline 中很常见。扩展动画随后会
-    ///     按错误纪元顺序将数据送入 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" />
-    ///     。
+    ///     <para xml:lang="en">
+    ///         Sorts timeline expansion slots by <see cref="EpochSlotData.Era" /> and then
+    ///         <see cref="EpochSlotData.EraPosition" />, avoiding collisions between equal positions in different eras.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         先按 <see cref="EpochSlotData.Era" />、再按 <see cref="EpochSlotData.EraPosition" /> 对时间线扩展槽位排序，
+    ///         避免不同时代中相同位置发生排序冲突。
+    ///     </para>
     /// </summary>
     internal class NUnlockTimelineScreenExpansionSlotSortPatch : IPatchMethod
     {
@@ -83,19 +82,14 @@ namespace STS2RitsuLib.Timeline.Patches
     }
 
     /// <summary>
-    ///     When <c>NeowEpoch.QueueUnlocks</c> runs (scoped by <see cref="NeowEpochQueueUnlocksCoExpansionScopePatch" />),
-    ///     after vanilla <see cref="EpochModel.QueueTimelineExpansion" /> unlocks the twelve base rows, also obtains
-    ///     Ironclad-gated mod character root rows and runs
-    ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" /> for already-obtained
-    ///     <see cref="ModEpochTemplate" /> rows and other root mod timeline rows not in that batch, then signals the
-    ///     animated <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" /> prefix to merge the
-    ///     same mod slots in-session.
-    ///     当 <c>NeowEpoch.QueueUnlocks</c> 运行时（由 <see cref="NeowEpochQueueUnlocksCoExpansionScopePatch" /> 限定作用域），
-    ///     在原版 <see cref="EpochModel.QueueTimelineExpansion" /> 解锁十二个基础行后，还会获得以 Ironclad 为前置的
-    ///     mod 角色根行，并为该批次之外已获得的 <see cref="ModEpochTemplate" /> 行和其他 mod 时间线根节点调用
-    ///     <see cref="MegaCrit.Sts2.Core.Saves.SaveManager.UnlockSlot" />，然后通知
-    ///     动画版 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Timeline.NTimelineScreen.AddEpochSlots" /> 前缀在当前会话中合并
-    ///     相同的 mod 槽。
+    ///     <para xml:lang="en">
+    ///         Extends Neow's primary timeline expansion with eligible mod character roots and other mod epoch slots,
+    ///         then signals the animated timeline screen to merge those slots in the current session.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将符合条件的模组角色根节点和其他模组纪元槽位加入涅奥的主时间线扩展，并通知动画时间线界面在当前会话中
+    ///         合并这些槽位。
+    ///     </para>
     /// </summary>
     internal sealed class QueueTimelineExpansionUnlockModSlotsAfterNeowPatch : IPatchMethod
     {

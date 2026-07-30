@@ -5,13 +5,16 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     Base <see cref="StoryModel" /> that derives its id from <see cref="StoryKey" />. Epoch order comes from
-    ///     <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory, TEpoch}" /> (or
-    ///     <see cref="TimelineColumnPackEntry{TStory}" />),
-    ///     not from an overridden type list.
-    ///     基类 <see cref="StoryModel" /> 其 id 派生自 <see cref="StoryKey" />. 纪元顺序来自
-    ///     <see cref="TimelineColumnPackEntry{TStory}" />),
-    ///     而不是来自重写的类型列表。
+    ///     <para xml:lang="en">
+    ///         Provides a <see cref="StoryModel" /> base whose ID is derived from <see cref="StoryKey" />. Its epoch order
+    ///         comes from <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory,TEpoch}" /> or
+    ///         <see cref="TimelineColumnPackEntry{TStory}" />, rather than an overridden type list.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供从 <see cref="StoryKey" /> 派生 ID 的 <see cref="StoryModel" /> 基类。其纪元顺序来自
+    ///         <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory,TEpoch}" /> 或
+    ///         <see cref="TimelineColumnPackEntry{TStory}" />，而不是由子类重写类型列表。
+    ///     </para>
     /// </summary>
     public abstract class ModStoryTemplate : StoryModel
     {
@@ -27,8 +30,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ];
 
         /// <summary>
-        ///     Human-readable story key slugified into the model id.
-        ///     会转换为模型 id 的人类可读故事键。
+        ///     <para xml:lang="en">Gets the human-readable story key used to derive the model ID.</para>
+        ///     <para xml:lang="zh-CN">获取用于派生模型 ID 的可读故事键。</para>
         /// </summary>
         protected abstract string StoryKey { get; }
 

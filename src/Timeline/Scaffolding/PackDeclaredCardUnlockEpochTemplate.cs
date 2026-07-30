@@ -6,20 +6,21 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     Card-unlock epoch whose gated card types are declared in the content pack via
-    ///     <see cref="TimelineColumnPackEntry{TStory}" /> (not on the epoch subclass). Keeps <see cref="QueueUnlocks" />,
-    ///     <see cref="EpochModel.UnlockText" />, and <see cref="Unlocks.ModUnlockRegistry" /> in sync from one manifest
-    ///     registration.
-    ///     卡牌解锁纪元，其受门控的卡牌类型通过内容包中的
-    ///     <see cref="TimelineColumnPackEntry{TStory}" /> 声明（而不是在纪元子类上声明）。它让 <see cref="QueueUnlocks" />、
-    ///     <see cref="EpochModel.UnlockText" /> 和 <see cref="Unlocks.ModUnlockRegistry" /> 从同一份 manifest
-    ///     注册保持同步。
+    ///     <para xml:lang="en">
+    ///         Provides a card-unlock epoch whose gated card types are declared through
+    ///         <see cref="TimelineColumnPackEntry{TStory}" /> rather than on the epoch subclass. One content-pack
+    ///         registration supplies its unlock action, unlock text, and epoch requirements.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供通过 <see cref="TimelineColumnPackEntry{TStory}" /> 而非纪元子类声明受限卡牌类型的卡牌解锁纪元。
+    ///         一项内容包注册即可同时提供解锁操作、解锁文本和纪元要求。
+    ///     </para>
     /// </summary>
     public abstract class PackDeclaredCardUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
-        ///     Cards resolved from <see cref="ModEpochGatedContentRegistry" /> for this epoch’s <see cref="EpochModel.Id" />.
-        ///     解析出的卡牌，来源： <see cref="ModEpochGatedContentRegistry" /> 用于此纪元的 <see cref="EpochModel.Id" />。
+        ///     <para xml:lang="en">Gets the cards registered for this epoch's <see cref="EpochModel.Id" />.</para>
+        ///     <para xml:lang="zh-CN">获取为此纪元的 <see cref="EpochModel.Id" /> 注册的卡牌。</para>
         /// </summary>
         public IReadOnlyList<CardModel> Cards => RequireUnlockPresentationItems(
             ModEpochGatedContentRegistry.ResolveCards(Id),
@@ -29,8 +30,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         public override string UnlockText => CreateCardUnlockText([.. Cards]);
 
         /// <summary>
-        ///     Additional epoch types to append when this epoch unlocks.
-        ///     要追加的额外纪元类型 当此纪元解锁时。
+        ///     <para xml:lang="en">Gets additional epoch types appended when this epoch unlocks.</para>
+        ///     <para xml:lang="zh-CN">获取此纪元解锁时追加的其他纪元类型。</para>
         /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 

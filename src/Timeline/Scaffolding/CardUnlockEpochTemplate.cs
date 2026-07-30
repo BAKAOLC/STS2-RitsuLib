@@ -5,16 +5,19 @@ using MegaCrit.Sts2.Core.Timeline;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     <see cref="EpochModel" /> base that unlocks a set of cards (from declared CLR types) and optional timeline
-    ///     expansions.
-    ///     <see cref="EpochModel" /> 基类，用于解锁一组卡牌（来自声明的 CLR 类型）以及可选 timeline
-    ///     扩展。
+    ///     <para xml:lang="en">
+    ///         Provides an <see cref="EpochModel" /> base that unlocks cards declared by CLR type and optionally expands
+    ///         the timeline.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供按 CLR 类型声明并解锁卡牌的 <see cref="EpochModel" /> 基类，也可选择扩展时间线。
+    ///     </para>
     /// </summary>
     public abstract class CardUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
-        ///     Resolved <see cref="CardModel" /> instances for <see cref="CardTypes" />.
-        ///     解析出的 <see cref="CardModel" /> 实例，用于 <see cref="CardTypes" />。
+        ///     <para xml:lang="en">Gets the <see cref="CardModel" /> instances resolved from <see cref="CardTypes" />.</para>
+        ///     <para xml:lang="zh-CN">获取从 <see cref="CardTypes" /> 解析出的 <see cref="CardModel" /> 实例。</para>
         /// </summary>
         public IReadOnlyList<CardModel> Cards => RequireUnlockPresentationItems(
             CardTypes
@@ -26,22 +29,26 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         public override string UnlockText => CreateCardUnlockText([.. Cards]);
 
         /// <summary>
-        ///     CLR types of cards to unlock; each must be registered in <see cref="ModelDb" />.
-        ///     要解锁的卡牌 CLR 类型; 每个都必须注册到 <see cref="ModelDb" />。
+        ///     <para xml:lang="en">Gets the CLR types of cards to unlock; each must be registered in <see cref="ModelDb" />.</para>
+        ///     <para xml:lang="zh-CN">获取要解锁的卡牌 CLR 类型；每种类型都必须已注册到 <see cref="ModelDb" />。</para>
         /// </summary>
         protected abstract IEnumerable<Type> CardTypes { get; }
 
         /// <summary>
-        ///     Additional epoch types to append to the timeline when this epoch unlocks; default none.
-        ///     此纪元解锁时要追加到时间线的额外纪元类型；默认为无。
+        ///     <para xml:lang="en">Gets additional epoch types appended when this epoch unlocks.</para>
+        ///     <para xml:lang="zh-CN">获取此纪元解锁时追加的其他纪元类型。</para>
         /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 
         /// <summary>
-        ///     Same as <see cref="CardTypes" /> for batch <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" />
-        ///     registration from a content-pack manifest.
-        ///     同 <see cref="CardTypes" /> 用于批量 <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" />
-        ///     从内容包 manifest 注册。
+        ///     <para xml:lang="en">
+        ///         Enumerates <see cref="CardTypes" /> for batch
+        ///         <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> registration by a content pack.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         枚举 <see cref="CardTypes" />，供内容包批量调用
+        ///         <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> 注册。
+        ///     </para>
         /// </summary>
         public IEnumerable<Type> EnumerateUnlockCardTypes()
         {

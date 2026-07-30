@@ -3,13 +3,16 @@ using MegaCrit.Sts2.Core.Timeline;
 namespace STS2RitsuLib.Timeline
 {
     /// <summary>
-    ///     Collects ordered epoch CLR types per concrete <see cref="MegaCrit.Sts2.Core.Timeline.StoryModel" /> type, filled by
-    ///     <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory, TEpoch}" />. <see cref="Scaffolding.ModStoryTemplate" />
-    ///     reads this list instead of a hard-coded <c>EpochTypes</c> override.
-    ///     按具体 <see cref="MegaCrit.Sts2.Core.Timeline.StoryModel" /> 类型收集有序纪元 CLR 类型，由
-    ///     <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory, TEpoch}" /> 填充。
-    ///     <see cref="Scaffolding.ModStoryTemplate" />
-    ///     会读取此列表，而不是硬编码的 <c>EpochTypes</c> override。
+    ///     <para xml:lang="en">
+    ///         Collects ordered epoch CLR types for each concrete <see cref="StoryModel" /> type.
+    ///         <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory,TEpoch}" /> adds entries, and
+    ///         <see cref="Scaffolding.ModStoryTemplate" /> reads them instead of using a hard-coded type list.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为每个具体 <see cref="StoryModel" /> 类型收集有序的纪元 CLR 类型。
+    ///         <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory,TEpoch}" /> 会添加条目，
+    ///         <see cref="Scaffolding.ModStoryTemplate" /> 则读取这些条目，而非使用硬编码的类型列表。
+    ///     </para>
     /// </summary>
     public static class ModStoryEpochBindings
     {
@@ -22,14 +25,18 @@ namespace STS2RitsuLib.Timeline
         private static bool _frozen;
 
         /// <summary>
-        ///     Appends <paramref name="epochType" /> to <paramref name="storyType" />'s column order (registration order).
-        ///     将 <paramref name="epochType" /> 追加到 <paramref name="storyType" /> 的列顺序中（注册顺序）。
+        ///     <para xml:lang="en">
+        ///         Appends <paramref name="epochType" /> to <paramref name="storyType" />'s column in registration order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按注册顺序将 <paramref name="epochType" /> 追加到 <paramref name="storyType" /> 的列中。
+        ///     </para>
         /// </summary>
         /// <exception cref="InvalidOperationException">
-        ///     Frozen, duplicate epoch in the same story, or epoch already bound to
-        ///     Frozen, duplicate epoch in the same story, 或 epoch already bound to
-        ///     another story.
-        ///     中文说明：another story.
+        ///     <para xml:lang="en">
+        ///         Registration is frozen, the epoch is already present in this story, or the epoch belongs to another story.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册已被冻结、该纪元已存在于此故事中，或该纪元已属于另一个故事。</para>
         /// </exception>
         public static void Append(Type storyType, Type epochType)
         {
@@ -72,8 +79,10 @@ namespace STS2RitsuLib.Timeline
         }
 
         /// <summary>
-        ///     Ordered epoch types for a concrete story type, or empty when none were bound.
-        ///     具体 story 类型的有序纪元类型；未绑定时为空。
+        ///     <para xml:lang="en">
+        ///         Returns the ordered epoch types for a concrete story type, or an empty list when none are bound.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回具体故事类型的有序纪元类型；没有绑定时返回空列表。</para>
         /// </summary>
         public static IReadOnlyList<Type> GetOrderedEpochTypes(Type storyConcreteType)
         {

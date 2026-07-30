@@ -3,8 +3,8 @@ using MegaCrit.Sts2.Core.Timeline;
 namespace STS2RitsuLib.Timeline
 {
     /// <summary>
-    ///     Per-era policy registry for timeline axis icons.
-    ///     时间线轴图标的按 era 策略注册表。
+    ///     <para xml:lang="en">Registers timeline-axis icon policies by era.</para>
+    ///     <para xml:lang="zh-CN">按时代注册时间线坐标轴图标策略。</para>
     /// </summary>
     public static class ModTimelineEraIconRegistry
     {
@@ -12,8 +12,8 @@ namespace STS2RitsuLib.Timeline
         private static readonly Dictionary<long, EraIconRule> RulesByEra = [];
 
         /// <summary>
-        ///     Configures icon policy for a concrete <see cref="EpochEra" /> value.
-        ///     为具体 <see cref="EpochEra" /> 值配置图标策略。
+        ///     <para xml:lang="en">Configures the icon policy for an <see cref="EpochEra" /> value.</para>
+        ///     <para xml:lang="zh-CN">为 <see cref="EpochEra" /> 值配置图标策略。</para>
         /// </summary>
         public static void Configure(EpochEra era, bool? enabled = null, string? texturePath = null)
         {
@@ -21,8 +21,10 @@ namespace STS2RitsuLib.Timeline
         }
 
         /// <summary>
-        ///     Configures icon policy for an era integer value (supports custom/non-enum eras).
-        ///     为 era 整数值配置图标策略（支持自定义/非枚举 era）。
+        ///     <para xml:lang="en">
+        ///         Configures the icon policy for an era's integer value, including custom values absent from the enum.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为时代的整数值配置图标策略，也支持未在枚举中定义的自定义值。</para>
         /// </summary>
         public static void Configure(long eraValue, bool? enabled = null, string? texturePath = null)
         {
@@ -36,8 +38,8 @@ namespace STS2RitsuLib.Timeline
         }
 
         /// <summary>
-        ///     Clears icon policy for a concrete <see cref="EpochEra" /> value.
-        ///     清除具体 <see cref="EpochEra" /> 值的图标策略。
+        ///     <para xml:lang="en">Clears the icon policy for an <see cref="EpochEra" /> value.</para>
+        ///     <para xml:lang="zh-CN">清除 <see cref="EpochEra" /> 值的图标策略。</para>
         /// </summary>
         public static void Clear(EpochEra era)
         {
@@ -45,8 +47,8 @@ namespace STS2RitsuLib.Timeline
         }
 
         /// <summary>
-        ///     Clears icon policy for an era integer value.
-        ///     清除 era 整数值的图标策略。
+        ///     <para xml:lang="en">Clears the icon policy for an era's integer value.</para>
+        ///     <para xml:lang="zh-CN">清除时代整数值的图标策略。</para>
         /// </summary>
         public static void Clear(long eraValue)
         {

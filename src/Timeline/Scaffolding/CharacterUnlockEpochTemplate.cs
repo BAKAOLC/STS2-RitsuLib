@@ -6,11 +6,17 @@ using MegaCrit.Sts2.Core.Timeline;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     <see cref="EpochModel" /> base that unlocks <typeparamref name="TCharacter" /> and optional follow-on epochs.
+    ///     <para xml:lang="en">
+    ///         Provides an <see cref="EpochModel" /> base that unlocks <typeparamref name="TCharacter" /> and optionally
+    ///         expands the timeline.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供解锁 <typeparamref name="TCharacter" /> 的 <see cref="EpochModel" /> 基类，也可选择扩展时间线。
+    ///     </para>
     /// </summary>
     /// <typeparam name="TCharacter">
-    ///     Character model type being unlocked.
-    ///     正在解锁的角色模型类型。
+    ///     <para xml:lang="en">The character model type to unlock.</para>
+    ///     <para xml:lang="zh-CN">要解锁的角色模型类型。</para>
     /// </typeparam>
     public abstract class CharacterUnlockEpochTemplate<TCharacter> : ModEpochTemplate
         where TCharacter : CharacterModel
@@ -21,8 +27,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
 #endif
 
         /// <summary>
-        ///     Additional epoch types to append when this unlock fires; default none.
-        ///     要追加的额外纪元类型 当此解锁触发时; 默认为无。
+        ///     <para xml:lang="en">Gets additional epoch types appended when this epoch unlocks.</para>
+        ///     <para xml:lang="zh-CN">获取此纪元解锁时追加的其他纪元类型。</para>
         /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 
