@@ -169,6 +169,8 @@ namespace STS2RitsuLib.Settings
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(pageId);
             ArgumentException.ThrowIfNullOrWhiteSpace(afterPageId);
+            if (gap <= 0)
+                throw new ArgumentOutOfRangeException(nameof(gap), "Page sort-order gap must be greater than zero.");
 
             lock (SyncRoot)
             {
@@ -177,7 +179,7 @@ namespace STS2RitsuLib.Settings
 
                 var baseOrder =
                     PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, afterPageId), after.SortOrder);
-                PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder + gap;
+                PageSortOverrides[CreateCompositeId(modId, pageId)] = checked(baseOrder + gap);
                 _sortedPagesCache = null;
                 return true;
             }
@@ -200,6 +202,8 @@ namespace STS2RitsuLib.Settings
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(pageId);
             ArgumentException.ThrowIfNullOrWhiteSpace(beforePageId);
+            if (gap <= 0)
+                throw new ArgumentOutOfRangeException(nameof(gap), "Page sort-order gap must be greater than zero.");
 
             lock (SyncRoot)
             {
@@ -208,7 +212,7 @@ namespace STS2RitsuLib.Settings
 
                 var baseOrder = PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, beforePageId),
                     before.SortOrder);
-                PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder - gap;
+                PageSortOverrides[CreateCompositeId(modId, pageId)] = checked(baseOrder - gap);
                 _sortedPagesCache = null;
                 return true;
             }
