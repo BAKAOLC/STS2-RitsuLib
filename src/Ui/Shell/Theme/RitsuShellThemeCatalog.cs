@@ -24,8 +24,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         {
             get
             {
-                EnsureLoaded();
-                var keys = _byId!.Keys.ToArray();
+                var catalog = GetLoadedCatalogSnapshot();
+                var keys = catalog.Keys.ToArray();
                 Array.Sort(keys, StringComparer.Ordinal);
                 return keys;
             }
@@ -167,14 +167,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 ? DefaultThemeId
                 : themeId.Trim().ToLowerInvariant();
             theme = null;
-            EnsureLoaded();
-            if (_byId == null)
+            var catalog = GetLoadedCatalogSnapshot();
+
+            if (!catalog.TryGetValue(resolvedId, out var leaf))
                 return false;
 
-            if (!_byId.TryGetValue(resolvedId, out var leaf))
-                return false;
-
-            if (!TryResolveInheritanceChain(leaf, out var chain))
+            if (!TryResolveInheritanceChain(catalog, leaf, out var chain))
                 return false;
 
             var root = new Dictionary<string, object?>(StringComparer.Ordinal);
@@ -335,7 +333,9 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 }
         }
 
-        private static bool TryResolveInheritanceChain(RitsuShellThemeDocument leaf,
+        private static bool TryResolveInheritanceChain(
+            IReadOnlyDictionary<string, RitsuShellThemeDocument> catalog,
+            RitsuShellThemeDocument leaf,
             out List<RitsuShellThemeDocument> chain)
         {
             chain = [];
@@ -353,7 +353,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     break;
 
                 var p = cur.Inherits!.Trim().ToLowerInvariant();
-                if (_byId == null || !_byId.TryGetValue(p, out var parent))
+                if (!catalog.TryGetValue(p, out var parent))
                     return false;
                 cur = parent;
             }
@@ -362,6 +362,19 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 chain.Add(stack.Pop());
 
             return true;
+        }
+
+        private static IReadOnlyDictionary<string, RitsuShellThemeDocument> GetLoadedCatalogSnapshot()
+        {
+            while (true)
+            {
+                EnsureLoaded();
+                lock (Gate)
+                {
+                    if (_byId != null)
+                        return _byId;
+                }
+            }
         }
 
         private static bool TryLoadEmbeddedThemeBytes(string normalizedThemeId, out byte[] bytes)
