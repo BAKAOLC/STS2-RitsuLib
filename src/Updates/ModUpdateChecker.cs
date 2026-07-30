@@ -45,17 +45,29 @@ namespace STS2RitsuLib.Updates
                     return new NoopDisposable();
             }
 
-            var registration = AutomaticUpdateCheckScheduler.Register(
-                $"mod-update:{key}",
-                options.DisplayName,
-                static () => true,
-                cancellationToken => CheckAndToastAsync(
-                    options,
-                    false,
-                    true,
+            try
+            {
+                var registration = AutomaticUpdateCheckScheduler.Register(
                     $"mod-update:{key}",
-                    cancellationToken));
-            return new RegisteredSessionCheck(key, registration);
+                    options.DisplayName,
+                    static () => true,
+                    cancellationToken => CheckAndToastAsync(
+                        options,
+                        false,
+                        true,
+                        $"mod-update:{key}",
+                        cancellationToken));
+                return new RegisteredSessionCheck(key, registration);
+            }
+            catch
+            {
+                lock (SessionLock)
+                {
+                    ScheduledSessionChecks.Remove(key);
+                }
+
+                throw;
+            }
         }
 
         /// <summary>

@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Updates
         private static int? _deferredFromOrder;
         private static int _nextOrder;
         private static bool _initialized;
+        private static bool _initializing;
         private static bool _loopStarted;
 
         internal static IDisposable Register(
@@ -48,18 +49,46 @@ namespace STS2RitsuLib.Updates
         {
             lock (SyncRoot)
             {
-                if (_initialized)
+                if (_initialized || _initializing)
                     return;
 
-                _initialized = true;
+                _initializing = true;
+            }
+
+            var subscriptions = new List<IDisposable>();
+            try
+            {
                 UpdateCheckSessionState.Initialize();
-                RitsuLibFramework.SubscribeLifecycle<EssentialInitializationStartingEvent>(_ =>
-                    StartLoop("essential initialization starting"));
-                RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
-                    StartLoop("first main menu fallback"));
-                RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => TryRunDeferredCycle());
-                RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(_ => TryRunDeferredCycle());
-                RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => TryRunDeferredCycle());
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<EssentialInitializationStartingEvent>(_ =>
+                        StartLoop("essential initialization starting")));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
+                        StartLoop("first main menu fallback")));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => TryRunDeferredCycle()));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(_ => TryRunDeferredCycle()));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => TryRunDeferredCycle()));
+
+                lock (SyncRoot)
+                {
+                    _initialized = true;
+                }
+            }
+            catch
+            {
+                for (var i = subscriptions.Count - 1; i >= 0; i--)
+                    subscriptions[i].Dispose();
+                throw;
+            }
+            finally
+            {
+                lock (SyncRoot)
+                {
+                    _initializing = false;
+                }
             }
         }
 

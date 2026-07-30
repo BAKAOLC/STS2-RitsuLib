@@ -32,29 +32,44 @@ namespace STS2RitsuLib.Updates
 
         internal static void Initialize()
         {
-            if (Interlocked.Exchange(ref _initialized, 1) != 0)
+            if (Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
                 return;
 
-            RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
+            var subscriptions = new List<IDisposable>();
+            try
             {
-                _isCombatRoomActive = false;
-                _isMainMenuActive = true;
-                UpdateCheckNotificationQueue.FlushPending();
-            });
-            RitsuLibFramework.SubscribeLifecycle<RunStartedEvent>(_ => _isMainMenuActive = false);
-            RitsuLibFramework.SubscribeLifecycle<RunLoadedEvent>(_ => _isMainMenuActive = false);
-            RitsuLibFramework.SubscribeLifecycle<RoomEnteringEvent>(evt =>
-            {
-                _isMainMenuActive = false;
-                if (evt.Room is CombatRoom)
-                    _isCombatRoomActive = true;
-            });
-            RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(evt =>
-            {
-                if (evt.Room is CombatRoom)
+                subscriptions.Add(RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
+                {
                     _isCombatRoomActive = false;
-            });
-            RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => _isCombatRoomActive = false);
+                    _isMainMenuActive = true;
+                    UpdateCheckNotificationQueue.FlushPending();
+                }));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<RunStartedEvent>(_ => _isMainMenuActive = false));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<RunLoadedEvent>(_ => _isMainMenuActive = false));
+                subscriptions.Add(RitsuLibFramework.SubscribeLifecycle<RoomEnteringEvent>(evt =>
+                {
+                    _isMainMenuActive = false;
+                    if (evt.Room is CombatRoom)
+                        _isCombatRoomActive = true;
+                }));
+                subscriptions.Add(RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(evt =>
+                {
+                    if (evt.Room is CombatRoom)
+                        _isCombatRoomActive = false;
+                }));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => _isCombatRoomActive = false));
+                Volatile.Write(ref _initialized, 2);
+            }
+            catch
+            {
+                for (var i = subscriptions.Count - 1; i >= 0; i--)
+                    subscriptions[i].Dispose();
+                Volatile.Write(ref _initialized, 0);
+                throw;
+            }
         }
     }
 }
