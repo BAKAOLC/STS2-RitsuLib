@@ -33,7 +33,7 @@ namespace STS2RitsuLib.Combat.PlayerResources
         public static async Task AfterEnergyGained(PlayerResourceGainContext context)
         {
             foreach (var entry in IterateListeners(context.CombatState))
-                await entry.Listener.AfterPlayerEnergyGained(context);
+                await Invoke(entry, context, static (listener, ctx) => listener.AfterPlayerEnergyGained(ctx));
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace STS2RitsuLib.Combat.PlayerResources
         public static async Task AfterStarsGained(PlayerResourceGainContext context)
         {
             foreach (var entry in IterateListeners(context.CombatState))
-                await entry.Listener.AfterPlayerStarsGained(context);
+                await Invoke(entry, context, static (listener, ctx) => listener.AfterPlayerStarsGained(ctx));
         }
 
         internal static async Task AfterEnergyGainedIfChanged(Player player, int oldAmount)
@@ -92,6 +92,15 @@ namespace STS2RitsuLib.Combat.PlayerResources
             CombatStateLike combatState)
         {
             return ModelHookListenerDispatcher.FromCombat(combatState, GlobalListeners);
+        }
+
+        private static async Task Invoke(
+            ModelHookListener<IPlayerResourceHookListener> entry,
+            PlayerResourceGainContext context,
+            Func<IPlayerResourceHookListener, PlayerResourceGainContext, Task> callback)
+        {
+            await callback(entry.Listener, context);
+            entry.Model?.InvokeExecutionFinished();
         }
     }
 }
