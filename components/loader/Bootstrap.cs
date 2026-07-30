@@ -13,10 +13,15 @@ using STS2RitsuLib.Platform;
 namespace STS2RitsuLib.Loader
 {
     /// <summary>
-    ///     Entry assembly for the multi-variant RitsuLib bundle: loads the matching <c>STS2-RitsuLib.dll</c> from
-    ///     <c>lib/&lt;compat&gt;/</c> into the default ALC, then forwards to the real framework initializer.
-    ///     多变体 RitsuLib bundle 的入口程序集：从
-    ///     <c>lib/&lt;compat&gt;/</c> 将匹配的 <c>STS2-RitsuLib.dll</c> 加载到默认 ALC，然后转发到真正的框架初始化器。
+    ///     <para xml:lang="en">
+    ///         Provides the entry assembly for the multi-variant RitsuLib bundle. It loads the matching
+    ///         <c>STS2-RitsuLib.dll</c> from <c>lib/&lt;compat&gt;/</c> into the default ALC, then invokes the real
+    ///         framework initializer.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供多变体 RitsuLib 捆绑包的入口程序集。它从 <c>lib/&lt;compat&gt;/</c> 将匹配的
+        ///         <c>STS2-RitsuLib.dll</c> 加载到默认 ALC，然后调用实际的框架初始化器。
+    ///     </para>
     /// </summary>
     [ModInitializer(nameof(Initialize))]
     public static class Bootstrap
