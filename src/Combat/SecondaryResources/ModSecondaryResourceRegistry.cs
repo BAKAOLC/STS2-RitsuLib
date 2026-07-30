@@ -80,8 +80,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a secondary resource and returns its mod-bound definition.</para>
-        ///     <para xml:lang="zh-CN">注册次级资源并返回绑定到模组后的定义。</para>
+        ///     <para xml:lang="en">
+        ///         Registers a secondary resource and returns its mod-bound definition. Repeating the same registration
+        ///         returns the definition registered first.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册次级资源并返回绑定到模组后的定义；重复注册同一资源时返回最先注册的定义。</para>
         /// </summary>
         public SecondaryResourceDefinition Register(string localId, SecondaryResourceDefinition definition)
         {
@@ -170,8 +173,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers an additional combat UI visibility predicate for one resource.</para>
-        ///     <para xml:lang="zh-CN">为一个资源注册额外的战斗界面可见性谓词。</para>
+        ///     <para xml:lang="en">
+        ///         Registers an additional combat UI visibility predicate for one resource. Lower order values run
+        ///         first; predicates with the same order retain registration order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为一种资源注册额外的战斗界面可见性谓词；顺序值较小的先运行，相同时保持注册顺序。</para>
         /// </summary>
         public void RegisterCombatUiAlwaysVisibleWhen(
             string localId,

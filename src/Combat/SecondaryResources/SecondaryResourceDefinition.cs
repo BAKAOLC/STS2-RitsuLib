@@ -129,21 +129,25 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public string? DescriptionKey { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the effective localization table.</para>
-        ///     <para xml:lang="zh-CN">获取实际使用的本地化表。</para>
+        ///     <para xml:lang="en">Gets the effective localization table with surrounding whitespace removed.</para>
+        ///     <para xml:lang="zh-CN">获取移除首尾空白后实际使用的本地化表。</para>
         /// </summary>
         public string EffectiveLocTable => string.IsNullOrWhiteSpace(LocTable) ? DefaultLocTable : LocTable.Trim();
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the effective display-title localization key.</para>
-        ///     <para xml:lang="zh-CN">获取实际使用的显示标题本地化键。</para>
+        ///     <para xml:lang="en">
+        ///         Gets the effective display-title localization key with surrounding whitespace removed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取移除首尾空白后实际使用的显示标题本地化键。</para>
         /// </summary>
         public string EffectiveTitleKey =>
             string.IsNullOrWhiteSpace(TitleKey) ? $"{Id}.title" : TitleKey.Trim();
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the effective hover-tip description localization key.</para>
-        ///     <para xml:lang="zh-CN">获取实际使用的悬浮提示说明本地化键。</para>
+        ///     <para xml:lang="en">
+        ///         Gets the effective hover-tip description localization key with surrounding whitespace removed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取移除首尾空白后实际使用的悬浮提示说明本地化键。</para>
         /// </summary>
         public string EffectiveDescriptionKey =>
             string.IsNullOrWhiteSpace(DescriptionKey) ? $"{Id}.description" : DescriptionKey.Trim();
