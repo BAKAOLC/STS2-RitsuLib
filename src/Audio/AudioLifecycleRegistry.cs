@@ -66,24 +66,33 @@ namespace STS2RitsuLib.Audio
         /// </param>
         public void Attach(IAudioHandle handle, AudioPlaybackOptions? options)
         {
+            TryAttach(handle, options);
+        }
+
+        internal bool TryAttach(IAudioHandle handle, AudioPlaybackOptions? options)
+        {
             var token = options?.ScopeToken;
             if (token is not null)
             {
                 if (token.IsClosing)
                 {
-                    handle.Dispose();
-                    return;
+                    DisposeOrRetainByScope(handle);
+                    return false;
                 }
 
                 var tokenSet = _tokenHandles.GetOrAdd(token, _ => new());
                 tokenSet.TryAdd(handle, 0);
                 if (token.IsClosing && tokenSet.TryRemove(handle, out _))
-                    handle.Dispose();
-                return;
+                {
+                    DisposeOrRetainByScope(handle);
+                    return false;
+                }
+
+                return true;
             }
 
-            var scopeSet = _scopeHandles.GetOrAdd(handle.Scope, _ => new());
-            scopeSet.TryAdd(handle, 0);
+            TrackByScope(handle);
+            return true;
         }
 
         /// <summary>
@@ -204,6 +213,19 @@ namespace STS2RitsuLib.Audio
 
             _tokenHandles.TryRemove(new(token, handles));
             return true;
+        }
+
+        private void DisposeOrRetainByScope(IAudioHandle handle)
+        {
+            handle.Dispose();
+            if (!handle.IsReleased)
+                TrackByScope(handle);
+        }
+
+        private void TrackByScope(IAudioHandle handle)
+        {
+            var scopeSet = _scopeHandles.GetOrAdd(handle.Scope, _ => new());
+            scopeSet.TryAdd(handle, 0);
         }
     }
 }

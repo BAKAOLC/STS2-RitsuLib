@@ -24,22 +24,42 @@ namespace STS2RitsuLib.Audio
         /// <inheritdoc />
         public void PlayOneShot(string eventPath, float volume = 1f)
         {
-            Manager?.PlayOneShot(eventPath, volume);
+            TryPlayOneShot(eventPath, volume);
         }
 
         /// <inheritdoc />
         public void PlayOneShot(string eventPath, IReadOnlyDictionary<string, float> parameters, float volume = 1f)
         {
-            if (Manager is null)
-                return;
+            TryPlayOneShot(eventPath, parameters, volume);
+        }
+
+        internal bool TryPlayOneShot(string eventPath, float volume)
+        {
+            var manager = Manager;
+            if (manager is null)
+                return false;
+
+            manager.PlayOneShot(eventPath, volume);
+            return true;
+        }
+
+        internal bool TryPlayOneShot(
+            string eventPath,
+            IReadOnlyDictionary<string, float> parameters,
+            float volume)
+        {
+            var manager = Manager;
+            if (manager is null)
+                return false;
 
             if (parameters.Count == 0)
             {
-                Manager.PlayOneShot(eventPath, volume);
-                return;
+                manager.PlayOneShot(eventPath, volume);
+                return true;
             }
 
-            Manager.PlayOneShot(eventPath, ToManagedDictionary(parameters), volume);
+            manager.PlayOneShot(eventPath, ToManagedDictionary(parameters), volume);
+            return true;
         }
 
         /// <inheritdoc />
