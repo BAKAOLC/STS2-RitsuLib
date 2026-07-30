@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Audio.Internal
     internal static class FmodStudioGuidPathTable
     {
         private static readonly Lock Gate = new();
+        private static readonly Lock ParseGate = new();
         private static Dictionary<string, string> _eventPathToGuid = [];
 
         internal static int EventMappingCount
@@ -20,6 +21,7 @@ namespace STS2RitsuLib.Audio.Internal
 
         internal static void Clear()
         {
+            lock (ParseGate)
             lock (Gate)
             {
                 _eventPathToGuid = [];
@@ -41,6 +43,12 @@ namespace STS2RitsuLib.Audio.Internal
         }
 
         internal static int ParseAndMerge(string text, string? sourceLabel = null)
+        {
+            lock (ParseGate)
+                return ParseAndMergeCore(text, sourceLabel);
+        }
+
+        private static int ParseAndMergeCore(string text, string? sourceLabel)
         {
             var lines = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
             Dictionary<string, string> next;
