@@ -202,6 +202,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsLocation location,
             ModSettingsOpenOptions? options = null)
         {
+            ArgumentNullException.ThrowIfNull(location);
+
             var requested = Normalize(location);
             var resolved = ResolveLocation(requested);
             if (!resolved.Success)
