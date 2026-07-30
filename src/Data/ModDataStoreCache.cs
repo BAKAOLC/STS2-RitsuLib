@@ -3,14 +3,17 @@ using STS2RitsuLib.Utils.Persistence;
 namespace STS2RitsuLib.Data
 {
     /// <summary>
-    ///     Lazy cache for a single <see cref="ModDataStore" /> key.
-    ///     Invalidates automatically when the backing entry is reloaded or the active profile data is invalidated.
-    ///     单个 <see cref="ModDataStore" /> key 的惰性缓存。
-    ///     当后备条目重新加载或活动档案数据失效时自动失效。
+    ///     <para xml:lang="en">
+    ///         Provides a lazy cache for one <see cref="ModDataStore" /> key and invalidates it when the backing entry is
+    ///         reloaded.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为单个 <see cref="ModDataStore" /> 键提供惰性缓存，并在重新加载底层条目时自动使缓存失效。
+    ///     </para>
     /// </summary>
     /// <typeparam name="T">
-    ///     Registered data model type.
-    ///     已注册的数据模型类型。
+    ///     <para xml:lang="en">The registered data model type.</para>
+    ///     <para xml:lang="zh-CN">已注册的数据模型类型。</para>
     /// </typeparam>
     public sealed class ModDataStoreCache<T> : IDisposable where T : class, new()
     {
@@ -33,14 +36,14 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Logical data key for this cache.
-        ///     此缓存对应的逻辑数据 key。
+        ///     <para xml:lang="en">Gets the logical data key associated with this cache.</para>
+        ///     <para xml:lang="zh-CN">获取与此缓存关联的逻辑数据键。</para>
         /// </summary>
         public string Key { get; }
 
         /// <summary>
-        ///     Returns the cached value, loading it from the store on first access or after invalidation.
-        ///     返回缓存值；首次访问或失效后会从存储重新读取。
+        ///     <para xml:lang="en">Gets the cached value, loading it from the store on first access or after invalidation.</para>
+        ///     <para xml:lang="zh-CN">获取缓存值；首次访问或缓存失效后会从存储中重新读取。</para>
         /// </summary>
         public T Value
         {
@@ -56,8 +59,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Whether this wrapper currently holds a cached instance.
-        ///     此包装器当前是否持有缓存实例。
+        ///     <para xml:lang="en">Gets whether this wrapper currently holds a cached instance.</para>
+        ///     <para xml:lang="zh-CN">获取此包装器当前是否持有缓存实例。</para>
         /// </summary>
         public bool HasValue
         {
@@ -83,8 +86,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Drops the cached instance; the next <see cref="Value" /> access re-reads the store.
-        ///     丢弃缓存实例；下次访问 <see cref="Value" /> 时重新读取存储。
+        ///     <para xml:lang="en">Clears the cached instance so the next <see cref="Value" /> access reads from the store.</para>
+        ///     <para xml:lang="zh-CN">清除缓存实例，使下次访问 <see cref="Value" /> 时从存储中重新读取。</para>
         /// </summary>
         public void Invalidate()
         {
@@ -95,8 +98,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Forces a re-read from the store and returns the refreshed instance.
-        ///     强制从存储重新读取并返回刷新后的实例。
+        ///     <para xml:lang="en">Reloads the value from the store and returns the refreshed instance.</para>
+        ///     <para xml:lang="zh-CN">从存储中重新读取值，并返回刷新后的实例。</para>
         /// </summary>
         public T Refresh()
         {
@@ -110,8 +113,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Mutates the backing store entry without requiring the caller to touch the cached instance directly.
-        ///     修改后备存储条目，调用方无需直接接触缓存实例。
+        ///     <para xml:lang="en">Mutates the backing store entry in place.</para>
+        ///     <para xml:lang="zh-CN">原地修改底层存储条目。</para>
         /// </summary>
         public void Modify(Action<T> modifier)
         {
@@ -122,8 +125,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Persists the backing store entry.
-        ///     持久化后备存储条目。
+        ///     <para xml:lang="en">Persists the backing store entry.</para>
+        ///     <para xml:lang="zh-CN">持久化底层存储条目。</para>
         /// </summary>
         public void Save()
         {
