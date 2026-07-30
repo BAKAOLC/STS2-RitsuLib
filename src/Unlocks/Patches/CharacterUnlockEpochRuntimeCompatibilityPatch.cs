@@ -7,10 +7,13 @@ using STS2RitsuLib.Scaffolding.Characters;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Skips vanilla character-unlock epoch grants when the inferred epoch id is unusable at runtime for mod
-    ///     characters.
-    ///     当推断出的纪元 id 对 mod
-    ///     角色在运行时不可安全使用时，跳过原版角色解锁纪元授予。
+    ///     <para xml:lang="en">
+    ///         Skips a base-game-style character-unlock grant when its inferred epoch ID is unavailable for a mod
+    ///         character.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         模组角色按游戏本体规则推导出的纪元 ID 不可用时，跳过该角色解锁纪元的授予。
+    ///     </para>
     /// </summary>
     internal class CharacterUnlockEpochRuntimeCompatibilityPatch : IPatchMethod
     {

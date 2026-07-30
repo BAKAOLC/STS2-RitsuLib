@@ -9,7 +9,10 @@ using STS2RitsuLib.Timeline.Scaffolding;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Backfills mod character root epochs from existing prerequisite character run history.
+    ///     <para xml:lang="en">
+    ///         Backfills mod character root epochs from existing run history for their prerequisite characters.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">根据前置角色已有的游戏记录补发模组角色的根纪元。</para>
     /// </summary>
     internal sealed class ModCharacterRootEpochBackfillPatch : IPatchMethod
     {

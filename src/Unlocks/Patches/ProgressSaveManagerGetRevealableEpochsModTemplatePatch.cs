@@ -7,14 +7,15 @@ using STS2RitsuLib.Timeline.Scaffolding;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Vanilla <see cref="ProgressSaveManager.GetRevealableEpochs" /> only marks epochs reachable from Neow via
-    ///     <see cref="EpochModel.GetTimelineExpansion" /> BFS. Mod story roots are not in that graph, so obtained mod slots
-    ///     never count for <see cref="SaveManager.GetDiscoveredEpochCount" />, main-menu timeline cues, or related UX even
-    ///     when the UI slot is already in the obtained (click-to-reveal) state.
-    ///     原版 <see cref="ProgressSaveManager.GetRevealableEpochs" /> 只会标记可通过
-    ///     <see cref="EpochModel.GetTimelineExpansion" /> BFS 从 Neow 到达的纪元。mod 故事根节点不在该图中，因此已获得的 mod 槽位
-    ///     即使 UI 槽位已处于已获得（点击显示）状态，也永远不会计入 <see cref="SaveManager.GetDiscoveredEpochCount" />、主菜单时间线提示或相关 UX，
-    ///     即便 UI 槽位已处于已获得（点击显示）状态。
+    ///     <para xml:lang="en">
+    ///         Adds obtained mod epoch templates omitted by the base game's Neow-rooted expansion traversal to
+    ///         <see cref="ProgressSaveManager.GetRevealableEpochs" />. This lets independent mod story roots contribute to
+    ///         discovery counts and timeline notifications.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将游戏本体以涅奥为根的扩展遍历所遗漏、但已获得的模组纪元模板加入
+    ///         <see cref="ProgressSaveManager.GetRevealableEpochs" />，使独立的模组故事根节点可计入发现数量和时间线通知。
+    ///     </para>
     /// </summary>
     internal sealed class ProgressSaveManagerGetRevealableEpochsModTemplatePatch : IPatchMethod
     {

@@ -1,9 +1,13 @@
 namespace STS2RitsuLib.Unlocks
 {
     /// <summary>
-    ///     Emits at most one warning per key so mod characters missing unlock-rule registration stay playable
-    ///     without spamming logs every combat or frame.
-    ///     每个键最多输出一次警告，使缺少解锁规则注册的 mod 角色仍可游玩，同时避免每场战斗或每帧刷日志。
+    ///     <para xml:lang="en">
+    ///         Emits at most one warning per key, keeping mod characters with missing unlock-rule registration playable
+    ///         without repeating the warning every combat or frame.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         每个键最多发出一次警告，使缺少解锁规则注册的模组角色仍可游玩，同时避免每场战斗或每帧重复记录。
+    ///     </para>
     /// </summary>
     internal static class ModUnlockMissingRuleWarnings
     {

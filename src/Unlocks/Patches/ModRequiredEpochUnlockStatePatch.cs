@@ -6,9 +6,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Projects obtained RitsuLib requirement epochs into <see cref="UnlockState" /> before it is serialized for
-    ///     multiplayer lobby sync and run setup.
-    ///     在多人大厅同步和跑局创建序列化前，将已获得的 RitsuLib 需求纪元投影进 <see cref="UnlockState" />。
+    ///     <para xml:lang="en">
+    ///         Adds obtained RitsuLib requirement epochs to <see cref="UnlockState" /> before multiplayer lobby
+    ///         synchronization and run setup serialize it.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在多人游戏大厅同步和开局设置序列化 <see cref="UnlockState" /> 前，将已获得的 RitsuLib 要求纪元加入其中。
+    ///     </para>
     /// </summary>
     internal sealed class ModRequiredEpochUnlockStatePatch : IPatchMethod
     {
@@ -34,10 +38,15 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Normalizes the local host player's lobby unlock state when game screens pass <c>new UnlockState(Progress)</c>
-    ///     directly instead of <see cref="SaveManager.GenerateUnlockStateFromProgress" />.
-    ///     当游戏界面直接传入 <c>new UnlockState(Progress)</c> 而不是
-    ///     <see cref="SaveManager.GenerateUnlockStateFromProgress" /> 时，规范化本地 host 玩家在大厅中的解锁状态。
+    ///     <para xml:lang="en">
+    ///         Adds obtained requirement epochs to the local host's lobby state when a game screen constructs
+    ///         <see cref="UnlockState" /> directly instead of calling
+    ///         <see cref="SaveManager.GenerateUnlockStateFromProgress" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         游戏界面直接构造 <see cref="UnlockState" /> 而未调用
+    ///         <see cref="SaveManager.GenerateUnlockStateFromProgress" /> 时，将已获得的要求纪元加入本地主机的大厅状态。
+    ///     </para>
     /// </summary>
     internal sealed class StartRunLobbyLocalHostUnlockStatePatch : IPatchMethod
     {
