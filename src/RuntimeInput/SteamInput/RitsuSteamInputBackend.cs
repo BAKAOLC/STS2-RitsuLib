@@ -5,7 +5,7 @@ namespace STS2RitsuLib.RuntimeInput
     internal static class RitsuSteamInputBackend
     {
         private static readonly Dictionary<string, object> ActionHandles = new(StringComparer.Ordinal);
-        private static readonly HashSet<string> PressedActions = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, string> PressedActions = new(StringComparer.Ordinal);
         private static bool _handleCacheDirty = true;
         private static int _unavailableLogged;
 
@@ -23,6 +23,7 @@ namespace STS2RitsuLib.RuntimeInput
             }
 
             var actions = RitsuSteamInputActionRegistry.GetActions();
+            ReleaseMissingActions(actions);
             if (actions.Count == 0)
             {
                 ReleaseAll();
@@ -44,12 +45,12 @@ namespace STS2RitsuLib.RuntimeInput
                         continue;
 
                     var pressed = RitsuSteamInputInterop.IsDigitalActionPressed(controllerHandle, actionHandle);
-                    var wasPressed = PressedActions.Contains(action.SteamActionId);
+                    var wasPressed = PressedActions.ContainsKey(action.SteamActionId);
                     if (pressed == wasPressed)
                         continue;
 
                     if (pressed)
-                        PressedActions.Add(action.SteamActionId);
+                        PressedActions[action.SteamActionId] = action.InputActionName;
                     else
                         PressedActions.Remove(action.SteamActionId);
 
@@ -80,15 +81,27 @@ namespace STS2RitsuLib.RuntimeInput
 
         private static void ReleaseAll()
         {
-            foreach (var actionId in PressedActions.ToArray())
-            {
-                var descriptor = RitsuSteamInputActionRegistry.GetActions()
-                    .FirstOrDefault(action => action.SteamActionId == actionId);
-                if (descriptor != null)
-                    EmitAction(descriptor.InputActionName, false);
-            }
+            foreach (var inputActionName in PressedActions.Values.ToArray())
+                EmitAction(inputActionName, false);
 
             PressedActions.Clear();
+        }
+
+        private static void ReleaseMissingActions(IReadOnlyList<RitsuSteamInputActionDescriptor> actions)
+        {
+            if (PressedActions.Count == 0)
+                return;
+
+            var activeIds = actions.Select(static action => action.SteamActionId)
+                .ToHashSet(StringComparer.Ordinal);
+            foreach (var (actionId, inputActionName) in PressedActions.ToArray())
+            {
+                if (activeIds.Contains(actionId))
+                    continue;
+
+                EmitAction(inputActionName, false);
+                PressedActions.Remove(actionId);
+            }
         }
 
         private static void EmitAction(string inputActionName, bool pressed)
