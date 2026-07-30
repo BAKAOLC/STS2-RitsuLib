@@ -37,10 +37,26 @@ namespace STS2RitsuLib.Audio
         ///     True when the underlying instance is still available.
         ///     底层实例仍可用时为 true。
         /// </summary>
-        public bool IsValid =>
-            !IsReleased &&
-            RawInstance is not null &&
-            GodotObject.IsInstanceValid(RawInstance);
+        public bool IsValid
+        {
+            get
+            {
+                if (IsReleased || RawInstance is null || !GodotObject.IsInstanceValid(RawInstance))
+                    return false;
+
+                if (!RawInstance.HasMethod("is_valid"))
+                    return true;
+
+                try
+                {
+                    return RawInstance.Call("is_valid").AsBool();
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
 
         /// <summary>
         ///     True after native resources have been released.
