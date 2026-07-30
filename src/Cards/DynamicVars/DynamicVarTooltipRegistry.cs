@@ -42,7 +42,19 @@ namespace STS2RitsuLib.Cards.DynamicVars
         {
             ArgumentNullException.ThrowIfNull(dynamicVar);
             var factory = Get(dynamicVar);
-            return factory?.Invoke(dynamicVar);
+            if (factory is null)
+                return null;
+
+            try
+            {
+                return factory(dynamicVar);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[DynamicVarTooltipRegistry] Tooltip factory failed for '{dynamicVar.Name}': {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>
