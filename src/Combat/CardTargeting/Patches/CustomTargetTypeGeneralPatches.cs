@@ -125,7 +125,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     {
         public static string PatchId => "card_target_custom_can_play_targeting";
 
-        public static string Description => "Filter CanPlayTargeting with custom single-target predicates";
+        public static string Description =>
+            "Combine custom single-target predicates with card playability in CanPlayTargeting";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -142,7 +143,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                     out var allowed))
                 return true;
 
-            __result = allowed;
+            __result = allowed && __instance.CanPlay();
             return false;
         }
     }
