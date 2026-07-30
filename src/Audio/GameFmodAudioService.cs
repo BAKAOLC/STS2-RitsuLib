@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Audio
         public static GameFmodAudioService Shared { get; } = new();
 
         private static NAudioManager? Manager => NAudioManager.Instance;
+        internal static bool IsAvailable => Manager is not null;
 
         /// <inheritdoc />
         public void PlayOneShot(string eventPath, float volume = 1f)

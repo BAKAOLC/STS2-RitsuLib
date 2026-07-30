@@ -137,6 +137,9 @@ namespace STS2RitsuLib.Audio
 
         private static AudioPlayResult PlayVanillaOneShot(StudioEventSource source, AudioPlaybackOptions options)
         {
+            if (!GameFmodAudioService.IsAvailable)
+                return AudioPlayResult.Fail(AudioPlayStatus.MissingManager);
+
             if (options.GetParameters().Count == 0)
                 GameFmod.Studio.PlayOneShot(source.Path, options.Volume);
             else
@@ -147,9 +150,7 @@ namespace STS2RitsuLib.Audio
 
         private static AudioPlayResult PlayStudioGuid(StudioGuidSource source, AudioPlaybackOptions options)
         {
-            return !FmodStudioDirectOneShots.TryPlayUsingGuid(source.Value)
-                ? AudioPlayResult.Fail(AudioPlayStatus.Failed)
-                : AudioPlayResult.Started();
+            return PlayStudioEventFromGuid(source, options);
         }
 
         private static AudioPlayResult PlayStudioLoop(StudioEventSource source, AudioPlaybackOptions options)
