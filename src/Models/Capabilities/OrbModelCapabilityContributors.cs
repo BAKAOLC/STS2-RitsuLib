@@ -200,7 +200,7 @@ namespace STS2RitsuLib.Models.Capabilities
                         .ThenBy(static fragment => fragment.SourceIndex)
                         .Select(static fragment => fragment.Text)));
 
-            tips[index] = new HoverTip(orb.Title, description, orb.Icon)
+            var replacement = new HoverTip(orb.Title, description, orb.Icon)
             {
                 Id = hoverTip.Id,
                 IsSmart = hoverTip.IsSmart,
@@ -208,6 +208,10 @@ namespace STS2RitsuLib.Models.Capabilities
                 IsInstanced = hoverTip.IsInstanced,
                 ShouldOverrideTextOverflow = hoverTip.ShouldOverrideTextOverflow,
             };
+            if (hoverTip.CanonicalModel is { } canonicalModel)
+                replacement.SetCanonicalModel(canonicalModel);
+
+            tips[index] = replacement;
             result = IHoverTip.RemoveDupes(tips);
         }
 
