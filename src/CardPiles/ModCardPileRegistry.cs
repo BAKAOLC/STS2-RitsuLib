@@ -84,6 +84,7 @@ namespace STS2RitsuLib.CardPiles
         public static ModCardPileRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            modId = modId.Trim();
 
             lock (SyncRoot)
             {
@@ -448,6 +449,8 @@ namespace STS2RitsuLib.CardPiles
 
             lock (SyncRoot)
             {
+                EnsureMutable("register card piles");
+
                 if (Definitions.TryGetValue(normalizedId, out var existing))
                 {
                     if (!ReferenceEquals(existing.ModId, definition.ModId)
