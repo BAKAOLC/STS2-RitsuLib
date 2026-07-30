@@ -19,6 +19,9 @@ namespace STS2RitsuLib.Audio
     {
         private static readonly ConcurrentDictionary<string, LoadedKind> Loaded = new(StringComparer.Ordinal);
         private static readonly Lock LoadedGate = new();
+        private static readonly StringName SetVolume = new("set_volume");
+        private static readonly StringName SetPitch = new("set_pitch");
+        private static readonly StringName Play = new("play");
 
         /// <summary>
         ///     Creates a typed handle for a short loose-file sound.
@@ -96,7 +99,7 @@ namespace STS2RitsuLib.Audio
                 if (Loaded.TryGetValue(resolvedPath, out var loadedKind))
                     return CheckLoadedKind(resolvedPath, loadedKind, LoadedKind.Sound);
 
-                if (!FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadFileAsSound, resolvedPath))
+                if (!TryLoadFile(FmodStudioMethodNames.LoadFileAsSound, resolvedPath))
                     return false;
 
                 Loaded[resolvedPath] = LoadedKind.Sound;
@@ -130,7 +133,7 @@ namespace STS2RitsuLib.Audio
                 if (Loaded.TryGetValue(resolvedPath, out var loadedKind))
                     return CheckLoadedKind(resolvedPath, loadedKind, LoadedKind.MusicStream);
 
-                if (!FmodStudioGateway.TryCall(FmodStudioMethodNames.LoadFileAsMusic, resolvedPath))
+                if (!TryLoadFile(FmodStudioMethodNames.LoadFileAsMusic, resolvedPath))
                     return false;
 
                 Loaded[resolvedPath] = LoadedKind.MusicStream;
@@ -216,21 +219,7 @@ namespace STS2RitsuLib.Audio
         public static bool TryPlaySoundFile(string absolutePath, float volume = 1f, float pitch = 1f)
         {
             var sound = TryCreateSoundInstance(absolutePath);
-            if (sound is null)
-                return false;
-
-            try
-            {
-                sound.Call("set_volume", volume);
-                sound.Call("set_pitch", pitch);
-                sound.Call("play");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play file: {ex.Message}");
-                return false;
-            }
+            return TryConfigureAndPlay(sound, volume, pitch, "file");
         }
 
         /// <summary>
@@ -240,21 +229,7 @@ namespace STS2RitsuLib.Audio
         public static bool TryPlayResourceSound(string resourcePath, float volume = 1f, float pitch = 1f)
         {
             var sound = TryCreateResourceSoundInstance(resourcePath);
-            if (sound is null)
-                return false;
-
-            try
-            {
-                sound.Call("set_volume", volume);
-                sound.Call("set_pitch", pitch);
-                sound.Call("play");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play resource file: {ex.Message}");
-                return false;
-            }
+            return TryConfigureAndPlay(sound, volume, pitch, "resource file");
         }
 
         /// <summary>
@@ -371,8 +346,54 @@ namespace STS2RitsuLib.Audio
             if (!FmodStudioGateway.TryCall(out var value, FmodStudioMethodNames.CreateSoundInstance, resolvedPath))
                 return null;
 
+            if (value.VariantType != Variant.Type.Object)
+                return null;
+
             var instance = value.AsGodotObject();
             return instance is not null && GodotObject.IsInstanceValid(instance) ? instance : null;
+        }
+
+        private static bool TryLoadFile(StringName method, string resolvedPath)
+        {
+            if (!FmodStudioGateway.TryCall(out var value, method, resolvedPath) ||
+                value.VariantType != Variant.Type.Object)
+                return false;
+
+            var file = value.AsGodotObject();
+            return file is not null && GodotObject.IsInstanceValid(file);
+        }
+
+        private static bool TryConfigureAndPlay(GodotObject? sound, float volume, float pitch, string sourceKind)
+        {
+            if (sound is null || !GodotObject.IsInstanceValid(sound))
+                return false;
+
+            var started = false;
+            try
+            {
+                if (!sound.HasMethod(SetVolume) || !sound.HasMethod(SetPitch) || !sound.HasMethod(Play))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Audio] FMOD play {sourceKind}: sound instance is missing a required method.");
+                    return false;
+                }
+
+                sound.Call(SetVolume, volume);
+                sound.Call(SetPitch, pitch);
+                sound.Call(Play);
+                started = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play {sourceKind}: {ex}");
+                return false;
+            }
+            finally
+            {
+                if (!started)
+                    FmodStudioEventInstances.TryRelease(sound);
+            }
         }
 
         private enum LoadedKind : byte
