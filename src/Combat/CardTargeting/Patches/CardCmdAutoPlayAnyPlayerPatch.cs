@@ -6,7 +6,10 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Godot;
 
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
@@ -93,20 +96,37 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             if (target != null)
                 return true;
 
-            if (ShouldLetVanillaHandleEarlyExit(card, combatState, type))
+            if (CombatManager.Instance.IsOverOrEnding
+                || card.Owner.Creature.IsDead
+                || card.Keywords.Contains(CardKeyword.Unplayable))
                 return true;
 
-            __result = MoveToResultPileWithoutPlaying(choiceContext, card);
+            __result = HandleMissingTarget(choiceContext, card, combatState, type);
             return false;
         }
 
-        private static bool ShouldLetVanillaHandleEarlyExit(CardModel card, ICombatState combatState,
+        private static async Task HandleMissingTarget(
+            PlayerChoiceContext choiceContext,
+            CardModel card,
+            ICombatState combatState,
             AutoPlayType type)
         {
-            return CombatManager.Instance.IsOverOrEnding
-                   || card.Owner.Creature.IsDead
-                   || card.Keywords.Contains(CardKeyword.Unplayable)
-                   || !Hook.ShouldPlay(combatState, card, out _, type);
+            if (!Hook.ShouldPlay(combatState, card, out var preventer, type))
+            {
+                await MoveToResultPileWithoutPlaying(choiceContext, card);
+                var line = UnplayableReason.BlockedByHook.GetPlayerDialogueLine(preventer);
+                if (line != null)
+                {
+                    var container = card.Owner.Creature.GetVfxContainer();
+                    if (container != null)
+                        RitsuGodotTreeCompat.AddChildSafely(
+                            container,
+                            NThoughtBubbleVfx.Create(line.GetFormattedText(), card.Owner.Creature, 1.0));
+                }
+                return;
+            }
+
+            await MoveToResultPileWithoutPlaying(choiceContext, card);
         }
     }
 }
