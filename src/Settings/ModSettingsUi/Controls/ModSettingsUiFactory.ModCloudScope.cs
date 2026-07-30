@@ -183,8 +183,14 @@ namespace STS2RitsuLib.Settings
                 if (chosen)
                     return;
                 chosen = true;
-                onChosen(scope);
-                CloseDialog();
+                try
+                {
+                    onChosen(scope);
+                }
+                finally
+                {
+                    CloseDialog();
+                }
             }
 
             void RestorePreviousFocus()

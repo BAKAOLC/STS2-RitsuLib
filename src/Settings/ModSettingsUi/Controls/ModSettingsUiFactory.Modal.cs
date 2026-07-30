@@ -149,8 +149,14 @@ namespace STS2RitsuLib.Settings
                 confirmIsDanger ? ModSettingsButtonTone.Danger : ModSettingsButtonTone.Accent,
                 () =>
                 {
-                    onConfirm();
-                    CloseDialog(false, false);
+                    try
+                    {
+                        onConfirm();
+                    }
+                    finally
+                    {
+                        CloseDialog(false, false);
+                    }
                 })
             {
                 CustomMinimumSize = actionButtonMinSize,
@@ -221,11 +227,17 @@ namespace STS2RitsuLib.Settings
                     viewport.SizeChanged -= OnViewportSized;
                 if (GodotObject.IsInstanceValid(canvasLayer))
                     canvasLayer.QueueFree();
-                if (cancelled)
-                    onCancel?.Invoke();
-                else if (dismissed)
-                    onDismiss?.Invoke();
-                RestorePreviousFocus();
+                try
+                {
+                    if (cancelled)
+                        onCancel?.Invoke();
+                    else if (dismissed)
+                        onDismiss?.Invoke();
+                }
+                finally
+                {
+                    RestorePreviousFocus();
+                }
             }
 
             void RestorePreviousFocus()
