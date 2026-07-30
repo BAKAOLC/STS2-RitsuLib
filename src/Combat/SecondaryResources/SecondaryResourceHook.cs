@@ -103,7 +103,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceInsufficientPayment payment)
         {
             return IterateListeners(context.CombatState, context.Card, context.Source).Aggregate(payment,
-                (current, listener) => listener.ModifySecondaryResourceInsufficientPayment(context, current));
+                (current, listener) =>
+                    listener.ModifySecondaryResourceInsufficientPayment(context, current) ??
+                    throw new InvalidOperationException(
+                        $"Secondary-resource hook listener '{listener.GetType().FullName}' returned a null " +
+                        "insufficient-payment policy."));
         }
 
         /// <summary>
@@ -115,7 +119,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceShortfallResolution resolution)
         {
             return IterateListeners(context.CombatState, context.Card, context.Source).Aggregate(resolution,
-                (current, listener) => listener.ResolveSecondaryResourceShortfall(context, current));
+                (current, listener) =>
+                    listener.ResolveSecondaryResourceShortfall(context, current) ??
+                    throw new InvalidOperationException(
+                        $"Secondary-resource hook listener '{listener.GetType().FullName}' returned a null " +
+                        "shortfall resolution."));
         }
 
         /// <summary>

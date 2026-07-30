@@ -73,7 +73,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         internal Task Commit(SecondaryResourceShortfallContext context)
         {
-            return OnCommit?.Invoke(context) ?? Task.CompletedTask;
+            if (OnCommit == null)
+                return Task.CompletedTask;
+
+            return OnCommit(context) ??
+                   throw new InvalidOperationException("A shortfall replacement-payment handler returned null.");
         }
     }
 
@@ -173,12 +177,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         internal Task InvokeShortfall(SecondaryResourceShortfallContext context)
         {
-            return OnShortfall?.Invoke(context) ?? Task.CompletedTask;
+            if (OnShortfall == null)
+                return Task.CompletedTask;
+
+            return OnShortfall(context) ??
+                   throw new InvalidOperationException("A remaining-shortfall payment handler returned null.");
         }
 
         internal SecondaryResourceShortfallResolution Resolve(SecondaryResourceShortfallResolutionContext context)
         {
-            return ResolveShortfall?.Invoke(context) ?? SecondaryResourceShortfallResolution.None;
+            if (ResolveShortfall == null)
+                return SecondaryResourceShortfallResolution.None;
+
+            return ResolveShortfall(context) ??
+                   throw new InvalidOperationException("A shortfall replacement-payment resolver returned null.");
         }
     }
 
