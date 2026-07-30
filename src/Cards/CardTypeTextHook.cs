@@ -27,29 +27,50 @@ namespace STS2RitsuLib.Cards
         internal static LocString Apply(LocString originalPlaqueText, CardModel card)
         {
             var modifiers = GetTypeModifiers(card);
-            var modifiersByWrapMode = modifiers.ToLookup(ReferencesTypeArgument);
+            var replacements = new List<ModifierEntry>();
+            var wrappers = new List<ModifierEntry>();
+            foreach (var entry in modifiers)
+            {
+                try
+                {
+                    (ReferencesTypeArgument(entry.Modifier) ? wrappers : replacements).Add(entry);
+                }
+                catch (Exception ex)
+                {
+                    WarnFailure(entry.Source, card, ex);
+                }
+            }
 
-            foreach (var modifier in modifiersByWrapMode[false])
-                originalPlaqueText = modifier;
+            foreach (var entry in replacements)
+                originalPlaqueText = entry.Modifier;
 
             var previousTypeText = originalPlaqueText;
-            foreach (var modifier in modifiersByWrapMode[true])
+            foreach (var entry in wrappers)
             {
-                modifier.Add(TypeArgumentName, previousTypeText);
-                previousTypeText = modifier;
+                try
+                {
+                    var wrapper = new LocString(entry.Modifier.LocTable, entry.Modifier.LocEntryKey);
+                    wrapper.AddVariablesFrom(entry.Modifier);
+                    wrapper.Add(TypeArgumentName, previousTypeText);
+                    previousTypeText = wrapper;
+                }
+                catch (Exception ex)
+                {
+                    WarnFailure(entry.Source, card, ex);
+                }
             }
 
             return previousTypeText;
         }
 
-        private static IEnumerable<LocString> GetTypeModifiers(CardModel card)
+        private static IEnumerable<ModifierEntry> GetTypeModifiers(CardModel card)
         {
             if (card is ICustomTypeTextCard customTypeTextCard)
                 foreach (var modifier in GetTypeModifiersSafely(
                              card,
                              card,
                              customTypeTextCard.GetTypeModifiers))
-                    yield return modifier;
+                    yield return new(modifier, card);
 
             HashSet<ICardTypeTextModifier> seen = new(ReferenceEqualityComparer.Instance);
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardTypeTextModifier>(card))
@@ -59,7 +80,7 @@ namespace STS2RitsuLib.Cards
                              capability,
                              card,
                              () => capability.GetTypeModifiers(card)))
-                    yield return modifier;
+                    yield return new(modifier, capability);
             }
 
             foreach (var source in IterateHookModifiers(card, seen))
@@ -67,7 +88,7 @@ namespace STS2RitsuLib.Cards
                          source,
                          card,
                          () => source.GetTypeModifiers(card)))
-                yield return modifier;
+                yield return new(modifier, source);
         }
 
         private static IEnumerable<ICardTypeTextModifier> IterateHookModifiers(
@@ -114,15 +135,21 @@ namespace STS2RitsuLib.Cards
             }
             catch (Exception ex)
             {
-                if (source is IModelCapability capability)
-                    ModelCapabilityDiagnostics.WarnFailure("card display/type-text", card, capability, ex);
-                else
-                    RitsuLibFramework.Logger.Warn(
-                        $"[CardTypeText] Modifier source '{source.GetType().FullName}' failed for {card.Id}: " +
-                        ex.Message);
-
+                WarnFailure(source, card, ex);
                 return [];
             }
         }
+
+        private static void WarnFailure(object source, CardModel card, Exception exception)
+        {
+            if (source is IModelCapability capability)
+                ModelCapabilityDiagnostics.WarnFailure("card display/type-text", card, capability, exception);
+            else
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardTypeText] Modifier source '{source.GetType().FullName}' failed for {card.Id}: " +
+                    exception.Message);
+        }
+
+        private readonly record struct ModifierEntry(LocString Modifier, object Source);
     }
 }
