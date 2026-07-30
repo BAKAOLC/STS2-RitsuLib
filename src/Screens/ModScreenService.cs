@@ -4,67 +4,62 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 namespace STS2RitsuLib.Screens
 {
     /// <summary>
-    ///     Lightweight mod-facing façade around <see cref="NCapstoneContainer" /> for opening and closing
-    ///     custom <see cref="ICapstoneScreen" />s without depending on any specific ritsulib subsystem
-    ///     (card piles, top-bar buttons, combat commands, …). This is the single public API any mod code
-    ///     should use when it wants to mount a screen as a full-page overlay.
-    ///     围绕 <see cref="NCapstoneContainer" /> 的轻量 mod 侧外观，用于打开和关闭
-    ///     自定义 <see cref="ICapstoneScreen" />，无需依赖任何特定 ritsulib 子系统
-    ///     （卡牌牌堆、顶部栏按钮、战斗命令等）。mod 代码想将屏幕挂载为整页覆盖层时，
-    ///     应使用这个唯一的公共 API。
+    ///     <para xml:lang="en">
+    ///         Opens, closes, and queries custom <see cref="ICapstoneScreen" /> instances through
+    ///         <see cref="NCapstoneContainer" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="NCapstoneContainer" /> 打开、关闭和查询自定义
+    ///         <see cref="ICapstoneScreen" /> 实例。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         The capstone container is a scene-owned singleton; during menus / between runs it may not
-    ///         yet exist. The helpers here therefore silently no-op when <see cref="NCapstoneContainer.Instance" />
-    ///         is null so callers do not need to guard every invocation.
+    ///     <para xml:lang="en">
+    ///         Operations return <see langword="false" /> when the scene-owned container is unavailable. Opening a
+    ///         screen replaces a different current screen and leaves an already-current instance unchanged.
     ///     </para>
-    ///     <para>
-    ///         When a capstone screen is already showing, <see cref="Open" /> closes it first so the new
-    ///         screen can take the stage — matching the behaviour users expect when clicking "view"-style
-    ///         top-bar buttons that toggle or swap screens.
-    ///     </para>
-    ///     <para>
-    ///         capstone 容器是由场景拥有的单例；在菜单中或两次跑局之间，它可能
-    ///         尚未存在。因此这里的 helper 会在 <see cref="NCapstoneContainer.Instance" />
-    ///         为 null 时静默无操作，调用方无需为每次调用都加保护。
-    ///     </para>
-    ///     <para>
-    ///         当已有 capstone 屏幕正在显示时，<see cref="Open" /> 会先关闭它，让新的
-    ///         屏幕接管舞台；这符合用户点击用于切换或替换屏幕的“view”式
-    ///         顶部栏按钮时的预期行为。
+    ///     <para xml:lang="zh-CN">
+    ///         场景持有的容器不可用时，操作返回 <see langword="false" />。打开屏幕会替换其他当前屏幕；
+    ///         已是当前屏幕的实例保持不变。
     ///     </para>
     /// </remarks>
     public static class ModScreenService
     {
         /// <summary>
-        ///     The screen currently owning the capstone container, or null when the container is idle / not
-        ///     yet instantiated.
-        ///     当前拥有 capstone 容器的屏幕；当容器空闲或尚未实例化时为 null。
+        ///     <para xml:lang="en">Gets the current Capstone screen, or <see langword="null" /> when the container is idle or unavailable.</para>
+        ///     <para xml:lang="zh-CN">获取当前 Capstone 屏幕；容器空闲或不可用时为 <see langword="null" />。</para>
         /// </summary>
         public static ICapstoneScreen? CurrentCapstoneScreen => NCapstoneContainer.Instance?.CurrentCapstoneScreen;
 
         /// <summary>
-        ///     True when a capstone is visible right now.
-        ///     当前有 capstone 可见时为 true。
+        ///     <para xml:lang="en">Gets whether a Capstone screen is currently open.</para>
+        ///     <para xml:lang="zh-CN">获取当前是否打开了 Capstone 屏幕。</para>
         /// </summary>
         public static bool IsCapstoneOpen => NCapstoneContainer.Instance is { InUse: true };
 
         /// <summary>
-        ///     Mounts <paramref name="screen" /> inside <see cref="NCapstoneContainer" />. If a different
-        ///     capstone is already open, it is closed first; if the same instance is already mounted this
-        ///     is a no-op.
-        ///     将 <paramref name="screen" /> 挂载到 <see cref="NCapstoneContainer" /> 内。如果已有另一个
-        ///     capstone 打开，会先将其关闭；如果同一实例已经挂载，则
-        ///     不执行任何操作。
+        ///     <para xml:lang="en">
+        ///         Mounts <paramref name="screen" /> in <see cref="NCapstoneContainer" />. Opening the screen
+        ///         replaces a different current screen; opening the already current instance is a no-op.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="screen" /> 挂载到 <see cref="NCapstoneContainer" /> 中。打开该屏幕会替换不同的
+        ///         当前屏幕；打开已是当前实例的屏幕时不执行任何操作。
+        ///     </para>
         /// </summary>
         /// <param name="screen">
-        ///     Screen to mount (must also be a Godot <see cref="Node" />).
-        ///     要挂载的屏幕（也必须是 Godot <see cref="Node" />）。
+        ///     <para xml:lang="en">The screen to mount, which must also be a Godot <see cref="Node" />.</para>
+        ///     <para xml:lang="zh-CN">要挂载的屏幕，且其也必须是 Godot <see cref="Node" />。</para>
         /// </param>
         /// <returns>
-        ///     True when the screen was mounted; false when no container is available.
-        ///     屏幕已挂载时为 true；没有可用容器时为 false。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if <paramref name="screen" /> is current after the call; otherwise,
+        ///         <see langword="false" /> when the container is unavailable.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         调用后 <paramref name="screen" /> 为当前屏幕时返回 <see langword="true" />；容器不可用时返回
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool Open(ICapstoneScreen screen)
         {
@@ -82,9 +77,13 @@ namespace STS2RitsuLib.Screens
         }
 
         /// <summary>
-        ///     Closes the current capstone, if any. Returns true when a close actually happened.
-        ///     关闭当前 capstone（如果有）。实际发生关闭时返回 true。
+        ///     <para xml:lang="en">Closes the current Capstone screen, if any.</para>
+        ///     <para xml:lang="zh-CN">关闭当前 Capstone 屏幕（如果存在）。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> if an open screen was closed; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">关闭了已打开的屏幕时返回 <see langword="true" />；否则返回 <see langword="false" />。</para>
+        /// </returns>
         public static bool Close()
         {
             var container = NCapstoneContainer.Instance;
@@ -96,11 +95,18 @@ namespace STS2RitsuLib.Screens
         }
 
         /// <summary>
-        ///     Convenience toggle: if <paramref name="screen" /> is already the current capstone, close it;
-        ///     otherwise open it.
-        ///     便捷切换：如果 <paramref name="screen" /> 已是当前 capstone，则关闭它；
-        ///     否则打开它。
+        ///     <para xml:lang="en">Closes <paramref name="screen" /> when it is current; otherwise opens it.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="screen" /> 为当前屏幕时将其关闭；否则打开它。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the requested open or close operation succeeded; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求的打开或关闭操作成功时返回 <see langword="true" />；否则返回 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool Toggle(ICapstoneScreen screen)
         {
             ArgumentNullException.ThrowIfNull(screen);

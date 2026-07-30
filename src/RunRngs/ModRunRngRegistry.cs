@@ -10,8 +10,13 @@ using StsRng = MegaCrit.Sts2.Core.Random.Rng;
 namespace STS2RitsuLib.RunRngs
 {
     /// <summary>
-    ///     Provides independent per-run RNG streams for mods.
-    ///     为 Mod 提供独立的按跑局随机数流。
+    ///     <para xml:lang="en">
+    ///         Provides persistent independent random-number streams for mods, scoped either to a run or to a player
+    ///         within that run.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组提供可持久化的独立随机数流，作用域可以是整局游戏，也可以是该局中的单个玩家。
+    ///     </para>
     /// </summary>
     public static class ModRunRngRegistry
     {
@@ -27,8 +32,8 @@ namespace STS2RitsuLib.RunRngs
         private static readonly ConditionalWeakTable<RunState, RuntimeState> Runtimes = new();
 
         /// <summary>
-        ///     Gets an independent RNG stream for the given run, mod id, and stream id.
-        ///     按跑局、mod ID 和流 ID 获取一条独立 RNG 流。
+        ///     <para xml:lang="en">Gets a persistent independent RNG stream for the specified run, mod ID, and stream ID.</para>
+        ///     <para xml:lang="zh-CN">获取指定局内状态、模组 ID 和流 ID 的可持久化独立 RNG 流。</para>
         /// </summary>
         public static StsRng Get(RunState runState, string modId, string streamId)
         {
@@ -41,8 +46,8 @@ namespace STS2RitsuLib.RunRngs
         }
 
         /// <summary>
-        ///     Gets an independent RNG stream scoped to a player within the run.
-        ///     获取作用域为跑局中某个玩家的独立 RNG 流。
+        ///     <para xml:lang="en">Gets a persistent independent RNG stream scoped to <paramref name="player" /> within its run.</para>
+        ///     <para xml:lang="zh-CN">获取在 <paramref name="player" /> 所在局内以该玩家为作用域的可持久化独立 RNG 流。</para>
         /// </summary>
         public static StsRng Get(Player player, string modId, string streamId)
         {
