@@ -128,12 +128,15 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             {
                 Callable.From(FlushExternalFontCacheCleared).CallDeferred();
             }
-            catch
+            catch (Exception ex)
             {
                 lock (Gate)
                 {
                     _fontRefreshQueued = false;
                 }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[ShellTheme] Could not defer the external font-cache refresh: {ex}");
             }
         }
 
@@ -243,10 +246,29 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 modSnapshot = [.. ModRegistrations.Values];
             }
 
-            ThemeChanged?.Invoke();
+            var handlers = ThemeChanged?.GetInvocationList();
+            if (handlers != null)
+                foreach (var handler in handlers)
+                    try
+                    {
+                        ((Action)handler).Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[ShellTheme] ThemeChanged callback failed: {ex}");
+                    }
 
             foreach (var reg in modSnapshot)
-                reg.OnApply?.Invoke(snapshot);
+                try
+                {
+                    reg.OnApply?.Invoke(snapshot);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.CreateLogger(reg.ModId)
+                        .Warn($"[ShellTheme] Theme apply callback failed: {ex}");
+                }
         }
 
         private static void FlushExternalFontCacheCleared()
