@@ -10,57 +10,58 @@ using MegaCrit.Sts2.Core.Nodes.Relics;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Runtime refresh categories for safe node-level visual reloads.
-    ///     用于安全节点级视觉重载的运行时刷新类别。
+    ///     <para xml:lang="en">Defines runtime refresh categories for supported node-level visual reloads.</para>
+    ///     <para xml:lang="zh-CN">定义运行时支持按节点重新加载视觉效果的刷新类别。</para>
     /// </summary>
     [Flags]
     public enum RuntimeAssetRefreshScope
     {
         /// <summary>
-        ///     No refresh requested.
-        ///     未请求刷新。
+        ///     <para xml:lang="en">Requests no refresh.</para>
+        ///     <para xml:lang="zh-CN">不请求刷新。</para>
         /// </summary>
         None = 0,
 
         /// <summary>
-        ///     Reload card visuals.
-        ///     重新加载卡牌视觉。
+        ///     <para xml:lang="en">Reloads card visuals.</para>
+        ///     <para xml:lang="zh-CN">重新加载卡牌视觉效果。</para>
         /// </summary>
         Cards = 1 << 0,
 
         /// <summary>
-        ///     Reload relic visuals.
-        ///     重新加载遗物视觉。
+        ///     <para xml:lang="en">Reloads relic visuals.</para>
+        ///     <para xml:lang="zh-CN">重新加载遗物视觉效果。</para>
         /// </summary>
         Relics = 1 << 1,
 
         /// <summary>
-        ///     Reload potion visuals.
-        ///     重新加载药水视觉。
+        ///     <para xml:lang="en">Reloads potion visuals.</para>
+        ///     <para xml:lang="zh-CN">重新加载药水视觉效果。</para>
         /// </summary>
         Potions = 1 << 2,
 
         /// <summary>
-        ///     Reload power visuals.
-        ///     重新加载能力视觉。
+        ///     <para xml:lang="en">Reloads power visuals.</para>
+        ///     <para xml:lang="zh-CN">重新加载能力视觉效果。</para>
         /// </summary>
         Powers = 1 << 3,
 
         /// <summary>
-        ///     Reload orb visuals.
-        ///     重新加载充能球视觉。
+        ///     <para xml:lang="en">Reloads orb visuals.</para>
+        ///     <para xml:lang="zh-CN">重新加载充能球视觉效果。</para>
         /// </summary>
         Orbs = 1 << 4,
 
         /// <summary>
-        ///     Refresh all currently supported safe runtime categories.
+        ///     <para xml:lang="en">Refreshes every category currently supported by the runtime coordinator.</para>
+        ///     <para xml:lang="zh-CN">刷新运行时协调器当前支持的所有类别。</para>
         /// </summary>
         AllSafe = Cards | Relics | Potions | Powers | Orbs,
     }
 
     /// <summary>
-    ///     Coalesces runtime visual refresh requests for commonly safe node types.
-    ///     合并常见安全节点类型的运行时视觉刷新请求。
+    ///     <para xml:lang="en">Coalesces runtime visual refresh requests for supported node types.</para>
+    ///     <para xml:lang="zh-CN">合并针对受支持节点类型的运行时视觉刷新请求。</para>
     /// </summary>
     public static class RuntimeAssetRefreshCoordinator
     {
@@ -78,8 +79,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static readonly List<Predicate<OrbModel>> PendingOrbRules = [];
 
         /// <summary>
-        ///     Requests a deferred refresh pass for the supplied <paramref name="scope" />.
-        ///     为提供的 <paramref name="scope" /> 请求一次延迟刷新。
+        ///     <para xml:lang="en">Requests a deferred refresh pass for the specified <paramref name="scope" />.</para>
+        ///     <para xml:lang="zh-CN">为指定的 <paramref name="scope" /> 请求一次延迟刷新。</para>
         /// </summary>
         public static void Request(RuntimeAssetRefreshScope scope = RuntimeAssetRefreshScope.AllSafe)
         {
@@ -103,8 +104,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Requests card-node reloads for cards matched by <paramref name="rule" />.
-        ///     为 <paramref name="rule" /> 匹配的卡牌请求卡牌节点重载。
+        ///     <para xml:lang="en">Requests card-node reloads for cards matched by <paramref name="rule" />.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配卡牌的节点。</para>
         /// </summary>
         public static void RequestCardsWhere(Predicate<CardModel> rule)
         {
@@ -113,8 +114,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Requests relic-node reloads for relics matched by <paramref name="rule" />.
-        ///     为 <paramref name="rule" /> 匹配的遗物请求遗物节点重载。
+        ///     <para xml:lang="en">Requests relic-node reloads for relics matched by <paramref name="rule" />.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配遗物的节点。</para>
         /// </summary>
         public static void RequestRelicsWhere(Predicate<RelicModel> rule)
         {
@@ -123,8 +124,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Requests potion-node reloads for potions matched by <paramref name="rule" />.
-        ///     为 <paramref name="rule" /> 匹配的药水请求药水节点重载。
+        ///     <para xml:lang="en">Requests potion-node reloads for potions matched by <paramref name="rule" />.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配药水的节点。</para>
         /// </summary>
         public static void RequestPotionsWhere(Predicate<PotionModel> rule)
         {
@@ -133,8 +134,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Requests power-node reloads for powers matched by <paramref name="rule" />.
-        ///     为 <paramref name="rule" /> 匹配的能力请求能力节点重载。
+        ///     <para xml:lang="en">Requests power-node reloads for powers matched by <paramref name="rule" />.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配能力的节点。</para>
         /// </summary>
         public static void RequestPowersWhere(Predicate<PowerModel> rule)
         {
@@ -143,8 +144,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Requests orb-node visual updates for orbs matched by <paramref name="rule" />.
-        ///     为 <paramref name="rule" /> 匹配的充能球请求充能球节点视觉更新。
+        ///     <para xml:lang="en">Requests orb-node visual updates for orbs matched by <paramref name="rule" />.</para>
+        ///     <para xml:lang="zh-CN">请求更新 <paramref name="rule" /> 所匹配充能球的节点视觉效果。</para>
         /// </summary>
         public static void RequestOrbsWhere(Predicate<OrbModel> rule)
         {

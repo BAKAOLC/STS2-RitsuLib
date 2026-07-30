@@ -7,11 +7,15 @@ using STS2RitsuLib.Scaffolding.Content.Visuals;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Supplies a tiny packed placeholder scene for ancient events that use
-    ///     <see cref="AncientEventPresentationAssetProfile.StageProcedural" />, so
-    ///     <see cref="EventModel.CreateBackgroundScene" /> does not require a real background <c>.tscn</c>.
-    ///     对使用 <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> 的远古事件提供一个极小的 packed scene
-    ///     占位符，使 <see cref="EventModel.CreateBackgroundScene" /> 不再需要真实的背景 <c>.tscn</c>。
+    ///     <para xml:lang="en">
+    ///         Supplies a minimal placeholder <see cref="PackedScene" /> for Ancient events that use
+    ///         <see cref="AncientEventPresentationAssetProfile.StageProcedural" />, avoiding the need for a background
+    ///         <c>.tscn</c> file.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为使用 <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> 的先古事件提供最小化的
+    ///         <see cref="PackedScene" /> 占位场景，无需另备背景 <c>.tscn</c> 文件。
+    ///     </para>
     /// </summary>
     internal class AncientEventProceduralBackgroundScenePatch : IPatchMethod
     {
@@ -28,8 +32,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Short-circuits background scene load when the ancient uses procedural stage layers.
-        ///     当远古事件使用程序化舞台图层时，跳过真实背景场景加载。
+        ///     <para xml:lang="en">Skips background-scene loading when an Ancient event uses procedural stage layers.</para>
+        ///     <para xml:lang="zh-CN">先古事件使用程序化舞台图层时，跳过背景场景加载。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(EventModel __instance, ref PackedScene __result)

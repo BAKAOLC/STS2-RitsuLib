@@ -66,8 +66,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Replaces <see cref="OrbModel.GetRandomOrb" /> only when registered mod orbs opt in to the random pool.
-    ///     仅当已注册 mod 充能球选择加入随机池时替换 <see cref="OrbModel.GetRandomOrb" />。
+    ///     <para xml:lang="en">
+    ///         Replaces <see cref="OrbModel.GetRandomOrb" /> only when registered mod orbs opt in to the random pool.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         仅当已注册的模组充能球选择加入随机池时替换 <see cref="OrbModel.GetRandomOrb" />。
+    ///     </para>
     /// </summary>
     internal sealed class OrbModelRandomPoolPolicyPatch : IPatchMethod
     {
@@ -81,8 +85,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Uses the vanilla random pool plus registered <see cref="IModOrbRandomPoolPolicy" /> opt-in candidates.
-        ///     使用原版随机池，加上已注册且通过 <see cref="IModOrbRandomPoolPolicy" /> 选择加入的候选项。
+        ///     <para xml:lang="en">
+        ///         Uses the vanilla random pool plus registered <see cref="IModOrbRandomPoolPolicy" /> opt-in candidates.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用原版随机池，并加入已注册且通过 <see cref="IModOrbRandomPoolPolicy" /> 选择加入的候选项。
+        ///     </para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId, Const.FrameworkContentRegistryHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -163,8 +171,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Applies <see cref="IModOrbValueDisplayPolicy" /> after vanilla orb visual refresh.
-    ///     在原版充能球视觉刷新之后应用 <see cref="IModOrbValueDisplayPolicy" />。
+    ///     <para xml:lang="en">
+    ///         Applies <see cref="IModOrbValueDisplayPolicy" /> after the base game's orb visuals are refreshed.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在游戏刷新充能球视觉效果后应用 <see cref="IModOrbValueDisplayPolicy" />。
+    ///     </para>
     /// </summary>
     internal sealed class NOrbValueDisplayPolicyPatch : IPatchMethod
     {
@@ -178,8 +190,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Reconciles labels with the mod orb's requested display mode.
-        ///     按 mod 充能球请求的显示模式同步标签。
+        ///     <para xml:lang="en">
+        ///         Updates the value labels to match the display mode requested by the mod orb.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         根据模组充能球请求的显示模式更新数值标签。
+        ///     </para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]

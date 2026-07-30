@@ -5,27 +5,27 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Optional icon path overrides for <see cref="ModifierModel" />.
-    ///     <see cref="ModifierModel" /> 的可选图标路径覆盖。
+    ///     <para xml:lang="en">Defines optional icon-path overrides for <see cref="ModifierModel" />.</para>
+    ///     <para xml:lang="zh-CN">定义 <see cref="ModifierModel" /> 的可选图标路径覆盖。</para>
     /// </summary>
     public interface IModModifierAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; default is empty.
-        ///     路径包；默认为空。
+        ///     <para xml:lang="en">Gets the modifier asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取修饰符资源配置。</para>
         /// </summary>
         ModifierAssetProfile AssetProfile => ModifierAssetProfile.Empty;
 
         /// <summary>
-        ///     Icon path override for custom run and daily-run UI.
-        ///     自定义 run 与每日挑战 UI 的图标路径覆盖。
+        ///     <para xml:lang="en">Gets the icon-path override used by custom-run and daily-run UI.</para>
+        ///     <para xml:lang="zh-CN">获取自定义模式和每日挑战界面使用的图标路径覆盖。</para>
         /// </summary>
         string? CustomIconPath => AssetProfile.IconPath;
     }
 
     /// <summary>
-    ///     Patches <see cref="ModifierModel" /> icon path for <see cref="IModModifierAssetOverrides" />.
-    ///     为 <see cref="IModModifierAssetOverrides" /> 修补 <see cref="ModifierModel" /> 图标路径。
+    ///     <para xml:lang="en">Applies external and interface icon-path overrides to <see cref="ModifierModel" />.</para>
+    ///     <para xml:lang="zh-CN">将外部和接口图标路径覆盖应用到 <see cref="ModifierModel" />。</para>
     /// </summary>
     internal sealed class ModifierIconPathPatch : IPatchMethod
     {
@@ -39,8 +39,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModModifierAssetOverrides.CustomIconPath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModModifierAssetOverrides.CustomIconPath" />。
+        ///     <para xml:lang="en">Applies the first available modifier icon-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的修饰符图标路径覆盖。</para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]

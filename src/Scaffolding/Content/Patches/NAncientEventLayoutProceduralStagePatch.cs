@@ -10,11 +10,10 @@ using STS2RitsuLib.Scaffolding.Content.Visuals;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     After <see cref="NAncientEventLayout.InitializeVisuals" />, replaces the instantiated background subtree with
-    ///     procedural stage layers when <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> is set.
-    ///     在 <see cref="NAncientEventLayout.InitializeVisuals" /> 之后，当设置了
-    ///     <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> 时，
-    ///     用程序化舞台图层替换已实例化的背景子树。
+    ///     <para xml:lang="en">
+    ///         Replaces an Ancient event's initialized background subtree with configured procedural stage layers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">使用已配置的程序化舞台图层替换先古事件初始化后的背景子树。</para>
     /// </summary>
     internal class NAncientEventLayoutProceduralStagePatch : IPatchMethod
     {

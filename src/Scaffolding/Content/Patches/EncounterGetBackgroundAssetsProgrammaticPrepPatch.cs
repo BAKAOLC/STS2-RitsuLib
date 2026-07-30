@@ -7,12 +7,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Runs before <c>EncounterModel.GetBackgroundAssets</c> so <see cref="ModEncounterTemplate" /> can fill the
-    ///     programmatic slot (needs <see cref="ActModel" /> + <see cref="Rng" />; vanilla
-    ///     <c>CreateBackgroundAssetsForCustom</c> only receives <c>Rng</c>).
-    ///     在 <c>EncounterModel.GetBackgroundAssets</c> 之前运行，使 <see cref="ModEncounterTemplate" /> 可以填充
-    ///     编程式槽位（需要 <see cref="ActModel" /> + <see cref="Rng" />；原版
-    ///     <c>CreateBackgroundAssetsForCustom</c> 只接收 <c>Rng</c>）。
+    ///     <para xml:lang="en">
+    ///         Prepares a <see cref="ModEncounterTemplate" /> programmatic background before
+    ///         <c>EncounterModel.GetBackgroundAssets</c> delegates to the custom-background path.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <c>EncounterModel.GetBackgroundAssets</c> 转入自定义背景路径前，准备
+    ///         <see cref="ModEncounterTemplate" /> 的程序化背景。
+    ///     </para>
     /// </summary>
     internal class EncounterGetBackgroundAssetsProgrammaticPrepPatch : IPatchMethod
     {

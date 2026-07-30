@@ -1,3 +1,4 @@
+using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Patching.Models;
@@ -5,29 +6,33 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Optional creature visuals scene path (vanilla <c>MonsterModel.VisualsPath</c>); use
-    ///     <see cref="ModMonsterTemplate" /> or implement on a mod <see cref="MonsterModel" />.
-    ///     可选生物视觉场景路径（原版 <c>MonsterModel.VisualsPath</c>）；使用
-    ///     <see cref="ModMonsterTemplate" />，或在 mod <see cref="MonsterModel" /> 上实现。
+    ///     <para xml:lang="en">
+    ///         Defines an optional monster combat-visual scene-path override. Mods may use
+    ///         <see cref="ModMonsterTemplate" /> or implement this interface on a <see cref="MonsterModel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义可选的怪物战斗视觉场景路径覆盖。模组可以使用 <see cref="ModMonsterTemplate" />，
+    ///         或在 <see cref="MonsterModel" /> 上实现此接口。
+    ///     </para>
     /// </summary>
     public interface IModMonsterAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; <c>Custom*</c> properties mirror these fields unless overridden.
-        ///     路径包；除非被覆盖，否则 <c>Custom*</c> 属性会映射这些字段。
+        ///     <para xml:lang="en">Gets the monster asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取怪物资源配置。</para>
         /// </summary>
         MonsterAssetProfile AssetProfile => MonsterAssetProfile.Empty;
 
         /// <summary>
-        ///     Override packed scene path for combat creature visuals.
-        ///     覆盖战斗生物视觉的 packed scene 路径。
+        ///     <para xml:lang="en">Gets the combat-visual <see cref="PackedScene" /> path override.</para>
+        ///     <para xml:lang="zh-CN">获取战斗视觉 <see cref="PackedScene" /> 路径覆盖。</para>
         /// </summary>
         string? CustomVisualsPath => AssetProfile.VisualsScenePath;
     }
 
     /// <summary>
-    ///     Patches <see cref="MonsterModel.VisualsPath" /> for <see cref="IModMonsterAssetOverrides" />.
-    ///     为 <see cref="IModMonsterAssetOverrides" /> 修补<see cref="MonsterModel.VisualsPath" />。
+    ///     <para xml:lang="en">Applies custom combat-visual scene paths to <see cref="MonsterModel.VisualsPath" />.</para>
+    ///     <para xml:lang="zh-CN">将自定义战斗视觉场景路径应用到 <see cref="MonsterModel.VisualsPath" />。</para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -43,8 +48,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModMonsterAssetOverrides.CustomVisualsPath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModMonsterAssetOverrides.CustomVisualsPath" />。
+        ///     <para xml:lang="en">Applies an available monster combat-visual path override.</para>
+        ///     <para xml:lang="zh-CN">应用可用的怪物战斗视觉路径覆盖。</para>
         /// </summary>
         public static bool Prefix(MonsterModel __instance, ref string __result)
         {

@@ -14,8 +14,10 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Applies optional card-pool deck-view style overrides after the vanilla deck screen initializes.
-    ///     在原版牌组查看界面初始化后应用可选的卡池样式覆盖。
+    ///     <para xml:lang="en">
+    ///         Applies optional card-pool style overrides after the base game's deck-view screen initializes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在原版游戏的牌组查看界面初始化后，应用可选的卡池样式覆盖。</para>
     /// </summary>
     internal sealed class CardPoolDeckViewStylePatch : IPatchMethod
     {

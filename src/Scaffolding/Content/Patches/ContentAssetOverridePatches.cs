@@ -276,12 +276,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Resolves a <see cref="PackedScene" /> for an already-defined path, preferring the preload cache and
-        ///     falling back to <see cref="ResourceLoader" /> for paths that were never preloaded. Iterates the same
-        ///     candidate set as <see cref="GodotResourcePath.TryLoad{T}" /> so <c>uid://</c> / remapped inputs resolve.
-        ///     为已定义的路径解析 <see cref="PackedScene" />，优先使用预加载缓存，未预加载的路径回退到
-        ///     <see cref="ResourceLoader" />。与 <see cref="GodotResourcePath.TryLoad{T}" /> 使用相同的候选集合，
-        ///     以便 <c>uid://</c> / 重映射输入也能解析。
+        ///     <para xml:lang="en">
+        ///         Resolves a <see cref="PackedScene" /> from a defined path, preferring the preload cache and falling
+        ///         back to <see cref="ResourceLoader" />. Candidate enumeration supports <c>uid://</c> and remapped paths.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从已定义路径解析 <see cref="PackedScene" />，优先使用预加载缓存，并回退到
+        ///         <see cref="ResourceLoader" />。候选路径枚举支持 <c>uid://</c> 和重映射路径。
+        ///     </para>
         /// </summary>
         internal static PackedScene? ResolveScene(string definedPath)
         {
@@ -301,10 +303,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Resolves a <see cref="Texture2D" /> for an already-defined path, preferring the preload cache and
-        ///     falling back to <see cref="ResourceLoader" /> for paths that were never preloaded.
-        ///     为已定义的路径解析 <see cref="Texture2D" />，优先使用预加载缓存，未预加载的路径回退到
-        ///     <see cref="ResourceLoader" />。
+        ///     <para xml:lang="en">
+        ///         Resolves a <see cref="Texture2D" /> from a defined path, preferring the preload cache and falling
+        ///         back to <see cref="ResourceLoader" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从已定义路径解析 <see cref="Texture2D" />，优先使用预加载缓存，并回退到
+        ///         <see cref="ResourceLoader" />。
+        ///     </para>
         /// </summary>
         internal static Texture2D? ResolveTexture2D(string definedPath)
         {
@@ -349,13 +355,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Warns about a <em>defined</em> override path that could not be used: either it does not resolve at all
-        ///     (logged as a missing path by <see cref="AssetPathDiagnostics.Exists" />) or it resolves but cannot be
-        ///     loaded as the expected type. Callers must only reach this after confirming the author defined a path,
-        ///     so an undefined override never produces a warning.
-        ///     对一个<em>已定义</em>但无法使用的覆盖路径发出警告：要么完全无法解析（由
-        ///     <see cref="AssetPathDiagnostics.Exists" /> 记为缺失），要么能解析但无法按期望类型加载。调用方必须在
-        ///     确认作者已定义路径之后才会到达此处，因此未定义的覆盖永远不会产生警告。
+        ///     <para xml:lang="en">
+        ///         Reports a defined override path that is missing or cannot be loaded as the expected resource type.
+        ///         Undefined overrides do not produce warnings.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         报告已定义但不存在或无法按预期资源类型加载的覆盖路径。未定义的覆盖不会产生警告。
+        ///     </para>
         /// </summary>
         internal static void WarnOverrideUnavailable(object instance, string memberName, string path,
             string expectedType)
@@ -537,562 +543,557 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Optional card art paths and materials consumed by content asset Harmony patches.
-    ///     由 content asset Harmony 补丁使用的可选卡牌美术路径和材质。
+    ///     <para xml:lang="en">Defines optional card artwork paths and materials used by RitsuLib patches.</para>
+    ///     <para xml:lang="zh-CN">定义由 RitsuLib 补丁使用的可选卡牌美术资源路径和材质。</para>
     /// </summary>
     public interface IModCardAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; individual properties usually mirror these fields unless overridden.
-        ///     路径包；除非被重写，各个属性通常会映射这些字段。
+        ///     <para xml:lang="en">Gets the card asset profile used by the default property implementations.</para>
+        ///     <para xml:lang="zh-CN">获取默认属性实现使用的卡牌资源配置。</para>
         /// </summary>
         CardAssetProfile AssetProfile { get; }
 
         /// <summary>
-        ///     Override for main portrait image path.
-        ///     主肖像图像路径覆盖。
+        ///     <para xml:lang="en">Gets the main card portrait path override.</para>
+        ///     <para xml:lang="zh-CN">获取主要卡图路径覆盖。</para>
         /// </summary>
         string? CustomPortraitPath { get; }
 
         /// <summary>
-        ///     Override for beta/alternate portrait path.
-        ///     beta/备用肖像路径覆盖。
+        ///     <para xml:lang="en">Gets the beta or alternate card portrait path override.</para>
+        ///     <para xml:lang="zh-CN">获取测试版或备用卡图路径覆盖。</para>
         /// </summary>
         string? CustomBetaPortraitPath { get; }
 
         /// <summary>
-        ///     Override for card portrait <see cref="Material" /> resource path.
-        ///     卡图 <see cref="Material" /> 资源路径覆盖。
+        ///     <para xml:lang="en">Gets the card portrait <see cref="Material" /> resource-path override.</para>
+        ///     <para xml:lang="zh-CN">获取卡图 <see cref="Material" /> 资源路径覆盖。</para>
         /// </summary>
         string? CustomPortraitMaterialPath => AssetProfile.PortraitMaterialPath;
 
         /// <summary>
-        ///     Override for card frame texture path.
-        ///     卡牌边框纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the card frame texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取卡牌边框纹理路径覆盖。</para>
         /// </summary>
         string? CustomFramePath { get; }
 
         /// <summary>
-        ///     Override for portrait border texture path.
-        ///     肖像边框纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the portrait-border texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取卡图边框纹理路径覆盖。</para>
         /// </summary>
         string? CustomPortraitBorderPath { get; }
 
         /// <summary>
-        ///     Override for small energy icon texture path.
-        ///     小型能量图标纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the small energy-icon texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取小型能量图标纹理路径覆盖。</para>
         /// </summary>
         string? CustomEnergyIconPath { get; }
 
         /// <summary>
-        ///     Override for ancient card border texture path.
-        ///     Ancient 卡牌边框纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the Ancient-card border texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取先古卡牌边框纹理路径覆盖。</para>
         /// </summary>
         string? CustomAncientBorderPath => AssetProfile.AncientBorderPath;
 
         /// <summary>
-        ///     Override for ancient card text background texture path.
-        ///     Ancient 卡牌文本背景纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the Ancient-card text-background texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取先古卡牌文本背景纹理路径覆盖。</para>
         /// </summary>
         string? CustomAncientTextBgPath => AssetProfile.AncientTextBgPath;
 
         /// <summary>
-        ///     Override for ancient card title banner texture path.
-        ///     Ancient 卡牌卡名横幅纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the Ancient-card title-banner texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取先古卡牌标题横幅纹理路径覆盖。</para>
         /// </summary>
         string? CustomAncientBannerPath => AssetProfile.AncientBannerPath;
 
         /// <summary>
-        ///     Optional visual layout override. Defaults to the base-game rarity-driven card layout.
-        ///     可选视觉布局覆盖。默认使用原版按稀有度驱动的卡牌布局。
+        ///     <para xml:lang="en">Gets the optional visual-layout override.</para>
+        ///     <para xml:lang="zh-CN">获取可选的视觉布局覆盖。</para>
         /// </summary>
         CardVisualStyle CustomVisualStyle => AssetProfile.VisualStyle;
 
         /// <summary>
-        ///     Override for frame <see cref="Material" /> resource path.
-        ///     边框 <see cref="Material" /> 资源路径覆盖。
+        ///     <para xml:lang="en">Gets the frame <see cref="Material" /> resource-path override.</para>
+        ///     <para xml:lang="zh-CN">获取边框 <see cref="Material" /> 资源路径覆盖。</para>
         /// </summary>
         string? CustomFrameMaterialPath { get; }
 
         /// <summary>
-        ///     Override for portrait border <see cref="Material" /> resource path.
-        ///     肖像边框 <see cref="Material" /> 资源路径覆盖。
+        ///     <para xml:lang="en">Gets the portrait-border <see cref="Material" /> resource-path override.</para>
+        ///     <para xml:lang="zh-CN">获取卡图边框 <see cref="Material" /> 资源路径覆盖。</para>
         /// </summary>
         string? CustomPortraitBorderMaterialPath => AssetProfile.PortraitBorderMaterialPath;
 
         /// <summary>
-        ///     Override for energy icon <see cref="Material" /> resource path.
-        ///     能量图标 <see cref="Material" /> 资源路径覆盖。
+        ///     <para xml:lang="en">Gets the energy-icon <see cref="Material" /> resource-path override.</para>
+        ///     <para xml:lang="zh-CN">获取能量图标 <see cref="Material" /> 资源路径覆盖。</para>
         /// </summary>
         string? CustomEnergyIconMaterialPath => AssetProfile.EnergyIconMaterialPath;
 
         /// <summary>
-        ///     Override for ancient card border <see cref="Material" /> resource path.
-        ///     Ancient 卡牌边框 <see cref="Material" /> 资源路径覆盖。
+        ///     <para xml:lang="en">Gets the Ancient-card border <see cref="Material" /> resource-path override.</para>
+        ///     <para xml:lang="zh-CN">获取先古卡牌边框 <see cref="Material" /> 资源路径覆盖。</para>
         /// </summary>
         string? CustomAncientBorderMaterialPath => AssetProfile.AncientBorderMaterialPath;
 
         /// <summary>
-        ///     Override for ancient card text background <see cref="Material" /> resource path.
-        ///     Ancient 卡牌文本背景 <see cref="Material" /> 资源路径覆盖。
+        ///     <para xml:lang="en">
+        ///         Gets the Ancient-card text-background <see cref="Material" /> resource-path override.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取先古卡牌文本背景 <see cref="Material" /> 资源路径覆盖。</para>
         /// </summary>
         string? CustomAncientTextBgMaterialPath => AssetProfile.AncientTextBgMaterialPath;
 
         /// <summary>
-        ///     Override for ancient card title banner <see cref="Material" /> resource path.
-        ///     Ancient 卡牌卡名横幅 <see cref="Material" /> 资源路径覆盖。
+        ///     <para xml:lang="en">Gets the Ancient-card title-banner <see cref="Material" /> resource-path override.</para>
+        ///     <para xml:lang="zh-CN">获取先古卡牌标题横幅 <see cref="Material" /> 资源路径覆盖。</para>
         /// </summary>
         string? CustomAncientBannerMaterialPath => AssetProfile.AncientBannerMaterialPath;
 
         /// <summary>
-        ///     Override for built-in overlay packed scene path.
-        ///     内置覆盖层 packed scene路径覆盖。
+        ///     <para xml:lang="en">Gets the built-in overlay <see cref="PackedScene" /> path override.</para>
+        ///     <para xml:lang="zh-CN">获取内置覆盖层 <see cref="PackedScene" /> 路径覆盖。</para>
         /// </summary>
         string? CustomOverlayScenePath { get; }
 
         /// <summary>
-        ///     Override for banner texture path.
-        ///     横幅纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the title-banner texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取标题横幅纹理路径覆盖。</para>
         /// </summary>
         string? CustomBannerTexturePath { get; }
 
         /// <summary>
-        ///     Override for banner material path.
-        ///     横幅材质路径覆盖。
+        ///     <para xml:lang="en">Gets the title-banner material-path override.</para>
+        ///     <para xml:lang="zh-CN">获取标题横幅材质路径覆盖。</para>
         /// </summary>
         string? CustomBannerMaterialPath { get; }
     }
 
     /// <summary>
-    ///     Optional direct portrait <see cref="Material" /> override for cards.
-    ///     This is applied to the portrait TextureRect after <see cref="NCard" /> reloads its vanilla visuals.
-    ///     用于卡牌的可选直接卡图 <see cref="Material" /> 覆盖。
-    ///     会在 <see cref="NCard" /> 重载原版视觉后应用到卡图 TextureRect。
+    ///     <para xml:lang="en">Defines an optional direct portrait <see cref="Material" /> override for cards.</para>
+    ///     <para xml:lang="zh-CN">为卡牌定义可选的直接卡图 <see cref="Material" /> 覆盖。</para>
     /// </summary>
     public interface IModCardPortraitMaterialOverride
     {
         /// <summary>
-        ///     Direct portrait material override.
-        ///     Return <c>null</c> to continue with other override layers.
-        ///     直接的卡图材质覆盖。
-        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        ///     <para xml:lang="en">
+        ///         Gets the direct portrait material, or <see langword="null" /> to continue with later override layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接卡图材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomPortraitMaterial => null;
     }
 
     /// <summary>
-    ///     Optional direct frame <see cref="Material" /> override for cards.
-    ///     This bypasses resource-path loading and is checked before
-    ///     <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" />.
-    ///     用于卡牌的可选直接frame <see cref="Material" /> 覆盖。
-    ///     这会绕过资源路径加载，并优先于
-    ///     <see cref="IModCardAssetOverrides.CustomFrameMaterialPath" /> 检查。
+    ///     <para xml:lang="en">Defines an optional direct frame <see cref="Material" /> override for cards.</para>
+    ///     <para xml:lang="zh-CN">为卡牌定义可选的直接边框 <see cref="Material" /> 覆盖。</para>
     /// </summary>
     public interface IModCardFrameMaterialOverride
     {
         /// <summary>
-        ///     Direct frame material override.
-        ///     Return <c>null</c> to continue with other override layers.
-        ///     直接的边框材质覆盖。
-        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        ///     <para xml:lang="en">
+        ///         Gets the direct frame material, or <see langword="null" /> to continue with later override layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接边框材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomFrameMaterial => null;
     }
 
     /// <summary>
-    ///     Optional direct portrait border <see cref="Material" /> override for cards.
-    ///     用于卡牌的可选直接肖像边框 <see cref="Material" /> 覆盖。
+    ///     <para xml:lang="en">Defines an optional direct portrait-border material override for cards.</para>
+    ///     <para xml:lang="zh-CN">为卡牌定义可选的直接卡图边框材质覆盖。</para>
     /// </summary>
     public interface IModCardPortraitBorderMaterialOverride
     {
         /// <summary>
-        ///     Direct portrait border material override.
-        ///     Return <c>null</c> to continue with other override layers.
-        ///     直接的肖像边框材质覆盖。
-        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        ///     <para xml:lang="en">
+        ///         Gets the direct portrait-border material, or <see langword="null" /> to continue with later layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接卡图边框材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomPortraitBorderMaterial => null;
     }
 
     /// <summary>
-    ///     Optional direct energy icon <see cref="Material" /> override for cards.
-    ///     用于卡牌的可选直接能量图标 <see cref="Material" /> 覆盖。
+    ///     <para xml:lang="en">Defines an optional direct energy-icon material override for cards.</para>
+    ///     <para xml:lang="zh-CN">为卡牌定义可选的直接能量图标材质覆盖。</para>
     /// </summary>
     public interface IModCardEnergyIconMaterialOverride
     {
         /// <summary>
-        ///     Direct energy icon material override.
-        ///     Return <c>null</c> to continue with other override layers.
-        ///     直接的能量图标材质覆盖。
-        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        ///     <para xml:lang="en">
+        ///         Gets the direct energy-icon material, or <see langword="null" /> to continue with later layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接能量图标材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomEnergyIconMaterial => null;
     }
 
     /// <summary>
-    ///     Optional direct ancient card border <see cref="Material" /> override for cards.
-    ///     用于 ancient 卡牌的可选直接边框 <see cref="Material" /> 覆盖。
+    ///     <para xml:lang="en">Defines an optional direct Ancient-card border material override.</para>
+    ///     <para xml:lang="zh-CN">定义可选的直接先古卡牌边框材质覆盖。</para>
     /// </summary>
     public interface IModCardAncientBorderMaterialOverride
     {
         /// <summary>
-        ///     Direct ancient card border material override.
-        ///     Return <c>null</c> to continue with other override layers.
-        ///     直接的 ancient 卡牌边框材质覆盖。
-        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        ///     <para xml:lang="en">
+        ///         Gets the direct Ancient-card border material, or <see langword="null" /> to continue with later layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接先古卡牌边框材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomAncientBorderMaterial => null;
     }
 
     /// <summary>
-    ///     Optional direct ancient card text background <see cref="Material" /> override for cards.
-    ///     用于 ancient 卡牌的可选直接文本背景 <see cref="Material" /> 覆盖。
+    ///     <para xml:lang="en">Defines an optional direct Ancient-card text-background material override.</para>
+    ///     <para xml:lang="zh-CN">定义可选的直接先古卡牌文本背景材质覆盖。</para>
     /// </summary>
     public interface IModCardAncientTextBgMaterialOverride
     {
         /// <summary>
-        ///     Direct ancient card text background material override.
-        ///     Return <c>null</c> to continue with other override layers.
-        ///     直接的 ancient 卡牌文本背景材质覆盖。
-        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        ///     <para xml:lang="en">
+        ///         Gets the direct Ancient-card text-background material, or <see langword="null" /> to continue.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接先古卡牌文本背景材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomAncientTextBgMaterial => null;
     }
 
     /// <summary>
-    ///     Optional direct ancient card title banner <see cref="Material" /> override for cards.
-    ///     用于 ancient 卡牌的可选直接卡名横幅 <see cref="Material" /> 覆盖。
+    ///     <para xml:lang="en">Defines an optional direct Ancient-card title-banner material override.</para>
+    ///     <para xml:lang="zh-CN">定义可选的直接先古卡牌标题横幅材质覆盖。</para>
     /// </summary>
     public interface IModCardAncientBannerMaterialOverride
     {
         /// <summary>
-        ///     Direct ancient card title banner material override.
-        ///     Return <c>null</c> to continue with other override layers.
-        ///     直接的 ancient 卡牌卡名横幅材质覆盖。
-        ///     返回 <c>null</c> 以继续使用其它覆盖层。
+        ///     <para xml:lang="en">
+        ///         Gets the direct Ancient-card title-banner material, or <see langword="null" /> to continue.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接先古卡牌标题横幅材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomAncientBannerMaterial => null;
     }
 
     /// <summary>
-    ///     Optional direct banner <see cref="Material" /> override for cards.
-    ///     This bypasses resource-path loading and is checked before
-    ///     <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" />.
-    ///     用于卡牌的可选直接banner <see cref="Material" /> 覆盖。
-    ///     这会绕过资源路径加载，并优先于
-    ///     <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> 检查。
+    ///     <para xml:lang="en">Defines an optional direct title-banner <see cref="Material" /> override for cards.</para>
+    ///     <para xml:lang="zh-CN">为卡牌定义可选的直接标题横幅 <see cref="Material" /> 覆盖。</para>
     /// </summary>
     public interface IModCardBannerMaterialOverride
     {
         /// <summary>
-        ///     Direct banner material override.
-        ///     Return <c>null</c> to fall back to frame material semantics.
-        ///     直接的横幅材质覆盖。
-        ///     返回 <c>null</c> 以回退到边框材质语义。
+        ///     <para xml:lang="en">
+        ///         Gets the direct title-banner material, or <see langword="null" /> to continue with later layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取直接标题横幅材质；返回 <see langword="null" /> 时继续处理后续覆盖层。</para>
         /// </summary>
         Material? CustomBannerMaterial => null;
     }
 
     /// <summary>
-    ///     Implement this interface on a <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> to directly supply
-    ///     a <see cref="Material" /> for card frames in the pool.
-    ///     When <see cref="PoolFrameMaterial" /> is non-null, <c>CardFrameMaterialPath</c> is ignored entirely.
-    ///     在 <see cref="MegaCrit.Sts2.Core.Models.CardPoolModel" /> 上实现此接口，以直接提供
-    ///     牌池中卡牌边框使用的 <see cref="Material" />。
-    ///     当 <see cref="PoolFrameMaterial" /> 非 null 时，<c>CardFrameMaterialPath</c> 会被完全忽略。
+    ///     <para xml:lang="en">Allows a card pool to supply its card-frame <see cref="Material" /> directly.</para>
+    ///     <para xml:lang="zh-CN">允许卡池直接提供其卡牌边框 <see cref="Material" />。</para>
     /// </summary>
     public interface IModCardPoolFrameMaterial
     {
         /// <summary>
-        ///     The material to use for card frames in this pool.
-        ///     Return <c>null</c> to fall back to the path-based default.
-        ///     此牌池中卡牌边框使用的材质。
-        ///     返回 <c>null</c> 以回退到基于路径的默认值。
+        ///     <para xml:lang="en">
+        ///         Gets the card-frame material, or <see langword="null" /> to use the path-based default.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取卡牌边框材质；返回 <see langword="null" /> 时使用基于路径的默认值。</para>
         /// </summary>
         Material? PoolFrameMaterial { get; }
     }
 
     /// <summary>
-    ///     Optional asset profile for card-pool-level presentation overrides.
-    ///     卡池级表现覆盖的可选 asset profile。
+    ///     <para xml:lang="en">Defines optional card-pool presentation overrides.</para>
+    ///     <para xml:lang="zh-CN">定义可选的卡池表现覆盖。</para>
     /// </summary>
     public interface IModCardPoolAssetOverrides
     {
         /// <summary>
-        ///     Card-pool-level asset profile. Return <see cref="CardPoolAssetProfile.Empty" /> when unused.
-        ///     卡池级 asset profile。未使用时返回 <see cref="CardPoolAssetProfile.Empty" />。
+        ///     <para xml:lang="en">Gets the card-pool asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取卡池资源配置。</para>
         /// </summary>
         CardPoolAssetProfile AssetProfile { get; }
     }
 
     /// <summary>
-    ///     Optional deck-view style override for a card pool.
-    ///     卡池的可选牌组查看界面样式覆盖。
+    ///     <para xml:lang="en">Defines an optional deck-view style override for a card pool.</para>
+    ///     <para xml:lang="zh-CN">定义卡池的可选牌组查看界面样式覆盖。</para>
     /// </summary>
     public interface IModCardPoolDeckViewStyle
     {
         /// <summary>
-        ///     Deck-view style for this pool, or <c>null</c> to keep vanilla behavior.
-        ///     此卡池的牌组查看样式；返回 <c>null</c> 保持原版行为。
+        ///     <para xml:lang="en">
+        ///         Gets the deck-view style, or <see langword="null" /> to retain base-game behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取牌组查看界面样式；返回 <see langword="null" /> 时保留原版行为。</para>
         /// </summary>
         CardPoolDeckViewStyle? DeckViewStyle { get; }
     }
 
     /// <summary>
-    ///     Optional relic icon paths for Harmony patches on <see cref="RelicModel" />.
-    ///     用于 <see cref="RelicModel" /> 的 Harmony 补丁的可选遗物 图标路径。
+    ///     <para xml:lang="en">Defines optional relic icon-path overrides.</para>
+    ///     <para xml:lang="zh-CN">定义可选的遗物图标路径覆盖。</para>
     /// </summary>
     public interface IModRelicAssetOverrides
     {
         /// <summary>
-        ///     Path bundle for relic presentation assets.
-        ///     遗物表现资源的路径包。
+        ///     <para xml:lang="en">Gets the relic asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取遗物资源配置。</para>
         /// </summary>
         RelicAssetProfile AssetProfile { get; }
 
         /// <summary>
-        ///     Primary relic icon path override.
-        ///     主 遗物 图标路径覆盖。
+        ///     <para xml:lang="en">Gets the primary relic icon-path override.</para>
+        ///     <para xml:lang="zh-CN">获取遗物主图标路径覆盖。</para>
         /// </summary>
         string? CustomIconPath { get; }
 
         /// <summary>
-        ///     Outline icon path override.
-        ///     轮廓 图标路径覆盖。
+        ///     <para xml:lang="en">Gets the relic outline-icon path override.</para>
+        ///     <para xml:lang="zh-CN">获取遗物轮廓图标路径覆盖。</para>
         /// </summary>
         string? CustomIconOutlinePath { get; }
 
         /// <summary>
-        ///     Large relic art path override.
-        ///     大型 遗物 art路径覆盖。
+        ///     <para xml:lang="en">Gets the large relic artwork path override.</para>
+        ///     <para xml:lang="zh-CN">获取遗物大图路径覆盖。</para>
         /// </summary>
         string? CustomBigIconPath { get; }
     }
 
     /// <summary>
-    ///     Optional power icon paths for Harmony patches on <see cref="PowerModel" />.
-    ///     用于 <see cref="PowerModel" /> 的 Harmony 补丁的可选能力 图标路径。
+    ///     <para xml:lang="en">Defines optional power icon-path overrides.</para>
+    ///     <para xml:lang="zh-CN">定义可选的能力图标路径覆盖。</para>
     /// </summary>
     public interface IModPowerAssetOverrides
     {
         /// <summary>
-        ///     Path bundle for power icons.
-        ///     能力图标的路径包。
+        ///     <para xml:lang="en">Gets the power asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取能力资源配置。</para>
         /// </summary>
         PowerAssetProfile AssetProfile { get; }
 
         /// <summary>
-        ///     Standard icon path override.
-        ///     标准 图标路径覆盖。
+        ///     <para xml:lang="en">Gets the standard icon-path override.</para>
+        ///     <para xml:lang="zh-CN">获取标准图标路径覆盖。</para>
         /// </summary>
         string? CustomIconPath { get; }
 
         /// <summary>
-        ///     Large icon path override.
-        ///     大型 图标路径覆盖。
+        ///     <para xml:lang="en">Gets the large icon-path override.</para>
+        ///     <para xml:lang="zh-CN">获取大图标路径覆盖。</para>
         /// </summary>
         string? CustomBigIconPath { get; }
     }
 
     /// <summary>
-    ///     Optional orb icon and visuals scene paths for Harmony patches on <see cref="OrbModel" />.
-    ///     用于 <see cref="OrbModel" /> 上 Harmony 补丁的可选充能球图标和视觉场景路径。
+    ///     <para xml:lang="en">Defines optional orb icon and combat-visual scene-path overrides.</para>
+    ///     <para xml:lang="zh-CN">定义可选的充能球图标和战斗视觉场景路径覆盖。</para>
     /// </summary>
     public interface IModOrbAssetOverrides
     {
         /// <summary>
-        ///     Path bundle for orb HUD and combat visuals.
-        ///     充能球 HUD 和战斗视觉的路径包。
+        ///     <para xml:lang="en">Gets the orb asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取充能球资源配置。</para>
         /// </summary>
         OrbAssetProfile AssetProfile { get; }
 
         /// <summary>
-        ///     Orb icon texture path override.
-        ///     充能球 图标 纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the orb icon texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取充能球图标纹理路径覆盖。</para>
         /// </summary>
         string? CustomIconPath { get; }
 
         /// <summary>
-        ///     Orb combat visuals scene path override.
-        ///     充能球 combat 视觉场景路径覆盖。
+        ///     <para xml:lang="en">Gets the orb combat-visual scene-path override.</para>
+        ///     <para xml:lang="zh-CN">获取充能球战斗视觉场景路径覆盖。</para>
         /// </summary>
         string? CustomVisualsScenePath { get; }
     }
 
     /// <summary>
-    ///     Default act asset override surface; concrete mods typically use <see cref="ModActTemplate" /> instead of
-    ///     implementing this directly.
-    ///     默认章节资源覆盖接口；具体 mod 通常使用 <see cref="ModActTemplate" />，而不是
-    ///     直接实现此接口。
+    ///     <para xml:lang="en">
+    ///         Defines optional act asset overrides. Most mods can use <see cref="ModActTemplate" /> instead of
+    ///         implementing this interface directly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义可选的章节资源覆盖。大多数模组可以使用 <see cref="ModActTemplate" />，无需直接实现此接口。
+    ///     </para>
     /// </summary>
     public interface IModActAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; default is empty.
-        ///     路径包；默认为空。
+        ///     <para xml:lang="en">Gets the act asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取章节资源配置。</para>
         /// </summary>
         ActAssetProfile AssetProfile => ActAssetProfile.Empty;
 
         /// <summary>
-        ///     Main act background scene path override.
-        ///     Main 章节 背景场景路径覆盖。
+        ///     <para xml:lang="en">Gets the main act background scene-path override.</para>
+        ///     <para xml:lang="zh-CN">获取章节主背景场景路径覆盖。</para>
         /// </summary>
         string? CustomBackgroundScenePath => AssetProfile.BackgroundScenePath;
 
         /// <summary>
-        ///     Rest site background scene path override.
-        ///     休息处 背景场景路径覆盖。
+        ///     <para xml:lang="en">Gets the rest-site background scene-path override.</para>
+        ///     <para xml:lang="zh-CN">获取休息处背景场景路径覆盖。</para>
         /// </summary>
         string? CustomRestSiteBackgroundPath => AssetProfile.RestSiteBackgroundPath;
 
         /// <summary>
-        ///     Map top-layer background image path override.
-        ///     地图顶层背景图像路径覆盖。
+        ///     <para xml:lang="en">Gets the map's top-layer background image-path override.</para>
+        ///     <para xml:lang="zh-CN">获取地图顶层背景图像路径覆盖。</para>
         /// </summary>
         string? CustomMapTopBgPath => AssetProfile.MapTopBgPath;
 
         /// <summary>
-        ///     Map middle-layer background image path override.
-        ///     地图中层背景图像路径覆盖。
+        ///     <para xml:lang="en">Gets the map's middle-layer background image-path override.</para>
+        ///     <para xml:lang="zh-CN">获取地图中层背景图像路径覆盖。</para>
         /// </summary>
         string? CustomMapMidBgPath => AssetProfile.MapMidBgPath;
 
         /// <summary>
-        ///     Map bottom-layer background image path override.
-        ///     地图底层背景图像路径覆盖。
+        ///     <para xml:lang="en">Gets the map's bottom-layer background image-path override.</para>
+        ///     <para xml:lang="zh-CN">获取地图底层背景图像路径覆盖。</para>
         /// </summary>
         string? CustomMapBotBgPath => AssetProfile.MapBotBgPath;
 
         /// <summary>
-        ///     Treasure chest Spine resource path override.
-        ///     宝箱 Spine 资源路径覆盖。
+        ///     <para xml:lang="en">Gets the treasure-chest Spine resource-path override.</para>
+        ///     <para xml:lang="zh-CN">获取宝箱 Spine 资源路径覆盖。</para>
         /// </summary>
         string? CustomChestSpineResourcePath => AssetProfile.ChestSpineResourcePath;
 
         /// <summary>
-        ///     Optional <c>res://</c> directory for combat background parallax layers (same <c>_bg_</c> / <c>_fg_</c> naming as
-        ///     vanilla). When set, <see cref="ActModel.GenerateBackgroundAssets" /> scans this folder instead of
-        ///     <c>scenes/backgrounds/&lt;act&gt;/layers</c>.
-        ///     战斗背景视差图层的可选 <c>res://</c> 目录（命名方式与原版相同，使用 <c>_bg_</c> / <c>_fg_</c>）。
-        ///     设置后，<see cref="ActModel.GenerateBackgroundAssets" /> 会扫描此文件夹，而不是
+        ///     <para xml:lang="en">
+        ///         Gets an optional <c>res://</c> directory containing combat-background parallax layers named with
+        ///         the base game's <c>_bg_</c> and <c>_fg_</c> conventions.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取可选的 <c>res://</c> 战斗背景视差图层目录，其中的文件采用原版游戏的 <c>_bg_</c> 和
+        ///         <c>_fg_</c> 命名约定。
+        ///     </para>
         /// </summary>
         string? CustomBackgroundLayersDirectoryPath => AssetProfile.BackgroundLayersDirectoryPath;
     }
 
     /// <summary>
-    ///     Optional event layout, portrait, background, and VFX scene paths; use <see cref="ModEventTemplate" /> or implement
-    ///     on a mod <see cref="EventModel" />.
-    ///     on a mod <c>EventModel</c>.
-    ///     可选事件布局、肖像、背景和 VFX 场景路径；使用 <see cref="ModEventTemplate" />，或在 mod
-    ///     <see cref="EventModel" /> 上实现。
-    ///     在 mod <c>EventModel</c> 上实现。
+    ///     <para xml:lang="en">
+    ///         Defines optional event layout, portrait, background, and VFX asset overrides. Mods may use
+    ///         <see cref="ModEventTemplate" /> or implement this interface on an <see cref="EventModel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义可选的事件布局、立绘、背景和 VFX 资源覆盖。模组可以使用 <see cref="ModEventTemplate" />，
+    ///         或在 <see cref="EventModel" /> 上实现此接口。
+    ///     </para>
     /// </summary>
     public interface IModEventAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; <c>Custom*</c> properties mirror these fields unless overridden.
-        ///     路径包；除非被覆盖，否则 <c>Custom*</c> 属性会映射这些字段。
+        ///     <para xml:lang="en">Gets the event asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取事件资源配置。</para>
         /// </summary>
         EventAssetProfile AssetProfile => EventAssetProfile.Empty;
 
         /// <summary>
-        ///     Override packed scene for <c>EventModel.CreateScene</c> (full layout root).
-        ///     <c>EventModel.CreateScene</c> 的 packed scene 覆盖（完整布局根节点）。
+        ///     <para xml:lang="en">Gets the full event-layout <see cref="PackedScene" /> path override.</para>
+        ///     <para xml:lang="zh-CN">获取完整事件布局 <see cref="PackedScene" /> 路径覆盖。</para>
         /// </summary>
         string? CustomLayoutScenePath => AssetProfile.LayoutScenePath;
 
         /// <summary>
-        ///     Override texture path for <c>EventModel.CreateInitialPortrait</c>.
-        ///     <c>EventModel.CreateInitialPortrait</c> 的纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the initial portrait texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取初始立绘纹理路径覆盖。</para>
         /// </summary>
         string? CustomInitialPortraitPath => AssetProfile.InitialPortraitPath;
 
         /// <summary>
-        ///     Override packed scene path for <c>EventModel.CreateBackgroundScene</c>.
-        ///     <c>EventModel.CreateBackgroundScene</c> 的 packed scene 路径覆盖。
+        ///     <para xml:lang="en">Gets the background <see cref="PackedScene" /> path override.</para>
+        ///     <para xml:lang="zh-CN">获取背景 <see cref="PackedScene" /> 路径覆盖。</para>
         /// </summary>
         string? CustomBackgroundScenePath => AssetProfile.BackgroundScenePath;
 
         /// <summary>
-        ///     Override packed scene path for <c>EventModel.CreateVfx</c> / <c>HasVfx</c>.
-        ///     <c>EventModel.CreateVfx</c> / <c>HasVfx</c> 的 packed scene 路径覆盖。
+        ///     <para xml:lang="en">Gets the VFX <see cref="PackedScene" /> path override.</para>
+        ///     <para xml:lang="zh-CN">获取 VFX <see cref="PackedScene" /> 路径覆盖。</para>
         /// </summary>
         string? CustomVfxScenePath => AssetProfile.VfxScenePath;
     }
 
     /// <summary>
-    ///     Extends <see cref="IModEventAssetOverrides" /> with ancient map and run-history icon paths; use
-    ///     <see cref="ModAncientEventTemplate" /> or implement on a mod <see cref="AncientEventModel" />.
-    ///     扩展 <see cref="IModEventAssetOverrides" />，增加远古地图和跑局历史图标路径；使用
-    ///     <see cref="ModAncientEventTemplate" />，或在 mod <see cref="AncientEventModel" />.
+    ///     <para xml:lang="en">
+    ///         Extends event asset overrides with Ancient map-node, run-history, and procedural-stage presentation.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         扩展事件资源覆盖，增加先古地图节点、游戏历史和程序化舞台表现。
+    ///     </para>
     /// </summary>
     public interface IModAncientEventAssetOverrides : IModEventAssetOverrides
     {
         /// <summary>
-        ///     Ancient-only presentation paths (map node + run history).
-        ///     仅远古事件使用的表现资源路径（地图节点 + 运行历史）。
+        ///     <para xml:lang="en">Gets the Ancient-event presentation profile.</para>
+        ///     <para xml:lang="zh-CN">获取先古事件表现资源配置。</para>
         /// </summary>
         AncientEventPresentationAssetProfile AncientPresentationAssetProfile =>
             AncientEventPresentationAssetProfile.Empty;
 
         /// <summary>
-        ///     Override for <c>AncientEventModel.MapIcon</c>.
-        ///     <c>AncientEventModel.MapIcon</c> 的覆盖。
+        ///     <para xml:lang="en">Gets the map-node icon-path override.</para>
+        ///     <para xml:lang="zh-CN">获取地图节点图标路径覆盖。</para>
         /// </summary>
         string? CustomMapIconPath => AncientPresentationAssetProfile?.MapIconPath;
 
         /// <summary>
-        ///     Override for <c>AncientEventModel.MapIconOutline</c>.
-        ///     <c>AncientEventModel.MapIconOutline</c> 的覆盖。
+        ///     <para xml:lang="en">Gets the map-node outline-icon path override.</para>
+        ///     <para xml:lang="zh-CN">获取地图节点轮廓图标路径覆盖。</para>
         /// </summary>
         string? CustomMapIconOutlinePath => AncientPresentationAssetProfile?.MapIconOutlinePath;
 
         /// <summary>
-        ///     Override for <c>AncientEventModel.RunHistoryIcon</c>.
-        ///     <c>AncientEventModel.RunHistoryIcon</c> 的覆盖。
+        ///     <para xml:lang="en">Gets the run-history icon-path override.</para>
+        ///     <para xml:lang="zh-CN">获取游戏历史图标路径覆盖。</para>
         /// </summary>
         string? CustomRunHistoryIconPath => AncientPresentationAssetProfile?.RunHistoryIconPath;
 
         /// <summary>
-        ///     Override for <c>AncientEventModel.RunHistoryIconOutline</c>.
-        ///     <c>AncientEventModel.RunHistoryIconOutline</c> 的覆盖。
+        ///     <para xml:lang="en">Gets the run-history outline-icon path override.</para>
+        ///     <para xml:lang="zh-CN">获取游戏历史轮廓图标路径覆盖。</para>
         /// </summary>
         string? CustomRunHistoryIconOutlinePath => AncientPresentationAssetProfile?.RunHistoryIconOutlinePath;
     }
 
     /// <summary>
-    ///     Optional epoch timeline portrait paths; use <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" /> or
-    ///     implement on a mod <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel" />.
-    ///     可选纪元时间线肖像路径；使用 <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" /> or
+    ///     <para xml:lang="en">Defines optional epoch timeline portrait-path overrides.</para>
+    ///     <para xml:lang="zh-CN">定义可选的时代时间线肖像路径覆盖。</para>
     /// </summary>
     public interface IModEpochAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; <c>Custom*</c> properties mirror these fields unless overridden.
-        ///     路径包；除非被覆盖，否则 <c>Custom*</c> 属性会映射这些字段。
+        ///     <para xml:lang="en">Gets the epoch asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取时代资源配置。</para>
         /// </summary>
         EpochAssetProfile AssetProfile => EpochAssetProfile.Empty;
 
         /// <summary>
-        ///     Override for <c>EpochModel.PackedPortraitPath</c> (atlas sprite entry).
-        ///     <c>EpochModel.PackedPortraitPath</c> 的覆盖（图集 sprite 条目）。
+        ///     <para xml:lang="en">Gets the packed timeline-portrait path override.</para>
+        ///     <para xml:lang="zh-CN">获取打包时间线肖像路径覆盖。</para>
         /// </summary>
         string? CustomPackedPortraitPath => AssetProfile.PackedPortraitPath;
 
         /// <summary>
-        ///     Override for the large portrait texture path.
-        ///     大型肖像纹理路径覆盖。
+        ///     <para xml:lang="en">Gets the large portrait texture-path override.</para>
+        ///     <para xml:lang="zh-CN">获取大型肖像纹理路径覆盖。</para>
         /// </summary>
         string? CustomBigPortraitPath => AssetProfile.BigPortraitPath;
     }
 
     /// <summary>
-    ///     Patches <see cref="EpochModel" /> portrait path getters for <see cref="IModEpochAssetOverrides" />.
-    ///     为 <see cref="IModEpochAssetOverrides" /> 修补<see cref="EpochModel" /> portrait 路径 getter。
-    /// </summary>
-    /// <summary>
-    ///     Patches orb HUD icon (<see cref="CompressedTexture2D" />) for <see cref="IModOrbAssetOverrides" />.
-    ///     为 <see cref="IModOrbAssetOverrides" /> 修补充能球 HUD 图标 (<see cref="CompressedTexture2D" />)。
+    ///     <para xml:lang="en">Applies external and interface overrides to the orb HUD icon.</para>
+    ///     <para xml:lang="zh-CN">将外部和接口覆盖应用到充能球 HUD 图标。</para>
     /// </summary>
     internal class OrbIconPatch : IPatchMethod
     {
@@ -1109,8 +1110,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Loads compressed icon texture from <see cref="IModOrbAssetOverrides.CustomIconPath" /> when valid.
-        ///     有效时从 <see cref="IModOrbAssetOverrides.CustomIconPath" /> 加载compressed 图标 纹理。
+        ///     <para xml:lang="en">Applies the first available orb HUD icon override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的充能球 HUD 图标覆盖。</para>
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref CompressedTexture2D __result)
         {
@@ -1136,8 +1137,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches orb visuals scene path for combat presentation overrides.
-    ///     为战斗表现覆盖修补充能球视觉场景路径。
+    ///     <para xml:lang="en">Applies external and interface overrides to the orb combat-visual scene path.</para>
+    ///     <para xml:lang="zh-CN">将外部和接口覆盖应用到充能球战斗视觉场景路径。</para>
     /// </summary>
     internal class OrbSpritePathPatch : IPatchMethod
     {
@@ -1154,8 +1155,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModOrbAssetOverrides.CustomVisualsScenePath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModOrbAssetOverrides.CustomVisualsScenePath" />。
+        ///     <para xml:lang="en">Applies the first available orb combat-visual scene-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的充能球战斗视觉场景路径覆盖。</para>
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref string __result)
         {
@@ -1177,8 +1178,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="OrbModel.AssetPaths" /> so custom icon and visuals paths appear in preload enumeration.
-    ///     修补 <see cref="OrbModel.AssetPaths" />，使自定义图标和视觉路径出现在预加载枚举中。
+    ///     <para xml:lang="en">Adds custom orb icon and combat-visual paths to preload enumeration.</para>
+    ///     <para xml:lang="zh-CN">将自定义充能球图标和战斗视觉路径添加到预加载枚举。</para>
     /// </summary>
     internal class OrbAssetPathsPatch : IPatchMethod
     {
@@ -1195,8 +1196,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Collects existing paths from <see cref="IModOrbAssetOverrides" /> for icon and visuals scenes.
-        ///     从 <see cref="IModOrbAssetOverrides" /> 收集现有的图标和视觉场景路径。
+        ///     <para xml:lang="en">Builds the effective custom orb asset-path enumeration.</para>
+        ///     <para xml:lang="zh-CN">构建有效的自定义充能球资源路径枚举。</para>
         /// </summary>
         public static bool Prefix(OrbModel __instance, ref IEnumerable<string> __result)
         {
@@ -1232,10 +1233,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches potion image and outline path getters (including packed atlas path getters used by vanilla
-    ///     <c>Image</c> / preload) for <see cref="IModPotionAssetOverrides" />.
-    ///     为 <see cref="IModPotionAssetOverrides" /> 修补药水图像和轮廓路径 getter（包括原版
-    ///     <c>Image</c> / 预加载使用的 packed atlas 路径 getter）。
+    ///     <para xml:lang="en">
+    ///         Applies character-owned, external-registry, and potion-interface image-path overrides.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">按角色所属、外部注册表和药水接口的顺序应用药水图像路径覆盖。</para>
     /// </summary>
     internal class PotionImagePathPatch : IPatchMethod
     {
@@ -1292,8 +1293,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches potion outline path getters for mod path overrides.
-    ///     为 mod 路径覆盖修补药水轮廓路径 getter。
+    ///     <para xml:lang="en">Applies custom potion outline-path overrides.</para>
+    ///     <para xml:lang="zh-CN">应用自定义药水轮廓路径覆盖。</para>
     /// </summary>
     internal class PotionOutlinePathPatch : IPatchMethod
     {
@@ -1318,8 +1319,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches potion image and outline textures for mod path overrides.
-    ///     为 mod 路径覆盖修补药水图像和轮廓纹理。
+    ///     <para xml:lang="en">Applies custom potion image and outline texture overrides.</para>
+    ///     <para xml:lang="zh-CN">应用自定义药水图像和轮廓纹理覆盖。</para>
     /// </summary>
     internal class PotionTexturePatch : IPatchMethod
     {
@@ -1374,8 +1375,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches potion outline texture for mod path overrides.
-    ///     为 mod 路径覆盖修补药水轮廓纹理。
+    ///     <para xml:lang="en">Applies custom potion outline texture overrides.</para>
+    ///     <para xml:lang="zh-CN">应用自定义药水轮廓纹理覆盖。</para>
     /// </summary>
     internal class PotionOutlineTexturePatch : IPatchMethod
     {
@@ -1395,8 +1396,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches run-summary banner texture for cards implementing <see cref="IModCardAssetOverrides" />.
-    ///     为实现 <see cref="IModCardAssetOverrides" /> 的卡牌修补跑局摘要横幅纹理。
+    ///     <para xml:lang="en">Applies custom card title-banner texture overrides.</para>
+    ///     <para xml:lang="zh-CN">应用自定义卡牌标题横幅纹理覆盖。</para>
     /// </summary>
     internal class CardBannerTexturePatch : IPatchMethod
     {
@@ -1410,8 +1411,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Loads banner texture from <see cref="IModCardAssetOverrides.CustomBannerTexturePath" /> when valid.
-        ///     有效时从 <see cref="IModCardAssetOverrides.CustomBannerTexturePath" /> 加载横幅纹理。
+        ///     <para xml:lang="en">Applies the first available title-banner texture override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的标题横幅纹理覆盖。</para>
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Texture2D __result)
         {
@@ -1425,8 +1426,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches banner <see cref="Material" /> resolution for mod cards.
-    ///     为 mod 卡牌修补横幅 <see cref="Material" /> 解析。
+    ///     <para xml:lang="en">Applies custom card title-banner <see cref="Material" /> overrides.</para>
+    ///     <para xml:lang="zh-CN">应用自定义卡牌标题横幅 <see cref="Material" /> 覆盖。</para>
     /// </summary>
     internal class CardBannerMaterialPatch : IPatchMethod
     {
@@ -1440,8 +1441,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Loads material from <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> when valid.
-        ///     有效时从 <see cref="IModCardAssetOverrides.CustomBannerMaterialPath" /> 加载材质。
+        ///     <para xml:lang="en">Applies the first available title-banner material override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的标题横幅材质覆盖。</para>
         /// </summary>
         public static bool Prefix(CardModel __instance, ref Material __result)
         {
@@ -1469,8 +1470,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches act main background scene path for <see cref="IModActAssetOverrides" />.
-    ///     为 <see cref="IModActAssetOverrides" /> 修补章节 主背景场景 路径。
+    ///     <para xml:lang="en">Applies external and interface overrides to an act's main background scene path.</para>
+    ///     <para xml:lang="zh-CN">将外部和接口覆盖应用到章节主背景场景路径。</para>
     /// </summary>
     internal class ActBackgroundScenePathPatch : IPatchMethod
     {
@@ -1484,8 +1485,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModActAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModActAssetOverrides.CustomBackgroundScenePath" />。
+        ///     <para xml:lang="en">Applies the first available main background scene-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的主背景场景路径覆盖。</para>
         /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
         {
@@ -1507,8 +1508,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches rest-site background scene path for mod acts.
-    ///     为 mod 章节修补休息处背景场景路径。
+    ///     <para xml:lang="en">Applies external and interface overrides to an act's rest-site background path.</para>
+    ///     <para xml:lang="zh-CN">将外部和接口覆盖应用到章节休息处背景路径。</para>
     /// </summary>
     internal class ActRestSiteBackgroundPathPatch : IPatchMethod
     {
@@ -1522,8 +1523,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModActAssetOverrides.CustomRestSiteBackgroundPath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModActAssetOverrides.CustomRestSiteBackgroundPath" />。
+        ///     <para xml:lang="en">Applies the first available rest-site background-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的休息处背景路径覆盖。</para>
         /// </summary>
         public static bool Prefix(ActModel __instance, ref string __result)
         {
@@ -1545,8 +1546,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches act map layer background image paths (top/mid/bottom) for mod acts.
-    ///     为 mod 章节修补章节地图图层背景图像路径（top/mid/bottom）。
+    ///     <para xml:lang="en">Applies custom overrides to an act map's top, middle, and bottom background layers.</para>
+    ///     <para xml:lang="zh-CN">将自定义覆盖应用到章节地图的顶层、中层和底层背景。</para>
     /// </summary>
     internal class ActMapBackgroundPathPatch : IPatchMethod
     {
@@ -1617,8 +1618,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches act middle map background image path for mod acts.
-    ///     为 mod 章节修补章节地图中层背景图像路径。
+    ///     <para xml:lang="en">Applies custom overrides to an act map's middle background layer.</para>
+    ///     <para xml:lang="zh-CN">将自定义覆盖应用到章节地图的中层背景。</para>
     /// </summary>
     internal class ActMapMidBackgroundPathPatch : IPatchMethod
     {
@@ -1638,8 +1639,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches act bottom map background image path for mod acts.
-    ///     为 mod 章节修补章节地图底层背景图像路径。
+    ///     <para xml:lang="en">Applies custom overrides to an act map's bottom background layer.</para>
+    ///     <para xml:lang="zh-CN">将自定义覆盖应用到章节地图的底层背景。</para>
     /// </summary>
     internal class ActMapBottomBackgroundPathPatch : IPatchMethod
     {
@@ -1659,13 +1660,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <c>EventModel.BackgroundScenePath</c> so preloads and <see cref="EventModel.CreateBackgroundScene" /> use
-    ///     <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> instead of the synthetic
-    ///     <c>events/background_scenes/&lt;id&gt;.tscn</c> path (which mod packs usually do not ship).
-    ///     <c>events/background_scenes/&lt;id&gt;.tscn</c>。
-    ///     修补 <c>EventModel.BackgroundScenePath</c>，使预加载和 <see cref="EventModel.CreateBackgroundScene" /> 使用
-    ///     <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />，而不是合成的
-    ///     <c>events/background_scenes/&lt;id&gt;.tscn</c> 路径（mod 包通常不会提供该路径）。
+    ///     <para xml:lang="en">
+    ///         Applies a custom event background scene path before the base game's synthesized path is used.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在使用原版游戏合成的路径之前，应用自定义事件背景场景路径。</para>
     /// </summary>
     internal class EventBackgroundScenePathGetterPatch : IPatchMethod
     {
@@ -1682,8 +1680,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />。
+        ///     <para xml:lang="en">Applies the first available event background scene-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的事件背景场景路径覆盖。</para>
         /// </summary>
         public static bool Prefix(EventModel __instance, ref string __result)
         {
@@ -1705,8 +1703,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="EventModel.CreateScene" /> for <see cref="IModEventAssetOverrides" />.
-    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateScene" />。
+    ///     <para xml:lang="en">Applies custom event layout scenes to <see cref="EventModel.CreateScene" />.</para>
+    ///     <para xml:lang="zh-CN">将自定义事件布局场景应用到 <see cref="EventModel.CreateScene" />。</para>
     /// </summary>
     internal class EventLayoutScenePatch : IPatchMethod
     {
@@ -1720,8 +1718,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModEventAssetOverrides.CustomLayoutScenePath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomLayoutScenePath" />。
+        ///     <para xml:lang="en">Applies the first available event layout-scene override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的事件布局场景覆盖。</para>
         /// </summary>
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
         {
@@ -1743,8 +1741,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="EventModel.CreateInitialPortrait" /> for <see cref="IModEventAssetOverrides" />.
-    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateInitialPortrait" />。
+    ///     <para xml:lang="en">Applies custom event portraits to <see cref="EventModel.CreateInitialPortrait" />.</para>
+    ///     <para xml:lang="zh-CN">将自定义事件立绘应用到 <see cref="EventModel.CreateInitialPortrait" />。</para>
     /// </summary>
     internal class EventInitialPortraitPatch : IPatchMethod
     {
@@ -1758,8 +1756,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Loads portrait from <see cref="IModEventAssetOverrides.CustomInitialPortraitPath" /> when valid.
-        ///     有效时从 <see cref="IModEventAssetOverrides.CustomInitialPortraitPath" /> 加载portrait。
+        ///     <para xml:lang="en">Applies the first available initial-portrait override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的初始立绘覆盖。</para>
         /// </summary>
         public static bool Prefix(EventModel __instance, ref Texture2D __result)
         {
@@ -1779,8 +1777,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="EventModel.CreateBackgroundScene" /> for <see cref="IModEventAssetOverrides" />.
-    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateBackgroundScene" />。
+    ///     <para xml:lang="en">Applies custom event background scenes to <see cref="EventModel.CreateBackgroundScene" />.</para>
+    ///     <para xml:lang="zh-CN">将自定义事件背景场景应用到 <see cref="EventModel.CreateBackgroundScene" />。</para>
     /// </summary>
     internal class EventBackgroundScenePatch : IPatchMethod
     {
@@ -1794,8 +1792,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModEventAssetOverrides.CustomBackgroundScenePath" />。
+        ///     <para xml:lang="en">Applies the first available event background-scene override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的事件背景场景覆盖。</para>
         /// </summary>
         public static bool Prefix(EventModel __instance, ref PackedScene __result)
         {
@@ -1827,8 +1825,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="EventModel.HasVfx" /> for mod VFX scene overrides.
-    ///     为 mod VFX 场景覆盖修补 <see cref="EventModel.HasVfx" />。
+    ///     <para xml:lang="en">Makes <see cref="EventModel.HasVfx" /> honor custom VFX scenes.</para>
+    ///     <para xml:lang="zh-CN">使 <see cref="EventModel.HasVfx" /> 识别自定义 VFX 场景。</para>
     /// </summary>
     internal class EventHasVfxPatch : IPatchMethod
     {
@@ -1842,8 +1840,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Returns true when <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> resolves to an existing resource.
-        ///     当 <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> 解析到现有资源时返回 true。
+        ///     <para xml:lang="en">Reports VFX availability from the first valid custom scene.</para>
+        ///     <para xml:lang="zh-CN">根据首个有效的自定义场景报告 VFX 可用性。</para>
         /// </summary>
         public static bool Prefix(EventModel __instance, ref bool __result)
         {
@@ -1880,8 +1878,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="EventModel.CreateVfx" /> for <see cref="IModEventAssetOverrides" />.
-    ///     为 <see cref="IModEventAssetOverrides" /> 修补<see cref="EventModel.CreateVfx" />。
+    ///     <para xml:lang="en">Makes <see cref="EventModel.CreateVfx" /> instantiate custom VFX scenes.</para>
+    ///     <para xml:lang="zh-CN">使 <see cref="EventModel.CreateVfx" /> 实例化自定义 VFX 场景。</para>
     /// </summary>
     internal class EventCreateVfxPatch : IPatchMethod
     {
@@ -1895,8 +1893,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Instantiates <see cref="IModEventAssetOverrides.CustomVfxScenePath" /> when the packed scene exists.
-        ///     当 packed scene 存在时实例化 <see cref="IModEventAssetOverrides.CustomVfxScenePath" />。
+        ///     <para xml:lang="en">Instantiates the first configured custom VFX scene.</para>
+        ///     <para xml:lang="zh-CN">实例化首个已配置的自定义 VFX 场景。</para>
         /// </summary>
         public static bool Prefix(EventModel __instance, ref Node2D __result)
         {
@@ -1926,8 +1924,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Appends custom event asset paths to <see cref="EventModel.GetAssetPaths" /> for preloading.
-    ///     将自定义事件资源路径追加到 <see cref="EventModel.GetAssetPaths" />，用于预加载。
+    ///     <para xml:lang="en">Merges custom event asset paths into <see cref="EventModel.GetAssetPaths" /> for preloading.</para>
+    ///     <para xml:lang="zh-CN">将自定义事件资源路径合并到 <see cref="EventModel.GetAssetPaths" />，以供预加载。</para>
     /// </summary>
     internal class EventGetAssetPathsPatch : IPatchMethod
     {
@@ -1941,8 +1939,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Concatenates resolved override paths after the vanilla enumeration.
-        ///     将已解析的覆盖资源路径追加到原版枚举结果之后。
+        ///     <para xml:lang="en">Merges available override paths with the base-game enumeration.</para>
+        ///     <para xml:lang="zh-CN">将可用的覆盖路径与原版游戏枚举结果合并。</para>
         /// </summary>
         public static void Postfix(EventModel __instance, IRunState runState, ref IEnumerable<string> __result)
         {
@@ -2082,8 +2080,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches ancient map icon textures for <see cref="IModAncientEventAssetOverrides" />.
-    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件地图图标纹理。
+    ///     <para xml:lang="en">Applies custom Ancient-event map-node icon textures.</para>
+    ///     <para xml:lang="zh-CN">应用自定义先古事件地图节点图标纹理。</para>
     /// </summary>
     internal class AncientMapIconTexturePatch : IPatchMethod
     {
@@ -2144,8 +2142,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches ancient map node icon outline textures for <see cref="IModAncientEventAssetOverrides" />.
-    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件地图节点图标轮廓纹理。
+    ///     <para xml:lang="en">Applies custom Ancient-event map-node outline-icon textures.</para>
+    ///     <para xml:lang="zh-CN">应用自定义先古事件地图节点轮廓图标纹理。</para>
     /// </summary>
     internal class AncientMapIconOutlineTexturePatch : IPatchMethod
     {
@@ -2165,8 +2163,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches ancient run-history icon textures for <see cref="IModAncientEventAssetOverrides" />.
-    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件跑局历史图标纹理。
+    ///     <para xml:lang="en">Applies custom Ancient-event run-history icon textures.</para>
+    ///     <para xml:lang="zh-CN">应用自定义先古事件游戏历史图标纹理。</para>
     /// </summary>
     internal class AncientRunHistoryIconTexturePatch : IPatchMethod
     {
@@ -2227,8 +2225,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches ancient run-history icon outline textures for <see cref="IModAncientEventAssetOverrides" />.
-    ///     为 <see cref="IModAncientEventAssetOverrides" /> 修补远古事件跑局历史图标轮廓纹理。
+    ///     <para xml:lang="en">Applies custom Ancient-event run-history outline-icon textures.</para>
+    ///     <para xml:lang="zh-CN">应用自定义先古事件游戏历史轮廓图标纹理。</para>
     /// </summary>
     internal class AncientRunHistoryIconOutlineTexturePatch : IPatchMethod
     {
@@ -2248,8 +2246,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Merges custom map node asset paths into <see cref="AncientEventModel.MapNodeAssetPaths" />.
-    ///     将自定义地图节点资源路径合并到 <see cref="AncientEventModel.MapNodeAssetPaths" />。
+    ///     <para xml:lang="en">
+    ///         Replaces corresponding base-game paths in <see cref="AncientEventModel.MapNodeAssetPaths" /> with
+    ///         available custom map-node icon paths.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用可用的自定义地图节点图标路径替换 <see cref="AncientEventModel.MapNodeAssetPaths" /> 中的对应原版路径。
+    ///     </para>
     /// </summary>
     internal class AncientMapNodeAssetPathsPatch : IPatchMethod
     {
@@ -2263,8 +2266,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Appends resolved custom map icon paths after the vanilla pair.
-        ///     在原版路径对之后追加已解析的自定义地图图标路径。
+        ///     <para xml:lang="en">Replaces available base-game map-icon paths with their custom counterparts.</para>
+        ///     <para xml:lang="zh-CN">使用自定义路径替换对应的可用原版地图图标路径。</para>
         /// </summary>
         public static void Postfix(AncientEventModel __instance, ref IEnumerable<string> __result)
         {
@@ -2309,27 +2312,27 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Optional affliction overlay scene path for patches on <see cref="AfflictionModel" />.
-    ///     用于 <see cref="AfflictionModel" /> 补丁的可选苦痛 overlay 场景路径。
+    ///     <para xml:lang="en">Defines an optional affliction overlay scene-path override.</para>
+    ///     <para xml:lang="zh-CN">定义可选的侵蚀覆盖层场景路径覆盖。</para>
     /// </summary>
     public interface IModAfflictionAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; default is empty.
-        ///     路径包；默认为空。
+        ///     <para xml:lang="en">Gets the affliction asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取侵蚀资源配置。</para>
         /// </summary>
         AfflictionAssetProfile AssetProfile => AfflictionAssetProfile.Empty;
 
         /// <summary>
-        ///     Overlay packed scene path override.
-        ///     Overlay packed 场景路径覆盖。
+        ///     <para xml:lang="en">Gets the overlay <see cref="PackedScene" /> path override.</para>
+        ///     <para xml:lang="zh-CN">获取覆盖层 <see cref="PackedScene" /> 路径覆盖。</para>
         /// </summary>
         string? CustomOverlayScenePath => AssetProfile.OverlayScenePath;
     }
 
     /// <summary>
-    ///     Patches <see cref="AfflictionModel" /> overlay scene path for <see cref="IModAfflictionAssetOverrides" />.
-    ///     为 <see cref="IModAfflictionAssetOverrides" /> 修补<see cref="AfflictionModel" /> overlay 场景 路径。
+    ///     <para xml:lang="en">Applies custom overlay scene paths to <see cref="AfflictionModel" />.</para>
+    ///     <para xml:lang="zh-CN">将自定义覆盖层场景路径应用到 <see cref="AfflictionModel" />。</para>
     /// </summary>
     internal class AfflictionOverlayPathPatch : IPatchMethod
     {
@@ -2343,8 +2346,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" />。
+        ///     <para xml:lang="en">Applies the first available affliction overlay path.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的侵蚀覆盖层路径。</para>
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref string __result)
         {
@@ -2376,8 +2379,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="AfflictionModel.HasOverlay" /> from custom overlay path existence.
-    ///     根据自定义 overlay 路径 existence修补<see cref="AfflictionModel.HasOverlay" />。
+    ///     <para xml:lang="en">Makes <see cref="AfflictionModel.HasOverlay" /> honor custom overlay scenes.</para>
+    ///     <para xml:lang="zh-CN">使 <see cref="AfflictionModel.HasOverlay" /> 识别自定义覆盖层场景。</para>
     /// </summary>
     internal class AfflictionHasOverlayPatch : IPatchMethod
     {
@@ -2391,8 +2394,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Resolves the custom overlay path then sets boolean availability from resource existence.
-        ///     解析自定义覆盖层路径，然后根据资源是否存在来设置布尔可用性。
+        ///     <para xml:lang="en">Reports overlay availability from the first valid custom scene.</para>
+        ///     <para xml:lang="zh-CN">根据首个有效的自定义场景报告覆盖层可用性。</para>
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
         {
@@ -2439,8 +2442,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="AfflictionModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
-    ///     修补 <see cref="AfflictionModel.CreateOverlay" />，在配置后实例化 mod 覆盖层场景。
+    ///     <para xml:lang="en">Makes <see cref="AfflictionModel.CreateOverlay" /> instantiate custom overlay scenes.</para>
+    ///     <para xml:lang="zh-CN">使 <see cref="AfflictionModel.CreateOverlay" /> 实例化自定义覆盖层场景。</para>
     /// </summary>
     internal class AfflictionCreateOverlayPatch : IPatchMethod
     {
@@ -2454,8 +2457,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Instantiates <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" /> when the packed scene exists.
-        ///     当 packed scene 存在时实例化 <see cref="IModAfflictionAssetOverrides.CustomOverlayScenePath" />。
+        ///     <para xml:lang="en">
+        ///         Tries the registered scene, registered path, and model-provided path in order; if none can be
+        ///         instantiated, runs the base-game implementation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         依次尝试已注册场景、已注册路径和模型提供的路径；均无法实例化时运行原版游戏实现。
+        ///     </para>
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref Control __result)
         {
@@ -2495,27 +2503,27 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Optional enchantment icon path for patches on <see cref="EnchantmentModel" />.
-    ///     用于 <see cref="EnchantmentModel" /> 补丁的可选附魔 图标路径。
+    ///     <para xml:lang="en">Defines an optional enchantment icon-path override.</para>
+    ///     <para xml:lang="zh-CN">定义可选的附魔图标路径覆盖。</para>
     /// </summary>
     public interface IModEnchantmentAssetOverrides
     {
         /// <summary>
-        ///     Path bundle; default is empty.
-        ///     路径包；默认为空。
+        ///     <para xml:lang="en">Gets the enchantment asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取附魔资源配置。</para>
         /// </summary>
         EnchantmentAssetProfile AssetProfile => EnchantmentAssetProfile.Empty;
 
         /// <summary>
-        ///     Intended icon path override.
-        ///     Intended 图标路径覆盖。
+        ///     <para xml:lang="en">Gets the intended icon-path override.</para>
+        ///     <para xml:lang="zh-CN">获取预期图标路径覆盖。</para>
         /// </summary>
         string? CustomIconPath => AssetProfile.IconPath;
     }
 
     /// <summary>
-    ///     Patches <see cref="EnchantmentModel" /> intended icon path for <see cref="IModEnchantmentAssetOverrides" />.
-    ///     为 <see cref="IModEnchantmentAssetOverrides" /> 修补<see cref="EnchantmentModel" /> intended 图标 路径。
+    ///     <para xml:lang="en">Applies custom intended icon paths to <see cref="EnchantmentModel" />.</para>
+    ///     <para xml:lang="zh-CN">将自定义预期图标路径应用到 <see cref="EnchantmentModel" />。</para>
     /// </summary>
     internal class EnchantmentIntendedIconPathPatch : IPatchMethod
     {
@@ -2529,8 +2537,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModEnchantmentAssetOverrides.CustomIconPath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModEnchantmentAssetOverrides.CustomIconPath" />。
+        ///     <para xml:lang="en">Applies the first available enchantment icon-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的附魔图标路径覆盖。</para>
         /// </summary>
         public static bool Prefix(EnchantmentModel __instance, ref string __result)
         {
@@ -2550,8 +2558,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="PowerModel.ResolvedBigIconPath" /> so preload lists include mod big-icon paths.
-    ///     修补<see cref="PowerModel.ResolvedBigIconPath" />，使预加载 列表 include mod big-图标 路径。
+    ///     <para xml:lang="en">Applies custom large power-icon paths to preload resolution.</para>
+    ///     <para xml:lang="zh-CN">将自定义能力大图标路径应用到预加载解析。</para>
     /// </summary>
     internal class PowerResolvedBigIconPathPatch : IPatchMethod
     {
@@ -2565,8 +2573,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModPowerAssetOverrides.CustomBigIconPath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModPowerAssetOverrides.CustomBigIconPath" />。
+        ///     <para xml:lang="en">Applies an available large power-icon path override.</para>
+        ///     <para xml:lang="zh-CN">应用可用的能力大图标路径覆盖。</para>
         /// </summary>
         public static bool Prefix(PowerModel __instance, ref string __result)
         {
@@ -2577,25 +2585,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Implement on a <see cref="CardPoolModel" /> subclass to supply a custom image path for the
-    ///     small energy icon rendered inside rich-text card descriptions
-    ///     (e.g. <c>[img]…/winefox_energy_icon.png[/img]</c>).
-    ///     <para />
-    ///     The default game path pattern is:
-    ///     <c>res://images/packed/sprite_fonts/{EnergyColorName}_energy_icon.png</c>.
-    ///     Use this interface only when you need a different path.
-    ///     在 <see cref="CardPoolModel" /> 子类上实现此接口，以提供自定义图像路径，用于
-    ///     富文本卡牌描述中渲染的小型能量图标
-    ///     （例如 <c>[img]…/winefox_energy_icon.png[/img]</c>）。
-    ///     <para />
-    ///     游戏默认路径模式为：
-    ///     仅在需要不同路径时使用此接口。
+    ///     <para xml:lang="en">
+    ///         Allows a <see cref="CardPoolModel" /> to supply the small energy-icon image embedded in rich-text card
+    ///         descriptions. Use this only when the base-game
+    ///         <c>res://images/packed/sprite_fonts/{EnergyColorName}_energy_icon.png</c> pattern is unsuitable.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         允许 <see cref="CardPoolModel" /> 提供嵌入富文本卡牌描述的小型能量图标。
+    ///         仅当原版游戏的 <c>res://images/packed/sprite_fonts/{EnergyColorName}_energy_icon.png</c>
+    ///         路径模式不适用时使用此接口。
+    ///     </para>
     /// </summary>
     public interface IModTextEnergyIconPool
     {
         /// <summary>
-        ///     Custom image path for the small energy icon embedded in rich-text card descriptions.
-        ///     嵌入富文本卡牌描述的小型能量图标的自定义图像路径。
+        ///     <para xml:lang="en">Gets the custom rich-text energy-icon image path.</para>
+        ///     <para xml:lang="zh-CN">获取自定义富文本能量图标的图像路径。</para>
         /// </summary>
         string? TextEnergyIconPath { get; }
     }

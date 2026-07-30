@@ -9,8 +9,14 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Replaces the vanilla relic collection's hard-coded ancient act list with the runtime <see cref="ModelDb.Acts" />
-    ///     sequence so registered mod acts can contribute ancient relic subcategories.
+    ///     <para xml:lang="en">
+    ///         Replaces the base game's hard-coded act list for Ancient relic categories with the runtime
+    ///         <see cref="ModelDb.Acts" /> sequence, allowing registered mod acts to contribute their own categories.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将游戏中用于先古遗物分类的硬编码章节列表替换为运行时 <see cref="ModelDb.Acts" /> 序列，
+    ///         使已注册的模组章节能够提供自己的分类。
+    ///     </para>
     /// </summary>
     internal class RelicCollectionActListPatch : IPatchMethod
     {
@@ -30,7 +36,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Stores the runtime act list into the local variable that vanilla later uses for ancient category generation.
+        ///     <para xml:lang="en">
+        ///         Stores the runtime act list in the local variable that the base game later uses to generate Ancient categories.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将运行时章节列表存入游戏随后用于生成先古分类的局部变量。
+        ///     </para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]

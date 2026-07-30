@@ -4,10 +4,13 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     External override registry for card-pool deck-view styles.
-    ///     Intended for card pools that cannot implement RitsuLib interfaces directly, including vanilla pools.
-    ///     卡池牌组查看界面样式的外部覆盖注册表。
-    ///     用于无法直接实现 RitsuLib 接口的卡池，包括原版卡池。
+    ///     <para xml:lang="en">
+    ///         Provides external card-pool deck-view style overrides for pools that cannot implement RitsuLib
+    ///         interfaces directly, including base-game pools.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为无法直接实现 RitsuLib 接口的卡池（包括原版卡池）提供外部牌组查看界面样式覆盖。
+    ///     </para>
     /// </summary>
     public static class CardPoolDeckViewStyleRegistry
     {
@@ -17,8 +20,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             new(StringComparer.Ordinal);
 
         /// <summary>
-        ///     Registers or replaces a deck-view style provider.
-        ///     注册或替换牌组查看界面样式 provider。
+        ///     <para xml:lang="en">Registers or replaces a deck-view style provider.</para>
+        ///     <para xml:lang="zh-CN">注册或替换牌组查看界面样式提供器。</para>
         /// </summary>
         public static void RegisterProvider(string key, Func<CardPoolModel, CardPoolDeckViewStyle?> provider)
         {
@@ -31,8 +34,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Removes a deck-view style provider by key.
-        ///     按 key 移除牌组查看界面样式 provider。
+        ///     <para xml:lang="en">Removes a deck-view style provider by key.</para>
+        ///     <para xml:lang="zh-CN">按键移除牌组查看界面样式提供器。</para>
         /// </summary>
         public static bool UnregisterProvider(string key)
         {
@@ -44,8 +47,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Clears all registered deck-view style providers.
-        ///     清除所有已注册的牌组查看界面样式 provider。
+        ///     <para xml:lang="en">Removes all registered deck-view style providers.</para>
+        ///     <para xml:lang="zh-CN">移除所有已注册的牌组查看界面样式提供器。</para>
         /// </summary>
         public static void Clear()
         {

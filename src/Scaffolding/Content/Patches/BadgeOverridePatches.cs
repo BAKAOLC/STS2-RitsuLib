@@ -12,8 +12,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     External badge icon path override providers keyed by registration key.
-    ///     按注册 key 索引的外部徽章图标路径覆盖提供器。
+    ///     <para xml:lang="en">
+    ///         Provides externally registered badge icon-path overrides, keyed by provider registration key.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供外部注册的徽章图标路径覆盖，并按提供器注册键索引。</para>
     /// </summary>
     public static class ExternalBadgeIconOverrideRegistry
     {
@@ -23,8 +25,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Registers or replaces an icon path provider.
-        ///     注册或替换图标路径提供器。
+        ///     <para xml:lang="en">Registers or replaces an icon-path provider.</para>
+        ///     <para xml:lang="zh-CN">注册或替换图标路径提供器。</para>
         /// </summary>
         public static void RegisterIconPathProvider(string key, Func<string, string?> provider)
         {
@@ -37,8 +39,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Unregisters a previously registered provider key.
-        ///     注销先前注册的提供器 key。
+        ///     <para xml:lang="en">Removes the provider with the specified registration key.</para>
+        ///     <para xml:lang="zh-CN">移除具有指定注册键的提供器。</para>
         /// </summary>
         public static bool UnregisterIconPathProvider(string key)
         {
@@ -50,8 +52,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Clears all registered providers.
-        ///     清除所有已注册提供器。
+        ///     <para xml:lang="en">Removes all registered providers.</para>
+        ///     <para xml:lang="zh-CN">移除所有已注册的提供器。</para>
         /// </summary>
         public static void Clear()
         {

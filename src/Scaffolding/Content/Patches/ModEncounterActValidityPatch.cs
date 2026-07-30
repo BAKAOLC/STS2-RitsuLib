@@ -5,8 +5,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Repairs saved boss selections that were generated before
-    ///     <see cref="IModEncounterActValidity.IsValidForAct" /> rules changed.
+    ///     <para xml:lang="en">
+    ///         Replaces saved boss selections that no longer satisfy
+    ///         <see cref="IModEncounterActValidity.IsValidForAct" />, when a valid alternative is available.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         已保存的首领选择不再满足 <see cref="IModEncounterActValidity.IsValidForAct" /> 时，
+    ///         若存在有效替代项则将其替换。
+    ///     </para>
     /// </summary>
     internal class ModEncounterActValidityPatch : IPatchMethod
     {
