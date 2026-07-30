@@ -22,6 +22,7 @@ namespace STS2RitsuLib.Combat.HealthBars
     internal static class BaseLibHealthBarForecastBridge
     {
         private const string SourceId = "ritsulib.registry";
+        private static readonly Lock Gate = new();
         private static bool _registered;
         private static bool _legacyImportMode;
         private static bool _baselibSupportsForecastInterop;
@@ -44,18 +45,30 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public static bool ShouldRitsuRendererStandDown()
         {
-            return _registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol;
+            lock (Gate)
+            {
+                return _registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol;
+            }
         }
 
         public static bool ShouldSuppressBaseLibRenderer()
         {
-            return !ShouldRitsuRendererStandDown() && (_legacyImportMode || TryResolveLegacyImportApi(out _));
+            lock (Gate)
+            {
+                return !(_registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol)
+                       && (_legacyImportMode || TryResolveLegacyImportApi(out _));
+            }
         }
 
         internal static IReadOnlyList<BaseLibImportedHealthBarForecastSegment> GetImportedSegments(Creature creature)
         {
-            if (ShouldRitsuRendererStandDown() || !TryResolveLegacyImportApi(out var getSegments))
-                return [];
+            MethodInfo getSegments;
+            lock (Gate)
+            {
+                if ((_registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol)
+                    || !TryResolveLegacyImportApi(out getSegments))
+                    return [];
+            }
 
             try
             {
@@ -68,10 +81,12 @@ namespace STS2RitsuLib.Combat.HealthBars
             }
             catch (Exception ex)
             {
-                if (_loggedLegacyImportFailure)
-                    return [];
-
-                _loggedLegacyImportFailure = true;
+                lock (Gate)
+                {
+                    if (_loggedLegacyImportFailure)
+                        return [];
+                    _loggedLegacyImportFailure = true;
+                }
                 RitsuLibFramework.Logger.Warn($"[HealthBarForecast] Failed to import BaseLib forecast segments: {ex}");
                 return [];
             }
@@ -83,8 +98,6 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public static void TryRegisterPrimary()
         {
-            if (_registered || _legacyImportMode)
-                return;
             TryRegisterCore();
         }
 
@@ -94,8 +107,6 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public static void TryRegisterSecondary()
         {
-            if (_registered || _legacyImportMode)
-                return;
             TryRegisterCore();
         }
 
@@ -110,63 +121,66 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static void TryRegisterCore()
         {
-            if (_registered || _legacyImportMode)
-                return;
-            if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
-                return;
-
-            try
+            lock (Gate)
             {
-                var registryType = ResolveBaseLibRegistryType();
-                if (registryType == null)
+                if (_registered || _legacyImportMode)
+                    return;
+                if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                     return;
 
-                var registerForeign = registryType.GetMethod(
-                    "RegisterForeign",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null,
-                    [typeof(string), typeof(string), typeof(Func<Creature, IEnumerable<object>>)],
-                    null);
-
-                if (registerForeign == null)
+                try
                 {
-                    _baselibSupportsForecastInterop = false;
-                    _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
-                    if (_loggedMissingRegisterForeign) return;
-                    _loggedMissingRegisterForeign = true;
-                    RitsuLibFramework.Logger.Warn(
-                        $"[HealthBarForecast] BaseLib registry type '{registryType.FullName}' does not expose " +
-                        "RegisterForeign(string, string, Func<Creature, IEnumerable<object>>); forecast interop unavailable.");
+                    var registryType = ResolveBaseLibRegistryType();
+                    if (registryType == null)
+                        return;
 
-                    return;
-                }
+                    var registerForeign = registryType.GetMethod(
+                        "RegisterForeign",
+                        BindingFlags.Public | BindingFlags.Static,
+                        null,
+                        [typeof(string), typeof(string), typeof(Func<Creature, IEnumerable<object>>)],
+                        null);
 
-                if (!BaseLibSupportsRitsuRenderProtocol(registryType))
-                {
+                    if (registerForeign == null)
+                    {
+                        _baselibSupportsForecastInterop = false;
+                        _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        if (_loggedMissingRegisterForeign) return;
+                        _loggedMissingRegisterForeign = true;
+                        RitsuLibFramework.Logger.Warn(
+                            $"[HealthBarForecast] BaseLib registry type '{registryType.FullName}' does not expose " +
+                            "RegisterForeign(string, string, Func<Creature, IEnumerable<object>>); forecast interop unavailable.");
+
+                        return;
+                    }
+
+                    if (!BaseLibSupportsRitsuRenderProtocol(registryType))
+                    {
+                        _baselibSupportsForecastInterop = true;
+                        _baselibSupportsRitsuRenderProtocol = false;
+                        _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        if (_loggedLegacyImportMode) return;
+                        _loggedLegacyImportMode = true;
+                        RitsuLibFramework.Logger.Info(
+                            "[HealthBarForecast] BaseLib forecast registry uses the legacy render protocol; " +
+                            "RitsuLib will import BaseLib segments and keep its own renderer active.");
+
+                        return;
+                    }
+
+                    var provider = GetSegmentsForCreature;
+                    _registerForeign ??=
+                        registerForeign.CreateDelegate<Action<string, string, Func<Creature, IEnumerable<object>>>>();
+                    _registerForeign(Const.ModId, SourceId, provider);
+                    _registered = true;
                     _baselibSupportsForecastInterop = true;
-                    _baselibSupportsRitsuRenderProtocol = false;
-                    _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
-                    if (_loggedLegacyImportMode) return;
-                    _loggedLegacyImportMode = true;
-                    RitsuLibFramework.Logger.Info(
-                        "[HealthBarForecast] BaseLib forecast registry uses the legacy render protocol; " +
-                        "RitsuLib will import BaseLib segments and keep its own renderer active.");
-
-                    return;
+                    _baselibSupportsRitsuRenderProtocol = true;
+                    RitsuLibFramework.Logger.Info("[HealthBarForecast] Registered BaseLib bridge provider.");
                 }
-
-                var provider = GetSegmentsForCreature;
-                _registerForeign ??=
-                    registerForeign.CreateDelegate<Action<string, string, Func<Creature, IEnumerable<object>>>>();
-                _registerForeign(Const.ModId, SourceId, provider);
-                _registered = true;
-                _baselibSupportsForecastInterop = true;
-                _baselibSupportsRitsuRenderProtocol = true;
-                RitsuLibFramework.Logger.Info("[HealthBarForecast] Registered BaseLib bridge provider.");
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[HealthBarForecast] Failed to register BaseLib bridge provider: {ex}");
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn($"[HealthBarForecast] Failed to register BaseLib bridge provider: {ex}");
+                }
             }
         }
 
@@ -269,7 +283,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
             var segment = entryType.GetProperty("Segment", BindingFlags.Instance | BindingFlags.Public);
             var sequenceOrder = entryType.GetProperty("SequenceOrder", BindingFlags.Instance | BindingFlags.Public);
-            if (segment == null || sequenceOrder == null)
+            if (segment == null || sequenceOrder?.PropertyType != typeof(long))
                 return LegacyImportReader.Unavailable;
 
             var method = typeof(BaseLibHealthBarForecastBridge)

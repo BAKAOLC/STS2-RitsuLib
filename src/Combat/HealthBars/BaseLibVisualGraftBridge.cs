@@ -13,6 +13,7 @@ namespace STS2RitsuLib.Combat.HealthBars
     internal static class BaseLibVisualGraftBridge
     {
         private const string SourceId = "ritsulib.visual_graft_registry";
+        private static readonly Lock Gate = new();
         private static bool _registered;
         private static bool _interopOk;
         private static bool _loggedMissingRegistry;
@@ -21,20 +22,19 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         public static bool ShouldRitsuGraftStandDown()
         {
-            return _registered && _interopOk;
+            lock (Gate)
+            {
+                return _registered && _interopOk;
+            }
         }
 
         public static void TryRegisterPrimary()
         {
-            if (_registered)
-                return;
             TryRegisterCore();
         }
 
         public static void TryRegisterSecondary()
         {
-            if (_registered)
-                return;
             TryRegisterCore();
         }
 
@@ -45,50 +45,54 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static void TryRegisterCore()
         {
-            if (_registered)
-                return;
-            if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
-                return;
-
-            try
+            lock (Gate)
             {
-                var registryType = ResolveBaseLibRegistryType();
-                if (registryType == null)
+                if (_registered)
+                    return;
+                if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                     return;
 
-                var registerForeign = registryType.GetMethod(
-                    "RegisterForeign",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null,
-                    [typeof(string), typeof(string), typeof(Func<Creature, object>)],
-                    null);
-
-                if (registerForeign == null)
+                try
                 {
-                    _interopOk = false;
-                    if (_loggedMissingRegisterForeign)
+                    var registryType = ResolveBaseLibRegistryType();
+                    if (registryType == null)
                         return;
-                    _loggedMissingRegisterForeign = true;
-                    RitsuLibFramework.Logger.Warn(
-                        "[HealthBarGraft] BaseLib registry type does not expose " +
-                        "RegisterForeign(string, string, Func<Creature, object>).");
-                    return;
-                }
 
-                static object Handler(Creature c)
+                    var registerForeign = registryType.GetMethod(
+                        "RegisterForeign",
+                        BindingFlags.Public | BindingFlags.Static,
+                        null,
+                        [typeof(string), typeof(string), typeof(Func<Creature, object>)],
+                        null);
+
+                    if (registerForeign == null)
+                    {
+                        _interopOk = false;
+                        if (_loggedMissingRegisterForeign)
+                            return;
+                        _loggedMissingRegisterForeign = true;
+                        RitsuLibFramework.Logger.Warn(
+                            "[HealthBarGraft] BaseLib registry type does not expose " +
+                            "RegisterForeign(string, string, Func<Creature, object>).");
+                        return;
+                    }
+
+                    static object Handler(Creature c)
+                    {
+                        return HealthBarVisualGraftRegistry.Aggregate(c);
+                    }
+
+                    _registerForeign ??=
+                        registerForeign.CreateDelegate<Action<string, string, Func<Creature, object>>>();
+                    _registerForeign(Const.ModId, SourceId, Handler);
+                    _registered = true;
+                    _interopOk = true;
+                    RitsuLibFramework.Logger.Info("[HealthBarGraft] Registered BaseLib visual graft bridge.");
+                }
+                catch (Exception ex)
                 {
-                    return HealthBarVisualGraftRegistry.Aggregate(c);
+                    RitsuLibFramework.Logger.Warn($"[HealthBarGraft] Failed to register BaseLib bridge: {ex}");
                 }
-
-                _registerForeign ??= registerForeign.CreateDelegate<Action<string, string, Func<Creature, object>>>();
-                _registerForeign(Const.ModId, SourceId, Handler);
-                _registered = true;
-                _interopOk = true;
-                RitsuLibFramework.Logger.Info("[HealthBarGraft] Registered BaseLib visual graft bridge.");
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[HealthBarGraft] Failed to register BaseLib bridge: {ex}");
             }
         }
 
