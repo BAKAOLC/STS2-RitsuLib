@@ -26,6 +26,7 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(bbcode);
             ArgumentNullException.ThrowIfNull(text);
+            ArgumentNullException.ThrowIfNull(parameters);
 
             var tag = NormalizeName(bbcode, "BBCode tag");
             var opening = BuildOpeningTag(tag, parameters);
