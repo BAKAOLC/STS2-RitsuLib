@@ -961,7 +961,7 @@ namespace STS2RitsuLib.Settings
         public static MegaRichTextLabel CreateHeaderLabel(string text, int fontSize, HorizontalAlignment alignment,
             float? scrollViewportHeight = null, Color? textModulate = null)
         {
-            var boundedScroll = scrollViewportHeight is > 0f;
+            var boundedScroll = scrollViewportHeight is > 0f && float.IsFinite(scrollViewportHeight.Value);
             var label = new MegaRichTextLabel
             {
                 BbcodeEnabled = true,
