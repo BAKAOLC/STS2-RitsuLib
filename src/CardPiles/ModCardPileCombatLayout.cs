@@ -5,12 +5,14 @@ using STS2RitsuLib.CardPiles.Nodes;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Re-packs mod combat bottom-row pile buttons when <see cref="NModCardPileButton" /> visibility
-    ///     changes so <see cref="ModCardPileSpec.VisibleWhen" /> does not leave empty gaps. Manual
-    ///     <see cref="ModCardPileAnchorKind.Custom" /> anchors are left untouched.
-    ///     当 <see cref="NModCardPileButton" /> 可见性变化时，重新打包 mod 战斗底部 row 的牌堆按钮，
-    ///     使 <see cref="ModCardPileSpec.VisibleWhen" /> 不会留下空洞。手动
-    ///     <see cref="ModCardPileAnchorKind.Custom" /> anchor 保持不变。
+    ///     <para xml:lang="en">
+    ///         Reflows visible bottom-row mod card-pile buttons without moving controls that use
+    ///         <see cref="ModCardPileAnchorKind.Custom" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         重新排列战斗界面底部行中可见的模组卡牌牌堆按钮，但不移动使用
+    ///         <see cref="ModCardPileAnchorKind.Custom" /> 的控件。
+    ///     </para>
     /// </summary>
     internal static class ModCardPileCombatLayout
     {
