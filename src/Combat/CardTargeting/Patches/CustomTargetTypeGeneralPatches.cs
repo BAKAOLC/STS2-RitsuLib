@@ -18,8 +18,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Shows filtered multi-target visuals for registered custom multi-target types.
-    ///     为已注册的自定义群体目标类型显示按规则筛选后的多目标可视化指示。
+    ///     <para xml:lang="en">Shows filtered reticles for registered custom multi-target types.</para>
+    ///     <para xml:lang="zh-CN">为已注册的自定义群体目标类型显示经过筛选的目标指示器。</para>
     /// </summary>
     internal sealed class NCardPlayShowMultiCreatureTargetingVisualsCustomTargetTypePatch : IPatchMethod
     {
@@ -60,8 +60,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Treats registered custom single-target types as single-target in target helpers.
-    ///     将已注册的自定义单体目标类型识别为单体目标。
+    ///     <para xml:lang="en">Makes target-type helpers recognize registered custom single-target types.</para>
+    ///     <para xml:lang="zh-CN">使目标类型辅助方法识别已注册的自定义单体目标类型。</para>
     /// </summary>
     internal sealed class ActionTargetExtensionsIsSingleTargetCustomTargetTypePatch : IPatchMethod
     {
@@ -87,8 +87,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Delegates target-eligibility checks to custom single-target predicates.
-    ///     将目标可选性判定委托给自定义单体目标谓词。
+    ///     <para xml:lang="en">Applies custom single-target predicates to target eligibility checks.</para>
+    ///     <para xml:lang="zh-CN">在目标可选性检查中应用自定义单体目标谓词。</para>
     /// </summary>
     internal sealed class NTargetManagerAllowedToTargetCreatureCustomTargetTypePatch : IPatchMethod
     {
@@ -118,8 +118,13 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Delegates <see cref="CardModel.CanPlayTargeting" /> to custom single-target predicates.
-    ///     将 <see cref="CardModel.CanPlayTargeting" /> 的判定委托给自定义单体目标谓词。
+    ///     <para xml:lang="en">
+    ///         Combines custom single-target predicates with ordinary card playability in
+    ///         <see cref="CardModel.CanPlayTargeting" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="CardModel.CanPlayTargeting" /> 中同时检查自定义单体目标谓词和卡牌本身是否可打出。
+    ///     </para>
     /// </summary>
     internal sealed class CardModelCanPlayTargetingCustomTargetTypePatch : IPatchMethod
     {
@@ -149,8 +154,12 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Delegates <see cref="CardModel.IsValidTarget" /> to custom single-target predicates.
-    ///     将 <see cref="CardModel.IsValidTarget" /> 的判定委托给自定义单体目标谓词。
+    ///     <para xml:lang="en">
+    ///         Applies custom single-target predicates in <see cref="CardModel.IsValidTarget" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="CardModel.IsValidTarget" /> 中应用自定义单体目标谓词。
+    ///     </para>
     /// </summary>
     internal sealed class CardModelIsValidTargetCustomTargetTypePatch : IPatchMethod
     {
@@ -179,8 +188,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Routes mouse target selection to single-target flow for custom single-target types.
-    ///     对自定义单体目标类型，将鼠标选目标流程路由到单体选目标分支。
+    ///     <para xml:lang="en">Routes custom single-target types through mouse single-target selection.</para>
+    ///     <para xml:lang="zh-CN">将自定义单体目标类型路由至鼠标单体选目标流程。</para>
     /// </summary>
     internal sealed class NMouseCardPlayTargetSelectionCustomTargetTypePatch : IPatchMethod
     {
@@ -221,8 +230,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         }
 
         /// <summary>
-        ///     Executes custom single-target mouse selection with card highlight feedback.
-        ///     执行自定义单体目标的鼠标选择流程并保持卡牌高亮反馈。
+        ///     <para xml:lang="en">Runs mouse selection for a custom single-target card.</para>
+        ///     <para xml:lang="zh-CN">为自定义单体目标卡牌执行鼠标选目标流程。</para>
         /// </summary>
         private static async Task RunTargeting(NMouseCardPlay instance, TargetMode targetMode, TargetType targetType)
         {
@@ -239,8 +248,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Routes controller start flow to single-target selection for custom single-target types.
-    ///     对自定义单体目标类型，将手柄开始流程路由到单体选目标流程。
+    ///     <para xml:lang="en">Routes custom single-target types through controller single-target selection.</para>
+    ///     <para xml:lang="zh-CN">将自定义单体目标类型路由至手柄单体选目标流程。</para>
     /// </summary>
     internal sealed class NControllerCardPlayStartCustomTargetTypePatch : IPatchMethod
     {
@@ -313,8 +322,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Provides filtered controller candidate lists for custom single-target types.
-    ///     为自定义单体目标类型提供按规则筛选的手柄候选目标列表。
+    ///     <para xml:lang="en">Supplies filtered controller candidates for custom single-target types.</para>
+    ///     <para xml:lang="zh-CN">为自定义单体目标类型提供经过筛选的手柄候选目标。</para>
     /// </summary>
     internal sealed class NControllerCardPlaySingleTargetingCustomTargetTypePatch : IPatchMethod
     {
@@ -359,8 +368,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         }
 
         /// <summary>
-        ///     Runs controller targeting with candidates filtered by custom predicate.
-        ///     执行按自定义谓词筛选候选集的手柄选目标流程。
+        ///     <para xml:lang="en">Runs controller selection with candidates filtered by the custom predicate.</para>
+        ///     <para xml:lang="zh-CN">使用自定义谓词筛选候选目标并执行手柄选目标流程。</para>
         /// </summary>
         private static async Task RunTargeting(NControllerCardPlay instance, TargetType targetType)
         {
@@ -441,8 +450,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Preserves selected target when trying to play cards with custom single-target types.
-    ///     在尝试打出自定义单体目标卡牌时保留并传递已选择目标。
+    ///     <para xml:lang="en">Passes the selected target when playing a custom single-target card.</para>
+    ///     <para xml:lang="zh-CN">打出自定义单体目标卡牌时传递已选目标。</para>
     /// </summary>
     internal sealed class NCardPlayTryPlayCardCustomTargetTypePatch : IPatchMethod
     {

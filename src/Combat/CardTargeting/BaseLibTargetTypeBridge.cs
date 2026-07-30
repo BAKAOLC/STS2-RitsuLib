@@ -7,7 +7,8 @@ using STS2RitsuLib.Compat;
 namespace STS2RitsuLib.Combat.CardTargeting
 {
     /// <summary>
-    ///     Optional bridge for BaseLib custom target predicates.
+    ///     <para xml:lang="en">Bridges BaseLib custom-target predicates when BaseLib is loaded.</para>
+    ///     <para xml:lang="zh-CN">在 BaseLib 已加载时桥接其自定义目标谓词。</para>
     /// </summary>
     internal static class BaseLibTargetTypeBridge
     {

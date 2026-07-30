@@ -5,30 +5,30 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Combat.CardTargeting
 {
     /// <summary>
-    ///     Source-aware context passed to custom single-target predicates.
-    ///     传递给自定义单体目标谓词的来源上下文。
+    ///     <para xml:lang="en">Provides the candidate, player, and source model to a custom target predicate.</para>
+    ///     <para xml:lang="zh-CN">向自定义目标谓词提供候选目标、玩家和来源模型。</para>
     /// </summary>
     public sealed class CustomTargetContext
     {
         /// <summary>
-        ///     Creates a source-aware custom targeting context.
-        ///     创建一个感知来源的自定义目标上下文。
+        ///     <para xml:lang="en">Initializes a custom target context.</para>
+        ///     <para xml:lang="zh-CN">初始化自定义目标上下文。</para>
         /// </summary>
         /// <param name="targetCreature">
-        ///     Candidate creature being evaluated.
-        ///     正在判定的候选生物。
+        ///     <para xml:lang="en">The candidate creature being evaluated.</para>
+        ///     <para xml:lang="zh-CN">正在判定的候选生物。</para>
         /// </param>
         /// <param name="player">
-        ///     Player using the card or potion.
-        ///     使用卡牌或药水的玩家。
+        ///     <para xml:lang="en">The player using the card or potion.</para>
+        ///     <para xml:lang="zh-CN">使用卡牌或药水的玩家。</para>
         /// </param>
         /// <param name="card">
-        ///     Source card when targeting was started by a card, otherwise null.
-        ///     由卡牌发起选目标时的来源卡牌；否则为 null。
+        ///     <para xml:lang="en">The source card, or <see langword="null" /> when the source is not a card.</para>
+        ///     <para xml:lang="zh-CN">来源卡牌；来源不是卡牌时为 <see langword="null" />。</para>
         /// </param>
         /// <param name="potion">
-        ///     Source potion when targeting was started by a potion, otherwise null.
-        ///     由药水发起选目标时的来源药水；否则为 null。
+        ///     <para xml:lang="en">The source potion, or <see langword="null" /> when the source is not a potion.</para>
+        ///     <para xml:lang="zh-CN">来源药水；来源不是药水时为 <see langword="null" />。</para>
         /// </param>
         public CustomTargetContext(
             Creature targetCreature,
@@ -46,26 +46,26 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Candidate creature being evaluated.
-        ///     正在判定的候选生物。
+        ///     <para xml:lang="en">Gets the candidate creature being evaluated.</para>
+        ///     <para xml:lang="zh-CN">获取正在判定的候选生物。</para>
         /// </summary>
         public Creature TargetCreature { get; }
 
         /// <summary>
-        ///     Player using the card or potion.
-        ///     使用卡牌或药水的玩家。
+        ///     <para xml:lang="en">Gets the player using the card or potion.</para>
+        ///     <para xml:lang="zh-CN">获取使用卡牌或药水的玩家。</para>
         /// </summary>
         public Player Player { get; }
 
         /// <summary>
-        ///     Source card when targeting was started by a card, otherwise null.
-        ///     由卡牌发起选目标时的来源卡牌；否则为 null。
+        ///     <para xml:lang="en">Gets the source card, if any.</para>
+        ///     <para xml:lang="zh-CN">获取来源卡牌（如有）。</para>
         /// </summary>
         public CardModel? Card { get; }
 
         /// <summary>
-        ///     Source potion when targeting was started by a potion, otherwise null.
-        ///     由药水发起选目标时的来源药水；否则为 null。
+        ///     <para xml:lang="en">Gets the source potion, if any.</para>
+        ///     <para xml:lang="zh-CN">获取来源药水（如有）。</para>
         /// </summary>
         public PotionModel? Potion { get; }
 

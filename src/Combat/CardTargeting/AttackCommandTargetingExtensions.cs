@@ -5,15 +5,27 @@ using STS2RitsuLib.Combat.CardTargeting.Patches;
 namespace STS2RitsuLib.Combat.CardTargeting
 {
     /// <summary>
-    ///     Extension helpers for custom AttackCommand target assignment.
-    ///     用于自定义 AttackCommand 目标分配的扩展 helper。
+    ///     <para xml:lang="en">Provides custom target assignment for <see cref="AttackCommand" />.</para>
+    ///     <para xml:lang="zh-CN">提供为 <see cref="AttackCommand" /> 指定自定义目标的方法。</para>
     /// </summary>
     public static class AttackCommandTargetingExtensions
     {
         /// <summary>
-        ///     Restricts the attack command to an explicit filtered target set.
-        ///     将攻击命令限制到显式给出的筛选目标集合。
+        ///     <para xml:lang="en">Restricts the attack command to a snapshot of <paramref name="targets" />.</para>
+        ///     <para xml:lang="zh-CN">将攻击命令限制为 <paramref name="targets" /> 的当前快照。</para>
         /// </summary>
+        /// <param name="command">
+        ///     <para xml:lang="en">The attack command to configure.</para>
+        ///     <para xml:lang="zh-CN">待配置的攻击命令。</para>
+        /// </param>
+        /// <param name="targets">
+        ///     <para xml:lang="en">The allowed targets to snapshot.</para>
+        ///     <para xml:lang="zh-CN">待建立快照的可用目标。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The configured <paramref name="command" />.</para>
+        ///     <para xml:lang="zh-CN">配置后的 <paramref name="command" />。</para>
+        /// </returns>
         public static AttackCommand TargetingFiltered(this AttackCommand command, IEnumerable<Creature> targets)
         {
             ArgumentNullException.ThrowIfNull(command);
