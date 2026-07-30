@@ -5,10 +5,13 @@ using MegaCrit.Sts2.Core.Saves;
 namespace STS2RitsuLib.Saves
 {
     /// <summary>
-    ///     Shared checks when resuming a run: missing <see cref="CharacterModel" /> means a mod was unloaded.
-    ///     We never delete run saves so the player can restore mods and continue later.
-    ///     恢复跑局时的共享检查：缺失 <see cref="CharacterModel" /> 表示某个 mod 已卸载。
-    ///     我们从不删除跑局存档，因此玩家可以稍后恢复 mod 并继续。
+    ///     <para xml:lang="en">
+    ///         Detects missing <see cref="CharacterModel" /> instances when resuming a run and presents the base game's
+    ///         invalid-save dialog without deleting the run save.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         恢复跑局时检测缺失的 <see cref="CharacterModel" />，并显示原版游戏的无效存档对话框，而不删除局内存档。
+    ///     </para>
     /// </summary>
     internal static class RunResumeMissingCharacterSupport
     {

@@ -10,8 +10,13 @@ using MegaCrit.Sts2.Core.Timeline;
 namespace STS2RitsuLib.Saves
 {
     /// <summary>
-    ///     Holds progress-save entries whose model IDs are unavailable in the current mod set so they can be written
-    ///     back without participating in runtime progress logic.
+    ///     <para xml:lang="en">
+    ///         Preserves progress-save entries whose model IDs are unavailable with the current set of mods, allowing the
+    ///         entries to be written back without exposing them to runtime progress logic.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         保留模型 ID 在当前模组集合中不可用的进度存档条目，使其不会参与运行时进度逻辑，但仍可在保存时写回。
+    ///     </para>
     /// </summary>
     public sealed class PreservedProgressRecords
     {
