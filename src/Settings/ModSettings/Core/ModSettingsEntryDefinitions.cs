@@ -340,7 +340,8 @@ namespace STS2RitsuLib.Settings
         ///     <see cref="OptionsProvider" /> is <see langword="null" />.
         ///     UI 中显示的初始有序选项；当 <see cref="OptionsProvider" /> 为 <see langword="null" /> 时也是完整固定选项集。
         /// </summary>
-        public IReadOnlyList<ModSettingsChoiceOption<TValue>> Options { get; } = options;
+        public IReadOnlyList<ModSettingsChoiceOption<TValue>> Options { get; } =
+            Array.AsReadOnly((options ?? throw new ArgumentNullException(nameof(options))).ToArray());
 
         /// <summary>
         ///     Optional provider that re-evaluates the available choices whenever the settings UI refreshes.
@@ -954,7 +955,8 @@ namespace STS2RitsuLib.Settings
         ///     Binding chips shown in the right-hand column.
         ///     显示在右侧列中的绑定 chip。
         /// </summary>
-        public IReadOnlyList<ModSettingsText> Bindings { get; } = bindings;
+        public IReadOnlyList<ModSettingsText> Bindings { get; } =
+            Array.AsReadOnly((bindings ?? throw new ArgumentNullException(nameof(bindings))).ToArray());
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {

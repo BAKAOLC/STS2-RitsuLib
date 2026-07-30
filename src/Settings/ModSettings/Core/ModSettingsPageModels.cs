@@ -70,7 +70,8 @@ namespace STS2RitsuLib.Settings
             Title = title;
             Description = description;
             SortOrder = sortOrder;
-            Sections = sections;
+            Sections = Array.AsReadOnly(
+                (sections ?? throw new ArgumentNullException(nameof(sections))).ToArray());
             VisibleWhen = visibleWhen;
             EnabledWhen = enabledWhen;
             MenuCapabilities = menuCapabilities;
@@ -211,7 +212,8 @@ namespace STS2RitsuLib.Settings
             Description = description;
             IsCollapsible = isCollapsible;
             StartCollapsed = startCollapsed;
-            Entries = entries;
+            Entries = Array.AsReadOnly(
+                (entries ?? throw new ArgumentNullException(nameof(entries))).ToArray());
             VisibleWhen = visibleWhen;
             EnabledWhen = enabledWhen;
             MenuCapabilities = menuCapabilities;
