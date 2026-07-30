@@ -767,7 +767,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         protected virtual ModAnimStateMachine? SetupCustomNonSpineAnimationStateMachine(Node visualsRoot,
             CharacterModel character)
         {
-            return SetupCustomCombatAnimationStateMachine(visualsRoot, character);
+            return null;
         }
 
         /// <summary>
