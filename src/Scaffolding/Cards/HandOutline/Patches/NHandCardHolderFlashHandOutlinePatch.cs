@@ -4,8 +4,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
 {
     /// <summary>
-    ///     Tints the brief hand flash VFX to match <see cref="ModCardHandOutlineRegistry" /> when a rule matches.
-    ///     规则匹配时，将短暂的手牌闪光 VFX 染色为匹配 <see cref="ModCardHandOutlineRegistry" />。
+    ///     <para xml:lang="en">
+    ///         Applies the matching <see cref="ModCardHandOutlineRegistry" /> color to the hand-card flash.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将匹配的 <see cref="ModCardHandOutlineRegistry" /> 颜色应用到手牌闪光效果。
+    ///     </para>
     /// </summary>
     internal sealed class NHandCardHolderFlashHandOutlinePatch : IPatchMethod
     {

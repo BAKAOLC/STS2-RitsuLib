@@ -5,15 +5,14 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
 {
     /// <summary>
-    ///     Global registration of per–card-type hand glow rules, merged into <see cref="CardModel.ShouldGlowGold" /> and
-    ///     <see cref="CardModel.ShouldGlowRed" /> via framework Harmony patches. Prefer
-    ///     <see cref="ModContentRegistry.RegisterCardHandGlow{TCard}" /> so registration respects the same freeze rules as
-    ///     other
-    ///     content.
-    ///     逐卡牌类型手牌发光规则的全局注册，经框架 Harmony patch 合并到 <see cref="CardModel.ShouldGlowGold" /> 和
-    ///     <see cref="CardModel.ShouldGlowRed" />。优先使用
-    ///     <see cref="ModContentRegistry.RegisterCardHandGlow{TCard}" />，让注册遵循与其它
-    ///     内容相同的冻结规则。
+    ///     <para xml:lang="en">
+    ///         Registers card-type rules that contribute to <see cref="CardModel.ShouldGlowGold" /> and
+    ///         <see cref="CardModel.ShouldGlowRed" />. Rules registered for a base card type also apply to derived types.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册参与计算 <see cref="CardModel.ShouldGlowGold" /> 与 <see cref="CardModel.ShouldGlowRed" />
+    ///         的卡牌类型规则；为卡牌基类注册的规则也适用于其派生类型。
+    ///     </para>
     /// </summary>
     public static class ModCardHandGlowRegistry
     {
@@ -22,10 +21,14 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         private static int _sequence;
 
         /// <summary>
-        ///     Registers rules for <typeparamref name="TCard" />. Multiple calls for the same type OR-merge channels.
-        ///     Throws if <see cref="ModContentRegistry.IsFrozen" />.
-        ///     为 <typeparamref name="TCard" /> 注册规则。对同一类型多次调用会按 OR 合并通道。
-        ///     如果 <see cref="ModContentRegistry.IsFrozen" /> 则抛出。
+        ///     <para xml:lang="en">
+        ///         Registers rules for <typeparamref name="TCard" />. Every matching registration is evaluated until
+        ///         one returns <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TCard" /> 注册规则。所有匹配的注册会依次评估，直至其中一项返回
+        ///         <see langword="true" />。
+        ///     </para>
         /// </summary>
         public static void Register<TCard>(ModCardHandGlowRules rules) where TCard : CardModel
         {
@@ -33,8 +36,10 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         }
 
         /// <summary>
-        ///     Registers rules for <paramref name="cardType" />. Must be a concrete <see cref="CardModel" /> subtype.
-        ///     为 <paramref name="cardType" /> 注册规则。必须是具体 <see cref="CardModel" /> 子类型。
+        ///     <para xml:lang="en">
+        ///         Registers rules for a concrete <see cref="CardModel" /> subtype.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为具体的 <see cref="CardModel" /> 子类型注册规则。</para>
         /// </summary>
         public static void Register(Type cardType, ModCardHandGlowRules rules)
         {
@@ -57,8 +62,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         }
 
         /// <summary>
-        ///     Clears all rules (intended for tests or hot reload tooling).
-        ///     清除所有规则（用于测试或热重载工具）。
+        ///     <para xml:lang="en">Clears all rules for tests or hot-reload tooling.</para>
+        ///     <para xml:lang="zh-CN">清除所有规则，供测试或热重载工具使用。</para>
         /// </summary>
         public static void ClearForTests()
         {

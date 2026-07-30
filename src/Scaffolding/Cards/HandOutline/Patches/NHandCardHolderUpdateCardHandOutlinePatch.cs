@@ -4,9 +4,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
 {
     /// <summary>
-    ///     After vanilla hand highlight color (playable / gold / red), applies <see cref="ModCardHandOutlineRegistry" /> when
-    ///     a matching rule exists.
-    ///     在原版手牌高亮颜色（可打出/金色/红色）之后，存在匹配规则时应用 <see cref="ModCardHandOutlineRegistry" />。
+    ///     <para xml:lang="en">
+    ///         Applies the matching <see cref="ModCardHandOutlineRegistry" /> color after the vanilla hand-card
+    ///         highlight is updated.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在原版手牌高亮更新后，应用匹配的 <see cref="ModCardHandOutlineRegistry" /> 颜色。
+    ///     </para>
     /// </summary>
     internal sealed class NHandCardHolderUpdateCardHandOutlinePatch : IPatchMethod
     {

@@ -3,15 +3,20 @@ using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 namespace STS2RitsuLib.Scaffolding.MonsterMoves
 {
     /// <summary>
-    ///     Common <see cref="MonsterMoveStateMachine" /> wiring patterns for mod monsters, so
-    ///     <see cref="MegaCrit.Sts2.Core.Models.MonsterModel.GenerateMoveStateMachine" /> stays short.
-    ///     mod 怪物常用的 <see cref="MonsterMoveStateMachine" /> 接线模式，使
-    ///     <see cref="MegaCrit.Sts2.Core.Models.MonsterModel.GenerateMoveStateMachine" /> 保持简短。
+    ///     <para xml:lang="en">
+    ///         Provides common <see cref="MonsterMoveStateMachine" /> construction patterns for mod monsters, keeping
+    ///         <see cref="MegaCrit.Sts2.Core.Models.MonsterModel.GenerateMoveStateMachine" /> implementations concise.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供模组怪物常用的 <see cref="MonsterMoveStateMachine" /> 构造模式，使
+    ///         <see cref="MegaCrit.Sts2.Core.Models.MonsterModel.GenerateMoveStateMachine" /> 的实现保持简洁。
+    ///     </para>
     /// </summary>
     public static class ModMonsterMoveStateMachines
     {
         /// <summary>
-        ///     One move that repeats every turn (<c>FollowUpState = self</c>).
+        ///     <para xml:lang="en">Creates a state machine containing one move that repeats every turn.</para>
+        ///     <para xml:lang="zh-CN">创建只包含一个行动、且每回合重复该行动的状态机。</para>
         /// </summary>
         public static MonsterMoveStateMachine SingleMoveLoop(MoveState move)
         {
@@ -21,8 +26,10 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
         }
 
         /// <summary>
-        ///     Rotating cycle: each move leads to the next, last leads back to the first.
-        ///     轮转循环：每个行动指向下一个，最后一个指回第一个。
+        ///     <para xml:lang="en">
+        ///         Creates a rotating cycle in which each move leads to the next and the last leads back to the first.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建轮转循环：每个行动衔接下一个行动，最后一个行动衔接回第一个。</para>
         /// </summary>
         public static MonsterMoveStateMachine Cycle(params MoveState[] moves)
         {
@@ -30,8 +37,10 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
         }
 
         /// <summary>
-        ///     Rotating cycle: each move leads to the next, last leads back to the first.
-        ///     轮转循环：每个行动指向下一个，最后一个指回第一个。
+        ///     <para xml:lang="en">
+        ///         Creates a rotating cycle in which each move leads to the next and the last leads back to the first.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建轮转循环：每个行动衔接下一个行动，最后一个行动衔接回第一个。</para>
         /// </summary>
         public static MonsterMoveStateMachine Cycle(IReadOnlyList<MoveState> moves)
         {
@@ -49,10 +58,14 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
         }
 
         /// <summary>
-        ///     <paramref name="head" /> once, then <paramref name="tail" /> every subsequent turn
-        ///     (matches patterns like Track → Hounds, Hounds → Hounds).
-        ///     <paramref name="head" /> 执行一次，之后每回合执行 <paramref name="tail" />
-        ///     （匹配 Track → Hounds、Hounds → Hounds 等模式）。
+        ///     <para xml:lang="en">
+        ///         Creates a state machine that performs <paramref name="head" /> once, then repeats
+        ///         <paramref name="tail" /> every subsequent turn, matching patterns such as Track → Hounds → Hounds.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建先执行一次 <paramref name="head" />、再于之后每回合重复 <paramref name="tail" /> 的状态机，
+        ///         对应 Track → Hounds → Hounds 等模式。
+        ///     </para>
         /// </summary>
         public static MonsterMoveStateMachine HeadThenRepeatTail(MoveState head, MoveState tail)
         {
@@ -64,12 +77,18 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
         }
 
         /// <summary>
-        ///     <see cref="RandomBranchState" /> as entry: call <paramref name="configureBranches" /> to
-        ///     <c>AddBranch</c> moves, then pass every <see cref="MoveState" /> and other
-        ///     <see cref="MonsterState" /> nodes that must register (same rules as vanilla).
-        ///     将 <see cref="RandomBranchState" /> 作为条目：调用 <paramref name="configureBranches" /> 来
-        ///     <c>AddBranch</c> 各个招式，然后传入所有必须注册的 <see cref="MoveState" /> 以及其他
-        ///     <see cref="MonsterState" /> 节点（规则与原版相同）。
+        ///     <para xml:lang="en">
+        ///         Creates a state machine with <see cref="RandomBranchState" /> as its entry state. Use
+        ///         <paramref name="configureBranches" /> to call <c>AddBranch</c>, and include every
+        ///         <see cref="MoveState" /> and other required <see cref="MonsterState" /> in
+        ///         <paramref name="allStatesIncludingMoves" />, following the base game's registration rules.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建以 <see cref="RandomBranchState" /> 为入口状态的状态机。使用
+        ///         <paramref name="configureBranches" /> 调用 <c>AddBranch</c>，并按照游戏的注册规则，将所有
+        ///         <see cref="MoveState" /> 及其他必需的 <see cref="MonsterState" /> 包含在
+        ///         <paramref name="allStatesIncludingMoves" /> 中。
+        ///     </para>
         /// </summary>
         public static MonsterMoveStateMachine RandomEntry(
             string branchId,
@@ -88,8 +107,13 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
         }
 
         /// <summary>
-        ///     <see cref="ConditionalBranchState" /> as entry (e.g. Toadpole-style first branch).
-        ///     <see cref="ConditionalBranchState" /> as 条目 (e.g. Toadpole-style first 分支)。
+        ///     <para xml:lang="en">
+        ///         Creates a state machine with <see cref="ConditionalBranchState" /> as its entry state, for patterns such as
+        ///         Toadpole's initial branch.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建以 <see cref="ConditionalBranchState" /> 为入口状态的状态机，适用于 Toadpole 首次分支等模式。
+        ///     </para>
         /// </summary>
         public static MonsterMoveStateMachine ConditionalEntry(
             string branchId,

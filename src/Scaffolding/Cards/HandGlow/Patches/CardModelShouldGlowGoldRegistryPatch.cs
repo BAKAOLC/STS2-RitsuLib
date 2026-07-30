@@ -5,8 +5,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches
 {
     /// <summary>
-    ///     ORs <see cref="ModCardHandGlowRegistry" /> gold rules into <see cref="CardModel.ShouldGlowGold" />.
-    ///     将 <see cref="ModCardHandGlowRegistry" /> 的金色规则 OR 到 <see cref="CardModel.ShouldGlowGold" />。
+    ///     <para xml:lang="en">
+    ///         Adds <see cref="ModCardHandGlowRegistry" /> gold rules to
+    ///         <see cref="CardModel.ShouldGlowGold" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="ModCardHandGlowRegistry" /> 的金色规则加入
+    ///         <see cref="CardModel.ShouldGlowGold" /> 的计算。
+    ///     </para>
     /// </summary>
     internal sealed class CardModelShouldGlowGoldRegistryPatch : IPatchMethod
     {

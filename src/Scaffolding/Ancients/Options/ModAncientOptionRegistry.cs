@@ -5,8 +5,8 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Scaffolding.Ancients.Options
 {
     /// <summary>
-    ///     Global registration surface for ancient initial-option injection rules.
-    ///     古代初始选项注入规则的全局注册入口。
+    ///     <para xml:lang="en">Registers rules that add choices to an Ancient's initial option list.</para>
+    ///     <para xml:lang="zh-CN">注册向先古之民初始选项列表添加选项的规则。</para>
     /// </summary>
     public static class ModAncientOptionRegistry
     {
@@ -15,8 +15,12 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
         private static long _registrationCounter;
 
         /// <summary>
-        ///     Registers an option rule for <typeparamref name="TAncient" />.
-        ///     为 <typeparamref name="TAncient" /> 注册选项规则。
+        ///     <para xml:lang="en">
+        ///         Registers an option rule for <typeparamref name="TAncient" /> and its derived types.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TAncient" /> 及其派生类型注册选项规则。
+        ///     </para>
         /// </summary>
         public static void Register<TAncient>(string ownerModId, ModAncientOptionRule rule)
             where TAncient : AncientEventModel
@@ -25,8 +29,12 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
         }
 
         /// <summary>
-        ///     Registers an option rule for <paramref name="ancientType" />.
-        ///     为 <paramref name="ancientType" /> 注册选项规则。
+        ///     <para xml:lang="en">
+        ///         Registers an option rule for <paramref name="ancientType" /> and its derived types.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="ancientType" /> 及其派生类型注册选项规则。
+        ///     </para>
         /// </summary>
         public static void Register(Type ancientType, string ownerModId, ModAncientOptionRule rule)
         {
@@ -62,8 +70,8 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
         }
 
         /// <summary>
-        ///     Clears all registered rules (for tests/hot reload tooling).
-        ///     清除所有已注册规则（用于测试 / 热重载工具）。
+        ///     <para xml:lang="en">Clears all registered rules for tests or hot-reload tooling.</para>
+        ///     <para xml:lang="zh-CN">清除所有已注册规则，供测试或热重载工具使用。</para>
         /// </summary>
         public static void ClearForTests()
         {

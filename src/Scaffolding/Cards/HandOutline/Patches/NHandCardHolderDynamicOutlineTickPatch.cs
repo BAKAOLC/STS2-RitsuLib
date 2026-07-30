@@ -5,8 +5,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
 {
     /// <summary>
-    ///     Keeps dynamic hand-outline colors fresh through a child process ticker while the holder is alive.
-    ///     holder 存活期间通过子 process ticker 保持动态手牌描边颜色新鲜。
+    ///     <para xml:lang="en">
+    ///         Adds a child process node that refreshes dynamic hand-card outline rules each frame.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">添加子处理节点，以便每帧刷新动态手牌描边规则。</para>
     /// </summary>
     internal sealed class NHandCardHolderDynamicOutlineTickPatch : IPatchMethod
     {
