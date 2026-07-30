@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Content
             if (additional.Length == 0)
                 return source;
 
-            var result = source as List<TModel> ?? [.. source];
+            var result = new List<TModel>(source);
             ContentMergeStrategies.AppendDistinctById(result, additional);
             return result;
         }
