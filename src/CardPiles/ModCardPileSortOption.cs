@@ -3,38 +3,38 @@ using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Sort option shown by the optional mod card-pile view sort bar.
-    ///     可选 mod 牌堆查看界面排序栏显示的排序项。
+    ///     <para xml:lang="en">Specifies a sort category offered by the optional mod pile view.</para>
+    ///     <para xml:lang="zh-CN">指定模组牌堆可选查看界面提供的排序类别。</para>
     /// </summary>
     public enum ModCardPileSortOption
     {
         /// <summary>
-        ///     Original pile order.
-        ///     原始牌堆顺序。
+        ///     <para xml:lang="en">Sorts by the cards' order in the pile.</para>
+        ///     <para xml:lang="zh-CN">按卡牌在牌堆中的顺序排序。</para>
         /// </summary>
         Obtained = 0,
 
         /// <summary>
-        ///     Card type.
-        ///     卡牌类型。
+        ///     <para xml:lang="en">Sorts by card type.</para>
+        ///     <para xml:lang="zh-CN">按卡牌类型排序。</para>
         /// </summary>
         Type = 1,
 
         /// <summary>
-        ///     Energy cost.
-        ///     能量费用。
+        ///     <para xml:lang="en">Sorts by energy cost.</para>
+        ///     <para xml:lang="zh-CN">按能量费用排序。</para>
         /// </summary>
         Cost = 2,
 
         /// <summary>
-        ///     Localized card title.
-        ///     本地化卡牌标题。
+        ///     <para xml:lang="en">Sorts alphabetically by localized card title.</para>
+        ///     <para xml:lang="zh-CN">按本地化卡牌标题的字母顺序排序。</para>
         /// </summary>
         Alphabetical = 3,
 
         /// <summary>
-        ///     Card rarity.
-        ///     卡牌稀有度。
+        ///     <para xml:lang="en">Sorts by card rarity.</para>
+        ///     <para xml:lang="zh-CN">按卡牌稀有度排序。</para>
         /// </summary>
         Rarity = 4,
     }

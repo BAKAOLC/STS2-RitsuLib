@@ -6,10 +6,12 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Context passed to <see cref="ModCardPileSpec.FlightTargetPositionResolver" /> each time a card
-    ///     requests a fly-in target position for a mod pile.
-    ///     每当卡牌请求飞入 mod 牌堆的目标位置时，传给
-    ///     <see cref="ModCardPileSpec.FlightTargetPositionResolver" /> 的上下文。
+    ///     <para xml:lang="en">
+    ///         Provides information for resolving a card-flight target position in a registered mod pile.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供用于解析卡牌飞入已注册模组牌堆时目标位置的信息。
+    ///     </para>
     /// </summary>
     public sealed class ModCardPileFlightTargetContext : IModCardPileFlightContext
     {
@@ -24,20 +26,25 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Ritsulib's default target position for this request.
-        ///     ritsulib 为此请求计算的默认目标位置。
+        ///     <para xml:lang="en">Gets the target position RitsuLib resolved for this request.</para>
+        ///     <para xml:lang="zh-CN">获取 RitsuLib 为本次请求解析的目标位置。</para>
         /// </summary>
         public Vector2 DefaultTargetPosition { get; }
 
         /// <summary>
-        ///     Definition of the target pile.
-        ///     目标牌堆的定义。
+        ///     <para xml:lang="en">Gets the registered definition of the destination pile.</para>
+        ///     <para xml:lang="zh-CN">获取目标牌堆的已注册定义。</para>
         /// </summary>
         public ModCardPileDefinition Definition { get; }
 
         /// <summary>
-        ///     Live card node that is flying into the pile, when available.
-        ///     正在飞入牌堆的实时卡牌节点（可用时）。
+        ///     <para xml:lang="en">
+        ///         Gets the live card node being positioned, or <see langword="null" /> when the caller did not
+        ///         provide one.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取正在定位的实时卡牌节点；调用方未提供节点时为 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public NCard? CardNode { get; }
 

@@ -3,68 +3,116 @@ using Godot;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Presentation and interaction options for <see cref="ModCardPileUiStyle.ExtraHand" />.
-    ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 的展示与交互选项。
+    ///     <para xml:lang="en">
+    ///         Configures the presentation and interaction behavior of an
+    ///         <see cref="ModCardPileUiStyle.ExtraHand" /> pile.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         配置 <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆的展示与交互行为。
+    ///     </para>
     /// </summary>
     public sealed record ModCardPileExtraHandSpec
     {
         /// <summary>
-        ///     Built-in arrangement direction. Defaults to the vanilla hand layout.
-        ///     内置排列方向。默认为原版手牌布局。
+        ///     <para xml:lang="en">
+        ///         Gets the built-in card arrangement. The default uses the base-game hand layout.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取内置卡牌排列方式。默认使用游戏原有的手牌布局。</para>
         /// </summary>
         public ModExtraHandLayoutDirection Direction { get; init; } = ModExtraHandLayoutDirection.VanillaHand;
 
         /// <summary>
-        ///     Distance in pixels between adjacent holder origins for horizontal and vertical layouts.
-        ///     Defaults to <c>110</c> and is ignored by the vanilla hand layout.
-        ///     水平与垂直布局中相邻 holder 原点之间的像素距离。默认为 <c>110</c>，原版手牌布局会忽略此值。
+        ///     <para xml:lang="en">
+        ///         Gets the distance in pixels between adjacent card-holder origins in horizontal and vertical
+        ///         layouts. The default is <c>110</c>; the base-game hand layout ignores this value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取水平和垂直布局中相邻卡牌容器原点之间的像素距离。默认值为 <c>110</c>；游戏原有的
+        ///         手牌布局会忽略该值。
+        ///     </para>
         /// </summary>
         public float Spacing { get; init; } = 110f;
 
         /// <summary>
-        ///     Normal card scale for horizontal and vertical layouts. Defaults to <c>0.65</c> on both axes
-        ///     and is ignored by the vanilla hand layout.
-        ///     水平与垂直布局中的卡牌常态缩放。两轴默认为 <c>0.65</c>，原版手牌布局会忽略此值。
+        ///     <para xml:lang="en">
+        ///         Gets the normal card scale for horizontal and vertical layouts. Both axes default to
+        ///         <c>0.65</c>; the base-game hand layout ignores this value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取水平和垂直布局中的卡牌常态缩放比例。两轴默认均为 <c>0.65</c>；游戏原有的手牌布局
+        ///         会忽略该值。
+        ///     </para>
         /// </summary>
         public Vector2 CardScale { get; init; } = Vector2.One * 0.65f;
 
         /// <summary>
-        ///     Focused/hovered card scale for horizontal and vertical layouts. Defaults to full size and is
-        ///     ignored by the vanilla hand layout.
-        ///     水平与垂直布局中获得焦点或悬停时的卡牌缩放。默认为完整尺寸，原版手牌布局会忽略此值。
+        ///     <para xml:lang="en">
+        ///         Gets the focused-card scale for horizontal and vertical layouts. The default is
+        ///         <see cref="Vector2.One" />; the base-game hand layout ignores this value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取水平和垂直布局中卡牌获得焦点时的缩放比例。默认值为 <see cref="Vector2.One" />；
+        ///         游戏原有的手牌布局会忽略该值。
+        ///     </para>
         /// </summary>
         public Vector2 HoverScale { get; init; } = Vector2.One;
 
         /// <summary>
-        ///     Whether cards use the vanilla hand-card playable glow rules. Defaults to true.
-        ///     卡牌是否使用原版手牌的可打出发光规则。默认为 true。
+        ///     <para xml:lang="en">
+        ///         Gets whether mounted cards show the base-game playable highlight. The default is
+        ///         <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已挂载卡牌是否显示游戏原有的可打出高亮。默认值为 <see langword="true" />。
+        ///     </para>
         /// </summary>
         public bool ShowPlayableGlow { get; init; } = true;
 
         /// <summary>
-        ///     Whether cards can be manually played through the vanilla targeting, queue, resource-spend,
-        ///     hook, and result-pile pipeline. Defaults to true.
-        ///     卡牌是否可通过原版目标选择、播放队列、资源支付、hook 与结果牌堆流程手动打出。默认为 true。
+        ///     <para xml:lang="en">
+        ///         Gets whether cards can be manually played through the base-game targeting, action queue,
+        ///         resource payment, card hooks, and destination-pile flow. The default is
+        ///         <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取卡牌是否可通过游戏原有的目标选择、行动队列、资源支付、卡牌钩子与目标牌堆流程手动打出。
+        ///         默认值为 <see langword="true" />。
+        ///     </para>
         /// </summary>
         public bool AllowCardPlay { get; init; } = true;
 
         /// <summary>
-        ///     Optional per-card layout resolver. Return null to keep the built-in transform.
-        ///     可选的逐卡布局 resolver。返回 null 时保留内置变换。
+        ///     <para xml:lang="en">
+        ///         Gets the optional per-card layout resolver. Returning <see langword="null" /> keeps the
+        ///         built-in transform; exceptions propagate to the layout caller.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取可选的逐卡布局解析器。返回 <see langword="null" /> 时保留内置变换；异常会传播给布局调用方。
+        ///     </para>
         /// </summary>
         public Func<ModExtraHandCardContext, ModExtraHandCardTransform?>? LayoutResolver { get; init; }
 
         /// <summary>
-        ///     Optional callback invoked after an interactive card visual is mounted.
-        ///     交互式卡牌视觉挂载后调用的可选回调。
+        ///     <para xml:lang="en">
+        ///         Gets the optional callback invoked after an interactive card visual is mounted. Exceptions
+        ///         propagate to the mounting caller.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取交互式卡牌视觉节点挂载后调用的可选回调。异常会传播给执行挂载的调用方。
+        ///     </para>
         /// </summary>
         public Action<ModExtraHandCardContext>? OnCardVisualCreated { get; init; }
 
         /// <summary>
-        ///     Optional callback invoked when the corresponding vanilla <c>NCardFlyVfx</c> finishes. Adds that
-        ///     skip visuals or use aggregate shuffle visuals do not invoke this callback.
-        ///     对应的原版 <c>NCardFlyVfx</c> 完成时调用的可选回调。跳过视觉或使用聚合 shuffle 视觉的
-        ///     加入操作不会调用此回调。
+        ///     <para xml:lang="en">
+        ///         Gets the optional callback invoked when the matching base-game card-flight visual finishes
+        ///         adding a card. Adds that skip individual visuals or use an aggregate shuffle visual do not
+        ///         invoke it. Exceptions propagate from the flight-visual callback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取对应的游戏原有卡牌飞行动画完成加牌时调用的可选回调。跳过逐卡动画或使用聚合洗牌动画的
+        ///         加牌操作不会调用该回调；回调异常会从飞行动画回调中传播。
+        ///     </para>
         /// </summary>
         public Action<ModExtraHandCardContext>? OnCardArrived { get; init; }
     }

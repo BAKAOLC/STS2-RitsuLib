@@ -5,25 +5,40 @@ using MegaCrit.Sts2.Core.Nodes.HoverTips;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Clamps an <see cref="NHoverTipSet" /> top-left into the visible viewport. Vanilla pile tips that use
-    ///     <c>HoverTipAlignment.None</c> set <see cref="Control.GlobalPosition" /> manually and never run
-    ///     <c>NHoverTipSet.SetAlignment</c>, so they do not get <c>CorrectVerticalOverflow</c> /
-    ///     <c>CorrectHorizontalOverflow</c>; this helper reproduces that containment for mod pile buttons.
-    ///     将 <see cref="NHoverTipSet" /> 左上角 clamp 到可见 viewport 内。使用
-    ///     <c>HoverTipAlignment.None</c> 的原版牌堆 tip 会手动设置 <see cref="Control.GlobalPosition" />，
-    ///     不会运行 <c>NHoverTipSet.SetAlignment</c>，因此也不会得到 <c>CorrectVerticalOverflow</c> /
-    ///     <c>CorrectHorizontalOverflow</c>；此 helper 为 mod 牌堆按钮复现该 containment。
+    ///     <para xml:lang="en">
+    ///         Provides viewport containment for manually positioned mod card-pile hover tips.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为手动定位的模组卡牌牌堆悬停提示提供视口边界约束。
+    ///     </para>
     /// </summary>
     public static class ModCardPileHoverTipViewport
     {
         private const float Margin = 8f;
 
         /// <summary>
-        ///     Returns <paramref name="globalTopLeft" /> nudged so the tip rect stays inside
-        ///     <see cref="NGame.Instance" />'s viewport with a small margin.
-        ///     返回经过微调的 <paramref name="globalTopLeft" />，让 tip rect 以小 margin 保持在
-        ///     <see cref="NGame.Instance" /> 的 viewport 内。
+        ///     <para xml:lang="en">
+        ///         Clamps a hover tip's global top-left position to the game viewport with an eight-pixel margin.
+        ///         If the tip is larger than an axis of the viewport, it is centered on that axis. An invalid tip,
+        ///         missing game instance, or unresolved tip size leaves the requested position unchanged.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将悬停提示的全局左上角位置限制在游戏视口内，并保留八像素边距。提示在某一轴上大于视口时，
+        ///         会在该轴上居中。提示无效、游戏实例不存在或无法确定提示尺寸时，保持请求位置不变。
+        ///     </para>
         /// </summary>
+        /// <param name="tipSet">
+        ///     <para xml:lang="en">The hover-tip control whose outer size defines the constrained rectangle.</para>
+        ///     <para xml:lang="zh-CN">外部尺寸用于确定约束矩形的悬停提示控件。</para>
+        /// </param>
+        /// <param name="globalTopLeft">
+        ///     <para xml:lang="en">The requested global top-left position.</para>
+        ///     <para xml:lang="zh-CN">请求的全局左上角位置。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The constrained position, or the original position when it cannot be resolved.</para>
+        ///     <para xml:lang="zh-CN">约束后的位置；无法解析时为原始位置。</para>
+        /// </returns>
         public static Vector2 ClampTipTopLeft(NHoverTipSet tipSet, Vector2 globalTopLeft)
         {
             if (tipSet == null || !GodotObject.IsInstanceValid(tipSet))

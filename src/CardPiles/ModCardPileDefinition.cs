@@ -5,88 +5,98 @@ using MegaCrit.Sts2.Core.Localization;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Immutable registry entry for a mod card pile. Produced by <see cref="ModCardPileRegistry" /> and keyed
-    ///     by both the normalized id and the deterministically minted <see cref="PileType" /> value.
-    ///     mod 卡牌牌堆的不可变注册条目。由 <see cref="ModCardPileRegistry" /> 生成，并同时按规范化 id
-    ///     与确定性生成的 <see cref="PileType" /> 值索引。
+    ///     <para xml:lang="en">
+    ///         Describes a registered mod card pile and the presentation and interaction options captured when
+    ///         it was registered.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述已注册的模组卡牌牌堆，以及注册时保存的展示与交互选项。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Localization follows the vanilla pile convention: the hover-tip title / description and
-    ///     empty-pile message are always resolved against <see cref="ModCardPileSpec.HoverTipLocTable" />
-    ///     (<c>static_hover_tips</c>) using the keys <c>"{Id}.title"</c>, <c>"{Id}.description"</c> and
-    ///     <c>"{Id}.empty"</c> (same as the registered pile id).
-    ///     本地化遵循原版牌堆约定：hover-tip title / description 与 empty-pile message 始终基于
-    ///     <see cref="ModCardPileSpec.HoverTipLocTable" />（<c>static_hover_tips</c>）解析，使用
-    ///     <c>"{Id}.title"</c>、<c>"{Id}.description"</c> 和 <c>"{Id}.empty"</c> key
-    ///     （与已注册牌堆 id 相同）。
+    ///     <para xml:lang="en">
+    ///         <see cref="Title" />, <see cref="Description" />, and <see cref="EmptyPileMessage" /> use the
+    ///         registered pile ID with the <c>.title</c>, <c>.description</c>, and <c>.empty</c> suffixes in
+    ///         <see cref="ModCardPileSpec.HoverTipLocTable" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="Title" />、<see cref="Description" /> 和 <see cref="EmptyPileMessage" /> 使用已注册
+    ///         牌堆 ID，并分别附加 <c>.title</c>、<c>.description</c> 和 <c>.empty</c> 后缀，从
+    ///         <see cref="ModCardPileSpec.HoverTipLocTable" /> 中读取本地化文本。
+    ///     </para>
     /// </remarks>
     public sealed record ModCardPileDefinition
     {
         /// <summary>
-        ///     Primary constructor used by the registry; all fields are immutable once registered.
-        ///     registry 使用的主构造函数；所有字段注册后不可变。
+        ///     <para xml:lang="en">Initializes a card-pile definition without default-screen capabilities.</para>
+        ///     <para xml:lang="zh-CN">初始化不带默认牌堆界面扩展能力的卡牌牌堆定义。</para>
         /// </summary>
         /// <param name="modId">
-        ///     Owning mod id (<c>com.example.my-mod</c>).
-        ///     所属 mod id（<c>com.example.my-mod</c>）。
+        ///     <para xml:lang="en">The ID of the mod that owns the registry.</para>
+        ///     <para xml:lang="zh-CN">拥有该注册表的模组 ID。</para>
         /// </param>
         /// <param name="id">
-        ///     Normalized global id (<c>NormalizeId</c> output from <see cref="ModCardPileRegistry" />).
-        ///     normalized global id（<see cref="ModCardPileRegistry" /> 的 <c>NormalizeId</c> 输出）。
+        ///     <para xml:lang="en">The normalized, globally qualified pile ID.</para>
+        ///     <para xml:lang="zh-CN">规范化后的全局限定牌堆 ID。</para>
         /// </param>
         /// <param name="pileType">
-        ///     Minted <see cref="PileType" /> value that represents this pile at runtime.
-        ///     运行时代表此牌堆的生成 <see cref="PileType" /> 值。
+        ///     <para xml:lang="en">The runtime <see cref="PileType" /> assigned to the pile.</para>
+        ///     <para xml:lang="zh-CN">分配给该牌堆的运行时 <see cref="PileType" />。</para>
         /// </param>
         /// <param name="scope">
-        ///     Lifetime scope.
-        ///     生命周期作用域。
+        ///     <para xml:lang="en">The lifetime scope of the pile.</para>
+        ///     <para xml:lang="zh-CN">牌堆的生命周期作用域。</para>
         /// </param>
         /// <param name="style">
-        ///     UI chrome style.
-        ///     UI chrome 样式。
+        ///     <para xml:lang="en">The UI style used to present the pile.</para>
+        ///     <para xml:lang="zh-CN">用于展示牌堆的界面样式。</para>
         /// </param>
         /// <param name="anchor">
-        ///     UI slot hint.
-        ///     UI slot 提示。
+        ///     <para xml:lang="en">The anchor used to place the pile control.</para>
+        ///     <para xml:lang="zh-CN">用于放置牌堆控件的锚点。</para>
         /// </param>
         /// <param name="iconPath">
-        ///     Optional Godot resource path for the pile icon.
-        ///     牌堆图标的可选 Godot resource 路径。
+        ///     <para xml:lang="en">The optional Godot resource path of the pile icon.</para>
+        ///     <para xml:lang="zh-CN">牌堆图标的可选 Godot 资源路径。</para>
         /// </param>
         /// <param name="hotkeys">
-        ///     Optional hotkey ids for the pile button.
-        ///     牌堆按钮的可选 hotkey id。
+        ///     <para xml:lang="en">The optional input-action IDs forwarded to the default pile screen.</para>
+        ///     <para xml:lang="zh-CN">转发给默认牌堆界面的可选输入动作 ID。</para>
         /// </param>
         /// <param name="cardShouldBeVisible">
-        ///     Whether cards render as <c>NCard</c> nodes inside the pile container.
-        ///     卡牌是否在牌堆容器内渲染为 <c>NCard</c> 节点。
+        ///     <para xml:lang="en">
+        ///         Whether cards in an extra-hand pile should be represented by visible card nodes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">额外手牌牌堆中的卡牌是否应显示为可见的卡牌节点。</para>
         /// </param>
         /// <param name="onOpen">
-        ///     Optional callback invoked when the pile's UI button is released (see <see cref="OnOpen" />).
-        ///     牌堆的 UI 按钮释放时调用的可选回调（参见 <see cref="OnOpen" />）。
+        ///     <para xml:lang="en">The optional callback invoked when the pile is opened.</para>
+        ///     <para xml:lang="zh-CN">打开牌堆时调用的可选回调。</para>
         /// </param>
         /// <param name="hoverTipScreenOffset">
-        ///     Added to the hover tip position after automatic placement (see <see cref="HoverTipScreenOffset" />).
-        ///     自动放置后添加到 hover tip 位置的偏移（参见 <see cref="HoverTipScreenOffset" />）。
+        ///     <para xml:lang="en">The screen-space offset added to the resolved hover-tip position.</para>
+        ///     <para xml:lang="zh-CN">添加到悬停提示最终位置的屏幕空间偏移量。</para>
         /// </param>
         /// <param name="hoverTipPlacement">
-        ///     How the hover tip is anchored to the pile button (see <see cref="HoverTipPlacement" />).
-        ///     hover tip 锚定到牌堆按钮的方式（参见 <see cref="HoverTipPlacement" />）。
+        ///     <para xml:lang="en">The placement rule for the pile's hover tip.</para>
+        ///     <para xml:lang="zh-CN">牌堆悬停提示的放置规则。</para>
         /// </param>
         /// <param name="visibleWhen">
-        ///     Optional visibility predicate (see <see cref="VisibleWhen" />). Null means always visible on the
-        ///     button node (subject to parent visibility).
-        ///     可选可见性谓词（参见 <see cref="VisibleWhen" />）。null 表示在按钮节点上始终可见
-        ///     （仍受父节点可见性影响）。
+        ///     <para xml:lang="en">
+        ///         The optional predicate that controls pile-control visibility; <see langword="null" /> does
+        ///         not add a per-pile visibility restriction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         控制牌堆控件可见性的可选谓词；<see langword="null" /> 表示不额外限制该牌堆控件的可见性。
+        ///     </para>
         /// </param>
         /// <param name="flightTargetPositionResolver">
-        ///     Optional dynamic fly-in target resolver (see <see cref="FlightTargetPositionResolver" />).
-        ///     可选动态飞入目标解析器（参见 <see cref="FlightTargetPositionResolver" />）。
+        ///     <para xml:lang="en">The optional resolver for card-flight target positions.</para>
+        ///     <para xml:lang="zh-CN">用于解析卡牌飞行动画目标位置的可选解析器。</para>
         /// </param>
         /// <param name="flightStartPositionResolver">
-        ///     Optional dynamic fly-out source/start resolver (see <see cref="FlightStartPositionResolver" />).
-        ///     可选动态飞出源/起点解析器（参见 <see cref="FlightStartPositionResolver" />）。
+        ///     <para xml:lang="en">The optional resolver for shuffle-flight start positions.</para>
+        ///     <para xml:lang="zh-CN">用于解析洗牌飞行动画起始位置的可选解析器。</para>
         /// </param>
         public ModCardPileDefinition(
             string modId,
@@ -111,9 +121,10 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Constructor with optional default-screen view capabilities. The extra parameter is appended so
-        ///     the historical constructor signature remains available for already-compiled mods.
-        ///     带默认 screen 可选查看能力的构造函数。额外参数追加在末尾，从而保留已编译 mod 使用的历史构造函数签名。
+        ///     <para xml:lang="en">
+        ///         Initializes a card-pile definition with optional capabilities for the default pile screen.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化带有默认牌堆界面可选扩展能力的卡牌牌堆定义。</para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -139,8 +150,10 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Constructor with extra-hand presentation and interaction capabilities.
-        ///     带额外手牌展示与交互能力的构造函数。
+        ///     <para xml:lang="en">
+        ///         Initializes a card-pile definition with default-screen and extra-hand capabilities.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化带有默认牌堆界面与额外手牌能力的卡牌牌堆定义。</para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -181,8 +194,10 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Compatibility overload that omitted <see cref="FlightTargetPositionResolver" />; forwards with null.
-        ///     省略 <see cref="FlightTargetPositionResolver" /> 的兼容重载；以 null 转发。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition without card-flight position resolvers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化不带卡牌飞行动画位置解析器的定义。</para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -204,8 +219,10 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Compatibility overload that omitted <see cref="FlightStartPositionResolver" />; forwards with null.
-        ///     省略 <see cref="FlightStartPositionResolver" /> 的兼容重载；以 null 转发。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition without a shuffle-flight start-position resolver.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化不带洗牌飞行动画起始位置解析器的定义。</para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -228,8 +245,12 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Compatibility overload that omitted <see cref="VisibleWhen" />; forwards with null.
-        ///     省略 <see cref="VisibleWhen" /> 的兼容重载；以 null 转发。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition without a per-pile visibility predicate or flight-position resolvers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         初始化不带牌堆可见性谓词与飞行动画位置解析器的定义。
+        ///     </para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -250,10 +271,13 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Compatibility overload that omitted <see cref="HoverTipPlacement" />; forwards with
-        ///     <see cref="ModCardPileHoverTipPlacement.Auto" />.
-        ///     省略 <see cref="HoverTipPlacement" /> 的兼容重载；以
-        ///     <see cref="ModCardPileHoverTipPlacement.Auto" /> 转发。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition with automatic hover-tip placement and without visibility or
+        ///         flight-position callbacks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用自动悬停提示位置初始化定义，且不设置可见性或飞行动画位置回调。
+        ///     </para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -273,13 +297,13 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Compatibility overload matching the historical call shape that omitted
-        ///     <see cref="OnOpen" />; forwards with a null <see cref="OnOpen" />,
-        ///     <see cref="Vector2.Zero" /> for <see cref="HoverTipScreenOffset" />, and
-        ///     <see cref="ModCardPileHoverTipPlacement.Auto" /> for <see cref="HoverTipPlacement" />.
-        ///     匹配历史调用形状的兼容重载，该形状省略 <see cref="OnOpen" />；以 null 的 <see cref="OnOpen" />、
-        ///     <see cref="HoverTipScreenOffset" /> 的 <see cref="Vector2.Zero" />，以及
-        ///     <see cref="HoverTipPlacement" /> 的 <see cref="ModCardPileHoverTipPlacement.Auto" /> 转发。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition that uses the default open behavior, automatic hover-tip placement,
+        ///         and no additional hover-tip offset.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         初始化使用默认打开行为、自动悬停提示位置且不附加悬停提示偏移量的定义。
+        ///     </para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -297,11 +321,13 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Compatibility overload for the historical shape before
-        ///     <see cref="HoverTipScreenOffset" /> and <see cref="HoverTipPlacement" />; forwards with
-        ///     <see cref="Vector2.Zero" /> and <see cref="ModCardPileHoverTipPlacement.Auto" />.
-        ///     针对引入 <see cref="HoverTipScreenOffset" /> 和 <see cref="HoverTipPlacement" /> 之前历史形状的
-        ///     兼容重载；以 <see cref="Vector2.Zero" /> 和 <see cref="ModCardPileHoverTipPlacement.Auto" /> 转发。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition with a custom open callback, automatic hover-tip placement, and no
+        ///         additional hover-tip offset.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         初始化带有自定义打开回调、使用自动悬停提示位置且不附加悬停提示偏移量的定义。
+        ///     </para>
         /// </summary>
         public ModCardPileDefinition(
             string modId,
@@ -320,134 +346,178 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Owning mod id.
-        ///     所属 mod id。
+        ///     <para xml:lang="en">Gets the ID of the mod that owns the registry.</para>
+        ///     <para xml:lang="zh-CN">获取拥有该注册表的模组 ID。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     Normalized global id (trimmed).
-        ///     normalized global id（已 trim）。
+        ///     <para xml:lang="en">Gets the normalized, globally qualified pile ID.</para>
+        ///     <para xml:lang="zh-CN">获取规范化后的全局限定牌堆 ID。</para>
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        ///     Deterministically minted <see cref="PileType" /> value.
-        ///     确定性 minted 的 <see cref="PileType" /> 值。
+        ///     <para xml:lang="en">Gets the runtime <see cref="PileType" /> assigned to the pile.</para>
+        ///     <para xml:lang="zh-CN">获取分配给该牌堆的运行时 <see cref="PileType" />。</para>
         /// </summary>
         public PileType PileType { get; }
 
         /// <summary>
-        ///     Lifetime scope declared at registration.
-        ///     注册时声明的生命周期作用域。
+        ///     <para xml:lang="en">Gets the pile's registered lifetime scope.</para>
+        ///     <para xml:lang="zh-CN">获取该牌堆注册时声明的生命周期作用域。</para>
         /// </summary>
         public ModCardPileScope Scope { get; }
 
         /// <summary>
-        ///     UI chrome style.
-        ///     UI chrome 样式。
+        ///     <para xml:lang="en">Gets the UI style used to present the pile.</para>
+        ///     <para xml:lang="zh-CN">获取用于展示该牌堆的界面样式。</para>
         /// </summary>
         public ModCardPileUiStyle Style { get; }
 
         /// <summary>
-        ///     UI slot hint.
-        ///     UI slot 提示。
+        ///     <para xml:lang="en">Gets the anchor used to place the pile control.</para>
+        ///     <para xml:lang="zh-CN">获取用于放置该牌堆控件的锚点。</para>
         /// </summary>
         public ModCardPileAnchor Anchor { get; }
 
         /// <summary>
-        ///     Icon resource path (<c>res://...</c>); null falls back to a placeholder icon.
-        ///     图标ResourcePath（<c>res://...</c>）；null 时回退到占位图标。
+        ///     <para xml:lang="en">Gets the optional Godot resource path of the pile icon.</para>
+        ///     <para xml:lang="zh-CN">获取牌堆图标的可选 Godot 资源路径。</para>
         /// </summary>
         public string? IconPath { get; }
 
         /// <summary>
-        ///     Hover-tip title resolved against <see cref="ModCardPileSpec.HoverTipLocTable" /> with key
-        ///     <c>"{Id}.title"</c>.
-        ///     基于 <see cref="ModCardPileSpec.HoverTipLocTable" />、使用 <c>"{Id}.title"</c> key 解析的
-        ///     hover-tip 标题。
+        ///     <para xml:lang="en">
+        ///         Gets the localized hover-tip title at <c>{Id}.title</c> in
+        ///         <see cref="ModCardPileSpec.HoverTipLocTable" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="ModCardPileSpec.HoverTipLocTable" /> 中键为 <c>{Id}.title</c> 的本地化
+        ///         悬停提示标题。
+        ///     </para>
         /// </summary>
         public LocString Title => new(ModCardPileSpec.HoverTipLocTable, $"{Id}.title");
 
         /// <summary>
-        ///     Hover-tip description resolved against <see cref="ModCardPileSpec.HoverTipLocTable" /> with
-        ///     key <c>"{Id}.description"</c>.
-        ///     基于 <see cref="ModCardPileSpec.HoverTipLocTable" />、使用 <c>"{Id}.description"</c> key 解析的
-        ///     hover-tip 描述。
+        ///     <para xml:lang="en">
+        ///         Gets the localized hover-tip description at <c>{Id}.description</c> in
+        ///         <see cref="ModCardPileSpec.HoverTipLocTable" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="ModCardPileSpec.HoverTipLocTable" /> 中键为 <c>{Id}.description</c> 的
+        ///         本地化悬停提示描述。
+        ///     </para>
         /// </summary>
         public LocString Description => new(ModCardPileSpec.HoverTipLocTable, $"{Id}.description");
 
         /// <summary>
-        ///     Message displayed when the pile is opened while empty; resolved against
-        ///     <see cref="ModCardPileSpec.HoverTipLocTable" /> with key <c>"{Id}.empty"</c>.
-        ///     牌堆为空时打开所显示的消息；基于 <see cref="ModCardPileSpec.HoverTipLocTable" />、
-        ///     使用 <c>"{Id}.empty"</c> key 解析。
+        ///     <para xml:lang="en">
+        ///         Gets the localized thought-bubble message at <c>{Id}.empty</c> in
+        ///         <see cref="ModCardPileSpec.HoverTipLocTable" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="ModCardPileSpec.HoverTipLocTable" /> 中键为 <c>{Id}.empty</c> 的本地化
+        ///         思考气泡文本。
+        ///     </para>
         /// </summary>
         public LocString EmptyPileMessage => new(ModCardPileSpec.HoverTipLocTable, $"{Id}.empty");
 
         /// <summary>
-        ///     Hotkey ids (see <c>MegaInput</c>) forwarded to <c>NCardPileScreen.ShowScreen</c>.
-        ///     转发给 <c>NCardPileScreen.ShowScreen</c> 的 hotkey id（参见 <c>MegaInput</c>）。
+        ///     <para xml:lang="en">
+        ///         Gets the optional input-action IDs forwarded to the default pile screen.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取转发给默认牌堆界面的可选输入动作 ID。</para>
         /// </summary>
         public string[]? Hotkeys { get; }
 
         /// <summary>
-        ///     When true, the pile renders cards as <c>NCard</c> nodes (only meaningful for
-        ///     <see cref="ModCardPileUiStyle.ExtraHand" />).
-        ///     为 true 时，牌堆将卡牌渲染为 <c>NCard</c> 节点（仅对
-        ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 有意义）。
+        ///     <para xml:lang="en">
+        ///         Gets whether an <see cref="ModCardPileUiStyle.ExtraHand" /> pile should represent its cards
+        ///         with visible card nodes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆是否应将其中的卡牌显示为可见的卡牌节点。
+        ///     </para>
         /// </summary>
         public bool CardShouldBeVisible { get; }
 
         /// <summary>
-        ///     Extra-hand presentation and interaction settings.
-        ///     额外手牌的展示与交互设置。
+        ///     <para xml:lang="en">Gets the extra-hand presentation and interaction settings.</para>
+        ///     <para xml:lang="zh-CN">获取额外手牌的展示与交互设置。</para>
         /// </summary>
         public ModCardPileExtraHandSpec ExtraHand { get; }
 
         /// <summary>
-        ///     Handler invoked when the pile's UI button is released. Null means "use the default
-        ///     <c>NCardPileScreen</c>". See <see cref="ModCardPileSpec.OnOpen" /> for the full contract.
-        ///     牌堆的 UI 按钮释放时调用的 handler。null 表示“使用默认 <c>NCardPileScreen</c>”。
-        ///     完整契约参见 <see cref="ModCardPileSpec.OnOpen" />。
+        ///     <para xml:lang="en">
+        ///         Gets the callback invoked when the pile is opened. <see langword="null" /> selects the
+        ///         default pile screen.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取打开牌堆时调用的回调。<see langword="null" /> 表示使用默认牌堆界面。
+        ///     </para>
         /// </summary>
         public Action<ModCardPileOpenContext>? OnOpen { get; }
 
         /// <summary>
-        ///     Optional default-screen capabilities. Null means legacy <c>NCardPileScreen</c> behavior.
-        ///     默认 screen 的可选能力。null 表示旧的 <c>NCardPileScreen</c> 行为。
+        ///     <para xml:lang="en">
+        ///         Gets the optional capabilities applied to the default pile screen. <see langword="null" />
+        ///         preserves the base-game screen behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取应用于默认牌堆界面的可选扩展能力。<see langword="null" /> 保留游戏原有界面行为。
+        ///     </para>
         /// </summary>
         public ModCardPileViewSpec? View { get; }
 
         /// <summary>
-        ///     Extra pixels added to the hover tip position (see <see cref="ModCardPileSpec.HoverTipScreenOffset" />).
-        ///     添加到 hover tip 位置的额外像素（参见 <see cref="ModCardPileSpec.HoverTipScreenOffset" />）。
+        ///     <para xml:lang="en">Gets the screen-space offset added to the resolved hover-tip position.</para>
+        ///     <para xml:lang="zh-CN">获取添加到悬停提示最终位置的屏幕空间偏移量。</para>
         /// </summary>
         public Vector2 HoverTipScreenOffset { get; }
 
         /// <summary>
-        ///     How the hover tip is anchored to the pile button (see <see cref="ModCardPileSpec.HoverTipPlacement" />).
-        ///     hover tip 锚定到牌堆按钮的方式（参见 <see cref="ModCardPileSpec.HoverTipPlacement" />）。
+        ///     <para xml:lang="en">Gets the placement rule for the pile's hover tip.</para>
+        ///     <para xml:lang="zh-CN">获取牌堆悬停提示的放置规则。</para>
         /// </summary>
         public ModCardPileHoverTipPlacement HoverTipPlacement { get; }
 
         /// <summary>
-        ///     When non-null, the pile button evaluates this on <c>_Process</c> and hides itself when the
-        ///     predicate returns false (see <see cref="ModCardPileSpec.VisibleWhen" />).
-        ///     非 null 时，牌堆按钮会在 <c>_Process</c> 中求值；谓词返回 false 时隐藏自身
-        ///     （参见 <see cref="ModCardPileSpec.VisibleWhen" />）。
+        ///     <para xml:lang="en">
+        ///         Gets the optional predicate evaluated while the pile control is active. Returning
+        ///         <see langword="false" /> hides the control; an exception is logged and also hides it for that
+        ///         evaluation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取牌堆控件处于活动状态时求值的可选谓词。返回 <see langword="false" /> 会隐藏控件；
+        ///         抛出异常时会记录异常，并在本次求值中隐藏控件。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileVisibilityContext, bool>? VisibleWhen { get; }
 
         /// <summary>
-        ///     Optional resolver invoked for each fly-in targeting request to this pile.
-        ///     每次以此牌堆为目标的飞入请求都会调用的可选解析器。
+        ///     <para xml:lang="en">
+        ///         Gets the optional resolver evaluated for each card-flight target request. Returning
+        ///         <see langword="null" /> uses the position resolved from the current pile control or anchor.
+        ///         Exceptions propagate to the caller.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取每次请求卡牌飞行动画目标位置时求值的可选解析器。返回 <see langword="null" /> 时使用根据
+        ///         当前牌堆控件或锚点解析的位置；异常会传播给调用方。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileFlightTargetContext, Vector2?>? FlightTargetPositionResolver { get; }
 
         /// <summary>
-        ///     Optional resolver invoked when a shuffle-style fly visual starts from this pile.
-        ///     shuffle 风格飞行动画从此牌堆开始时调用的可选解析器。
+        ///     <para xml:lang="en">
+        ///         Gets the optional resolver evaluated when a shuffle-flight visual starts from this pile.
+        ///         Returning <see langword="null" /> uses the position resolved from the current pile control or
+        ///         anchor. Exceptions propagate to the caller.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取洗牌飞行动画从该牌堆开始时求值的可选解析器。返回 <see langword="null" /> 时使用根据当前
+        ///         牌堆控件或锚点解析的位置；异常会传播给调用方。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileFlightStartContext, Vector2?>? FlightStartPositionResolver { get; }
     }
