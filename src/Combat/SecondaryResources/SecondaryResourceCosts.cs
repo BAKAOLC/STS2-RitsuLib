@@ -964,6 +964,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 {
                     IsFree = true,
                     AmountToSpend = 0,
+                    Value = !line.CostsX && line.Kind == SecondaryResourceUseKind.OptionalSpend
+                        ? 0
+                        : line.Value,
                     OriginalShortfall = 0,
                     CoveredShortfall = 0,
                     Shortfall = 0,
