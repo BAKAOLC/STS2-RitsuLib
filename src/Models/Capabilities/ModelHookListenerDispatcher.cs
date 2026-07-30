@@ -30,6 +30,8 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(combatState);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore<TListener>(combatState.IterateHookListeners(), null, null, extraModels);
         }
 
@@ -52,7 +54,9 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(combatState);
             ArgumentNullException.ThrowIfNull(adapterResolver);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore(combatState.IterateHookListeners(), null, adapterResolver, extraModels);
         }
 
@@ -77,6 +81,8 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(runState);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore<TListener>(runState.IterateHookListeners(combatState), null, null, extraModels);
         }
 
@@ -99,6 +105,8 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(models);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore<TListener>(models, null, null, extraModels);
         }
 
