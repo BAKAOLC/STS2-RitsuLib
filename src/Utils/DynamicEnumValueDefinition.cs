@@ -1,9 +1,8 @@
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     Immutable row for a mod-owned dynamic enum value registered through
-    ///     <see cref="DynamicEnumValueRegistry{TEnum}" />.
-    ///     表示通过 <see cref="DynamicEnumValueRegistry{TEnum}" /> 注册的 mod 所有动态枚举值的不可变记录。
+    ///     <para xml:lang="en">Describes an immutable mod-owned dynamic enum value registered through <see cref="DynamicEnumValueRegistry{TEnum}" />.</para>
+    ///     <para xml:lang="zh-CN">表示通过 <see cref="DynamicEnumValueRegistry{TEnum}" /> 注册的模组归属动态枚举值定义。</para>
     /// </summary>
     public sealed record DynamicEnumValueDefinition<TEnum>(string ModId, string Id, TEnum Value)
         where TEnum : struct, Enum;

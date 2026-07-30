@@ -6,17 +6,25 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Utils.Json
 {
     /// <summary>
-    ///     JSON Canonicalization Scheme (JCS, RFC 8785) for <see cref="JsonNode" /> DOM.
-    ///     https://www.rfc-editor.org/rfc/rfc8785
-    ///     JSON Canonicalization Scheme (JCS, RFC 8785) 用于 <see cref="JsonNode" /> DOM.
-    ///     https://www.rfc-edit或.或g/rfc/rfc8785
+    ///     <para xml:lang="en">
+    ///         Implements the JSON Canonicalization Scheme (JCS, RFC 8785) for <see cref="JsonNode" /> DOM values.
+    ///         See <see href="https://www.rfc-editor.org/rfc/rfc8785" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="JsonNode" /> DOM 值实现 JSON 规范化方案（JCS，RFC 8785）。
+    ///         参见 <see href="https://www.rfc-editor.org/rfc/rfc8785" />。
+    ///     </para>
     /// </summary>
     public static class JsonCanonicalizer
     {
         /// <summary>
-        ///     Canonicalizes a JSON DOM node into a deterministic UTF-16 string representation.
-        ///     将 JSON DOM 节点规范化为确定性的 UTF-16 字符串表示。
+        ///     <para xml:lang="en">Canonicalizes a JSON DOM node into JCS JSON text. Encode the returned .NET string as UTF-8 to obtain the RFC 8785 byte representation.</para>
+        ///     <para xml:lang="zh-CN">将 JSON DOM 节点规范化为 JCS JSON 文本。将返回的 .NET 字符串编码为 UTF-8，即可得到 RFC 8785 字节表示。</para>
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        ///     <para xml:lang="en">The DOM contains a value that JCS cannot represent, such as a non-finite IEEE 754 binary64 number, an unpaired surrogate, or a Unicode noncharacter.</para>
+        ///     <para xml:lang="zh-CN">DOM 包含 JCS 无法表示的值，例如非有限 IEEE 754 binary64 数值、未配对代理项或 Unicode 非字符码点。</para>
+        /// </exception>
         public static string Canonicalize(JsonNode? node)
         {
             var output = new StringBuilder();

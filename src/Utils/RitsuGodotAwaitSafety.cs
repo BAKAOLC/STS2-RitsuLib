@@ -2,6 +2,13 @@ using Godot;
 
 namespace STS2RitsuLib.Utils
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Provides cancellable process-frame waits while validating the scene tree and an optional owner
+    ///         object.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供可取消的处理帧等待，并验证场景树和可选所有者对象。</para>
+    /// </summary>
     internal static class RitsuGodotAwaitSafety
     {
         internal static async Task AwaitProcessFrameAsync(SceneTree? tree,

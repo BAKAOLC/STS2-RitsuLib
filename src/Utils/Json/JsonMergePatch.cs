@@ -4,16 +4,14 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Utils.Json
 {
     /// <summary>
-    ///     RFC 7386 JSON Merge Patch utilities for <see cref="JsonNode" /> DOM.
-    ///     RFC 7386 JSON Merge Patch utilities 用于 <see cref="JsonNode" /> DOM.
+    ///     <para xml:lang="en">Provides RFC 7386 JSON Merge Patch operations for <see cref="JsonNode" /> DOM values.</para>
+    ///     <para xml:lang="zh-CN">为 <see cref="JsonNode" /> DOM 值提供 RFC 7386 JSON 合并补丁操作。</para>
     /// </summary>
     public static class JsonMergePatch
     {
         /// <summary>
-        ///     Applies an RFC 7386 merge patch to <paramref name="target" /> and returns the merged result.
-        ///     When <paramref name="patch" /> is not an object, the result is the patch itself (replacement).
-        ///     将 RFC 7386 merge patch 应用于 <paramref name="target" /> 并返回合并结果。
-        ///     当 <paramref name="patch" /> 不是对象时，结果就是 patch 本身（替换）。
+        ///     <para xml:lang="en">Applies an RFC 7386 merge patch to <paramref name="target" /> and returns the merged result. A non-object <paramref name="patch" /> replaces the target.</para>
+        ///     <para xml:lang="zh-CN">将 RFC 7386 合并补丁应用于 <paramref name="target" /> 并返回合并结果。非对象的 <paramref name="patch" /> 会替换目标。</para>
         /// </summary>
         public static JsonNode? Apply(JsonNode? target, JsonNode? patch)
         {
@@ -28,8 +26,8 @@ namespace STS2RitsuLib.Utils.Json
         }
 
         /// <summary>
-        ///     Applies an RFC 7386 merge patch to <paramref name="target" /> in-place.
-        ///     将 RFC 7386 merge patch 原地应用到 <paramref name="target" />。
+        ///     <para xml:lang="en">Applies an RFC 7386 merge patch to <paramref name="target" /> in place.</para>
+        ///     <para xml:lang="zh-CN">将 RFC 7386 合并补丁原地应用于 <paramref name="target" />。</para>
         /// </summary>
         public static void ApplyInPlace(JsonObject target, JsonObject patch)
         {

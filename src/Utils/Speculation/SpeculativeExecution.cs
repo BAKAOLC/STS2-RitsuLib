@@ -4,52 +4,52 @@ using System.Runtime.CompilerServices;
 namespace STS2RitsuLib.Utils.Speculation
 {
     /// <summary>
-    ///     Severity of a speculative-execution diagnostic.
-    ///     推演执行诊断的严重程度。
+    ///     <para xml:lang="en">Severity of a speculative-execution diagnostic.</para>
+    ///     <para xml:lang="zh-CN">推演执行诊断的严重程度。</para>
     /// </summary>
     public enum SpeculativeDiagnosticSeverity
     {
         /// <summary>
-        ///     Informational execution detail.
-        ///     信息性执行详情。
+        ///     <para xml:lang="en">Informational execution detail.</para>
+        ///     <para xml:lang="zh-CN">信息性执行详情。</para>
         /// </summary>
         Information,
 
         /// <summary>
-        ///     Recoverable condition that may reduce precision.
-        ///     可能降低精度的可恢复状况。
+        ///     <para xml:lang="en">Recoverable condition that may reduce precision.</para>
+        ///     <para xml:lang="zh-CN">可能降低精度的可恢复状况。</para>
         /// </summary>
         Warning,
 
         /// <summary>
-        ///     Condition that makes the result incomplete.
-        ///     导致结果不完整的错误状况。
+        ///     <para xml:lang="en">Condition that makes the result incomplete.</para>
+        ///     <para xml:lang="zh-CN">导致结果不完整的错误状况。</para>
         /// </summary>
         Error,
     }
 
     /// <summary>
-    ///     Limits applied to one speculative execution.
-    ///     单次推演执行使用的限制。
+    ///     <para xml:lang="en">Limits applied to one speculative execution.</para>
+    ///     <para xml:lang="zh-CN">单次推演执行使用的限制。</para>
     /// </summary>
     public sealed record SpeculativeExecutionBudget
     {
         /// <summary>
-        ///     Maximum number of accounted operations.
-        ///     允许计入的最大操作数量。
+        ///     <para xml:lang="en">Maximum number of accounted operations.</para>
+        ///     <para xml:lang="zh-CN">允许计入的最大操作数量。</para>
         /// </summary>
         public int MaxOperations { get; init; } = 100_000;
 
         /// <summary>
-        ///     Maximum nested execution-frame depth.
-        ///     允许嵌套的最大执行帧深度。
+        ///     <para xml:lang="en">Maximum nested execution-frame depth.</para>
+        ///     <para xml:lang="zh-CN">允许嵌套的最大执行帧深度。</para>
         /// </summary>
         public int MaxDepth { get; init; } = 128;
     }
 
     /// <summary>
-    ///     One diagnostic emitted during speculative execution.
-    ///     推演执行期间产生的一条诊断。
+    ///     <para xml:lang="en">One diagnostic emitted during speculative execution.</para>
+    ///     <para xml:lang="zh-CN">推演执行期间产生的一条诊断。</para>
     /// </summary>
     public sealed record SpeculativeDiagnostic(
         SpeculativeDiagnosticSeverity Severity,
@@ -59,8 +59,8 @@ namespace STS2RitsuLib.Utils.Speculation
         int? InstructionIndex = null);
 
     /// <summary>
-    ///     One ordered terminal effect recorded by a speculative execution.
-    ///     推演执行记录的一条有序终点效果。
+    ///     <para xml:lang="en">One ordered terminal effect recorded by a speculative execution.</para>
+    ///     <para xml:lang="zh-CN">推演执行记录的一条有序终端效果。</para>
     /// </summary>
     public sealed record SpeculativeEffect(
         int Sequence,
@@ -69,8 +69,8 @@ namespace STS2RitsuLib.Utils.Speculation
         object? Payload);
 
     /// <summary>
-    ///     Async-flowing execution context with a shadow-state overlay, ordered effect journal, and hard budgets.
-    ///     随异步流传播的执行上下文，包含影子状态覆盖、有序效果日志和硬预算。
+    ///     <para xml:lang="en">Async-flowing execution context with a shadow-state overlay, ordered effect journal, and explicit operation and frame-depth budgets.</para>
+    ///     <para xml:lang="zh-CN">随异步流传播的执行上下文，包含影子状态覆盖、有序效果日志，以及显式的操作和执行帧深度预算。</para>
     /// </summary>
     public sealed class SpeculativeExecutionSession
     {
@@ -85,8 +85,8 @@ namespace STS2RitsuLib.Utils.Speculation
         private bool _operationBudgetReported;
 
         /// <summary>
-        ///     Creates an isolated speculative-execution session.
-        ///     创建一个独立的推演执行会话。
+        ///     <para xml:lang="en">Creates an isolated speculative-execution session.</para>
+        ///     <para xml:lang="zh-CN">创建一个独立的推演执行会话。</para>
         /// </summary>
         public SpeculativeExecutionSession(SpeculativeExecutionBudget? budget = null)
         {
@@ -96,46 +96,46 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Session currently active in this async control flow, if any.
-        ///     当前异步控制流中处于活动状态的会话；没有时为 null。
+        ///     <para xml:lang="en">Session currently active in this async control flow, if any.</para>
+        ///     <para xml:lang="zh-CN">当前异步控制流中处于活动状态的会话；没有时为 null。</para>
         /// </summary>
         public static SpeculativeExecutionSession? Current => Ambient.Value?.Session;
 
         /// <summary>
-        ///     Limits applied to this session.
-        ///     此会话使用的限制。
+        ///     <para xml:lang="en">Limits applied to this session.</para>
+        ///     <para xml:lang="zh-CN">此会话使用的限制。</para>
         /// </summary>
         public SpeculativeExecutionBudget Budget { get; }
 
         /// <summary>
-        ///     Ordered effects recorded by this session.
-        ///     此会话记录的有序效果。
+        ///     <para xml:lang="en">Ordered effects recorded by this session.</para>
+        ///     <para xml:lang="zh-CN">此会话记录的有序效果。</para>
         /// </summary>
         public IReadOnlyList<SpeculativeEffect> Effects => _effects;
 
         /// <summary>
-        ///     Diagnostics recorded by this session.
-        ///     此会话记录的诊断。
+        ///     <para xml:lang="en">Diagnostics recorded by this session.</para>
+        ///     <para xml:lang="zh-CN">此会话记录的诊断。</para>
         /// </summary>
         public IReadOnlyList<SpeculativeDiagnostic> Diagnostics => _diagnostics;
 
         /// <summary>
-        ///     Number of operations consumed so far.
-        ///     当前已消耗的操作数量。
+        ///     <para xml:lang="en">Number of operations consumed so far.</para>
+        ///     <para xml:lang="zh-CN">当前已消耗的操作数量。</para>
         /// </summary>
         public int Operations { get; private set; }
 
         /// <summary>
-        ///     True when no error diagnostic was recorded.
-        ///     未记录错误诊断时为 true。
+        ///     <para xml:lang="en">True when no error diagnostic was recorded.</para>
+        ///     <para xml:lang="zh-CN">未记录错误诊断时为 true。</para>
         /// </summary>
         public bool IsComplete =>
             _diagnostics.All(static diagnostic =>
                 diagnostic.Severity != SpeculativeDiagnosticSeverity.Error);
 
         /// <summary>
-        ///     Makes this session current until the returned scope is disposed.
-        ///     在返回的作用域释放前将此会话设为当前会话。
+        ///     <para xml:lang="en">Makes this session current until the returned scope is disposed.</para>
+        ///     <para xml:lang="zh-CN">在返回的作用域释放前将此会话设为当前会话。</para>
         /// </summary>
         public IDisposable Enter()
         {
@@ -152,20 +152,20 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Attempts to enter one nested execution frame.
-        ///     尝试进入一个嵌套执行帧。
+        ///     <para xml:lang="en">Attempts to enter one nested execution frame.</para>
+        ///     <para xml:lang="zh-CN">尝试进入一个嵌套执行帧。</para>
         /// </summary>
         /// <param name="method">
-        ///     Method represented by the frame, when known.
-        ///     此执行帧表示的方法（如已知）。
+        ///     <para xml:lang="en">Method represented by the frame, when known.</para>
+        ///     <para xml:lang="zh-CN">此执行帧所表示的方法（如已知）。</para>
         /// </param>
         /// <param name="scope">
-        ///     Scope that leaves the frame when disposed.
-        ///     释放时离开执行帧的作用域。
+        ///     <para xml:lang="en">Scope that leaves the frame when disposed.</para>
+        ///     <para xml:lang="zh-CN">释放时离开执行帧的作用域。</para>
         /// </param>
         /// <returns>
-        ///     True when both operation and depth budgets permit the frame.
-        ///     操作预算与深度预算均允许此执行帧时为 true。
+        ///     <para xml:lang="en">True when both operation and depth budgets permit the frame.</para>
+        ///     <para xml:lang="zh-CN">操作预算与深度预算均允许此执行帧时为 true。</para>
         /// </returns>
         public bool TryEnterFrame(MethodBase? method, out IDisposable scope)
         {
@@ -197,8 +197,8 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Accounts one operation and reports whether execution may continue.
-        ///     计入一个操作并报告执行是否可以继续。
+        ///     <para xml:lang="en">Accounts one operation and reports whether execution may continue.</para>
+        ///     <para xml:lang="zh-CN">计入一个操作并报告执行是否可以继续。</para>
         /// </summary>
         public bool TryConsumeOperation(MethodBase? method = null, int? instructionIndex = null)
         {
@@ -221,8 +221,8 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Pushes a causal source used by effects that do not supply an explicit source.
-        ///     压入因果来源，供未显式指定来源的效果使用。
+        ///     <para xml:lang="en">Pushes a causal source used by effects that do not supply an explicit source.</para>
+        ///     <para xml:lang="zh-CN">压入因果来源，供未显式指定来源的效果使用。</para>
         /// </summary>
         public IDisposable PushSource(object? source)
         {
@@ -231,8 +231,8 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Appends one terminal effect to the ordered journal.
-        ///     向有序日志追加一条终点效果。
+        ///     <para xml:lang="en">Appends one terminal effect to the ordered journal.</para>
+        ///     <para xml:lang="zh-CN">向有序日志追加一条终端效果。</para>
         /// </summary>
         public SpeculativeEffect RecordEffect(
             string kind,
@@ -250,8 +250,8 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Appends a diagnostic.
-        ///     追加一条诊断。
+        ///     <para xml:lang="en">Appends a diagnostic.</para>
+        ///     <para xml:lang="zh-CN">追加一条诊断。</para>
         /// </summary>
         public void AddDiagnostic(SpeculativeDiagnostic diagnostic)
         {
@@ -260,8 +260,8 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Reads an overlaid value or obtains and caches its original value.
-        ///     读取覆盖值；不存在时读取并缓存原始值。
+        ///     <para xml:lang="en">Reads an overlaid value or obtains and caches its original value.</para>
+        ///     <para xml:lang="zh-CN">读取覆盖值；不存在时读取并缓存原始值。</para>
         /// </summary>
         public T GetState<T>(
             object target,
@@ -282,8 +282,8 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Writes a value to the session overlay without modifying the target object.
-        ///     将值写入会话覆盖层而不修改目标对象。
+        ///     <para xml:lang="en">Writes a value to the session overlay without modifying the target object.</para>
+        ///     <para xml:lang="zh-CN">将值写入会话覆盖层而不修改目标对象。</para>
         /// </summary>
         public void SetState<T>(object target, object slot, T value)
         {
@@ -293,8 +293,8 @@ namespace STS2RitsuLib.Utils.Speculation
         }
 
         /// <summary>
-        ///     Returns whether this session contains an overlaid value.
-        ///     返回此会话是否包含指定覆盖值。
+        ///     <para xml:lang="en">Returns whether this session contains an overlaid value.</para>
+        ///     <para xml:lang="zh-CN">返回此会话是否包含指定覆盖值。</para>
         /// </summary>
         public bool HasState(object target, object slot)
         {

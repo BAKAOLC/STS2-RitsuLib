@@ -8,9 +8,8 @@ using MegaCrit.Sts2.Core.Localization;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK paths,
-    ///     reacting to game locale changes when possible.
-    ///     从文件系统、嵌入资源和 PCK 路径加载并合并 JSON 翻译字典，并在可行时响应游戏语言切换。
+    ///     <para xml:lang="en">Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK paths, reacting to game locale changes when possible.</para>
+    ///     <para xml:lang="zh-CN">从文件系统、嵌入资源和 PCK 路径加载并合并 JSON 翻译字典，并在可行时响应游戏语言切换。</para>
     /// </summary>
     public class I18N : IDisposable, IEnumerable<KeyValuePair<string, string>>
     {
@@ -28,14 +27,12 @@ namespace STS2RitsuLib.Utils
         private Dictionary<string, string> _translations = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Creates an instance, optionally wiring locale change subscription when sources are configured.
-        ///     创建实例；当配置了翻译来源时，可自动接入语言切换订阅。
+        ///     <para xml:lang="en">Creates an instance, optionally wiring locale change subscription when sources are configured.</para>
+        ///     <para xml:lang="zh-CN">创建实例；当配置了翻译来源时，可自动接入语言切换订阅。</para>
         /// </summary>
         /// <remarks>
-        ///     Optional fallback language code. When omitted, non-English languages fall back to <c>eng</c>, matching
-        ///     the game's <c>LocTable</c> fallback behavior.
-        ///     可选 fallback 语言代码。省略时，非英语语言会 fallback 到 <c>eng</c>，与游戏
-        ///     <c>LocTable</c> 的 fallback 行为一致。
+        ///     <para xml:lang="en">This overload falls back from non-English languages to <c>eng</c>, matching the game's <c>LocTable</c> fallback behavior.</para>
+        ///     <para xml:lang="zh-CN">此重载会让非英语语言回退到 <c>eng</c>，与游戏 <c>LocTable</c> 的回退行为一致。</para>
         /// </remarks>
         public I18N(string? instanceName = null,
             string[]? fsFolders = null,
@@ -47,8 +44,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Creates an instance with an explicit fallback language.
-        ///     使用显式 fallback 语言创建实例。
+        ///     <para xml:lang="en">Creates an instance with an explicit fallback language when <paramref name="fallbackLanguage" /> is non-blank.</para>
+        ///     <para xml:lang="zh-CN">创建实例；<paramref name="fallbackLanguage" /> 非空白时将其用作显式回退语言。</para>
         /// </summary>
         public I18N(string? instanceName,
             string[]? fsFolders,
@@ -73,8 +70,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Releases subscriptions and clears loaded translations.
-        ///     释放订阅并清空已经加载的翻译。
+        ///     <para xml:lang="en">Releases subscriptions and clears loaded translations.</para>
+        ///     <para xml:lang="zh-CN">释放订阅并清空已经加载的翻译。</para>
         /// </summary>
         public void Dispose()
         {
@@ -90,12 +87,12 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Enumerates the current merged translations as key-value pairs.
-        ///     以键值对形式枚举当前已合并的翻译。
+        ///     <para xml:lang="en">Enumerates the current merged translations as key-value pairs.</para>
+        ///     <para xml:lang="zh-CN">以键值对形式枚举当前已合并的翻译。</para>
         /// </summary>
         /// <remarks>
-        ///     Enumeration uses a snapshot copy to avoid collection-modified exceptions if reload happens during iteration.
-        ///     枚举会使用快照副本，避免迭代期间重载翻译导致集合被修改异常。
+        ///     <para xml:lang="en">Enumeration uses a snapshot copy to avoid collection-modified exceptions if a reload occurs during iteration.</para>
+        ///     <para xml:lang="zh-CN">枚举使用快照副本，避免迭代期间重新加载翻译造成集合已修改异常。</para>
         /// </remarks>
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
@@ -110,14 +107,14 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Raised after translations are reloaded (locale change or <see cref="ForceReload" />).
-        ///     在翻译重新加载后触发（区域设置变化或 <see cref="ForceReload" />）。
+        ///     <para xml:lang="en">Raised by <see cref="ForceReload" />, including reloads initiated by a subscribed locale-change notification.</para>
+        ///     <para xml:lang="zh-CN">由 <see cref="ForceReload" /> 触发，包括已订阅语言变化通知所发起的重新加载。</para>
         /// </summary>
         public event Action? Changed;
 
         /// <summary>
-        ///     Returns the translation for <paramref name="key" /> or <paramref name="fallback" /> if missing.
-        ///     返回 <paramref name="key" /> 的翻译；缺失时返回 <paramref name="fallback" />。
+        ///     <para xml:lang="en">Returns the translation for <paramref name="key" /> or <paramref name="fallback" /> if missing.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的翻译；缺失时返回 <paramref name="fallback" />。</para>
         /// </summary>
         public string Get(string key, string fallback)
         {
@@ -127,8 +124,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns true and outputs the translation when <paramref name="key" /> exists.
-        ///     当 <paramref name="key" /> 存在时返回 true 并输出翻译。
+        ///     <para xml:lang="en">Returns true and outputs the translation when <paramref name="key" /> exists.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="key" /> 存在时返回 true 并输出翻译。</para>
         /// </summary>
         public bool TryGet(string key, out string value)
         {
@@ -138,8 +135,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns true when <paramref name="key" /> exists in the current merged dictionary.
-        ///     当 <paramref name="key" /> 存在于当前合并字典中时返回 true。
+        ///     <para xml:lang="en">Returns true when <paramref name="key" /> exists in the current merged dictionary.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="key" /> 存在于当前合并字典中时返回 true。</para>
         /// </summary>
         public bool ContainsKey(string key)
         {
@@ -149,9 +146,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns true when <paramref name="key" /> exists in the current language before fallback language entries
-        ///     are considered.
-        ///     当 <paramref name="key" /> 在 fallback 语言项介入前存在于当前语言中时返回 true。
+        ///     <para xml:lang="en">Returns true when <paramref name="key" /> exists in the current language before fallback language entries are considered.</para>
+        ///     <para xml:lang="zh-CN">在考虑回退语言条目前，如果 <paramref name="key" /> 已存在于当前语言中，则返回 true。</para>
         /// </summary>
         public bool ContainsLocalKey(string key)
         {
@@ -161,8 +157,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns a stable snapshot view of the current merged translations.
-        ///     返回当前合并翻译的稳定快照视图。
+        ///     <para xml:lang="en">Returns a stable snapshot view of the current merged translations.</para>
+        ///     <para xml:lang="zh-CN">返回当前合并翻译的稳定快照视图。</para>
         /// </summary>
         public IReadOnlyDictionary<string, string> Snapshot()
         {
@@ -172,16 +168,16 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Enumerates translation keys in the current merged dictionary.
-        ///     枚举当前合并字典中的翻译键。
+        ///     <para xml:lang="en">Enumerates translation keys in the current merged dictionary.</para>
+        ///     <para xml:lang="zh-CN">枚举当前合并字典中的翻译键。</para>
         /// </summary>
         /// <param name="prefix">
-        ///     When non-empty, only keys that start with this prefix (ordinal ignore case).
-        ///     非空时，仅返回以该前缀开头的键（序号忽略大小写）。
+        ///     <para xml:lang="en">When non-empty, limits results to keys beginning with this prefix using ordinal case-insensitive comparison.</para>
+        ///     <para xml:lang="zh-CN">非空时，仅返回以此输入前缀开头的键，比较时按序号忽略大小写。</para>
         /// </param>
         /// <param name="orderByKey">
-        ///     When true, keys are ordered with ordinal ignore case.
-        ///     为 true 时，按键名以序号忽略大小写排序。
+        ///     <para xml:lang="en">When true, keys are ordered with ordinal ignore case.</para>
+        ///     <para xml:lang="zh-CN">为 true 时，按键名以序号忽略大小写排序。</para>
         /// </param>
         public IEnumerable<string> EnumerateKeys(string? prefix = null, bool orderByKey = true)
         {
@@ -198,8 +194,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns all keys from the current merged dictionary as a new list, optionally sorted.
-        ///     将当前合并字典中的全部键作为新列表返回，并可选择排序。
+        ///     <para xml:lang="en">Returns all keys from the current merged dictionary as a new list, optionally sorted.</para>
+        ///     <para xml:lang="zh-CN">将当前合并字典中的全部键作为新列表返回，并可选择排序。</para>
         /// </summary>
         public IReadOnlyList<string> GetAllKeys(bool orderByKey = true)
         {
@@ -207,8 +203,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns known language codes discoverable from configured sources.
-        ///     返回可从已配置来源中发现的已知语言代码。
+        ///     <para xml:lang="en">Returns known language codes discoverable from configured sources.</para>
+        ///     <para xml:lang="zh-CN">返回可从已配置来源中发现的已知语言代码。</para>
         /// </summary>
         public IReadOnlyList<string> EnumerateAvailableLanguages(bool useCache = true)
         {
@@ -243,8 +239,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Reloads translations for the current resolved language and raises <see cref="Changed" />.
-        ///     重新加载当前解析语言的翻译，并触发 <see cref="Changed" />。
+        ///     <para xml:lang="en">Reloads translations for the current resolved language and raises <see cref="Changed" />.</para>
+        ///     <para xml:lang="zh-CN">重新加载当前解析语言的翻译，并触发 <see cref="Changed" />。</para>
         /// </summary>
         public void ForceReload()
         {
@@ -572,33 +568,20 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Resolves the current game locale to a normalized language code.
-        ///     将当前游戏区域语言解析为规范化语言代码。
+        ///     <para xml:lang="en">Resolves the current game locale to a normalized language code.</para>
+        ///     <para xml:lang="zh-CN">将当前游戏语言设置解析为规范化语言代码。</para>
         /// </summary>
         /// <remarks>
-        ///     Resolution tries (in order):
-        ///     <list type="number">
-        ///         <item>
-        ///         </item>
-        ///         <item>
-        ///             <description>
-        ///                 <c>Godot.TranslationServer.GetLocale()</c>；<c>Godot.TranslationServer.GetLocale()</c>
-        ///             </description>
-        ///         </item>
-        ///     </list>
-        ///     The returned value is always normalized by <see cref="NormalizeLanguageCode" /> and falls back to
-        ///     <c>eng</c> when unknown.
-        ///     解析会按顺序尝试：
-        ///     <list type="number">
-        ///         <item>
-        ///         </item>
-        ///         <item>
-        ///             <description>
-        ///             </description>
-        ///         </item>
-        ///     </list>
-        ///     返回值始终由 <see cref="NormalizeLanguageCode" /> 规范化，并在未知时回退到
-        ///     <c>eng</c>。
+        ///     <para xml:lang="en">
+        ///         Resolution tries <c>LocManager.Instance.Language</c> first, then
+        ///         <see cref="TranslationServer.GetLocale" />. The result is normalized by
+        ///         <see cref="NormalizeLanguageCode" /> and falls back to <c>eng</c> when unavailable or blank.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析会先尝试 <c>LocManager.Instance.Language</c>，再尝试
+        ///         <see cref="TranslationServer.GetLocale" />。结果由 <see cref="NormalizeLanguageCode" /> 规范化，
+        ///         无法取得或为空白时回退到 <c>eng</c>。
+        ///     </para>
         /// </remarks>
         public static string ResolveCurrentLanguageCode()
         {
@@ -629,32 +612,20 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Normalizes a locale / language input to RitsuLib's stable three-letter-ish codes.
-        ///     将区域/语言输入规范化为 RitsuLib 稳定使用的近似三字母代码。
+        ///     <para xml:lang="en">Normalizes a locale or language input to RitsuLib's stable language-code identifiers.</para>
+        ///     <para xml:lang="zh-CN">将区域设置或语言输入规范化为 RitsuLib 使用的稳定语言代码标识符。</para>
         /// </summary>
         /// <remarks>
-        ///     Examples:
-        ///     <list type="bullet">
-        ///         <item>
-        ///         </item>
-        ///         <item>
-        ///         </item>
-        ///         <item>
-        ///         </item>
-        ///     </list>
-        ///     Unrecognized values are lower-cased, with <c>-</c> replaced by <c>_</c>.
-        ///     Null or whitespace inputs fall back to <c>eng</c>.
-        ///     示例：
-        ///     <list type="bullet">
-        ///         <item>
-        ///         </item>
-        ///         <item>
-        ///         </item>
-        ///         <item>
-        ///         </item>
-        ///     </list>
-        ///     无法识别的值会转为小写，并将 <c>-</c> 替换为 <c>_</c>。
-        ///     null 或空白输入会回退到 <c>eng</c>。
+        ///     <para xml:lang="en">
+        ///         Examples include <c>zh-CN</c> to <c>zhs</c>, <c>en-US</c> to <c>eng</c>, and <c>ja-JP</c> to
+        ///         <c>jpn</c>. Unrecognized values are lower-cased with <c>-</c> replaced by <c>_</c>; null or
+        ///         whitespace values fall back to <c>eng</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         例如，<c>zh-CN</c> 会变为 <c>zhs</c>，<c>en-US</c> 会变为 <c>eng</c>，<c>ja-JP</c> 会变为
+        ///         <c>jpn</c>。无法识别的值会转为小写并将 <c>-</c> 替换为 <c>_</c>；null 或空白值会回退到
+        ///         <c>eng</c>。
+        ///     </para>
         /// </remarks>
         public static string NormalizeLanguageCode(string? language)
         {

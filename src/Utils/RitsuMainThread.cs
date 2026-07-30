@@ -3,6 +3,10 @@ using MegaCrit.Sts2.Core.Nodes;
 
 namespace STS2RitsuLib.Utils
 {
+    /// <summary>
+    ///     <para xml:lang="en">Dispatches work to the Godot main thread when a scene tree is available.</para>
+    ///     <para xml:lang="zh-CN">在场景树可用时将工作调度到 Godot 主线程。</para>
+    /// </summary>
     internal static class RitsuMainThread
     {
         internal static Task InvokeAsync(Action action, CancellationToken cancellationToken = default)

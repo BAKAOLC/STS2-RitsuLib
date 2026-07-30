@@ -4,12 +4,12 @@ using System.Runtime.CompilerServices;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     Stores mod-attached state on arbitrary reference objects without subclassing or boxing through object APIs.
-    ///     在任意引用对象上存储 mod 附加状态，无需子类化，也无需通过 object API 装箱。
+    ///     <para xml:lang="en">Stores mod-attached state on arbitrary reference objects without subclassing or boxing through object APIs.</para>
+    ///     <para xml:lang="zh-CN">在任意引用对象上存储模组附加状态，无需子类化，也无需通过 object API 装箱。</para>
     /// </summary>
     /// <param name="valueFactory">
-    ///     Optional per-key factory; when null, lazily created values use <c>default(TValue)</c>.
-    ///     可选的按键工厂；为 null 时，惰性创建的值使用 <c>default(TValue)</c>。
+    ///     <para xml:lang="en">Optional per-key factory; when null, lazily created values use <c>default(TValue)</c>.</para>
+    ///     <para xml:lang="zh-CN">可选的按键工厂；为 null 时，惰性创建的值使用 <c>default(TValue)</c>。</para>
     /// </param>
     public sealed class AttachedState<TKey, TValue>(Func<TKey, TValue>? valueFactory)
         where TKey : class
@@ -18,8 +18,8 @@ namespace STS2RitsuLib.Utils
         private readonly Func<TKey, TValue> _valueFactory = valueFactory ?? (_ => default!);
 
         /// <summary>
-        ///     Creates state storage using an optional parameterless factory for default values.
-        ///     使用可选的无参工厂创建默认值的状态存储。
+        ///     <para xml:lang="en">Creates state storage using an optional parameterless factory for default values.</para>
+        ///     <para xml:lang="zh-CN">使用可选的无参工厂创建具有默认值的状态存储。</para>
         /// </summary>
         public AttachedState(Func<TValue>? defaultValueFactory = null)
             : this(_ => defaultValueFactory != null ? defaultValueFactory() : default!)
@@ -27,8 +27,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Gets or sets the attached value for <paramref name="key" />.
-        ///     获取或设置 <paramref name="key" /> 的附加值。
+        ///     <para xml:lang="en">Gets or sets the attached value for <paramref name="key" />.</para>
+        ///     <para xml:lang="zh-CN">获取或设置 <paramref name="key" /> 的附加值。</para>
         /// </summary>
         public TValue this[TKey key]
         {
@@ -37,8 +37,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Determines whether an entry exists for <paramref name="key" /> (without creating one).
-        ///     确定 <paramref name="key" /> 是否存在条目（不会创建条目）。
+        ///     <para xml:lang="en">Determines whether an entry exists for <paramref name="key" /> without creating one.</para>
+        ///     <para xml:lang="zh-CN">确定 <paramref name="key" /> 是否存在条目，但不创建条目。</para>
         /// </summary>
         public bool ContainsKey(TKey key)
         {
@@ -47,12 +47,12 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Adds an entry for <paramref name="key" /> if absent.
-        ///     如果缺少 <paramref name="key" />，则添加条目。
+        ///     <para xml:lang="en">Adds an entry for <paramref name="key" /> if absent.</para>
+        ///     <para xml:lang="zh-CN">如果 <paramref name="key" /> 缺少条目，则添加条目。</para>
         /// </summary>
         /// <returns>
-        ///     True if the entry was added; false if <paramref name="key" /> already had a value.
-        ///     如果已添加条目，则为 true；如果 <paramref name="key" /> 已有值，则为 false。
+        ///     <para xml:lang="en">True if the entry was added; false if <paramref name="key" /> already had a value.</para>
+        ///     <para xml:lang="zh-CN">已添加条目时为 true；<paramref name="key" /> 已有值时为 false。</para>
         /// </returns>
         public bool TryAdd(TKey key, TValue value)
         {
@@ -61,10 +61,13 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Adds an entry for <paramref name="key" />.
-        ///     为 <paramref name="key" /> 添加条目。
+        ///     <para xml:lang="en">Adds an entry for <paramref name="key" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="key" /> 添加条目。</para>
         /// </summary>
-        /// <exception cref="ArgumentException">An entry for <paramref name="key" /> already exists.</exception>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">An entry for <paramref name="key" /> already exists.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="key" /> 的条目已存在。</para>
+        /// </exception>
         public void Add(TKey key, TValue value)
         {
             ArgumentNullException.ThrowIfNull(key);
@@ -73,8 +76,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns the existing value for <paramref name="key" /> or adds <paramref name="value" /> and returns it.
-        ///     返回 <paramref name="key" /> 的现有值；如果不存在，则添加并返回 <paramref name="value" />。
+        ///     <para xml:lang="en">Returns the existing value for <paramref name="key" /> or adds <paramref name="value" /> and returns it.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的现有值；不存在时添加并返回 <paramref name="value" />。</para>
         /// </summary>
         public TValue GetOrAdd(TKey key, TValue value)
         {
@@ -83,8 +86,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns the existing value for <paramref name="key" /> or creates one with <paramref name="valueFactory" />.
-        ///     返回 <paramref name="key" /> 的现有值；如果不存在，则用 <paramref name="valueFactory" /> 创建一个。
+        ///     <para xml:lang="en">Returns the existing value for <paramref name="key" /> or creates one with <paramref name="valueFactory" />.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的现有值；不存在时使用 <paramref name="valueFactory" /> 创建一个。</para>
         /// </summary>
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
         {
@@ -94,8 +97,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns the existing value for <paramref name="key" /> or creates and stores one.
-        ///     返回 <paramref name="key" /> 的现有值；如果不存在，则创建并存储一个。
+        ///     <para xml:lang="en">Returns the existing value for <paramref name="key" /> or creates and stores one.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的现有值；不存在时创建并存储一个。</para>
         /// </summary>
         public TValue GetOrCreate(TKey key)
         {
@@ -104,8 +107,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns the value for <paramref name="key" /> if present; otherwise <c>default(TValue)</c>.
-        ///     如果存在，则返回 <paramref name="key" /> 的值；否则返回 <c>default(TValue)</c>。
+        ///     <para xml:lang="en">Returns the value for <paramref name="key" /> if present; otherwise <c>default(TValue)</c>.</para>
+        ///     <para xml:lang="zh-CN">存在时返回 <paramref name="key" /> 的值；否则返回 <c>default(TValue)</c>。</para>
         /// </summary>
         public TValue? GetValueOrDefault(TKey key)
         {
@@ -114,8 +117,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns the value for <paramref name="key" /> if present; otherwise <paramref name="defaultValue" />.
-        ///     如果存在，则返回 <paramref name="key" /> 的值；否则返回 <paramref name="defaultValue" />。
+        ///     <para xml:lang="en">Returns the value for <paramref name="key" /> if present; otherwise <paramref name="defaultValue" />.</para>
+        ///     <para xml:lang="zh-CN">存在时返回 <paramref name="key" /> 的值；否则返回 <paramref name="defaultValue" />。</para>
         /// </summary>
         public TValue GetValueOrDefault(TKey key, TValue defaultValue)
         {
@@ -124,8 +127,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Attempts to read the attached value without creating it.
-        ///     尝试读取附加值，但不创建它。
+        ///     <para xml:lang="en">Attempts to read the attached value without creating it.</para>
+        ///     <para xml:lang="zh-CN">尝试读取附加值，但不创建它。</para>
         /// </summary>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
@@ -142,8 +145,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Replaces the stored value for <paramref name="key" /> and returns <paramref name="value" />.
-        ///     替换 <paramref name="key" /> 的已存储值，并返回 <paramref name="value" />。
+        ///     <para xml:lang="en">Stores <paramref name="value" /> for <paramref name="key" />, replacing any existing entry, and returns the value.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="key" /> 存储 <paramref name="value" />，替换任何现有条目，并返回该值。</para>
         /// </summary>
         public TValue Set(TKey key, TValue value)
         {
@@ -154,9 +157,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Mutates the stored value in place using <paramref name="updater" />.
-        ///     使用 <paramref name="updater" /> 原地修改已存储值。
-        ///     使用 <c>updater</c> 原地修改已存储值。
+        ///     <para xml:lang="en">Updates the stored value using <paramref name="updater" />, creating the entry first when absent.</para>
+        ///     <para xml:lang="zh-CN">使用 <paramref name="updater" /> 更新已存储值；条目不存在时会先创建。</para>
         /// </summary>
         public TValue Update(TKey key, Func<TValue, TValue> updater)
         {
@@ -166,12 +168,12 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Removes any value attached to <paramref name="key" />.
-        ///     移除附加到 <paramref name="key" /> 的任何值。
+        ///     <para xml:lang="en">Removes any value attached to <paramref name="key" />.</para>
+        ///     <para xml:lang="zh-CN">移除附加到 <paramref name="key" /> 的任何值。</para>
         /// </summary>
         /// <returns>
-        ///     True if an entry was removed.
-        ///     如果已移除条目，则为 true。
+        ///     <para xml:lang="en">True if an entry was removed.</para>
+        ///     <para xml:lang="zh-CN">已移除条目时为 true。</para>
         /// </returns>
         public bool Remove(TKey key)
         {
@@ -180,12 +182,12 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Removes the value attached to <paramref name="key" /> if present.
-        ///     如果存在，则移除附加到 <paramref name="key" /> 的值。
+        ///     <para xml:lang="en">Removes the value attached to <paramref name="key" /> if present.</para>
+        ///     <para xml:lang="zh-CN">存在时移除附加到 <paramref name="key" /> 的值。</para>
         /// </summary>
         /// <returns>
-        ///     True if an entry was removed.
-        ///     如果已移除条目，则为 true。
+        ///     <para xml:lang="en">True if an entry was removed.</para>
+        ///     <para xml:lang="zh-CN">已移除条目时为 true。</para>
         /// </returns>
         public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
@@ -209,8 +211,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Removes all entries from the table (does not affect live <typeparamref name="TKey" /> instances).
-        ///     移除表中的所有条目（不影响仍存活的 <typeparamref name="TKey" /> 实例）。
+        ///     <para xml:lang="en">Removes all entries from the table without affecting live <typeparamref name="TKey" /> instances.</para>
+        ///     <para xml:lang="zh-CN">移除表中的所有条目，但不影响仍存活的 <typeparamref name="TKey" /> 实例。</para>
         /// </summary>
         public void Clear()
         {

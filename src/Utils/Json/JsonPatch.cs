@@ -4,20 +4,25 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Utils.Json
 {
     /// <summary>
-    ///     JSON Patch (RFC 6902) implementation for <see cref="JsonNode" /> DOM.
-    ///     https://www.rfc-editor.org/rfc/rfc6902
-    ///     JSON Patch (RFC 6902) implementation 用于 <see cref="JsonNode" /> DOM.
-    ///     https://www.rfc-edit或.或g/rfc/rfc6902
+    ///     <para xml:lang="en">
+    ///         Implements JSON Patch (RFC 6902) operations for <see cref="JsonNode" /> DOM values.
+    ///         See <see href="https://www.rfc-editor.org/rfc/rfc6902" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="JsonNode" /> DOM 值实现 JSON 补丁（RFC 6902）操作。
+    ///         参见 <see href="https://www.rfc-editor.org/rfc/rfc6902" />。
+    ///     </para>
     /// </summary>
     public static class JsonPatch
     {
         /// <summary>
-        ///     Applies a JSON Patch (RFC 6902) document to <paramref name="target" /> and returns the patched result.
-        ///     The patch document must be a JSON array of operation objects.
-        ///     将 JSON Patch（RFC 6902）文档应用到 <paramref name="target" /> 并返回打补丁后的结果。
-        ///     patch 文档必须是由操作对象组成的 JSON 数组。
+        ///     <para xml:lang="en">Applies a JSON Patch (RFC 6902) document to <paramref name="target" /> and returns the patched result. The document must be an array of operation objects.</para>
+        ///     <para xml:lang="zh-CN">将 JSON 补丁（RFC 6902）文档应用于 <paramref name="target" /> 并返回应用后的结果。该文档必须是操作对象数组。</para>
         /// </summary>
-        /// <exception cref="JsonPatchException">Thrown when the patch document is malformed or cannot be applied.</exception>
+        /// <exception cref="JsonPatchException">
+        ///     <para xml:lang="en">Thrown when the patch document is malformed or cannot be applied.</para>
+        ///     <para xml:lang="zh-CN">当补丁文档格式错误或无法应用时引发。</para>
+        /// </exception>
         public static JsonNode? Apply(JsonNode? target, JsonNode? patchDocument)
         {
             if (patchDocument == null)
@@ -29,10 +34,13 @@ namespace STS2RitsuLib.Utils.Json
         }
 
         /// <summary>
-        ///     Applies a JSON Patch document to <paramref name="target" /> and returns the patched result.
-        ///     将 JSON Patch 文档应用到 <paramref name="target" /> 并返回打补丁后的结果。
+        ///     <para xml:lang="en">Applies a JSON Patch document to <paramref name="target" /> and returns the patched result.</para>
+        ///     <para xml:lang="zh-CN">将 JSON Patch 文档应用于 <paramref name="target" /> 并返回应用后的结果。</para>
         /// </summary>
-        /// <exception cref="JsonPatchException">Thrown when an operation cannot be applied.</exception>
+        /// <exception cref="JsonPatchException">
+        ///     <para xml:lang="en">Thrown when an operation cannot be applied.</para>
+        ///     <para xml:lang="zh-CN">当某项操作无法应用时引发。</para>
+        /// </exception>
         public static JsonNode? Apply(JsonNode? target, IEnumerable<JsonPatchOperation> operations)
         {
             ArgumentNullException.ThrowIfNull(operations);
@@ -408,22 +416,20 @@ namespace STS2RitsuLib.Utils.Json
     }
 
     /// <summary>
-    ///     JSON Patch operation object (RFC 6902).
-    ///     https://www.rfc-editor.org/rfc/rfc6902
-    ///     JSON Patch 操作对象（RFC 6902）。
+    ///     <para xml:lang="en">Represents one JSON Patch operation object (RFC 6902).</para>
+    ///     <para xml:lang="zh-CN">表示一个 JSON 补丁操作对象（RFC 6902）。</para>
     /// </summary>
     public sealed record JsonPatchOperation(string Op, string Path, string? From = null, JsonNode? Value = null);
 
     /// <summary>
-    ///     Error raised when a JSON Patch cannot be applied.
-    ///     https://www.rfc-editor.org/rfc/rfc6902
-    ///     无法应用 JSON Patch 时引发的错误。
+    ///     <para xml:lang="en">Represents an error raised when a JSON Patch cannot be applied.</para>
+    ///     <para xml:lang="zh-CN">表示无法应用 JSON 补丁时引发的错误。</para>
     /// </summary>
     public sealed class JsonPatchException : Exception
     {
         /// <summary>
-        ///     Creates a JSON Patch exception.
-        ///     创建 JSON Patch 异常。
+        ///     <para xml:lang="en">Creates a JSON Patch exception.</para>
+        ///     <para xml:lang="zh-CN">创建 JSON Patch 异常。</para>
         /// </summary>
         public JsonPatchException(string message) : base(message)
         {

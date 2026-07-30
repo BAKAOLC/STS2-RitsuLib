@@ -5,19 +5,30 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Utils.Json
 {
     /// <summary>
-    ///     I-JSON (RFC 7493) validator for <see cref="JsonNode" /> DOM.
-    ///     I-JSON is a restricted profile of JSON for interoperable exchanges.
-    ///     https://www.rfc-editor.org/rfc/rfc7493
-    ///     面向 <see cref="JsonNode" /> DOM 的 I-JSON（RFC 7493）验证器。
-    ///     I-JSON 是用于互操作交换的受限 JSON 配置文件。
+    ///     <para xml:lang="en">
+    ///         Validates the DOM-level I-JSON constraints of <see cref="JsonNode" /> values (RFC 7493), including
+    ///         Unicode scalar and noncharacter restrictions plus finite IEEE 754 binary64-compatible numbers. See
+    ///         <see href="https://www.rfc-editor.org/rfc/rfc7493" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         验证 <see cref="JsonNode" /> 值在 DOM 层面的 I-JSON（RFC 7493）约束，包括 Unicode 标量和非字符限制，
+    ///         以及与有限 IEEE 754 binary64 数值的兼容性。参见 <see href="https://www.rfc-editor.org/rfc/rfc7493" />。
+    ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">A DOM cannot reveal the original byte encoding or duplicate object names discarded before construction; validate those properties while parsing the source JSON.</para>
+    ///     <para xml:lang="zh-CN">DOM 无法反映原始字节编码，也无法发现构建前已被丢弃的重复对象成员名；这些属性应在解析源 JSON 时验证。</para>
+    /// </remarks>
     public static class JsonIJsonValidator
     {
         /// <summary>
-        ///     Validates that the DOM node conforms to I-JSON constraints.
-        ///     验证 DOM 节点是否符合 I-JSON 约束。
-        ///     验证 DOM 节点是否符合 I-JSON 约束。
+        ///     <para xml:lang="en">Attempts to validate the DOM node against the representable I-JSON constraints.</para>
+        ///     <para xml:lang="zh-CN">尝试验证 DOM 节点是否符合可在 DOM 中检查的 I-JSON 约束。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> with a null <paramref name="error" /> when validation succeeds; otherwise <see langword="false" /> with a diagnostic.</para>
+        ///     <para xml:lang="zh-CN">验证成功时返回 <see langword="true" />，且 <paramref name="error" /> 为 null；否则返回 <see langword="false" /> 并提供诊断。</para>
+        /// </returns>
         public static bool TryValidate(JsonNode? node, out string? error)
         {
             error = null;

@@ -3,14 +3,14 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     Host-version-stable helpers for checking whether a creature should be rendered with an infinite HP display.
-    ///     用于检查生物是否应以无限 HP 显示渲染的宿主版本稳定辅助方法。
+    ///     <para xml:lang="en">Provides host-version-stable helpers for checking whether a creature displays infinite HP.</para>
+    ///     <para xml:lang="zh-CN">提供跨宿主版本保持稳定的辅助方法，用于检查生物是否显示无限生命值。</para>
     /// </summary>
     public static class CreatureHpDisplayExtensions
     {
         /// <summary>
-        ///     Returns <c>true</c> when the creature is currently rendered with an infinite HP indicator.
-        ///     当该生物当前以无限 HP 指示器渲染时，返回 <c>true</c>。
+        ///     <para xml:lang="en">Returns whether the creature's HP display is currently in infinite mode.</para>
+        ///     <para xml:lang="zh-CN">返回该生物的生命值显示当前是否处于无限模式。</para>
         /// </summary>
         public static bool IsInfiniteHpDisplayed(this Creature creature)
         {
