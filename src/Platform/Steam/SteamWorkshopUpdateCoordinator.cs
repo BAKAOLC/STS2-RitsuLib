@@ -404,12 +404,23 @@ namespace STS2RitsuLib.Platform.Steam
 
         private static async Task MonitorAutoDownloadsAsync(AutoDownloadNotification notification)
         {
-            var downloadFinished = await MonitorTriggeredDownloadsAsync(
-                    notification.Result,
-                    null,
-                    false,
-                    CancellationToken.None)
-                .ConfigureAwait(false);
+            bool downloadFinished;
+            try
+            {
+                downloadFinished = await MonitorTriggeredDownloadsAsync(
+                        notification.Result,
+                        null,
+                        false,
+                        CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[SteamWorkshopUpdate] Automatic download monitor failed: {ex.Message}");
+                return;
+            }
+
             if (!downloadFinished)
                 return;
 
