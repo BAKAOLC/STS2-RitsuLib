@@ -62,10 +62,16 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static void StopAndRelease(GodotObject? snapshotInstance, bool allowFadeOut = true)
         {
-            if (snapshotInstance is null)
+            if (snapshotInstance is null || !GodotObject.IsInstanceValid(snapshotInstance))
                 return;
 
-            FmodStudioEventInstances.TryStop(snapshotInstance, allowFadeOut);
+            if (!FmodStudioEventInstances.TryStop(snapshotInstance, allowFadeOut))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    "[Audio] FMOD snapshot stop failed; release was skipped so the caller can retry.");
+                return;
+            }
+
             FmodStudioEventInstances.TryRelease(snapshotInstance);
         }
     }
