@@ -150,11 +150,20 @@ namespace STS2RitsuLib.Audio.Internal
                 $"{SanitizeFileName(Path.GetFileNameWithoutExtension(resourcePath))}-{digest[..16]}{extension}";
             var path = Path.Combine(cacheDir, fileName);
 
-            lock (Gate)
+            try
             {
-                Directory.CreateDirectory(cacheDir);
-                if (!File.Exists(path) || new FileInfo(path).Length != bytes.Length)
-                    File.WriteAllBytes(path, bytes);
+                lock (Gate)
+                {
+                    Directory.CreateDirectory(cacheDir);
+                    if (!File.Exists(path) || new FileInfo(path).Length != bytes.Length)
+                        File.WriteAllBytes(path, bytes);
+                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[Audio] FMOD resource cache write failed: {resourcePath}; {ex.Message}");
+                return false;
             }
 
             absolutePath = path;
