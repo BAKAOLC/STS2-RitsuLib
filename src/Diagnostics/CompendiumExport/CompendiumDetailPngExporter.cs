@@ -472,11 +472,21 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 log?.Invoke($"{logLinePrefix}{logFileTag}: {ex.Message}");
                 ok = false;
             }
+            finally
+            {
+                try
+                {
+                    await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
+                }
+                finally
+                {
+                    if (GodotObject.IsInstanceValid(host))
+                        DisposeExportHost(host);
+                }
 
-            await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
-            if (GodotObject.IsInstanceValid(host))
-                DisposeExportHost(host);
-            await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
+                await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
+            }
+
             return ok;
         }
 
@@ -510,11 +520,21 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 log?.Invoke($"{logLinePrefix}{logFileTag}: {ex.Message}");
                 ok = false;
             }
+            finally
+            {
+                try
+                {
+                    await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
+                }
+                finally
+                {
+                    if (GodotObject.IsInstanceValid(host))
+                        DisposeExportHost(host);
+                }
 
-            await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
-            if (GodotObject.IsInstanceValid(host))
-                DisposeExportHost(host);
-            await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
+                await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
+            }
+
             return ok;
         }
 
