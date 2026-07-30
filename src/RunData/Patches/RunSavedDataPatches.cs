@@ -187,18 +187,27 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static string? TryReadPayload(PacketReader reader)
         {
-            var payload = RitsuNetMessageTailExtensions.TryReadLegacySingleBytes(
-                reader,
-                TailExtensionId,
-                PayloadVersion,
-                LegacyStringPayloadVersion,
-                out var wasLegacyString);
-            if (payload == null)
-                return null;
+            try
+            {
+                var payload = RitsuNetMessageTailExtensions.TryReadLegacySingleBytes(
+                    reader,
+                    TailExtensionId,
+                    PayloadVersion,
+                    LegacyStringPayloadVersion,
+                    out var wasLegacyString);
+                if (payload == null)
+                    return null;
 
-            return wasLegacyString
-                ? Encoding.UTF8.GetString(payload)
-                : Encoding.UTF8.GetString(Unbrotli(payload));
+                return wasLegacyString
+                    ? Encoding.UTF8.GetString(payload)
+                    : Encoding.UTF8.GetString(Unbrotli(payload));
+            }
+            catch (InvalidDataException ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RunSavedData] Failed to read synchronized payload: {ex.Message}");
+                return null;
+            }
         }
 
         private static byte[] Brotli(byte[] data)
