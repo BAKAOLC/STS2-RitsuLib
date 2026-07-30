@@ -800,6 +800,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             AbstractModel? source = null)
         {
             ArgumentNullException.ThrowIfNull(plan);
+            ValidateCommitPlan(plan);
 
             if (plan.Player == null)
             {
@@ -815,10 +816,6 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var builder = new SecondaryResourcePlayLedgerBuilder(plan.Card, plan.Player, plan.IsFree);
             foreach (var line in plan.Lines)
             {
-                if (!line.CanPlay)
-                    throw new InvalidOperationException(
-                        $"Cannot commit unplayable secondary resource payment for {line.ResourceId} on {plan.Card.Id.Entry}.");
-
                 if (line is { IsFree: false, AmountToSpend: > 0 })
                 {
                     var spent = await SecondaryResourceCmd.SpendResolvedCardPayment(
@@ -839,6 +836,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourcePlayLedgerRuntime.SetPending(plan.Card, ledger);
             await RunShortfallPayments(plan, ledger, source ?? plan.Card);
             return ledger;
+        }
+
+        private static void ValidateCommitPlan(SecondaryResourcePaymentPlan plan)
+        {
+            var duplicateUse = plan.Lines
+                .GroupBy(static line => line.UseId, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(static group => group.Count() > 1);
+            if (duplicateUse != null)
+                throw new InvalidOperationException(
+                    $"Secondary resource payment plan for {plan.Card.Id.Entry} contains duplicate use id '{duplicateUse.Key}'.");
+
+            var unplayableLine = plan.Lines.FirstOrDefault(static line => !line.CanPlay);
+            if (unplayableLine != null)
+                throw new InvalidOperationException(
+                    $"Cannot commit unplayable secondary resource payment for {unplayableLine.ResourceId} on {plan.Card.Id.Entry}.");
+
+            if (plan.Player == null)
+                return;
+
+            foreach (var group in plan.Lines
+                         .Where(static line => !line.IsFree && line.AmountToSpend > 0)
+                         .GroupBy(static line => line.ResourceId, StringComparer.OrdinalIgnoreCase))
+            {
+                var required = group.Aggregate(0L, static (sum, line) => sum + line.AmountToSpend);
+                if (required > SecondaryResourceCmd.Get(plan.Player, group.Key))
+                    throw new InvalidOperationException(
+                        $"Secondary resource payment plan for {plan.Card.Id.Entry} no longer has enough '{group.Key}'.");
+            }
         }
 
         private static async Task RunShortfallPayments(

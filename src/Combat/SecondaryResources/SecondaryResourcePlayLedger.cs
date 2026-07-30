@@ -311,7 +311,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         public void Add(SecondaryResourcePaymentLine line)
         {
-            _useLines[line.UseId] = new(
+            var ledgerLine = new SecondaryResourcePlayLedgerLine(
                 line.ResourceId,
                 line.IsFree ? 0 : line.AmountToSpend,
                 line.Value,
@@ -332,6 +332,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 ExtraAmountSpent = line.ExtraAmountToSpend,
                 ExtraStacks = line.ExtraStacks,
             };
+
+            if (!_useLines.TryAdd(line.UseId, ledgerLine))
+                throw new InvalidOperationException(
+                    $"Duplicate secondary-resource use id '{line.UseId}' in the card-play ledger.");
         }
 
         public SecondaryResourcePlayLedger Build()
