@@ -109,6 +109,9 @@ namespace STS2RitsuLib.Interop.Internal
             try
             {
                 var targetType = ResolveTargetType(targetName, targetContext);
+                if (targetType.IsValueType)
+                    throw new InvalidOperationException(
+                        $"InteropClassWrapper cannot wrap value type {targetType.FullName}.");
 
                 // Validate all constructors before patching any to avoid partial application.
                 var ctorPairs = constructors.Select(ctor =>
@@ -161,58 +164,63 @@ namespace STS2RitsuLib.Interop.Internal
                 var methodParams = methodParamInfos.Select(p => p.ParameterType).ToArray();
                 var nonStaticParamInfos = method.IsStatic ? [.. methodParamInfos.Skip(1)] : methodParamInfos;
 
-                MethodInfo? targetMethod = null;
-                var loadParams = new List<CodeInstruction>();
+                var candidates = new List<MethodInfo>();
                 foreach (var possibleTarget in AccessTools.GetDeclaredMethods(targetType))
                 {
-                    if (possibleTarget.Name != methodName)
+                    if (possibleTarget.Name != methodName || possibleTarget.ContainsGenericParameters)
                         continue;
-                    var targetParams = possibleTarget.GetParameters();
+                    if (possibleTarget.IsStatic && !method.IsStatic)
+                        continue;
+                    if (!possibleTarget.IsStatic && method.IsStatic &&
+                        !CanUseStaticShimReceiver(methodParamInfos, targetType))
+                        continue;
+
+                    var candidateParams = possibleTarget.GetParameters();
                     var checkParamInfos = possibleTarget.IsStatic ? methodParamInfos : nonStaticParamInfos;
-                    if (!CheckParamMatch(targetParams, checkParamInfos))
-                        continue;
-                    targetMethod = possibleTarget;
-
-                    if (targetMethod.ReturnType != typeof(void))
-                        loadParams.Add(new(OpCodes.Pop));
-
-                    var off = 0;
-                    if (!targetMethod.IsStatic)
-                    {
-                        if (method.IsStatic)
-                        {
-                            ValidateStaticShimReceiver(method, methodParamInfos, targetType, targetMethod);
-                            loadParams.Add(CodeInstruction.LoadArgument(0));
-                            if (methodParams[0] != targetType)
-                                loadParams.Add(new(OpCodes.Castclass, targetType));
-                            ++off;
-                        }
-                        else
-                        {
-                            loadParams.AddRange(LoadWrappedTarget(targetType));
-                        }
-                    }
-
-                    for (var i = 0; i < targetParams.Length; i++)
-                    {
-                        loadParams.Add(CodeInstruction.LoadArgument(i + off));
-                        if (methodParams[i + off] != targetParams[i].ParameterType)
-                            loadParams.Add(new(OpCodes.Castclass, targetParams[i].ParameterType));
-                    }
-
-                    break;
+                    if (CheckParamMatch(candidateParams, checkParamInfos))
+                        candidates.Add(possibleTarget);
                 }
 
-                if (targetMethod is null)
-                    throw new InvalidOperationException(
-                        $"{FormatMethod(method)} → {targetType.FullName}.{methodName}: no overload with matching parameters");
+                var targetMethod = ResolveTargetMethodCandidate(method, targetType, methodName, candidates);
+                var loadParams = new List<CodeInstruction>();
+
+                if (targetMethod.ReturnType != typeof(void))
+                    loadParams.Add(new(OpCodes.Pop));
+
+                var sourceParameterOffset = 0;
+                if (!targetMethod.IsStatic)
+                {
+                    if (method.IsStatic)
+                    {
+                        ValidateStaticShimReceiver(method, methodParamInfos, targetType, targetMethod);
+                        loadParams.Add(CodeInstruction.LoadArgument(0));
+                        AddTypeCoercion(loadParams, methodParams[0], targetType);
+                        sourceParameterOffset = 1;
+                    }
+                    else
+                    {
+                        loadParams.AddRange(LoadWrappedTarget(targetType));
+                    }
+                }
+
+                var targetParams = targetMethod.GetParameters();
+                var instanceArgumentOffset = method.IsStatic ? 0 : 1;
+                for (var i = 0; i < targetParams.Length; i++)
+                {
+                    var sourceParameterIndex = i + sourceParameterOffset;
+                    loadParams.Add(CodeInstruction.LoadArgument(sourceParameterIndex + instanceArgumentOffset));
+                    AddTypeCoercion(
+                        loadParams,
+                        methodParams[sourceParameterIndex],
+                        targetParams[i].ParameterType);
+                }
 
                 if (targetMethod.ReturnType != method.ReturnType)
                     throw new InvalidOperationException(
                         $"{FormatMethod(method)} → {targetType.FullName}.{methodName}: " +
                         $"return type mismatch (stub: {method.ReturnType.Name}, target: {targetMethod.ReturnType.Name})");
 
-                loadParams.Add(new(OpCodes.Call, targetMethod));
+                loadParams.Add(Call(targetMethod));
                 PatchReturnInsertion(harmony, method, loadParams);
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop method {method.Name}");
             }
@@ -266,13 +274,13 @@ namespace STS2RitsuLib.Interop.Internal
                             PatchReturnInsertion(harmony, property.SetMethod,
                             [
                                 new(OpCodes.Ldarg_0),
-                                new(OpCodes.Call, targetProperty.SetMethod),
+                                Call(targetProperty.SetMethod),
                             ]);
                         else
                             PatchReturnInsertion(harmony, property.SetMethod,
                             [
                                 .. LoadWrappedTarget(targetType), new(OpCodes.Ldarg_1),
-                                new(OpCodes.Call, targetProperty.SetMethod),
+                                Call(targetProperty.SetMethod),
                             ]);
                     }
 
@@ -286,13 +294,13 @@ namespace STS2RitsuLib.Interop.Internal
                             PatchReturnInsertion(harmony, property.GetMethod,
                             [
                                 new(OpCodes.Pop),
-                                new(OpCodes.Call, targetProperty.GetMethod),
+                                Call(targetProperty.GetMethod),
                             ]);
                         else
                             PatchReturnInsertion(harmony, property.GetMethod,
                             [
                                 new(OpCodes.Pop), .. LoadWrappedTarget(targetType),
-                                new(OpCodes.Call, targetProperty.GetMethod),
+                                Call(targetProperty.GetMethod),
                             ]);
                     }
 
@@ -374,6 +382,10 @@ namespace STS2RitsuLib.Interop.Internal
 
         private static CodeInstruction[] LoadWrappedTarget(Type targetType)
         {
+            if (targetType.IsValueType)
+                throw new InvalidOperationException(
+                    $"InteropClassWrapper cannot wrap value type {targetType.FullName}.");
+
             return
             [
                 CodeInstruction.LoadArgument(0),
@@ -394,6 +406,67 @@ namespace STS2RitsuLib.Interop.Internal
 
             throw new InvalidOperationException(
                 $"Static shim {FormatMethod(sourceMethod)} must take target receiver {targetType.FullName} as its first parameter to match instance target {FormatMethod(targetMethod)}");
+        }
+
+        private static bool CanUseStaticShimReceiver(ParameterInfo[] sourceParameters, Type targetType)
+        {
+            return !targetType.IsValueType &&
+                   sourceParameters.Length > 0 &&
+                   (IsWildcardParam(sourceParameters[0]) ||
+                    targetType.IsAssignableTo(sourceParameters[0].ParameterType));
+        }
+
+        private static MethodInfo ResolveTargetMethodCandidate(
+            MethodInfo sourceMethod,
+            Type targetType,
+            string methodName,
+            IReadOnlyList<MethodInfo> candidates)
+        {
+            if (candidates.Count == 0)
+                throw new InvalidOperationException(
+                    $"{FormatMethod(sourceMethod)} → {targetType.FullName}.{methodName}: " +
+                    "no overload with matching parameters");
+            if (candidates.Count == 1)
+                return candidates[0];
+
+            var signatures = string.Join(", ", candidates.Select(FormatMethodSignature));
+            throw new InvalidOperationException(
+                $"{FormatMethod(sourceMethod)} → {targetType.FullName}.{methodName}: " +
+                $"multiple overloads match ({signatures}); use more specific stub parameter types");
+        }
+
+        private static void AddTypeCoercion(List<CodeInstruction> instructions, Type sourceType, Type targetType)
+        {
+            if (sourceType == targetType)
+                return;
+
+            if (sourceType.IsByRef || targetType.IsByRef || sourceType.IsPointer || targetType.IsPointer)
+                throw new InvalidOperationException(
+                    $"Cannot coerce interop argument from {sourceType} to {targetType}.");
+
+            if (sourceType.IsValueType)
+            {
+                if (targetType.IsValueType)
+                    throw new InvalidOperationException(
+                        $"Cannot coerce interop value argument from {sourceType} to {targetType}.");
+
+                instructions.Add(new(OpCodes.Box, sourceType));
+                if (targetType != typeof(object))
+                    instructions.Add(new(OpCodes.Castclass, targetType));
+                return;
+            }
+
+            instructions.Add(targetType.IsValueType
+                ? new(OpCodes.Unbox_Any, targetType)
+                : new(OpCodes.Castclass, targetType));
+        }
+
+        private static CodeInstruction Call(MethodInfo method)
+        {
+            var opcode = method.IsStatic || method.DeclaringType?.IsValueType == true
+                ? OpCodes.Call
+                : OpCodes.Callvirt;
+            return new(opcode, method);
         }
 
         private static bool IsStaticProperty(PropertyInfo property)
@@ -471,6 +544,11 @@ namespace STS2RitsuLib.Interop.Internal
         private static string FormatMethod(MethodInfo m)
         {
             return $"{m.DeclaringType?.FullName}.{m.Name}";
+        }
+
+        private static string FormatMethodSignature(MethodInfo method)
+        {
+            return $"{method.Name}({string.Join(", ", method.GetParameters().Select(p => p.ParameterType.Name))})";
         }
 
         private static string FormatConstructor(ConstructorInfo c)
