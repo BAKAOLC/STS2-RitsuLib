@@ -193,9 +193,9 @@ namespace STS2RitsuLib.Unlocks
 
         private void RequireEpochCore(Type modelType, string epochId, bool overwrite)
         {
-            EnsureMutable($"register unlock requirement for '{modelType.Name}'");
             ArgumentNullException.ThrowIfNull(modelType);
             ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
+            EnsureMutable($"register unlock requirement for '{modelType.Name}'");
 
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
             var modelId = ModelDb.GetId(modelType);
@@ -230,6 +230,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterRunAs(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
                     ModTimelineRegistry.GetEpochId(epochType),
@@ -259,6 +261,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterWinAs(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
                     ModTimelineRegistry.GetEpochId(epochType),
@@ -287,6 +291,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterAscensionWin(Type characterType, Type epochType, int ascensionLevel)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             ArgumentOutOfRangeException.ThrowIfNegative(ascensionLevel);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
@@ -354,6 +360,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterEliteVictories(Type characterType, Type epochType, int requiredEliteWins = 15)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterEliteEpochRule(
                 EliteEpochUnlockRule.Create(
                     ModelDb.GetId(characterType),
@@ -400,6 +408,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterBossVictories(Type characterType, Type epochType, int requiredBossWins = 15)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterBossEpochRule(
                 CountedEpochUnlockRule.Create(
                     ModelDb.GetId(characterType),
@@ -446,6 +456,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterAscensionOneWin(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterAscensionOneEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
 
@@ -485,6 +497,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void RevealAscensionAfterEpoch(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterAscensionRevealEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
 
@@ -524,6 +538,8 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockCharacterAfterRunAs(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunCharacterUnlockEpoch(ModelDb.GetId(characterType),
                 ModTimelineRegistry.GetEpochId(epochType));
         }
