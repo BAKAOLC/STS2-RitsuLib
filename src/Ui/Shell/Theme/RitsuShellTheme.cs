@@ -6,11 +6,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Represents an immutable snapshot of a resolved shell theme. It exposes typed color, text, surface,
+    ///         Represents an immutable snapshot of a resolved Shell theme. It exposes typed color, text, panel,
     ///         component, metric, and font tokens, as well as path-based access and per-mod extension data.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         表示已解析外壳主题的不可变快照。该快照公开类型化的颜色、文本、表面、组件、度量及字体令牌，
+    ///         表示已解析 Shell 主题的不可变快照。该快照公开类型化的颜色、文本、面板、组件、度量及字体令牌，
     ///         同时提供基于路径的访问方式和各模组的扩展数据。
     ///     </para>
     /// </summary>
@@ -77,14 +77,14 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         public TextTokens Text { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the colors used by panes, entries, and framed surfaces.</para>
-        ///     <para xml:lang="zh-CN">获取窗格、条目及带框表面所用的颜色。</para>
+        ///     <para xml:lang="en">Gets the colors used by panes, entries, and framed panels.</para>
+        ///     <para xml:lang="zh-CN">获取窗格、条目及带框面板所用的颜色。</para>
         /// </summary>
         public SurfaceTokens Surface { get; }
 
         /// <summary>
         ///     <para xml:lang="en">Gets the visual tokens for shell UI components.</para>
-        ///     <para xml:lang="zh-CN">获取外壳界面组件的视觉令牌。</para>
+        ///     <para xml:lang="zh-CN">获取 Shell 界面组件的视觉令牌。</para>
         /// </summary>
         public ComponentTokens Component { get; }
 
@@ -298,7 +298,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         ///         token cannot be loaded.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取 <paramref name="path" /> 处的字体族；令牌无法加载时使用配置的后备字体。
+        ///         获取 <paramref name="path" /> 处的字体族；令牌无法加载时使用配置的回退字体。
         ///     </para>
         /// </summary>
         /// <param name="path">
@@ -307,7 +307,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </param>
         /// <returns>
         ///     <para xml:lang="en">The resolved font or the configured fallback font.</para>
-        ///     <para xml:lang="zh-CN">解析出的字体或配置的后备字体。</para>
+        ///     <para xml:lang="zh-CN">解析出的字体或配置的回退字体。</para>
         /// </returns>
         public Font GetFontFamily(string path)
         {

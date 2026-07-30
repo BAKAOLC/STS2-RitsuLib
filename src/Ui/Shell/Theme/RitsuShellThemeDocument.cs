@@ -10,7 +10,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///         <c>$description</c> properties.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         表示基于 W3C 设计令牌格式模块的外壳主题文档。令牌组存储为嵌套 JSON 对象，叶令牌包含
+    ///         表示基于 W3C 设计令牌格式模块的 Shell 主题文档。令牌组存储为嵌套 JSON 对象，叶令牌包含
     ///         <c>$value</c>、<c>$type</c> 及可选的 <c>$description</c> 属性。
     ///     </para>
     /// </summary>

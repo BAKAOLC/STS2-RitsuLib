@@ -3,12 +3,12 @@ using Godot;
 namespace STS2RitsuLib.Ui.RichTextEffects
 {
     /// <summary>
-    ///     <para xml:lang="en">Immutable definition of a registered mod rich-text effect.</para>
-    ///     <para xml:lang="zh-CN">已注册 mod 富文本特效的不可变定义。</para>
+    ///     <para xml:lang="en">Contains the metadata and effect instance of a registered mod rich-text effect.</para>
+    ///     <para xml:lang="zh-CN">包含已注册模组富文本特效的元数据与特效实例。</para>
     /// </summary>
     /// <param name="ModId">
     ///     <para xml:lang="en">ID of the mod that owns the registration.</para>
-    ///     <para xml:lang="zh-CN">拥有该注册项的 mod ID。</para>
+    ///     <para xml:lang="zh-CN">拥有该注册项的模组 ID。</para>
     /// </param>
     /// <param name="Bbcode">
     ///     <para xml:lang="en">Global BBCode tag name handled by the effect.</para>

@@ -9,7 +9,7 @@ namespace STS2RitsuLib.Ui.Shell
     ///         through a <see cref="Control.Theme" /> attached to an ancestor control.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         通过附加到祖先控件的 <see cref="Control.Theme" />，将外壳主题令牌映射到 Godot 原生的
+    ///         通过附加到祖先控件的 <see cref="Control.Theme" />，将 Shell 主题令牌映射到 Godot 原生的
     ///         <c>TooltipPanel</c> 和 <c>TooltipLabel</c> 主题类型。
     ///     </para>
     /// </summary>

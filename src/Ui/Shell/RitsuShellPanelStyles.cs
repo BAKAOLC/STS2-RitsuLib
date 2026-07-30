@@ -6,21 +6,21 @@ namespace STS2RitsuLib.Ui.Shell
     /// <summary>
     ///     <para xml:lang="en">
     ///         Provides shared <see cref="StyleBoxFlat" /> factories for framed panels and sidebar cards used by
-    ///         mod settings, runtime overlays, and other in-game surfaces that follow the Ritsu shell style.
+    ///         mod settings, runtime overlays, and other in-game UI that follows the Ritsu Shell style.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         提供带框面板和侧边栏卡片所用的共享 <see cref="StyleBoxFlat" /> 工厂，适用于模组设置界面、
-    ///         运行时浮层及其他采用 Ritsu 外壳样式的游戏内界面。
+    ///         运行时浮层及其他采用 Ritsu Shell 样式的游戏内界面。
     ///     </para>
     /// </summary>
     public static class RitsuShellPanelStyles
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Creates a primary framed surface for large panes and content areas.
+        ///         Creates a primary framed panel for large panes and content areas.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         为大型窗格和内容区域创建主要的带框表面。
+        ///         为大型窗格和内容区域创建主要的带框面板。
         ///     </para>
         /// </summary>
         /// <param name="background">
@@ -32,8 +32,8 @@ namespace STS2RitsuLib.Ui.Shell
         ///     <para xml:lang="zh-CN">应用于各个角的备用圆角半径。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en">A new style box for the framed surface.</para>
-        ///     <para xml:lang="zh-CN">新建的带框表面样式框。</para>
+        ///     <para xml:lang="en">A new style box for the framed panel.</para>
+        ///     <para xml:lang="zh-CN">带框面板的新样式框。</para>
         /// </returns>
         public static StyleBoxFlat CreateFramedSurface(Color background, int cornerRadius)
         {
@@ -69,7 +69,7 @@ namespace STS2RitsuLib.Ui.Shell
         ///         Creates a nested sidebar card used to group a mod's entries.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         创建用于归组模组条目的嵌套侧边栏卡片。
+        ///         创建用于组织模组条目的嵌套侧边栏卡片。
         ///     </para>
         /// </summary>
         /// <param name="cornerRadius">

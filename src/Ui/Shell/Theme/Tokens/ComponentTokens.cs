@@ -4,7 +4,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
     ///     <para xml:lang="en">Groups shell-theme colors by component, variant, and interaction state.</para>
-    ///     <para xml:lang="zh-CN">按组件、变体及交互状态归组外壳主题颜色。</para>
+    ///     <para xml:lang="zh-CN">按组件、变体及交互状态分类定义 Shell 主题颜色。</para>
     /// </summary>
     /// <param name="SidebarCard">
     ///     <para xml:lang="en">The default and selected sidebar mod-card states.</para>
@@ -27,8 +27,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///     <para xml:lang="zh-CN">列表项卡片的变体。</para>
     /// </param>
     /// <param name="ListEditor">
-    ///     <para xml:lang="en">The inline list-editor surface.</para>
-    ///     <para xml:lang="zh-CN">内联列表编辑器表面。</para>
+    ///     <para xml:lang="en">The inline list-editor panel.</para>
+    ///     <para xml:lang="zh-CN">内联列表编辑器面板。</para>
     /// </param>
     /// <param name="Pill">
     ///     <para xml:lang="en">The states of pill-shaped tags and compact buttons.</para>
@@ -44,11 +44,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// </param>
     /// <param name="Dropdown">
     ///     <para xml:lang="en">The drop-down face interaction states.</para>
-    ///     <para xml:lang="zh-CN">下拉框表面的交互状态。</para>
+    ///     <para xml:lang="zh-CN">下拉框正面的交互状态。</para>
     /// </param>
     /// <param name="Stepper">
     ///     <para xml:lang="en">The stepper face states.</para>
-    ///     <para xml:lang="zh-CN">步进器表面的状态。</para>
+    ///     <para xml:lang="zh-CN">步进器正面的状态。</para>
     /// </param>
     /// <param name="DragHandle">
     ///     <para xml:lang="en">The drag-handle states of reorderable lists.</para>
@@ -105,7 +105,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups sidebar mod-card colors.</para>
-    ///     <para xml:lang="zh-CN">归组侧边栏模组卡片的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义侧边栏模组卡片的颜色。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The default background and border.</para>
@@ -123,7 +123,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups compact action-menu colors.</para>
-    ///     <para xml:lang="zh-CN">归组紧凑操作菜单的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义紧凑操作菜单的颜色。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The resting background and border.</para>
@@ -137,7 +137,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups page-toolbar tray colors.</para>
-    ///     <para xml:lang="zh-CN">归组页面工具栏托盘的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义页面工具栏托盘的颜色。</para>
     /// </summary>
     /// <param name="Bg">
     ///     <para xml:lang="en">The tray background color.</para>
@@ -151,7 +151,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups colors used by a list's outer container.</para>
-    ///     <para xml:lang="zh-CN">归组列表外层容器使用的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义列表外层容器使用的颜色。</para>
     /// </summary>
     /// <param name="Bg">
     ///     <para xml:lang="en">The outer-container background color.</para>
@@ -169,7 +169,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups default and accent list-item card colors.</para>
-    ///     <para xml:lang="zh-CN">归组列表项卡片的默认及强调颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义列表项卡片的默认及强调颜色。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The resting background and border.</para>
@@ -186,8 +186,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     public sealed record ListItemTokens(BgBorder Default, BgBorder Accent, Color Shadow);
 
     /// <summary>
-    ///     <para xml:lang="en">Groups inline list-editor surface colors.</para>
-    ///     <para xml:lang="zh-CN">归组内联列表编辑器表面的颜色。</para>
+    ///     <para xml:lang="en">Groups inline list-editor panel colors.</para>
+    ///     <para xml:lang="zh-CN">集中定义内联列表编辑器面板的颜色。</para>
     /// </summary>
     /// <param name="Bg">
     ///     <para xml:lang="en">The editor background color.</para>
@@ -201,7 +201,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups colors used by pill-shaped tags and compact buttons.</para>
-    ///     <para xml:lang="zh-CN">归组胶囊形标签及紧凑按钮使用的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义胶囊形标签及紧凑按钮使用的颜色。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The resting background and border.</para>
@@ -215,7 +215,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups toggle-state colors and the shared resting shadow.</para>
-    ///     <para xml:lang="zh-CN">归组开关各状态的颜色及共享的静止阴影。</para>
+    ///     <para xml:lang="zh-CN">集中定义开关各状态的颜色及共享的静止阴影。</para>
     /// </summary>
     /// <param name="On">
     ///     <para xml:lang="en">The enabled-state background and border.</para>
@@ -250,7 +250,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups the highlight and shadow colors of a slider thumb.</para>
-    ///     <para xml:lang="zh-CN">归组滑块柄的高光及阴影颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义滑块柄的高光及阴影颜色。</para>
     /// </summary>
     /// <param name="GrabHighlight">
     ///     <para xml:lang="en">The outer highlight color.</para>
@@ -264,11 +264,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups the base, hover, pressed, and focus colors of drop-down faces.</para>
-    ///     <para xml:lang="zh-CN">归组下拉框表面的基础、悬停、按下及聚焦颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义下拉框正面的基础、悬停、按下及聚焦颜色。</para>
     /// </summary>
     /// <param name="Open">
     ///     <para xml:lang="en">The base face background and border.</para>
-    ///     <para xml:lang="zh-CN">基础表面状态的背景及边框。</para>
+    ///     <para xml:lang="zh-CN">默认正面状态的背景及边框。</para>
     /// </param>
     /// <param name="Hover">
     ///     <para xml:lang="en">
@@ -298,7 +298,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups stepper-face colors by interaction state.</para>
-    ///     <para xml:lang="zh-CN">按交互状态归组步进器表面的颜色。</para>
+    ///     <para xml:lang="zh-CN">按交互状态分类定义步进器正面的颜色。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The default background and border.</para>
@@ -310,13 +310,13 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// </param>
     /// <param name="Neutral">
     ///     <para xml:lang="en">The neutral colors used when the face has no visible affordance.</para>
-    ///     <para xml:lang="zh-CN">表面没有可见操作提示时使用的中性颜色。</para>
+    ///     <para xml:lang="zh-CN">正面没有可见操作提示时使用的中性颜色。</para>
     /// </param>
     public sealed record StepperTokens(BgBorder Default, BgBorder Hover, BgBorder Neutral);
 
     /// <summary>
     ///     <para xml:lang="en">Groups drag-handle colors by selection state.</para>
-    ///     <para xml:lang="zh-CN">按选中状态归组拖动手柄的颜色。</para>
+    ///     <para xml:lang="zh-CN">按选中状态分类定义拖动手柄的颜色。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The resting background and border.</para>
@@ -330,7 +330,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups collapsible section-header colors by interaction state.</para>
-    ///     <para xml:lang="zh-CN">按交互状态归组可折叠分区标题栏的颜色。</para>
+    ///     <para xml:lang="zh-CN">按交互状态分类定义可折叠分区标题栏的颜色。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The resting background and border.</para>
@@ -360,7 +360,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///         current sidebar.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         归组当前侧边栏用于组合模组组、页面、分区及工具行的旧版颜色槽位。
+    ///         集中定义当前侧边栏用于组合模组组、页面、分区及工具条目的旧版颜色槽位。
     ///     </para>
     /// </summary>
     /// <param name="Default">
@@ -442,7 +442,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups the background and border colors of the sidebar section rail.</para>
-    ///     <para xml:lang="zh-CN">归组侧边栏分区轨道的背景及边框颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义侧边栏分区轨道的背景及边框颜色。</para>
     /// </summary>
     /// <param name="Bg">
     ///     <para xml:lang="en">The rail background color.</para>
@@ -456,7 +456,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups inline text-button colors by semantic tone.</para>
-    ///     <para xml:lang="zh-CN">按语义色调归组内联文本按钮的颜色。</para>
+    ///     <para xml:lang="zh-CN">按语义色调分类定义内联文本按钮的颜色。</para>
     /// </summary>
     /// <param name="Accent">
     ///     <para xml:lang="en">The accent tone.</para>
@@ -477,7 +477,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups the foreground and state backgrounds of one inline text-button tone.</para>
-    ///     <para xml:lang="zh-CN">归组一种内联文本按钮色调的前景及状态背景颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义一种内联文本按钮色调的前景及状态背景颜色。</para>
     /// </summary>
     /// <param name="Fg">
     ///     <para xml:lang="en">The label foreground color.</para>
@@ -495,7 +495,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups neutral and invalid validation-frame colors for string editors.</para>
-    ///     <para xml:lang="zh-CN">归组字符串编辑器验证边框的中性及无效状态颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义字符串编辑器验证边框的中性及无效状态颜色。</para>
     /// </summary>
     /// <param name="Neutral">
     ///     <para xml:lang="en">The neutral background and border.</para>
@@ -509,7 +509,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups floating-overlay panel colors.</para>
-    ///     <para xml:lang="zh-CN">归组浮动层面板的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义浮动层面板的颜色。</para>
     /// </summary>
     /// <param name="Bg">
     ///     <para xml:lang="en">The panel background color.</para>
@@ -523,7 +523,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups the two-color highlight gradient of a choice control's center label.</para>
-    ///     <para xml:lang="zh-CN">归组选择控件中央标签的双色高亮渐变。</para>
+    ///     <para xml:lang="zh-CN">集中定义选择控件中央标签的双色高亮渐变。</para>
     /// </summary>
     /// <param name="HighlightTop">
     ///     <para xml:lang="en">The color at the top of the gradient.</para>

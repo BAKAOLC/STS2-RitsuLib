@@ -5,7 +5,7 @@ namespace STS2RitsuLib.Ui.RichTextEffects
 {
     /// <summary>
     ///     <para xml:lang="en">Builds BBCode tags for mod rich-text effects.</para>
-    ///     <para xml:lang="zh-CN">为 mod 富文本特效构建 BBCode 标签。</para>
+    ///     <para xml:lang="zh-CN">为模组富文本特效构建 BBCode 标签。</para>
     /// </summary>
     public static class ModRichTextTag
     {

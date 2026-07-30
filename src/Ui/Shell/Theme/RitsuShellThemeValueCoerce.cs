@@ -15,7 +15,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///         and fonts used by shell-theme snapshots.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         将已解析的 <see cref="LeafToken" /> 值转换为外壳主题快照所用的颜色、有限数值、布尔值及字体。
+    ///         将已解析的 <see cref="LeafToken" /> 值转换为 Shell 主题快照所用的颜色、有限数值、布尔值及字体。
     ///     </para>
     /// </summary>
     internal static class RitsuShellThemeValueCoerce
@@ -218,7 +218,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </param>
         /// <returns>
         ///     <para xml:lang="en">The resolved font or fallback font.</para>
-        ///     <para xml:lang="zh-CN">解析出的字体或后备字体。</para>
+        ///     <para xml:lang="zh-CN">解析出的字体或回退字体。</para>
         /// </returns>
         public static Font AsFont(LeafToken? leaf, FontType fontType = FontType.Regular)
         {

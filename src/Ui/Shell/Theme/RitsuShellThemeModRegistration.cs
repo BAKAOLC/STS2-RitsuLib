@@ -8,7 +8,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///         shell-theme snapshots.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         描述模组贡献的默认令牌，以及可选的外壳主题新快照发布回调。
+    ///         描述模组贡献的默认令牌，以及可选的 Shell 主题新快照发布回调。
     ///     </para>
     /// </summary>
     /// <param name="ModId">

@@ -4,7 +4,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
     ///     <para xml:lang="en">Groups primitive colors used without component-level state or variant scoping.</para>
-    ///     <para xml:lang="zh-CN">归组不受组件状态或变体作用域限制的基础颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义不受组件状态或变体作用域限制的基础颜色。</para>
     /// </summary>
     /// <param name="White">
     ///     <para xml:lang="en">The plain white tint used by active controls and overlays.</para>
@@ -40,7 +40,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups shadow colors that are not bound to a specific component.</para>
-    ///     <para xml:lang="zh-CN">归组不与特定组件绑定的阴影颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义不与特定组件绑定的阴影颜色。</para>
     /// </summary>
     /// <param name="Ambient">
     ///     <para xml:lang="en">The soft ambient shadow used by elevated controls.</para>
@@ -50,7 +50,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups colors used by rich text, labels, hints, and control text.</para>
-    ///     <para xml:lang="zh-CN">归组富文本、标签、提示及控件文本所用的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义富文本、标签、提示及控件文本所用的颜色。</para>
     /// </summary>
     /// <param name="RichTitle">
     ///     <para xml:lang="en">The rich-text title color.</para>
@@ -115,8 +115,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         Color DropdownRow);
 
     /// <summary>
-    ///     <para xml:lang="en">Groups colors shared by panes, entries, and framed surfaces.</para>
-    ///     <para xml:lang="zh-CN">归组窗格、条目及带框表面共享的颜色。</para>
+    ///     <para xml:lang="en">Groups colors shared by panes, entries, and framed panels.</para>
+    ///     <para xml:lang="zh-CN">集中定义窗格、条目及带框面板共享的颜色。</para>
     /// </summary>
     /// <param name="Sidebar">
     ///     <para xml:lang="en">The settings sidebar background.</para>
@@ -127,12 +127,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///     <para xml:lang="zh-CN">设置内容窗格的背景色。</para>
     /// </param>
     /// <param name="Entry">
-    ///     <para xml:lang="en">The background, border, and shadow colors of standard entry surfaces.</para>
-    ///     <para xml:lang="zh-CN">标准条目表面的背景、边框及阴影颜色。</para>
+    ///     <para xml:lang="en">The background, border, and shadow colors of standard entry controls.</para>
+    ///     <para xml:lang="zh-CN">标准条目控件的背景、边框及阴影颜色。</para>
     /// </param>
     /// <param name="Inset">
-    ///     <para xml:lang="en">The colors of recessed surfaces used for nested content.</para>
-    ///     <para xml:lang="zh-CN">嵌套内容所用凹陷表面的颜色。</para>
+    ///     <para xml:lang="en">The colors of recessed panels used for nested content.</para>
+    ///     <para xml:lang="zh-CN">嵌套内容所用凹陷面板的颜色。</para>
     /// </param>
     /// <param name="Framed">
     ///     <para xml:lang="en">The border and shadow colors of large framed panes.</para>
@@ -147,7 +147,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups colors used by standard entry containers.</para>
-    ///     <para xml:lang="zh-CN">归组标准条目容器使用的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义标准条目容器使用的颜色。</para>
     /// </summary>
     /// <param name="Bg">
     ///     <para xml:lang="en">The background fill color.</para>
@@ -164,22 +164,22 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     public sealed record EntrySurfaceTokens(Color Bg, Color Border, Color Shadow);
 
     /// <summary>
-    ///     <para xml:lang="en">Groups colors used by recessed surfaces for nested content.</para>
-    ///     <para xml:lang="zh-CN">归组嵌套内容所用凹陷表面的颜色。</para>
+    ///     <para xml:lang="en">Groups colors used by recessed panels for nested content.</para>
+    ///     <para xml:lang="zh-CN">集中定义嵌套内容所用凹陷面板的颜色。</para>
     /// </summary>
     /// <param name="Bg">
     ///     <para xml:lang="en">The recessed background fill color.</para>
     ///     <para xml:lang="zh-CN">凹陷背景的填充颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     <para xml:lang="en">The recessed-surface border color.</para>
-    ///     <para xml:lang="zh-CN">凹陷表面的边框颜色。</para>
+    ///     <para xml:lang="en">The recessed-panel border color.</para>
+    ///     <para xml:lang="zh-CN">凹陷面板的边框颜色。</para>
     /// </param>
     public sealed record InsetSurfaceTokens(Color Bg, Color Border);
 
     /// <summary>
     ///     <para xml:lang="en">Groups colors shared by large framed panes.</para>
-    ///     <para xml:lang="zh-CN">归组大型带框窗格共享的颜色。</para>
+    ///     <para xml:lang="zh-CN">集中定义大型带框窗格共享的颜色。</para>
     /// </summary>
     /// <param name="Border">
     ///     <para xml:lang="en">The frame border color.</para>

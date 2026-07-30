@@ -407,10 +407,10 @@ namespace STS2RitsuLib.Ui.Shell
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Creates the inner editor surface used to edit list entries inline, such as path or text rows.
+        ///         Creates the inner editor panel used to edit list entries inline, such as path or text entries.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         创建用于内联编辑列表项的内部编辑器表面，例如路径行或文本行。
+        ///         创建用于内联编辑列表项的内部编辑器面板，例如路径或文本条目。
         ///     </para>
         /// </summary>
         public static StyleBoxFlat CreateListEditorSurfaceStyle()

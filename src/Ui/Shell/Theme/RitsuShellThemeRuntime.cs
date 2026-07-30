@@ -9,7 +9,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///         and mod token registrations. Public state transitions are synchronized.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         管理当前外壳主题快照、主题应用与重新加载、变更通知及模组令牌注册。公开的状态转换均会同步。
+    ///         管理当前 Shell 主题快照、主题应用与重新加载、变更通知及模组令牌注册。公开的状态转换均会同步。
     ///     </para>
     /// </summary>
     public static class RitsuShellThemeRuntime

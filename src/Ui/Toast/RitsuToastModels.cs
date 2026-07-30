@@ -7,7 +7,7 @@ namespace STS2RitsuLib.Ui.Toast
     ///         Identifies a tracked toast and provides operations for querying, updating, or closing it.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         标识一条可跟踪的 toast，并提供查询、更新及关闭操作。
+    ///         标识一条已跟踪的浮动通知，并提供查询、更新及关闭操作。
     ///     </para>
     /// </summary>
     public sealed class RitsuToastHandle
@@ -19,17 +19,17 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Gets the stable identifier assigned to the tracked toast.</para>
-        ///     <para xml:lang="zh-CN">获取分配给该可跟踪 toast 的稳定标识符。</para>
+        ///     <para xml:lang="zh-CN">获取分配给该已跟踪浮动通知的稳定标识符。</para>
         /// </summary>
         public Guid Id { get; }
 
         /// <summary>
         ///     <para xml:lang="en">Determines whether the toast is queued or active and has not begun closing.</para>
-        ///     <para xml:lang="zh-CN">确定该 toast 是否仍在队列中或处于活动状态，且尚未开始关闭。</para>
+        ///     <para xml:lang="zh-CN">确定该浮动通知是否仍在队列中或处于活动状态，且尚未开始关闭。</para>
         /// </summary>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the toast is still alive; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若该 toast 仍然存活则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若该浮动通知仍有效则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool IsAlive()
         {
@@ -38,15 +38,15 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Removes a queued toast or requests that an active toast close.</para>
-        ///     <para xml:lang="zh-CN">移除队列中的 toast，或请求关闭活动中的 toast。</para>
+        ///     <para xml:lang="zh-CN">移除队列中的浮动通知，或请求关闭活动中的浮动通知。</para>
         /// </summary>
         /// <param name="immediate">
         ///     <para xml:lang="en">Whether an active toast should close without playing its exit animation.</para>
-        ///     <para xml:lang="zh-CN">活动中的 toast 是否应跳过退出动画并立即关闭。</para>
+        ///     <para xml:lang="zh-CN">活动中的浮动通知是否应跳过退出动画并立即关闭。</para>
         /// </param>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the service found the toast; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若服务找到了该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若服务找到了该浮动通知则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool Close(bool immediate = false)
         {
@@ -59,11 +59,11 @@ namespace STS2RitsuLib.Ui.Toast
         /// </summary>
         /// <param name="immediate">
         ///     <para xml:lang="en">Whether an active toast should close without playing its exit animation.</para>
-        ///     <para xml:lang="zh-CN">活动中的 toast 是否应跳过退出动画并立即关闭。</para>
+        ///     <para xml:lang="zh-CN">活动中的浮动通知是否应跳过退出动画并立即关闭。</para>
         /// </param>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the service found the toast; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若服务找到了该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若服务找到了该浮动通知则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool Dismiss(bool immediate = false)
         {
@@ -80,11 +80,11 @@ namespace STS2RitsuLib.Ui.Toast
         /// </param>
         /// <param name="resetDuration">
         ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
-        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        ///     <para xml:lang="zh-CN">若浮动通知已处于活动状态，是否重新开始计时。</para>
         /// </param>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若已更新该浮动通知则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         /// <exception cref="ArgumentNullException">
         ///     <para xml:lang="en"><paramref name="request" /> is <see langword="null" />.</para>
@@ -105,11 +105,11 @@ namespace STS2RitsuLib.Ui.Toast
         /// </param>
         /// <param name="resetDuration">
         ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
-        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        ///     <para xml:lang="zh-CN">若浮动通知已处于活动状态，是否重新开始计时。</para>
         /// </param>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若已更新该浮动通知则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         /// <exception cref="ArgumentNullException">
         ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
@@ -134,11 +134,11 @@ namespace STS2RitsuLib.Ui.Toast
         /// </param>
         /// <param name="resetDuration">
         ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
-        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        ///     <para xml:lang="zh-CN">若浮动通知已处于活动状态，是否重新开始计时。</para>
         /// </param>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若已更新该浮动通知则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         /// <exception cref="ArgumentNullException">
         ///     <para xml:lang="en"><paramref name="body" /> is <see langword="null" />.</para>
@@ -159,11 +159,11 @@ namespace STS2RitsuLib.Ui.Toast
         /// </param>
         /// <param name="resetDuration">
         ///     <para xml:lang="en">Whether to restart the timer if the toast is already active.</para>
-        ///     <para xml:lang="zh-CN">若 toast 已处于活动状态，是否重新开始计时。</para>
+        ///     <para xml:lang="zh-CN">若浮动通知已处于活动状态，是否重新开始计时。</para>
         /// </param>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the toast was updated; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若已更新该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若已更新该浮动通知则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool UpdateTitle(string? title, bool resetDuration = false)
         {
@@ -172,7 +172,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Restarts the timer and optionally replaces the per-toast duration.</para>
-        ///     <para xml:lang="zh-CN">重新开始计时，并可选择替换该 toast 的持续时间。</para>
+        ///     <para xml:lang="zh-CN">重新开始计时，并可选择替换该浮动通知的持续时间。</para>
         /// </summary>
         /// <param name="durationSeconds">
         ///     <para xml:lang="en">
@@ -184,7 +184,7 @@ namespace STS2RitsuLib.Ui.Toast
         /// </param>
         /// <returns>
         ///     <para xml:lang="en"><see langword="true" /> if the service found the toast; otherwise, <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">若服务找到了该 toast 则为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        ///     <para xml:lang="zh-CN">若服务找到了该浮动通知则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool ResetDuration(double? durationSeconds = null)
         {
@@ -194,7 +194,7 @@ namespace STS2RitsuLib.Ui.Toast
 
     /// <summary>
     ///     <para xml:lang="en">Specifies the semantic level used to select default toast colors.</para>
-    ///     <para xml:lang="zh-CN">指定用于选择 toast 默认颜色的语义级别。</para>
+    ///     <para xml:lang="zh-CN">指定用于选择浮动通知默认颜色的语义级别。</para>
     /// </summary>
     public enum RitsuToastLevel
     {
@@ -219,19 +219,19 @@ namespace STS2RitsuLib.Ui.Toast
 
     /// <summary>
     ///     <para xml:lang="en">Specifies a built-in animation used when a toast enters or exits.</para>
-    ///     <para xml:lang="zh-CN">指定 toast 进入或退出时使用的内置动画。</para>
+    ///     <para xml:lang="zh-CN">指定浮动通知进入或退出时使用的内置动画。</para>
     /// </summary>
     public enum RitsuToastAnimationPreset
     {
         /// <summary>
         ///     <para xml:lang="en">Fades the toast without sliding or scaling it.</para>
-        ///     <para xml:lang="zh-CN">仅使 toast 淡入淡出，不进行滑动或缩放。</para>
+        ///     <para xml:lang="zh-CN">仅使浮动通知淡入淡出，不进行滑动或缩放。</para>
         /// </summary>
         Fade,
 
         /// <summary>
         ///     <para xml:lang="en">Combines fading with a slide based on the toast anchor.</para>
-        ///     <para xml:lang="zh-CN">将淡入淡出与基于 toast 锚点方向的滑动结合。</para>
+        ///     <para xml:lang="zh-CN">将淡入淡出与基于浮动通知锚点方向的滑动结合。</para>
         /// </summary>
         FadeSlide,
 
@@ -244,7 +244,7 @@ namespace STS2RitsuLib.Ui.Toast
 
     /// <summary>
     ///     <para xml:lang="en">Specifies the toast stack anchor on a three-by-three viewport grid.</para>
-    ///     <para xml:lang="zh-CN">指定 toast 堆栈在视口三乘三网格上的锚点。</para>
+    ///     <para xml:lang="zh-CN">指定浮动通知堆栈在视口三乘三网格上的锚点。</para>
     /// </summary>
     public enum RitsuToastAnchor
     {
@@ -379,7 +379,7 @@ namespace STS2RitsuLib.Ui.Toast
     ///         Describes the content, lifetime, interaction, and presentation options of a toast.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         描述 toast 的内容、生命周期、交互方式及呈现选项。
+    ///         描述浮动通知的内容、生命周期、交互方式及呈现选项。
     ///     </para>
     /// </summary>
     public sealed record RitsuToastRequest
@@ -388,7 +388,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Initializes a toast request.</para>
-        ///     <para xml:lang="zh-CN">初始化一个 toast 请求。</para>
+        ///     <para xml:lang="zh-CN">初始化一个浮动通知请求。</para>
         /// </summary>
         /// <param name="body">
         ///     <para xml:lang="en">The required body text.</para>
@@ -416,7 +416,7 @@ namespace STS2RitsuLib.Ui.Toast
         /// </param>
         /// <param name="onClick">
         ///     <para xml:lang="en">The optional callback invoked when the toast is clicked.</para>
-        ///     <para xml:lang="zh-CN">点击 toast 时调用的可选回调。</para>
+        ///     <para xml:lang="zh-CN">点击浮动通知时调用的可选回调。</para>
         /// </param>
         /// <param name="animationOverride">
         ///     <para xml:lang="en">The optional animation preset used instead of the global setting.</para>
@@ -489,11 +489,11 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets or initializes the optional callback invoked when the toast surface is clicked. Callback
+        ///         Gets or initializes the optional callback invoked when the notification is clicked. Callback
         ///         exceptions are logged and do not escape the toast input handler.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取或初始化点击 toast 表面时调用的可选回调。回调异常会被记录，不会逸出 toast 输入处理器。
+        ///         获取或初始化点击浮动通知时调用的可选回调。回调异常会被记录，不会逸出浮动通知输入处理器。
         ///     </para>
         /// </summary>
         public Action? OnClick { get; init; }
@@ -512,7 +512,7 @@ namespace STS2RitsuLib.Ui.Toast
         ///         through the service, its handle, click-to-dismiss behavior, or disabling toast settings.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取或初始化是否禁用自动关闭。持久 toast 仍可通过服务、句柄、点击关闭行为或禁用 toast 设置来关闭。
+        ///         获取或初始化是否禁用自动关闭。持久浮动通知仍可通过服务、句柄、点击关闭行为或禁用浮动通知设置来关闭。
         ///     </para>
         /// </summary>
         public bool IsPersistent { get; init; }
@@ -525,7 +525,7 @@ namespace STS2RitsuLib.Ui.Toast
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         获取或初始化可选的显式进度值。有限值会限制在零到一之间，非有限值按零处理；
-        ///         未设置时，限时 toast 会显示剩余时间进度。
+        ///         未设置时，限时浮动通知会显示剩余时间进度。
         ///     </para>
         /// </summary>
         public float? ProgressFraction { get; init; }
@@ -536,7 +536,7 @@ namespace STS2RitsuLib.Ui.Toast
         ///         <see langword="true" />.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取或初始化点击 toast 时是否请求将其关闭。默认值为 <see langword="true" />。
+        ///         获取或初始化点击浮动通知时是否请求将其关闭。默认值为 <see langword="true" />。
         ///     </para>
         /// </summary>
         public bool DismissOnClick { get; init; } = true;
@@ -545,7 +545,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Creates an informational toast request.</para>
-        ///     <para xml:lang="zh-CN">创建一条信息 toast 请求。</para>
+        ///     <para xml:lang="zh-CN">创建一条信息浮动通知请求。</para>
         /// </summary>
         /// <param name="body">
         ///     <para xml:lang="en">The required body text.</para>
@@ -570,7 +570,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Creates a warning toast request.</para>
-        ///     <para xml:lang="zh-CN">创建一条警告 toast 请求。</para>
+        ///     <para xml:lang="zh-CN">创建一条警告浮动通知请求。</para>
         /// </summary>
         /// <param name="body">
         ///     <para xml:lang="en">The required body text.</para>
@@ -595,7 +595,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Creates an error toast request.</para>
-        ///     <para xml:lang="zh-CN">创建一条错误 toast 请求。</para>
+        ///     <para xml:lang="zh-CN">创建一条错误浮动通知请求。</para>
         /// </summary>
         /// <param name="body">
         ///     <para xml:lang="en">The required body text.</para>
@@ -717,7 +717,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         /// <summary>
         ///     <para xml:lang="en">Creates a copy with a different per-toast duration.</para>
-        ///     <para xml:lang="zh-CN">创建单条 toast 持续时间不同的副本。</para>
+        ///     <para xml:lang="zh-CN">创建单条浮动通知持续时间不同的副本。</para>
         /// </summary>
         /// <param name="durationSeconds">
         ///     <para xml:lang="en">
@@ -818,7 +818,7 @@ namespace STS2RitsuLib.Ui.Toast
         /// </summary>
         /// <param name="dismissOnClick">
         ///     <para xml:lang="en"><see langword="true" /> to request closing when the toast is clicked.</para>
-        ///     <para xml:lang="zh-CN">传入 <see langword="true" /> 可在点击 toast 时请求关闭。</para>
+        ///     <para xml:lang="zh-CN">传入 <see langword="true" /> 可在点击浮动通知时请求关闭。</para>
         /// </param>
         /// <returns>
         ///     <para xml:lang="en">The updated request.</para>

@@ -8,7 +8,7 @@ namespace STS2RitsuLib.Ui.Shell
     ///         Provides paths to the shell-theme directory within global mod data.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         提供全局模组数据中外壳主题目录的路径。
+    ///         提供全局模组数据中 Shell 主题目录的路径。
     ///     </para>
     /// </summary>
     public static class RitsuShellThemePaths
@@ -18,12 +18,12 @@ namespace STS2RitsuLib.Ui.Shell
         ///         Gets the virtual <c>user://</c> path to the shell-theme directory.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取外壳主题目录的虚拟 <c>user://</c> 路径。
+        ///         获取 Shell 主题目录的虚拟 <c>user://</c> 路径。
         ///     </para>
         /// </summary>
         /// <returns>
         ///     <para xml:lang="en">The virtual path to the shell-theme directory.</para>
-        ///     <para xml:lang="zh-CN">外壳主题目录的虚拟路径。</para>
+        ///     <para xml:lang="zh-CN">Shell 主题目录的虚拟路径。</para>
         /// </returns>
         public static string GetShellThemesDirectoryVirtual()
         {
@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Ui.Shell
         ///         Resolves the shell-theme directory to an absolute path and creates the directory when necessary.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         将外壳主题目录解析为绝对路径，并在需要时创建该目录。
+        ///         将 Shell 主题目录解析为绝对路径，并在需要时创建该目录。
         ///     </para>
         /// </summary>
         /// <param name="absolutePath">

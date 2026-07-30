@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     ///         Resolves optional layout tokens against fallback values for the current shell theme.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         根据当前外壳主题解析可选布局令牌，并在令牌不可用时使用备用值。
+    ///         根据当前 Shell 主题解析可选布局令牌，并在令牌不可用时使用备用值。
     ///     </para>
     /// </summary>
     internal static class RitsuShellThemeLayoutResolver

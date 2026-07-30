@@ -4,7 +4,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
     ///     <para xml:lang="en">Groups the font resources resolved for a shell theme.</para>
-    ///     <para xml:lang="zh-CN">归组为外壳主题解析的字体资源。</para>
+    ///     <para xml:lang="zh-CN">集中定义为 Shell 主题解析的字体资源。</para>
     /// </summary>
     /// <param name="Body">
     ///     <para xml:lang="en">The regular body font.</para>

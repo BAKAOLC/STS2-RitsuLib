@@ -2,7 +2,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
     ///     <para xml:lang="en">Groups shell-theme dimensions, spacing, typography sizes, and layout behavior.</para>
-    ///     <para xml:lang="zh-CN">归组外壳主题的尺寸、间距、排版大小及布局行为。</para>
+    ///     <para xml:lang="zh-CN">集中定义 Shell 主题的尺寸、间距、排版大小及布局行为。</para>
     /// </summary>
     /// <param name="Radius">
     ///     <para xml:lang="en">The corner-radius scale.</para>
@@ -62,8 +62,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         FontSizeMetrics FontSize);
 
     /// <summary>
-    ///     <para xml:lang="en">Groups fallback corner radii for common shell surfaces.</para>
-    ///     <para xml:lang="zh-CN">归组常见外壳表面的备用圆角半径。</para>
+    ///     <para xml:lang="en">Groups fallback corner radii for common Shell panels.</para>
+    ///     <para xml:lang="zh-CN">集中定义常见 Shell 面板的备用圆角半径。</para>
     /// </summary>
     /// <param name="Default">
     ///     <para xml:lang="en">The default style-box corner radius.</para>
@@ -81,7 +81,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups fallback border widths by visual emphasis.</para>
-    ///     <para xml:lang="zh-CN">按视觉强调程度归组备用边框宽度。</para>
+    ///     <para xml:lang="zh-CN">按视觉强调程度分类定义备用边框宽度。</para>
     /// </summary>
     /// <param name="Thin">
     ///     <para xml:lang="en">The thin border width.</para>
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups common entry and value-control dimensions.</para>
-    ///     <para xml:lang="zh-CN">归组常见条目及值控件的尺寸。</para>
+    ///     <para xml:lang="zh-CN">集中定义常见条目及值控件的尺寸。</para>
     /// </summary>
     /// <param name="ValueMinWidth">
     ///     <para xml:lang="en">The default minimum width of compact value controls.</para>
@@ -121,7 +121,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups slider-row, track, and value-field dimensions.</para>
-    ///     <para xml:lang="zh-CN">归组滑块行、轨道及数值字段的尺寸。</para>
+    ///     <para xml:lang="zh-CN">集中定义滑块条目、轨道及数值字段的尺寸。</para>
     /// </summary>
     /// <param name="RowMinWidth">
     ///     <para xml:lang="en">The minimum width of a slider row.</para>
@@ -147,7 +147,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups choice-stepper row dimensions.</para>
-    ///     <para xml:lang="zh-CN">归组选择步进器行的尺寸。</para>
+    ///     <para xml:lang="zh-CN">集中定义选择步进器条目的尺寸。</para>
     /// </summary>
     /// <param name="RowMinWidth">
     ///     <para xml:lang="en">The minimum width of the complete stepper row.</para>
@@ -161,7 +161,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups color-picker row and swatch dimensions.</para>
-    ///     <para xml:lang="zh-CN">归组颜色选择器行及色块的尺寸。</para>
+    ///     <para xml:lang="zh-CN">集中定义颜色选择器条目及色块的尺寸。</para>
     /// </summary>
     /// <param name="RowMinWidth">
     ///     <para xml:lang="en">The minimum width of a color-picker row.</para>
@@ -175,7 +175,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups single-line and multiline string-editor dimensions.</para>
-    ///     <para xml:lang="zh-CN">归组单行及多行字符串编辑器的尺寸。</para>
+    ///     <para xml:lang="zh-CN">集中定义单行及多行字符串编辑器的尺寸。</para>
     /// </summary>
     /// <param name="MinWidth">
     ///     <para xml:lang="en">The minimum width of a single-line string entry.</para>
@@ -189,7 +189,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups key-binding editor dimensions and helper-text sizing.</para>
-    ///     <para xml:lang="zh-CN">归组按键绑定编辑器的尺寸及辅助文本字号。</para>
+    ///     <para xml:lang="zh-CN">集中定义按键绑定编辑器的尺寸及辅助文本字号。</para>
     /// </summary>
     /// <param name="BlockWidth">
     ///     <para xml:lang="en">The width of the key-binding control block.</para>
@@ -207,7 +207,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups the content padding of floating overlay panels.</para>
-    ///     <para xml:lang="zh-CN">归组浮动层面板的内容内边距。</para>
+    ///     <para xml:lang="zh-CN">集中定义浮动层面板的内容内边距。</para>
     /// </summary>
     /// <param name="PaddingH">
     ///     <para xml:lang="en">The horizontal content padding.</para>
@@ -221,7 +221,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups sidebar navigation dimensions, spacing, and optional metadata display.</para>
-    ///     <para xml:lang="zh-CN">归组侧边栏导航的尺寸、间距及可选元数据显示行为。</para>
+    ///     <para xml:lang="zh-CN">集中定义侧边栏导航的尺寸、间距及可选元数据显示行为。</para>
     /// </summary>
     /// <param name="Width">
     ///     <para xml:lang="en">The minimum width of the sidebar column.</para>
@@ -276,7 +276,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
     /// <summary>
     ///     <para xml:lang="en">Groups font sizes used by shell controls, navigation, and overlays.</para>
-    ///     <para xml:lang="zh-CN">归组外壳控件、导航及浮层使用的字号。</para>
+    ///     <para xml:lang="zh-CN">集中定义 Shell 控件、导航及浮层使用的字号。</para>
     /// </summary>
     /// <param name="Button">
     ///     <para xml:lang="en">The default font size of standard buttons.</para>
@@ -288,7 +288,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     /// </param>
     /// <param name="ValueLabel">
     ///     <para xml:lang="en">The font size of drop-down faces and center labels in steppers.</para>
-    ///     <para xml:lang="zh-CN">下拉框表面及步进器中央标签的字号。</para>
+    ///     <para xml:lang="zh-CN">下拉框正面及步进器中央标签的字号。</para>
     /// </param>
     /// <param name="PopupRow">
     ///     <para xml:lang="en">The font size of rows in drop-down and other pop-ups.</para>
