@@ -295,6 +295,7 @@ namespace STS2RitsuLib.RuntimeInput
 
         public bool TryRebind(IEnumerable<string> bindingTexts, out IReadOnlyList<string> normalizedBindings)
         {
+            ArgumentNullException.ThrowIfNull(bindingTexts);
             if (_owner != null && _registration != null)
                 return _owner.TryRebind(_registration, bindingTexts, out normalizedBindings);
             normalizedBindings = [];
