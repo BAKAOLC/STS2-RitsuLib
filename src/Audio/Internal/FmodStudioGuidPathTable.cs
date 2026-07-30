@@ -26,8 +26,9 @@ namespace STS2RitsuLib.Audio.Internal
             }
         }
 
-        internal static bool TryLoadFromResourceFile(string resourcePath)
+        internal static bool TryLoadFromResourceFile(string resourcePath, out int parsedEventMappings)
         {
+            parsedEventMappings = 0;
             if (string.IsNullOrWhiteSpace(resourcePath) || !FileAccess.FileExists(resourcePath))
                 return false;
 
@@ -35,13 +36,13 @@ namespace STS2RitsuLib.Audio.Internal
             if (file is null)
                 return false;
 
-            ParseAndReplace(file.GetAsText(), resourcePath);
+            parsedEventMappings = ParseAndMerge(file.GetAsText(), resourcePath);
             return true;
         }
 
-        internal static void ParseAndReplace(string text, string? sourceLabel = null)
+        internal static int ParseAndMerge(string text, string? sourceLabel = null)
         {
-            var lines = text.Replace("\r\n", "\n").Split('\n');
+            var lines = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
             Dictionary<string, string> next;
             lock (Gate)
             {
@@ -58,6 +59,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
 
             var prefix = string.IsNullOrEmpty(sourceLabel) ? "[Audio] guids.txt" : $"[Audio] guids.txt ({sourceLabel})";
+            var parsedEventMappings = 0;
 
             for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
             {
@@ -111,12 +113,15 @@ namespace STS2RitsuLib.Audio.Internal
                     guidKeyToFirstPath.TryAdd(dedupeKey, pathPart);
 
                 next[pathPart] = braced;
+                parsedEventMappings++;
             }
 
             lock (Gate)
             {
                 _eventPathToGuid = next;
             }
+
+            return parsedEventMappings;
         }
 
         private static bool TryParseStoredGuid(string stored, out Guid parsed)

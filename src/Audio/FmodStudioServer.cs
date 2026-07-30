@@ -225,12 +225,12 @@ namespace STS2RitsuLib.Audio
 
         private static bool TryApplyStudioGuidMappingsCore(string resourcePath)
         {
-            if (!FmodStudioGuidPathTable.TryLoadFromResourceFile(resourcePath))
+            if (!FmodStudioGuidPathTable.TryLoadFromResourceFile(resourcePath, out var parsedEventMappings))
                 return false;
 
             var injected = TryCallNativeGuidInject(resourcePath);
             WarnIfMappedEventGuidsUnresolved();
-            return injected || FmodStudioGuidPathTable.EventMappingCount > 0;
+            return injected || parsedEventMappings > 0;
         }
 
         private static void WarnIfMappedEventGuidsUnresolved()
