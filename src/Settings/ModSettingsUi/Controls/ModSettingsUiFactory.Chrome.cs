@@ -540,19 +540,11 @@ namespace STS2RitsuLib.Settings
             {
                 if (!GodotObject.IsInstanceValid(inner))
                     return;
-                try
-                {
-                    var visible = predicate();
-                    if (inner.Visible == visible)
-                        return;
-                    inner.Visible = visible;
-                    FastVerticalStack.RequestAncestorLayouts(inner);
-                }
-                catch
-                {
-                    inner.Visible = true;
-                    FastVerticalStack.RequestAncestorLayouts(inner);
-                }
+                var visible = ModSettingsPredicate.Evaluate(predicate);
+                if (inner.Visible == visible)
+                    return;
+                inner.Visible = visible;
+                FastVerticalStack.RequestAncestorLayouts(inner);
             }
         }
 
@@ -648,17 +640,7 @@ namespace STS2RitsuLib.Settings
 
             void Apply()
             {
-                bool enabled;
-                try
-                {
-                    enabled = section.EnabledWhen();
-                }
-                catch
-                {
-                    enabled = true;
-                }
-
-                collapsibleHost.SetContentEnabled(enabled);
+                collapsibleHost.SetContentEnabled(ModSettingsPredicate.Evaluate(section.EnabledWhen));
             }
         }
 
@@ -681,7 +663,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex.Message}");
+                    $"[Settings] Failed to build entry '{page.ModId}:{page.Id}:{section.Id}:{entry.Id}': {ex}");
                 control = CreateBuildErrorPlaceholder(
                     ModSettingsLocalization.Get("entry.failed.title", "Setting failed to load"),
                     string.Format(ModSettingsLocalization.Get("entry.failed.body", "Failed to build setting '{0}'."),
@@ -727,17 +709,7 @@ namespace STS2RitsuLib.Settings
             {
                 if (!GodotObject.IsInstanceValid(host))
                     return;
-                bool enabled;
-                try
-                {
-                    enabled = predicate();
-                }
-                catch
-                {
-                    enabled = true;
-                }
-
-                ApplyEnabledRecursive(host, enabled);
+                ApplyEnabledRecursive(host, ModSettingsPredicate.Evaluate(predicate));
             }
         }
 

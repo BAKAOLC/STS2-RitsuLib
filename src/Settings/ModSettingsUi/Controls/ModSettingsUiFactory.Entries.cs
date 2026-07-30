@@ -85,7 +85,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[Settings] Failed to build section '{page.ModId}:{page.Id}:{section.Id}': {ex.Message}");
+                        $"[Settings] Failed to build section '{page.ModId}:{page.Id}:{section.Id}': {ex}");
                     failedSection = new(CreateBuildErrorPlaceholder(
                         ModSettingsLocalization.Get("section.failed.title", "Section failed to load"),
                         string.Format(
@@ -225,7 +225,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsUiFactory] Slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                        $"[ModSettingsUiFactory] Slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex}");
                     return value.ToString("0.##");
                 }
             }
@@ -275,7 +275,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsUiFactory] Float slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                        $"[ModSettingsUiFactory] Float slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex}");
                     return value.ToString("0.##");
                 }
             }
@@ -881,7 +881,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsUiFactory] Int slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                        $"[ModSettingsUiFactory] Int slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex}");
                     return intValue.ToString();
                 }
             }
