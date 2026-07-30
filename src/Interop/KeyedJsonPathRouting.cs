@@ -17,11 +17,9 @@ namespace STS2RitsuLib.Interop
     ///     <para xml:lang="zh-CN">通过节点写入器推送文档子树时使用的指针。</para>
     /// </param>
     /// <param name="MergePushPaths">
-    ///     <para xml:lang="en">
-    ///         Pointers written through merge-at hooks when pushing RFC 7386 merge payloads.
-    ///     </para>
+    ///     <para xml:lang="en">Pointers written through merge-at hooks when pushing object subtrees.</para>
     ///     <para xml:lang="zh-CN">
-    ///         通过指定位置合并钩子推送 RFC 7386 合并载荷时使用的指针。
+    ///         通过指定位置合并钩子推送对象子树时使用的指针。
     ///     </para>
     /// </param>
     public sealed record KeyedJsonPathRouting(string[]? PullPaths, string[]? PushPaths, string[]? MergePushPaths);

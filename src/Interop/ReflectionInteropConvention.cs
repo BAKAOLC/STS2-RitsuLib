@@ -140,11 +140,13 @@ namespace STS2RitsuLib.Interop
         /// <summary>
         ///     <para xml:lang="en">
         ///         Optional root-object getter name:
-        ///         <c>(string key) → JsonObject?</c> or another <c>JsonNode?</c> subtype that must contain an object.
+        ///         <c>(string key) → JsonObject?</c>, or <c>(string key) → JsonNode?</c> whose returned value must
+        ///         be a <c>JsonObject</c>.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         可选的根对象读取方法名：
-        ///         <c>(string key) → JsonObject?</c>，或必须包含对象的其他 <c>JsonNode?</c> 子类型。
+        ///         <c>(string key) → JsonObject?</c>，或返回值必须是 <c>JsonObject</c> 的
+        ///         <c>(string key) → JsonNode?</c>。
         ///     </para>
         /// </summary>
         public string? TypedGetJsonObjectMethodName { get; init; }

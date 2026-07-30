@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Interop
     ///         It mirrors BaseLib's scan timing without coupling discovery to one feature.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         在本地化初始化早期调用的可扩展 mod 加载后类型发现管线。它与 BaseLib 的扫描时机保持一致，
+    ///         在本地化初始化早期调用的可扩展模组加载后类型发现管线。它与 BaseLib 的扫描时机保持一致，
     ///         但不会将发现流程绑定到单一功能。
     ///     </para>
     /// </summary>
@@ -33,10 +33,10 @@ namespace STS2RitsuLib.Interop
         /// <summary>
         ///     <para xml:lang="en">
         ///         Registers a discovery contributor. Custom contributors must be registered from the mod initializer
-        ///         before framework patches are applied; <see cref="RitsuLibFramework" /> registers built-ins.
+        ///         before the discovery pipeline runs; <see cref="RitsuLibFramework" /> registers built-ins.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         注册类型发现贡献器。自定义贡献器必须在框架补丁应用前由 mod 初始化器注册；
+        ///         注册类型发现贡献器。自定义贡献器必须在类型发现管线运行前由模组初始化器注册；
         ///         内置贡献器由 <see cref="RitsuLibFramework" /> 注册。
         ///     </para>
         /// </summary>
@@ -56,9 +56,9 @@ namespace STS2RitsuLib.Interop
         ///         associations, RitsuLib also forwards the association to the game after mod initialization.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         为一次性类型发现管线建立程序集与 mod 的关联。请在 mod 初始化器中、且在
-        ///         <see cref="ModTypeDiscoveryPatch" /> 运行前调用。若宿主公开 mod 与程序集关联 API，
-        ///         RitsuLib 还会在 mod 初始化完成后将该关联同步给游戏。
+        ///         为一次性类型发现管线建立程序集与模组的关联。请在模组初始化器中、且在
+        ///         <see cref="ModTypeDiscoveryPatch" /> 运行前调用。若宿主公开模组与程序集关联 API，
+        ///         RitsuLib 还会在模组初始化完成后将该关联同步给游戏。
         ///     </para>
         /// </summary>
         public static void RegisterModAssembly(string modId, Assembly assembly)
@@ -86,7 +86,7 @@ namespace STS2RitsuLib.Interop
         ///     <para xml:lang="en">
         ///         Logs the current contributor list and registered mod-to-assembly map.
         ///     </para>
-        ///     <para xml:lang="zh-CN">将当前贡献器列表和已注册的 mod 至程序集映射写入 RitsuLib 日志。</para>
+        ///     <para xml:lang="zh-CN">将当前贡献器列表和已注册的模组到程序集映射写入 RitsuLib 日志。</para>
         /// </summary>
         public static void LogDiagnostics()
         {

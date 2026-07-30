@@ -3,16 +3,16 @@ namespace STS2RitsuLib.Interop
     /// <summary>
     ///     <para xml:lang="en">
     ///         Marks a class whose public methods, properties, and nested <see cref="InteropClassWrapper" /> types
-    ///         are rewritten at runtime to call another mod's assembly without a compile-time reference.
+    ///         are rewritten at runtime to invoke members in another mod's assemblies without a compile-time reference.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         标记一个类，使其公共方法、属性及嵌套 <see cref="InteropClassWrapper" /> 类型在运行时被重写，
-    ///         从而无需编译期引用即可调用另一个 mod 的程序集。
+    ///         从而无需编译期引用即可调用另一个模组程序集中的成员。
     ///     </para>
     /// </summary>
     /// <param name="modId">
     ///     <para xml:lang="en">Manifest ID of the mod required by this interop surface.</para>
-    ///     <para xml:lang="zh-CN">此互操作接口所依赖 mod 的清单 ID。</para>
+    ///     <para xml:lang="zh-CN">此互操作接口所依赖模组的清单 ID。</para>
     /// </param>
     /// <param name="type">
     ///     <para xml:lang="en">
@@ -27,7 +27,7 @@ namespace STS2RitsuLib.Interop
     {
         /// <summary>
         ///     <para xml:lang="en">Manifest ID of the target mod required by this interop surface.</para>
-        ///     <para xml:lang="zh-CN">此互操作接口所依赖目标 mod 的清单 ID。</para>
+        ///     <para xml:lang="zh-CN">此互操作接口所依赖目标模组的清单 ID。</para>
         /// </summary>
         public string ModId { get; } = string.IsNullOrWhiteSpace(modId)
             ? throw new ArgumentException("Mod ID must not be null or whitespace.", nameof(modId))
@@ -46,12 +46,13 @@ namespace STS2RitsuLib.Interop
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Marks a class whose public members forward to a CLR type resolved from an assembly-qualified name,
-    ///         such as <c>Namespace.Type, AssemblyName</c>.
+    ///         Marks a class whose public methods, properties, and nested <see cref="InteropClassWrapper" /> types
+    ///         forward to a CLR type resolved from an assembly-qualified name, such as
+    ///         <c>Namespace.Type, AssemblyName</c>.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         标记一个类，使其公共成员转发到由程序集限定名称解析的 CLR 类型，例如
-    ///         <c>Namespace.Type, AssemblyName</c>。
+    ///         标记一个类，使其公共方法、属性及嵌套 <see cref="InteropClassWrapper" /> 类型转发到
+    ///         由程序集限定名称解析的 CLR 类型，例如 <c>Namespace.Type, AssemblyName</c>。
     ///     </para>
     /// </summary>
     /// <param name="type">
@@ -90,14 +91,14 @@ namespace STS2RitsuLib.Interop
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Overrides the target type or member name for a class, method, or property. With
-    ///         <see cref="ModInteropAttribute" />, the type is resolved inside the target mod assembly. With
-    ///         <see cref="AssemblyInteropAttribute" />, it must be an assembly-qualified CLR type name.
+    ///         Overrides the target type or member name for a nested wrapper class, method, or property. With
+    ///         <see cref="ModInteropAttribute" />, the type is resolved inside the target mod's assemblies.
+    ///         With <see cref="AssemblyInteropAttribute" />, it must be an assembly-qualified CLR type name.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         为类、方法或属性覆盖目标类型或成员名。与 <see cref="ModInteropAttribute" /> 配合时，
-    ///         类型在目标 mod 程序集中解析；与 <see cref="AssemblyInteropAttribute" /> 配合时，
-    ///         类型必须使用程序集限定的 CLR 类型名。
+    ///         为嵌套包装器类、方法或属性覆盖目标类型或成员名。与 <see cref="ModInteropAttribute" />
+    ///         配合时，类型在目标模组的程序集中解析；与 <see cref="AssemblyInteropAttribute" />
+    ///         配合时，类型必须使用程序集限定的 CLR 类型名。
     ///     </para>
     /// </summary>
     [AttributeUsage(
