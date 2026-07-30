@@ -251,7 +251,17 @@ namespace STS2RitsuLib.Loader
             }
             catch (ReflectionTypeLoadException ex)
             {
-                Log.Warn($"[RitsuLib.Loader] Partial type load for {assembly.FullName}: {ex.Message}");
+                var loaderExceptions = ex.LoaderExceptions.OfType<Exception>().ToArray();
+                var details = string.Join(
+                    Environment.NewLine,
+                    loaderExceptions.Take(8).Select(static exception => exception.ToString()));
+                var detailBlock = details.Length > 0 ? Environment.NewLine + details : string.Empty;
+                var omitted = loaderExceptions.Length > 8
+                    ? $"{Environment.NewLine}... {loaderExceptions.Length - 8} more loader exception(s) omitted."
+                    : string.Empty;
+                Log.Warn(
+                    $"[RitsuLib.Loader] Partial type load for {assembly.FullName}: {ex.Message}" +
+                    $"{detailBlock}{omitted}");
                 return ex.Types.OfType<Type>();
             }
         }
