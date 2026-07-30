@@ -264,7 +264,9 @@ namespace STS2RitsuLib.Cards.Transforms
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModCardTransformRegistry] Listener '{entry.ModId}/{entry.ListenerId}' failed for {original.Id}: {ex.Message}");
+                        $"[ModCardTransformRegistry] Listener '{entry.ModId}/{entry.ListenerId}' failed for " +
+                        $"{original.Id}: {ex}");
+                    throw;
                 }
         }
 
