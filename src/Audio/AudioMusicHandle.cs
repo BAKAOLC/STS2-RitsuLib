@@ -15,8 +15,20 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public bool TrySwitchTo(AudioSource nextSource, AudioPlaybackOptions? options = null)
         {
-            var next = GameFmod.Playback.Play(nextSource, options ?? new AudioPlaybackOptions { Scope = Scope });
-            if (!next.Succeeded)
+            return TrySwitchTo(nextSource, out _, options);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">Starts a replacement music source and returns its handle. This handle is disposed only after the replacement starts successfully.</para>
+        ///     <para xml:lang="zh-CN">启动替代音乐源并返回其句柄。只有替代音乐成功开始播放后，才会释放当前句柄。</para>
+        /// </summary>
+        public bool TrySwitchTo(AudioSource nextSource, out AudioMusicHandle? replacement,
+            AudioPlaybackOptions? options = null)
+        {
+            replacement = GameFmod.Playback.PlayMusic(
+                nextSource,
+                options ?? new AudioPlaybackOptions { Scope = Scope });
+            if (replacement is null)
                 return false;
 
             Dispose();
