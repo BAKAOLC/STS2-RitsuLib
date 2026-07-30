@@ -5,8 +5,12 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Embedded JSON i18n for mod settings UI plus mod/page name resolution helpers.
-    ///     mod 设置 UI 的嵌入式 JSON i18n，以及 mod / 页面名称解析 helper。
+    ///     <para xml:lang="en">
+    ///         Provides embedded JSON localization for the mod settings UI and resolves mod and page display names.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组设置界面提供嵌入式 JSON 本地化，并解析模组和页面的显示名称。
+    ///     </para>
     /// </summary>
     internal static class ModSettingsLocalization
     {
@@ -48,8 +52,6 @@ namespace STS2RitsuLib.Settings
                        string.Equals(mod.manifest?.id, modId, StringComparison.OrdinalIgnoreCase))?.manifest?.name
                    ?? fallback;
         }
-
-
         public static string ResolvePageDisplayName(ModSettingsPage page)
         {
             var title = page.Title?.Resolve();

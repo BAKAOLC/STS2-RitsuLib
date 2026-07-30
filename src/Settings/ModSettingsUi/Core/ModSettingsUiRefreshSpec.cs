@@ -3,12 +3,15 @@ using System.Collections.Immutable;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     When <see cref="RitsuModSettingsSubmenu.MarkDirty" /> is called on this binding, these bindings are also
-    ///     marked dirty so selective refresh specs and autosave see the same invalidation (e.g. projected field → list
-    ///     root, decorator → inner).
-    ///     当对此 binding 调用 <see cref="RitsuModSettingsSubmenu.MarkDirty" /> 时，这些 binding 也会
-    ///     被标记为脏，使选择性刷新规范和自动保存看到相同的失效（例如投影字段 → 列表
-    ///     根、装饰器 → 内部）。
+    ///     <para xml:lang="en">
+    ///         Allows a binding to propagate <see cref="RitsuModSettingsSubmenu.MarkDirty" /> to related bindings so
+    ///         selective refresh and autosave observe the same invalidation. Examples include a projected field and its
+    ///         list root, or a decorator and its inner binding.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         允许绑定将 <see cref="RitsuModSettingsSubmenu.MarkDirty" /> 传播到相关绑定，使选择性刷新和自动保存观察到
+    ///         相同的失效关系，例如投影字段与列表根绑定，或装饰器与内部绑定。
+    ///     </para>
     /// </summary>
     internal interface IModSettingsUiRefreshPropagation
     {
@@ -16,16 +19,24 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Bindings that participate in UI refresh invalidation as a group (e.g. decorator + inner store).
-    ///     作为一组参与 UI 刷新失效的 binding（例如装饰器 + 内部存储）。
+    ///     <para xml:lang="en">
+    ///         Identifies bindings that participate in UI refresh invalidation as one equivalent group.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         标识在界面刷新失效判断中视为同一等价组的绑定。
+    ///     </para>
     /// </summary>
     internal interface IModSettingsUiRefreshEquivalence
     {
         /// <summary>
-        ///     Other binding instances that should count as the same target for selective refresh (typically the inner
-        ///     binding when <see cref="ModSettingsDebugShowcaseBinding{TValue}" /> wraps an in-memory binding).
-        ///     在选择性刷新中应视为同一目标的其他 binding 实例（通常是内部
-        ///     binding，当 <see cref="ModSettingsDebugShowcaseBinding{TValue}" /> 包装内存 binding 时）。
+        ///     <para xml:lang="en">
+        ///         Gets other binding instances treated as the same selective-refresh target, such as the inner binding
+        ///         wrapped by <see cref="ModSettingsDebugShowcaseBinding{TValue}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取在选择性刷新中视为同一目标的其他绑定实例，例如
+        ///         <see cref="ModSettingsDebugShowcaseBinding{TValue}" /> 所包装的内部绑定。
+        ///     </para>
         /// </summary>
         IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty { get; }
     }
@@ -38,10 +49,13 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Declares when a registered settings UI refresh callback should run relative to bindings that were marked
-    ///     dirty since the last flush.
-    ///     声明已注册的设置 UI 刷新回调应何时运行，依据是上次 flush 后被标记为
-    ///     脏的 binding。
+    ///     <para xml:lang="en">
+    ///         Declares when a registered settings UI refresh callback runs, based on bindings marked dirty since the
+    ///         previous refresh flush.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         根据上一次刷新队列执行后被标记为脏的绑定，声明已注册的设置界面刷新回调何时运行。
+    ///     </para>
     /// </summary>
     internal readonly record struct ModSettingsUiRefreshSpec(
         ModSettingsRefreshRegistrationKind Kind,
