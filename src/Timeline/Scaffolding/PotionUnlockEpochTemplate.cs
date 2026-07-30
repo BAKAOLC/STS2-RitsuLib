@@ -26,11 +26,11 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     Resolved <see cref="PotionModel" /> instances for <see cref="PotionTypes" />.
         ///     解析出的 <see cref="PotionModel" /> 实例，用于 <see cref="PotionTypes" />。
         /// </summary>
-        public IReadOnlyList<PotionModel> Potions =>
-        [
-            .. PotionTypes
-                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type))),
-        ];
+        public IReadOnlyList<PotionModel> Potions => RequireUnlockPresentationItems(
+            PotionTypes
+                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
+                .ToArray(),
+            nameof(PotionTypes));
 
         /// <inheritdoc />
         public override string UnlockText => CreatePotionUnlockText([.. Potions]);
@@ -56,7 +56,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            NTimelineScreen.Instance.QueuePotionUnlock([.. Potions]);
+            var potions = Potions;
+            NTimelineScreen.Instance.QueuePotionUnlock([.. potions]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

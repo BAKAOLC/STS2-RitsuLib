@@ -91,8 +91,8 @@ namespace STS2RitsuLib.Timeline
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
 
-            var cards = cardTypes ?? [];
-            var relics = relicTypes ?? [];
+            var cards = SnapshotTypes<CardModel>(cardTypes, nameof(cardTypes));
+            var relics = SnapshotTypes<RelicModel>(relicTypes, nameof(relicTypes));
             if (cards.Count == 0 && relics.Count == 0)
                 throw new ArgumentException(
                     $"Gated content for epoch '{epochId}' must include at least one card or relic type.",
@@ -162,6 +162,31 @@ namespace STS2RitsuLib.Timeline
 
             throw new InvalidOperationException(
                 $"Cannot {operation} after epoch gated content registration has been frozen.");
+        }
+
+        private static IReadOnlyList<Type> SnapshotTypes<TModel>(
+            IReadOnlyList<Type>? types,
+            string paramName)
+            where TModel : AbstractModel
+        {
+            if (types == null || types.Count == 0)
+                return Array.AsReadOnly(Array.Empty<Type>());
+
+            var snapshot = types.ToArray();
+            var seen = new HashSet<Type>();
+            foreach (var type in snapshot)
+            {
+                if (type == null || type.IsAbstract || !typeof(TModel).IsAssignableFrom(type))
+                    throw new ArgumentException(
+                        $"Type '{type?.FullName ?? "<null>"}' must be a concrete {typeof(TModel).Name} subtype.",
+                        paramName);
+                if (!seen.Add(type))
+                    throw new ArgumentException(
+                        $"Type '{type.FullName}' is listed more than once.",
+                        paramName);
+            }
+
+            return Array.AsReadOnly(snapshot);
         }
 
         /// <summary>

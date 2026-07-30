@@ -21,7 +21,9 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     Cards resolved from <see cref="ModEpochGatedContentRegistry" /> for this epoch’s <see cref="EpochModel.Id" />.
         ///     解析出的卡牌，来源： <see cref="ModEpochGatedContentRegistry" /> 用于此纪元的 <see cref="EpochModel.Id" />。
         /// </summary>
-        public IReadOnlyList<CardModel> Cards => ModEpochGatedContentRegistry.ResolveCards(Id);
+        public IReadOnlyList<CardModel> Cards => RequireUnlockPresentationItems(
+            ModEpochGatedContentRegistry.ResolveCards(Id),
+            nameof(ModEpochGatedContentRegistry));
 
         /// <inheritdoc />
         public override string UnlockText => CreateCardUnlockText([.. Cards]);
@@ -41,12 +43,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            if (Cards.Count == 0)
-                throw new InvalidOperationException(
-                    $"Pack-declared card epoch '{Id}' has no cards in {nameof(ModEpochGatedContentRegistry)}. " +
-                    "Register gated cards for this epoch via TimelineColumnPackEntry (e.g. .Epoch<TEpoch>(e => e.Cards(...))) with a non-empty list.");
-
-            NTimelineScreen.Instance.QueueCardUnlock(Cards);
+            var cards = Cards;
+            NTimelineScreen.Instance.QueueCardUnlock(cards);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

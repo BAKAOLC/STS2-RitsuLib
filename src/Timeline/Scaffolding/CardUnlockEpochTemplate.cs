@@ -16,11 +16,11 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     Resolved <see cref="CardModel" /> instances for <see cref="CardTypes" />.
         ///     解析出的 <see cref="CardModel" /> 实例，用于 <see cref="CardTypes" />。
         /// </summary>
-        public IReadOnlyList<CardModel> Cards =>
-        [
-            .. CardTypes
-                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type))),
-        ];
+        public IReadOnlyList<CardModel> Cards => RequireUnlockPresentationItems(
+            CardTypes
+                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
+                .ToArray(),
+            nameof(CardTypes));
 
         /// <inheritdoc />
         public override string UnlockText => CreateCardUnlockText([.. Cards]);
@@ -45,7 +45,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// </summary>
         public IEnumerable<Type> EnumerateUnlockCardTypes()
         {
-            return CardTypes;
+            return CardTypes.ToArray();
         }
 
         /// <inheritdoc />
@@ -57,7 +57,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            NTimelineScreen.Instance.QueueCardUnlock(Cards);
+            var cards = Cards;
+            NTimelineScreen.Instance.QueueCardUnlock(cards);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

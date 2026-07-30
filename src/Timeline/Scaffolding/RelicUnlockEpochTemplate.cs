@@ -14,11 +14,11 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     Resolved <see cref="RelicModel" /> instances for <see cref="RelicTypes" />.
         ///     解析出的 <see cref="RelicModel" /> 实例，用于 <see cref="RelicTypes" />。
         /// </summary>
-        public IReadOnlyList<RelicModel> Relics =>
-        [
-            .. RelicTypes
-                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type))),
-        ];
+        public IReadOnlyList<RelicModel> Relics => RequireUnlockPresentationItems(
+            RelicTypes
+                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
+                .ToArray(),
+            nameof(RelicTypes));
 
         /// <inheritdoc />
         public override string UnlockText => CreateRelicUnlockText([.. Relics]);
@@ -43,7 +43,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// </summary>
         public IEnumerable<Type> EnumerateUnlockRelicTypes()
         {
-            return RelicTypes;
+            return RelicTypes.ToArray();
         }
 
         /// <inheritdoc />
@@ -55,7 +55,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            NTimelineScreen.Instance.QueueRelicUnlock([.. Relics]);
+            var relics = Relics;
+            NTimelineScreen.Instance.QueueRelicUnlock([.. relics]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

@@ -26,5 +26,27 @@ namespace STS2RitsuLib.Timeline.Scaffolding
 
         /// <inheritdoc />
         public virtual string? CustomBigPortraitPath => AssetProfile.BigPortraitPath;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Validates content passed to the base game's unlock-text formatter, which reads the first three items.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         验证传给原版解锁文本格式化方法的内容；该方法会读取前三项。
+        ///     </para>
+        /// </summary>
+        protected IReadOnlyList<TModel> RequireUnlockPresentationItems<TModel>(
+            IReadOnlyList<TModel> items,
+            string sourceName)
+        {
+            ArgumentNullException.ThrowIfNull(items);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourceName);
+            if (items.Count < 3)
+                throw new InvalidOperationException(
+                    $"Epoch '{Id}' requires at least three {typeof(TModel).Name} entries from {sourceName}; " +
+                    "the built-in timeline unlock text reads the first three items.");
+
+            return items;
+        }
     }
 }

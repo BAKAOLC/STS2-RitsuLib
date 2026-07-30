@@ -17,7 +17,9 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     Relics resolved from <see cref="ModEpochGatedContentRegistry" /> for this epoch’s <see cref="EpochModel.Id" />.
         ///     解析出的遗物，来源： <see cref="ModEpochGatedContentRegistry" /> 用于此纪元的 <see cref="EpochModel.Id" />。
         /// </summary>
-        public IReadOnlyList<RelicModel> Relics => ModEpochGatedContentRegistry.ResolveRelics(Id);
+        public IReadOnlyList<RelicModel> Relics => RequireUnlockPresentationItems(
+            ModEpochGatedContentRegistry.ResolveRelics(Id),
+            nameof(ModEpochGatedContentRegistry));
 
         /// <inheritdoc />
         public override string UnlockText => CreateRelicUnlockText([.. Relics]);
@@ -37,12 +39,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            if (Relics.Count == 0)
-                throw new InvalidOperationException(
-                    $"Pack-declared relic epoch '{Id}' has no relics in {nameof(ModEpochGatedContentRegistry)}. " +
-                    "Register gated relics for this epoch via TimelineColumnPackEntry (e.g. .Epoch<TEpoch>(e => e.RelicsFromPool<...>())) with a non-empty pool.");
-
-            NTimelineScreen.Instance.QueueRelicUnlock([.. Relics]);
+            var relics = Relics;
+            NTimelineScreen.Instance.QueueRelicUnlock([.. relics]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)
