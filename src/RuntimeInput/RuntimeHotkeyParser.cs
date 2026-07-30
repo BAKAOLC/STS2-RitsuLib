@@ -53,7 +53,7 @@ namespace STS2RitsuLib.RuntimeInput
                     }
 
                     if (parts.Length == 1)
-                        primaryKey = ModifierRequirementToPrimaryKey(kind, requirement);
+                        primaryKey = ModifierKindToPrimaryKey(kind);
                     continue;
                 }
 
@@ -63,13 +63,13 @@ namespace STS2RitsuLib.RuntimeInput
             }
 
             primaryKey ??= ctrl != ModifierRequirement.NotPressed
-                ? ModifierRequirementToPrimaryKey(ModifierKind.Ctrl, ctrl)
+                ? ModifierKindToPrimaryKey(ModifierKind.Ctrl)
                 : alt != ModifierRequirement.NotPressed
-                    ? ModifierRequirementToPrimaryKey(ModifierKind.Alt, alt)
+                    ? ModifierKindToPrimaryKey(ModifierKind.Alt)
                     : shift != ModifierRequirement.NotPressed
-                        ? ModifierRequirementToPrimaryKey(ModifierKind.Shift, shift)
+                        ? ModifierKindToPrimaryKey(ModifierKind.Shift)
                         : meta != ModifierRequirement.NotPressed
-                            ? ModifierRequirementToPrimaryKey(ModifierKind.Meta, meta)
+                            ? ModifierKindToPrimaryKey(ModifierKind.Meta)
                             : null;
 
             if (primaryKey == null)
@@ -117,37 +117,20 @@ namespace STS2RitsuLib.RuntimeInput
                 : GetModifierKind(keyEvent.Keycode);
         }
 
-        internal static bool ModifierStateMatches(ModifierKind kind, ModifierRequirement requirement,
-            InputEventKey keyEvent)
+        internal static bool ModifierStateMatches(
+            ModifierKind kind,
+            ModifierRequirement requirement,
+            InputEventKey keyEvent,
+            RuntimeModifierSideState modifierSides)
         {
             return requirement switch
             {
                 ModifierRequirement.NotPressed => !IsModifierPressed(kind, keyEvent),
                 ModifierRequirement.AnySide => IsModifierPressed(kind, keyEvent),
-                ModifierRequirement.LeftOnly => IsModifierPressed(kind, keyEvent) &&
-                                                ModifierKeyMatches(ModifierRequirementToPrimaryKey(kind, requirement),
-                                                    keyEvent),
-                ModifierRequirement.RightOnly => IsModifierPressed(kind, keyEvent) &&
-                                                 ModifierKeyMatches(ModifierRequirementToPrimaryKey(kind, requirement),
-                                                     keyEvent),
+                ModifierRequirement.LeftOnly or ModifierRequirement.RightOnly =>
+                    IsModifierPressed(kind, keyEvent) && modifierSides.IsPressed(kind, requirement),
                 _ => false,
             };
-        }
-
-        internal static bool ModifierKeyMatches(Key expectedKey, InputEventKey keyEvent)
-        {
-            if (keyEvent.Keycode == expectedKey || keyEvent.PhysicalKeycode == expectedKey)
-                return true;
-
-            var expectedKind = GetModifierKind(expectedKey);
-            if (expectedKind == ModifierKind.None)
-                return false;
-
-            if (IsLeftSpecific(expectedKey))
-                return IsLeftSpecific(keyEvent.Keycode) || IsLeftSpecific(keyEvent.PhysicalKeycode);
-            if (IsRightSpecific(expectedKey))
-                return IsRightSpecific(keyEvent.Keycode) || IsRightSpecific(keyEvent.PhysicalKeycode);
-            return GetModifierKindForKeyEvent(keyEvent) == expectedKind;
         }
 
         private static bool IsModifierPressed(ModifierKind kind, InputEventKey keyEvent)
@@ -184,14 +167,14 @@ namespace STS2RitsuLib.RuntimeInput
                 case "lctrl":
                 case "lcontrol":
                     kind = ModifierKind.Ctrl;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.LeftOnly;
                     return true;
                 case "rightctrl":
                 case "rightcontrol":
                 case "rctrl":
                 case "rcontrol":
                     kind = ModifierKind.Ctrl;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.RightOnly;
                     return true;
                 case "alt":
                     kind = ModifierKind.Alt;
@@ -200,12 +183,12 @@ namespace STS2RitsuLib.RuntimeInput
                 case "leftalt":
                 case "lalt":
                     kind = ModifierKind.Alt;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.LeftOnly;
                     return true;
                 case "rightalt":
                 case "ralt":
                     kind = ModifierKind.Alt;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.RightOnly;
                     return true;
                 case "shift":
                     kind = ModifierKind.Shift;
@@ -214,12 +197,12 @@ namespace STS2RitsuLib.RuntimeInput
                 case "leftshift":
                 case "lshift":
                     kind = ModifierKind.Shift;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.LeftOnly;
                     return true;
                 case "rightshift":
                 case "rshift":
                     kind = ModifierKind.Shift;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.RightOnly;
                     return true;
                 case "meta":
                 case "cmd":
@@ -233,7 +216,7 @@ namespace STS2RitsuLib.RuntimeInput
                 case "lmeta":
                 case "lcmd":
                     kind = ModifierKind.Meta;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.LeftOnly;
                     return true;
                 case "rightmeta":
                 case "rightcmd":
@@ -241,7 +224,7 @@ namespace STS2RitsuLib.RuntimeInput
                 case "rmeta":
                 case "rcmd":
                     kind = ModifierKind.Meta;
-                    requirement = ModifierRequirement.AnySide;
+                    requirement = ModifierRequirement.RightOnly;
                     return true;
                 default:
                     kind = ModifierKind.None;
@@ -308,7 +291,7 @@ namespace STS2RitsuLib.RuntimeInput
                 parts.Add(RequirementToken(ModifierKind.Shift, shift));
             if (meta != ModifierRequirement.NotPressed && !SameModifierAsPrimary(primaryKey, ModifierKind.Meta))
                 parts.Add(RequirementToken(ModifierKind.Meta, meta));
-            parts.Add(PrimaryKeyToken(primaryKey));
+            parts.Add(PrimaryKeyToken(primaryKey, ctrl, alt, shift, meta));
             return string.Join('+', parts);
         }
 
@@ -328,60 +311,33 @@ namespace STS2RitsuLib.RuntimeInput
             };
         }
 
-        private static string PrimaryKeyToken(Key key)
+        private static string PrimaryKeyToken(
+            Key key,
+            ModifierRequirement ctrl,
+            ModifierRequirement alt,
+            ModifierRequirement shift,
+            ModifierRequirement meta)
         {
-            return key switch
+            return GetModifierKind(key) switch
             {
-                _ when IsLeftSpecific(key) => $"Left{GetModifierKind(key)}",
-                _ when IsRightSpecific(key) => $"Right{GetModifierKind(key)}",
-                _ when IsModifierKey(key) => GetModifierKind(key).ToString(),
+                ModifierKind.Ctrl => RequirementToken(ModifierKind.Ctrl, ctrl),
+                ModifierKind.Alt => RequirementToken(ModifierKind.Alt, alt),
+                ModifierKind.Shift => RequirementToken(ModifierKind.Shift, shift),
+                ModifierKind.Meta => RequirementToken(ModifierKind.Meta, meta),
                 _ => key.ToString(),
             };
         }
 
-        private static Key ModifierRequirementToPrimaryKey(ModifierKind kind, ModifierRequirement requirement)
+        private static Key ModifierKindToPrimaryKey(ModifierKind kind)
         {
-            return (kind, requirement) switch
+            return kind switch
             {
-                (ModifierKind.Ctrl, ModifierRequirement.LeftOnly) =>
-                    ParseKnownKey("LeftCtrl") ?? ParseKnownKey("Ctrl") ?? Key.Ctrl,
-                (ModifierKind.Ctrl, ModifierRequirement.RightOnly) =>
-                    ParseKnownKey("RightCtrl") ?? ParseKnownKey("Ctrl") ?? Key.Ctrl,
-                (ModifierKind.Ctrl, _) => Key.Ctrl,
-                (ModifierKind.Alt, ModifierRequirement.LeftOnly) =>
-                    ParseKnownKey("LeftAlt") ?? ParseKnownKey("Alt") ?? Key.Alt,
-                (ModifierKind.Alt, ModifierRequirement.RightOnly) =>
-                    ParseKnownKey("RightAlt") ?? ParseKnownKey("Alt") ?? Key.Alt,
-                (ModifierKind.Alt, _) => Key.Alt,
-                (ModifierKind.Shift, ModifierRequirement.LeftOnly) =>
-                    ParseKnownKey("LeftShift") ?? ParseKnownKey("Shift") ?? Key.Shift,
-                (ModifierKind.Shift, ModifierRequirement.RightOnly) =>
-                    ParseKnownKey("RightShift") ?? ParseKnownKey("Shift") ?? Key.Shift,
-                (ModifierKind.Shift, _) => Key.Shift,
-                (ModifierKind.Meta, ModifierRequirement.LeftOnly) =>
-                    ParseKnownKey("LeftMeta") ?? ParseKnownKey("Meta") ?? Key.Meta,
-                (ModifierKind.Meta, ModifierRequirement.RightOnly) =>
-                    ParseKnownKey("RightMeta") ?? ParseKnownKey("Meta") ?? Key.Meta,
-                (ModifierKind.Meta, _) => Key.Meta,
+                ModifierKind.Ctrl => Key.Ctrl,
+                ModifierKind.Alt => Key.Alt,
+                ModifierKind.Shift => Key.Shift,
+                ModifierKind.Meta => Key.Meta,
                 _ => Key.None,
             };
-        }
-
-        private static Key? ParseKnownKey(string token)
-        {
-            return Enum.TryParse<Key>(token, true, out var key) ? key : null;
-        }
-
-        private static bool IsLeftSpecific(Key key)
-        {
-            var name = key.ToString().ToLowerInvariant();
-            return GetModifierKind(key) != ModifierKind.None && name.Contains("left");
-        }
-
-        private static bool IsRightSpecific(Key key)
-        {
-            var name = key.ToString().ToLowerInvariant();
-            return GetModifierKind(key) != ModifierKind.None && name.Contains("right");
         }
     }
 }

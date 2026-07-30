@@ -7,11 +7,19 @@ namespace STS2RitsuLib.RuntimeInput
     internal sealed partial class RuntimeHotkeyRouterNode : Node
     {
         private readonly List<RuntimeHotkeyRegistration> _registrations = [];
+        private RuntimeModifierSideState _modifierSides;
 
         public override void _EnterTree()
         {
+            SetProcessInput(true);
             SetProcessUnhandledKeyInput(true);
             SetProcessUnhandledInput(true);
+        }
+
+        public override void _Input(InputEvent @event)
+        {
+            if (@event is InputEventKey keyEvent)
+                _modifierSides.Update(keyEvent);
         }
 
         public RuntimeHotkeyHandle Register(RuntimeHotkeyBinding binding, Action callback,
@@ -120,7 +128,10 @@ namespace STS2RitsuLib.RuntimeInput
 
         public override void _UnhandledKeyInput(InputEvent @event)
         {
-            if (@event is not InputEventKey { Pressed: true } keyEvent || keyEvent.IsEcho())
+            if (@event is not InputEventKey keyEvent)
+                return;
+
+            if (!keyEvent.Pressed || keyEvent.IsEcho())
                 return;
 
             for (var i = _registrations.Count - 1; i >= 0; i--)
@@ -128,7 +139,7 @@ namespace STS2RitsuLib.RuntimeInput
                 var registration = _registrations[i];
                 if (!ShouldConsider(registration.Options))
                     continue;
-                if (!registration.Matches(keyEvent))
+                if (!registration.Matches(keyEvent, _modifierSides))
                     continue;
 
                 registration.Callback();
@@ -199,10 +210,10 @@ namespace STS2RitsuLib.RuntimeInput
             SyncOptionalSteamInputActions();
         }
 
-        public bool Matches(InputEventKey keyEvent)
+        public bool Matches(InputEventKey keyEvent, RuntimeModifierSideState modifierSides)
         {
             for (var i = 0; i < _bindings.Count; i++)
-                if (_bindings[i].Matches(keyEvent))
+                if (_bindings[i].Matches(keyEvent, modifierSides))
                     return true;
 
             return false;
