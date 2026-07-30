@@ -122,8 +122,9 @@ namespace STS2RitsuLib.Utils
         public void Add(T item, int weight)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(weight);
+            var nextTotalWeight = checked(TotalWeight + weight);
             _entries.Add(new(item, weight));
-            TotalWeight += weight;
+            TotalWeight = nextTotalWeight;
         }
 
         /// <summary>
@@ -195,8 +196,12 @@ namespace STS2RitsuLib.Utils
         public void Insert(int index, T item, int weight)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(weight);
+            if ((uint)index > (uint)_entries.Count)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            var nextTotalWeight = checked(TotalWeight + weight);
             _entries.Insert(index, new(item, weight));
-            TotalWeight += weight;
+            TotalWeight = nextTotalWeight;
         }
 
         private readonly record struct Entry(T Value, int Weight);
