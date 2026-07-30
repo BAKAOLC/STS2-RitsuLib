@@ -15,6 +15,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public static HealthBarForecastSequenceBuilder For(HealthBarForecastContext context)
         {
+            ArgumentNullException.ThrowIfNull(context.Creature);
             return new(context);
         }
 
@@ -196,7 +197,10 @@ namespace STS2RitsuLib.Combat.HealthBars
         ///     Forecast context associated with this sequence.
         ///     与此序列关联的 forecast 上下文。
         /// </summary>
-        public HealthBarForecastContext Context { get; } = context;
+        public HealthBarForecastContext Context { get; } =
+            context.Creature == null
+                ? throw new ArgumentException("The forecast context must contain a creature.", nameof(context))
+                : context;
 
         /// <summary>
         ///     Appends a segment when <paramref name="amount" /> is positive.
@@ -516,7 +520,8 @@ namespace STS2RitsuLib.Combat.HealthBars
         ///     Parent sequence builder.
         ///     父序列构建器。
         /// </summary>
-        public HealthBarForecastSequenceBuilder Sequence { get; } = sequence;
+        public HealthBarForecastSequenceBuilder Sequence { get; } =
+            sequence ?? throw new ArgumentNullException(nameof(sequence));
 
         /// <summary>
         ///     Appends a segment with explicit <paramref name="order" /> and optional <paramref name="overlayMaterial" />.
