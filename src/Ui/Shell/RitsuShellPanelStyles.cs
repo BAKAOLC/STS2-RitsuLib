@@ -4,28 +4,36 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Ui.Shell
 {
     /// <summary>
-    ///     Shared <see cref="StyleBoxFlat" /> factories for framed panels and side cards. Use for mod settings, run-time
-    ///     overlays, and any in-game surface that should match the Ritsu shell look.
-    ///     共享 <see cref="StyleBoxFlat" /> 工厂，用于带框面板和侧边卡片。用于 mod 设置、运行时
-    ///     覆盖层，以及任何应匹配 Ritsu shell 外观的游戏内表面。
+    ///     <para xml:lang="en">
+    ///         Provides shared <see cref="StyleBoxFlat" /> factories for framed panels and sidebar cards used by
+    ///         mod settings, runtime overlays, and other in-game surfaces that follow the Ritsu shell style.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供带框面板和侧边栏卡片所用的共享 <see cref="StyleBoxFlat" /> 工厂，适用于模组设置界面、
+    ///         运行时浮层及其他采用 Ritsu 外壳样式的游戏内界面。
+    ///     </para>
     /// </summary>
     public static class RitsuShellPanelStyles
     {
         /// <summary>
-        ///     Primary framed panel (large panes, content wells).
-        ///     主带框面板 (大窗格, 内容井)。
+        ///     <para xml:lang="en">
+        ///         Creates a primary framed surface for large panes and content areas.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为大型窗格和内容区域创建主要的带框表面。
+        ///     </para>
         /// </summary>
         /// <param name="background">
-        ///     Background fill color.
-        ///     背景填充颜色。
+        ///     <para xml:lang="en">The background fill color.</para>
+        ///     <para xml:lang="zh-CN">背景填充颜色。</para>
         /// </param>
         /// <param name="cornerRadius">
-        ///     Corner radius.
-        ///     圆角半径。
+        ///     <para xml:lang="en">The fallback radius applied to each corner.</para>
+        ///     <para xml:lang="zh-CN">应用于各个角的备用圆角半径。</para>
         /// </param>
         /// <returns>
-        ///     A new framed surface stylebox.
-        ///     A 新的带框表面 stylebox。
+        ///     <para xml:lang="en">A new style box for the framed surface.</para>
+        ///     <para xml:lang="zh-CN">新建的带框表面样式框。</para>
         /// </returns>
         public static StyleBoxFlat CreateFramedSurface(Color background, int cornerRadius)
         {
@@ -57,20 +65,24 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Nested card inside a sidebar (mod group chrome).
-        ///     嵌套卡片 侧边栏内 (mod 分组 chrome)。
+        ///     <para xml:lang="en">
+        ///         Creates a nested sidebar card used to group a mod's entries.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建用于归组模组条目的嵌套侧边栏卡片。
+        ///     </para>
         /// </summary>
         /// <param name="cornerRadius">
-        ///     Corner radius.
-        ///     圆角半径。
+        ///     <para xml:lang="en">The fallback radius applied to each corner.</para>
+        ///     <para xml:lang="zh-CN">应用于各个角的备用圆角半径。</para>
         /// </param>
         /// <param name="selected">
-        ///     Whether the card is in its selected state.
-        ///     卡片是否处于选中状态。
+        ///     <para xml:lang="en"><see langword="true" /> to use the selected-state colors.</para>
+        ///     <para xml:lang="zh-CN">若要使用选中状态的颜色，则为 <see langword="true" />。</para>
         /// </param>
         /// <returns>
-        ///     A new sidebar mod card stylebox.
-        ///     A new 侧边栏 mod 卡片 stylebox。
+        ///     <para xml:lang="en">A new style box for the sidebar card.</para>
+        ///     <para xml:lang="zh-CN">新建的侧边栏卡片样式框。</para>
         /// </returns>
         public static StyleBoxFlat CreateSidebarModCard(int cornerRadius, bool selected)
         {
@@ -103,24 +115,28 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Same as <see cref="CreateSidebarModCard" /> but with tighter inner padding (compact nav).
-        ///     同 <see cref="CreateSidebarModCard" /> but 与 更紧凑的内部 padding (紧凑导航)。
+        ///     <para xml:lang="en">
+        ///         Creates a sidebar card with explicitly controlled inner padding for compact navigation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建可显式控制内边距的侧边栏卡片，用于紧凑导航。
+        ///     </para>
         /// </summary>
         /// <param name="cornerRadius">
-        ///     Corner radius.
-        ///     圆角半径。
+        ///     <para xml:lang="en">The fallback radius applied to each corner.</para>
+        ///     <para xml:lang="zh-CN">应用于各个角的备用圆角半径。</para>
         /// </param>
         /// <param name="selected">
-        ///     Whether the card is in its selected state.
-        ///     卡片是否处于选中状态。
+        ///     <para xml:lang="en"><see langword="true" /> to use the selected-state colors.</para>
+        ///     <para xml:lang="zh-CN">若要使用选中状态的颜色，则为 <see langword="true" />。</para>
         /// </param>
         /// <param name="innerMargin">
-        ///     Inner padding override applied to all four edges.
-        ///     内部 padding 覆盖值 应用 to 四条边。
+        ///     <para xml:lang="en">The content margin applied to all four edges.</para>
+        ///     <para xml:lang="zh-CN">应用于四条边的内容边距。</para>
         /// </param>
         /// <returns>
-        ///     A new compact sidebar mod card stylebox.
-        ///     A new compact 侧边栏 mod 卡片 stylebox。
+        ///     <para xml:lang="en">A new style box for the compact sidebar card.</para>
+        ///     <para xml:lang="zh-CN">新建的紧凑侧边栏卡片样式框。</para>
         /// </returns>
         public static StyleBoxFlat CreateSidebarModCardCompact(int cornerRadius, bool selected, int innerMargin = 6)
         {

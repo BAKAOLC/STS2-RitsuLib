@@ -4,14 +4,23 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Ui.Shell
 {
     /// <summary>
-    ///     StyleBox factories for dense editor/list/toolbar chrome shared across mod settings and modal overlays.
-    ///     StyleBox 工厂，用于 mod 设置和模态覆盖层共享的密集编辑器 / 列表 / 工具栏 chrome。
+    ///     <para xml:lang="en">
+    ///         Provides style-box factories for compact editors, lists, and toolbars shared by mod settings
+    ///         and modal overlays.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供由模组设置界面和模态浮层共享的紧凑编辑器、列表及工具栏样式框工厂。
+    ///     </para>
     /// </summary>
     public static class RitsuShellChromeStyles
     {
         /// <summary>
-        ///     Builds a rounded flat panel for generic content surfaces (background, border, soft shadow).
-        ///     为通用内容表面构建圆角平面面板（背景、边框、柔和阴影）。
+        ///     <para xml:lang="en">
+        ///         Creates a rounded flat panel with a background, border, and soft shadow for general content.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为通用内容创建带背景、边框和柔和阴影的圆角平面面板。
+        ///     </para>
         /// </summary>
         public static StyleBoxFlat CreateSurfaceStyle()
         {
@@ -52,12 +61,20 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds a frame around an entry or form field, optionally with a stronger border and shadow.
-        ///     围绕条目或表单字段构建边框，可选使用更强的边框和阴影。
+        ///     <para xml:lang="en">
+        ///         Creates a frame for an entry or form field, optionally with a stronger border and shadow.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为条目或表单字段创建边框，可选择使用更醒目的边框和阴影。
+        ///     </para>
         /// </summary>
         /// <param name="emphasized">
-        ///     When <see langword="true" />, uses a thicker border and stronger shadow.
-        ///     当 <see langword="true" /> 时，使用更粗的边框和更强的阴影。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> to use a thicker border and stronger shadow.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若要使用更粗的边框和更强的阴影，则为 <see langword="true" />。
+        ///     </para>
         /// </param>
         public static StyleBoxFlat CreateEntryFieldFrameStyle(bool emphasized)
         {
@@ -107,8 +124,12 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds a tight inset frame around a color swatch preview.
-        ///     构建 a 紧凑内嵌边框 around a 颜色样本预览。
+        ///     <para xml:lang="en">
+        ///         Creates a compact inset frame around a color-swatch preview.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为颜色样本预览创建紧凑的内嵌边框。
+        ///     </para>
         /// </summary>
         public static StyleBoxFlat CreateColorPickerSwatchFrameStyle()
         {
@@ -144,8 +165,12 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds a recessed panel (inset background) for secondary content blocks.
-        ///     为次级内容块构建凹陷面板（内嵌背景）。
+        ///     <para xml:lang="en">
+        ///         Creates a recessed panel for secondary content.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为次级内容创建凹陷面板。
+        ///     </para>
         /// </summary>
         public static StyleBoxFlat CreateInsetSurfaceStyle()
         {
@@ -185,12 +210,20 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds a compact menu row or popup action item (background and border from chrome tokens).
-        ///     构建紧凑菜单行或弹出动作项（背景和边框来自 chrome 令牌）。
+        ///     <para xml:lang="en">
+        ///         Creates a compact menu row or pop-up action item using the menu background and border tokens.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用菜单的背景和边框令牌创建紧凑的菜单行或弹出式操作项。
+        ///     </para>
         /// </summary>
         /// <param name="highlighted">
-        ///     When <see langword="true" />, uses hover chrome colors.
-        ///     当 <see langword="true" />, 使用 悬停 chrome 颜色。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> to use the hover-state colors.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若要使用悬停状态的颜色，则为 <see langword="true" />。
+        ///     </para>
         /// </param>
         public static StyleBoxFlat CreateChromeActionsMenuStyle(bool highlighted)
         {
@@ -232,9 +265,12 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds the tray behind per-page toolbar controls (search, actions).
-        ///     构建每页工具栏控件（搜索、动作）后方的托盘。
-        ///     构建每页工具栏控件（搜索、动作）后方的托盘。
+        ///     <para xml:lang="en">
+        ///         Creates the tray behind page-level toolbar controls, such as search and action controls.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建页面级工具栏控件（如搜索及操作控件）后方的托盘。
+        ///     </para>
         /// </summary>
         public static StyleBoxFlat CreatePageToolbarTrayStyle()
         {
@@ -276,8 +312,12 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds the outer container for scrollable list content (list shell with shadow).
-        ///     为可滚动列表内容构建外层容器（带阴影的列表外壳）。
+        ///     <para xml:lang="en">
+        ///         Creates the outer container for scrollable list content.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为可滚动的列表内容创建外层容器。
+        ///     </para>
         /// </summary>
         public static StyleBoxFlat CreateListShellStyle()
         {
@@ -314,12 +354,20 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds a card row inside a list (optional accent styling for selection or emphasis).
-        ///     在列表内构建卡片行（可选为选中或强调使用 accent 样式）。
+        ///     <para xml:lang="en">
+        ///         Creates a card row within a list, optionally using accent styling for selection or emphasis.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在列表中创建卡片行，可选择使用强调样式表示选中或突出状态。
+        ///     </para>
         /// </summary>
         /// <param name="accent">
-        ///     When <see langword="true" />, uses accent background and border tokens.
-        ///     当 <see langword="true" />, 使用 强调背景和边框 token。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> to use the accent background and border tokens.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若要使用强调背景及边框令牌，则为 <see langword="true" />。
+        ///     </para>
         /// </param>
         public static StyleBoxFlat CreateListItemCardStyle(bool accent = false)
         {
@@ -358,8 +406,12 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds the inner editor surface for inline list editing (e.g. path or text rows).
-        ///     为内联列表编辑构建内部编辑器表面（例如路径或文本行）。
+        ///     <para xml:lang="en">
+        ///         Creates the inner editor surface used to edit list entries inline, such as path or text rows.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建用于内联编辑列表项的内部编辑器表面，例如路径行或文本行。
+        ///     </para>
         /// </summary>
         public static StyleBoxFlat CreateListEditorSurfaceStyle()
         {
@@ -401,12 +453,20 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Builds a pill-shaped control (tags, compact buttons) with optional hover emphasis.
-        ///     构建 a 胶囊形控件 (标签, 紧凑按钮) 与 可选 悬停强调。
+        ///     <para xml:lang="en">
+        ///         Creates a pill-shaped control for tags or compact buttons, optionally using hover emphasis.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为标签或紧凑按钮创建胶囊形控件，可选择使用悬停强调样式。
+        ///     </para>
         /// </summary>
         /// <param name="highlighted">
-        ///     When <see langword="true" />, uses hover background and border colors.
-        ///     当 <see langword="true" /> 时，使用悬停背景和边框颜色。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> to use the hover background and border colors.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若要使用悬停状态的背景及边框颜色，则为 <see langword="true" />。
+        ///     </para>
         /// </param>
         public static StyleBoxFlat CreatePillStyle(bool highlighted = false)
         {
@@ -447,10 +507,14 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Compact panel backing Godot TooltipPanel (<see cref="Control.TooltipText" /> popups), aligned with entry
-        ///     chrome tokens.
-        ///     Godot TooltipPanel（<see cref="Control.TooltipText" /> 弹窗）的紧凑面板底板，与条目
-        ///     chrome 令牌对齐。
+        ///     <para xml:lang="en">
+        ///         Creates a compact panel for Godot <c>TooltipPanel</c> pop-ups produced from
+        ///         <see cref="Control.TooltipText" />, styled consistently with entry controls.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <see cref="Control.TooltipText" /> 生成的 Godot <c>TooltipPanel</c> 弹出框创建紧凑面板，
+        ///         并使其样式与条目控件保持一致。
+        ///     </para>
         /// </summary>
         public static StyleBoxFlat CreateTooltipPanelStyle()
         {
