@@ -228,7 +228,8 @@ namespace STS2RitsuLib.RunRngs
         internal bool TryGetRunRngState(string modId, string streamId, out ModRunRngSnapshot state)
         {
             if (RngStates.TryGetValue(modId, out var streams) &&
-                streams.TryGetValue(streamId, out var found))
+                streams.TryGetValue(streamId, out var found) &&
+                found is { IsValid: true })
             {
                 state = found;
                 return true;
@@ -246,7 +247,8 @@ namespace STS2RitsuLib.RunRngs
         {
             if (PlayerRngStates.TryGetValue(netId, out var mods) &&
                 mods.TryGetValue(modId, out var streams) &&
-                streams.TryGetValue(streamId, out var found))
+                streams.TryGetValue(streamId, out var found) &&
+                found is { IsValid: true })
             {
                 state = found;
                 return true;
@@ -352,6 +354,10 @@ namespace STS2RitsuLib.RunRngs
         ///     获取或设置生成器状态的第四个字。
         /// </summary>
         public ulong State3 { get; set; }
+
+        internal bool IsValid =>
+            Counter >= 0 &&
+            (State0 != 0 || State1 != 0 || State2 != 0 || State3 != 0);
 
 #if STS2_AT_LEAST_0_109_0
         internal static ModRunRngSnapshot From(StsRng rng)
