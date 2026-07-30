@@ -12,16 +12,16 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Sidecar combat history for secondary-resource events.
-    ///     次级资源事件的 sidecar 战斗历史。
+    ///     <para xml:lang="en">Attaches secondary-resource events to the game's combat history.</para>
+    ///     <para xml:lang="zh-CN">将次级资源事件附加到游戏的战斗历史。</para>
     /// </summary>
     public static class SecondaryResourceHistory
     {
         private static readonly AttachedState<CombatHistory, SecondaryResourceHistoryBag> Bags = new(() => new());
 
         /// <summary>
-        ///     Returns all sidecar entries for this combat history without creating a bag.
-        ///     返回该战斗历史的所有 sidecar 条目，不创建新 bag。
+        ///     <para xml:lang="en">Returns all attached entries without allocating storage when none exist.</para>
+        ///     <para xml:lang="zh-CN">返回所有附加条目；不存在条目时不会创建存储。</para>
         /// </summary>
         public static IReadOnlyList<SecondaryResourceHistoryEntry> Entries(CombatHistory history)
         {
@@ -30,8 +30,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns change entries.
-        ///     返回变化条目。
+        ///     <para xml:lang="en">Returns amount-change entries.</para>
+        ///     <para xml:lang="zh-CN">返回数量变化条目。</para>
         /// </summary>
         public static IEnumerable<SecondaryResourceChangedEntry> Changes(CombatHistory history)
         {
@@ -39,8 +39,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns spend entries.
-        ///     返回消耗条目。
+        ///     <para xml:lang="en">Returns payment entries.</para>
+        ///     <para xml:lang="zh-CN">返回支付条目。</para>
         /// </summary>
         public static IEnumerable<SecondaryResourceSpentEntry> Spends(CombatHistory history)
         {
@@ -48,8 +48,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns reset entries.
-        ///     返回重置条目。
+        ///     <para xml:lang="en">Returns reset entries.</para>
+        ///     <para xml:lang="zh-CN">返回重置条目。</para>
         /// </summary>
         public static IEnumerable<SecondaryResourceResetEntry> Resets(CombatHistory history)
         {
@@ -91,16 +91,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Base sidecar history entry for secondary-resource events.
-    ///     次级资源事件的 sidecar 历史条目基类。
+    ///     <para xml:lang="en">Provides shared metadata for an attached secondary-resource history entry.</para>
+    ///     <para xml:lang="zh-CN">提供附加次级资源历史条目的共享元数据。</para>
     /// </summary>
     public abstract class SecondaryResourceHistoryEntry
     {
         private readonly Dictionary<ulong, int> _playerTurnNumbers = [];
 
         /// <summary>
-        ///     Creates a sidecar history entry.
-        ///     创建一个 sidecar 历史条目。
+        ///     <para xml:lang="en">Initializes an attached history entry.</para>
+        ///     <para xml:lang="zh-CN">初始化附加历史条目。</para>
         /// </summary>
         protected SecondaryResourceHistoryEntry(
             CombatStateLike combatState,
@@ -122,44 +122,44 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Player whose resource changed.
-        ///     资源发生变化的玩家。
+        ///     <para xml:lang="en">Gets the player whose resource was involved.</para>
+        ///     <para xml:lang="zh-CN">获取涉及该资源事件的玩家。</para>
         /// </summary>
         public Player Player { get; }
 
         /// <summary>
-        ///     Resource definition.
-        ///     资源定义。
+        ///     <para xml:lang="en">Gets the resource definition.</para>
+        ///     <para xml:lang="zh-CN">获取资源定义。</para>
         /// </summary>
         public SecondaryResourceDefinition Definition { get; }
 
         /// <summary>
-        ///     Optional model source.
-        ///     可选的模型来源。
+        ///     <para xml:lang="en">Gets the model that caused the event, if known.</para>
+        ///     <para xml:lang="zh-CN">获取引发事件的模型（如已知）。</para>
         /// </summary>
         public AbstractModel? Source { get; }
 
         /// <summary>
-        ///     Combat round number at entry creation.
-        ///     条目创建时的战斗轮数。
+        ///     <para xml:lang="en">Gets the combat round number recorded at creation.</para>
+        ///     <para xml:lang="zh-CN">获取创建时记录的战斗轮数。</para>
         /// </summary>
         public int RoundNumber { get; }
 
         /// <summary>
-        ///     Combat side at entry creation.
-        ///     条目创建时的战斗方。
+        ///     <para xml:lang="en">Gets the active combat side recorded at creation.</para>
+        ///     <para xml:lang="zh-CN">获取创建时记录的当前行动方。</para>
         /// </summary>
         public CombatSide CurrentSide { get; }
 
         /// <summary>
-        ///     Human-readable diagnostic text.
-        ///     供诊断使用的人类可读文本。
+        ///     <para xml:lang="en">Gets a human-readable diagnostic description.</para>
+        ///     <para xml:lang="zh-CN">获取供诊断使用的可读说明。</para>
         /// </summary>
         public abstract string Description { get; }
 
         /// <summary>
-        ///     Returns true when the entry happened during the current player turn.
-        ///     当该条目发生在当前玩家回合内时返回 true。
+        ///     <para xml:lang="en">Determines whether the entry occurred during the current player turn.</para>
+        ///     <para xml:lang="zh-CN">判断条目是否发生在当前玩家回合。</para>
         /// </summary>
         public bool HappenedThisTurn(CombatStateLike? state)
         {
@@ -182,8 +182,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns true when the entry happened during the previous turn for <paramref name="player" />.
-        ///     当该条目发生在 <paramref name="player" /> 的上一回合时返回 true。
+        ///     <para xml:lang="en">
+        ///         Determines whether the entry occurred during <paramref name="player" />'s previous turn.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         判断条目是否发生在 <paramref name="player" /> 的上一回合。
+        ///     </para>
         /// </summary>
         public bool HappenedLastPlayerTurn(Player player)
         {
@@ -198,8 +202,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Current amount changed.
-    ///     当前数量发生变化。
+    ///     <para xml:lang="en">Records a change to a resource's current amount.</para>
+    ///     <para xml:lang="zh-CN">记录资源当前数量的变化。</para>
     /// </summary>
     public sealed class SecondaryResourceChangedEntry : SecondaryResourceHistoryEntry
     {
@@ -213,26 +217,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Amount before the change.
-        ///     变化前的数量。
+        ///     <para xml:lang="en">Gets the amount before the change.</para>
+        ///     <para xml:lang="zh-CN">获取变化前的数量。</para>
         /// </summary>
         public int OldAmount { get; }
 
         /// <summary>
-        ///     Amount after the change.
-        ///     变化后的数量。
+        ///     <para xml:lang="en">Gets the amount after the change.</para>
+        ///     <para xml:lang="zh-CN">获取变化后的数量。</para>
         /// </summary>
         public int NewAmount { get; }
 
         /// <summary>
-        ///     Signed amount delta.
-        ///     带符号的数量差值。
+        ///     <para xml:lang="en">Gets the saturating signed amount delta.</para>
+        ///     <para xml:lang="zh-CN">获取饱和带符号数量差值。</para>
         /// </summary>
         public int Delta { get; }
 
         /// <summary>
-        ///     Reason supplied by the command.
-        ///     命令提供的原因。
+        ///     <para xml:lang="en">Gets the reason assigned to the change.</para>
+        ///     <para xml:lang="zh-CN">获取为本次变化指定的原因。</para>
         /// </summary>
         public SecondaryResourceChangeReason Reason { get; }
 
@@ -242,8 +246,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Resource amount was spent for a card or command.
-    ///     资源数量被卡牌或命令消耗。
+    ///     <para xml:lang="en">Records resource paid by a card or direct command.</para>
+    ///     <para xml:lang="zh-CN">记录由卡牌或直接命令支付的资源。</para>
     /// </summary>
     public sealed class SecondaryResourceSpentEntry : SecondaryResourceHistoryEntry
     {
@@ -255,14 +259,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Card associated with the spend, if any.
-        ///     与该消耗关联的卡牌；如果存在。
+        ///     <para xml:lang="en">Gets the card associated with the payment, if any.</para>
+        ///     <para xml:lang="zh-CN">获取与支付关联的卡牌（如有）。</para>
         /// </summary>
         public CardModel? Card { get; }
 
         /// <summary>
-        ///     Amount spent.
-        ///     已消耗数量。
+        ///     <para xml:lang="en">Gets the amount paid.</para>
+        ///     <para xml:lang="zh-CN">获取支付的数量。</para>
         /// </summary>
         public int Amount { get; }
 
@@ -272,8 +276,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Resource amount was reset by a built-in policy or command.
-    ///     资源数量被内建策略或命令重置。
+    ///     <para xml:lang="en">Records a resource reset performed by a policy or command.</para>
+    ///     <para xml:lang="zh-CN">记录由策略或命令执行的资源重置。</para>
     /// </summary>
     public sealed class SecondaryResourceResetEntry : SecondaryResourceHistoryEntry
     {
@@ -286,20 +290,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Amount before the reset.
-        ///     重置前的数量。
+        ///     <para xml:lang="en">Gets the amount before the reset.</para>
+        ///     <para xml:lang="zh-CN">获取重置前的数量。</para>
         /// </summary>
         public int OldAmount { get; }
 
         /// <summary>
-        ///     Amount after the reset.
-        ///     重置后的数量。
+        ///     <para xml:lang="en">Gets the amount after the reset.</para>
+        ///     <para xml:lang="zh-CN">获取重置后的数量。</para>
         /// </summary>
         public int NewAmount { get; }
 
         /// <summary>
-        ///     Reason supplied by the command.
-        ///     命令提供的原因。
+        ///     <para xml:lang="en">Gets the reason assigned to the reset.</para>
+        ///     <para xml:lang="zh-CN">获取为本次重置指定的原因。</para>
         /// </summary>
         public SecondaryResourceChangeReason Reason { get; }
 

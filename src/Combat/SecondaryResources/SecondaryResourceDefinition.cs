@@ -4,20 +4,20 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Immutable definition for a registered secondary combat resource.
-    ///     已注册次级战斗资源的不可变定义。
+    ///     <para xml:lang="en">Defines a registered secondary combat resource.</para>
+    ///     <para xml:lang="zh-CN">定义已注册的次级战斗资源。</para>
     /// </summary>
     public sealed record SecondaryResourceDefinition
     {
         /// <summary>
-        ///     Default vanilla loc table used for secondary-resource hover tips.
-        ///     次级资源悬浮提示默认使用的原版本地化表。
+        ///     <para xml:lang="en">The base-game localization table used by default for resource hover tips.</para>
+        ///     <para xml:lang="zh-CN">资源悬浮提示默认使用的原版本地化表。</para>
         /// </summary>
         public const string DefaultLocTable = "static_hover_tips";
 
         /// <summary>
-        ///     Creates a secondary resource definition.
-        ///     创建一个次级资源定义。
+        ///     <para xml:lang="en">Initializes a secondary-resource definition.</para>
+        ///     <para xml:lang="zh-CN">初始化次级资源定义。</para>
         /// </summary>
         public SecondaryResourceDefinition(
             int defaultAmount = 0,
@@ -46,119 +46,123 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Full RitsuLib compound id. Filled by <see cref="ModSecondaryResourceRegistry" />.
-        ///     完整的 RitsuLib compound id，由 <see cref="ModSecondaryResourceRegistry" /> 填充。
+        ///     <para xml:lang="en">Gets the full resource ID assigned during registration.</para>
+        ///     <para xml:lang="zh-CN">获取注册时分配的完整资源 ID。</para>
         /// </summary>
         public string Id { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Owning mod id. Filled by <see cref="ModSecondaryResourceRegistry" />.
-        ///     所属 mod id，由 <see cref="ModSecondaryResourceRegistry" /> 填充。
+        ///     <para xml:lang="en">Gets the owning mod ID assigned during registration.</para>
+        ///     <para xml:lang="zh-CN">获取注册时分配的所属模组 ID。</para>
         /// </summary>
         public string ModId { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Mod-local resource id stem before compound-id expansion.
-        ///     compound id 展开前的 mod 本地资源 id stem。
+        ///     <para xml:lang="en">Gets the mod-local resource ID assigned during registration.</para>
+        ///     <para xml:lang="zh-CN">获取注册时分配的模组内资源 ID。</para>
         /// </summary>
         public string LocalId { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Initial amount used when state is first created.
-        ///     状态首次创建时使用的初始数量。
+        ///     <para xml:lang="en">Gets the amount used before an explicit value is stored.</para>
+        ///     <para xml:lang="zh-CN">获取显式存储数值前使用的默认数量。</para>
         /// </summary>
         public int DefaultAmount { get; init; }
 
         /// <summary>
-        ///     Base max amount before secondary-resource max hooks. Null means the resource has no max concept.
-        ///     次级资源 max hook 前的基础上限；null 表示该资源没有上限概念。
+        ///     <para xml:lang="en">
+        ///         Gets the maximum before hook modifiers, or <see langword="null" /> when the resource has no maximum.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取钩子修正前的最大数量；资源没有最大数量时为 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public int? BaseMaxAmount { get; init; }
 
         /// <summary>
-        ///     Hard lower clamp for current amount.
-        ///     当前数量的硬下限。
+        ///     <para xml:lang="en">Gets the hard lower bound for the current amount.</para>
+        ///     <para xml:lang="zh-CN">获取当前数量的硬下限。</para>
         /// </summary>
         public int MinAmount { get; init; }
 
         /// <summary>
-        ///     Hard upper clamp for current amount.
-        ///     当前数量的硬上限。
+        ///     <para xml:lang="en">Gets the hard upper bound for the current amount.</para>
+        ///     <para xml:lang="zh-CN">获取当前数量的硬上限。</para>
         /// </summary>
         public int HardMaxAmount { get; init; }
 
         /// <summary>
-        ///     Built-in turn-start behavior.
-        ///     内建的回合开始行为。
+        ///     <para xml:lang="en">Gets the built-in turn-start behavior.</para>
+        ///     <para xml:lang="zh-CN">获取内置的回合开始行为。</para>
         /// </summary>
         public SecondaryResourceTurnStartPolicy TurnStartPolicy { get; init; }
 
         /// <summary>
-        ///     Run-save persistence scope.
-        ///     跑局存档持久化范围。
+        ///     <para xml:lang="en">Gets the persistence scope in run saves.</para>
+        ///     <para xml:lang="zh-CN">获取在跑局存档中的持久化范围。</para>
         /// </summary>
         public SecondaryResourcePersistencePolicy PersistencePolicy { get; init; }
 
         /// <summary>
-        ///     Default policy for required card payments that are short on this resource.
-        ///     此资源作为卡牌必需支付且数量不足时的默认策略。
+        ///     <para xml:lang="en">Gets the default policy for an underfunded required card payment.</para>
+        ///     <para xml:lang="zh-CN">获取卡牌必需支付资源不足时的默认策略。</para>
         /// </summary>
         public SecondaryResourceInsufficientPayment DefaultInsufficientPayment { get; init; } =
             SecondaryResourceInsufficientPayment.BlockPlay;
 
         /// <summary>
-        ///     Optional localization table for title and description.
-        ///     用于标题和描述的可选本地化表。
+        ///     <para xml:lang="en">Gets the optional localization table for the title and description.</para>
+        ///     <para xml:lang="zh-CN">获取标题和说明使用的可选本地化表。</para>
         /// </summary>
         public string? LocTable { get; init; }
 
         /// <summary>
-        ///     Optional localization key for the display title.
-        ///     显示标题的可选本地化 key。
+        ///     <para xml:lang="en">Gets the optional localization key for the display title.</para>
+        ///     <para xml:lang="zh-CN">获取显示标题的可选本地化键。</para>
         /// </summary>
         public string? TitleKey { get; init; }
 
         /// <summary>
-        ///     Optional localization key for the hover/description text.
-        ///     悬浮提示/描述文本的可选本地化 key。
+        ///     <para xml:lang="en">Gets the optional localization key for the hover-tip description.</para>
+        ///     <para xml:lang="zh-CN">获取悬浮提示说明的可选本地化键。</para>
         /// </summary>
         public string? DescriptionKey { get; init; }
 
         /// <summary>
-        ///     Effective localization table for this resource.
-        ///     此资源实际使用的本地化表。
+        ///     <para xml:lang="en">Gets the effective localization table.</para>
+        ///     <para xml:lang="zh-CN">获取实际使用的本地化表。</para>
         /// </summary>
         public string EffectiveLocTable => string.IsNullOrWhiteSpace(LocTable) ? DefaultLocTable : LocTable;
 
         /// <summary>
-        ///     Effective localization key for the display title.
-        ///     显示标题实际使用的本地化 key。
+        ///     <para xml:lang="en">Gets the effective display-title localization key.</para>
+        ///     <para xml:lang="zh-CN">获取实际使用的显示标题本地化键。</para>
         /// </summary>
         public string EffectiveTitleKey =>
             string.IsNullOrWhiteSpace(TitleKey) ? $"{Id}.title" : TitleKey;
 
         /// <summary>
-        ///     Effective localization key for the hover/description text.
-        ///     悬浮提示/描述文本实际使用的本地化 key。
+        ///     <para xml:lang="en">Gets the effective hover-tip description localization key.</para>
+        ///     <para xml:lang="zh-CN">获取实际使用的悬浮提示说明本地化键。</para>
         /// </summary>
         public string EffectiveDescriptionKey =>
             string.IsNullOrWhiteSpace(DescriptionKey) ? $"{Id}.description" : DescriptionKey;
 
         /// <summary>
-        ///     Optional small icon path for text/card displays.
-        ///     用于文本/卡牌显示的可选小图标路径。
+        ///     <para xml:lang="en">Gets the optional small icon path used in text and card UI.</para>
+        ///     <para xml:lang="zh-CN">获取文本和卡牌界面使用的可选小图标路径。</para>
         /// </summary>
         public string? SmallIconPath { get; init; }
 
         /// <summary>
-        ///     Optional large icon path for combat UI displays.
-        ///     用于战斗 UI 显示的可选大图标路径。
+        ///     <para xml:lang="en">Gets the optional large icon path used in combat UI.</para>
+        ///     <para xml:lang="zh-CN">获取战斗界面使用的可选大图标路径。</para>
         /// </summary>
         public string? LargeIconPath { get; init; }
 
         /// <summary>
-        ///     Returns whether this resource is visible in combat UI for <paramref name="player" />.
-        ///     返回该资源对 <paramref name="player" /> 的战斗 UI 是否可见。
+        ///     <para xml:lang="en">Determines whether this resource is visible in combat UI for <paramref name="player" />.</para>
+        ///     <para xml:lang="zh-CN">判断该资源是否在 <paramref name="player" /> 的战斗界面中可见。</para>
         /// </summary>
         public bool IsVisibleInCombatUi(Player player)
         {
@@ -168,8 +172,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns whether this resource is visible in card UI for <paramref name="card" />.
-        ///     返回该资源在 <paramref name="card" /> 的卡牌 UI 上是否可见。
+        ///     <para xml:lang="en">Determines whether this resource has a payment line to show on <paramref name="card" />.</para>
+        ///     <para xml:lang="zh-CN">判断该资源是否有需要在 <paramref name="card" /> 上显示的支付条目。</para>
         /// </summary>
         public bool IsVisibleOnCard(CardModel card, SecondaryResourcePaymentLine? paymentLine = null)
         {

@@ -1,14 +1,14 @@
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Optional listener for secondary-resource gameplay hooks.
-    ///     次级资源 gameplay hook 的可选监听器。
+    ///     <para xml:lang="en">Participates in secondary-resource calculations and state changes.</para>
+    ///     <para xml:lang="zh-CN">参与次级资源计算和状态变化。</para>
     /// </summary>
     public interface ISecondaryResourceHookListener
     {
         /// <summary>
-        ///     Modifies a resource gain amount.
-        ///     修正资源获得数量。
+        ///     <para xml:lang="en">Modifies a proposed resource gain.</para>
+        ///     <para xml:lang="zh-CN">修正拟增加的资源数量。</para>
         /// </summary>
         decimal ModifySecondaryResourceGain(SecondaryResourceContext context, decimal amount)
         {
@@ -16,8 +16,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Modifies the calculated max amount for max-bearing resources.
-        ///     修正具有上限概念的资源所计算出的最大数量。
+        ///     <para xml:lang="en">Modifies the calculated maximum for a capped resource.</para>
+        ///     <para xml:lang="zh-CN">修正有上限资源计算出的最大数量。</para>
         /// </summary>
         decimal ModifyMaxSecondaryResource(SecondaryResourceMaxContext context, decimal amount)
         {
@@ -25,8 +25,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Modifies a card secondary-resource cost.
-        ///     修正卡牌的次级资源费用。
+        ///     <para xml:lang="en">Modifies a card's secondary-resource cost.</para>
+        ///     <para xml:lang="zh-CN">修正卡牌的次级资源费用。</para>
         /// </summary>
         decimal ModifySecondaryResourceCost(SecondaryResourceCostContext context, decimal cost)
         {
@@ -34,8 +34,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Modifies a card secondary-resource cost after the normal cost-modifier pass.
-        ///     在普通费用修正阶段之后修正卡牌的次级资源费用。
+        ///     <para xml:lang="en">Modifies a card's cost after the normal cost-modification pass.</para>
+        ///     <para xml:lang="zh-CN">在常规费用修正阶段之后修正卡牌费用。</para>
         /// </summary>
         decimal ModifySecondaryResourceCostLate(SecondaryResourceCostContext context, decimal cost)
         {
@@ -43,8 +43,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Modifies a captured secondary X value.
-        ///     修正捕获到的次级 X 值。
+        ///     <para xml:lang="en">Modifies the secondary X value captured for a card play.</para>
+        ///     <para xml:lang="zh-CN">修正一次出牌所捕获的次级 X 值。</para>
         /// </summary>
         int ModifySecondaryResourceXValue(SecondaryResourceXContext context, int value)
         {
@@ -52,8 +52,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns false to block a resource gain.
-        ///     返回 false 以阻止资源获得。
+        ///     <para xml:lang="en">Returns <see langword="false" /> to prevent a resource gain.</para>
+        ///     <para xml:lang="zh-CN">返回 <see langword="false" /> 可阻止资源增加。</para>
         /// </summary>
         bool ShouldGainSecondaryResource(SecondaryResourceContext context, decimal amount)
         {
@@ -61,8 +61,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns false to block a resource spend.
-        ///     返回 false 以阻止资源消耗。
+        ///     <para xml:lang="en">Returns <see langword="false" /> to prevent a resource payment.</para>
+        ///     <para xml:lang="zh-CN">返回 <see langword="false" /> 可阻止资源支付。</para>
         /// </summary>
         bool ShouldSpendSecondaryResource(SecondaryResourceSpendContext context)
         {
@@ -70,8 +70,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Dynamically modifies the insufficient-payment policy for a required card payment.
-        ///     动态修正必需卡牌支付的资源不足策略。
+        ///     <para xml:lang="en">Modifies the insufficient-payment policy for a required card payment.</para>
+        ///     <para xml:lang="zh-CN">修正卡牌必需支付的资源不足策略。</para>
         /// </summary>
         SecondaryResourceInsufficientPayment ModifySecondaryResourceInsufficientPayment(
             SecondaryResourceInsufficientPaymentContext context,
@@ -81,8 +81,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Resolves whether another payment source can cover a required card-payment shortfall.
-        ///     解析是否可用其他支付来源覆盖必需卡牌支付短缺。
+        ///     <para xml:lang="en">Plans replacement payment for some or all of a required-payment shortfall.</para>
+        ///     <para xml:lang="zh-CN">为必需支付的部分或全部缺口规划替代支付。</para>
         /// </summary>
         SecondaryResourceShortfallResolution ResolveSecondaryResourceShortfall(
             SecondaryResourceShortfallResolutionContext context,
@@ -92,8 +92,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns false to suppress the built-in turn-start reset for this resource.
-        ///     返回 false 以阻止该资源的内建回合开始重置。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="false" /> to prevent a reset performed through
+        ///         <see cref="SecondaryResourceCmd.Reset" /> or a turn-start policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <see langword="false" /> 可阻止通过 <see cref="SecondaryResourceCmd.Reset" />
+        ///         或回合开始策略执行的重置。
+        ///     </para>
         /// </summary>
         bool ShouldResetSecondaryResource(SecondaryResourceContext context)
         {
@@ -101,8 +107,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after a resource amount changes.
-        ///     在资源数量变化后运行。
+        ///     <para xml:lang="en">Runs after a resource amount changes.</para>
+        ///     <para xml:lang="zh-CN">在资源数量变化后运行。</para>
         /// </summary>
         Task AfterSecondaryResourceChanged(SecondaryResourceChangeContext context)
         {
@@ -110,8 +116,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after a resource is spent.
-        ///     在资源被消耗后运行。
+        ///     <para xml:lang="en">Runs after a resource payment is committed.</para>
+        ///     <para xml:lang="zh-CN">在资源支付提交后运行。</para>
         /// </summary>
         Task AfterSecondaryResourceSpent(SecondaryResourceSpendContext context)
         {
@@ -119,8 +125,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after a required card payment was committed with a secondary-resource shortfall.
-        ///     在必需卡牌支付以次级资源短缺形式提交后运行。
+        ///     <para xml:lang="en">Runs after a required card payment with a remaining shortfall is committed.</para>
+        ///     <para xml:lang="zh-CN">在仍有缺口的卡牌必需支付提交后运行。</para>
         /// </summary>
         Task AfterSecondaryResourceShortfallPayment(SecondaryResourceShortfallContext context)
         {
@@ -128,8 +134,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after a built-in reset policy changes the resource.
-        ///     在内建重置策略改变资源后运行。
+        ///     <para xml:lang="en">Runs after a reset changes the resource amount.</para>
+        ///     <para xml:lang="zh-CN">在重置改变资源数量后运行。</para>
         /// </summary>
         Task AfterSecondaryResourceReset(SecondaryResourceChangeContext context)
         {

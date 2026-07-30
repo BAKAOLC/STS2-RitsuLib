@@ -5,8 +5,8 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Per-mod registration facade for secondary combat resources.
-    ///     每个 mod 的次级战斗资源注册 facade。
+    ///     <para xml:lang="en">Registers secondary combat resources owned by one mod.</para>
+    ///     <para xml:lang="zh-CN">注册由一个模组所有的次级战斗资源。</para>
     /// </summary>
     public sealed partial class ModSecondaryResourceRegistry
     {
@@ -31,8 +31,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     True when at least one secondary resource has been registered.
-        ///     至少注册了一个次级资源时为 true。
+        ///     <para xml:lang="en">Gets whether at least one secondary resource is registered.</para>
+        ///     <para xml:lang="zh-CN">获取是否至少注册了一个次级资源。</para>
         /// </summary>
         public static bool HasAny
         {
@@ -46,8 +46,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the registry facade for <paramref name="modId" />.
-        ///     返回 <paramref name="modId" /> 对应的注册 facade。
+        ///     <para xml:lang="en">
+        ///         Gets the registry for <paramref name="modId" />. Leading and trailing whitespace is ignored.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="modId" /> 的注册表；忽略首尾空白。
+        ///     </para>
         /// </summary>
         public static ModSecondaryResourceRegistry For(string modId)
         {
@@ -66,8 +70,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Builds the full compound id for a mod-local secondary resource id.
-        ///     为 mod 本地次级资源 id 构建完整 compound id。
+        ///     <para xml:lang="en">Builds a full resource ID from a mod ID and mod-local ID.</para>
+        ///     <para xml:lang="zh-CN">根据模组 ID 和模组内 ID 构建完整资源 ID。</para>
         /// </summary>
         public static string GetResourceId(string modId, string localId)
         {
@@ -75,8 +79,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers a secondary resource and returns the bound definition.
-        ///     注册一个次级资源并返回已绑定的定义。
+        ///     <para xml:lang="en">Registers a secondary resource and returns its mod-bound definition.</para>
+        ///     <para xml:lang="zh-CN">注册次级资源并返回绑定到模组后的定义。</para>
         /// </summary>
         public SecondaryResourceDefinition Register(string localId, SecondaryResourceDefinition definition)
         {
@@ -105,8 +109,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to read a registered definition.
-        ///     尝试读取已注册的资源定义。
+        ///     <para xml:lang="en">Attempts to get a registered definition by full resource ID.</para>
+        ///     <para xml:lang="zh-CN">尝试按完整资源 ID 获取已注册定义。</para>
         /// </summary>
         public static bool TryGet(string resourceId, out SecondaryResourceDefinition definition)
         {
@@ -119,8 +123,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns a registered definition or throws when missing.
-        ///     返回已注册的定义；不存在时抛出异常。
+        ///     <para xml:lang="en">Gets a registered definition, or throws when the ID is unknown.</para>
+        ///     <para xml:lang="zh-CN">获取已注册定义；ID 未知时抛出异常。</para>
         /// </summary>
         public static SecondaryResourceDefinition Get(string resourceId)
         {
@@ -130,8 +134,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns all registered definitions in deterministic order.
-        ///     按确定性顺序返回所有已注册定义。
+        ///     <para xml:lang="en">Returns a deterministically ordered snapshot of registered definitions.</para>
+        ///     <para xml:lang="zh-CN">返回按确定性顺序排列的已注册定义快照。</para>
         /// </summary>
         public static SecondaryResourceDefinition[] GetDefinitionsSnapshot()
         {
@@ -142,21 +146,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Convenience wrapper that builds a <see cref="HoverTip" /> from a registered
-        ///     <see cref="SecondaryResourceDefinition" />.
-        ///     便捷包装：使用已注册的 <see cref="SecondaryResourceDefinition" /> 构建 <see cref="HoverTip" />。
+        ///     <para xml:lang="en">Creates a localized <see cref="HoverTip" /> for a registered resource.</para>
+        ///     <para xml:lang="zh-CN">为已注册资源创建本地化的 <see cref="HoverTip" />。</para>
         /// </summary>
         /// <param name="resourceId">
-        ///     Full secondary-resource id.
-        ///     完整次级资源 id。
+        ///     <para xml:lang="en">The full resource ID.</para>
+        ///     <para xml:lang="zh-CN">完整资源 ID。</para>
         /// </param>
         /// <param name="amount">
-        ///     Current amount exposed to localization variables. Defaults to <c>0</c> for simple description tips.
-        ///     暴露给本地化变量的当前数量。简单描述 tip 默认使用 <c>0</c>。
+        ///     <para xml:lang="en">The current amount exposed to localization variables.</para>
+        ///     <para xml:lang="zh-CN">提供给本地化变量的当前数量。</para>
         /// </param>
         /// <param name="maxAmount">
-        ///     Optional max amount exposed to localization variables.
-        ///     暴露给本地化变量的可选最大数量。
+        ///     <para xml:lang="en">The optional maximum exposed to localization variables.</para>
+        ///     <para xml:lang="zh-CN">提供给本地化变量的可选最大数量。</para>
         /// </param>
         public static HoverTip CreateHoverTip(string resourceId, int amount = 0, int? maxAmount = null)
         {
@@ -166,8 +169,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers an additional combat UI visibility predicate for one secondary resource.
-        ///     为一个次级资源注册额外战斗 UI 可见性谓词。
+        ///     <para xml:lang="en">Registers an additional combat UI visibility predicate for one resource.</para>
+        ///     <para xml:lang="zh-CN">为一个资源注册额外的战斗界面可见性谓词。</para>
         /// </summary>
         public void RegisterCombatUiAlwaysVisibleWhen(
             string localId,
@@ -192,9 +195,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Shows a secondary resource in combat UI for <typeparamref name="TCharacter" /> even before the resource
-        ///     is obtained.
-        ///     让 <typeparamref name="TCharacter" /> 在战斗 UI 中固定显示该次级资源，即使尚未获得该资源。
+        ///     <para xml:lang="en">
+        ///         Keeps a resource visible in combat UI for <typeparamref name="TCharacter" />, even at its default
+        ///         amount.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         对 <typeparamref name="TCharacter" /> 始终在战斗界面显示资源，即使资源处于默认数量。
+        ///     </para>
         /// </summary>
         public void AlwaysShowInCombatUiForCharacter<TCharacter>(string localId, int order = -1000)
             where TCharacter : CharacterModel
@@ -203,8 +210,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Shows a secondary resource in combat UI for a character type even before the resource is obtained.
-        ///     让指定角色类型在战斗 UI 中固定显示该次级资源，即使尚未获得该资源。
+        ///     <para xml:lang="en">Keeps a resource visible for characters assignable to the specified type.</para>
+        ///     <para xml:lang="zh-CN">对可赋值给指定类型的角色始终显示资源。</para>
         /// </summary>
         public void AlwaysShowInCombatUiForCharacter(string localId, Type characterType, int order = -1000)
         {
@@ -222,8 +229,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Shows a secondary resource in combat UI for every character even before the resource is obtained.
-        ///     让所有角色在战斗 UI 中固定显示该次级资源，即使尚未获得该资源。
+        ///     <para xml:lang="en">Keeps a resource visible in combat UI for every character.</para>
+        ///     <para xml:lang="zh-CN">对所有角色始终在战斗界面显示资源。</para>
         /// </summary>
         public void AlwaysShowInCombatUi(string localId, int order = -1000)
         {

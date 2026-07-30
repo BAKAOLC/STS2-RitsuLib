@@ -5,8 +5,8 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Combat UI visibility context for a secondary resource.
-    ///     次级资源的战斗 UI 可见性上下文。
+    ///     <para xml:lang="en">Provides data for secondary-resource combat UI visibility.</para>
+    ///     <para xml:lang="zh-CN">提供判断次级资源战斗界面可见性时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceCombatVisibilityContext(
         Player Player,
@@ -15,8 +15,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         int? MaxAmount);
 
     /// <summary>
-    ///     Card UI visibility context for a secondary resource.
-    ///     次级资源的卡牌 UI 可见性上下文。
+    ///     <para xml:lang="en">Provides data for secondary-resource card UI visibility.</para>
+    ///     <para xml:lang="zh-CN">提供判断次级资源卡牌界面可见性时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceCardVisibilityContext(
         CardModel Card,
@@ -24,15 +24,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourcePaymentLine? PaymentLine);
 
     /// <summary>
-    ///     Additional combat UI visibility predicate for a secondary resource.
-    ///     次级资源的额外战斗 UI 可见性谓词。
+    ///     <para xml:lang="en">Determines whether a secondary resource should be visible in the combat UI.</para>
+    ///     <para xml:lang="zh-CN">判断次级资源是否应显示在战斗界面中。</para>
     /// </summary>
     public delegate bool SecondaryResourceCombatUiVisibilityPredicate(
         SecondaryResourceCombatVisibilityContext context);
 
     /// <summary>
-    ///     Visibility helpers for secondary-resource UI routing.
-    ///     次级资源 UI 路由的可见性辅助工具。
+    ///     <para xml:lang="en">Resolves secondary-resource visibility in combat and card UI.</para>
+    ///     <para xml:lang="zh-CN">解析次级资源在战斗界面和卡牌界面中的可见性。</para>
     /// </summary>
     public static class SecondaryResourceVisibility
     {
@@ -43,8 +43,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             new(() => new(StringComparer.OrdinalIgnoreCase));
 
         /// <summary>
-        ///     Returns definitions visible for a combat UI update.
-        ///     返回一次战斗 UI 更新中可见的资源定义。
+        ///     <para xml:lang="en">Returns resource definitions visible for the current combat UI update.</para>
+        ///     <para xml:lang="zh-CN">返回当前战斗界面更新中可见的资源定义。</para>
         /// </summary>
         public static IReadOnlyList<SecondaryResourceDefinition> GetCombatUiDefinitions(Player? player)
         {
@@ -130,8 +130,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns definitions visible for a card UI update.
-        ///     返回一次卡牌 UI 更新中可见的资源定义。
+        ///     <para xml:lang="en">Returns definitions with payment lines visible on <paramref name="card" />.</para>
+        ///     <para xml:lang="zh-CN">返回在 <paramref name="card" /> 上有可见支付条目的资源定义。</para>
         /// </summary>
         public static IReadOnlyList<SecondaryResourceDefinition> GetCardUiDefinitions(
             CardModel card,

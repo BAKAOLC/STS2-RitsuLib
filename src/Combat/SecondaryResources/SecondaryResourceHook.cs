@@ -9,17 +9,22 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Dispatches secondary-resource hooks to model, capability, and registered global listeners.
-    ///     将次级资源 hook 分发给模型、capability 和已注册的全局监听器。
+    ///     <para xml:lang="en">Dispatches secondary-resource hooks to model, capability, and global listeners.</para>
+    ///     <para xml:lang="zh-CN">将次级资源钩子分发给模型、能力和全局监听器。</para>
     /// </summary>
     public static class SecondaryResourceHook
     {
         private static readonly ModelHookListenerRegistry<ISecondaryResourceHookListener> GlobalListeners = new();
 
         /// <summary>
-        ///     Registers a process-wide listener. Use sparingly; model-owned effects should usually implement the
-        ///     listener interface directly.
-        ///     注册一个进程级监听器。应谨慎使用；模型所属效果通常应直接实现监听接口。
+        ///     <para xml:lang="en">
+        ///         Registers a process-wide listener. Model-owned effects should normally implement
+        ///         <see cref="ISecondaryResourceHookListener" /> on that model instead.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册进程级监听器。由模型承载的效果通常应让该模型直接实现
+        ///         <see cref="ISecondaryResourceHookListener" />。
+        ///     </para>
         /// </summary>
         public static void RegisterGlobalListener(ISecondaryResourceHookListener listener)
         {
@@ -27,8 +32,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Applies max-amount hooks.
-        ///     应用最大数量 hook。
+        ///     <para xml:lang="en">Applies maximum-amount modifiers.</para>
+        ///     <para xml:lang="zh-CN">应用最大数量修正。</para>
         /// </summary>
         public static decimal ModifyMaxAmount(SecondaryResourceMaxContext context, decimal amount)
         {
@@ -37,8 +42,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Applies gain-amount hooks.
-        ///     应用获得数量 hook。
+        ///     <para xml:lang="en">Applies gain-amount modifiers.</para>
+        ///     <para xml:lang="zh-CN">应用增加量修正。</para>
         /// </summary>
         public static decimal ModifyGain(SecondaryResourceContext context, decimal amount)
         {
@@ -47,8 +52,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Applies cost hooks.
-        ///     应用费用 hook。
+        ///     <para xml:lang="en">Applies normal and late cost modifiers.</para>
+        ///     <para xml:lang="zh-CN">应用常规和后置费用修正。</para>
         /// </summary>
         public static decimal ModifyCost(SecondaryResourceCostContext context, decimal cost)
         {
@@ -60,8 +65,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Applies secondary X-value hooks.
-        ///     应用次级 X 值 hook。
+        ///     <para xml:lang="en">Applies secondary X-value modifiers.</para>
+        ///     <para xml:lang="zh-CN">应用次级 X 值修正。</para>
         /// </summary>
         public static int ModifyXValue(SecondaryResourceXContext context, int value)
         {
@@ -70,8 +75,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns whether a gain should proceed.
-        ///     返回是否应继续执行获得。
+        ///     <para xml:lang="en">Determines whether every listener permits a resource gain.</para>
+        ///     <para xml:lang="zh-CN">判断所有监听器是否都允许增加资源。</para>
         /// </summary>
         public static bool ShouldGain(SecondaryResourceContext context, decimal amount)
         {
@@ -80,8 +85,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns whether a spend should proceed.
-        ///     返回是否应继续执行消耗。
+        ///     <para xml:lang="en">Determines whether every listener permits a resource payment.</para>
+        ///     <para xml:lang="zh-CN">判断所有监听器是否都允许支付资源。</para>
         /// </summary>
         public static bool ShouldSpend(SecondaryResourceSpendContext context)
         {
@@ -90,8 +95,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Applies dynamic insufficient-payment policy hooks.
-        ///     应用动态资源不足支付策略 hook。
+        ///     <para xml:lang="en">Applies insufficient-payment policy modifiers.</para>
+        ///     <para xml:lang="zh-CN">应用资源不足支付策略修正。</para>
         /// </summary>
         public static SecondaryResourceInsufficientPayment ModifyInsufficientPayment(
             SecondaryResourceInsufficientPaymentContext context,
@@ -102,8 +107,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Applies shortfall-replacement planning hooks.
-        ///     应用短缺替代规划 hook。
+        ///     <para xml:lang="en">Applies replacement-payment planners for a shortfall.</para>
+        ///     <para xml:lang="zh-CN">应用缺口替代支付规划器。</para>
         /// </summary>
         public static SecondaryResourceShortfallResolution ResolveShortfall(
             SecondaryResourceShortfallResolutionContext context,
@@ -114,8 +119,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns whether a built-in reset should proceed.
-        ///     返回是否应继续执行内建重置。
+        ///     <para xml:lang="en">Determines whether every listener permits a reset.</para>
+        ///     <para xml:lang="zh-CN">判断所有监听器是否都允许重置资源。</para>
         /// </summary>
         public static bool ShouldReset(SecondaryResourceContext context)
         {
@@ -124,8 +129,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after-change hooks.
-        ///     运行变化后 hook。
+        ///     <para xml:lang="en">Runs listeners after an amount changes.</para>
+        ///     <para xml:lang="zh-CN">在数量变化后运行监听器。</para>
         /// </summary>
         public static async Task AfterChanged(SecondaryResourceChangeContext context)
         {
@@ -134,8 +139,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after-spent hooks.
-        ///     运行消耗后 hook。
+        ///     <para xml:lang="en">Runs listeners after a resource payment.</para>
+        ///     <para xml:lang="zh-CN">在资源支付后运行监听器。</para>
         /// </summary>
         public static async Task AfterSpent(SecondaryResourceSpendContext context)
         {
@@ -144,8 +149,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after-shortfall-payment hooks.
-        ///     运行短缺支付后 hook。
+        ///     <para xml:lang="en">Runs listeners after a payment with a remaining shortfall.</para>
+        ///     <para xml:lang="zh-CN">在仍有缺口的支付提交后运行监听器。</para>
         /// </summary>
         public static async Task AfterShortfallPayment(SecondaryResourceShortfallContext context)
         {
@@ -154,8 +159,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Runs after-reset hooks.
-        ///     运行重置后 hook。
+        ///     <para xml:lang="en">Runs listeners after a reset.</para>
+        ///     <para xml:lang="zh-CN">在资源重置后运行监听器。</para>
         /// </summary>
         public static async Task AfterReset(SecondaryResourceChangeContext context)
         {

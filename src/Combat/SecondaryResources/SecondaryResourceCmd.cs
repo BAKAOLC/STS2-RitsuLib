@@ -9,14 +9,14 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Command API for mutating registered secondary-resource amounts.
-    ///     用于修改已注册次级资源数量的命令 API。
+    ///     <para xml:lang="en">Provides commands that mutate registered secondary-resource amounts.</para>
+    ///     <para xml:lang="zh-CN">提供修改已注册次级资源数量的命令。</para>
     /// </summary>
     public static class SecondaryResourceCmd
     {
         /// <summary>
-        ///     Reads the current amount without creating state when the feature is inactive.
-        ///     读取当前数量；功能未启用时不会创建状态。
+        ///     <para xml:lang="en">Gets the current amount without creating state when no resources are registered.</para>
+        ///     <para xml:lang="zh-CN">获取当前数量；未注册资源时不会创建状态。</para>
         /// </summary>
         public static int Get(Player player, string resourceId)
         {
@@ -24,8 +24,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Calculates the current max amount, or null for resources without a max concept.
-        ///     计算当前最大数量；没有上限概念的资源返回 null。
+        ///     <para xml:lang="en">Gets the current maximum, or <see langword="null" /> for an uncapped resource.</para>
+        ///     <para xml:lang="zh-CN">获取当前最大数量；资源没有上限时返回 <see langword="null" />。</para>
         /// </summary>
         public static int? GetMax(Player player, string resourceId)
         {
@@ -33,8 +33,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Gains a resource amount after gain hooks.
-        ///     在 gain hook 处理后获得资源数量。
+        ///     <para xml:lang="en">Adds a positive amount after applying gain checks and modifiers.</para>
+        ///     <para xml:lang="zh-CN">通过增加检查并应用修正后，增加一个正数数量。</para>
         /// </summary>
         public static async Task<int> Gain(
             Player player,
@@ -81,8 +81,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Loses a resource amount.
-        ///     失去指定资源数量。
+        ///     <para xml:lang="en">Subtracts a positive amount from a resource.</para>
+        ///     <para xml:lang="zh-CN">从资源中减去一个正数数量。</para>
         /// </summary>
         public static async Task<int> Lose(
             Player player,
@@ -103,8 +103,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets the current amount.
-        ///     设置当前数量。
+        ///     <para xml:lang="en">Sets the current amount after applying the resource bounds.</para>
+        ///     <para xml:lang="zh-CN">应用资源上下限后设置当前数量。</para>
         /// </summary>
         public static async Task<int> Set(
             Player player,
@@ -125,8 +125,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Spends a resource amount after spend hooks.
-        ///     在 spend hook 处理后消耗资源数量。
+        ///     <para xml:lang="en">Pays a positive amount after applying spend checks.</para>
+        ///     <para xml:lang="zh-CN">通过支付检查后支付一个正数数量。</para>
         /// </summary>
         public static async Task<bool> Spend(
             Player player,
@@ -199,8 +199,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Resets a resource to its default or max amount.
-        ///     将资源重置为默认数量或最大数量。
+        ///     <para xml:lang="en">Resets a resource to its default amount or current maximum.</para>
+        ///     <para xml:lang="zh-CN">将资源重置为默认数量或当前最大数量。</para>
         /// </summary>
         public static async Task<int> Reset(
             Player player,
@@ -256,8 +256,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Applies built-in start-of-turn policies to all registered resources.
-        ///     对所有已注册资源应用内建回合开始策略。
+        ///     <para xml:lang="en">Applies each registered resource's built-in turn-start policy.</para>
+        ///     <para xml:lang="zh-CN">应用各已注册资源的内置回合开始策略。</para>
         /// </summary>
         public static async Task ApplyTurnStartPolicies(Player player, AbstractModel? source = null)
         {
