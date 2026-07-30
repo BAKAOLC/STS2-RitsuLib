@@ -123,7 +123,8 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the toggle.
         ///     开关的后端绑定。
         /// </summary>
-        public IModSettingsValueBinding<bool> Binding { get; } = binding;
+        public IModSettingsValueBinding<bool> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <inheritdoc />
         public override Func<bool>? VisibilityPredicate => visibilityPredicate;
@@ -177,25 +178,38 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the slider value.
         ///     滑条值的后端绑定。
         /// </summary>
-        public IModSettingsValueBinding<double> Binding { get; } = binding;
+        public IModSettingsValueBinding<double> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     Minimum slider value (inclusive).
         ///     滑条最小值（含）。
         /// </summary>
-        public double MinValue { get; } = minValue;
+        public double MinValue { get; } =
+            double.IsFinite(minValue)
+                ? minValue
+                : throw new ArgumentOutOfRangeException(nameof(minValue), "Slider minValue must be finite.");
 
         /// <summary>
         ///     Maximum slider value (inclusive).
         ///     滑条最大值（含）。
         /// </summary>
-        public double MaxValue { get; } = maxValue;
+        public double MaxValue { get; } =
+            !double.IsFinite(maxValue)
+                ? throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be finite.")
+                : maxValue >= minValue
+                    ? maxValue
+                    : throw new ArgumentOutOfRangeException(nameof(maxValue),
+                        "Slider maxValue must be >= minValue.");
 
         /// <summary>
         ///     Step between valid values.
         ///     有效值之间的步进。
         /// </summary>
-        public double Step { get; } = step;
+        public double Step { get; } =
+            double.IsFinite(step) && step > 0d
+                ? step
+                : throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be finite and > 0.");
 
         /// <summary>
         ///     Optional formatter for the displayed value string.
@@ -258,25 +272,38 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the slider value.
         ///     滑条值的后端绑定。
         /// </summary>
-        public IModSettingsValueBinding<float> Binding { get; } = binding;
+        public IModSettingsValueBinding<float> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     Minimum slider value (inclusive).
         ///     滑条最小值（含）。
         /// </summary>
-        public float MinValue { get; } = minValue;
+        public float MinValue { get; } =
+            float.IsFinite(minValue)
+                ? minValue
+                : throw new ArgumentOutOfRangeException(nameof(minValue), "Slider minValue must be finite.");
 
         /// <summary>
         ///     Maximum slider value (inclusive).
         ///     滑条最大值（含）。
         /// </summary>
-        public float MaxValue { get; } = maxValue;
+        public float MaxValue { get; } =
+            !float.IsFinite(maxValue)
+                ? throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be finite.")
+                : maxValue >= minValue
+                    ? maxValue
+                    : throw new ArgumentOutOfRangeException(nameof(maxValue),
+                        "Slider maxValue must be >= minValue.");
 
         /// <summary>
         ///     Step between valid values.
         ///     有效值之间的步进。
         /// </summary>
-        public float Step { get; } = step;
+        public float Step { get; } =
+            float.IsFinite(step) && step > 0f
+                ? step
+                : throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be finite and > 0.");
 
         /// <summary>
         ///     Optional formatter for the displayed value string.
@@ -333,7 +360,8 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the selected option value.
         ///     所选选项值的后端绑定。
         /// </summary>
-        public IModSettingsValueBinding<TValue> Binding { get; } = binding;
+        public IModSettingsValueBinding<TValue> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     Initial ordered choices shown in the UI; also the complete fixed set when
@@ -341,13 +369,24 @@ namespace STS2RitsuLib.Settings
         ///     UI 中显示的初始有序选项；当 <see cref="OptionsProvider" /> 为 <see langword="null" /> 时也是完整固定选项集。
         /// </summary>
         public IReadOnlyList<ModSettingsChoiceOption<TValue>> Options { get; } =
-            Array.AsReadOnly((options ?? throw new ArgumentNullException(nameof(options))).ToArray());
+            ValidateAndSnapshotOptions(options, nameof(options));
 
         /// <summary>
         ///     Optional provider that re-evaluates the available choices whenever the settings UI refreshes.
         ///     可选提供器；每次设置 UI 刷新时重新计算可用选项。
         /// </summary>
         public Func<IReadOnlyList<ModSettingsChoiceOption<TValue>>>? OptionsProvider { get; internal set; }
+
+        internal IReadOnlyList<ModSettingsChoiceOption<TValue>> ResolveOptions()
+        {
+            if (OptionsProvider == null)
+                return Options;
+
+            var options = OptionsProvider()
+                          ?? throw new InvalidOperationException(
+                              $"Dynamic choice setting '{Id}' returned a null option list.");
+            return ValidateAndSnapshotOptions(options, nameof(OptionsProvider));
+        }
 
         /// <summary>
         ///     Visual presentation (stepper, dropdown, etc.).
@@ -383,6 +422,19 @@ namespace STS2RitsuLib.Settings
         {
             return TryResetBindingToDefault(Binding, host);
         }
+
+        private static IReadOnlyList<ModSettingsChoiceOption<TValue>> ValidateAndSnapshotOptions(
+            IReadOnlyList<ModSettingsChoiceOption<TValue>>? options,
+            string parameterName)
+        {
+            ArgumentNullException.ThrowIfNull(options, parameterName);
+
+            var snapshot = options.ToArray();
+            if (snapshot.Any(option => option.Label == null))
+                throw new ArgumentException("Choice option labels cannot be null.", parameterName);
+
+            return Array.AsReadOnly(snapshot);
+        }
     }
 
     /// <summary>
@@ -416,6 +468,7 @@ namespace STS2RitsuLib.Settings
             bool editIntensity)
             : base(id, label, description)
         {
+            ArgumentNullException.ThrowIfNull(binding);
             Binding = binding;
             EditAlpha = editAlpha;
             EditIntensity = editIntensity;
@@ -489,7 +542,8 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the text value.
         ///     文本值的后备绑定。
         /// </summary>
-        public IModSettingsValueBinding<string> Binding { get; } = binding;
+        public IModSettingsValueBinding<string> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     Placeholder shown when empty.
@@ -501,7 +555,10 @@ namespace STS2RitsuLib.Settings
         ///     Maximum character count when set.
         ///     设置时的最大字符数。
         /// </summary>
-        public int? MaxLength { get; } = maxLength;
+        public int? MaxLength { get; } =
+            maxLength is null or >= 1
+                ? maxLength
+                : throw new ArgumentOutOfRangeException(nameof(maxLength), "maxLength must be null or >= 1.");
 
         internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
 
@@ -594,7 +651,8 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the serialized key string.
         ///     序列化按键字符串的后备绑定。
         /// </summary>
-        public IModSettingsValueBinding<string> Binding { get; } = binding;
+        public IModSettingsValueBinding<string> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     When true, modifier+key combinations are allowed.
@@ -663,7 +721,8 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the serialized input binding string.
         ///     序列化输入绑定字符串的后备绑定。
         /// </summary>
-        public IModSettingsValueBinding<string> Binding { get; } = binding;
+        public IModSettingsValueBinding<string> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     Whether modifier+key combinations are allowed.
@@ -738,7 +797,9 @@ namespace STS2RitsuLib.Settings
         ///     存储已捕获热键规范化列表的绑定。
         /// </summary>
         public IModSettingsValueBinding<List<string>> Binding { get; } =
-            binding is IStructuredModSettingsValueBinding<List<string>>
+            binding is null
+                ? throw new ArgumentNullException(nameof(binding))
+                : binding is IStructuredModSettingsValueBinding<List<string>>
                 ? binding
                 : ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List<string>());
 
@@ -808,13 +869,14 @@ namespace STS2RitsuLib.Settings
         ///     Caption on the button control.
         ///     按钮控件上的标题。
         /// </summary>
-        public ModSettingsText ButtonText { get; } = buttonText;
+        public ModSettingsText ButtonText { get; } =
+            buttonText ?? throw new ArgumentNullException(nameof(buttonText));
 
         /// <summary>
         ///     Callback when the button is activated.
         ///     按钮激活时的回调。
         /// </summary>
-        public Action Action { get; } = action;
+        public Action Action { get; } = action ?? throw new ArgumentNullException(nameof(action));
 
         /// <summary>
         ///     Visual emphasis (normal, primary, danger).
@@ -847,7 +909,8 @@ namespace STS2RitsuLib.Settings
         ///     Caption on the button control.
         ///     按钮控件上的标题。
         /// </summary>
-        public ModSettingsText ButtonText { get; } = buttonText;
+        public ModSettingsText ButtonText { get; } =
+            buttonText ?? throw new ArgumentNullException(nameof(buttonText));
 
         /// <summary>
         ///     Callback when the button is activated; use <see cref="IModSettingsUiActionHost.RequestRefresh" /> after
@@ -855,7 +918,8 @@ namespace STS2RitsuLib.Settings
         ///     按钮激活时的回调；在控件图之外修改绑定后使用
         ///     <see cref="IModSettingsUiActionHost.RequestRefresh" />。
         /// </summary>
-        public Action<IModSettingsUiActionHost> Action { get; } = action;
+        public Action<IModSettingsUiActionHost> Action { get; } =
+            action ?? throw new ArgumentNullException(nameof(action));
 
         /// <summary>
         ///     Visual emphasis (normal, primary, danger).
@@ -925,7 +989,7 @@ namespace STS2RitsuLib.Settings
         ///     Main rich-text body shown inside the card.
         ///     显示在卡片内的富文本正文。
         /// </summary>
-        public ModSettingsText Body { get; } = body;
+        public ModSettingsText Body { get; } = body ?? throw new ArgumentNullException(nameof(body));
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
@@ -949,18 +1013,30 @@ namespace STS2RitsuLib.Settings
         ///     Descriptive body text shown under the title.
         ///     显示在标题下方的描述正文。
         /// </summary>
-        public ModSettingsText Body { get; } = body;
+        public ModSettingsText Body { get; } = body ?? throw new ArgumentNullException(nameof(body));
 
         /// <summary>
         ///     Binding chips shown in the right-hand column.
         ///     显示在右侧列中的绑定 chip。
         /// </summary>
         public IReadOnlyList<ModSettingsText> Bindings { get; } =
-            Array.AsReadOnly((bindings ?? throw new ArgumentNullException(nameof(bindings))).ToArray());
+            ValidateAndSnapshotBindings(bindings);
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
             return ModSettingsUiFactory.CreateRuntimeHotkeySummaryEntry(context, this);
+        }
+
+        private static IReadOnlyList<ModSettingsText> ValidateAndSnapshotBindings(
+            IReadOnlyList<ModSettingsText>? bindings)
+        {
+            ArgumentNullException.ThrowIfNull(bindings);
+
+            var snapshot = bindings.ToArray();
+            if (snapshot.Any(binding => binding == null))
+                throw new ArgumentException("Runtime hotkey binding labels cannot be null.", nameof(bindings));
+
+            return Array.AsReadOnly(snapshot);
         }
     }
 
@@ -980,13 +1056,18 @@ namespace STS2RitsuLib.Settings
         ///     Lazy texture source for the preview.
         ///     预览用的延迟纹理来源。
         /// </summary>
-        public Func<Texture2D?> TextureProvider { get; } = textureProvider;
+        public Func<Texture2D?> TextureProvider { get; } =
+            textureProvider ?? throw new ArgumentNullException(nameof(textureProvider));
 
         /// <summary>
         ///     Height of the preview area in pixels.
         ///     预览区域的高度，单位为像素。
         /// </summary>
-        public float PreviewHeight { get; } = previewHeight;
+        public float PreviewHeight { get; } =
+            float.IsFinite(previewHeight) && previewHeight > 0f
+                ? previewHeight
+                : throw new ArgumentOutOfRangeException(nameof(previewHeight),
+                    "Image previewHeight must be finite and > 0.");
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
@@ -1010,7 +1091,8 @@ namespace STS2RitsuLib.Settings
         ///     Factory that creates the row control.
         ///     创建行控件的工厂。
         /// </summary>
-        public Func<IModSettingsUiActionHost, Control> ControlFactory { get; } = controlFactory;
+        public Func<IModSettingsUiActionHost, Control> ControlFactory { get; } =
+            controlFactory ?? throw new ArgumentNullException(nameof(controlFactory));
 
         /// <inheritdoc />
         public override Func<bool>? VisibilityPredicate => visibilityPredicate;

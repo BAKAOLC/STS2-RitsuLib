@@ -236,6 +236,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public Control CreateEntry(ModSettingsEntryDefinition entry)
         {
+            ArgumentNullException.ThrowIfNull(entry);
             return entry.CreateControl(_uiContext);
         }
 

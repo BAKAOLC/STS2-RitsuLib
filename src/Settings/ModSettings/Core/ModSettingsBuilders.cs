@@ -785,7 +785,9 @@ namespace STS2RitsuLib.Settings
             ModSettingsChoicePresentation presentation = ModSettingsChoicePresentation.Stepper)
         {
             ArgumentNullException.ThrowIfNull(optionsProvider);
-            var options = optionsProvider();
+            var options = optionsProvider()
+                          ?? throw new InvalidOperationException(
+                              $"Dynamic choice setting '{id}' returned a null option list.");
 
             var entry = new ChoiceModSettingsEntryDefinition<TValue>(
                 id,

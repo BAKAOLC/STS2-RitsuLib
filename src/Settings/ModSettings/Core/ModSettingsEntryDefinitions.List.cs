@@ -28,7 +28,9 @@ namespace STS2RitsuLib.Settings
         ///     列表绑定；当内部绑定尚非结构化绑定时，会用列表适配器包装。
         /// </summary>
         public IModSettingsValueBinding<List<TItem>> Binding { get; } =
-            binding is IStructuredModSettingsValueBinding<List<TItem>>
+            binding is null
+                ? throw new ArgumentNullException(nameof(binding))
+                : binding is IStructuredModSettingsValueBinding<List<TItem>>
                 ? binding
                 : ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List(itemDataAdapter));
 
@@ -36,13 +38,15 @@ namespace STS2RitsuLib.Settings
         ///     Factory for a new row when Add is pressed.
         ///     按下 Add 时用于创建新行的工厂。
         /// </summary>
-        public Func<TItem> CreateItem { get; } = createItem;
+        public Func<TItem> CreateItem { get; } =
+            createItem ?? throw new ArgumentNullException(nameof(createItem));
 
         /// <summary>
         ///     Row title resolver.
         ///     行标题解析器。
         /// </summary>
-        public Func<TItem, ModSettingsText> ItemLabel { get; } = itemLabel;
+        public Func<TItem, ModSettingsText> ItemLabel { get; } =
+            itemLabel ?? throw new ArgumentNullException(nameof(itemLabel));
 
         /// <summary>
         ///     Optional per-row description.
@@ -66,7 +70,8 @@ namespace STS2RitsuLib.Settings
         ///     Localized label for the add button.
         ///     添加按钮的本地化标签。
         /// </summary>
-        public ModSettingsText AddButtonText { get; } = addButtonText;
+        public ModSettingsText AddButtonText { get; } =
+            addButtonText ?? throw new ArgumentNullException(nameof(addButtonText));
 
         /// <summary>
         ///     When true, each list item can collapse its detail editor body.
@@ -136,7 +141,8 @@ namespace STS2RitsuLib.Settings
         ///     Backing binding for the integer value.
         ///     整数值的后端绑定。
         /// </summary>
-        public IModSettingsValueBinding<int> Binding { get; } = binding;
+        public IModSettingsValueBinding<int> Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     Minimum value (inclusive).
@@ -148,13 +154,19 @@ namespace STS2RitsuLib.Settings
         ///     Maximum value (inclusive).
         ///     最大值（含）。
         /// </summary>
-        public int MaxValue { get; } = maxValue;
+        public int MaxValue { get; } =
+            maxValue >= minValue
+                ? maxValue
+                : throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be >= minValue.");
 
         /// <summary>
         ///     Step between valid values.
         ///     有效值之间的步进。
         /// </summary>
-        public int Step { get; } = step;
+        public int Step { get; } =
+            step > 0
+                ? step
+                : throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be > 0.");
 
         /// <summary>
         ///     Optional display formatter.
@@ -210,13 +222,17 @@ namespace STS2RitsuLib.Settings
         ///     Destination page id.
         ///     目标页面 id。
         /// </summary>
-        public string TargetPageId { get; } = targetPageId;
+        public string TargetPageId { get; } =
+            !string.IsNullOrWhiteSpace(targetPageId)
+                ? targetPageId
+                : throw new ArgumentException("The target page ID cannot be null or whitespace.", nameof(targetPageId));
 
         /// <summary>
         ///     Label shown on the navigation control.
         ///     导航控件上显示的标签。
         /// </summary>
-        public ModSettingsText ButtonText { get; } = buttonText;
+        public ModSettingsText ButtonText { get; } =
+            buttonText ?? throw new ArgumentNullException(nameof(buttonText));
 
         internal override Control CreateControl(ModSettingsUiContext context)
         {
