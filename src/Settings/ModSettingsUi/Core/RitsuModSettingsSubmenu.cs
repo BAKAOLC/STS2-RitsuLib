@@ -494,6 +494,7 @@ namespace STS2RitsuLib.Settings
 
         internal void RegisterRefreshAction(Action action, ModSettingsUiRefreshSpec spec, string? pageScopeId = null)
         {
+            ArgumentNullException.ThrowIfNull(action);
             if (spec.IsStaticDisplay)
                 return;
 
@@ -660,6 +661,7 @@ namespace STS2RitsuLib.Settings
 
         private void CallDeferredIfAlive(Action action)
         {
+            ArgumentNullException.ThrowIfNull(action);
             var owner = this;
             Callable.From(() =>
             {
@@ -854,6 +856,8 @@ namespace STS2RitsuLib.Settings
         internal async Task<ModSettingsOpenResult> OpenToAsync(ModSettingsLocation location,
             ModSettingsOpenOptions options)
         {
+            ArgumentNullException.ThrowIfNull(location);
+            ArgumentNullException.ThrowIfNull(options);
             if (!IsInstanceValid(this))
                 return ModSettingsOpenResult.Error("ui-not-available", "The mod settings UI is not available.",
                     location);

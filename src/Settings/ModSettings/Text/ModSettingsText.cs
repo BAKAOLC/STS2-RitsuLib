@@ -33,6 +33,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static ModSettingsText Literal(string text)
         {
+            ArgumentNullException.ThrowIfNull(text);
             return new LiteralModSettingsText(text);
         }
 
@@ -57,6 +58,9 @@ namespace STS2RitsuLib.Settings
         {
             ArgumentNullException.ThrowIfNull(resolver);
             ArgumentNullException.ThrowIfNull(refreshWhenAnyOfTheseChange);
+            if (refreshWhenAnyOfTheseChange.Any(static binding => binding == null))
+                throw new ArgumentException("Refresh bindings cannot contain null.", nameof(refreshWhenAnyOfTheseChange));
+
             return new DynamicModSettingsText(
                 resolver,
                 refreshWhenAnyOfTheseChange.Length > 0
@@ -86,6 +90,7 @@ namespace STS2RitsuLib.Settings
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(table);
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentNullException.ThrowIfNull(fallback);
             return new LocStringModSettingsText(table, key, fallback);
         }
 
@@ -107,6 +112,7 @@ namespace STS2RitsuLib.Settings
         {
             ArgumentNullException.ThrowIfNull(localization);
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentNullException.ThrowIfNull(fallback);
             return new I18NModSettingsText(localization, key, fallback);
         }
 
@@ -114,6 +120,7 @@ namespace STS2RitsuLib.Settings
         {
             ArgumentNullException.ThrowIfNull(localizationFactory);
             ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentNullException.ThrowIfNull(fallback);
             return new DeferredI18NModSettingsText(localizationFactory, key, fallback);
         }
 
@@ -169,9 +176,10 @@ namespace STS2RitsuLib.Settings
                     return MegaCrit.Sts2.Core.Localization.LocString.GetIfExists(table, key)?.GetFormattedText() ??
                            fallback;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to resolve localization '{table}:{key}'; using fallback: {ex}");
                     return fallback;
                 }
             }
@@ -187,9 +195,10 @@ namespace STS2RitsuLib.Settings
                 {
                     return locString.Exists() ? locString.GetFormattedText() : fallback;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to resolve a game localization value; using fallback: {ex}");
                     return fallback;
                 }
             }
@@ -205,9 +214,10 @@ namespace STS2RitsuLib.Settings
                 {
                     return localization.Get(key, fallback);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to resolve I18N key '{key}'; using fallback: {ex}");
                     return fallback;
                 }
             }
@@ -224,9 +234,10 @@ namespace STS2RitsuLib.Settings
                 {
                     return localizationFactory().Get(key, fallback);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to resolve deferred I18N key '{key}'; using fallback: {ex}");
                     return fallback;
                 }
             }

@@ -32,6 +32,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static MarginContainer Create(Action openAction, IHoverTip? hoverTip)
         {
+            ArgumentNullException.ThrowIfNull(openAction);
             var title = ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)");
             return Create(
                 "RitsuLibModSettings",
@@ -57,6 +58,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static MarginContainer CreateOpenLogs(Action openAction, IHoverTip? hoverTip)
         {
+            ArgumentNullException.ThrowIfNull(openAction);
             var title = ModSettingsLocalization.Get("entry.openLogs.title", "Open Logs Folder");
             return Create(
                 "RitsuLibOpenLogs",

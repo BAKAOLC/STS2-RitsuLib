@@ -61,11 +61,16 @@ namespace STS2RitsuLib.Settings
 
         public static ModSettingsUiRefreshSpec ForBinding(IModSettingsBinding binding)
         {
+            ArgumentNullException.ThrowIfNull(binding);
             return new(ModSettingsRefreshRegistrationKind.SpecificBindings, [binding]);
         }
 
         public static ModSettingsUiRefreshSpec ForBindings(params IModSettingsBinding[] bindings)
         {
+            ArgumentNullException.ThrowIfNull(bindings);
+            if (bindings.Any(static binding => binding == null))
+                throw new ArgumentException("Refresh bindings cannot contain null.", nameof(bindings));
+
             return new(ModSettingsRefreshRegistrationKind.SpecificBindings, [..bindings]);
         }
 

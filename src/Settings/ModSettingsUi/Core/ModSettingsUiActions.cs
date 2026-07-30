@@ -132,13 +132,13 @@ namespace STS2RitsuLib.Settings
         ///     Page being targeted by page-level actions.
         ///     页面级动作的目标页面。
         /// </summary>
-        public ModSettingsPage Page { get; } = page;
+        public ModSettingsPage Page { get; } = page ?? throw new ArgumentNullException(nameof(page));
 
         /// <summary>
         ///     Host for refresh and dirty propagation.
         ///     刷新和脏传播的宿主。
         /// </summary>
-        public IModSettingsUiActionHost Host { get; } = host;
+        public IModSettingsUiActionHost Host { get; } = host ?? throw new ArgumentNullException(nameof(host));
     }
 
     /// <summary>
@@ -154,18 +154,18 @@ namespace STS2RitsuLib.Settings
         ///     Owning page.
         ///     Owning 页面.
         /// </summary>
-        public ModSettingsPage Page { get; } = page;
+        public ModSettingsPage Page { get; } = page ?? throw new ArgumentNullException(nameof(page));
 
         /// <summary>
         ///     Section receiving section-level actions.
         /// </summary>
-        public ModSettingsSection Section { get; } = section;
+        public ModSettingsSection Section { get; } = section ?? throw new ArgumentNullException(nameof(section));
 
         /// <summary>
         ///     Host for refresh and dirty propagation.
         ///     刷新和脏传播的宿主。
         /// </summary>
-        public IModSettingsUiActionHost Host { get; } = host;
+        public IModSettingsUiActionHost Host { get; } = host ?? throw new ArgumentNullException(nameof(host));
     }
 
     /// <summary>

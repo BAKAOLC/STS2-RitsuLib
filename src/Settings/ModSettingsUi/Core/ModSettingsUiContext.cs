@@ -30,6 +30,7 @@ namespace STS2RitsuLib.Settings
 
         public static string Resolve(ModSettingsText? text, string fallback = "")
         {
+            ArgumentNullException.ThrowIfNull(fallback);
             return text?.Resolve() ?? fallback;
         }
 
@@ -85,6 +86,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public void RegisterRefresh(Action action, ModSettingsUiRefreshSpec spec)
         {
+            ArgumentNullException.ThrowIfNull(action);
             submenu.RegisterRefreshAction(action, spec, pageScopeId);
         }
 
@@ -130,6 +132,8 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public void RegisterDynamicVisibility(Control control, Func<bool> predicate)
         {
+            ArgumentNullException.ThrowIfNull(control);
+            ArgumentNullException.ThrowIfNull(predicate);
             submenu.RegisterDynamicVisibility(control, predicate, pageScopeId);
         }
 
@@ -145,6 +149,8 @@ namespace STS2RitsuLib.Settings
 
         public bool TryGetRowState<TValue>(string rowKey, string stateKey, out TValue? value)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(rowKey);
+            ArgumentException.ThrowIfNullOrWhiteSpace(stateKey);
             value = default;
             if (!_rowUiState.TryGetValue(rowKey, out var row) || !row.TryGetValue(stateKey, out var stored))
                 return false;
@@ -155,6 +161,8 @@ namespace STS2RitsuLib.Settings
 
         public void SetRowState<TValue>(string rowKey, string stateKey, TValue value)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(rowKey);
+            ArgumentException.ThrowIfNullOrWhiteSpace(stateKey);
             if (!_rowUiState.TryGetValue(rowKey, out var row))
             {
                 row = [];
