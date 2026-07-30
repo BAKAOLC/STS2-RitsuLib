@@ -509,6 +509,10 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description = null)
         {
             ArgumentNullException.ThrowIfNull(textureProvider);
+            if (!float.IsFinite(previewHeight) || previewHeight <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(previewHeight),
+                    "Image previewHeight must be finite and > 0.");
+
             AddEntry(id, new ImageModSettingsEntryDefinition(id, label, textureProvider, previewHeight, description));
             return this;
         }
@@ -649,11 +653,17 @@ namespace STS2RitsuLib.Settings
             Func<double, string>? valueFormatter = null,
             ModSettingsText? description = null)
         {
+            if (!double.IsFinite(minValue))
+                throw new ArgumentOutOfRangeException(nameof(minValue), "Slider minValue must be finite.");
+
+            if (!double.IsFinite(maxValue))
+                throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be finite.");
+
             if (maxValue < minValue)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be >= minValue.");
 
-            if (step <= 0d)
-                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be > 0.");
+            if (!double.IsFinite(step) || step <= 0d)
+                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be finite and > 0.");
 
             AddEntry(id, new SliderModSettingsEntryDefinition(
                 id,
@@ -686,11 +696,17 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description = null)
         {
             ArgumentNullException.ThrowIfNull(binding);
+            if (!float.IsFinite(minValue))
+                throw new ArgumentOutOfRangeException(nameof(minValue), "Slider minValue must be finite.");
+
+            if (!float.IsFinite(maxValue))
+                throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be finite.");
+
             if (maxValue < minValue)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be >= minValue.");
 
-            if (step <= 0f)
-                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be > 0.");
+            if (!float.IsFinite(step) || step <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be finite and > 0.");
 
             AddEntry(id, new FloatSliderModSettingsEntryDefinition(
                 id,

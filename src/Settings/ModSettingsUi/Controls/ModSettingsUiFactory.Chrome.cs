@@ -1002,7 +1002,7 @@ namespace STS2RitsuLib.Settings
             var initial = ResolvedText();
             wrap.Visible = initial.Length > 0;
 
-            var useCap = maxViewportHeight is > 0f;
+            var useCap = maxViewportHeight is > 0f && float.IsFinite(maxViewportHeight.Value);
             var label = CreateHeaderLabel(
                 initial.Length == 0 ? "\u200b" : initial,
                 16,
