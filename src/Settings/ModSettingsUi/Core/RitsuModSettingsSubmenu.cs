@@ -444,8 +444,9 @@ namespace STS2RitsuLib.Settings
 
         internal void MarkDirty(IModSettingsBinding binding)
         {
-            MarkDirtyRecursive(binding, []);
+            ArgumentNullException.ThrowIfNull(binding);
             _saveTimer = AutosaveDelaySeconds;
+            MarkDirtyRecursive(binding, []);
         }
 
         private void MarkDirtyRecursive(IModSettingsBinding binding, HashSet<IModSettingsBinding> visited)
@@ -3172,7 +3173,9 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            var roots = ModSettingsBindingFlushPlanner.SelectEffectiveSaveRoots(_dirtyBindings);
+            var pending = _dirtyBindings.ToHashSet();
+            var roots = ModSettingsBindingFlushPlanner.SelectEffectiveSaveRoots(pending);
+            _dirtyBindings.ExceptWith(pending);
             foreach (var binding in roots)
                 try
                 {
@@ -3180,12 +3183,13 @@ namespace STS2RitsuLib.Settings
                 }
                 catch (Exception ex)
                 {
+                    _dirtyBindings.Add(binding);
+                    var bindingType = binding.GetType();
                     RitsuLibFramework.Logger.Warn(
-                        $"[Settings] Failed to save '{binding.ModId}:{binding.DataKey}': {ex.Message}");
+                        $"[Settings] Failed to save '{bindingType.FullName ?? bindingType.Name}': {ex}");
                 }
 
-            _dirtyBindings.Clear();
-            _saveTimer = -1;
+            _saveTimer = _dirtyBindings.Count > 0 ? AutosaveDelaySeconds : -1;
         }
 
         private void SubscribeLocaleChanges()
