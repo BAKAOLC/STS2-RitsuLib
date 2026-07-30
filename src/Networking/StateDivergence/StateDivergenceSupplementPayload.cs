@@ -11,6 +11,7 @@ using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Networking.MessageExtensions;
+using STS2RitsuLib.Networking.Sidecar;
 #if STS2_AT_LEAST_0_109_0
 using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
 
@@ -336,20 +337,20 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static byte[] Gunzip(byte[] data)
         {
-            using var input = new MemoryStream(data, false);
-            using var gzip = new GZipStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            gzip.CopyTo(output);
-            return output.ToArray();
+            if (RitsuLibSidecarCompression.TryGunzip(data, out var decompressed))
+                return decompressed;
+
+            throw new InvalidDataException(
+                $"The gzip supplement is invalid or exceeds {RitsuLibSidecarWire.MaxPayloadBytes} decompressed bytes.");
         }
 
         private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream([.. data], false);
-            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            brotli.CopyTo(output);
-            return output.ToArray();
+            if (RitsuLibSidecarCompression.TryBrotliDecompress(data, out var decompressed))
+                return decompressed;
+
+            throw new InvalidDataException(
+                $"The Brotli supplement is invalid or exceeds {RitsuLibSidecarWire.MaxPayloadBytes} decompressed bytes.");
         }
 
         private static StateDivergenceSupplementPayloadV6 ToWirePayload(StateDivergenceSupplementPayload payload)
