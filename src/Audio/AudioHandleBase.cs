@@ -79,24 +79,8 @@ namespace STS2RitsuLib.Audio
             if (!TryGetInstance(out var instance))
                 return false;
 
-            try
-            {
-                instance.Call("play");
-                return true;
-            }
-            catch
-            {
-                try
-                {
-                    instance.Call("start");
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle play: {ex.Message}");
-                    return false;
-                }
-            }
+            var method = instance.HasMethod("play") ? "play" : "start";
+            return TryCall(method);
         }
 
         /// <summary>
@@ -108,24 +92,9 @@ namespace STS2RitsuLib.Audio
             if (!TryGetInstance(out var instance))
                 return false;
 
-            try
-            {
-                instance.Call("stop", allowFadeOut ? 0 : 1);
-                return true;
-            }
-            catch
-            {
-                try
-                {
-                    instance.Call("stop");
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle stop: {ex.Message}");
-                    return false;
-                }
-            }
+            return instance.HasMethod("start")
+                ? TryCall("stop", allowFadeOut ? 0 : 1)
+                : TryCall("stop");
         }
 
         /// <summary>
@@ -188,13 +157,16 @@ namespace STS2RitsuLib.Audio
                 return true;
             }
 
+            if (!RawInstance.HasMethod("release"))
+                return false;
+
             try
             {
                 RawInstance.Call("release");
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle release: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle release: {ex}");
                 return false;
             }
 
@@ -213,7 +185,12 @@ namespace STS2RitsuLib.Audio
 
             _disposed = true;
             TryStop(AllowFadeOutOnStop);
-            TryRelease();
+            if (!TryRelease())
+            {
+                _disposed = false;
+                return;
+            }
+
             AudioLifecycleRegistry.Shared.Detach(this);
             AudioChannelRegistry.Shared.Detach(this);
 
@@ -235,7 +212,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         protected bool TryCall(string method, params Variant[] args)
         {
-            if (!TryGetInstance(out var instance))
+            if (!TryGetInstance(out var instance) || !instance.HasMethod(method))
                 return false;
 
             try
@@ -245,7 +222,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle {method}: {ex}");
                 return false;
             }
         }
