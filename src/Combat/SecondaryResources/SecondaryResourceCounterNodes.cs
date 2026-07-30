@@ -938,7 +938,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             CustomMinimumSize = _style.Size;
             Size = _style.Size;
 
-            if (!IsNodeReady()) return;
+            if (!IsNodeReady())
+                return;
+
             ApplyStyleAndDefinition();
             RefreshHoverTipBinding();
         }
@@ -951,6 +953,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             _amount = amount;
             _maxAmount = maxAmount;
+            _hoverTipBinder?.Refresh();
         }
 
         /// <summary>
@@ -1253,6 +1256,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private readonly Callable _showCallable;
         private Control _owner = null!;
         private Func<SecondaryResourceHoverTipRequest?> _requestFactory = null!;
+        private bool _shown;
         private SecondaryResourceHoverTipStyle _style = SecondaryResourceHoverTipStyle.Default;
 
         /// <summary>
@@ -1316,15 +1320,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceHoverTipStyle? style = null)
         {
             ArgumentNullException.ThrowIfNull(requestFactory);
+            var refreshShownTip = _shown;
             _requestFactory = requestFactory;
             _style = style ?? SecondaryResourceHoverTipStyle.Default;
+            if (refreshShownTip)
+                Show();
         }
 
         /// <inheritdoc />
-        public override void _Ready()
+        public override void _EnterTree()
         {
             _owner ??= GetParent<Control>();
-
             ConnectOwnerSignals();
         }
 
@@ -1346,14 +1352,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var request = _requestFactory();
             if (request == null)
+            {
+                Hide();
                 return;
+            }
 
-            SecondaryResourceHoverTipFactory.Show(
+            _shown = SecondaryResourceHoverTipFactory.Show(
                 _owner,
                 request.Value.Definition,
                 request.Value.Amount,
                 request.Value.MaxAmount,
-                _style);
+                _style) != null;
         }
 
         /// <summary>
@@ -1362,8 +1371,19 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public void Hide()
         {
+            _shown = false;
             if (_owner != null && IsInstanceValid(_owner))
                 NHoverTipSet.Remove(_owner);
+        }
+
+        /// <summary>
+        ///     Recreates the hover tip with current request data when it is already visible.
+        ///     悬浮提示已显示时，使用当前请求数据重新创建提示。
+        /// </summary>
+        public void Refresh()
+        {
+            if (_shown)
+                Show();
         }
 
         private void ConnectOwnerSignals()
@@ -1614,7 +1634,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var resolvedStyle = style ?? SecondaryResourceHoverTipStyle.Default;
             if (!resolvedStyle.Enabled)
+            {
+                NHoverTipSet.Remove(owner);
                 return null;
+            }
 
             var hoverTip = Create(definition, amount, maxAmount);
             NHoverTipSet.Remove(owner);
