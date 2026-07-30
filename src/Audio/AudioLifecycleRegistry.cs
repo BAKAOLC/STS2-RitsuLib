@@ -69,8 +69,16 @@ namespace STS2RitsuLib.Audio
             var token = options?.ScopeToken;
             if (token is not null)
             {
+                if (token.IsClosing)
+                {
+                    handle.Dispose();
+                    return;
+                }
+
                 var tokenSet = _tokenHandles.GetOrAdd(token, _ => new());
                 tokenSet.TryAdd(handle, 0);
+                if (token.IsClosing && tokenSet.TryRemove(handle, out _))
+                    handle.Dispose();
                 return;
             }
 
@@ -171,6 +179,31 @@ namespace STS2RitsuLib.Audio
             }
 
             return any && allReleased;
+        }
+
+        internal bool TryDisposeScope(AudioScopeToken token, bool allowFadeOut = true)
+        {
+            if (!_tokenHandles.TryGetValue(token, out var handles))
+                return true;
+
+            var allReleased = true;
+            foreach (var handle in handles.Keys.ToArray())
+            {
+                handle.TryStop(allowFadeOut);
+                if (!handle.TryRelease())
+                {
+                    allReleased = false;
+                    continue;
+                }
+
+                handles.TryRemove(handle, out _);
+            }
+
+            if (!allReleased || !handles.IsEmpty)
+                return false;
+
+            _tokenHandles.TryRemove(new(token, handles));
+            return true;
         }
     }
 }

@@ -6,6 +6,8 @@ namespace STS2RitsuLib.Audio
     /// </summary>
     public sealed class AudioScopeToken : IDisposable
     {
+        private int _disposeState;
+
         internal AudioScopeToken(string name, AudioLifecycleScope scope)
         {
             Name = name;
@@ -28,7 +30,9 @@ namespace STS2RitsuLib.Audio
         ///     True after this token has been disposed.
         ///     此 token 已释放后为 true。
         /// </summary>
-        public bool IsDisposed { get; private set; }
+        public bool IsDisposed => Volatile.Read(ref _disposeState) == 2;
+
+        internal bool IsClosing => Volatile.Read(ref _disposeState) != 0;
 
         /// <summary>
         ///     Stops and releases any handles still attached to this token.
@@ -36,11 +40,13 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public void Dispose()
         {
-            if (IsDisposed)
+            if (Interlocked.CompareExchange(ref _disposeState, 1, 0) != 0)
                 return;
 
-            IsDisposed = true;
-            AudioLifecycleRegistry.Shared.StopScope(this);
+            if (AudioLifecycleRegistry.Shared.TryDisposeScope(this))
+                Volatile.Write(ref _disposeState, 2);
+            else
+                Volatile.Write(ref _disposeState, 0);
         }
 
         /// <summary>
