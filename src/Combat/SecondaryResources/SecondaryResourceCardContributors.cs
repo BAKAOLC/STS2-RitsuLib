@@ -3,14 +3,14 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Optional card capability that contributes local secondary-resource play uses.
-    ///     可选卡牌能力：贡献卡牌本地次级资源出牌条款。
+    ///     <para xml:lang="en">Provides card-specific secondary-resource payment uses.</para>
+    ///     <para xml:lang="zh-CN">提供卡牌专属的次级资源支付条款。</para>
     /// </summary>
     public interface ICardSecondaryResourceUseContributor
     {
         /// <summary>
-        ///     Returns additional local secondary-resource uses for <paramref name="card" />.
-        ///     返回 <paramref name="card" /> 的额外本地次级资源条款。
+        ///     <para xml:lang="en">Returns the additional payment uses contributed to <paramref name="card" />.</para>
+        ///     <para xml:lang="zh-CN">返回为 <paramref name="card" /> 提供的额外支付条款。</para>
         /// </summary>
         IEnumerable<SecondaryResourcePlayUse> GetSecondaryResourceUses(CardModel card)
         {
@@ -19,14 +19,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Optional card capability that contributes local secondary-resource cost modifications.
-    ///     可选卡牌能力：贡献卡牌本地次级资源费用修正。
+    ///     <para xml:lang="en">Modifies secondary-resource costs for a specific card.</para>
+    ///     <para xml:lang="zh-CN">修正特定卡牌的次级资源费用。</para>
     /// </summary>
     public interface ICardSecondaryResourceCostContributor
     {
         /// <summary>
-        ///     Modifies a local fixed secondary-resource cost before combat/global cost hooks run.
-        ///     在战斗/global 费用 hook 运行前修正本地固定次级资源费用。
+        ///     <para xml:lang="en">Modifies a fixed cost before the combat-wide cost hooks run.</para>
+        ///     <para xml:lang="zh-CN">在战斗范围的费用钩子运行前修正固定费用。</para>
         /// </summary>
         decimal ModifySecondaryResourceCost(SecondaryResourceCardCostContext context, decimal cost)
         {
