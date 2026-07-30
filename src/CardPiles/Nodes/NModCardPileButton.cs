@@ -86,6 +86,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private const float TopBarIconSize = 72f;
 
+        private const float TopBarOpenRotation = -(float)Math.PI / 15f;
+
         private static readonly Vector2 TopBarHoverScale = Vector2.One * 1.1f;
 
         private static readonly Vector2 CombatPileHoverScale = Vector2.One * 1.25f;
@@ -94,9 +96,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         // Action-mode fields (null when Definition is set).
         private int _actionLastKnownCount = -1;
+        private bool _actionCountProviderFailed;
+        private bool _actionIsOpen;
+        private bool _actionOpenPredicateFailed;
+        private bool _actionVisibilityPredicateFailed;
 
         // Shared state between the two modes.
         private Tween? _bumpTween;
+        private Tween? _openStateTween;
 
         private Control? _countContainer;
         private MegaLabel _countLabel = null!;
@@ -223,6 +230,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                     TryReplaceIconWithVanillaDeckClone();
                 _hoverTip = ModTopBarButtonHoverTipFactory.Create(ActionDefinition);
                 PollActionCount(true);
+                RefreshActionOpenState(true);
                 return;
             }
 
@@ -254,6 +262,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             DetachPile();
             NHoverTipSet.Remove(this);
             _bumpTween?.Kill();
+            _openStateTween?.Kill();
         }
 
         /// <inheritdoc />
@@ -266,6 +275,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 // subscribe to. Both predicates are best kept cheap per their docs.
                 RefreshActionVisibility();
                 PollActionCount(false);
+                RefreshActionOpenState();
                 return;
             }
 
@@ -728,11 +738,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
             try
             {
                 count = def.CountProvider(new(def, _player, this));
+                _actionCountProviderFailed = false;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[TopBar] CountProvider for '{def.Id}' threw: {ex.Message}; using last known count.");
+                if (!_actionCountProviderFailed)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[TopBar] CountProvider for '{def.Id}' threw; using last known count: {ex}");
+                _actionCountProviderFailed = true;
                 return;
             }
 
@@ -779,11 +792,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 try
                 {
                     visible = def.VisibleWhen(new(def, _player, this));
+                    _actionVisibilityPredicateFailed = false;
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Warn(
-                        $"[TopBar] VisibleWhen predicate for '{def.Id}' threw: {ex.Message}; hiding button.");
+                    if (!_actionVisibilityPredicateFailed)
+                        RitsuLibFramework.Logger.Warn(
+                            $"[TopBar] VisibleWhen predicate for '{def.Id}' threw; hiding button: {ex}");
+                    _actionVisibilityPredicateFailed = true;
                     visible = false;
                 }
 
@@ -794,6 +810,44 @@ namespace STS2RitsuLib.CardPiles.Nodes
             MouseFilter = visible ? MouseFilterEnum.Stop : MouseFilterEnum.Ignore;
             if (!visible)
                 NHoverTipSet.Remove(this);
+        }
+
+        private void RefreshActionOpenState(bool immediate = false)
+        {
+            if (ActionDefinition is not { } def)
+                return;
+
+            var isOpen = false;
+            if (def.IsOpenWhen != null)
+                try
+                {
+                    isOpen = def.IsOpenWhen(new(def, _player, this));
+                    _actionOpenPredicateFailed = false;
+                }
+                catch (Exception ex)
+                {
+                    if (!_actionOpenPredicateFailed)
+                        RitsuLibFramework.Logger.Warn(
+                            $"[TopBar] IsOpenWhen predicate for '{def.Id}' threw; using closed state: {ex}");
+                    _actionOpenPredicateFailed = true;
+                }
+
+            if (!immediate && _actionIsOpen == isOpen)
+                return;
+
+            _actionIsOpen = isOpen;
+            _openStateTween?.Kill();
+            var targetRotation = isOpen ? TopBarOpenRotation : 0f;
+            if (immediate)
+            {
+                _icon.Rotation = targetRotation;
+                return;
+            }
+
+            _openStateTween = CreateTween();
+            _openStateTween.TweenProperty(_icon, "rotation", targetRotation, isOpen ? 0.5 : 1.0)
+                .SetTrans(isOpen ? Tween.TransitionType.Back : Tween.TransitionType.Elastic)
+                .SetEase(Tween.EaseType.Out);
         }
 
         private void RefreshPileButtonVisibility()
@@ -1027,11 +1081,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             if (ActionDefinition is { } actionDef)
             {
-                if (actionDef.OnClick is not { } handler)
-                    return;
                 try
                 {
-                    handler(new(actionDef, _player, this));
+                    actionDef.OnClick(new(actionDef, _player, this));
                 }
                 catch (Exception ex)
                 {
