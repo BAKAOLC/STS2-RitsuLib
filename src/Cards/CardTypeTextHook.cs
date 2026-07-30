@@ -45,19 +45,28 @@ namespace STS2RitsuLib.Cards
         private static IEnumerable<LocString> GetTypeModifiers(CardModel card)
         {
             if (card is ICustomTypeTextCard customTypeTextCard)
-                foreach (var modifier in customTypeTextCard.GetTypeModifiers())
+                foreach (var modifier in GetTypeModifiersSafely(
+                             card,
+                             card,
+                             customTypeTextCard.GetTypeModifiers))
                     yield return modifier;
 
             HashSet<ICardTypeTextModifier> seen = new(ReferenceEqualityComparer.Instance);
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardTypeTextModifier>(card))
             {
                 seen.Add(capability);
-                foreach (var modifier in capability.GetTypeModifiers(card))
+                foreach (var modifier in GetTypeModifiersSafely(
+                             capability,
+                             card,
+                             () => capability.GetTypeModifiers(card)))
                     yield return modifier;
             }
 
             foreach (var source in IterateHookModifiers(card, seen))
-            foreach (var modifier in source.GetTypeModifiers(card))
+            foreach (var modifier in GetTypeModifiersSafely(
+                         source,
+                         card,
+                         () => source.GetTypeModifiers(card)))
                 yield return modifier;
         }
 
@@ -92,6 +101,28 @@ namespace STS2RitsuLib.Cards
         private static bool ReferencesTypeArgument(LocString modifier)
         {
             return modifier.GetRawText().Contains("{" + TypeArgumentName + "}", StringComparison.Ordinal);
+        }
+
+        private static IReadOnlyList<LocString> GetTypeModifiersSafely(
+            object source,
+            CardModel card,
+            Func<IEnumerable<LocString>> getModifiers)
+        {
+            try
+            {
+                return getModifiers()?.Where(static modifier => modifier != null).ToArray() ?? [];
+            }
+            catch (Exception ex)
+            {
+                if (source is IModelCapability capability)
+                    ModelCapabilityDiagnostics.WarnFailure("card display/type-text", card, capability, ex);
+                else
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardTypeText] Modifier source '{source.GetType().FullName}' failed for {card.Id}: " +
+                        ex.Message);
+
+                return [];
+            }
         }
     }
 }
