@@ -68,6 +68,7 @@ namespace STS2RitsuLib.Keywords
         public static ModKeywordRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            modId = modId.Trim();
 
             lock (SyncRoot)
             {
