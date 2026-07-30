@@ -89,7 +89,7 @@ namespace STS2RitsuLib.Settings
         public static Func<bool> CombineVisibility(Func<bool>? existing, Func<bool> hostPredicate)
         {
             ArgumentNullException.ThrowIfNull(hostPredicate);
-            return () => (existing?.Invoke() ?? true) && hostPredicate();
+            return () => ModSettingsPredicate.Evaluate(existing) && ModSettingsPredicate.Evaluate(hostPredicate);
         }
     }
 }

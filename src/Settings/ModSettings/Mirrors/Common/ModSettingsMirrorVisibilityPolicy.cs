@@ -12,17 +12,7 @@ namespace STS2RitsuLib.Settings
 
         public static bool Evaluate(Func<bool>? predicate)
         {
-            if (predicate == null)
-                return true;
-
-            try
-            {
-                return predicate();
-            }
-            catch
-            {
-                return true;
-            }
+            return ModSettingsPredicate.Evaluate(predicate);
         }
     }
 }
