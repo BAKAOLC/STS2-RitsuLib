@@ -83,6 +83,7 @@ namespace STS2RitsuLib.Audio
         {
             if (plan.RoomSource is null)
             {
+                handle.Stop(false);
                 if (plan.RefreshVanillaRoomStateOnRoomEnter)
                     AudioVanillaBridge.RefreshTrackAndAmbience();
                 return;

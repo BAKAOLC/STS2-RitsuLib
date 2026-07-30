@@ -30,9 +30,12 @@ namespace STS2RitsuLib.Audio
 
         internal void SwitchTo(AudioMusicHandle? handle)
         {
+            if (handle is null)
+                return;
+
             if (Volatile.Read(ref _disposed) != 0)
             {
-                handle?.Dispose();
+                handle.Dispose();
                 return;
             }
 
