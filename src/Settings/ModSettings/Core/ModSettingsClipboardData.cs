@@ -21,12 +21,11 @@ namespace STS2RitsuLib.Settings
         ///     CLR full names for numeric primitives that may appear in <see cref="ModSettingsClipboardEnvelope.TypeName" />.
         ///     可能出现在 <see cref="ModSettingsClipboardEnvelope.TypeName" /> 中的数值基元 CLR 全名。
         /// </summary>
-        private static readonly FrozenSet<string> NumericEnvelopeTypeFullNames = new[]
+        private static readonly FrozenDictionary<string, Type> NumericEnvelopeTypes = new[]
         {
-            typeof(byte).FullName!, typeof(sbyte).FullName!, typeof(short).FullName!, typeof(ushort).FullName!,
-            typeof(int).FullName!, typeof(uint).FullName!, typeof(long).FullName!, typeof(ulong).FullName!,
-            typeof(float).FullName!, typeof(double).FullName!, typeof(decimal).FullName!,
-        }.ToFrozenSet(StringComparer.Ordinal);
+            typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long),
+            typeof(ulong), typeof(float), typeof(double), typeof(decimal),
+        }.ToFrozenDictionary(type => type.FullName!, StringComparer.Ordinal);
 
         public static void CopyValue<TValue>(IModSettingsBinding binding, ModSettingsClipboardScope scope,
             IStructuredModSettingsValueAdapter<TValue> adapter, TValue value)
@@ -152,14 +151,6 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private static bool TryParseEnvelope(string clipboard, out ModSettingsClipboardEnvelope? envelope)
-        {
-            if (!TryDeserializeEnvelope(clipboard, out envelope) || envelope == null)
-                return false;
-
-            return string.Equals(envelope.Kind, ClipboardKind, StringComparison.Ordinal);
-        }
-
         internal static bool TryReadEnvelopePayloadForTarget<TValue>(IModSettingsBinding binding,
             ModSettingsClipboardEnvelope? envelope, bool requireMatchingSourceBinding, out string payload)
         {
@@ -179,17 +170,8 @@ namespace STS2RitsuLib.Settings
             if (!string.Equals(envelope.SchemaSignature, GetSchemaSignature(typeof(TValue)), StringComparison.Ordinal))
                 return false;
 
-            if (!MatchesJsonShape(typeof(TValue), envelope.Payload))
-                return false;
-
             payload = envelope.Payload;
             return true;
-        }
-
-        private static bool TryReadEnvelopePayload<TValue>(IModSettingsBinding binding,
-            ModSettingsClipboardEnvelope? envelope, out string payload)
-        {
-            return TryReadEnvelopePayloadForTarget<TValue>(binding, envelope, true, out payload);
         }
 
         private static string CreateTargetSignature(IModSettingsBinding binding)
@@ -395,6 +377,7 @@ namespace STS2RitsuLib.Settings
                 return false;
 
             return CanCoerceClipboardEnvelopeScalarTo(typeof(TValue), envelope.TypeName) &&
+                   IsEnvelopeScalarPayloadValid(envelope.TypeName, envelope.Payload) &&
                    TryCoerceJsonPayloadToValue(envelope.Payload, out value);
         }
 
@@ -417,24 +400,72 @@ namespace STS2RitsuLib.Settings
             if (ut == typeof(string))
                 return false;
 
-            if (IsNumericType(ut) && NumericEnvelopeTypeFullNames.Contains(envelopeTypeName))
-                return true;
+            if (IsNumericType(ut) && NumericEnvelopeTypes.TryGetValue(envelopeTypeName, out var sourceNumericType))
+                return CanWidenNumericWithoutLoss(sourceNumericType, ut);
 
             if (ut.IsEnum)
-                return NumericEnvelopeTypeFullNames.Contains(envelopeTypeName) ||
+                return NumericEnvelopeTypes.ContainsKey(envelopeTypeName) ||
                        string.Equals(envelopeTypeName, ut.FullName ?? ut.Name, StringComparison.Ordinal);
 
             if (ut == typeof(bool))
-                return NumericEnvelopeTypeFullNames.Contains(envelopeTypeName) ||
+                return NumericEnvelopeTypes.ContainsKey(envelopeTypeName) ||
                        string.Equals(envelopeTypeName, typeof(bool).FullName, StringComparison.Ordinal);
 
             return false;
+        }
+
+        private static bool CanWidenNumericWithoutLoss(Type sourceType, Type targetType)
+        {
+            if (sourceType == targetType)
+                return true;
+
+            return Type.GetTypeCode(sourceType) switch
+            {
+                TypeCode.SByte => targetType == typeof(short) || targetType == typeof(int) ||
+                                  targetType == typeof(long) || targetType == typeof(float) ||
+                                  targetType == typeof(double) || targetType == typeof(decimal),
+                TypeCode.Byte => targetType == typeof(short) || targetType == typeof(ushort) ||
+                                 targetType == typeof(int) || targetType == typeof(uint) ||
+                                 targetType == typeof(long) || targetType == typeof(ulong) ||
+                                 targetType == typeof(float) || targetType == typeof(double) ||
+                                 targetType == typeof(decimal),
+                TypeCode.Int16 => targetType == typeof(int) || targetType == typeof(long) ||
+                                  targetType == typeof(float) || targetType == typeof(double) ||
+                                  targetType == typeof(decimal),
+                TypeCode.UInt16 => targetType == typeof(int) || targetType == typeof(uint) ||
+                                   targetType == typeof(long) || targetType == typeof(ulong) ||
+                                   targetType == typeof(float) || targetType == typeof(double) ||
+                                   targetType == typeof(decimal),
+                TypeCode.Int32 => targetType == typeof(long) || targetType == typeof(double) ||
+                                  targetType == typeof(decimal),
+                TypeCode.UInt32 => targetType == typeof(long) || targetType == typeof(ulong) ||
+                                   targetType == typeof(double) || targetType == typeof(decimal),
+                TypeCode.Int64 or TypeCode.UInt64 => targetType == typeof(decimal),
+                TypeCode.Single => targetType == typeof(double),
+                _ => false,
+            };
         }
 
         private static bool IsCoercibleScalarTarget(Type type)
         {
             var ut = Nullable.GetUnderlyingType(type) ?? type;
             return ut == typeof(string) || ut == typeof(bool) || ut.IsEnum || IsNumericType(ut);
+        }
+
+        private static bool IsEnvelopeScalarPayloadValid(string envelopeTypeName, string json)
+        {
+            if (!NumericEnvelopeTypes.TryGetValue(envelopeTypeName, out var numericType))
+                return true;
+
+            try
+            {
+                using var document = JsonDocument.Parse(json);
+                return TryConvertNumericElement(document.RootElement, numericType, out _);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static bool TryCoerceJsonPayloadToValue<TValue>(string json, out TValue value)
@@ -499,10 +530,9 @@ namespace STS2RitsuLib.Settings
 
                 if (IsNumericType(ut))
                 {
-                    if (!TryGetNumericDouble(element, out var d))
+                    if (!TryConvertNumericElement(element, ut, out var converted))
                         return false;
 
-                    var converted = Convert.ChangeType(d, ut, CultureInfo.InvariantCulture);
                     value = (TValue)converted;
                     return true;
                 }
@@ -538,16 +568,37 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private static bool TryGetNumericDouble(JsonElement element, out double d)
+        private static bool TryConvertNumericElement(JsonElement element, Type targetType, out object converted)
         {
-            d = 0;
-            return element.ValueKind switch
+            converted = null!;
+            try
             {
-                JsonValueKind.Number => element.TryGetDouble(out d),
-                JsonValueKind.String when double.TryParse(element.GetString(), NumberStyles.Float,
-                    CultureInfo.InvariantCulture, out d) => true,
-                _ => false,
-            };
+                switch (element.ValueKind)
+                {
+                    case JsonValueKind.Number:
+                        converted = JsonSerializer.Deserialize(element.GetRawText(), targetType)!;
+                        return converted != null;
+                    case JsonValueKind.String:
+                        var text = element.GetString();
+                        if (string.IsNullOrWhiteSpace(text))
+                            return false;
+
+                        converted = Convert.ChangeType(text, targetType, CultureInfo.InvariantCulture);
+                        return converted switch
+                        {
+                            float single => float.IsFinite(single),
+                            double @double => double.IsFinite(@double),
+                            _ => true,
+                        };
+                    default:
+                        return false;
+                }
+            }
+            catch
+            {
+                converted = null!;
+                return false;
+            }
         }
 
         private sealed record ClipboardSerializableMember(string JsonName, Type ValueType);
