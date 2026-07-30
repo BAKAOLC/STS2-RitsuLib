@@ -8,10 +8,14 @@ using STS2RitsuLib.Interop.Patches;
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Extensible pipeline invoked from <see cref="ModTypeDiscoveryPatch" /> (early localization init),
-    ///     mirroring BaseLib's post-mod-init scan without hard-wiring a single feature.
-    ///     从 <see cref="ModTypeDiscoveryPatch" /> 调用的可扩展管线（早期本地化初始化），
-    ///     对应 BaseLib 的 post-mod-init 扫描，但不硬编码到单一功能。
+    ///     <para xml:lang="en">
+    ///         Extensible post-mod-load type-discovery pipeline invoked during early localization initialization.
+    ///         It mirrors BaseLib's scan timing without coupling discovery to one feature.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在本地化初始化早期调用的可扩展 mod 加载后类型发现管线。它与 BaseLib 的扫描时机保持一致，
+    ///         但不会将发现流程绑定到单一功能。
+    ///     </para>
     /// </summary>
     public static class ModTypeDiscoveryHub
     {
@@ -27,10 +31,14 @@ namespace STS2RitsuLib.Interop
         private static bool _builtInsRegistered;
 
         /// <summary>
-        ///     Registers a contributor. Call from your mod initializer before framework patch application
-        ///     if you rely on custom discovery; otherwise built-ins are registered from <see cref="RitsuLibFramework" />.
-        ///     注册一个 contributor。如果依赖自定义 discovery，请在 framework patch application 前
-        ///     从你的 mod initializer 调用；否则内置项会从 <see cref="RitsuLibFramework" /> 注册。
+        ///     <para xml:lang="en">
+        ///         Registers a discovery contributor. Custom contributors must be registered from the mod initializer
+        ///         before framework patches are applied; <see cref="RitsuLibFramework" /> registers built-ins.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册类型发现贡献器。自定义贡献器必须在框架补丁应用前由 mod 初始化器注册；
+        ///         内置贡献器由 <see cref="RitsuLibFramework" /> 注册。
+        ///     </para>
         /// </summary>
         public static void RegisterContributor(IModTypeDiscoveryContributor contributor)
         {
@@ -42,12 +50,16 @@ namespace STS2RitsuLib.Interop
         }
 
         /// <summary>
-        ///     Registers a mod assembly for the one-shot discovery pipeline. Mods should call this from their initializer
-        ///     before <see cref="ModTypeDiscoveryPatch" /> runs. On hosts that expose mod assembly association,
-        ///     RitsuLib forwards the registration to the game after mod initialization completes.
-        ///     为一次性 discovery 管线注册一个 mod assembly。mod 应在其 initializer 中、
-        ///     <see cref="ModTypeDiscoveryPatch" /> 运行前调用。若宿主提供 mod assembly 关联 API，
-        ///     RitsuLib 会在 mod 初始化完成后把注册同步给游戏本体。
+        ///     <para xml:lang="en">
+        ///         Associates an assembly with a mod for the one-shot discovery pipeline. Call it from the mod
+        ///         initializer before <see cref="ModTypeDiscoveryPatch" /> runs. On hosts that expose mod-assembly
+        ///         associations, RitsuLib also forwards the association to the game after mod initialization.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为一次性类型发现管线建立程序集与 mod 的关联。请在 mod 初始化器中、且在
+        ///         <see cref="ModTypeDiscoveryPatch" /> 运行前调用。若宿主公开 mod 与程序集关联 API，
+        ///         RitsuLib 还会在 mod 初始化完成后将该关联同步给游戏。
+        ///     </para>
         /// </summary>
         public static void RegisterModAssembly(string modId, Assembly assembly)
         {
@@ -71,8 +83,10 @@ namespace STS2RitsuLib.Interop
         }
 
         /// <summary>
-        ///     Logs the current contributor list and registered mod assembly map to the RitsuLib logger.
-        ///     将当前 contributor 列表及已注册 mod assembly 映射输出到 RitsuLib logger。
+        ///     <para xml:lang="en">
+        ///         Logs the current contributor list and registered mod-to-assembly map.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将当前贡献器列表和已注册的 mod 至程序集映射写入 RitsuLib 日志。</para>
         /// </summary>
         public static void LogDiagnostics()
         {

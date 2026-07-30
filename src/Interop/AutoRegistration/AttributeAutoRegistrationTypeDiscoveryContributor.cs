@@ -22,11 +22,14 @@ using STS2RitsuLib.TopBar;
 namespace STS2RitsuLib.Interop.AutoRegistration
 {
     /// <summary>
-    ///     Built-in contributor: scans assemblies once for ritsulib auto-registration attributes, sorts them
-    ///     deterministically,
-    ///     and dispatches through the existing explicit registry APIs.
-    ///     内置贡献器：对程序集扫描一次以查找 ritsulib 自动注册特性，按确定性顺序排序，
-    ///     并通过现有显式注册表 API 分发。
+    ///     <para xml:lang="en">
+    ///         Built-in contributor that scans each assembly once for RitsuLib auto-registration attributes,
+    ///         orders the resulting operations deterministically, and dispatches them through explicit registry APIs.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         内置贡献器：对每个程序集扫描一次 RitsuLib 自动注册特性，对所得操作进行确定性排序，
+    ///         再通过显式注册表 API 执行。
+    ///     </para>
     /// </summary>
     public sealed class AttributeAutoRegistrationTypeDiscoveryContributor : IModTypeDiscoveryContributor
     {

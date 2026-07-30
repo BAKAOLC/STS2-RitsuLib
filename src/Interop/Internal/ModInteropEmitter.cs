@@ -7,8 +7,12 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Interop.Internal
 {
     /// <summary>
-    ///     Emits Harmony transpilers so annotated stub types forward to another mod's CLR surface.
-    ///     发出 Harmony transpiler，使带注解的 stub 类型转发到另一个 mod 的 CLR surface。
+    ///     <para xml:lang="en">
+    ///         Emits Harmony transpilers that forward annotated CLR stubs to another mod or assembly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         生成 Harmony 转译补丁，使带有互操作标记的 CLR 存根转发到另一个模组或程序集。
+    ///     </para>
     /// </summary>
     internal static class ModInteropEmitter
     {

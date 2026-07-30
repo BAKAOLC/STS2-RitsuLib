@@ -4,28 +4,36 @@ using HarmonyLib;
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Runs once per mod-defined CLR type after all mods are loaded (see <see cref="ModTypeDiscoveryHub" />).
-    ///     Used for cross-mod interop code generation and similar post-load reflection passes.
-    ///     所有 mod 加载后，对每个 mod 定义的 CLR 类型运行一次（参见 <see cref="ModTypeDiscoveryHub" />）。
-    ///     用于跨 mod 互操作代码生成以及类似的加载后反射流程。
+    ///     <para xml:lang="en">
+    ///         Contributes work for each mod-defined CLR type after all mods are loaded. Typical uses include
+    ///         cross-mod interop generation and other post-load reflection passes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在所有模组加载后，为每个由模组定义的 CLR 类型贡献处理逻辑。典型用途包括跨模组互操作生成
+    ///         以及其他加载后反射流程。
+    ///     </para>
     /// </summary>
     public interface IModTypeDiscoveryContributor
     {
         /// <summary>
-        ///     Invoked once per concrete mod entry type so contributors can emit patches or rewrite types.
-        ///     对每个具体 mod 条目类型调用一次，使贡献器可以发出补丁或重写类型。
+        ///     <para xml:lang="en">
+        ///         Processes one discovered mod type. Contributors may emit Harmony patches or rewrite interop stubs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         处理一个已发现的模组类型。贡献器可以生成 Harmony 补丁或重写互操作存根。
+        ///     </para>
         /// </summary>
         /// <param name="harmony">
-        ///     Harmony instance owned by the discovery pipeline.
-        ///     discovery 管线拥有的 Harmony 实例。
+        ///     <para xml:lang="en">Harmony instance owned by the discovery pipeline.</para>
+        ///     <para xml:lang="zh-CN">类型发现管线持有的 Harmony 实例。</para>
         /// </param>
         /// <param name="modAssembliesByManifestId">
-        ///     Loaded mod assemblies keyed by manifest id.
-        ///     按 manifest id 索引的已加载 mod assembly。
+        ///     <para xml:lang="en">Loaded mod assemblies keyed by manifest ID.</para>
+        ///     <para xml:lang="zh-CN">以清单 ID 为键的已加载模组程序集。</para>
         /// </param>
         /// <param name="modType">
-        ///     The mod’s attributed entry or discovery root type.
-        ///     mod 的带注解条目或发现根类型。
+        ///     <para xml:lang="en">Discovered CLR type from a mod assembly.</para>
+        ///     <para xml:lang="zh-CN">从模组程序集中发现的 CLR 类型。</para>
         /// </param>
         void Contribute(Harmony harmony, IReadOnlyDictionary<string, Assembly> modAssembliesByManifestId, Type modType);
     }

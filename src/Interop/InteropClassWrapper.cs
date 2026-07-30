@@ -1,16 +1,20 @@
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Base type for interop types whose instance methods forward to a wrapped runtime object
-    ///     (see <see cref="ModInteropAttribute" /> and <see cref="AssemblyInteropAttribute" />).
-    ///     interop 类型的基类；这些类型的实例方法会转发到包装的运行时对象
-    ///     （参见 <see cref="ModInteropAttribute" /> 和 <see cref="AssemblyInteropAttribute" />）。
+    ///     <para xml:lang="en">
+    ///         Base type for interop stubs whose instance members forward to a wrapped runtime object.
+    ///         See <see cref="ModInteropAttribute" /> and <see cref="AssemblyInteropAttribute" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         实例成员会转发到所包装运行时对象的互操作存根基类。参见
+    ///         <see cref="ModInteropAttribute" /> 和 <see cref="AssemblyInteropAttribute" />。
+    ///     </para>
     /// </summary>
     public abstract class InteropClassWrapper
     {
         /// <summary>
-        ///     Runtime instance in the remote mod that receives forwarded calls.
-        ///     接收转发调用的远端 mod 运行时实例。
+        ///     <para xml:lang="en">Runtime instance that receives forwarded member calls.</para>
+        ///     <para xml:lang="zh-CN">接收成员转发调用的运行时实例。</para>
         /// </summary>
         public object Value = null!;
     }

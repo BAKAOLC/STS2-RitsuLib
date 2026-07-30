@@ -6,10 +6,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interop.Patches
 {
     /// <summary>
-    ///     Runs the <see cref="ModTypeDiscoveryHub" /> pipeline once, at the same lifecycle point BaseLib uses
-    ///     (before heavy game systems consume localization).
-    ///     在 BaseLib 使用的同一生命周期点运行一次 <see cref="ModTypeDiscoveryHub" /> 管线
-    ///     （重型游戏系统消费本地化之前）。
+    ///     <para xml:lang="en">
+    ///         Runs <see cref="ModTypeDiscoveryHub" /> once at the same lifecycle point used by BaseLib, before
+    ///         later game systems consume localization data.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 BaseLib 使用的同一生命周期节点运行一次 <see cref="ModTypeDiscoveryHub" />，此时后续游戏系统
+    ///         尚未使用本地化数据。
+    ///     </para>
     /// </summary>
     internal sealed class ModTypeDiscoveryPatch : IPatchMethod
     {
