@@ -3154,11 +3154,13 @@ namespace STS2RitsuLib.Settings
         private readonly Action? _afterAction;
         private bool _dropOpen;
         private bool _hovered;
+        private IReadOnlyList<ModSettingsMenuAction>? _openActions;
         private Vector2I? _preferredPopupPosition;
 
         public ModSettingsActionsButton(IReadOnlyList<ModSettingsMenuAction> actions, Action? afterAction = null)
         {
-            _actions = actions;
+            ArgumentNullException.ThrowIfNull(actions);
+            _actions = [.. actions];
             _afterAction = afterAction;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
@@ -3181,7 +3183,7 @@ namespace STS2RitsuLib.Settings
             Action? afterAction = null)
             : this([], afterAction)
         {
-            _actionsProvider = actionsProvider;
+            _actionsProvider = actionsProvider ?? throw new ArgumentNullException(nameof(actionsProvider));
         }
 
         public ModSettingsActionsButton()
@@ -3298,10 +3300,22 @@ namespace STS2RitsuLib.Settings
 
         private void OpenDropdown()
         {
-            if (GetActions().Count == 0)
+            _openActions = GetActions();
+            if (_openActions.Count == 0)
+            {
+                _openActions = null;
                 return;
+            }
 
-            SharedDropdown.Open(this);
+            try
+            {
+                SharedDropdown.Open(this);
+            }
+            finally
+            {
+                if (!_dropOpen)
+                    _openActions = null;
+            }
         }
 
         private void CloseDropdown()
@@ -3327,6 +3341,7 @@ namespace STS2RitsuLib.Settings
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
             _preferredPopupPosition = null;
+            _openActions = null;
 
             if (restoreFocus && IsInstanceValid(this) && IsVisibleInTree())
                 GrabFocus();
@@ -3334,7 +3349,32 @@ namespace STS2RitsuLib.Settings
 
         private IReadOnlyList<ModSettingsMenuAction> GetActions()
         {
-            return _actionsProvider?.Invoke() ?? _actions;
+            if (_actionsProvider == null)
+                return FilterActions(_actions);
+
+            try
+            {
+                return FilterActions(_actionsProvider());
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] actionsProvider failed: {ex}");
+                return FilterActions(_actions);
+            }
+        }
+
+        private static IReadOnlyList<ModSettingsMenuAction> FilterActions(
+            IReadOnlyList<ModSettingsMenuAction>? actions)
+        {
+            return actions?
+                       .Where(static action => action is
+                       {
+                           Label: not null,
+                           IsEnabled: not null,
+                           Action: not null,
+                       })
+                       .ToArray()
+                   ?? [];
         }
 
         private static StyleBoxFlat CreateActionsRowStyle(bool highlighted)
@@ -3530,12 +3570,12 @@ namespace STS2RitsuLib.Settings
 
         private void ActivateRow(int index)
         {
-            var actions = GetActions();
+            var actions = _openActions ?? GetActions();
             if (index < 0 || index >= actions.Count)
                 return;
 
             var def = actions[index];
-            if (!def.IsEnabled())
+            if (!IsActionEnabled(def))
                 return;
 
             try
@@ -3558,6 +3598,19 @@ namespace STS2RitsuLib.Settings
                 }
 
             CloseDropdown();
+        }
+
+        private static bool IsActionEnabled(ModSettingsMenuAction action)
+        {
+            try
+            {
+                return action.IsEnabled();
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] IsEnabled failed: {ex}");
+                return false;
+            }
         }
 
         private sealed class SharedActionsDropdown
@@ -3725,7 +3778,7 @@ namespace STS2RitsuLib.Settings
                 if (_dropList == null)
                     return;
 
-                var actions = owner.GetActions();
+                var actions = owner._openActions ?? owner.GetActions();
                 _rowButtons.Clear();
                 var liveIndexes = Enumerable.Range(0, actions.Count).ToHashSet();
                 foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
@@ -3763,7 +3816,7 @@ namespace STS2RitsuLib.Settings
                     row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                         "components.dropdown.layout.actionsRow.minSize",
                         new(DropMinWidth - rowPadX, RowHeight));
-                    row.Disabled = !def.IsEnabled();
+                    row.Disabled = !IsActionEnabled(def);
                     row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
                     row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
                     row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
