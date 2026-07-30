@@ -843,7 +843,7 @@ namespace STS2RitsuLib.RunData.Patches
             __state = RunSavedDataLobbySync.PushOutboundContribution(__instance);
         }
 
-        public static void Postfix(IDisposable? __state)
+        public static void Finalizer(IDisposable? __state)
         {
             __state?.Dispose();
         }

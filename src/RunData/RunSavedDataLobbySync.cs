@@ -130,8 +130,14 @@ namespace STS2RitsuLib.RunData
 
         private sealed class OutboundPayloadScope(Stack<string?> stack) : IDisposable
         {
+            private bool _disposed;
+
             public void Dispose()
             {
+                if (_disposed)
+                    return;
+
+                _disposed = true;
                 if (stack.Count > 0)
                     stack.Pop();
             }
