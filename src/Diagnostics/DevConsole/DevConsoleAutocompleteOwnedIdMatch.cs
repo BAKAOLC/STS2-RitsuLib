@@ -11,8 +11,6 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
     /// </summary>
     public static class DevConsoleAutocompleteOwnedIdMatch
     {
-        private static readonly Lazy<OwnedIdCatalog> OwnedCatalog = new(BuildOwnedIdCatalog);
-
         /// <summary>
         ///     Matches full id prefix or the mod-stem tail segment for owned ids.
         /// </summary>
@@ -40,8 +38,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (string.IsNullOrWhiteSpace(candidate))
                 return false;
 
-            var ownership = OwnedCatalog.Value.IdOwnerMap;
-            if (!ownership.TryGetValue(candidate.Trim(), out var ownerModId))
+            if (!TryGetOwnerModId(candidate.Trim(), out var ownerModId))
                 return false;
 
             var modPrefix = ModContentRegistry.NormalizePublicStem(ownerModId) + "_";
@@ -55,42 +52,31 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             return tail.Contains('_');
         }
 
-        private static OwnedIdCatalog BuildOwnedIdCatalog()
+        private static bool TryGetOwnerModId(string candidate, out string ownerModId)
         {
-            var owned = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
             foreach (var s in ModContentRegistry.GetRegisteredTypeSnapshots())
             {
-                if (s.ModelDbId != null)
-                    TryAddOwned(owned, s.ModelDbId.Entry, s.ModId);
-
-                if (!string.IsNullOrWhiteSpace(s.ExpectedPublicEntry))
-                    TryAddOwned(owned, s.ExpectedPublicEntry, s.ModId);
+                if (string.Equals(s.ModelDbId?.Entry, candidate, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(s.ExpectedPublicEntry, candidate, StringComparison.OrdinalIgnoreCase))
+                {
+                    ownerModId = s.ModId;
+                    return true;
+                }
             }
 
-            foreach (var d in ModKeywordRegistry.GetDefinitionsSnapshot())
-                TryAddOwned(owned, d.Id, d.ModId);
+            if (ModKeywordRegistry.TryGetOwnerModId(candidate, out ownerModId) ||
+                ModCardTagRegistry.TryGetOwnerModId(candidate, out ownerModId) ||
+                ModCardPileRegistry.TryGetOwnerModId(candidate, out ownerModId))
+                return true;
 
-            foreach (var d in ModCardTagRegistry.GetDefinitionsSnapshot())
-                TryAddOwned(owned, d.Id, d.ModId);
+            if (ModTopBarButtonRegistry.TryGet(candidate, out var topBarButton))
+            {
+                ownerModId = topBarButton.ModId;
+                return true;
+            }
 
-            foreach (var d in ModCardPileRegistry.GetDefinitionsSnapshot())
-                TryAddOwned(owned, d.Id, d.ModId);
-
-            foreach (var d in ModTopBarButtonRegistry.GetDefinitionsSnapshot())
-                TryAddOwned(owned, d.Id, d.ModId);
-
-            return new(owned);
+            ownerModId = string.Empty;
+            return false;
         }
-
-        private static void TryAddOwned(Dictionary<string, string> owned, string? id, string? modId)
-        {
-            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(modId))
-                return;
-
-            owned.TryAdd(id.Trim(), modId);
-        }
-
-        private sealed record OwnedIdCatalog(Dictionary<string, string> IdOwnerMap);
     }
 }
