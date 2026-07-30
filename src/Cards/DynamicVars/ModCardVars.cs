@@ -1009,7 +1009,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
                     0m);
             }
 
-            if (card is not { IsEnchantmentPreview: false, Enchantment: { } enchantment }) return Math.Max(value, 0m);
+            if (card.Enchantment is not { } enchantment) return Math.Max(value, 0m);
             value += enchantment.EnchantDamageAdditive(value, props);
             value *= enchantment.EnchantDamageMultiplicative(value, props);
 
@@ -1120,7 +1120,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
                     null,
                     out _);
 
-            if (card is not { IsEnchantmentPreview: false, Enchantment: { } enchantment }) return value;
+            if (card.Enchantment is not { } enchantment) return value;
 #if STS2_AT_LEAST_0_106_0
             value += enchantment.EnchantBlockAdditive(value);
             value *= enchantment.EnchantBlockMultiplicative(value);
