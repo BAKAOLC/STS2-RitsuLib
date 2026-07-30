@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
@@ -22,6 +24,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
     /// </summary>
     public static class CardPngExporter
     {
+        private static int _exportInProgress;
         private const float HoverTipTargetWidth = 360f;
         private const float HoverTipVerticalGap = 5f;
         private const string HoverTipScenePath = "res://scenes/ui/hover_tip.tscn";
@@ -66,10 +69,24 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 return;
             }
 
+            if (Interlocked.CompareExchange(ref _exportInProgress, 1, 0) != 0)
+            {
+                log?.Invoke("Cannot export: another card PNG export is already running.");
+                return;
+            }
+
             var req = request;
             var player = issuingPlayer;
             var lg = log;
-            Callable.From(() => RunExportOnMainThreadEntry(req, player, lg)).CallDeferred();
+            try
+            {
+                Callable.From(() => RunExportOnMainThreadEntry(req, player, lg)).CallDeferred();
+            }
+            catch
+            {
+                Volatile.Write(ref _exportInProgress, 0);
+                throw;
+            }
         }
 
         private static async void RunExportOnMainThreadEntry(CardPngExportRequest request, Player? issuingPlayer,
@@ -83,6 +100,10 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             {
                 log?.Invoke($"Export stopped: {ex.Message}");
                 GD.PushError($"Card PNG export: {ex}");
+            }
+            finally
+            {
+                Volatile.Write(ref _exportInProgress, 0);
             }
         }
 
@@ -129,6 +150,24 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(request.OutputDirectory))
+            {
+                log?.Invoke("Cannot export: choose an output folder.");
+                return;
+            }
+
+            if (!float.IsFinite(request.Scale))
+            {
+                log?.Invoke("Cannot export: scale must be a finite number.");
+                return;
+            }
+
+            if (!Enum.IsDefined(request.CaptureMode))
+            {
+                log?.Invoke($"Cannot export: capture mode '{request.CaptureMode}' is not supported.");
+                return;
+            }
+
             var scale = Mathf.Max(0.25f, request.Scale);
             var outDir = ProjectSettings.GlobalizePath(request.OutputDirectory.Trim());
             try
@@ -148,11 +187,14 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                 return;
             }
 
+            var idFilter = string.IsNullOrWhiteSpace(request.IdFilterSubstring)
+                ? null
+                : request.IdFilterSubstring.Trim();
             var cards = ModelDb.AllCards
                 .Where(c => c is not DeprecatedCard)
                 .Where(c => request.IncludeCardsHiddenFromLibrary || c.ShouldShowInCardLibrary)
-                .Where(c => string.IsNullOrEmpty(request.IdFilterSubstring) ||
-                            c.Id.Entry.Contains(request.IdFilterSubstring, StringComparison.OrdinalIgnoreCase))
+                .Where(c => idFilter == null ||
+                            c.Id.Entry.Contains(idFilter, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(c => c.Id.Entry, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
@@ -176,7 +218,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                     {
                         progressUi.SetProgress(stepIndex, canonical.Id.Entry);
 
-                        var baseName = SanitizeFilePart(canonical.Id.Entry) + "_base.png";
+                        var baseName = BuildSafeFileStem(canonical.Id.Entry, "card") + "_base.png";
                         var basePath = Path.Combine(outDir, baseName);
                         if (await TryCaptureWithRetriesAsync(tree, canonical, basePath, request, scale, log, baseName))
                         {
@@ -200,7 +242,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
                             var upgraded = canonical.ToMutable();
                             upgraded.UpgradeInternal();
-                            var upName = SanitizeFilePart(canonical.Id.Entry) + "_upgraded.png";
+                            var upName = BuildSafeFileStem(canonical.Id.Entry, "card") + "_upgraded.png";
                             var upPath = Path.Combine(outDir, upName);
                             progressUi.SetProgress(stepIndex, $"{canonical.Id.Entry} (upgraded)");
                             if (await TryCaptureWithRetriesAsync(tree, upgraded, upPath, request, scale, log, upName))
@@ -662,10 +704,19 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             refHoverTipCardNodes.Add(node);
         }
 
-        private static string SanitizeFilePart(string entry)
+        internal static string BuildSafeFileStem(string entry, string fallback)
         {
-            var s = Path.GetInvalidFileNameChars().Aggregate(entry, (current, c) => current.Replace(c, '_'));
-            return string.IsNullOrEmpty(s) ? "card" : s;
+            var sanitized = Path.GetInvalidFileNameChars()
+                .Aggregate(entry, (current, character) => current.Replace(character, '_'))
+                .TrimEnd(' ', '.');
+            if (string.IsNullOrEmpty(sanitized))
+                sanitized = fallback;
+            if (string.Equals(sanitized, entry, StringComparison.Ordinal))
+                return sanitized;
+
+            var digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(entry)))[..12]
+                .ToLowerInvariant();
+            return $"{sanitized}-{digest}";
         }
 
         private sealed class BuiltCaptureViewport
