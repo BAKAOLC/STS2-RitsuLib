@@ -365,7 +365,9 @@ namespace STS2RitsuLib.Combat.Rewards
                 return false;
             }
 
-            reward = registration.Factory(save, player, json);
+            reward = registration.Factory(save, player, json)
+                     ?? throw new InvalidOperationException(
+                         $"The custom reward factory for RewardType '0x{(int)rewardType:X8}' returned null.");
             return true;
         }
 
