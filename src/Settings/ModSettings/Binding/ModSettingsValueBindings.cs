@@ -345,7 +345,11 @@ namespace STS2RitsuLib.Settings
     {
         public List<TItem> Clone(List<TItem> value)
         {
-            return itemAdapter == null ? [.. value] : [.. value.Select(itemAdapter.Clone)];
+            if (itemAdapter != null)
+                return [.. value.Select(itemAdapter.Clone)];
+
+            var json = JsonSerializer.Serialize(value, options);
+            return JsonSerializer.Deserialize<List<TItem>>(json, options) ?? [];
         }
 
         public string Serialize(List<TItem> value)
