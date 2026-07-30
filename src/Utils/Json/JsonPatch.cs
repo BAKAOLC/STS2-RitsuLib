@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json.Nodes;
 
 namespace STS2RitsuLib.Utils.Json
@@ -20,7 +21,7 @@ namespace STS2RitsuLib.Utils.Json
         public static JsonNode? Apply(JsonNode? target, JsonNode? patchDocument)
         {
             if (patchDocument == null)
-                return target?.DeepClone();
+                throw new JsonPatchException("JSON Patch document must be an array.");
 
             return patchDocument is not JsonArray arr
                 ? throw new JsonPatchException("JSON Patch document must be an array.")
@@ -42,35 +43,45 @@ namespace STS2RitsuLib.Utils.Json
 
         private static JsonNode? ApplyOne(JsonNode? root, JsonPatchOperation op)
         {
-            var operation = (op.Op ?? "").Trim().ToLowerInvariant();
-            var path = JsonPointer.Normalize(op.Path ?? "");
+            if (op == null)
+                throw new JsonPatchException("JSON Patch operations cannot be null.");
+
+            var operation = op.Op
+                            ?? throw new JsonPatchException("Missing required member 'op'.");
+            var path = op.Path
+                       ?? throw new JsonPatchException("Missing required member 'path'.");
+            var segments = ParsePointer(path, "path");
 
             switch (operation)
             {
                 case "add":
-                    return Add(root, path, op.Value);
+                    return Add(root, path, segments, op.Value);
                 case "remove":
-                    return Remove(root, path);
+                    return Remove(root, path, segments);
                 case "replace":
-                    return Replace(root, path, op.Value);
+                    return Replace(root, path, segments, op.Value);
                 case "move":
-                    return Move(root, path, op.From);
+                    return Move(root, path, segments, op.From);
                 case "copy":
-                    return Copy(root, path, op.From);
+                    return Copy(root, path, segments, op.From);
                 case "test":
-                    Test(root, path, op.Value);
+                    Test(root, path, segments, op.Value);
                     return root;
                 default:
                     throw new JsonPatchException($"Unsupported JSON Patch operation: '{op.Op}'.");
             }
         }
 
-        private static JsonNode? Add(JsonNode? root, string path, JsonNode? value)
+        private static JsonNode? Add(
+            JsonNode? root,
+            string path,
+            IReadOnlyList<string> segments,
+            JsonNode? value)
         {
-            if (JsonPointer.IsRoot(path))
+            if (segments.Count == 0)
                 return value?.DeepClone();
 
-            var (parent, segment) = ResolveParent(root, path, true);
+            var (parent, segment) = ResolveParent(root, path, segments);
             switch (parent)
             {
                 case JsonObject obj:
@@ -81,7 +92,7 @@ namespace STS2RitsuLib.Utils.Json
                     return root;
                 case JsonArray arr:
                 {
-                    if (!int.TryParse(segment, out var idx) || idx < 0 || idx > arr.Count)
+                    if (!TryParseArrayIndex(segment, out var idx) || idx > arr.Count)
                         throw new JsonPatchException($"Invalid array index for add: '{segment}'.");
 
                     arr.Insert(idx, value?.DeepClone());
@@ -92,12 +103,12 @@ namespace STS2RitsuLib.Utils.Json
             }
         }
 
-        private static JsonNode? Remove(JsonNode? root, string path)
+        private static JsonNode? Remove(JsonNode? root, string path, IReadOnlyList<string> segments)
         {
-            if (JsonPointer.IsRoot(path))
+            if (segments.Count == 0)
                 return null;
 
-            var (parent, segment) = ResolveParent(root, path, false);
+            var (parent, segment) = ResolveParent(root, path, segments);
             switch (parent)
             {
                 case JsonObject obj when !obj.Remove(segment):
@@ -106,7 +117,7 @@ namespace STS2RitsuLib.Utils.Json
                     return root;
                 case JsonArray arr:
                 {
-                    if (!int.TryParse(segment, out var idx) || idx < 0 || idx >= arr.Count)
+                    if (!TryParseArrayIndex(segment, out var idx) || idx >= arr.Count)
                         throw new JsonPatchException($"Invalid array index for remove: '{segment}'.");
 
                     arr.RemoveAt(idx);
@@ -117,12 +128,16 @@ namespace STS2RitsuLib.Utils.Json
             }
         }
 
-        private static JsonNode? Replace(JsonNode? root, string path, JsonNode? value)
+        private static JsonNode? Replace(
+            JsonNode? root,
+            string path,
+            IReadOnlyList<string> segments,
+            JsonNode? value)
         {
-            if (JsonPointer.IsRoot(path))
+            if (segments.Count == 0)
                 return value?.DeepClone();
 
-            var (parent, segment) = ResolveParent(root, path, false);
+            var (parent, segment) = ResolveParent(root, path, segments);
             switch (parent)
             {
                 case JsonObject obj when !obj.ContainsKey(segment):
@@ -132,7 +147,7 @@ namespace STS2RitsuLib.Utils.Json
                     return root;
                 case JsonArray arr:
                 {
-                    if (!int.TryParse(segment, out var idx) || idx < 0 || idx >= arr.Count)
+                    if (!TryParseArrayIndex(segment, out var idx) || idx >= arr.Count)
                         throw new JsonPatchException($"Invalid array index for replace: '{segment}'.");
 
                     arr[idx] = value?.DeepClone();
@@ -143,102 +158,92 @@ namespace STS2RitsuLib.Utils.Json
             }
         }
 
-        private static JsonNode? Move(JsonNode? root, string path, string? fromRaw)
+        private static JsonNode? Move(
+            JsonNode? root,
+            string path,
+            IReadOnlyList<string> pathSegments,
+            string? fromRaw)
         {
-            if (string.IsNullOrWhiteSpace(fromRaw))
+            if (fromRaw == null)
                 throw new JsonPatchException("Missing 'from' for move operation.");
 
-            var from = JsonPointer.Normalize(fromRaw);
-            var source = GetRequired(root, from)?.DeepClone();
-            root = Remove(root, from);
-            return Add(root, path, source);
+            var fromSegments = ParsePointer(fromRaw, "from");
+            if (IsProperPrefix(fromSegments, pathSegments))
+                throw new JsonPatchException("The 'path' of a move operation cannot be a child of its 'from' path.");
+
+            var source = GetRequired(root, fromRaw, fromSegments)?.DeepClone();
+            root = Remove(root, fromRaw, fromSegments);
+            return Add(root, path, pathSegments, source);
         }
 
-        private static JsonNode? Copy(JsonNode? root, string path, string? fromRaw)
+        private static JsonNode? Copy(
+            JsonNode? root,
+            string path,
+            IReadOnlyList<string> pathSegments,
+            string? fromRaw)
         {
-            if (string.IsNullOrWhiteSpace(fromRaw))
+            if (fromRaw == null)
                 throw new JsonPatchException("Missing 'from' for copy operation.");
 
-            var from = JsonPointer.Normalize(fromRaw);
-            var source = GetRequired(root, from)?.DeepClone();
-            return Add(root, path, source);
+            var fromSegments = ParsePointer(fromRaw, "from");
+            var source = GetRequired(root, fromRaw, fromSegments)?.DeepClone();
+            return Add(root, path, pathSegments, source);
         }
 
-        private static void Test(JsonNode? root, string path, JsonNode? expected)
+        private static void Test(
+            JsonNode? root,
+            string path,
+            IReadOnlyList<string> segments,
+            JsonNode? expected)
         {
-            var actual = JsonPointer.IsRoot(path) ? root : JsonPointer.Get(root ?? new JsonObject(), path);
-            if (!JsonNode.DeepEquals(actual, expected))
+            if (!TryGetAtPath(root, segments, out var actual) || !JsonNode.DeepEquals(actual, expected))
                 throw new JsonPatchException($"Test operation failed at '{path}'.");
         }
 
-        private static JsonNode GetRequired(JsonNode? root, string path)
+        private static JsonNode? GetRequired(
+            JsonNode? root,
+            string path,
+            IReadOnlyList<string> segments)
         {
-            var n = JsonPointer.IsRoot(path) ? root : JsonPointer.Get(root ?? new JsonObject(), path);
-            return n ?? throw new JsonPatchException($"Path not found: '{path}'.");
+            return TryGetAtPath(root, segments, out var value)
+                ? value
+                : throw new JsonPatchException($"Path not found: '{path}'.");
         }
 
-        private static (JsonNode parent, string segment) ResolveParent(JsonNode? root, string path,
-            bool createContainers)
+        private static (JsonNode parent, string segment) ResolveParent(
+            JsonNode? root,
+            string path,
+            IReadOnlyList<string> segments)
         {
-            var normalized = JsonPointer.Normalize(path);
-            var segments = JsonPointer.EnumerateSegments(normalized).ToArray();
-            if (segments.Length == 0)
+            if (segments.Count == 0)
                 throw new JsonPatchException($"Invalid path: '{path}'.");
 
-            root ??= new JsonObject();
-
-            var current = root;
-            for (var i = 0; i < segments.Length - 1; i++)
+            var current = root
+                          ?? throw new JsonPatchException(
+                              $"Cannot traverse path '{path}': encountered a non-container node.");
+            for (var i = 0; i < segments.Count - 1; i++)
             {
                 var seg = segments[i];
-                var nextSeg = segments[i + 1];
 
                 switch (current)
                 {
-                    case JsonObject obj:
+                    case JsonObject obj when obj.TryGetPropertyValue(seg, out var child):
                     {
-                        if (obj.TryGetPropertyValue(seg, out var child) && child != null)
-                        {
-                            current = child;
-                            break;
-                        }
-
-                        if (!createContainers)
-                            throw new JsonPatchException($"Path not found: '{path}'.");
-
-                        JsonNode created = int.TryParse(nextSeg, out _) || nextSeg == "-"
-                            ? new JsonArray()
-                            : new JsonObject();
-                        obj[seg] = created;
-                        current = created;
+                        current = child
+                                  ?? throw new JsonPatchException(
+                                      $"Cannot traverse path '{path}': encountered a non-container node.");
                         break;
                     }
+                    case JsonObject:
+                        throw new JsonPatchException($"Path not found: '{path}'.");
                     case JsonArray arr:
                     {
-                        if (!int.TryParse(seg, out var idx) || idx < 0)
+                        if (!TryParseArrayIndex(seg, out var idx) || idx >= arr.Count)
                             throw new JsonPatchException($"Invalid array index: '{seg}'.");
 
-                        while (createContainers && arr.Count <= idx)
-                            arr.Add(null);
-
-                        var child = idx < arr.Count ? arr[idx] : null;
-                        if (child != null)
-                        {
-                            current = child;
-                            break;
-                        }
-
-                        if (!createContainers)
-                            throw new JsonPatchException($"Path not found: '{path}'.");
-
-                        JsonNode created = int.TryParse(nextSeg, out _) || nextSeg == "-"
-                            ? new JsonArray()
-                            : new JsonObject();
-                        if (idx >= arr.Count)
-                            throw new JsonPatchException($"Invalid array index: '{seg}'.");
-
-                        arr[idx] = created;
-                        current = created;
+                        current = arr[idx]
+                                  ?? throw new JsonPatchException(
+                                      $"Cannot traverse path '{path}': encountered a non-container node.");
                         break;
                     }
                     default:
@@ -250,6 +255,112 @@ namespace STS2RitsuLib.Utils.Json
             return (current, segments[^1]);
         }
 
+        private static bool TryGetAtPath(
+            JsonNode? root,
+            IReadOnlyList<string> segments,
+            out JsonNode? value)
+        {
+            value = root;
+            foreach (var segment in segments)
+            {
+                switch (value)
+                {
+                    case JsonObject obj when obj.TryGetPropertyValue(segment, out var child):
+                        value = child;
+                        break;
+                    case JsonArray arr
+                        when TryParseArrayIndex(segment, out var index) && index < arr.Count:
+                        value = arr[index];
+                        break;
+                    default:
+                        value = null;
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static string[] ParsePointer(string pointer, string memberName)
+        {
+            if (pointer.Length == 0)
+                return [];
+            if (pointer[0] != '/')
+                throw new JsonPatchException(
+                    $"Member '{memberName}' must be an RFC 6901 JSON Pointer.");
+
+            return pointer[1..]
+                .Split('/')
+                .Select(segment => DecodePointerSegment(segment, memberName))
+                .ToArray();
+        }
+
+        private static string DecodePointerSegment(string segment, string memberName)
+        {
+            if (!segment.Contains('~'))
+                return segment;
+
+            var decoded = new StringBuilder(segment.Length);
+            for (var i = 0; i < segment.Length; i++)
+            {
+                var current = segment[i];
+                if (current != '~')
+                {
+                    decoded.Append(current);
+                    continue;
+                }
+
+                if (++i >= segment.Length)
+                    throw new JsonPatchException(
+                        $"Member '{memberName}' contains an invalid JSON Pointer escape.");
+
+                decoded.Append(segment[i] switch
+                {
+                    '0' => '~',
+                    '1' => '/',
+                    _ => throw new JsonPatchException(
+                        $"Member '{memberName}' contains an invalid JSON Pointer escape."),
+                });
+            }
+
+            return decoded.ToString();
+        }
+
+        private static bool TryParseArrayIndex(string segment, out int index)
+        {
+            index = 0;
+            if (segment.Length == 0 || segment.Length > 1 && segment[0] == '0')
+                return false;
+
+            foreach (var character in segment)
+            {
+                if (character is < '0' or > '9')
+                    return false;
+
+                var digit = character - '0';
+                if (index > (int.MaxValue - digit) / 10)
+                    return false;
+
+                index = index * 10 + digit;
+            }
+
+            return true;
+        }
+
+        private static bool IsProperPrefix(
+            IReadOnlyList<string> candidate,
+            IReadOnlyList<string> path)
+        {
+            if (candidate.Count >= path.Count)
+                return false;
+
+            for (var i = 0; i < candidate.Count; i++)
+                if (!string.Equals(candidate[i], path[i], StringComparison.Ordinal))
+                    return false;
+
+            return true;
+        }
+
         private static IEnumerable<JsonPatchOperation> ParseOperations(JsonArray arr)
         {
             foreach (var node in arr)
@@ -259,8 +370,22 @@ namespace STS2RitsuLib.Utils.Json
 
                 var op = ReadRequiredString(o, "op");
                 var path = ReadRequiredString(o, "path");
-                var from = ReadOptionalString(o, "from");
-                o.TryGetPropertyValue("value", out var value);
+                string? from = null;
+                JsonNode? value = null;
+                switch (op)
+                {
+                    case "add":
+                    case "replace":
+                    case "test":
+                        if (!o.TryGetPropertyValue("value", out value))
+                            throw new JsonPatchException($"Missing required member 'value' for '{op}' operation.");
+                        break;
+                    case "move":
+                    case "copy":
+                        from = ReadRequiredString(o, "from");
+                        break;
+                }
+
                 yield return new(op, path, from, value?.DeepClone());
             }
         }
@@ -280,23 +405,6 @@ namespace STS2RitsuLib.Utils.Json
             }
         }
 
-        private static string? ReadOptionalString(JsonObject obj, string key)
-        {
-            if (!obj.TryGetPropertyValue(key, out var n) || n == null)
-                return null;
-
-            if (n is not JsonValue v)
-                throw new JsonPatchException($"Member '{key}' must be a string when present.");
-
-            try
-            {
-                return v.GetValue<string>();
-            }
-            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
-            {
-                throw new JsonPatchException($"Member '{key}' must be a string when present.");
-            }
-        }
     }
 
     /// <summary>
