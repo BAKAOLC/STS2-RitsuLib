@@ -107,6 +107,10 @@ namespace STS2RitsuLib.Updates
             {
                 manifest = await FetchManifestAsync(options, cancellationToken).ConfigureAwait(false);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex) when
                 (ex is HttpRequestException or IOException or TaskCanceledException or OperationCanceledException)
             {
