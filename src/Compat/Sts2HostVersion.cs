@@ -6,24 +6,24 @@ using MegaCrit.Sts2.Core.Saves;
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
-    ///     Best-effort version of the running STS2 host from <c>release_info.json</c> or the <c>sts2</c> assembly.
-    ///     Used by telemetry and kept available for future version-gated behavior or diagnostics.
-    ///     从 <c>release_info.json</c> 或 <c>sts2</c> 程序集尽力获取正在运行的 STS2 宿主版本。
-    ///     供 telemetry 使用，并保留给未来按版本门控的行为或诊断。
+    ///     <para xml:lang="en">
+    ///         Resolves the running game's version on a best-effort basis from release metadata or the game assembly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">尽可能从发布元数据或游戏程序集解析当前运行游戏的版本。</para>
     /// </summary>
     internal static class Sts2HostVersion
     {
         private static readonly Lazy<HostVersionSnapshot> Lazy = new(Resolve);
 
         /// <summary>
-        ///     Parsed numeric version when reliable; otherwise <c>null</c>.
-        ///     可靠时解析出的数字版本；否则为 <c>null</c>。
+        ///     <para xml:lang="en">Gets the parsed numeric version, or <see langword="null" /> when unavailable.</para>
+        ///     <para xml:lang="zh-CN">获取解析出的数字版本；无法取得时为 <see langword="null" />。</para>
         /// </summary>
         internal static Version? Numeric => Lazy.Value.Numeric;
 
         /// <summary>
-        ///     Original label from <see cref="ReleaseInfo.Version" /> when present.
-        ///     存在时来自 <see cref="ReleaseInfo.Version" /> 的原始标签。
+        ///     <para xml:lang="en">Gets the original release label when one was found.</para>
+        ///     <para xml:lang="zh-CN">获取找到的原始发布版本标签。</para>
         /// </summary>
         internal static string? ReleaseLabel => Lazy.Value.ReleaseLabel;
 
@@ -208,8 +208,14 @@ namespace STS2RitsuLib.Compat
         }
 
         /// <summary>
-        ///     Accepts <c>major.minor[.build[.revision]]</c>; strips common semver suffixes (<c>-beta</c>, <c>+build</c>).
-        ///     接受 <c>major.minor[.build[.revision]]</c>；去除常见 semver 后缀（<c>-beta</c>、<c>+build</c>）。
+        ///     <para xml:lang="en">
+        ///         Parses <c>major.minor[.build[.revision]]</c> after removing a leading <c>v</c> and common semantic
+        ///         version suffixes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除开头的 <c>v</c> 及常见语义化版本后缀后，解析
+        ///         <c>major.minor[.build[.revision]]</c>。
+        ///     </para>
         /// </summary>
         internal static bool TryParseVersionCore(string text, out Version version)
         {

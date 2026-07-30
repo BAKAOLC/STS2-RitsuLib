@@ -6,10 +6,11 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
-    ///     Applies skeleton overrides whether visuals expose legacy <c>Body</c> or newer <c>SpineBody</c>
-    ///     (<see cref="MegaSprite" />).
-    ///     无论视觉对象暴露旧版 <c>Body</c> 还是新版 <c>SpineBody</c>，都应用骨架覆盖
-    ///     （<see cref="MegaSprite" />）。
+    ///     <para xml:lang="en">
+    ///         Applies skeleton overrides through either the legacy <c>Body</c> member or the newer <c>SpineBody</c>
+    ///         member.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">通过旧版 <c>Body</c> 成员或新版 <c>SpineBody</c> 成员应用骨架覆盖。</para>
     /// </summary>
     internal static class NCreatureVisualsSpineCompat
     {

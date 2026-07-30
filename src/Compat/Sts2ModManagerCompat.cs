@@ -7,8 +7,8 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
-    ///     Central entry for enumerating the host <see cref="ModManager" />'s mod lists.
-    ///     枚举宿主 <see cref="ModManager" /> 的 mod 列表的中央入口。
+    ///     <para xml:lang="en">Provides version-compatible access to the host <see cref="ModManager" />.</para>
+    ///     <para xml:lang="zh-CN">提供兼容不同游戏版本的宿主 <see cref="ModManager" /> 访问方式。</para>
     /// </summary>
     internal static class Sts2ModManagerCompat
     {
@@ -248,8 +248,10 @@ namespace STS2RitsuLib.Compat
         }
 
         /// <summary>
-        ///     All registered mods (including disabled / not loaded), for manifest name/description lookup.
-        ///     所有已注册 mod（包括禁用/未加载的 mod），用于清单名称/描述查找。
+        ///     <para xml:lang="en">
+        ///         Enumerates all known mods, including disabled and unloaded entries, for manifest metadata lookup.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">枚举所有已知模组，包括已禁用和未加载的条目，供查询清单元数据。</para>
         /// </summary>
         internal static IEnumerable<Mod> EnumerateModsForManifestLookup()
         {
