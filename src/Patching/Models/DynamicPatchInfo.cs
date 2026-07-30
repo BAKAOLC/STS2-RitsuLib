@@ -54,6 +54,8 @@ namespace STS2RitsuLib.Patching.Models
         bool isCritical = true,
         string? description = null)
     {
+        private Func<IDisposable>? _lifetimeLeaseFactory;
+
         /// <summary>
         ///     <para xml:lang="en">Gets the patch ID, which is unique within the owning patcher.</para>
         ///     <para xml:lang="zh-CN">获取补丁 ID；该 ID 在所属补丁器内唯一。</para>
@@ -109,6 +111,20 @@ namespace STS2RitsuLib.Patching.Models
         ///     <para xml:lang="zh-CN">获取是否至少指定了一个 Harmony 补丁方法。</para>
         /// </summary>
         public bool HasPatchMethods => Prefix != null || Postfix != null || Transpiler != null || Finalizer != null;
+
+        internal IDisposable? AcquireLifetimeLease()
+        {
+            return _lifetimeLeaseFactory?.Invoke();
+        }
+
+        internal void SetLifetimeLeaseFactory(Func<IDisposable> lifetimeLeaseFactory)
+        {
+            ArgumentNullException.ThrowIfNull(lifetimeLeaseFactory);
+            if (_lifetimeLeaseFactory != null)
+                throw new InvalidOperationException("A dynamic patch lifetime is already attached.");
+
+            _lifetimeLeaseFactory = lifetimeLeaseFactory;
+        }
 
         /// <inheritdoc />
         public override string ToString()

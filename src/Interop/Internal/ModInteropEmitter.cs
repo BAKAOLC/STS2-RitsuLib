@@ -22,6 +22,7 @@ namespace STS2RitsuLib.Interop.Internal
         private static readonly FieldInfo WrappedValueField =
             AccessTools.DeclaredField(typeof(InteropClassWrapper), nameof(InteropClassWrapper.Value))!;
 
+        private static readonly List<HarmonyIlPayloadTranspilerHandle> PayloadTranspilerHandles = [];
         private static readonly Dictionary<(string, string), Type> TypeResolutionCache = new();
 
         internal static void TryProcessType(
@@ -377,11 +378,12 @@ namespace STS2RitsuLib.Interop.Internal
             MethodBase target,
             IEnumerable<CodeInstruction> payload)
         {
-            HarmonyIlPayloadTranspiler.PatchReturnInsertion(
+            var handle = HarmonyIlPayloadTranspiler.PatchReturnInsertion(
                 harmony,
                 target,
                 payload,
                 "[ModInterop] Insert generated wrapper IL before single ret");
+            PayloadTranspilerHandles.Add(handle);
         }
 
         private static CodeInstruction[] LoadWrappedTarget(Type targetType)

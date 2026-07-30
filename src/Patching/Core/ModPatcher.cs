@@ -34,6 +34,7 @@ namespace STS2RitsuLib.Patching.Core
             string.IsNullOrEmpty(patcherName) ? "[Patcher] " : $"[Patcher - {patcherName}] ";
 
         private readonly Dictionary<string, bool> _patchedStatus = [];
+        private readonly Dictionary<string, IDisposable> _dynamicPatchLifetimeLeases = [];
         private readonly List<DynamicPatchInfo> _registeredDynamicPatches = [];
         private readonly List<ModPatchInfo> _registeredPatches = [];
 
@@ -480,6 +481,7 @@ namespace STS2RitsuLib.Patching.Core
                 try
                 {
                     _harmony.Unpatch(patchInfo.OriginalMethod, HarmonyPatchType.All, _harmony.Id);
+                    ReleaseDynamicPatchLifetime(patchInfo.Id);
                     _patchedStatus[patchInfo.Id] = false;
                     logger.Debug($"{_logPrefix}✓ Removed dynamic patch: {patchInfo.Id}");
                 }
@@ -555,6 +557,8 @@ namespace STS2RitsuLib.Patching.Core
         private (bool Success, string ErrorMessage, Exception? Exception) ApplyDynamicPatch(
             DynamicPatchInfo dynamicPatchInfo)
         {
+            IDisposable? lifetimeLease = null;
+            var lifetimeStored = false;
             try
             {
                 if (!dynamicPatchInfo.HasPatchMethods)
@@ -563,23 +567,42 @@ namespace STS2RitsuLib.Patching.Core
                     return (false, $"No valid patch methods found for dynamic patch '{dynamicPatchInfo.Id}'", null);
                 }
 
+                lifetimeLease = dynamicPatchInfo.AcquireLifetimeLease();
+                if (lifetimeLease != null)
+                {
+                    _dynamicPatchLifetimeLeases.Add(dynamicPatchInfo.Id, lifetimeLease);
+                    lifetimeStored = true;
+                }
+
                 _harmony.Patch(
                     dynamicPatchInfo.OriginalMethod,
                     dynamicPatchInfo.Prefix,
                     dynamicPatchInfo.Postfix,
                     dynamicPatchInfo.Transpiler,
                     dynamicPatchInfo.Finalizer);
-
-                _patchedStatus[dynamicPatchInfo.Id] = true;
-                logger.Debug(
-                    $"{_logPrefix}[{(dynamicPatchInfo.IsCritical ? "Critical" : "Optional")}] {dynamicPatchInfo.Id} - Success ✓");
-                return (true, string.Empty, null);
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
+                if (lifetimeStored &&
+                    _dynamicPatchLifetimeLeases.Remove(dynamicPatchInfo.Id, out var storedLifetimeLease))
+                    storedLifetimeLease.Dispose();
+                else
+                    lifetimeLease?.Dispose();
+
                 _patchedStatus[dynamicPatchInfo.Id] = false;
                 return (false, ex.Message, ex);
             }
+
+            _patchedStatus[dynamicPatchInfo.Id] = true;
+            logger.Debug(
+                $"{_logPrefix}[{(dynamicPatchInfo.IsCritical ? "Critical" : "Optional")}] {dynamicPatchInfo.Id} - Success ✓");
+            return (true, string.Empty, null);
+        }
+
+        private void ReleaseDynamicPatchLifetime(string patchId)
+        {
+            if (_dynamicPatchLifetimeLeases.Remove(patchId, out var lifetimeLease))
+                lifetimeLease.Dispose();
         }
 
         private bool ProcessPatchResults(ReadOnlySpan<ModPatchResult> results)

@@ -42,10 +42,16 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     /// </summary>
     public sealed class HarmonyIlPayloadTranspilerHandle : IDisposable
     {
-        internal HarmonyIlPayloadTranspilerHandle(string payloadId, HarmonyMethod harmonyMethod)
+        private IDisposable? _lifetimeLease;
+
+        internal HarmonyIlPayloadTranspilerHandle(
+            string payloadId,
+            HarmonyMethod harmonyMethod,
+            IDisposable lifetimeLease)
         {
             PayloadId = payloadId;
             HarmonyMethod = harmonyMethod;
+            _lifetimeLease = lifetimeLease;
         }
 
         /// <summary>
@@ -66,7 +72,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public void Dispose()
         {
-            HarmonyIlPayloadTranspiler.Remove(PayloadId);
+            Interlocked.Exchange(ref _lifetimeLease, null)?.Dispose();
         }
     }
 
@@ -77,7 +83,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     public static class HarmonyIlPayloadTranspiler
     {
         private static readonly Lock Gate = new();
-        private static readonly Dictionary<string, Payload> Payloads = [];
+        private static readonly Dictionary<string, PayloadRegistration> Payloads = [];
         private static int _nextPayloadId;
 
         /// <summary>
@@ -94,20 +100,16 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             ArgumentNullException.ThrowIfNull(payload);
             ArgumentException.ThrowIfNullOrWhiteSpace(operation);
 
-            var payloadId = AllocatePayloadId();
-            var snapshot = HarmonyIl.CloneAll(payload);
-            lock (Gate)
-            {
-                Payloads.Add(payloadId, new(
-                    payloadId,
-                    snapshot,
-                    operation,
-                    mode,
-                    moveLabelsAndBlocksToInserted,
-                    validateOutput));
-            }
-
-            return new(payloadId, new(CreateDynamicTranspiler(payloadId)));
+            var registration = CreateRegistration(
+                payload,
+                operation,
+                mode,
+                moveLabelsAndBlocksToInserted,
+                validateOutput);
+            return new(
+                registration.Payload.Id,
+                registration.HarmonyMethod,
+                registration.Acquire());
         }
 
         /// <summary>
@@ -140,19 +142,21 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             ArgumentException.ThrowIfNullOrWhiteSpace(id);
             ArgumentNullException.ThrowIfNull(originalMethod);
 
-            var handle = CreateReturnInsertion(
+            var registration = CreateRegistration(
                 payload,
                 operation,
                 mode,
                 moveLabelsAndBlocksToInserted,
                 validateOutput);
 
-            return new(
+            var patch = new DynamicPatchInfo(
                 id,
                 originalMethod,
-                transpiler: handle.HarmonyMethod,
+                transpiler: registration.HarmonyMethod,
                 isCritical: isCritical,
                 description: description);
+            patch.SetLifetimeLeaseFactory(registration.Acquire);
+            return patch;
         }
 
         /// <summary>
@@ -189,28 +193,45 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             }
         }
 
-        internal static void Remove(string payloadId)
+        private static PayloadRegistration CreateRegistration(
+            IEnumerable<CodeInstruction> payload,
+            string operation,
+            HarmonyIlReturnInsertionMode mode,
+            bool moveLabelsAndBlocksToInserted,
+            bool validateOutput)
         {
-            lock (Gate)
-            {
-                Payloads.Remove(payloadId);
-            }
+            ArgumentNullException.ThrowIfNull(payload);
+            ArgumentException.ThrowIfNullOrWhiteSpace(operation);
+
+            var payloadId = AllocatePayloadId();
+            var registeredPayload = new Payload(
+                payloadId,
+                HarmonyIl.CloneAll(payload),
+                operation,
+                mode,
+                moveLabelsAndBlocksToInserted,
+                validateOutput);
+
+            return new(
+                registeredPayload,
+                new(CreateFactoryMethod(payloadId)));
         }
 
         private static IEnumerable<CodeInstruction> Transpile(
             IEnumerable<CodeInstruction> instructions,
             string payloadId)
         {
-            Payload? payload;
+            PayloadRegistration? registration;
             lock (Gate)
             {
-                Payloads.TryGetValue(payloadId, out payload);
+                Payloads.TryGetValue(payloadId, out registration);
             }
 
-            if (payload is null)
+            if (registration is null)
                 throw new InvalidOperationException(
                     $"Harmony IL payload '{payloadId}' is not registered.");
 
+            var payload = registration.Payload;
             var insertion = HarmonyIl.CloneAll(payload.Instructions);
             var rewriter = HarmonyIlRewriter.From(instructions);
             var report = payload.Mode switch
@@ -250,6 +271,55 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             }
         }
 
+        private static ModuleBuilder CreateFactoryModule(string payloadId)
+        {
+            var sourceAssembly = typeof(HarmonyIlPayloadTranspiler).Assembly;
+            var sourceAssemblyName = sourceAssembly.GetName().Name
+                                     ?? throw new InvalidOperationException("RitsuLib assembly has no simple name.");
+            var assemblyName = new AssemblyName(
+                $"{sourceAssemblyName}.HarmonyIlPayloadFactory.{payloadId}");
+            var assembly = AssemblyBuilder.DefineDynamicAssembly(
+                assemblyName,
+                AssemblyBuilderAccess.RunAndCollect);
+            var ignoresAccessChecksTo = typeof(System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute)
+                .GetConstructor(
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                    null,
+                    [typeof(string)],
+                    null)
+                ?? throw new MissingMethodException(
+                    typeof(System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute).FullName,
+                    ".ctor");
+            assembly.SetCustomAttribute(new(
+                ignoresAccessChecksTo,
+                [sourceAssemblyName]));
+            return assembly.DefineDynamicModule(assemblyName.Name!);
+        }
+
+        private static MethodInfo CreateFactoryMethod(string payloadId)
+        {
+            var factoryModule = CreateFactoryModule(payloadId);
+            var type = factoryModule.DefineType(
+                $"RitsuLibHarmonyIlPayloadFactory_{payloadId}",
+                TypeAttributes.Public | TypeAttributes.Abstract | TypeAttributes.Sealed);
+            var method = type.DefineMethod(
+                "CreateTranspiler",
+                MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig,
+                typeof(DynamicMethod),
+                [typeof(MethodBase)]);
+            var il = method.GetILGenerator();
+            il.Emit(OpCodes.Ldstr, payloadId);
+            il.Emit(OpCodes.Call, AccessTools.DeclaredMethod(
+                typeof(HarmonyIlPayloadTranspiler),
+                nameof(CreateDynamicTranspiler)));
+            il.Emit(OpCodes.Ret);
+
+            return type.CreateType()!.GetMethod(
+                       method.Name,
+                       BindingFlags.Public | BindingFlags.Static)
+                   ?? throw new MissingMethodException(type.FullName, method.Name);
+        }
+
         private static DynamicMethod CreateDynamicTranspiler(string payloadId)
         {
             var method = new DynamicMethod(
@@ -276,5 +346,53 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             HarmonyIlReturnInsertionMode Mode,
             bool MoveLabelsAndBlocksToInserted,
             bool ValidateOutput);
+
+        private sealed class PayloadRegistration(Payload payload, HarmonyMethod harmonyMethod)
+        {
+            private int _leaseCount;
+
+            public Payload Payload { get; } = payload;
+
+            public HarmonyMethod HarmonyMethod { get; } = harmonyMethod;
+
+            public IDisposable Acquire()
+            {
+                lock (Gate)
+                {
+                    if (_leaseCount == int.MaxValue)
+                        throw new InvalidOperationException(
+                            $"Harmony IL payload '{Payload.Id}' has too many active owners.");
+                    if (_leaseCount == 0)
+                        Payloads.Add(Payload.Id, this);
+                    _leaseCount++;
+                }
+
+                return new PayloadLease(this);
+            }
+
+            private void Release()
+            {
+                lock (Gate)
+                {
+                    if (_leaseCount <= 0)
+                        throw new InvalidOperationException(
+                            $"Harmony IL payload '{Payload.Id}' has no active owner.");
+
+                    _leaseCount--;
+                    if (_leaseCount == 0)
+                        Payloads.Remove(Payload.Id);
+                }
+            }
+
+            private sealed class PayloadLease(PayloadRegistration registration) : IDisposable
+            {
+                private PayloadRegistration? _registration = registration;
+
+                public void Dispose()
+                {
+                    Interlocked.Exchange(ref _registration, null)?.Release();
+                }
+            }
+        }
     }
 }
