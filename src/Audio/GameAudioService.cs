@@ -22,6 +22,8 @@ namespace STS2RitsuLib.Audio
         public AudioPlayResult Play(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (options.ScopeToken is { IsClosing: true })
+                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "The audio scope token is disposed.");
             if (!TryEnterCooldown(source, options))
                 return AudioPlayResult.Fail(AudioPlayStatus.SkippedCooldown);
 
@@ -48,6 +50,8 @@ namespace STS2RitsuLib.Audio
         public AudioPlayResult PlayOneShot(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (options.ScopeToken is { IsClosing: true })
+                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "The audio scope token is disposed.");
             if (!TryEnterCooldown(source, options))
                 return AudioPlayResult.Fail(AudioPlayStatus.SkippedCooldown);
 
@@ -67,6 +71,8 @@ namespace STS2RitsuLib.Audio
         public AudioLoopHandle? PlayLoop(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (options.ScopeToken is { IsClosing: true })
+                return null;
             if (!TryEnterCooldown(source, options))
                 return null;
 
@@ -89,6 +95,8 @@ namespace STS2RitsuLib.Audio
         public AudioMusicHandle? PlayMusic(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (options.ScopeToken is { IsClosing: true })
+                return null;
             if (!TryEnterCooldown(source, options))
                 return null;
 
