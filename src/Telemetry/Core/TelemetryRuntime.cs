@@ -165,20 +165,17 @@ namespace STS2RitsuLib.Telemetry
 
             RitsuLibFramework.Logger.Debug(
                 $"[Telemetry] Replaying startup event '{eventName}' to applicant '{applicant.ApplicantId}'.");
-            try
-            {
-                new TelemetryClient(applicant.ApplicantId).CapturePayload(eventName, requestId, payload, properties);
-            }
-            catch (Exception ex)
-            {
-                lock (Sync)
-                {
-                    DeliveredStartupKeys.Remove(deliveryKey);
-                }
+            var client = new TelemetryClient(applicant.ApplicantId);
+            if (client.TryCapturePayload(eventName, requestId, payload, properties))
+                return;
 
-                RitsuLibFramework.Logger.Warn(
-                    $"[Telemetry] Failed to replay startup event '{eventName}' to applicant '{applicant.ApplicantId}': {ex.Message}");
+            lock (Sync)
+            {
+                DeliveredStartupKeys.Remove(deliveryKey);
             }
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Telemetry] Failed to queue startup event '{eventName}' for applicant '{applicant.ApplicantId}'.");
         }
 
         private static string? BuildStartupDeliveryKey(TelemetryEnvelope envelope)
