@@ -1,8 +1,8 @@
 namespace STS2RitsuLib.RunData
 {
     /// <summary>
-    ///     Per-mod registry for run saved data slots.
-    ///     每个 mod 的跑局保存数据槽位注册表。
+    ///     <para xml:lang="en">Provides a per-mod registry of run saved-data slots.</para>
+    ///     <para xml:lang="zh-CN">提供按模组划分的局内保存数据槽位注册表。</para>
     /// </summary>
     public sealed class RunSavedDataStore
     {
@@ -20,14 +20,14 @@ namespace STS2RitsuLib.RunData
         }
 
         /// <summary>
-        ///     Owning mod id for this store.
-        ///     此存储所属的 mod ID。
+        ///     <para xml:lang="en">Gets the identifier of the mod that owns this store.</para>
+        ///     <para xml:lang="zh-CN">获取此存储所属模组的标识符。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     Returns the process-wide store for <paramref name="modId" />.
-        ///     返回 <paramref name="modId" /> 的进程级存储。
+        ///     <para xml:lang="en">Gets the process-wide store for <paramref name="modId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 对应的进程级存储。</para>
         /// </summary>
         public static RunSavedDataStore For(string modId)
         {
@@ -44,8 +44,8 @@ namespace STS2RitsuLib.RunData
         }
 
         /// <summary>
-        ///     Registers shared per-run saved data.
-        ///     注册共享跑局保存数据。
+        ///     <para xml:lang="en">Registers saved data shared by the whole run.</para>
+        ///     <para xml:lang="zh-CN">注册由整局游戏共享的保存数据。</para>
         /// </summary>
         public RunSavedData<T> Register<T>(
             string key,
@@ -59,8 +59,8 @@ namespace STS2RitsuLib.RunData
         }
 
         /// <summary>
-        ///     Registers per-player run saved data.
-        ///     注册按玩家分桶的跑局保存数据。
+        ///     <para xml:lang="en">Registers run saved data stored separately for each player.</para>
+        ///     <para xml:lang="zh-CN">注册为每名玩家分别存储的局内保存数据。</para>
         /// </summary>
         public PlayerRunSavedData<T> RegisterPerPlayer<T>(
             string key,
