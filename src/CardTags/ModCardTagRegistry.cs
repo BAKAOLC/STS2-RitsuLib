@@ -6,12 +6,13 @@ using Logger = MegaCrit.Sts2.Core.Logging.Logger;
 namespace STS2RitsuLib.CardTags
 {
     /// <summary>
-    ///     Per-mod registration surface for custom <see cref="CardTag" /> values. Ids follow
-    ///     <see cref="ModContentRegistry.GetQualifiedCardTagId" />; numeric values are minted with
-    ///     <see cref="DynamicEnumValueMinter{TEnum}" /> in the same reserved band as keywords and card piles.
-    ///     自定义 <see cref="CardTag" /> 值的逐 mod 注册入口。ID 遵循
-    ///     <see cref="ModContentRegistry.GetQualifiedCardTagId" />；数值会通过
-    ///     <see cref="DynamicEnumValueMinter{TEnum}" /> 在与关键词和卡牌牌堆相同的保留区间内生成。
+    ///     <para xml:lang="en">
+    ///         Registers custom card tags for one mod and resolves their definitions and dynamic
+    ///         <see cref="CardTag" /> values.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为单个模组注册自定义卡牌标签，并解析其定义与动态 <see cref="CardTag" /> 值。
+    ///     </para>
     /// </summary>
     public sealed class ModCardTagRegistry
     {
@@ -36,14 +37,16 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     True after the framework freezes tag registration (at <c>ModelDb.Init</c>).
-        ///     框架冻结标签注册后为 true（发生在 <c>ModelDb.Init</c>）。
+        ///     <para xml:lang="en">Gets whether card-tag registration has been frozen.</para>
+        ///     <para xml:lang="zh-CN">获取卡牌标签注册是否已冻结。</para>
         /// </summary>
         public static bool IsFrozen { get; private set; }
 
         /// <summary>
-        ///     Returns the singleton registry for <paramref name="modId" />, creating it on first use.
-        ///     返回 <paramref name="modId" /> 对应的单例注册表，并在首次使用时创建。
+        ///     <para xml:lang="en">
+        ///         Gets the registry for <paramref name="modId" />, creating it on first use.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 的注册表，并在首次使用时创建。</para>
         /// </summary>
         public static ModCardTagRegistry For(string modId)
         {
@@ -80,8 +83,10 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Registers a tag owned by this registry’s mod using <see cref="ModContentRegistry.GetQualifiedCardTagId" />.
-        ///     使用 <see cref="ModContentRegistry.GetQualifiedCardTagId" /> 注册归属此注册表 mod 的标签。
+        ///     <para xml:lang="en">
+        ///         Registers a card tag owned by this registry's mod using a qualified ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用限定 ID 注册由此注册表所属模组拥有的卡牌标签。</para>
         /// </summary>
         public ModCardTagDefinition RegisterOwned(string localTagStem)
         {
@@ -92,8 +97,13 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Registers a tag with a raw global id. Prefer <see cref="RegisterOwned" /> for mod-scoped ids.
-        ///     使用原始全局 ID 注册标签。mod 作用域 ID 推荐优先使用 <see cref="RegisterOwned" />。
+        ///     <para xml:lang="en">
+        ///         Registers a card tag with a global ID. Prefer <see cref="RegisterOwned" /> for mod-qualified
+        ///         IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用全局 ID 注册卡牌标签。需要模组限定 ID 时优先使用 <see cref="RegisterOwned" />。
+        ///     </para>
         /// </summary>
         public ModCardTagDefinition Register(string id)
         {
@@ -103,8 +113,8 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Resolves which mod registered <paramref name="tagId" />, if any.
-        ///     解析 <paramref name="tagId" /> 是由哪个 mod 注册的（如果存在）。
+        ///     <para xml:lang="en">Tries to get the ID of the mod that registered <paramref name="tagId" />.</para>
+        ///     <para xml:lang="zh-CN">尝试获取注册 <paramref name="tagId" /> 的模组 ID。</para>
         /// </summary>
         public static bool TryGetOwnerModId(string tagId, out string modId)
         {
@@ -124,8 +134,8 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Tries to resolve a definition by qualified or raw id.
-        ///     尝试通过限定 ID 或原始 ID 解析定义。
+        ///     <para xml:lang="en">Tries to get a registered card-tag definition by ID.</para>
+        ///     <para xml:lang="zh-CN">尝试按 ID 获取已注册的卡牌标签定义。</para>
         /// </summary>
         public static bool TryGet(string id, out ModCardTagDefinition definition)
         {
@@ -138,8 +148,8 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Returns the definition for <paramref name="id" /> or throws <see cref="KeyNotFoundException" />.
-        ///     返回 <paramref name="id" /> 对应的定义；不存在时抛出 <see cref="KeyNotFoundException" />。
+        ///     <para xml:lang="en">Gets the registered card-tag definition for <paramref name="id" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="id" /> 的已注册卡牌标签定义。</para>
         /// </summary>
         public static ModCardTagDefinition Get(string id)
         {
@@ -177,8 +187,12 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Reverse lookup for a minted <see cref="CardTag" /> value.
-        ///     对已生成的 <see cref="CardTag" /> 值执行反向查找。
+        ///     <para xml:lang="en">
+        ///         Tries to get the registered definition represented by <paramref name="value" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取 <paramref name="value" /> 所表示的已注册定义。
+        ///     </para>
         /// </summary>
         public static bool TryGetByCardTag(CardTag value, out ModCardTagDefinition definition)
         {
@@ -189,8 +203,12 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Whether <paramref name="value" /> was minted by this registry (not a vanilla literal).
-        ///     判断 <paramref name="value" /> 是否由此注册表生成（而不是原版字面值）。
+        ///     <para xml:lang="en">
+        ///         Gets whether <paramref name="value" /> represents a registered mod card tag.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="value" /> 是否表示已注册的模组卡牌标签。
+        ///     </para>
         /// </summary>
         public static bool IsModCardTag(CardTag value)
         {
@@ -201,10 +219,13 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Resolves the deterministic <see cref="CardTag" /> value minted for <paramref name="id" />.
-        ///     The id does not need to be registered.
-        ///     解析为 <paramref name="id" /> 确定性 minted 的 <see cref="CardTag" /> 值。
-        ///     该 id 不需要已注册。
+        ///     <para xml:lang="en">
+        ///         Tries to return the deterministic <see cref="CardTag" /> for <paramref name="id" />. The ID
+        ///         does not need to be registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试返回 <paramref name="id" /> 对应的确定性 <see cref="CardTag" />。该 ID 无需已注册。
+        ///     </para>
         /// </summary>
         public static bool TryGetCardTag(string id, out CardTag value)
         {
@@ -222,10 +243,13 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Resolves either a registered mod card-tag id or a vanilla <see cref="CardTag" /> enum name.
-        ///     Mod ids take precedence when a string could match both.
-        ///     解析已注册的 mod 卡牌标签 ID 或原版 <see cref="CardTag" /> 枚举名。
-        ///     当字符串同时可能匹配两者时，mod ID 优先。
+        ///     <para xml:lang="en">
+        ///         Tries to resolve a registered tag ID, vanilla <see cref="CardTag" /> name, or deterministic
+        ///         dynamic value. Registered tag IDs take precedence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试解析已注册标签 ID、原版 <see cref="CardTag" /> 名称或确定性动态值。已注册标签 ID 优先。
+        ///     </para>
         /// </summary>
         public static bool TryResolveCardTag(string idOrEnumName, out CardTag value)
         {
@@ -238,10 +262,13 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Returns the deterministic <see cref="CardTag" /> minted for <paramref name="id" />.
-        ///     The id does not need to be registered.
-        ///     返回为 <paramref name="id" /> 确定性 minted 的 <see cref="CardTag" />。
-        ///     该 id 不需要已注册。
+        ///     <para xml:lang="en">
+        ///         Returns the deterministic <see cref="CardTag" /> for <paramref name="id" />. The ID does
+        ///         not need to be registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="id" /> 对应的确定性 <see cref="CardTag" />。该 ID 无需已注册。
+        ///     </para>
         /// </summary>
         public static CardTag GetCardTag(string id)
         {
@@ -250,8 +277,12 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Tries to resolve the string id that minted <paramref name="value" />.
-        ///     尝试解析生成 <paramref name="value" /> 的字符串 ID。
+        ///     <para xml:lang="en">
+        ///         Tries to get the registered tag ID represented by <paramref name="value" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取 <paramref name="value" /> 所表示的已注册标签 ID。
+        ///     </para>
         /// </summary>
         public static bool TryGetId(CardTag value, out string id)
         {
@@ -269,8 +300,13 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Snapshot of all registered card-tag definitions, stable-ordered by id.
-        ///     获取所有已注册卡牌标签定义的快照，并按 ID 稳定排序。
+        ///     <para xml:lang="en">
+        ///         Returns a snapshot of all registered card-tag definitions ordered by ID using ordinal
+        ///         comparison.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回所有已注册卡牌标签定义的快照，并按 ID 使用序号比较排序。
+        ///     </para>
         /// </summary>
         public static ModCardTagDefinition[] GetDefinitionsSnapshot()
         {
