@@ -61,7 +61,9 @@ namespace STS2RitsuLib.Audio
                         return false;
 
                     current.TryStop(allowFadeOut);
-                    current.TryRelease();
+                    if (!current.TryRelease())
+                        return false;
+
                     if (!_channels.TryUpdate(channel, handle, current))
                         continue;
 
@@ -143,15 +145,21 @@ namespace STS2RitsuLib.Audio
                 return false;
 
             var any = false;
+            var allReleased = true;
             foreach (var handle in handles.Keys.ToArray())
             {
                 any = true;
                 handle.TryStop(allowFadeOut);
-                handle.TryRelease();
+                if (!handle.TryRelease())
+                {
+                    allReleased = false;
+                    continue;
+                }
+
                 handles.TryRemove(handle, out _);
             }
 
-            return any;
+            return any && allReleased;
         }
 
         /// <summary>
@@ -172,11 +180,14 @@ namespace STS2RitsuLib.Audio
         /// </returns>
         public bool StopChannel(string channel, bool allowFadeOut = true)
         {
-            if (!_channels.TryRemove(channel, out var handle))
+            if (!_channels.TryGetValue(channel, out var handle))
                 return false;
 
             handle.TryStop(allowFadeOut);
-            handle.TryRelease();
+            if (!handle.TryRelease())
+                return false;
+
+            _channels.TryRemove(new(channel, handle));
             return true;
         }
 

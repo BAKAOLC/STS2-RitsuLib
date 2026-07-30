@@ -86,15 +86,21 @@ namespace STS2RitsuLib.Audio
                 return false;
 
             var any = false;
+            var allReleased = true;
             foreach (var handle in handles.Keys.ToArray())
             {
                 any = true;
                 handle.TryStop(allowFadeOut);
-                handle.TryRelease();
+                if (!handle.TryRelease())
+                {
+                    allReleased = false;
+                    continue;
+                }
+
                 handles.TryRemove(handle, out _);
             }
 
-            return any;
+            return any && allReleased;
         }
 
         /// <summary>
@@ -107,15 +113,21 @@ namespace STS2RitsuLib.Audio
                 return false;
 
             var any = false;
+            var allReleased = true;
             foreach (var handle in handles.Keys.ToArray())
             {
                 any = true;
                 handle.TryStop(allowFadeOut);
-                handle.TryRelease();
+                if (!handle.TryRelease())
+                {
+                    allReleased = false;
+                    continue;
+                }
+
                 handles.TryRemove(handle, out _);
             }
 
-            return any;
+            return any && allReleased;
         }
     }
 }
