@@ -24,7 +24,7 @@ namespace STS2RitsuLib.Scaffolding.Characters
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterId);
 
-            var id = characterId.ToLowerInvariant();
+            var id = characterId.Trim().ToLowerInvariant();
 
             return new(
                 new(
