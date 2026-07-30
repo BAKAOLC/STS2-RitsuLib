@@ -29,12 +29,18 @@ namespace STS2RitsuLib.Diagnostics
             "netstandard",
         ];
 
+        private static readonly Lock InitializeGate = new();
+        private static IDisposable? _lifecycleSubscription;
         private static int _scanIssuedForSession;
 
         internal static void Initialize()
         {
-            RitsuLibFramework.SubscribeLifecycleOnce<DeferredInitializationCompletedEvent>(_ =>
-                RitsuLibStartupAudit.Measure("runtimeDetourCompatibilityScan", ScanAndWarn));
+            lock (InitializeGate)
+            {
+                _lifecycleSubscription ??=
+                    RitsuLibFramework.SubscribeLifecycleOnce<DeferredInitializationCompletedEvent>(_ =>
+                        RitsuLibStartupAudit.Measure("runtimeDetourCompatibilityScan", ScanAndWarn));
+            }
         }
 
         private static void ScanAndWarn()

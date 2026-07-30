@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Diagnostics
         private const string Prefix = "[ModList]";
         private static readonly Lock SyncRoot = new();
         private static bool _initialized;
+        private static bool _initializing;
         private static bool _logged;
         private static bool _logging;
 
@@ -16,15 +17,40 @@ namespace STS2RitsuLib.Diagnostics
         {
             lock (SyncRoot)
             {
-                if (_initialized)
+                if (_initialized || _initializing)
                     return;
 
-                _initialized = true;
+                _initializing = true;
             }
 
-            ModManager.OnModDetected += OnModDetected;
-            TryLogAfterInitialModLoading();
-            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => TryLogStartupModList());
+            var detectedHandlerAdded = false;
+            IDisposable? mainMenuSubscription = null;
+            try
+            {
+                ModManager.OnModDetected += OnModDetected;
+                detectedHandlerAdded = true;
+                TryLogAfterInitialModLoading();
+                mainMenuSubscription =
+                    RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => TryLogStartupModList());
+                lock (SyncRoot)
+                {
+                    _initialized = true;
+                }
+            }
+            catch
+            {
+                mainMenuSubscription?.Dispose();
+                if (detectedHandlerAdded)
+                    ModManager.OnModDetected -= OnModDetected;
+                throw;
+            }
+            finally
+            {
+                lock (SyncRoot)
+                {
+                    _initializing = false;
+                }
+            }
         }
 
         private static void OnModDetected(Mod _)

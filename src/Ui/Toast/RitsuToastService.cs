@@ -20,25 +20,41 @@ namespace STS2RitsuLib.Ui.Toast
         private static RitsuToastHost? _host;
         private static IDisposable? _lifecycleSubscription;
         private static bool _initialized;
+        private static bool _initializing;
+        private static bool _themeChangedSubscribed;
         private static RitsuToastSettings _settings = RitsuToastSettings.Default;
 
         internal static void Initialize()
         {
             lock (SyncRoot)
             {
-                if (_initialized)
+                if (_initialized || _initializing)
                     return;
-                _initialized = true;
-                _settings = RitsuLibSettingsStore.GetToastSettings();
-                _lifecycleSubscription ??= RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
+
+                _initializing = true;
+                try
                 {
-                    lock (SyncRoot)
+                    _settings = RitsuLibSettingsStore.GetToastSettings();
+                    _lifecycleSubscription ??= RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
                     {
-                        EnsureHostAttached(evt.Game);
+                        lock (SyncRoot)
+                        {
+                            EnsureHostAttached(evt.Game);
+                        }
+                    }, false);
+                    if (!_themeChangedSubscribed)
+                    {
+                        RitsuShellThemeRuntime.ThemeChanged += HandleThemeChanged;
+                        _themeChangedSubscribed = true;
                     }
-                }, false);
-                RitsuShellThemeRuntime.ThemeChanged += HandleThemeChanged;
-                EnsureHostAttached(NGame.Instance);
+
+                    EnsureHostAttached(NGame.Instance);
+                    _initialized = true;
+                }
+                finally
+                {
+                    _initializing = false;
+                }
             }
         }
 

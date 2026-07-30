@@ -23,7 +23,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 () => new(),
                 new() { WritePolicy = RunSavedDataWritePolicy.WhenNonDefault });
 
+        private static readonly Lock InitializeGate = new();
         private static bool _initialized;
+        private static bool _initializing;
 
         /// <summary>
         ///     <para xml:lang="en">Registers the combat lifecycle handlers used for persistence.</para>
@@ -31,12 +33,40 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         /// </summary>
         public static void Initialize()
         {
-            if (_initialized)
-                return;
+            lock (InitializeGate)
+            {
+                if (_initialized || _initializing)
+                    return;
 
-            _initialized = true;
-            RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>(OnCombatStarting);
-            RitsuLibFramework.SubscribeLifecycle<CombatEndedEvent>(OnCombatEnded);
+                _initializing = true;
+            }
+
+            IDisposable? startingSubscription = null;
+            IDisposable? endedSubscription = null;
+            try
+            {
+                startingSubscription =
+                    RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>(OnCombatStarting);
+                endedSubscription =
+                    RitsuLibFramework.SubscribeLifecycle<CombatEndedEvent>(OnCombatEnded);
+                lock (InitializeGate)
+                {
+                    _initialized = true;
+                }
+            }
+            catch
+            {
+                endedSubscription?.Dispose();
+                startingSubscription?.Dispose();
+                throw;
+            }
+            finally
+            {
+                lock (InitializeGate)
+                {
+                    _initializing = false;
+                }
+            }
         }
 
         /// <summary>

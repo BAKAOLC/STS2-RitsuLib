@@ -9,8 +9,10 @@ namespace STS2RitsuLib.Graphics
     /// </summary>
     internal static class RitsuCanvasTextureFilterService
     {
+        private static readonly Lock InitializeGate = new();
         private static IDisposable? _lifecycleSubscription;
         private static bool _initialized;
+        private static bool _initializing;
 
         /// <summary>
         ///     <para xml:lang="en">Applies the current setting and subscribes to reapply it when the game becomes ready.</para>
@@ -18,15 +20,33 @@ namespace STS2RitsuLib.Graphics
         /// </summary>
         internal static void Initialize()
         {
-            if (_initialized)
-                return;
-
-            _initialized = true;
-            ApplyConfiguredMode();
-            _lifecycleSubscription ??= RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
+            lock (InitializeGate)
             {
-                ApplyMode(evt.Game.GetViewport(), RitsuLibSettingsStore.GetCanvasTextureFilterMode());
-            });
+                if (_initialized || _initializing)
+                    return;
+
+                _initializing = true;
+            }
+
+            try
+            {
+                ApplyConfiguredMode();
+                _lifecycleSubscription ??= RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
+                {
+                    ApplyMode(evt.Game.GetViewport(), RitsuLibSettingsStore.GetCanvasTextureFilterMode());
+                });
+                lock (InitializeGate)
+                {
+                    _initialized = true;
+                }
+            }
+            finally
+            {
+                lock (InitializeGate)
+                {
+                    _initializing = false;
+                }
+            }
         }
 
         /// <summary>

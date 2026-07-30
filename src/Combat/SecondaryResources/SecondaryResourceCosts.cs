@@ -460,9 +460,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (_initialized)
                 return;
 
-            _initialized = true;
             ModelCloneRegistry.For(Const.ModId)
                 .Register<CardModel>("secondary_resource_costs", CopySecondaryCosts);
+            _initialized = true;
         }
 
         private static void CopySecondaryCosts(CardModel prototype, CardModel clone)
