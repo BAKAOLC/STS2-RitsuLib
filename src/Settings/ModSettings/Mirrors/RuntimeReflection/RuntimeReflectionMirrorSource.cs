@@ -153,6 +153,22 @@ namespace STS2RitsuLib.Settings
             {
                 return asm.GetTypes();
             }
+            catch (ReflectionTypeLoadException ex)
+            {
+                var loadedTypes = ex.Types.OfType<Type>().ToArray();
+                var loaderFailures = ex.LoaderExceptions
+                    .OfType<Exception>()
+                    .Select(static exception => exception.Message)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                var details = loaderFailures.Length == 0
+                    ? "No loader details were provided."
+                    : string.Join(" | ", loaderFailures);
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[RuntimeReflectionMirrorSource] Partially enumerated assembly '{asm.FullName}': recovered {loadedTypes.Length} of {ex.Types.Length} type(s); skipped unloadable types. {details}");
+                return loadedTypes;
+            }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
