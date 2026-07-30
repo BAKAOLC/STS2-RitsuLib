@@ -65,6 +65,7 @@ namespace STS2RitsuLib
     {
         private static readonly Lock SyncRoot = new();
         private static readonly Dictionary<FrameworkPatcherArea, ModPatcher> FrameworkPatchersByArea = [];
+        private static bool _frameworkPatchesApplied;
         private static bool _frameworkInteropBootstrapRegistered;
 
         private static bool _profileServicesInitialized;
@@ -72,6 +73,7 @@ namespace STS2RitsuLib
         private static readonly ConcurrentDictionary<Type, object> LifecycleTopics = new();
         private static readonly Dictionary<Type, object> ReplayableLifecycleEvents = [];
         private static readonly HashSet<string> RegisteredScriptAssemblies = [];
+        private static readonly HashSet<string> RegisteringScriptAssemblies = [];
 
         private static readonly Lock DeferredContentPackSync = new();
         private static readonly List<DeferredContentPackRegistration> DeferredContentPackRegistrations = [];
@@ -372,28 +374,31 @@ namespace STS2RitsuLib
 
                 try
                 {
-                    FrameworkPatchersByArea.Clear();
-                    RitsuLibStartupAudit.Measure("registerPatches", () =>
+                    if (!_frameworkPatchesApplied)
                     {
-                        RegisterLifecyclePatches();
-                        RegisterSettingsUiPatches();
-                        RegisterContentAssetPatches();
-                        RegisterCharacterAssetPatches();
-                        RegisterContentRegistryPatches();
-                        RegisterPersistencePatches();
-                        RegisterUnlockPatches();
-                    });
+                        FrameworkPatchersByArea.Clear();
+                        RitsuLibStartupAudit.Measure("registerPatches", () =>
+                        {
+                            RegisterLifecyclePatches();
+                            RegisterSettingsUiPatches();
+                            RegisterContentAssetPatches();
+                            RegisterCharacterAssetPatches();
+                            RegisterContentRegistryPatches();
+                            RegisterPersistencePatches();
+                            RegisterUnlockPatches();
+                        });
 
-                    if (!RitsuLibStartupAudit.Measure("patchAll", PatchAllRequired))
-                    {
-                        Logger.ErrorNoTrace("Framework initialization failed: critical framework patches failed.");
-                        IsActive = false;
-                        RitsuLibStartupAudit.LogReport("initialization (failed)");
-                        return;
+                        if (!RitsuLibStartupAudit.Measure("patchAll", PatchAllRequired))
+                        {
+                            Logger.ErrorNoTrace("Framework initialization failed: critical framework patches failed.");
+                            IsActive = false;
+                            RitsuLibStartupAudit.LogReport("initialization (failed)");
+                            return;
+                        }
+
+                        _frameworkPatchesApplied = true;
                     }
 
-                    IsInitialized = true;
-                    IsActive = true;
                     RitsuLibStartupAudit.Measure("runtimeServices", () =>
                     {
                         EnsureFrameworkInteropBootstrapRegistered();
@@ -414,6 +419,9 @@ namespace STS2RitsuLib
                         HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu();
                         SelfCheckBundleCoordinator.TryAutoRunOnFirstMainMenu();
                     });
+
+                    IsInitialized = true;
+                    IsActive = true;
 
                     var frameworkInitializedEvent = new FrameworkInitializedEvent(
                         Const.ModId,
@@ -451,8 +459,8 @@ namespace STS2RitsuLib
             if (_frameworkInteropBootstrapRegistered)
                 return;
 
-            _frameworkInteropBootstrapRegistered = true;
             SubscribeLifecycle<DeferredInitializationCompletedEvent>(_ => ConfirmExternalFrameworkInterop());
+            _frameworkInteropBootstrapRegistered = true;
         }
 
         private static void ConfirmExternalFrameworkInterop()
@@ -1463,7 +1471,8 @@ namespace STS2RitsuLib
 
             lock (SyncRoot)
             {
-                if (!RegisteredScriptAssemblies.Add(assemblyName))
+                if (RegisteredScriptAssemblies.Contains(assemblyName) ||
+                    !RegisteringScriptAssemblies.Add(assemblyName))
                     return;
             }
 
@@ -1485,12 +1494,20 @@ namespace STS2RitsuLib
 
                 if (AreGodotScriptPathsAlreadyRegistered(assembly, bridgeType, logger))
                 {
+                    lock (SyncRoot)
+                    {
+                        RegisteredScriptAssemblies.Add(assemblyName);
+                    }
                     logger?.Debug($"Godot C# scripts already registered for assembly: {assemblyName}");
                     return;
                 }
 
                 var lookup = lookupMethod.CreateDelegate<Action<Assembly>>();
                 lookup(assembly);
+                lock (SyncRoot)
+                {
+                    RegisteredScriptAssemblies.Add(assemblyName);
+                }
                 logger?.Debug($"Registered Godot C# scripts for assembly: {assemblyName}");
             }
             catch (Exception ex)
@@ -1500,6 +1517,13 @@ namespace STS2RitsuLib
                 DiagnosticsTelemetryCollector.CaptureExceptionForAuthorizedApplicants(
                     ex,
                     "ritsulib_godot_script_registration");
+            }
+            finally
+            {
+                lock (SyncRoot)
+                {
+                    RegisteringScriptAssemblies.Remove(assemblyName);
+                }
             }
         }
 
