@@ -197,7 +197,7 @@ namespace STS2RitsuLib.Audio
                 ? AudioSource.StreamingResourceMusic(definition.ResourcePath)
                 : AudioSource.ResourceFile(definition.ResourcePath);
             var result = GameFmod.Playback.Play(source,
-                BuildOptions(definition, 1f, eventPath, AudioLifecycleScope.Room));
+                BuildOptions(definition, 1f, null, AudioLifecycleScope.Room));
             if (!result.Succeeded || result.Handle is null)
                 return false;
 
