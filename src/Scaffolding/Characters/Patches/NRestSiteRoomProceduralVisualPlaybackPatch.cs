@@ -92,8 +92,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 if (_built)
                     return;
 
-                _built = true;
                 StateMachine = factory.TryCreateRestSiteAnimationStateMachine(root, character);
+                _built = true;
             }
         }
     }

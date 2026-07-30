@@ -130,8 +130,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 if (_built)
                     return;
 
-                _built = true;
                 StateMachine = BuildFrom(character, monster, visuals);
+                _built = true;
             }
 
             private static ModAnimStateMachine? BuildFrom(CharacterModel? character, MonsterModel? monster,

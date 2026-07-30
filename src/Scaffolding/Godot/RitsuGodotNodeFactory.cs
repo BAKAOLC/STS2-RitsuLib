@@ -116,7 +116,10 @@ namespace STS2RitsuLib.Scaffolding.Godot
         public override Node CreateFromNode(Node source)
         {
             if (source is T typed)
+            {
+                CompleteBareRoot(typed);
                 return typed;
+            }
 
             var target = new T();
             try
@@ -135,6 +138,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
         {
             if (source is T typed)
             {
+                CompleteBareRoot(typed);
                 ApplyStyle(typed, false, style);
                 return typed;
             }

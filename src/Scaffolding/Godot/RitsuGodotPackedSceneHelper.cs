@@ -18,7 +18,11 @@ namespace STS2RitsuLib.Scaffolding.Godot
         {
             ArgumentNullException.ThrowIfNull(root);
             var packed = new PackedScene();
-            return packed.Pack(root) == Error.Ok ? packed : null;
+            if (packed.Pack(root) == Error.Ok)
+                return packed;
+
+            packed.Dispose();
+            return null;
         }
     }
 }

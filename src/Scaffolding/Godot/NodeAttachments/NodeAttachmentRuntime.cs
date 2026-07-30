@@ -87,11 +87,15 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                         if (!definition.NodeType.IsInstanceOfType(existing))
                             throw new InvalidOperationException(
                                 $"Existing child '{definition.Name}' is {existing.GetType().FullName}, expected {definition.NodeType.FullName}.");
-                        attached[definition.Id] = existing;
                         ApplyNodeOptions(existing, definition);
+                        if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.BeforeAdd)
+                            definition.RunSetup(parent, existing);
                         if (definition.Options.UniqueNameInOwner)
                             existing.Owner = attachParent;
                         ApplyInsertion(attachParent, existing, definition);
+                        if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
+                            definition.RunSetup(parent, existing);
+                        attached[definition.Id] = existing;
                         return;
                     case NodeAttachmentDuplicatePolicy.SkipIfExistingByName:
                         return;
