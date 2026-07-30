@@ -142,7 +142,16 @@ namespace STS2RitsuLib.Interop
 
                 foreach (var modType in modTypes)
                 foreach (var contributor in snapshot)
-                    contributor.Contribute(harmony, targetMap, modType);
+                    try
+                    {
+                        contributor.Contribute(harmony, targetMap, modType);
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.ErrorNoTrace(
+                            $"[ModTypeDiscoveryHub] Contributor {contributor.GetType().FullName} failed for " +
+                            $"{modType.FullName ?? modType.Name}; continuing discovery. {ex}");
+                    }
             }
         }
 

@@ -110,8 +110,17 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var attributeSource in EnumerateEffectiveRegistrationAttributes(type))
-                Append(attributeSource.Attribute, attributeSource.DeclaringType,
-                    attributeSource.DeclaringType != type);
+                try
+                {
+                    Append(attributeSource.Attribute, attributeSource.DeclaringType,
+                        attributeSource.DeclaringType != type);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[AutoRegister] Failed to inspect {attributeSource.Attribute.GetType().Name} for " +
+                        $"'{type.FullName}' (declared on '{attributeSource.DeclaringType.FullName}'): {ex}");
+                }
 
             return operations;
 
