@@ -83,17 +83,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static string? ResolveMainIconPath(EncounterModel encounter)
         {
-            return ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconPath(encounter, out var externalPath)
-                ? externalPath
-                : (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconPath;
+            if (ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconPath(encounter, out var externalPath) &&
+                AssetPathDiagnostics.Exists(
+                    externalPath,
+                    encounter,
+                    "ExternalAssetOverrideRegistry.EncounterRunHistoryIconPath"))
+                return externalPath;
+
+            return (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconPath;
         }
 
         private static string? ResolveOutlineIconPath(EncounterModel encounter)
         {
-            return ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconOutlinePath(encounter,
-                out var externalPath)
-                ? externalPath
-                : (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconOutlinePath;
+            if (ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconOutlinePath(
+                    encounter,
+                    out var externalPath) &&
+                AssetPathDiagnostics.Exists(
+                    externalPath,
+                    encounter,
+                    "ExternalAssetOverrideRegistry.EncounterRunHistoryIconOutlinePath"))
+                return externalPath;
+
+            return (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconOutlinePath;
         }
     }
 }

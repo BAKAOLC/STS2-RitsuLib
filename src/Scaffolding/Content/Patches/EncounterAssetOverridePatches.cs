@@ -98,31 +98,21 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(EncounterModel __instance, ref Control __result)
         {
-            string? path;
-            string memberName;
-            if (ExternalAssetOverrideRegistry.TryGetEncounterScenePath(__instance, out var externalPath))
-            {
-                path = externalPath;
-                memberName = "ExternalAssetOverrideRegistry.EncounterScenePath";
-            }
-            else if (__instance is IModEncounterAssetOverrides overrides)
-            {
-                path = overrides.CustomEncounterScenePath;
-                memberName = nameof(IModEncounterAssetOverrides.CustomEncounterScenePath);
-            }
-            else
-            {
-                return true;
-            }
+            if (ExternalAssetOverrideRegistry.TryGetEncounterScenePath(__instance, out var externalPath) &&
+                ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                    __instance,
+                    externalPath,
+                    "ExternalAssetOverrideRegistry.EncounterScenePath",
+                    out __result))
+                return false;
 
-            if (string.IsNullOrWhiteSpace(path))
-                return true;
-
-            return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
-                __instance,
-                path,
-                memberName,
-                out __result);
+            var path = (__instance as IModEncounterAssetOverrides)?.CustomEncounterScenePath;
+            return string.IsNullOrWhiteSpace(path) ||
+                   !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                       __instance,
+                       path,
+                       nameof(IModEncounterAssetOverrides.CustomEncounterScenePath),
+                       out __result);
         }
     }
 
@@ -274,27 +264,41 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(EncounterModel __instance, ref IEnumerable<string> __result)
         {
-            var hasExternal =
-                ExternalAssetOverrideRegistry.TryGetEncounterMapNodeAssetPaths(__instance, out var externalRaw);
-            var raw = hasExternal
-                ? externalRaw
-                : (__instance as IModEncounterAssetOverrides)?.CustomMapNodeAssetPaths;
-            if (raw == null)
-                return true;
+            if (ExternalAssetOverrideRegistry.TryGetEncounterMapNodeAssetPaths(__instance, out var externalRaw) &&
+                TryCollectExistingPaths(
+                    externalRaw,
+                    "ExternalAssetOverrideRegistry.EncounterMapNodeAssetPaths",
+                    out __result))
+                return false;
 
-            var candidates = raw.Where(p => !string.IsNullOrWhiteSpace(p)).ToArray();
-            if (candidates.Length == 0)
-                return true;
+            return !TryCollectExistingPaths(
+                (__instance as IModEncounterAssetOverrides)?.CustomMapNodeAssetPaths,
+                nameof(IModEncounterAssetOverrides.CustomMapNodeAssetPaths),
+                out __result);
 
-            var pathTuples = candidates
-                .Select(p => ((string?)p, nameof(IModEncounterAssetOverrides.CustomMapNodeAssetPaths)))
-                .ToArray();
-            var paths = AssetPathDiagnostics.CollectExistingPaths(__instance, pathTuples);
-            if (paths.Length == 0)
-                return true;
+            bool TryCollectExistingPaths(
+                IEnumerable<string>? raw,
+                string memberLabel,
+                out IEnumerable<string> paths)
+            {
+                paths = [];
+                if (raw == null)
+                    return false;
 
-            __result = paths;
-            return false;
+                var pathTuples = raw
+                    .Where(static path => !string.IsNullOrWhiteSpace(path))
+                    .Select(path => ((string?)path, memberLabel))
+                    .ToArray();
+                if (pathTuples.Length == 0)
+                    return false;
+
+                var existing = AssetPathDiagnostics.CollectExistingPaths(__instance, pathTuples);
+                if (existing.Length == 0)
+                    return false;
+
+                paths = existing;
+                return true;
+            }
         }
     }
 

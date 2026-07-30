@@ -2460,21 +2460,23 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(AfflictionModel __instance, ref Control __result)
         {
             if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene,
-                    out var externalSceneProviderKey))
-                return !ContentAssetOverridePatchHelper.TryInstantiatePackedSceneOverride(
+                    out var externalSceneProviderKey) &&
+                ContentAssetOverridePatchHelper.TryInstantiatePackedSceneOverride(
                     __instance,
                     externalScene,
                     "ExternalAssetOverrideRegistry.AfflictionOverlayScene",
                     $"provider '{externalSceneProviderKey}'",
-                    out __result);
+                    out __result))
+                return false;
 
             if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayPath(__instance, out var externalOverlayPath,
-                    out var externalPathProviderKey))
-                return !ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
+                    out var externalPathProviderKey) &&
+                ContentAssetOverridePatchHelper.TryInstantiatePackedScenePathOverride(
                     __instance,
                     externalOverlayPath,
                     $"ExternalAssetOverrideRegistry.AfflictionOverlayPath[{externalPathProviderKey}]",
-                    out __result);
+                    out __result))
+                return false;
 
             var path = string.Empty;
             if (ContentAssetOverridePatchHelper.TryUseStringOverride<IModAfflictionAssetOverrides>(
