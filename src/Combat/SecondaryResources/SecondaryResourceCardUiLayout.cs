@@ -5,8 +5,10 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Layout coordination helpers for secondary-resource card UI attached to <see cref="NCard" />.
-    ///     附加到 <see cref="NCard" /> 的次级资源卡牌 UI 布局协调辅助工具。
+    ///     <para xml:lang="en">
+    ///         Coordinates secondary-resource card-cost layout with the game's <see cref="NCard" /> layout.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">协调次级资源卡牌费用与游戏 <see cref="NCard" /> 的布局。</para>
     /// </summary>
     public static class SecondaryResourceCardUiLayout
     {
@@ -15,12 +17,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static readonly AttachedState<NCard, bool> ReservedVanillaStarCostSlot = new();
 
         /// <summary>
-        ///     Marks the current card UI refresh as occupying the vanilla star-cost slot.
-        ///     将当前卡牌 UI 刷新标记为占用了原版辉星费用槽。
+        ///     <para xml:lang="en">Marks the current card UI refresh as occupying the game's Stars-cost slot.</para>
+        ///     <para xml:lang="zh-CN">标记当前卡牌界面刷新占用了游戏的辉星费用槽。</para>
         /// </summary>
         /// <param name="card">
-        ///     Card node being refreshed.
-        ///     正在刷新的卡牌节点。
+        ///     <para xml:lang="en">The card node currently being refreshed.</para>
+        ///     <para xml:lang="zh-CN">当前正在刷新的卡牌节点。</para>
         /// </param>
         public static void ReserveVanillaStarCostSlot(NCard card)
         {
