@@ -201,6 +201,7 @@ namespace STS2RitsuLib.Updates
             bool showCompletionToast = false,
             CancellationToken cancellationToken = default)
         {
+            ValidateOptions(options);
             return CheckAndToastAsync(
                 options,
                 showCompletionToast,
@@ -546,6 +547,10 @@ namespace STS2RitsuLib.Updates
                 throw new ArgumentException("ReleasePageUri must use http or https when provided.", nameof(options));
             if (options.Timeout <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(options), "Timeout must be positive.");
+            if (options.ToastDurationSeconds is { } duration &&
+                (!double.IsFinite(duration) || duration <= 0))
+                throw new ArgumentOutOfRangeException(nameof(options),
+                    "ToastDurationSeconds must be finite and positive when provided.");
             if (options.SteamWorkshopItemId is 0)
                 throw new ArgumentOutOfRangeException(nameof(options),
                     "SteamWorkshopItemId must be positive when provided.");
