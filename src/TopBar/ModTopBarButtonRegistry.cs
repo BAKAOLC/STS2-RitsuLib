@@ -65,6 +65,7 @@ namespace STS2RitsuLib.TopBar
         public static ModTopBarButtonRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            modId = modId.Trim();
 
             lock (SyncRoot)
             {

@@ -15,7 +15,7 @@ namespace STS2RitsuLib.TopBar
             string? iconPath,
             int order,
             Vector2 offset,
-            Action<ModTopBarButtonContext>? onClick,
+            Action<ModTopBarButtonContext> onClick,
             Func<ModTopBarButtonContext, bool>? visibleWhen,
             Func<ModTopBarButtonContext, bool>? isOpenWhen,
             Func<ModTopBarButtonContext, int>? countProvider)
@@ -65,7 +65,7 @@ namespace STS2RitsuLib.TopBar
         ///     Click handler; see <see cref="ModTopBarButtonSpec.OnClick" />.
         ///     点击处理器; 见 <see cref="ModTopBarButtonSpec.OnClick" />。
         /// </summary>
-        public Action<ModTopBarButtonContext>? OnClick { get; }
+        public Action<ModTopBarButtonContext> OnClick { get; }
 
         /// <summary>
         ///     Optional visibility predicate; see <see cref="ModTopBarButtonSpec.VisibleWhen" />.
