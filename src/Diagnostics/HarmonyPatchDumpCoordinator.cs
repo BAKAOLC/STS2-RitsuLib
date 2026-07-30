@@ -5,18 +5,27 @@ using STS2RitsuLib.Settings;
 namespace STS2RitsuLib.Diagnostics
 {
     /// <summary>
-    ///     Orchestrates manual and first-main-menu Harmony patch dumps using persisted RitsuLib settings.
-    ///     编排手动和首次主菜单 Harmony 补丁转储，使用持久化的 RitsuLib 设置。
+    ///     <para xml:lang="en">
+    ///         Coordinates manual and first-main-menu Harmony patch dumps using persisted RitsuLib settings.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         根据持久化的 RitsuLib 设置协调手动转储和首次进入主菜单时的 Harmony 补丁转储。
+    ///     </para>
     /// </summary>
     internal static class HarmonyPatchDumpCoordinator
     {
         private static int _autoDumpIssuedForSession;
 
         /// <summary>
-        ///     Invoked deferred from <see cref="MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenu" /> readiness; runs at
-        ///     most once per process when the setting is enabled.
-        ///     从 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenu" /> readiness 延迟调用；启用该设置时，
-        ///     每个进程最多运行一次。
+        ///     <para xml:lang="en">
+        ///         Handles the deferred call made after
+        ///         <see cref="MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenu" /> becomes ready. When enabled, an
+        ///         automatic dump is attempted at most once per process.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         处理 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.MainMenu.NMainMenu" /> 就绪后的延迟调用。启用该设置
+        ///         时，每个进程最多尝试一次自动转储。
+        ///     </para>
         /// </summary>
         internal static void TryAutoDumpOnFirstMainMenu()
         {

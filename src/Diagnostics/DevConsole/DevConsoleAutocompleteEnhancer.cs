@@ -3,12 +3,22 @@ using MegaCrit.Sts2.Core.DevConsole;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Applies registered dev-console autocomplete enhancements to matchers and results.
+    ///     <para xml:lang="en">
+    ///         Applies registered developer-console autocomplete enhancements to match predicates and results.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将已注册的开发者控制台自动补全增强应用于匹配谓词和结果。
+    ///     </para>
     /// </summary>
     public static class DevConsoleAutocompleteEnhancer
     {
         /// <summary>
-        ///     Builds a match predicate chain for <paramref name="enhancements" />.
+        ///     <para xml:lang="en">
+        ///         Builds a match-predicate chain for <paramref name="enhancements" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="enhancements" /> 构建匹配谓词链。
+        ///     </para>
         /// </summary>
         public static Func<string, string, bool>? BuildMatchPredicate(
             DevConsoleAutocompleteEnhancements enhancements,
@@ -44,7 +54,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Applies result-side enhancements such as localized labels and de-duplication.
+        ///     <para xml:lang="en">
+        ///         Applies result-side enhancements such as localized labels and duplicate removal.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         应用本地化标签、移除重复项等结果侧增强。
+        ///     </para>
         /// </summary>
         public static void ApplyToResult(
             ref CompletionResult result,

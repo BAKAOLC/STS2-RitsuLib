@@ -23,10 +23,13 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         private const float CardExportHalfExtentY = 240f;
 
         /// <summary>
-        ///     Relic inspect <c>Popup</c> is often anchor-stretched; off-tree that yields 0×0 min size. Reset to
-        ///     top-left with margin 0 so <see cref="Control.GetCombinedMinimumSize" /> reflects child content.
-        ///     遗物查看 <c>Popup</c> 经常是锚点拉伸的；离树时这会得到 0×0 最小尺寸。重置为
-        ///     左上角且边距为 0，使 <see cref="Control.GetCombinedMinimumSize" /> 反映子内容。
+        ///     <para xml:lang="en">
+        ///         Resets an anchor-stretched control to the top-left preset so its off-tree combined minimum size
+        ///         reflects its child content.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将锚点拉伸的控件重置为左上角预设，使其离开场景树时的组合最小尺寸能够反映子内容。
+        ///     </para>
         /// </summary>
         internal static void StripToTopLeftUnstretched(Control? c)
         {

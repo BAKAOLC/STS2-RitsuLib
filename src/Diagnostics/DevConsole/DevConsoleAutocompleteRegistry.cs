@@ -3,7 +3,12 @@ using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Registry of per-command dev-console autocomplete enhancement bindings.
+    ///     <para xml:lang="en">
+    ///         Stores developer-console autocomplete enhancement bindings by command.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按命令存储开发者控制台自动补全增强绑定。
+    ///     </para>
     /// </summary>
     public static class DevConsoleAutocompleteRegistry
     {
@@ -19,7 +24,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Registers a binding. Later bindings merge enhancements when multiple bindings match the same slot.
+        ///     <para xml:lang="en">
+        ///         Registers a binding. When multiple bindings match the same argument slot, their enhancements are
+        ///         combined.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一个绑定。多个绑定匹配同一参数位置时，会合并其增强标志。
+        ///     </para>
         /// </summary>
         public static void Register(DevConsoleAutocompleteBinding binding)
         {
@@ -45,7 +56,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Registers enhancements for a command argument slot.
+        ///     <para xml:lang="en">Registers enhancements for a command argument slot.</para>
+        ///     <para xml:lang="zh-CN">为命令的指定参数位置注册增强。</para>
         /// </summary>
         public static void Register(
             string commandName,
@@ -63,7 +75,14 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Registers enhancements when <paramref name="appliesWhen" /> returns true (any argument index unless restricted).
+        ///     <para xml:lang="en">
+        ///         Registers enhancements that apply when <paramref name="appliesWhen" /> returns <see langword="true" />;
+        ///         the binding applies to every argument position.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册在 <paramref name="appliesWhen" /> 返回 <see langword="true" /> 时生效的增强；该绑定适用于所有
+        ///         参数位置。
+        ///     </para>
         /// </summary>
         public static void Register(
             string commandName,
@@ -81,7 +100,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Resolves merged enhancements for a completion call.
+        ///     <para xml:lang="en">
+        ///         Resolves and combines all enhancements that apply to an autocomplete call.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析并合并适用于一次自动补全调用的所有增强。
+        ///     </para>
         /// </summary>
         public static DevConsoleAutocompleteEnhancements Resolve(
             AbstractConsoleCmd command,
@@ -108,7 +132,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Returns whether any enhancements apply to the completion call.
+        ///     <para xml:lang="en">Returns whether any enhancements apply to an autocomplete call.</para>
+        ///     <para xml:lang="zh-CN">返回是否有任何增强适用于一次自动补全调用。</para>
         /// </summary>
         public static bool HasEnhancements(
             AbstractConsoleCmd command,

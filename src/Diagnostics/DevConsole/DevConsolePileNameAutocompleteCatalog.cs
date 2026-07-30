@@ -6,7 +6,12 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Maps dev-console pile argument tokens to localized display titles.
+    ///     <para xml:lang="en">
+    ///         Maps developer-console pile-argument tokens to localized display titles.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将开发者控制台的牌堆参数令牌映射到本地化显示标题。
+    ///     </para>
     /// </summary>
     public static class DevConsolePileNameAutocompleteCatalog
     {
@@ -16,7 +21,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static string? _builtForDefinitions;
 
         /// <summary>
-        ///     Returns the localized title for <paramref name="token" />, or null when unknown or empty.
+        ///     <para xml:lang="en">
+        ///         Returns the localized title for <paramref name="token" />, or <see langword="null" /> when it is
+        ///         unknown or empty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="token" /> 的本地化标题；标题未知或为空时返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public static string? TryGetLocalizedTitle(string token)
         {
@@ -28,7 +39,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Returns whether <paramref name="partial" /> matches the localized title of <paramref name="token" />.
+        ///     <para xml:lang="en">
+        ///         Returns whether <paramref name="partial" /> occurs in the localized title of
+        ///         <paramref name="token" />, ignoring case.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="token" /> 的本地化标题是否包含 <paramref name="partial" />，忽略大小写。
+        ///     </para>
         /// </summary>
         public static bool MatchesLocalizedTitle(string token, string partial)
         {
@@ -41,7 +58,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Appends registered mod pile ids that are not already present in <paramref name="candidates" />.
+        ///     <para xml:lang="en">
+        ///         Appends registered mod pile IDs that are not already present in <paramref name="candidates" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="candidates" /> 中尚不存在的已注册模组牌堆 ID 追加到其中。
+        ///     </para>
         /// </summary>
         public static void AppendModPileCandidates(IList<string> candidates)
         {

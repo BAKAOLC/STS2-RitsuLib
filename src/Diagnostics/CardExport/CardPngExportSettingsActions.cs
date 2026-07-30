@@ -3,8 +3,12 @@ using STS2RitsuLib.Settings;
 namespace STS2RitsuLib.Diagnostics.CardExport
 {
     /// <summary>
-    ///     Starts card PNG export from persisted RitsuLib settings (Mod Settings UI).
-    ///     从持久化的 RitsuLib 设置启动卡牌 PNG 导出（Mod 设置 UI）。
+    ///     <para xml:lang="en">
+    ///         Starts a card PNG export using values stored by the RitsuLib settings interface.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用 RitsuLib 设置界面保存的值启动卡牌 PNG 导出。
+    ///     </para>
     /// </summary>
     internal static class CardPngExportSettingsActions
     {

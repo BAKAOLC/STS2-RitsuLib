@@ -7,7 +7,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Diagnostics.Patches
 {
     /// <summary>
-    ///     Applies registered dev-console autocomplete enhancements through <see cref="DevConsoleAutocompleteRegistry" />.
+    ///     <para xml:lang="en">
+    ///         Applies registered developer-console autocomplete enhancements through
+    ///         <see cref="DevConsoleAutocompleteRegistry" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="DevConsoleAutocompleteRegistry" /> 应用已注册的开发者控制台自动补全增强。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleAutocompleteEnhancementPatch : IPatchMethod
     {

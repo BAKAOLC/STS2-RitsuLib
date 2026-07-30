@@ -72,7 +72,13 @@ namespace STS2RitsuLib.Diagnostics.Patches
     }
 
     /// <summary>
-    ///     Replaces vanilla dev-console history navigation with shell-style cursor movement and draft restore.
+    ///     <para xml:lang="en">
+    ///         Replaces the base game's developer-console history navigation with shell-style cursor movement and
+    ///         restoration of the in-progress draft.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将原版开发者控制台的历史记录导航替换为 Shell 风格的光标移动，并可恢复尚未提交的输入草稿。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleHistoryNavigationInputPatch : IPatchMethod
     {
@@ -236,7 +242,12 @@ namespace STS2RitsuLib.Diagnostics.Patches
     }
 
     /// <summary>
-    ///     Clears transient history-navigation state after the console consumes a command.
+    ///     <para xml:lang="en">
+    ///         Clears transient history-navigation state after the console processes a command.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         控制台处理命令后清除临时的历史记录导航状态。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleHistoryNavigationProcessCommandPatch : IPatchMethod
     {
@@ -261,7 +272,12 @@ namespace STS2RitsuLib.Diagnostics.Patches
     }
 
     /// <summary>
-    ///     Resets transient history browsing when closing the console without submitting a command.
+    ///     <para xml:lang="en">
+    ///         Resets transient history browsing when the console is hidden.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         隐藏控制台时重置临时的历史记录浏览状态。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleHistoryNavigationHideConsolePatch : IPatchMethod
     {
@@ -288,7 +304,12 @@ namespace STS2RitsuLib.Diagnostics.Patches
     }
 
     /// <summary>
-    ///     Resets transient history browsing before showing the console if another path hid it.
+    ///     <para xml:lang="en">
+    ///         Resets transient history browsing before the console is shown.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         显示控制台前重置临时的历史记录浏览状态。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleHistoryNavigationShowConsolePatch : IPatchMethod
     {

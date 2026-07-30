@@ -1,17 +1,22 @@
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Built-in dev-console autocomplete bindings aligned with vanilla command completion slots.
+    ///     <para xml:lang="en">
+    ///         Registers built-in autocomplete bindings aligned with the game's command argument positions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册与游戏命令参数位置一致的内置自动补全绑定。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Vanilla commands with completions but no model-id enhancement:
-    ///     <c>act</c> (no vanilla autocomplete; accepts run act index or act model id),
-    ///     <c>art</c> (content-type names),
-    ///     <c>room</c> (<see cref="MegaCrit.Sts2.Core.Rooms.RoomType" />),
-    ///     <c>kill</c> / <c>upgrade</c> (numeric indices),
-    ///     <c>achievement</c> / <c>open</c> / <c>leaderboard</c> (fixed option lists),
-    ///     <c>relic</c> arg 0 when choosing <c>add</c>/<c>remove</c> subcommands,
-    ///     <c>unlock</c> arg 0 (discovery type names).
+    ///     <para xml:lang="en">
+    ///         Commands whose completion values are not model IDs retain their original completion behavior. This
+    ///         includes content-type names, room types, numeric indices, fixed option lists, and subcommand selectors.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         补全值不是模型 ID 的命令会保留原有补全行为，包括内容类型名称、房间类型、数字索引、固定选项列表和
+    ///         子命令选择项。
+    ///     </para>
     /// </remarks>
     internal static class DevConsoleAutocompleteDefaults
     {

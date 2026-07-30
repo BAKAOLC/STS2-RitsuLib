@@ -6,8 +6,12 @@ using STS2RitsuLib.Settings;
 namespace STS2RitsuLib.Diagnostics.Commands
 {
     /// <summary>
-    ///     RitsuLib diagnostic console command entry.
-    ///     RitsuLib 诊断控制台命令入口。
+    ///     <para xml:lang="en">
+    ///         Implements the root console command for RitsuLib diagnostics and settings navigation.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         实现 RitsuLib 诊断和设置导航的根控制台命令。
+    ///     </para>
     /// </summary>
     public sealed class RitsuLibConsoleCmd : AbstractConsoleCmd
     {

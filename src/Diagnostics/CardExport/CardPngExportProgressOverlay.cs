@@ -5,8 +5,12 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Diagnostics.CardExport
 {
     /// <summary>
-    ///     Full-screen blocking overlay with a progress bar while batch PNG export runs.
-    ///     批量 PNG 导出运行期间显示的全屏阻塞覆盖层，带有进度条。
+    ///     <para xml:lang="en">
+    ///         Displays a full-screen blocking progress overlay during a batch card PNG export.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在批量导出卡牌 PNG 期间显示全屏阻塞式进度浮层。
+    ///     </para>
     /// </summary>
     internal sealed partial class CardPngExportProgressOverlay : CanvasLayer
     {

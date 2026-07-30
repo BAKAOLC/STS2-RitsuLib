@@ -9,8 +9,13 @@ using GameDevConsole = MegaCrit.Sts2.Core.DevConsole.DevConsole;
 namespace STS2RitsuLib.Diagnostics.Patches
 {
     /// <summary>
-    ///     Hides vanilla ghost text for localized autocomplete matches whose canonical completion does not extend the
-    ///     typed input.
+    ///     <para xml:lang="en">
+    ///         Hides the base game's ghost text when a localized autocomplete match produces a canonical completion
+    ///         that does not extend the typed input.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当本地化自动补全匹配所得的规范补全文本并非已输入文本的延伸时，隐藏原版幽灵文本。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleAutocompleteGhostTextPatch : IPatchMethod
     {

@@ -4,12 +4,18 @@ using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Public entry point for registering and applying dev-console autocomplete enhancements.
+    ///     <para xml:lang="en">
+    ///         Provides the public API for registering and applying developer-console autocomplete enhancements.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供注册和应用开发者控制台自动补全增强功能的公共 API。
+    ///     </para>
     /// </summary>
     public static class DevConsoleAutocomplete
     {
         /// <summary>
-        ///     Registers a command-argument autocomplete binding.
+        ///     <para xml:lang="en">Registers a command-argument autocomplete binding.</para>
+        ///     <para xml:lang="zh-CN">注册命令参数的自动补全绑定。</para>
         /// </summary>
         public static void Register(DevConsoleAutocompleteBinding binding)
         {
@@ -17,7 +23,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Registers enhancements for a fixed argument index on a command.
+        ///     <para xml:lang="en">Registers enhancements for a specific argument index of a command.</para>
+        ///     <para xml:lang="zh-CN">为命令的指定参数索引注册增强功能。</para>
         /// </summary>
         public static void Register(
             string commandName,
@@ -29,7 +36,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Registers enhancements selected by <paramref name="appliesWhen" />.
+        ///     <para xml:lang="en">Registers enhancements selected by <paramref name="appliesWhen" />.</para>
+        ///     <para xml:lang="zh-CN">注册由 <paramref name="appliesWhen" /> 选择的增强功能。</para>
         /// </summary>
         public static void Register(
             string commandName,
@@ -40,7 +48,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Resolves enhancements for a completion call.
+        ///     <para xml:lang="en">Resolves the enhancements applicable to a completion request.</para>
+        ///     <para xml:lang="zh-CN">解析适用于补全请求的增强功能。</para>
         /// </summary>
         public static DevConsoleAutocompleteEnhancements Resolve(
             AbstractConsoleCmd command,
@@ -51,7 +60,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Builds the match predicate chain for manual <c>CompleteArgument</c> usage in mod commands.
+        ///     <para xml:lang="en">
+        ///         Builds a match-predicate chain for mod commands that call <c>CompleteArgument</c> directly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为直接调用 <c>CompleteArgument</c> 的模组命令构建匹配谓词链。
+        ///     </para>
         /// </summary>
         public static Func<string, string, bool>? BuildMatchPredicate(
             AbstractConsoleCmd command,
@@ -65,7 +79,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Applies result enhancements for manual <c>CompleteArgument</c> usage in mod commands.
+        ///     <para xml:lang="en">
+        ///         Applies result enhancements for a mod command that calls <c>CompleteArgument</c> directly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为直接调用 <c>CompleteArgument</c> 的模组命令应用结果增强功能。
+        ///     </para>
         /// </summary>
         public static void ApplyToResult(
             AbstractConsoleCmd command,
