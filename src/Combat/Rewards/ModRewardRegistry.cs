@@ -650,13 +650,13 @@ namespace STS2RitsuLib.Combat.Rewards
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[RitsuLib] Custom reward payload JSON deserialize failed: {ex.Message}");
-                return default;
+                throw;
             }
             catch (NotSupportedException ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[RitsuLib] Custom reward payload JSON deserialize not supported: {ex.Message}");
-                return default;
+                throw;
             }
         }
 
