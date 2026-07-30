@@ -13,6 +13,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static readonly Lock Sync = new();
         private static Dictionary<string, string>? _titlesByToken;
         private static string? _builtForLanguage;
+        private static string? _builtForDefinitions;
 
         /// <summary>
         ///     Returns the localized title for <paramref name="token" />, or null when unknown or empty.
@@ -58,15 +59,27 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static void EnsureBuilt()
         {
             var language = I18N.ResolveCurrentLanguageCode();
+            var definitionKey = BuildDefinitionKey();
             lock (Sync)
             {
                 if (_titlesByToken != null &&
-                    string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
+                    string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(_builtForDefinitions, definitionKey, StringComparison.Ordinal))
                     return;
 
                 _titlesByToken = BuildTitles();
                 _builtForLanguage = language;
+                _builtForDefinitions = definitionKey;
             }
+        }
+
+        private static string BuildDefinitionKey()
+        {
+            return string.Join(
+                "\n",
+                ModCardPileRegistry.GetDefinitionsSnapshot()
+                    .OrderBy(definition => definition.Id, StringComparer.OrdinalIgnoreCase)
+                    .Select(definition => $"{definition.Id}\t{definition.PileType}"));
         }
 
         private static Dictionary<string, string> BuildTitles()

@@ -21,7 +21,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 return null;
 
             EnsureBuilt();
-            return _titlesByEntry!.GetValueOrDefault(entryId.Trim());
+            return _titlesByEntry?.GetValueOrDefault(entryId.Trim());
         }
 
         /// <summary>
@@ -46,7 +46,15 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                     string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
                     return;
 
-                _titlesByEntry = BuildTitles();
+                var titles = BuildTitles();
+                if (titles.Count == 0)
+                {
+                    _titlesByEntry = null;
+                    _builtForLanguage = null;
+                    return;
+                }
+
+                _titlesByEntry = titles;
                 _builtForLanguage = language;
             }
         }
