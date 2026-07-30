@@ -356,7 +356,12 @@ namespace STS2RitsuLib.Settings
                 value = JsonSerializer.Deserialize<TValue>(text, options)!;
                 return true;
             }
-            catch
+            catch (JsonException)
+            {
+                value = default!;
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 value = default!;
                 return false;
@@ -390,7 +395,12 @@ namespace STS2RitsuLib.Settings
                 value = JsonSerializer.Deserialize<List<TItem>>(text, options) ?? [];
                 return true;
             }
-            catch
+            catch (JsonException)
+            {
+                value = [];
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 value = [];
                 return false;
