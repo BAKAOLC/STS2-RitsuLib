@@ -22,7 +22,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static implicit operator string(FmodEventPath path)
         {
-            return path.Value;
+            return path.Value ?? string.Empty;
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public override string ToString()
         {
-            return Value;
+            return Value ?? string.Empty;
         }
     }
 }

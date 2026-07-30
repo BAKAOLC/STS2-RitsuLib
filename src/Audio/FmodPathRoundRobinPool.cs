@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
@@ -18,13 +20,14 @@ namespace STS2RitsuLib.Audio
         {
             ArgumentNullException.ThrowIfNull(paths);
             _entries = [.. paths];
+            Entries = new ReadOnlyCollection<string>(_entries);
         }
 
         /// <summary>
         ///     Snapshot of configured paths.
         ///     已配置路径的快照。
         /// </summary>
-        public IReadOnlyList<string> Entries => _entries;
+        public IReadOnlyList<string> Entries { get; }
 
         /// <summary>
         ///     Picks a random path, avoiding the same index as the previous pick when more than one entry exists.
