@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO.Hashing;
 using System.Text;
 
 namespace STS2RitsuLib.RuntimeInput
@@ -37,9 +38,15 @@ namespace STS2RitsuLib.RuntimeInput
                     return new RegistrationHandle(normalizedActionName);
                 }
 
+                var steamActionId = BuildSteamActionId(normalizedActionName);
+                if (Registrations.Values.Any(existing =>
+                        string.Equals(existing.SteamActionId, steamActionId, StringComparison.Ordinal)))
+                    throw new InvalidOperationException(
+                        $"Steam Input action id collision for '{normalizedActionName}'.");
+
                 Registrations[normalizedActionName] = new(
                     normalizedActionName,
-                    BuildSteamActionId(normalizedActionName),
+                    steamActionId,
                     displayName,
                     description,
                     registrationId);
@@ -88,7 +95,7 @@ namespace STS2RitsuLib.RuntimeInput
 
         private static string BuildSteamActionId(string actionName)
         {
-            var builder = new StringBuilder("ritsu_");
+            var builder = new StringBuilder();
             foreach (var ch in actionName)
             {
                 if (char.IsAsciiLetterOrDigit(ch))
@@ -100,12 +107,20 @@ namespace STS2RitsuLib.RuntimeInput
                 builder.Append('_');
             }
 
-            var collapsed = string.Join('_', builder.ToString()
+            var stem = string.Join('_', builder.ToString()
                 .Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-            return collapsed.Length > 6
-                ? collapsed
-                : "ritsu_action_" + Math.Abs(actionName.GetHashCode(StringComparison.Ordinal))
-                    .ToString(CultureInfo.InvariantCulture);
+            if (string.Equals(stem, actionName, StringComparison.Ordinal))
+                return $"ritsu_{stem}";
+
+            if (stem.Length == 0)
+                stem = "action";
+            if (stem.Length > 32)
+                stem = stem[..32].TrimEnd('_');
+
+            var hash = XxHash64.HashToUInt64(Encoding.UTF8.GetBytes(actionName));
+            return string.Create(
+                CultureInfo.InvariantCulture,
+                $"ritsu_{stem}_{hash:x16}");
         }
 
         private sealed record Registration(
