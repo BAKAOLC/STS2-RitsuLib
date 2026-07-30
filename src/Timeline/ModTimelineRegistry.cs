@@ -74,6 +74,7 @@ namespace STS2RitsuLib.Timeline
         /// </summary>
         public void RegisterEpoch(Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(epochType);
             EnsureMutable($"register epoch '{epochType.Name}'");
             EnsureSubtype(epochType, typeof(EpochModel), nameof(epochType));
 
@@ -86,7 +87,7 @@ namespace STS2RitsuLib.Timeline
                     epochType,
                     GetKnownEpochTypes());
 
-                if (!RegisteredEpochTypes.Add(epochType))
+                if (RegisteredEpochTypes.Contains(epochType))
                 {
                     _logger.Debug($"[Timeline] Skipping duplicate epoch registration: {epochType.Name} (id={epochId})");
                     return;
@@ -97,12 +98,30 @@ namespace STS2RitsuLib.Timeline
                 var typeToIdDictionary =
                     GetStaticField<Dictionary<Type, string>>(typeof(EpochModel), "_typeToIdDictionary");
 
-                epochTypeDictionary[epochId] = epochType;
-                typeToIdDictionary[epochType] = epochId;
+                epochTypeDictionary.Add(epochId, epochType);
 #if STS2_AT_LEAST_0_108_0
-                AddEpochTypeToAllEpochsLocked(epochType);
+                var addedToAllEpochs = false;
 #endif
-                RefreshAllEpochIdsSnapshotLocked();
+                try
+                {
+                    typeToIdDictionary.Add(epochType, epochId);
+#if STS2_AT_LEAST_0_108_0
+                    addedToAllEpochs = AddEpochTypeToAllEpochsLocked(epochType);
+#endif
+                    RefreshAllEpochIdsSnapshotLocked();
+                    RegisteredEpochTypes.Add(epochType);
+                }
+                catch
+                {
+                    epochTypeDictionary.Remove(epochId);
+                    typeToIdDictionary.Remove(epochType);
+#if STS2_AT_LEAST_0_108_0
+                    if (addedToAllEpochs)
+                        RemoveEpochTypeFromAllEpochsLocked(epochType);
+#endif
+                    RefreshAllEpochIdsSnapshotLocked();
+                    throw;
+                }
             }
 
             _logger.Info($"[Timeline] Registered epoch: {epochType.Name} (id={epochId})");
@@ -123,6 +142,7 @@ namespace STS2RitsuLib.Timeline
         /// </summary>
         public void RegisterStory(Type storyType)
         {
+            ArgumentNullException.ThrowIfNull(storyType);
             EnsureMutable($"register story '{storyType.Name}'");
             EnsureSubtype(storyType, typeof(StoryModel), nameof(storyType));
 
@@ -135,7 +155,7 @@ namespace STS2RitsuLib.Timeline
                     storyType,
                     GetKnownStoryTypes());
 
-                if (!RegisteredStoryTypes.Add(storyType))
+                if (RegisteredStoryTypes.Contains(storyType))
                 {
                     _logger.Debug($"[Timeline] Skipping duplicate story registration: {storyType.Name} (id={storyId})");
                     return;
@@ -143,7 +163,8 @@ namespace STS2RitsuLib.Timeline
 
                 var storyDictionary =
                     GetStaticField<Dictionary<string, Type>>(typeof(StoryModel), "_storyTypeDictionary");
-                storyDictionary[storyId] = storyType;
+                storyDictionary.Add(storyId, storyType);
+                RegisteredStoryTypes.Add(storyType);
             }
 
             _logger.Info($"[Timeline] Registered story: {storyType.Name} (id={storyId})");
@@ -242,6 +263,7 @@ namespace STS2RitsuLib.Timeline
 
         private static void EnsureSubtype(Type type, Type expectedBaseType, string paramName)
         {
+            ArgumentNullException.ThrowIfNull(type, paramName);
             if (type.IsAbstract || type.IsInterface || !expectedBaseType.IsAssignableFrom(type))
                 throw new ArgumentException(
                     $"Type '{type.FullName}' must be a concrete subtype of '{expectedBaseType.FullName}'.",
@@ -266,9 +288,12 @@ namespace STS2RitsuLib.Timeline
             var story = (StoryModel)Activator.CreateInstance(storyType)!;
             var property = storyType.GetProperty("Id",
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            return (string)(property?.GetValue(story) ??
-                            throw new InvalidOperationException(
-                                $"Story type '{storyType.FullName}' does not expose an Id property."));
+            var storyId = property?.GetValue(story) as string
+                          ?? throw new InvalidOperationException(
+                              $"Story type '{storyType.FullName}' does not expose a string Id property.");
+            return string.IsNullOrWhiteSpace(storyId)
+                ? throw new InvalidOperationException($"Story type '{storyType.FullName}' returned an empty Id.")
+                : storyId.Trim();
         }
 
         private static TField GetStaticField<TField>(Type ownerType, string fieldName) where TField : class
@@ -290,11 +315,20 @@ namespace STS2RitsuLib.Timeline
         }
 
 #if STS2_AT_LEAST_0_108_0
-        private static void AddEpochTypeToAllEpochsLocked(Type epochType)
+        private static bool AddEpochTypeToAllEpochsLocked(Type epochType)
         {
             var allEpochs = GetStaticField<List<Type>>(typeof(EpochModel), "_allEpochs");
-            if (!allEpochs.Contains(epochType))
-                allEpochs.Add(epochType);
+            if (allEpochs.Contains(epochType))
+                return false;
+
+            allEpochs.Add(epochType);
+            return true;
+        }
+
+        private static void RemoveEpochTypeFromAllEpochsLocked(Type epochType)
+        {
+            var allEpochs = GetStaticField<List<Type>>(typeof(EpochModel), "_allEpochs");
+            allEpochs.Remove(epochType);
         }
 #endif
 
@@ -307,6 +341,10 @@ namespace STS2RitsuLib.Timeline
             var field = typeof(EpochModel).GetField("_allEpochIds", BindingFlags.Static | BindingFlags.NonPublic)
                         ?? throw new MissingFieldException(typeof(EpochModel).FullName, "_allEpochIds");
             field.SetValue(null, field.FieldType == typeof(List<string>) ? ids : ids.ToArray());
+
+            typeof(EpochModel)
+                .GetField("_epochIdsHashSet", BindingFlags.Static | BindingFlags.NonPublic)
+                ?.SetValue(null, null);
         }
     }
 }
