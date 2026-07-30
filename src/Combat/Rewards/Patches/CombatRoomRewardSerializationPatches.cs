@@ -71,30 +71,30 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
 
         public static void Prefix(SerializableRoom serializableRoom)
         {
-            if (serializableRoom.EncounterState == null)
-                return;
-
-            var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
-
-            foreach (var (key, json) in serializableRoom.EncounterState)
+            if (serializableRoom.EncounterState != null)
             {
-                if (!RewardSerializationExt.TryParseKey(key, out var netId, out var index))
-                    continue;
+                var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
 
-                if (!serializableRoom.ExtraRewards.TryGetValue(netId, out var rewards))
-                    continue;
+                foreach (var (key, json) in serializableRoom.EncounterState)
+                {
+                    if (!RewardSerializationExt.TryParseKey(key, out var netId, out var index))
+                        continue;
 
-                if (index < 0 || index >= rewards.Count)
-                    continue;
+                    if (!serializableRoom.ExtraRewards.TryGetValue(netId, out var rewards))
+                        continue;
 
-                var ext = RewardSerializationExt.FromJson(json);
-                if (ext == null)
-                    continue;
-                // Match the ToSerializable side: keep custom reward payloads, leave CardReward data to BaseLib.
-                if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
-                    continue;
+                    if (index < 0 || index >= rewards.Count)
+                        continue;
 
-                RewardSerializationExt.SetExtData(rewards[index], ext);
+                    var ext = RewardSerializationExt.FromJson(json);
+                    if (ext == null)
+                        continue;
+                    // Match the ToSerializable side: keep custom reward payloads, leave CardReward data to BaseLib.
+                    if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
+                        continue;
+
+                    RewardSerializationExt.SetExtData(rewards[index], ext);
+                }
             }
 
             foreach (var (_, rewards) in serializableRoom.ExtraRewards)
