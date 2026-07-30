@@ -4,179 +4,184 @@ using STS2RitsuLib.Keywords;
 namespace STS2RitsuLib.Interop.AutoRegistration
 {
     /// <summary>
-    ///     Base metadata for declarative registrations discovered by the ritsulib auto-registration pipeline.
-    ///     ritsulib 自动注册管线发现的声明式注册基础元数据。
+    ///     <para xml:lang="en">Base metadata for declarations processed by the RitsuLib auto-registration pipeline.</para>
+    ///     <para xml:lang="zh-CN">由 RitsuLib 自动注册管线处理的声明式注册基础元数据。</para>
     /// </summary>
     public abstract class AutoRegistrationAttribute : Attribute
     {
         /// <summary>
-        ///     Local ordering within the same registration phase. Lower values run first.
-        ///     同一注册阶段内的局部排序。数值越小越先运行。
+        ///     <para xml:lang="en">Local ordering within the same registration phase. Lower values run first.</para>
+        ///     <para xml:lang="zh-CN">同一注册阶段内的局部排序。数值越小越先运行。</para>
         /// </summary>
         public int Order { get; set; }
 
         /// <summary>
-        ///     When true on an attribute declared on a base type, the registration is available to concrete derived
-        ///     types. The nearest declaration wins per logical registration slot: a direct declaration can replace
-        ///     inherited configuration such as a pool, count, path, placement, or threshold, while registrations for
-        ///     distinct target ids or scopes remain additive.
-        ///     当基类型上声明的 attribute 将此项设为 true 时，该注册可应用到具体派生类型。每个逻辑注册槽位采用最近的声明：
-        ///     直接声明可以替换继承的卡池、数量、路径、位置或阈值等配置，而不同目标 ID 或作用域的注册仍会累加。
+        ///     <para xml:lang="en">
+        ///         When <see langword="true" /> on an attribute declared on a base type, the registration is available to concrete derived
+        ///         types. The nearest declaration wins per logical registration slot: a direct declaration can replace
+        ///         inherited configuration such as a pool, count, path, placement, or threshold, while registrations for
+        ///         distinct target IDs or scopes remain additive.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当基类型上声明的特性将此项设为 <see langword="true" /> 时，该注册可应用到具体派生类型。
+        ///         每个逻辑注册槽位采用距离派生类型最近的声明：
+        ///         直接声明可以替换继承的卡池、数量、路径、位置或阈值等配置，而不同目标 ID 或作用域的注册仍会累加。
+        ///     </para>
         /// </summary>
         public bool Inherit { get; set; }
     }
 
     /// <summary>
-    ///     Base metadata for content registrations dispatched through <c>ModContentRegistry</c>.
-    ///     通过 <c>ModContentRegistry</c> 分发的内容注册基础元数据。
+    ///     <para xml:lang="en">Base metadata for content registrations dispatched through <c>ModContentRegistry</c>.</para>
+    ///     <para xml:lang="zh-CN">通过 <c>ModContentRegistry</c> 分发的内容注册基础元数据。</para>
     /// </summary>
     public abstract class ContentRegistrationAttribute : AutoRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a character model.
-    ///     将带注解的类型注册为char章节er模型。
+    ///     <para xml:lang="en">Registers the annotated type as a character model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为角色模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterCharacterAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as an act model.
-    ///     将带注解的类型注册为章节模型。
+    ///     <para xml:lang="en">Registers the annotated type as an act model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为阶段模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterActAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a monster model.
-    ///     将带注解的类型注册为怪物模型。
+    ///     <para xml:lang="en">Registers the annotated type as a monster model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为怪物模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterMonsterAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a power model.
-    ///     将带注解的类型注册为能力模型。
+    ///     <para xml:lang="en">Registers the annotated type as a power model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为能力模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterPowerAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as an orb model.
-    ///     将带注解的类型注册为充能球模型。
+    ///     <para xml:lang="en">Registers the annotated type as an orb model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为充能球模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterOrbAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as an enchantment model.
-    ///     将带注解的类型注册为附魔模型。
+    ///     <para xml:lang="en">Registers the annotated type as an enchantment model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为附魔模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterEnchantmentAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as an affliction model.
-    ///     将带注解的类型注册为苦痛模型。
+    ///     <para xml:lang="en">Registers the annotated type as an affliction model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为侵蚀模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterAfflictionAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as an achievement model.
-    ///     将带注解的类型注册为成就模型。
+    ///     <para xml:lang="en">Registers the annotated type as an achievement model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为成就模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterAchievementAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a singleton model.
-    ///     将带注解的类型注册为单例模型。
+    ///     <para xml:lang="en">Registers the annotated type as a singleton model.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为单例模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterSingletonAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a model capability.
-    ///     将带注解的类型注册为模型能力。
+    ///     <para xml:lang="en">Registers the annotated type as a model capability.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为模型能力。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterModelCapabilityAttribute : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Optional stable author-chosen capability id and public-entry stem.
-        ///     可选的、由作者选择的稳定能力 ID 与 public-entry stem。
+        ///     <para xml:lang="en">Optional stable, author-chosen capability ID and public-entry stem.</para>
+        ///     <para xml:lang="zh-CN">可选的、由作者指定的稳定能力 ID 与公共条目词干。</para>
         /// </summary>
         public string? StableEntryStem { get; set; }
 
         /// <summary>
-        ///     Optional full fixed public entry and capability id override.
-        ///     可选的完整固定 public-entry 与能力 ID 覆盖。
+        ///     <para xml:lang="en">Optional complete fixed public-entry and capability-ID override.</para>
+        ///     <para xml:lang="zh-CN">可选的完整固定公共条目及能力 ID 覆盖值。</para>
         /// </summary>
         public string? FullPublicEntry { get; set; }
     }
 
     /// <summary>
-    ///     Adds the annotated capability type to the default capability set for matching model instances.
-    ///     将带注解的能力类型添加到匹配模型实例的默认能力集合。
+    ///     <para xml:lang="en">Adds the annotated capability type to the default capability set for instances of a model type.</para>
+    ///     <para xml:lang="zh-CN">将标注的能力类型添加到目标模型类型实例的默认能力集合。</para>
     /// </summary>
     /// <param name="targetModelType">
-    ///     Target model type.
-    ///     目标模型类型。
+    ///     <para xml:lang="en">Target model type.</para>
+    ///     <para xml:lang="zh-CN">目标模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterDefaultModelCapabilityAttribute(Type targetModelType) : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Target model type.
-        ///     目标模型类型。
+        ///     <para xml:lang="en">Target model type.</para>
+        ///     <para xml:lang="zh-CN">目标模型类型。</para>
         /// </summary>
         public Type TargetModelType { get; } = targetModelType;
 
         /// <summary>
-        ///     Optional stable modifier id. Defaults to a mod-scoped id derived from the capability and target type.
-        ///     可选的稳定 modifier ID。默认根据能力与目标类型派生 mod 作用域 ID。
+        ///     <para xml:lang="en">Optional stable modifier ID. By default, RitsuLib derives a mod-scoped ID from the capability and target types.</para>
+        ///     <para xml:lang="zh-CN">可选的稳定特效 ID。默认由 RitsuLib 根据能力类型和目标类型派生模组作用域 ID。</para>
         /// </summary>
         public string? ModifierId { get; set; }
     }
 
     /// <summary>
-    ///     Registers the annotated type as a good daily modifier.
-    ///     将带注解的类型注册为正面每日修饰符。
+    ///     <para xml:lang="en">Registers the annotated type as a good daily modifier.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为正面每日特效。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterGoodModifierAttribute : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Negative values insert before the current good-modifier list segment; non-negative values insert after.
-        ///     负值插入当前正面修饰符列表段之前；非负值插入之后。
+        ///     <para xml:lang="en">Negative values insert before the current good-modifier list segment; non-negative values insert after.</para>
+        ///     <para xml:lang="zh-CN">负值插入当前正面特效列表区段之前；非负值插入之后。</para>
         /// </summary>
         public int ModifierListSortOrder { get; set; }
     }
 
     /// <summary>
-    ///     Registers the annotated type as a bad daily modifier.
-    ///     将带注解的类型注册为负面每日修饰符。
+    ///     <para xml:lang="en">Registers the annotated type as a bad daily modifier.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为负面每日特效。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterBadModifierAttribute : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Negative values insert before the current bad-modifier list segment; non-negative values insert after.
-        ///     负值插入当前负面修饰符列表段之前；非负值插入之后。
+        ///     <para xml:lang="en">Negative values insert before the current bad-modifier list segment; non-negative values insert after.</para>
+        ///     <para xml:lang="zh-CN">负值插入当前负面特效列表区段之前；非负值插入之后。</para>
         /// </summary>
         public int ModifierListSortOrder { get; set; }
     }
 
     /// <summary>
-    ///     Registers a mutually exclusive modifier group for the custom run and daily-run roller.
-    ///     为自定义 run 与每日挑战 roll 注册互斥修饰符组。
+    ///     <para xml:lang="en">Registers a mutually exclusive modifier group for custom and daily run selection.</para>
+    ///     <para xml:lang="zh-CN">为自定模式和每日挑战的随机特效选择注册互斥组。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterMutuallyExclusiveModifierGroupAttribute : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Creates an exclusivity group from the annotated modifier type plus <paramref name="memberTypes" />.
-        ///     从带注解的修饰符类型与 <paramref name="memberTypes" /> 创建互斥组。
+        ///     <para xml:lang="en">Creates a group containing the annotated modifier type and <paramref name="memberTypes" />.</para>
+        ///     <para xml:lang="zh-CN">创建包含标注特效类型及 <paramref name="memberTypes" /> 的互斥组。</para>
         /// </summary>
         public RegisterMutuallyExclusiveModifierGroupAttribute(params Type[] memberTypes)
         {
@@ -184,778 +189,778 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         }
 
         /// <summary>
-        ///     Additional modifier types in the same exclusivity group.
-        ///     同一互斥组中的其它修饰符类型。
+        ///     <para xml:lang="en">Additional modifier types in the same exclusivity group.</para>
+        ///     <para xml:lang="zh-CN">同一互斥组中的其他特效类型。</para>
         /// </summary>
         public Type[] MemberTypes { get; }
     }
 
     /// <summary>
-    ///     Registers the annotated type as a shared card pool.
-    ///     将带注解的类型注册为共享卡牌池。
+    ///     <para xml:lang="en">Registers the annotated type as a shared card pool.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为共享卡牌池。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterSharedCardPoolAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a shared relic pool.
-    ///     将带注解的类型注册为共享遗物池。
+    ///     <para xml:lang="en">Registers the annotated type as a shared relic pool.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为共享遗物池。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterSharedRelicPoolAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a shared potion pool.
-    ///     将带注解的类型注册为共享药水池。
+    ///     <para xml:lang="en">Registers the annotated type as a shared potion pool.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为共享药水池。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterSharedPotionPoolAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a shared event.
-    ///     将带注解的类型注册为共享事件。
+    ///     <para xml:lang="en">Registers the annotated type as a shared event.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为共享事件。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterSharedEventAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a shared ancient event.
-    ///     将带注解的类型注册为共享 ancient 事件。
+    ///     <para xml:lang="en">Registers the annotated type as a shared Ancients event.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为共享先古之民事件。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterSharedAncientAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a global encounter.
-    ///     将带注解的类型注册为全局遭遇。
+    ///     <para xml:lang="en">Registers the annotated type as a global encounter.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为全局遭遇。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterGlobalEncounterAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Base metadata for pool-backed model registrations that can override fixed public entry generation.
-    ///     可覆盖固定公共条目生成的池支持模型注册基础元数据。
+    ///     <para xml:lang="en">Base metadata for pool-backed model registrations with configurable public-entry naming.</para>
+    ///     <para xml:lang="zh-CN">可配置公共条目命名方式的池类模型注册基础元数据。</para>
     /// </summary>
     /// <param name="poolType">
-    ///     Target pool model type.
-    ///     目标牌池模型类型。
+    ///     <para xml:lang="en">Target pool model type.</para>
+    ///     <para xml:lang="zh-CN">目标池模型类型。</para>
     /// </param>
     public abstract class ModelPublicEntryRegistrationAttributeBase(Type poolType) : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Target pool model type.
-        ///     目标牌池模型类型。
+        ///     <para xml:lang="en">Target pool model type.</para>
+        ///     <para xml:lang="zh-CN">目标池模型类型。</para>
         /// </summary>
         public Type PoolType { get; } = poolType;
 
         /// <summary>
-        ///     Optional stable author-chosen type-name stem.
-        ///     可选的、由作者选择的稳定类型名 stem。
+        ///     <para xml:lang="en">Optional stable, author-chosen type-name stem.</para>
+        ///     <para xml:lang="zh-CN">可选的、由作者指定的稳定类型名词干。</para>
         /// </summary>
         public string? StableEntryStem { get; set; }
 
         /// <summary>
-        ///     Optional full fixed public entry override.
-        ///     可选的完整固定公共条目覆盖。
+        ///     <para xml:lang="en">Optional full fixed public entry override.</para>
+        ///     <para xml:lang="zh-CN">可选的完整固定公共条目覆盖。</para>
         /// </summary>
         public string? FullPublicEntry { get; set; }
     }
 
     /// <summary>
-    ///     Registers the annotated type as a card in the given pool.
-    ///     将带注解的类型注册为给定牌池中的卡牌。
+    ///     <para xml:lang="en">Registers the annotated type as a card in the given pool.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为指定卡牌池中的卡牌。</para>
     /// </summary>
     /// <param name="poolType">
-    ///     Target card pool type.
-    ///     目标卡牌池类型。
+    ///     <para xml:lang="en">Target card pool type.</para>
+    ///     <para xml:lang="zh-CN">目标卡牌池类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterCardAttribute(Type poolType) : ModelPublicEntryRegistrationAttributeBase(poolType);
 
     /// <summary>
-    ///     Registers the annotated type as a relic in the given pool.
-    ///     将带注解的类型注册为给定牌池中的遗物。
+    ///     <para xml:lang="en">Registers the annotated type as a relic in the given pool.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为指定遗物池中的遗物。</para>
     /// </summary>
     /// <param name="poolType">
-    ///     Target relic pool type.
-    ///     目标遗物池类型。
+    ///     <para xml:lang="en">Target relic pool type.</para>
+    ///     <para xml:lang="zh-CN">目标遗物池类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterRelicAttribute(Type poolType) : ModelPublicEntryRegistrationAttributeBase(poolType);
 
     /// <summary>
-    ///     Registers the annotated card type as a candidate for the Trash Heap event's Grab option.
-    ///     将带注解的卡牌类型注册为垃圾堆事件“拿取”选项的候选。
+    ///     <para xml:lang="en">Registers the annotated card type as a candidate for the Trash Heap event's Grab option.</para>
+    ///     <para xml:lang="zh-CN">将标注卡牌类型注册为“垃圾堆”事件“随便拿点垃圾”选项的候选。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterTrashHeapCardAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated relic type as a candidate for the Trash Heap event's Dive In option.
-    ///     将带注解的遗物类型注册为垃圾堆事件“深入翻找”选项的候选。
+    ///     <para xml:lang="en">Registers the annotated relic type as a candidate for the Trash Heap event's Dive In option.</para>
+    ///     <para xml:lang="zh-CN">将标注遗物类型注册为“垃圾堆”事件“扎进垃圾堆”选项的候选。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterTrashHeapRelicAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a potion in the given pool.
-    ///     将带注解的类型注册为给定牌池中的药水。
+    ///     <para xml:lang="en">Registers the annotated type as a potion in the given pool.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为指定药水池中的药水。</para>
     /// </summary>
     /// <param name="poolType">
-    ///     Target potion pool type.
-    ///     目标药水池类型。
+    ///     <para xml:lang="en">Target potion pool type.</para>
+    ///     <para xml:lang="zh-CN">目标药水池类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterPotionAttribute(Type poolType) : ModelPublicEntryRegistrationAttributeBase(poolType);
 
     /// <summary>
-    ///     Base metadata for character starter-content registrations.
-    ///     角色初始内容注册的基础元数据。
+    ///     <para xml:lang="en">Base metadata for character starter-content registrations.</para>
+    ///     <para xml:lang="zh-CN">角色初始内容注册的基础元数据。</para>
     /// </summary>
     /// <param name="characterType">
-    ///     Target character model type.
-    ///     目标角色模型类型。
+    ///     <para xml:lang="en">Target character model type.</para>
+    ///     <para xml:lang="zh-CN">目标角色模型类型。</para>
     /// </param>
     /// <param name="count">
-    ///     How many copies to register.
-    ///     要注册的份数。
+    ///     <para xml:lang="en">How many copies to register.</para>
+    ///     <para xml:lang="zh-CN">要注册的份数。</para>
     /// </param>
     public abstract class CharacterStarterRegistrationAttributeBase(Type characterType, int count = 1)
         : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Target character model type.
-        ///     目标角色模型类型。
+        ///     <para xml:lang="en">Target character model type.</para>
+        ///     <para xml:lang="zh-CN">目标角色模型类型。</para>
         /// </summary>
         public Type CharacterType { get; } = characterType;
 
         /// <summary>
-        ///     How many copies to register.
-        ///     要注册的份数。
+        ///     <para xml:lang="en">How many copies to register.</para>
+        ///     <para xml:lang="zh-CN">要注册的份数。</para>
         /// </summary>
         public int Count { get; } = count;
     }
 
     /// <summary>
-    ///     Registers the annotated card type as starter content for a character.
-    ///     将带注解的卡牌类型注册为某个角色的初始内容。
+    ///     <para xml:lang="en">Registers the annotated card type as starter content for a character.</para>
+    ///     <para xml:lang="zh-CN">将标注卡牌类型注册为指定角色的初始内容。</para>
     /// </summary>
     /// <param name="characterType">
-    ///     Target character model type.
-    ///     目标角色模型类型。
+    ///     <para xml:lang="en">Target character model type.</para>
+    ///     <para xml:lang="zh-CN">目标角色模型类型。</para>
     /// </param>
     /// <param name="count">
-    ///     How many copies to register.
-    ///     要注册的份数。
+    ///     <para xml:lang="en">How many copies to register.</para>
+    ///     <para xml:lang="zh-CN">要注册的份数。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterCharacterStarterCardAttribute(Type characterType, int count = 1)
         : CharacterStarterRegistrationAttributeBase(characterType, count);
 
     /// <summary>
-    ///     Registers the annotated relic type as starter content for a character.
-    ///     将带注解的遗物类型注册为某个角色的初始内容。
+    ///     <para xml:lang="en">Registers the annotated relic type as starter content for a character.</para>
+    ///     <para xml:lang="zh-CN">将标注遗物类型注册为指定角色的初始内容。</para>
     /// </summary>
     /// <param name="characterType">
-    ///     Target character model type.
-    ///     目标角色模型类型。
+    ///     <para xml:lang="en">Target character model type.</para>
+    ///     <para xml:lang="zh-CN">目标角色模型类型。</para>
     /// </param>
     /// <param name="count">
-    ///     How many copies to register.
-    ///     要注册的份数。
+    ///     <para xml:lang="en">How many copies to register.</para>
+    ///     <para xml:lang="zh-CN">要注册的份数。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterCharacterStarterRelicAttribute(Type characterType, int count = 1)
         : CharacterStarterRegistrationAttributeBase(characterType, count);
 
     /// <summary>
-    ///     Registers the annotated potion type as starter content for a character.
-    ///     将带注解的药水类型注册为某个角色的初始内容。
+    ///     <para xml:lang="en">Registers the annotated potion type as starter content for a character.</para>
+    ///     <para xml:lang="zh-CN">将标注药水类型注册为指定角色的初始内容。</para>
     /// </summary>
     /// <param name="characterType">
-    ///     Target character model type.
-    ///     目标角色模型类型。
+    ///     <para xml:lang="en">Target character model type.</para>
+    ///     <para xml:lang="zh-CN">目标角色模型类型。</para>
     /// </param>
     /// <param name="count">
-    ///     How many copies to register.
-    ///     要注册的份数。
+    ///     <para xml:lang="en">How many copies to register.</para>
+    ///     <para xml:lang="zh-CN">要注册的份数。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterCharacterStarterPotionAttribute(Type characterType, int count = 1)
         : CharacterStarterRegistrationAttributeBase(characterType, count);
 
     /// <summary>
-    ///     Base metadata for act-scoped registrations.
-    ///     act 范围注册的基础元数据。
+    ///     <para xml:lang="en">Base metadata for act-scoped registrations.</para>
+    ///     <para xml:lang="zh-CN">按阶段限定内容注册范围的基础元数据。</para>
     /// </summary>
     /// <param name="actType">
-    ///     Target act model type.
-    ///     目标章节模型类型。
+    ///     <para xml:lang="en">Target act model type.</para>
+    ///     <para xml:lang="zh-CN">目标阶段模型类型。</para>
     /// </param>
     public abstract class ActScopedRegistrationAttributeBase(Type actType) : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     Target act model type.
-        ///     目标章节模型类型。
+        ///     <para xml:lang="en">Target act model type.</para>
+        ///     <para xml:lang="zh-CN">目标阶段模型类型。</para>
         /// </summary>
         public Type ActType { get; } = actType;
     }
 
     /// <summary>
-    ///     Registers the annotated encounter type for the given act.
-    ///     将带注解的遭遇类型注册到给定章节。
+    ///     <para xml:lang="en">Registers the annotated encounter type for the given act.</para>
+    ///     <para xml:lang="zh-CN">将标注遭遇类型注册到指定阶段。</para>
     /// </summary>
     /// <param name="actType">
-    ///     Target act model type.
-    ///     目标章节模型类型。
+    ///     <para xml:lang="en">Target act model type.</para>
+    ///     <para xml:lang="zh-CN">目标阶段模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterActEncounterAttribute(Type actType) : ActScopedRegistrationAttributeBase(actType);
 
     /// <summary>
-    ///     Registers the annotated event type for the given act.
-    ///     将带注解的事件类型注册到给定章节。
+    ///     <para xml:lang="en">Registers the annotated event type for the given act.</para>
+    ///     <para xml:lang="zh-CN">将标注事件类型注册到指定阶段。</para>
     /// </summary>
     /// <param name="actType">
-    ///     Target act model type.
-    ///     目标章节模型类型。
+    ///     <para xml:lang="en">Target act model type.</para>
+    ///     <para xml:lang="zh-CN">目标阶段模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterActEventAttribute(Type actType) : ActScopedRegistrationAttributeBase(actType);
 
     /// <summary>
-    ///     Registers the annotated ancient type for the given act.
-    ///     将带注解的古代类型注册到给定章节。
+    ///     <para xml:lang="en">Registers the annotated ancient-event type for the given act.</para>
+    ///     <para xml:lang="zh-CN">将标注先古之民事件类型注册到指定阶段。</para>
     /// </summary>
     /// <param name="actType">
-    ///     Target act model type.
-    ///     目标章节模型类型。
+    ///     <para xml:lang="en">Target act model type.</para>
+    ///     <para xml:lang="zh-CN">目标阶段模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterActAncientAttribute(Type actType) : ActScopedRegistrationAttributeBase(actType);
 
     /// <summary>
-    ///     Base metadata for owned keyword registrations.
-    ///     owned keyword 注册的基础元数据。
+    ///     <para xml:lang="en">Base metadata for mod-owned keyword registrations.</para>
+    ///     <para xml:lang="zh-CN">归属于模组的关键词注册基础元数据。</para>
     /// </summary>
     /// <param name="localKeywordStem">
-    ///     Local mod-scoped keyword stem.
-    ///     mod 作用域内的本地 keyword stem。
+    ///     <para xml:lang="en">Local keyword stem within the owning mod's namespace.</para>
+    ///     <para xml:lang="zh-CN">归属模组命名空间内的本地关键词词干。</para>
     /// </param>
     public abstract class KeywordRegistrationAttributeBase(string localKeywordStem) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Local mod-scoped keyword stem.
-        ///     mod 作用域内的本地 keyword stem。
+        ///     <para xml:lang="en">Local keyword stem within the owning mod's namespace.</para>
+        ///     <para xml:lang="zh-CN">归属模组命名空间内的本地关键词词干。</para>
         /// </summary>
         public string LocalKeywordStem { get; } = localKeywordStem;
 
         /// <summary>
-        ///     Localization table containing the title key.
-        ///     包含标题键的本地化表。
+        ///     <para xml:lang="en">Localization table containing the title key.</para>
+        ///     <para xml:lang="zh-CN">包含标题键的本地化表。</para>
         /// </summary>
         public string TitleTable { get; set; } = "card_keywords";
 
         /// <summary>
-        ///     Optional explicit localization key for the title.
-        ///     标题使用的可选显式本地化键。
+        ///     <para xml:lang="en">Optional explicit localization key for the title.</para>
+        ///     <para xml:lang="zh-CN">标题使用的可选显式本地化键。</para>
         /// </summary>
         public string? TitleKey { get; set; }
 
         /// <summary>
-        ///     Optional localization table containing the description key.
-        ///     包含描述键的可选本地化表。
+        ///     <para xml:lang="en">Optional localization table containing the description key.</para>
+        ///     <para xml:lang="zh-CN">包含描述键的可选本地化表。</para>
         /// </summary>
         public string? DescriptionTable { get; set; }
 
         /// <summary>
-        ///     Optional explicit localization key for the description.
-        ///     描述使用的可选显式本地化键。
+        ///     <para xml:lang="en">Optional explicit localization key for the description.</para>
+        ///     <para xml:lang="zh-CN">描述使用的可选显式本地化键。</para>
         /// </summary>
         public string? DescriptionKey { get; set; }
 
         /// <summary>
-        ///     Optional icon path used by hover-tip rendering.
-        ///     悬停提示渲染使用的可选图标路径。
+        ///     <para xml:lang="en">Optional icon path used by hover-tip rendering.</para>
+        ///     <para xml:lang="zh-CN">悬停提示渲染使用的可选图标路径。</para>
         /// </summary>
         public string? IconPath { get; set; }
     }
 
     /// <summary>
-    ///     Registers an owned keyword definition.
-    ///     注册一个 owned keyword 定义。
+    ///     <para xml:lang="en">Registers a mod-owned keyword definition.</para>
+    ///     <para xml:lang="zh-CN">注册归属于模组的关键词定义。</para>
     /// </summary>
     /// <param name="localKeywordStem">
-    ///     Local mod-scoped keyword stem.
-    ///     mod 作用域内的本地 keyword stem。
+    ///     <para xml:lang="en">Local keyword stem within the owning mod's namespace.</para>
+    ///     <para xml:lang="zh-CN">归属模组命名空间内的本地关键词词干。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterOwnedKeywordAttribute(string localKeywordStem)
         : KeywordRegistrationAttributeBase(localKeywordStem)
     {
         /// <summary>
-        ///     Optional placement for inline card-description injection.
-        ///     内联卡牌描述注入使用的可选位置。
+        ///     <para xml:lang="en">Optional placement for inline card-description injection.</para>
+        ///     <para xml:lang="zh-CN">内联卡牌描述注入使用的可选位置。</para>
         /// </summary>
         public ModKeywordCardDescriptionPlacement CardDescriptionPlacement { get; set; } =
             ModKeywordCardDescriptionPlacement.None;
 
         /// <summary>
-        ///     Whether the keyword should appear in card hover tips.
-        ///     此 keyword 是否应显示在卡牌悬停提示中。
+        ///     <para xml:lang="en">Whether the keyword appears in card hover tips. Defaults to <see langword="true" />.</para>
+        ///     <para xml:lang="zh-CN">此关键词是否显示在卡牌悬停提示中。默认为 <see langword="true" />。</para>
         /// </summary>
         public bool IncludeInCardHoverTip { get; set; } = true;
     }
 
     /// <summary>
-    ///     Registers an owned card keyword definition using the card-keyword localization convention.
-    ///     使用 card-keyword 本地化约定注册一个归属当前 mod 的卡牌关键词定义。
+    ///     <para xml:lang="en">Registers a mod-owned keyword using the game's card-keyword localization convention.</para>
+    ///     <para xml:lang="zh-CN">按照游戏的卡牌关键词本地化约定，注册归属于模组的关键词。</para>
     /// </summary>
     /// <param name="localKeywordStem">
-    ///     Local mod-scoped keyword stem.
-    ///     mod 作用域内的本地 keyword stem。
+    ///     <para xml:lang="en">Local keyword stem within the owning mod's namespace.</para>
+    ///     <para xml:lang="zh-CN">归属模组命名空间内的本地关键词词干。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterOwnedCardKeywordAttribute(string localKeywordStem)
         : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Local mod-scoped keyword stem.
-        ///     mod 作用域内的本地 keyword stem。
+        ///     <para xml:lang="en">Local keyword stem within the owning mod's namespace.</para>
+        ///     <para xml:lang="zh-CN">归属模组命名空间内的本地关键词词干。</para>
         /// </summary>
         public string LocalKeywordStem { get; } = localKeywordStem;
 
         /// <summary>
-        ///     Optional icon path used by hover-tip rendering.
-        ///     悬停提示渲染使用的可选图标路径。
+        ///     <para xml:lang="en">Optional icon path used by hover-tip rendering.</para>
+        ///     <para xml:lang="zh-CN">悬停提示渲染使用的可选图标路径。</para>
         /// </summary>
         public string? IconPath { get; set; }
 
         /// <summary>
-        ///     Optional placement for inline card-description injection.
-        ///     内联卡牌描述注入使用的可选位置。
+        ///     <para xml:lang="en">Optional placement for inline card-description injection.</para>
+        ///     <para xml:lang="zh-CN">内联卡牌描述注入使用的可选位置。</para>
         /// </summary>
         public ModKeywordCardDescriptionPlacement CardDescriptionPlacement { get; set; } =
             ModKeywordCardDescriptionPlacement.None;
 
         /// <summary>
-        ///     Whether the keyword should appear in card hover tips.
-        ///     此 keyword 是否应显示在卡牌悬停提示中。
+        ///     <para xml:lang="en">Whether the keyword appears in card hover tips. Defaults to <see langword="true" />.</para>
+        ///     <para xml:lang="zh-CN">此关键词是否显示在卡牌悬停提示中。默认为 <see langword="true" />。</para>
         /// </summary>
         public bool IncludeInCardHoverTip { get; set; } = true;
     }
 
     /// <summary>
-    ///     Registers an owned custom <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id for this mod assembly.
-    ///     为此 mod 程序集注册一个归属当前 mod 的自定义 <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> id。
+    ///     <para xml:lang="en">Registers a mod-owned custom <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> ID.</para>
+    ///     <para xml:lang="zh-CN">注册归属于模组的自定义 <see cref="MegaCrit.Sts2.Core.Entities.Cards.CardTag" /> ID。</para>
     /// </summary>
     /// <param name="localCardTagStem">
-    ///     Local stem; combined with the mod id via <c>GetQualifiedCardTagId</c>.
-    ///     本地 stem；会通过 <c>GetQualifiedCardTagId</c> 与 mod id 组合。
+    ///     <para xml:lang="en">Local stem combined with the mod ID through <c>GetQualifiedCardTagId</c>.</para>
+    ///     <para xml:lang="zh-CN">通过 <c>GetQualifiedCardTagId</c> 与模组 ID 组合的本地词干。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterOwnedCardTagAttribute(string localCardTagStem) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Local mod-scoped card-tag stem.
-        ///     mod 作用域内的本地 card-tag 词干。
+        ///     <para xml:lang="en">Local card-tag stem within the owning mod's namespace.</para>
+        ///     <para xml:lang="zh-CN">归属模组命名空间内的本地卡牌标签词干。</para>
         /// </summary>
         public string LocalCardTagStem { get; } = localCardTagStem;
     }
 
     /// <summary>
-    ///     Registers the annotated type as a timeline epoch.
-    ///     将带注解的类型注册为时间线纪元。
+    ///     <para xml:lang="en">Registers the annotated type as a timeline epoch.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为时间线历史节点。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterEpochAttribute : AutoRegistrationAttribute;
 
     /// <summary>
-    ///     Registers the annotated type as a timeline story.
-    ///     将带注解的类型注册为时间线 story。
+    ///     <para xml:lang="en">Registers the annotated type as a timeline story.</para>
+    ///     <para xml:lang="zh-CN">将标注类型注册为时间线故事。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterStoryAttribute : AutoRegistrationAttribute;
 
     /// <summary>
-    ///     Binds the annotated epoch type into the given story column.
-    ///     将带注解的纪元类型绑定到给定 story column。
+    ///     <para xml:lang="en">Adds the annotated epoch type to the given story.</para>
+    ///     <para xml:lang="zh-CN">将标注历史节点类型加入指定故事。</para>
     /// </summary>
     /// <param name="storyType">
-    ///     Target story model type.
-    ///     目标 story 模型类型。
+    ///     <para xml:lang="en">Target story model type.</para>
+    ///     <para xml:lang="zh-CN">目标故事模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterStoryEpochAttribute(Type storyType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Target story model type.
-        ///     目标 story 模型类型。
+        ///     <para xml:lang="en">Target story model type.</para>
+        ///     <para xml:lang="zh-CN">目标故事模型类型。</para>
         /// </summary>
         public Type StoryType { get; } = storyType;
     }
 
     /// <summary>
-    ///     Places the annotated mod epoch into the first free slot in the given era column.
-    ///     将带注解的 mod 纪元放入给定 era column 中第一个空 slot。
+    ///     <para xml:lang="en">Places the annotated mod epoch in the first free position of the given era's timeline column.</para>
+    ///     <para xml:lang="zh-CN">将标注的模组历史节点放入指定历史时期时间线列中的第一个空位。</para>
     /// </summary>
     /// <param name="era">
-    ///     Target era column.
-    ///     目标 era column。
+    ///     <para xml:lang="en">Target era.</para>
+    ///     <para xml:lang="zh-CN">目标历史时期。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class AutoTimelineSlotAttribute(EpochEra era) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Target era column.
-        ///     目标 era column。
+        ///     <para xml:lang="en">Target era.</para>
+        ///     <para xml:lang="zh-CN">目标历史时期。</para>
         /// </summary>
         public EpochEra Era { get; } = era;
     }
 
     /// <summary>
-    ///     Places the annotated mod epoch into the nearest free column strictly before the given anchor era.
-    ///     将带注解的 mod 纪元放入严格位于给定锚点 era 之前的最近空列。
+    ///     <para xml:lang="en">Places the annotated mod epoch in the nearest free column before the anchor era.</para>
+    ///     <para xml:lang="zh-CN">将标注的模组历史节点放入锚点历史时期之前最近的空闲时间线列。</para>
     /// </summary>
     /// <param name="anchorEra">
-    ///     Anchor era whose left side should receive the epoch.
-    ///     其左侧应接收该纪元的锚点 era。
+    ///     <para xml:lang="en">Era used as the placement anchor.</para>
+    ///     <para xml:lang="zh-CN">用作位置锚点的历史时期。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class AutoTimelineSlotBeforeColumnAttribute(EpochEra anchorEra) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Anchor era whose left side should receive the epoch.
-        ///     其左侧应接收该纪元的锚点 era。
+        ///     <para xml:lang="en">Era used as the placement anchor.</para>
+        ///     <para xml:lang="zh-CN">用作位置锚点的历史时期。</para>
         /// </summary>
         public EpochEra AnchorEra { get; } = anchorEra;
     }
 
     /// <summary>
-    ///     Places the annotated mod epoch into the nearest free column strictly before the column of the reference epoch.
-    ///     将带注解的 mod 纪元放入严格位于参考纪元所在列之前的最近空列。
+    ///     <para xml:lang="en">Places the annotated mod epoch in the nearest free column before the reference epoch's column.</para>
+    ///     <para xml:lang="zh-CN">将标注的模组历史节点放入参考历史节点所在列之前最近的空闲时间线列。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class AutoTimelineSlotBeforeEpochColumnAttribute(Type referenceEpochType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Reference epoch whose column anchors the placement.
-        ///     其列用于锚定位置的参考纪元。
+        ///     <para xml:lang="en">Reference epoch whose column anchors the placement.</para>
+        ///     <para xml:lang="zh-CN">以其所在列作为位置锚点的参考历史节点。</para>
         /// </summary>
         public Type ReferenceEpochType { get; } = referenceEpochType;
     }
 
     /// <summary>
-    ///     Places the annotated mod epoch into the nearest free column strictly after the given anchor era.
-    ///     将带注解的 mod 纪元放入严格位于给定锚点 era 之后的最近空列。
+    ///     <para xml:lang="en">Places the annotated mod epoch in the nearest free column after the anchor era.</para>
+    ///     <para xml:lang="zh-CN">将标注的模组历史节点放入锚点历史时期之后最近的空闲时间线列。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class AutoTimelineSlotAfterColumnAttribute(EpochEra anchorEra) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Anchor era whose right side should receive the epoch.
-        ///     其右侧应接收该纪元的锚点 era。
+        ///     <para xml:lang="en">Era used as the placement anchor.</para>
+        ///     <para xml:lang="zh-CN">用作位置锚点的历史时期。</para>
         /// </summary>
         public EpochEra AnchorEra { get; } = anchorEra;
     }
 
     /// <summary>
-    ///     Places the annotated mod epoch into the nearest free column strictly after the column of the reference epoch.
-    ///     将带注解的 mod 纪元放入严格位于参考纪元所在列之后的最近空列。
+    ///     <para xml:lang="en">Places the annotated mod epoch in the nearest free column after the reference epoch's column.</para>
+    ///     <para xml:lang="zh-CN">将标注的模组历史节点放入参考历史节点所在列之后最近的空闲时间线列。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class AutoTimelineSlotAfterEpochColumnAttribute(Type referenceEpochType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Reference epoch whose column anchors the placement.
-        ///     其列用于锚定位置的参考纪元。
+        ///     <para xml:lang="en">Reference epoch whose column anchors the placement.</para>
+        ///     <para xml:lang="zh-CN">以其所在列作为位置锚点的参考历史节点。</para>
         /// </summary>
         public Type ReferenceEpochType { get; } = referenceEpochType;
     }
 
     /// <summary>
-    ///     Places the annotated mod epoch into the same era column as the given anchor era.
-    ///     将带注解的 mod 纪元放入与给定锚点 era 相同的 era column。
+    ///     <para xml:lang="en">Places the annotated mod epoch in the anchor era's timeline column.</para>
+    ///     <para xml:lang="zh-CN">将标注的模组历史节点放入锚点历史时期所在的时间线列。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class AutoTimelineSlotInColumnAttribute(EpochEra anchorEra) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Anchor era whose column should be shared.
-        ///     应共享其列的锚点 era。
+        ///     <para xml:lang="en">Era whose timeline column is used.</para>
+        ///     <para xml:lang="zh-CN">使用其时间线列的历史时期。</para>
         /// </summary>
         public EpochEra AnchorEra { get; } = anchorEra;
     }
 
     /// <summary>
-    ///     Places the annotated mod epoch into the same era column as the reference epoch.
-    ///     将带注解的 mod 纪元放入与参考纪元相同的 era column。
+    ///     <para xml:lang="en">Places the annotated mod epoch in the reference epoch's timeline column.</para>
+    ///     <para xml:lang="zh-CN">将标注的模组历史节点放入参考历史节点所在的同一列。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class AutoTimelineSlotInEpochColumnAttribute(Type referenceEpochType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Reference epoch whose column should be shared.
-        ///     应共享其列的参考纪元。
+        ///     <para xml:lang="en">Reference epoch whose column should be shared.</para>
+        ///     <para xml:lang="zh-CN">应与其共享列的参考历史节点。</para>
         /// </summary>
         public Type ReferenceEpochType { get; } = referenceEpochType;
     }
 
     /// <summary>
-    ///     Registers an ArchaicTooth transcendence mapping from the annotated starter card type to the given ancient card.
-    ///     注册从带注解的初始卡牌类型到给定古代卡牌的 ArchaicTooth 超越映射。
+    ///     <para xml:lang="en">Registers an Archaic Tooth transcendence mapping from the annotated starter card to an ancient card.</para>
+    ///     <para xml:lang="zh-CN">注册由“古老牙齿”将标注初始卡牌转化为指定先古卡牌的超越映射。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterArchaicToothTranscendenceAttribute(Type ancientCardType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Ancient card type produced by transcendence.
-        ///     超越产生的古代卡牌类型。
+        ///     <para xml:lang="en">Ancient card type produced by transcendence.</para>
+        ///     <para xml:lang="zh-CN">超越产生的先古卡牌类型。</para>
         /// </summary>
         public Type AncientCardType { get; } = ancientCardType;
     }
 
     /// <summary>
-    ///     Registers the annotated ancient card type as a preferred Dusty Tome candidate for the given character.
-    ///     将带注解的 ancient 卡牌类型注册为给定角色的 Dusty Tome 优先候选。
+    ///     <para xml:lang="en">Registers the annotated ancient card as a preferred Dusty Tome candidate for a character.</para>
+    ///     <para xml:lang="zh-CN">将标注先古卡牌注册为指定角色的“尘封魔典”优先候选。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterDustyTomeCardAttribute(Type characterType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Character type whose Dusty Tome pool should include the annotated card.
-        ///     应将带注解卡牌加入 Dusty Tome 候选池的角色类型。
+        ///     <para xml:lang="en">Character type whose Dusty Tome candidates include the annotated card.</para>
+        ///     <para xml:lang="zh-CN">其“尘封魔典”候选池应包含标注卡牌的角色类型。</para>
         /// </summary>
         public Type CharacterType { get; } = characterType;
     }
 
     /// <summary>
-    ///     Registers a TouchOfOrobas refinement mapping from the annotated starter relic type to the given upgraded relic.
-    ///     注册从带注解的初始遗物类型到给定升级遗物的 TouchOfOrobas 精炼映射。
+    ///     <para xml:lang="en">Registers a Touch of Orobas refinement mapping from the annotated starter relic to an upgraded relic.</para>
+    ///     <para xml:lang="zh-CN">注册由“欧洛巴斯之触”将标注初始遗物变为指定升级遗物的精炼映射。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterTouchOfOrobasRefinementAttribute(Type upgradedRelicType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Upgraded relic type produced by refinement.
-        ///     精炼产生的升级遗物类型。
+        ///     <para xml:lang="en">Upgraded relic type produced by refinement.</para>
+        ///     <para xml:lang="zh-CN">精炼产生的升级遗物类型。</para>
         /// </summary>
         public Type UpgradedRelicType { get; } = upgradedRelicType;
     }
 
     /// <summary>
-    ///     Registers explicit card unlock content for the annotated epoch and gates those cards behind it.
-    ///     为带注解的纪元注册显式卡牌解锁内容，并将这些卡牌 gated 在其之后。
+    ///     <para xml:lang="en">Registers explicit card unlock content for the annotated epoch and requires that epoch for those cards.</para>
+    ///     <para xml:lang="zh-CN">为标注历史节点注册显式卡牌解锁内容，并要求先揭示该历史节点才能解锁这些卡牌。</para>
     /// </summary>
     /// <param name="cardTypes">
-    ///     Card model types revealed by the epoch.
-    ///     该纪元揭示的卡牌模型类型。
+    ///     <para xml:lang="en">Card model types revealed by the epoch.</para>
+    ///     <para xml:lang="zh-CN">该历史节点揭示的卡牌模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterEpochCardsAttribute(params Type[] cardTypes) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Card model types revealed by the epoch.
-        ///     该纪元揭示的卡牌模型类型。
+        ///     <para xml:lang="en">Card model types revealed by the epoch.</para>
+        ///     <para xml:lang="zh-CN">该历史节点揭示的卡牌模型类型。</para>
         /// </summary>
         public IReadOnlyList<Type> CardTypes { get; } = cardTypes;
     }
 
     /// <summary>
-    ///     Gates every registered card in the given pool behind the annotated epoch.
-    ///     将给定牌池中每张已注册卡牌 gated 在带注解的纪元之后。
+    ///     <para xml:lang="en">Requires the annotated epoch for every registered card in the given pool.</para>
+    ///     <para xml:lang="zh-CN">要求先揭示标注历史节点，才能解锁指定卡牌池中的每张已注册卡牌。</para>
     /// </summary>
     /// <param name="poolType">
-    ///     Card pool model type.
-    ///     卡牌池模型类型。
+    ///     <para xml:lang="en">Card pool model type.</para>
+    ///     <para xml:lang="zh-CN">卡牌池模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RequireAllCardsInPoolAttribute(Type poolType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Card pool model type.
-        ///     卡牌池模型类型。
+        ///     <para xml:lang="en">Card pool model type.</para>
+        ///     <para xml:lang="zh-CN">卡牌池模型类型。</para>
         /// </summary>
         public Type PoolType { get; } = poolType;
     }
 
     /// <summary>
-    ///     Registers every relic in the given pool as unlock content for the annotated epoch and gates them behind it.
-    ///     将给定牌池中的每个遗物注册为带注解纪元的解锁内容，并将它们 gated 在其之后。
+    ///     <para xml:lang="en">Registers every relic in the given pool as unlock content for, and gated by, the annotated epoch.</para>
+    ///     <para xml:lang="zh-CN">将指定遗物池中的每件遗物注册为标注历史节点的解锁内容，并要求先揭示该节点。</para>
     /// </summary>
     /// <param name="poolType">
-    ///     Relic pool model type.
-    ///     遗物池模型类型。
+    ///     <para xml:lang="en">Relic pool model type.</para>
+    ///     <para xml:lang="zh-CN">遗物池模型类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterEpochRelicsFromPoolAttribute(Type poolType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Relic pool model type.
-        ///     遗物池模型类型。
+        ///     <para xml:lang="en">Relic pool model type.</para>
+        ///     <para xml:lang="zh-CN">遗物池模型类型。</para>
         /// </summary>
         public Type PoolType { get; } = poolType;
     }
 
     /// <summary>
-    ///     Gates the annotated content type behind the given epoch.
-    ///     将带注解的内容类型 gated 在给定纪元之后。
+    ///     <para xml:lang="en">Requires the given epoch before the annotated content type is unlocked.</para>
+    ///     <para xml:lang="zh-CN">要求先揭示指定历史节点，才能解锁标注内容类型。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Required epoch type.
-    ///     所需纪元类型。
+    ///     <para xml:lang="en">Required epoch type.</para>
+    ///     <para xml:lang="zh-CN">所需历史节点类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RequireEpochAttribute(Type epochType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Required epoch type.
-        ///     所需纪元类型。
+        ///     <para xml:lang="en">Required epoch type.</para>
+        ///     <para xml:lang="zh-CN">所需历史节点类型。</para>
         /// </summary>
         public Type EpochType { get; } = epochType;
     }
 
     /// <summary>
-    ///     Base metadata for character-to-epoch unlock registrations.
-    ///     角色到纪元解锁注册的基础元数据。
+    ///     <para xml:lang="en">Base metadata for character-to-epoch unlock registrations.</para>
+    ///     <para xml:lang="zh-CN">角色与历史节点解锁条件注册的基础元数据。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     public abstract class CharacterEpochRegistrationAttributeBase(Type epochType) : AutoRegistrationAttribute
     {
         /// <summary>
-        ///     Target epoch type.
-        ///     目标纪元类型。
+        ///     <para xml:lang="en">Target epoch type.</para>
+        ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
         /// </summary>
         public Type EpochType { get; } = epochType;
     }
 
     /// <summary>
-    ///     Unlocks an epoch after completing any run as the annotated character.
-    ///     使用带注解的角色完成任意跑局后解锁纪元。
+    ///     <para xml:lang="en">Unlocks an epoch after completing any run as the annotated character.</para>
+    ///     <para xml:lang="zh-CN">使用标注角色完成任意一局游戏后揭示历史节点。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class UnlockEpochAfterRunAsAttribute(Type epochType)
         : CharacterEpochRegistrationAttributeBase(epochType);
 
     /// <summary>
-    ///     Unlocks an epoch after winning a run as the annotated character.
-    ///     使用带注解的角色赢得一次跑局后解锁纪元。
+    ///     <para xml:lang="en">Unlocks an epoch after winning a run as the annotated character.</para>
+    ///     <para xml:lang="zh-CN">使用标注角色通关一次后揭示历史节点。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class UnlockEpochAfterWinAsAttribute(Type epochType)
         : CharacterEpochRegistrationAttributeBase(epochType);
 
     /// <summary>
-    ///     Unlocks an epoch after winning at or above a given ascension as the annotated character.
-    ///     使用带注解的角色在给定进阶等级或更高等级获胜后解锁纪元。
+    ///     <para xml:lang="en">Unlocks an epoch after winning at or above a given ascension as the annotated character.</para>
+    ///     <para xml:lang="zh-CN">使用标注角色在指定进阶等级或更高等级通关后揭示历史节点。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     /// <param name="ascensionLevel">
-    ///     Minimum ascension level.
-    ///     最低进阶等级。
+    ///     <para xml:lang="en">Minimum ascension level.</para>
+    ///     <para xml:lang="zh-CN">最低进阶等级。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class UnlockEpochAfterAscensionWinAttribute(Type epochType, int ascensionLevel)
         : CharacterEpochRegistrationAttributeBase(epochType)
     {
         /// <summary>
-        ///     Minimum ascension level required for the unlock.
-        ///     解锁所需的最低进阶等级。
+        ///     <para xml:lang="en">Minimum ascension level required for the unlock.</para>
+        ///     <para xml:lang="zh-CN">解锁所需的最低进阶等级。</para>
         /// </summary>
         public int AscensionLevel { get; } = ascensionLevel;
     }
 
     /// <summary>
-    ///     Unlocks an epoch after defeating a number of elites as the annotated character.
-    ///     使用带注解的角色击败指定数量的精英后解锁纪元。
+    ///     <para xml:lang="en">Unlocks an epoch after defeating a number of elites as the annotated character.</para>
+    ///     <para xml:lang="zh-CN">使用标注角色击败指定数量的精英后揭示历史节点。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     /// <param name="requiredEliteWins">
-    ///     Required elite victories.
-    ///     所需精英胜利次数。
+    ///     <para xml:lang="en">Required elite victories.</para>
+    ///     <para xml:lang="zh-CN">所需精英击败次数。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class UnlockEpochAfterEliteVictoriesAttribute(Type epochType, int requiredEliteWins = 15)
         : CharacterEpochRegistrationAttributeBase(epochType)
     {
         /// <summary>
-        ///     Required elite victories.
-        ///     所需精英胜利次数。
+        ///     <para xml:lang="en">Required elite victories.</para>
+        ///     <para xml:lang="zh-CN">所需精英击败次数。</para>
         /// </summary>
         public int RequiredEliteWins { get; } = requiredEliteWins;
     }
 
     /// <summary>
-    ///     Unlocks an epoch after defeating a number of bosses as the annotated character.
-    ///     使用带注解的角色击败指定数量的 boss 后解锁纪元。
+    ///     <para xml:lang="en">Unlocks an epoch after defeating a number of bosses as the annotated character.</para>
+    ///     <para xml:lang="zh-CN">使用标注角色击败指定数量的 Boss 后揭示历史节点。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     /// <param name="requiredBossWins">
-    ///     Required boss victories.
-    ///     所需 boss 胜利次数。
+    ///     <para xml:lang="en">Required boss victories.</para>
+    ///     <para xml:lang="zh-CN">所需 Boss 击败次数。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class UnlockEpochAfterBossVictoriesAttribute(Type epochType, int requiredBossWins = 15)
         : CharacterEpochRegistrationAttributeBase(epochType)
     {
         /// <summary>
-        ///     Required boss victories.
-        ///     所需 boss 胜利次数。
+        ///     <para xml:lang="en">Required boss victories.</para>
+        ///     <para xml:lang="zh-CN">所需 Boss 击败次数。</para>
         /// </summary>
         public int RequiredBossWins { get; } = requiredBossWins;
     }
 
     /// <summary>
-    ///     Unlocks an epoch after an ascension-one win as the annotated character.
-    ///     使用带注解的角色取得进阶一胜利后解锁纪元。
+    ///     <para xml:lang="en">Unlocks an epoch after an Ascension 1 win as the annotated character.</para>
+    ///     <para xml:lang="zh-CN">使用标注角色通关进阶 1 后揭示历史节点。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class UnlockEpochAfterAscensionOneWinAttribute(Type epochType)
         : CharacterEpochRegistrationAttributeBase(epochType);
 
     /// <summary>
-    ///     Reveals ascension UI for the annotated character after the given epoch is revealed.
-    ///     给定纪元 reveal 后，为带注解的角色显示进阶 UI。
+    ///     <para xml:lang="en">Reveals the Ascension UI for the annotated character after the given epoch is revealed.</para>
+    ///     <para xml:lang="zh-CN">指定历史节点揭示后，显示标注角色的进阶界面。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RevealAscensionAfterEpochAttribute(Type epochType)
         : CharacterEpochRegistrationAttributeBase(epochType);
 
     /// <summary>
-    ///     Grants the given epoch through the post-run character unlock flow for the annotated character.
-    ///     通过带注解角色的跑局后角色解锁流程授予给定纪元。
+    ///     <para xml:lang="en">Grants the given epoch through the post-run character unlock flow for the annotated character.</para>
+    ///     <para xml:lang="zh-CN">通过标注角色的局后角色解锁检查授予指定历史节点。</para>
     /// </summary>
     /// <param name="epochType">
-    ///     Target epoch type.
-    ///     目标纪元类型。
+    ///     <para xml:lang="en">Target epoch type.</para>
+    ///     <para xml:lang="zh-CN">目标历史节点类型。</para>
     /// </param>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class UnlockCharacterAfterRunAsAttribute(Type epochType)
