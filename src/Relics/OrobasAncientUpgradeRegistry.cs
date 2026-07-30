@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Relics;
 using STS2RitsuLib.Diagnostics;
@@ -43,7 +44,11 @@ namespace STS2RitsuLib.Relics
             }
 
             ancientTemplate = ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(mapping.TargetType));
-            return ancientTemplate != null;
+            if (ancientTemplate is { Rarity: CardRarity.Ancient })
+                return true;
+
+            ancientTemplate = null;
+            return false;
         }
 
         internal static bool TryGetRefinementUpgrade(ModelId starterRelicId,
@@ -66,10 +71,15 @@ namespace STS2RitsuLib.Relics
 
         internal static bool HasTranscendenceStarter(ModelId starterCardId)
         {
+            OrobasUpgradeMapping? mapping;
             lock (Sync)
             {
-                return FindLatestMappingLocked(TranscendenceMappings, starterCardId) != null;
+                mapping = FindLatestMappingLocked(TranscendenceMappings, starterCardId);
             }
+
+            return mapping != null &&
+                   ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(mapping.TargetType)) is
+                       { Rarity: CardRarity.Ancient };
         }
 
         /// <summary>
@@ -94,7 +104,9 @@ namespace STS2RitsuLib.Relics
             List<CardModel> list =
             [
                 .. types.Select(ancientType => ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(ancientType)))
-                    .OfType<CardModel>().Where(card => seen.Add(card.Id)),
+                    .OfType<CardModel>()
+                    .Where(static card => card.Rarity == CardRarity.Ancient)
+                    .Where(card => seen.Add(card.Id)),
             ];
 
             return list;
@@ -185,7 +197,14 @@ namespace STS2RitsuLib.Relics
             }
 
             foreach (var mapping in transcendence)
+            {
                 ValidateMapping(mapping, "Transcendence", typeof(CardModel), typeof(CardModel));
+                var target = ModelDb.GetByIdOrNull<CardModel>(ModelDb.GetId(mapping.TargetType));
+                if (target is { Rarity: not CardRarity.Ancient })
+                    RitsuLibFramework.Logger.Warn(
+                        $"[OrobasAncientUpgrades] Ignoring non-Ancient transcendence target {target.Id} for " +
+                        $"{mapping.StarterDescription}.");
+            }
 
             foreach (var mapping in refinement)
                 ValidateMapping(mapping, "Refinement", typeof(RelicModel), typeof(RelicModel));
