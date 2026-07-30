@@ -3,8 +3,13 @@ using Godot;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Per-row API when building a custom list editor: mutate the item, clipboard, nested entries, and list chrome.
-    ///     构建自定义列表编辑器时的逐行 API：可修改条目、访问剪贴板、创建嵌套条目并操作列表 chrome。
+    ///     <para xml:lang="en">
+    ///         Provides the current item, list operations, structured clipboard access, transient UI state, and nested
+    ///         entry helpers to a custom list-item editor.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为自定义列表项编辑器提供当前列表项、列表操作、结构化剪贴板、临时界面状态及嵌套条目辅助方法。
+    ///     </para>
     /// </summary>
     public sealed class ModSettingsListItemContext<TItem>
     {
@@ -46,50 +51,50 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Stable state key for transient per-row UI state.
-        ///     临时逐行 UI 状态使用的稳定状态键。
+        ///     <para xml:lang="en">Gets the key assigned to this row's transient UI state.</para>
+        ///     <para xml:lang="zh-CN">获取分配给此行临时界面状态的键。</para>
         /// </summary>
         public string RowStateKey { get; }
 
         /// <summary>
-        ///     Zero-based index of this row in the list.
-        ///     此行在列表中的从零开始索引。
+        ///     <para xml:lang="en">Gets the row's current zero-based list index.</para>
+        ///     <para xml:lang="zh-CN">获取此行当前在列表中的从零开始索引。</para>
         /// </summary>
         public int Index => _liveIndex.Value;
 
         /// <summary>
-        ///     Total number of rows in the list.
-        ///     列表中的总行数。
+        ///     <para xml:lang="en">Gets the current number of items in the list.</para>
+        ///     <para xml:lang="zh-CN">获取列表当前包含的列表项数量。</para>
         /// </summary>
         public int ItemCount { get; private set; }
 
         /// <summary>
-        ///     Current item snapshot for this row.
-        ///     此行当前条目的快照。
+        ///     <para xml:lang="en">Gets the item snapshot currently represented by this row.</para>
+        ///     <para xml:lang="zh-CN">获取此行当前表示的列表项快照。</para>
         /// </summary>
         public TItem Item { get; private set; }
 
         /// <summary>
-        ///     True when the row can move toward the start.
-        ///     当此行可以向列表开头移动时为 true。
+        ///     <para xml:lang="en">Gets whether the row can move one position toward the start of the list.</para>
+        ///     <para xml:lang="zh-CN">获取此行是否可以向列表开头移动一个位置。</para>
         /// </summary>
         public bool CanMoveUp => Index > 0;
 
         /// <summary>
-        ///     True when the row can move toward the end.
-        ///     当此行可以向列表末尾移动时为 true。
+        ///     <para xml:lang="en">Gets whether the row can move one position toward the end of the list.</para>
+        ///     <para xml:lang="zh-CN">获取此行是否可以向列表末尾移动一个位置。</para>
         /// </summary>
         public bool CanMoveDown => Index < ItemCount - 1;
 
         /// <summary>
-        ///     Binding scoped to this row’s value (structured clipboard when implemented).
-        ///     作用域限定到此行值的绑定（实现时支持结构化剪贴板）。
+        ///     <para xml:lang="en">Gets the binding scoped to this row's current list item.</para>
+        ///     <para xml:lang="zh-CN">获取作用域限定为此行当前列表项的绑定。</para>
         /// </summary>
         public IModSettingsValueBinding<TItem> Binding { get; }
 
         /// <summary>
-        ///     True when <see cref="Binding" /> exposes structured copy/paste.
-        ///     当 <see cref="Binding" /> 公开结构化复制 / 粘贴时为 true。
+        ///     <para xml:lang="en">Gets whether <see cref="Binding" /> supports structured copy and paste.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Binding" /> 是否支持结构化复制与粘贴。</para>
         /// </summary>
         public bool SupportsStructuredClipboard => Binding is IStructuredModSettingsValueBinding<TItem>;
 
@@ -101,8 +106,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Writes <paramref name="item" /> back into the list at <see cref="Index" />.
-        ///     将 <paramref name="item" /> 写回列表的 <see cref="Index" /> 位置。
+        ///     <para xml:lang="en">Writes <paramref name="item" /> to the row's current <see cref="Index" />.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="item" /> 写入此行当前的 <see cref="Index" /> 位置。</para>
         /// </summary>
         public void Update(TItem item)
         {
@@ -110,8 +115,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Removes this row from the list.
-        ///     从列表中移除此行。
+        ///     <para xml:lang="en">Removes this row's current item from the list.</para>
+        ///     <para xml:lang="zh-CN">从列表中移除此行当前表示的列表项。</para>
         /// </summary>
         public void Remove()
         {
@@ -119,8 +124,12 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Moves the row up when <see cref="CanMoveUp" />.
-        ///     当 <see cref="CanMoveUp" /> 时将该行上移。
+        ///     <para xml:lang="en">
+        ///         Moves the row one position toward the start when <see cref="CanMoveUp" /> is true.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <see cref="CanMoveUp" /> 为 <see langword="true" /> 时，将此行向列表开头移动一个位置。
+        ///     </para>
         /// </summary>
         public void MoveUp()
         {
@@ -128,8 +137,12 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Moves the row down when <see cref="CanMoveDown" />.
-        ///     当 <see cref="CanMoveDown" /> 时将该行下移。
+        ///     <para xml:lang="en">
+        ///         Moves the row one position toward the end when <see cref="CanMoveDown" /> is true.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <see cref="CanMoveDown" /> 为 <see langword="true" /> 时，将此行向列表末尾移动一个位置。
+        ///     </para>
         /// </summary>
         public void MoveDown()
         {
@@ -137,8 +150,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Duplicates the row when supported by the list host.
-        ///     当列表宿主支持时复制此行。
+        ///     <para xml:lang="en">Duplicates this row when the list host provides duplication support.</para>
+        ///     <para xml:lang="zh-CN">当列表宿主提供复制支持时复制此行。</para>
         /// </summary>
         public void Duplicate()
         {
@@ -146,8 +159,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Requests a deferred rebuild of the list UI.
-        ///     请求延迟重建列表 UI。
+        ///     <para xml:lang="en">Requests a deferred rebuild of the list UI.</para>
+        ///     <para xml:lang="zh-CN">请求延迟重建列表界面。</para>
         /// </summary>
         public void RequestRefresh()
         {
@@ -155,8 +168,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Reads transient row UI state for the current settings session.
-        ///     读取当前设置会话中的临时行 UI 状态。
+        ///     <para xml:lang="en">
+        ///         Reads a typed value from this row's transient state for the current settings UI session.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">从当前设置界面会话中此行的临时状态读取类型化值。</para>
         /// </summary>
         public TValue GetRowState<TValue>(string key, TValue fallback = default!)
         {
@@ -166,8 +181,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Stores transient row UI state for the current settings session.
-        ///     存储当前设置会话中的临时行 UI 状态。
+        ///     <para xml:lang="en">
+        ///         Stores a typed value in this row's transient state for the current settings UI session.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在当前设置界面会话中此行的临时状态内存储类型化值。</para>
         /// </summary>
         public void SetRowState<TValue>(string key, TValue value)
         {
@@ -175,8 +192,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Copies <see cref="Item" /> using structured clipboard when available.
-        ///     在可用时使用结构化剪贴板复制 <see cref="Item" />。
+        ///     <para xml:lang="en">
+        ///         Copies <see cref="Item" /> through the binding's structured adapter when one is available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">当绑定提供结构化适配器时，通过该适配器复制 <see cref="Item" />。</para>
         /// </summary>
         public bool TryCopyToClipboard(ModSettingsClipboardScope scope = ModSettingsClipboardScope.Self)
         {
@@ -188,8 +207,11 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Returns whether paste from clipboard is valid for this row’s type and adapter.
-        ///     返回当前剪贴板内容对该行类型和适配器是否可粘贴。
+        ///     <para xml:lang="en">
+        ///         Determines whether the current clipboard payload can be pasted through this row's structured
+        ///         adapter.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">确定当前剪贴板载荷是否可通过此行的结构化适配器粘贴。</para>
         /// </summary>
         public bool CanPasteFromClipboard()
         {
@@ -198,8 +220,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Pastes into this row and calls <see cref="Update" /> on success; shows UI feedback on failure.
-        ///     粘贴到此行，并在成功时调用 <see cref="Update" />；失败时显示 UI 反馈。
+        ///     <para xml:lang="en">
+        ///         Attempts to paste a structured value into this row, calls <see cref="Update" /> on success, and
+        ///         reports a rejected payload through the settings UI.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试将结构化值粘贴到此行；成功时调用 <see cref="Update" />，载荷被拒绝时通过设置界面报告原因。
+        ///     </para>
         /// </summary>
         public bool TryPasteFromClipboard()
         {
@@ -218,8 +245,12 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Projects a child field of <typeparamref name="TItem" /> as its own binding (nested editors).
-        ///     将 <typeparamref name="TItem" /> 的子字段投影为自己的绑定（嵌套编辑器）。
+        ///     <para xml:lang="en">
+        ///         Projects a value within <typeparamref name="TItem" /> as a child binding for a nested editor.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <typeparamref name="TItem" /> 内的值投影为供嵌套编辑器使用的子绑定。
+        ///     </para>
         /// </summary>
         public IModSettingsValueBinding<TValue> Project<TValue>(
             string dataKey,
@@ -231,8 +262,12 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Instantiates any <see cref="ModSettingsEntryDefinition" /> under this row’s UI context.
-        ///     在此行的 UI 上下文下实例化任意 <see cref="ModSettingsEntryDefinition" />。
+        ///     <para xml:lang="en">
+        ///         Creates the control for <paramref name="entry" /> within this row's settings UI context.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在此行的设置界面上下文中为 <paramref name="entry" /> 创建控件。
+        ///     </para>
         /// </summary>
         public Control CreateEntry(ModSettingsEntryDefinition entry)
         {
@@ -241,8 +276,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Convenience wrapper that builds a nested list entry for <typeparamref name="TChild" />.
-        ///     用于为 <typeparamref name="TChild" /> 构建嵌套列表条目的便捷 wrapper。
+        ///     <para xml:lang="en">
+        ///         Builds and creates a nested list editor for <typeparamref name="TChild" /> values.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">构建并创建用于编辑 <typeparamref name="TChild" /> 值的嵌套列表编辑器。</para>
         /// </summary>
         public Control CreateListEditor<TChild>(
             string id,
