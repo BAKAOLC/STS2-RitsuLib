@@ -5,7 +5,10 @@ using MegaCrit.Sts2.Core.Helpers;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides sound-effect helpers with the same non-interactive and combat-ending guards as <see cref="SfxCmd" />.</para>
+    ///     <para xml:lang="en">
+    ///         Provides sound-effect helpers with the same non-interactive and combat-ending guards as
+    ///         <see cref="SfxCmd" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">提供与 <see cref="SfxCmd" /> 相同、受非交互状态和战斗结束状态保护的音效辅助方法。</para>
     /// </summary>
     public static class Sts2SfxAlignedFmod
@@ -53,8 +56,14 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Plays a parameterized one-shot through <see cref="GameFmod.Studio" /> after applying the same guards as <see cref="SfxCmd.Play(string, float)" />.</para>
-        ///     <para xml:lang="zh-CN">应用与 <see cref="SfxCmd.Play(string, float)" /> 相同的保护条件后，通过 <see cref="GameFmod.Studio" /> 播放带参数的单次音效。</para>
+        ///     <para xml:lang="en">
+        ///         Plays a parameterized one-shot through <see cref="GameFmod.Studio" /> after applying the same
+        ///         guards as <see cref="SfxCmd.Play(string, float)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         应用与 <see cref="SfxCmd.Play(string, float)" /> 相同的保护条件后，通过 <see cref="GameFmod.Studio" />
+        ///         播放带参数的单次音效。
+        ///     </para>
         /// </summary>
         /// <param name="eventPath">
         ///     <para xml:lang="en">The FMOD Studio event path.</para>
@@ -78,7 +87,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Starts a loop through <see cref="SfxCmd.PlayLoop(string, bool)" />, which skips playback in non-interactive mode.</para>
+        ///     <para xml:lang="en">
+        ///         Starts a loop through <see cref="SfxCmd.PlayLoop(string, bool)" />, which skips playback in
+        ///         non-interactive mode.
+        ///     </para>
         ///     <para xml:lang="zh-CN">通过 <see cref="SfxCmd.PlayLoop(string, bool)" /> 启动循环；非交互模式下会跳过播放。</para>
         /// </summary>
         /// <param name="eventPath">
@@ -108,7 +120,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Sets a numeric parameter on the oldest loop under an event path through <see cref="SfxCmd.SetParam" />.</para>
+        ///     <para xml:lang="en">
+        ///         Sets a numeric parameter on the oldest loop under an event path through
+        ///         <see cref="SfxCmd.SetParam" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">通过 <see cref="SfxCmd.SetParam" /> 为事件路径下最早的循环设置数值参数。</para>
         /// </summary>
         /// <param name="eventPath">

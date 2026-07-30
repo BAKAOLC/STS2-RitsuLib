@@ -305,7 +305,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _definition = null;
 
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
+            {
                 Bind(definition);
+            }
             else if (IsNodeReady())
             {
                 ApplyDefinition();
@@ -346,7 +348,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _definition = null;
 
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
+            {
                 BindUse(_useId, definition);
+            }
             else if (IsNodeReady())
             {
                 ApplyDefinition();
@@ -648,9 +652,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             PileType pileType,
             CardPreviewMode previewMode)
         {
-            var useOptionalUnavailable =
-                _style.OptionalUnavailableColor.HasValue &&
-                _style.OptionalUnavailableOutlineColor.HasValue;
+            var useOptionalUnavailable = _style is
+            {
+                OptionalUnavailableColor: not null,
+                OptionalUnavailableOutlineColor: not null,
+            };
             return SecondaryResourceCardCostHelper.GetCostColor(
                     line,
                     pileType,

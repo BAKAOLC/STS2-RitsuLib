@@ -1,13 +1,19 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides typed playback, handle-based control, lifecycle ownership, routing, and adaptive music.</para>
+    ///     <para xml:lang="en">
+    ///         Provides typed playback, handle-based control, lifecycle ownership, routing, and adaptive
+    ///         music.
+    ///     </para>
     ///     <para xml:lang="zh-CN">提供类型化播放、基于句柄的控制、生命周期归属、路由和自适应音乐。</para>
     /// </summary>
     public interface IGameAudio
     {
         /// <summary>
-        ///     <para xml:lang="en">Dispatches a supported source and reports whether backend creation and requested initialization completed.</para>
+        ///     <para xml:lang="en">
+        ///         Dispatches a supported source and reports whether backend creation and requested initialization
+        ///         completed.
+        ///     </para>
         ///     <para xml:lang="zh-CN">分派受支持的音频源，并报告后端创建及所请求的初始化是否完成。</para>
         /// </summary>
         /// <param name="source">
@@ -33,11 +39,17 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">Studio 路径、Studio GUID、绝对路径声音文件或 Godot 资源声音文件。</para>
         /// </param>
         /// <param name="options">
-        ///     <para xml:lang="en">Optional playback settings. A path-based Studio event uses the native manager when <see cref="AudioPlaybackOptions.UseVanillaRouting" /> is enabled.</para>
+        ///     <para xml:lang="en">
+        ///         Optional playback settings. A path-based Studio event uses the native manager when
+        ///         <see cref="AudioPlaybackOptions.UseVanillaRouting" /> is enabled.
+        ///     </para>
         ///     <para xml:lang="zh-CN">可选的播放设置。启用 <see cref="AudioPlaybackOptions.UseVanillaRouting" /> 时，路径型 Studio 事件使用原生管理器。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en">The playback result; unsupported source kinds return <see cref="AudioPlayStatus.NotSupported" />.</para>
+        ///     <para xml:lang="en">
+        ///         The playback result; unsupported source kinds return
+        ///         <see cref="AudioPlayStatus.NotSupported" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">播放结果；不受支持的音频源类型返回 <see cref="AudioPlayStatus.NotSupported" />。</para>
         /// </returns>
         AudioPlayResult PlayOneShot(AudioSource source, AudioPlaybackOptions? options = null);
@@ -119,7 +131,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止事件句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one handle was found and every release completed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one handle was found and every release completed;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到至少一个句柄且所有释放均已完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         bool StopScope(AudioScopeToken scope, bool allowFadeOut = true);
@@ -137,7 +152,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止事件句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when an owner was found and released; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when an owner was found and released; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到并释放占用者时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         bool StopChannel(string channel, bool allowFadeOut = true);
@@ -155,7 +173,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止事件句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one handle was found and every release completed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one handle was found and every release completed;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到至少一个句柄且所有释放均已完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         bool StopTag(string tag, bool allowFadeOut = true);

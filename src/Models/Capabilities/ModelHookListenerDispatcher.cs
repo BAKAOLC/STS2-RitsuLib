@@ -103,7 +103,10 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves listeners from an explicit model sequence, attached capabilities, and optional extra models.</para>
+        ///     <para xml:lang="en">
+        ///         Resolves listeners from an explicit model sequence, attached capabilities, and optional extra
+        ///         models.
+        ///     </para>
         ///     <para xml:lang="zh-CN">从显式模型序列、已附加能力与可选的额外模型中解析监听器。</para>
         /// </summary>
         public static IEnumerable<ModelHookListener<TListener>> FromModels<TListener>(

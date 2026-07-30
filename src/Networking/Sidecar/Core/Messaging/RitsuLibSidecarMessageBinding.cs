@@ -9,7 +9,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         /// <summary>
         ///     <para xml:lang="en">
         ///         Subscribes <paramref name="processor" /> for <see cref="IRitsuLibSidecarMessageCodec{T}.Opcode" />. The
-        ///         processor runs on the same thread as <see cref="RitsuLibSidecarReceivePipeline.ShouldSuppressVanillaDeserialize" />
+        ///         processor runs on the same thread as
+        ///         <see cref="RitsuLibSidecarReceivePipeline.ShouldSuppressVanillaDeserialize" />
         ///         in the vanilla multiplayer receive path, which is not guaranteed to be the Godot main thread. Send with
         ///         <see cref="RitsuLibSidecar.CreateEnvelopeWithDelivery" /> or <see cref="RitsuLibSidecarHighLevelSend" /> to
         ///         record delivery semantics in the header extension.

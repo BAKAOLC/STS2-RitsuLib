@@ -10,7 +10,10 @@ namespace STS2RitsuLib.Utils
     public interface IWeightedValue
     {
         /// <summary>
-        ///     <para xml:lang="en">Positive relative weight used by <c>WeightedList&lt;T&gt;</c> when no explicit weight is provided.</para>
+        ///     <para xml:lang="en">
+        ///         Positive relative weight used by <c>WeightedList&lt;T&gt;</c> when no explicit weight is
+        ///         provided.
+        ///     </para>
         ///     <para xml:lang="zh-CN">未提供显式权重时，<c>WeightedList&lt;T&gt;</c> 使用的正相对权重。</para>
         /// </summary>
         int Weight { get; }
@@ -132,7 +135,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Appends each item using <paramref name="weightSelector" />, <see cref="IWeightedValue" />, or weight 1.</para>
+        ///     <para xml:lang="en">
+        ///         Appends each item using <paramref name="weightSelector" />, <see cref="IWeightedValue" />, or
+        ///         weight 1.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用 <paramref name="weightSelector" />、<see cref="IWeightedValue" /> 或权重 1 追加每一项。</para>
         /// </summary>
         public void AddRange(IEnumerable<T> items, Func<T, int>? weightSelector = null)
@@ -144,7 +150,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Rolls a weighted random entry using <paramref name="rng" />, optionally removing the chosen entry.</para>
+        ///     <para xml:lang="en">
+        ///         Rolls a weighted random entry using <paramref name="rng" />, optionally removing the chosen
+        ///         entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用 <paramref name="rng" /> 抽取加权随机条目，并可移除选中的条目。</para>
         /// </summary>
         public T GetRandom(Rng rng, bool remove = false)
@@ -174,7 +183,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns <see langword="false" /> when the list is empty or has non-positive total weight; otherwise performs a weighted roll like <c>GetRandom</c>.</para>
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="false" /> when the list is empty or has non-positive total weight;
+        ///         otherwise performs a weighted roll like <c>GetRandom</c>.
+        ///     </para>
         ///     <para xml:lang="zh-CN">列表为空或总权重非正时返回 <see langword="false" />；否则执行一次类似 <c>GetRandom</c> 的加权抽取。</para>
         /// </summary>
         public bool TryGetRandom(Rng rng, out T value, bool remove = false)
@@ -190,7 +202,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Inserts <paramref name="item" /> at <paramref name="index" /> with explicit positive <paramref name="weight" />.</para>
+        ///     <para xml:lang="en">
+        ///         Inserts <paramref name="item" /> at <paramref name="index" /> with explicit positive
+        ///         <paramref name="weight" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">以显式的正权重 <paramref name="weight" /> 将 <paramref name="item" /> 插入到 <paramref name="index" />。</para>
         /// </summary>
         /// <exception cref="OverflowException">

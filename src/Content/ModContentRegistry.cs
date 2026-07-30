@@ -369,7 +369,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <typeparamref name="TCard" /> with <typeparamref name="TPool" /> using the default public entry.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TCard" /> with <typeparamref name="TPool" /> using the default
+        ///         public entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用默认公共条目，将 <typeparamref name="TCard" /> 注册到 <typeparamref name="TPool" />。</para>
         /// </summary>
         public void RegisterCard<TPool, TCard>()
@@ -380,7 +383,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="cardType" /> with <paramref name="poolType" /> using the default public entry.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="cardType" /> with <paramref name="poolType" /> using the default
+        ///         public entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用默认公共条目，将 <paramref name="cardType" /> 注册到 <paramref name="poolType" />。</para>
         /// </summary>
         public void RegisterCard(Type poolType, Type cardType)
@@ -389,8 +395,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <typeparamref name="TCard" /> with <typeparamref name="TPool" /> using <paramref name="publicEntry" />.</para>
-        ///     <para xml:lang="zh-CN">使用 <paramref name="publicEntry" />，将 <typeparamref name="TCard" /> 注册到 <typeparamref name="TPool" />。</para>
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TCard" /> with <typeparamref name="TPool" /> using
+        ///         <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" />，将 <typeparamref name="TCard" /> 注册到
+        ///         <typeparamref name="TPool" />。
+        ///     </para>
         /// </summary>
         public void RegisterCard<TPool, TCard>(ModelPublicEntryOptions publicEntry)
             where TPool : CardPoolModel
@@ -400,8 +412,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="cardType" /> with <paramref name="poolType" /> using <paramref name="publicEntry" />.</para>
-        ///     <para xml:lang="zh-CN">使用 <paramref name="publicEntry" />，将 <paramref name="cardType" /> 注册到 <paramref name="poolType" />。</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="cardType" /> with <paramref name="poolType" /> using
+        ///         <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" />，将 <paramref name="cardType" /> 注册到
+        ///         <paramref name="poolType" />。
+        ///     </para>
         /// </summary>
         public void RegisterCard(Type poolType, Type cardType, ModelPublicEntryOptions publicEntry)
         {
@@ -409,7 +427,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <typeparamref name="TRelic" /> with <typeparamref name="TPool" /> using the default public entry.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TRelic" /> with <typeparamref name="TPool" /> using the default
+        ///         public entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用默认公共条目，将 <typeparamref name="TRelic" /> 注册到 <typeparamref name="TPool" />。</para>
         /// </summary>
         public void RegisterRelic<TPool, TRelic>()
@@ -420,7 +441,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="relicType" /> with <paramref name="poolType" /> using the default public entry.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="relicType" /> with <paramref name="poolType" /> using the default
+        ///         public entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用默认公共条目，将 <paramref name="relicType" /> 注册到 <paramref name="poolType" />。</para>
         /// </summary>
         public void RegisterRelic(Type poolType, Type relicType)
@@ -429,8 +453,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <typeparamref name="TRelic" /> with <typeparamref name="TPool" /> using <paramref name="publicEntry" />.</para>
-        ///     <para xml:lang="zh-CN">使用 <paramref name="publicEntry" />，将 <typeparamref name="TRelic" /> 注册到 <typeparamref name="TPool" />。</para>
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TRelic" /> with <typeparamref name="TPool" /> using
+        ///         <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" />，将 <typeparamref name="TRelic" /> 注册到
+        ///         <typeparamref name="TPool" />。
+        ///     </para>
         /// </summary>
         public void RegisterRelic<TPool, TRelic>(ModelPublicEntryOptions publicEntry)
             where TPool : RelicPoolModel
@@ -440,8 +470,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="relicType" /> with <paramref name="poolType" /> using <paramref name="publicEntry" />.</para>
-        ///     <para xml:lang="zh-CN">使用 <paramref name="publicEntry" />，将 <paramref name="relicType" /> 注册到 <paramref name="poolType" />。</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="relicType" /> with <paramref name="poolType" /> using
+        ///         <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" />，将 <paramref name="relicType" /> 注册到
+        ///         <paramref name="poolType" />。
+        ///     </para>
         /// </summary>
         public void RegisterRelic(Type poolType, Type relicType, ModelPublicEntryOptions publicEntry)
         {
@@ -449,7 +485,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <typeparamref name="TPotion" /> with <typeparamref name="TPool" /> using the default public entry.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TPotion" /> with <typeparamref name="TPool" /> using the default
+        ///         public entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用默认公共条目，将 <typeparamref name="TPotion" /> 注册到 <typeparamref name="TPool" />。</para>
         /// </summary>
         public void RegisterPotion<TPool, TPotion>()
@@ -460,7 +499,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="potionType" /> with <paramref name="poolType" /> using the default public entry.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="potionType" /> with <paramref name="poolType" /> using the default
+        ///         public entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用默认公共条目，将 <paramref name="potionType" /> 注册到 <paramref name="poolType" />。</para>
         /// </summary>
         public void RegisterPotion(Type poolType, Type potionType)
@@ -469,8 +511,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <typeparamref name="TPotion" /> with <typeparamref name="TPool" /> using <paramref name="publicEntry" />.</para>
-        ///     <para xml:lang="zh-CN">使用 <paramref name="publicEntry" />，将 <typeparamref name="TPotion" /> 注册到 <typeparamref name="TPool" />。</para>
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TPotion" /> with <typeparamref name="TPool" /> using
+        ///         <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" />，将 <typeparamref name="TPotion" /> 注册到
+        ///         <typeparamref name="TPool" />。
+        ///     </para>
         /// </summary>
         public void RegisterPotion<TPool, TPotion>(ModelPublicEntryOptions publicEntry)
             where TPool : PotionPoolModel
@@ -480,8 +528,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="potionType" /> with <paramref name="poolType" /> using <paramref name="publicEntry" />.</para>
-        ///     <para xml:lang="zh-CN">使用 <paramref name="publicEntry" />，将 <paramref name="potionType" /> 注册到 <paramref name="poolType" />。</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="potionType" /> with <paramref name="poolType" /> using
+        ///         <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" />，将 <paramref name="potionType" /> 注册到
+        ///         <paramref name="poolType" />。
+        ///     </para>
         /// </summary>
         public void RegisterPotion(Type poolType, Type potionType, ModelPublicEntryOptions publicEntry)
         {
@@ -498,7 +552,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="characterType" /> for inclusion in <see cref="ModelDb.AllCharacters" />.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="characterType" /> for inclusion in
+        ///         <see cref="ModelDb.AllCharacters" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册 <paramref name="characterType" />，使其纳入 <see cref="ModelDb.AllCharacters" />。</para>
         /// </summary>
         public void RegisterCharacter(Type characterType)
@@ -543,7 +600,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <paramref name="cardType" /> to the starting deck of <paramref name="characterType" />.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <paramref name="cardType" /> to the starting deck of
+        ///         <paramref name="characterType" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">向 <paramref name="characterType" /> 的初始牌组添加指定数量的 <paramref name="cardType" />。</para>
         /// </summary>
         public void RegisterCharacterStarterCard(Type characterType, Type cardType, int count = 1)
@@ -552,7 +612,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <paramref name="cardType" /> to the starting deck of <paramref name="characterType" /> using the specified public-entry rules.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <paramref name="cardType" /> to the starting deck of
+        ///         <paramref name="characterType" /> using the specified public-entry rules.
+        ///     </para>
         ///     <para xml:lang="zh-CN">按照指定的公共条目规则，向 <paramref name="characterType" /> 的初始牌组添加指定数量的 <paramref name="cardType" />。</para>
         /// </summary>
         public void RegisterCharacterStarterCard(Type characterType, Type cardType, int count, int order)
@@ -563,7 +626,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <typeparamref name="TRelic" /> to the starting relics of <typeparamref name="TCharacter" />.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <typeparamref name="TRelic" /> to the starting relics of
+        ///         <typeparamref name="TCharacter" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">向 <typeparamref name="TCharacter" /> 的初始遗物添加指定数量的 <typeparamref name="TRelic" />。</para>
         /// </summary>
         public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count = 1)
@@ -574,8 +640,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <typeparamref name="TRelic" /> to the starting relics of <typeparamref name="TCharacter" /> using the specified public-entry rules.</para>
-        ///     <para xml:lang="zh-CN">按照指定的公共条目规则，向 <typeparamref name="TCharacter" /> 的初始遗物添加指定数量的 <typeparamref name="TRelic" />。</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <typeparamref name="TRelic" /> to the starting relics of
+        ///         <typeparamref name="TCharacter" /> using the specified public-entry rules.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按照指定的公共条目规则，向 <typeparamref name="TCharacter" /> 的初始遗物添加指定数量的 <typeparamref name="TRelic" />
+        ///         。
+        ///     </para>
         /// </summary>
         public void RegisterCharacterStarterRelic<TCharacter, TRelic>(int count, int order)
             where TCharacter : CharacterModel
@@ -585,7 +657,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <paramref name="relicType" /> to the starting relics of <paramref name="characterType" />.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <paramref name="relicType" /> to the starting relics of
+        ///         <paramref name="characterType" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">向 <paramref name="characterType" /> 的初始遗物添加指定数量的 <paramref name="relicType" />。</para>
         /// </summary>
         public void RegisterCharacterStarterRelic(Type characterType, Type relicType, int count = 1)
@@ -594,7 +669,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <paramref name="relicType" /> to the starting relics of <paramref name="characterType" /> using the specified public-entry rules.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <paramref name="relicType" /> to the starting relics of
+        ///         <paramref name="characterType" /> using the specified public-entry rules.
+        ///     </para>
         ///     <para xml:lang="zh-CN">按照指定的公共条目规则，向 <paramref name="characterType" /> 的初始遗物添加指定数量的 <paramref name="relicType" />。</para>
         /// </summary>
         public void RegisterCharacterStarterRelic(Type characterType, Type relicType, int count, int order)
@@ -604,7 +682,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <typeparamref name="TPotion" /> to the starting potions of <typeparamref name="TCharacter" />.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <typeparamref name="TPotion" /> to the starting potions of
+        ///         <typeparamref name="TCharacter" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">向 <typeparamref name="TCharacter" /> 的初始药水添加指定数量的 <typeparamref name="TPotion" />。</para>
         /// </summary>
         public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count = 1)
@@ -615,8 +696,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <typeparamref name="TPotion" /> to the starting potions of <typeparamref name="TCharacter" /> using the specified public-entry rules.</para>
-        ///     <para xml:lang="zh-CN">按照指定的公共条目规则，向 <typeparamref name="TCharacter" /> 的初始药水添加指定数量的 <typeparamref name="TPotion" />。</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <typeparamref name="TPotion" /> to the starting potions of
+        ///         <typeparamref name="TCharacter" /> using the specified public-entry rules.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按照指定的公共条目规则，向 <typeparamref name="TCharacter" /> 的初始药水添加指定数量的
+        ///         <typeparamref name="TPotion" />。
+        ///     </para>
         /// </summary>
         public void RegisterCharacterStarterPotion<TCharacter, TPotion>(int count, int order)
             where TCharacter : CharacterModel
@@ -626,7 +713,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <paramref name="potionType" /> to the starting potions of <paramref name="characterType" />.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <paramref name="potionType" /> to the starting potions of
+        ///         <paramref name="characterType" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">向 <paramref name="characterType" /> 的初始药水添加指定数量的 <paramref name="potionType" />。</para>
         /// </summary>
         public void RegisterCharacterStarterPotion(Type characterType, Type potionType, int count = 1)
@@ -635,7 +725,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds copies of <paramref name="potionType" /> to the starting potions of <paramref name="characterType" /> using the specified public-entry rules.</para>
+        ///     <para xml:lang="en">
+        ///         Adds copies of <paramref name="potionType" /> to the starting potions of
+        ///         <paramref name="characterType" /> using the specified public-entry rules.
+        ///     </para>
         ///     <para xml:lang="zh-CN">按照指定的公共条目规则，向 <paramref name="characterType" /> 的初始药水添加指定数量的 <paramref name="potionType" />。</para>
         /// </summary>
         public void RegisterCharacterStarterPotion(Type characterType, Type potionType, int count, int order)
@@ -762,7 +855,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="capabilityType" /> as a model-backed capability using <paramref name="publicEntry" />.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="capabilityType" /> as a model-backed capability using
+        ///         <paramref name="publicEntry" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用 <paramref name="publicEntry" /> 将 <paramref name="capabilityType" /> 注册为基于模型的能力。</para>
         /// </summary>
         public void RegisterModelCapability(Type capabilityType, ModelPublicEntryOptions publicEntry)
@@ -956,7 +1052,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a mod modifier as a good daily modifier in the patched <see cref="ModelDb.GoodModifiers" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a mod modifier as a good daily modifier in the patched
+        ///         <see cref="ModelDb.GoodModifiers" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将模组修正项注册为正面每日修正项，使其纳入修补后的 <see cref="ModelDb.GoodModifiers" /> 列表。</para>
         /// </summary>
         public void RegisterGoodModifier<TModifier>() where TModifier : ModifierModel
@@ -983,7 +1082,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="modifierType" /> as a good daily modifier with explicit list placement.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="modifierType" /> as a good daily modifier with explicit list
+        ///         placement.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 <paramref name="modifierType" /> 注册为正面每日修正项，并指定其列表位置。</para>
         /// </summary>
         public void RegisterGoodModifier(Type modifierType, int modifierListSortOrder)
@@ -992,7 +1094,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a mod modifier as a bad daily modifier in the patched <see cref="ModelDb.BadModifiers" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a mod modifier as a bad daily modifier in the patched
+        ///         <see cref="ModelDb.BadModifiers" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将模组修正项注册为负面每日修正项，使其纳入修补后的 <see cref="ModelDb.BadModifiers" /> 列表。</para>
         /// </summary>
         public void RegisterBadModifier<TModifier>() where TModifier : ModifierModel
@@ -1019,7 +1124,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="modifierType" /> as a bad daily modifier with explicit list placement.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="modifierType" /> as a bad daily modifier with explicit list
+        ///         placement.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 <paramref name="modifierType" /> 注册为负面每日修正项，并指定其列表位置。</para>
         /// </summary>
         public void RegisterBadModifier(Type modifierType, int modifierListSortOrder)
@@ -1028,7 +1136,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a mutually exclusive modifier group in the patched <see cref="ModelDb.MutuallyExclusiveModifiers" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a mutually exclusive modifier group in the patched
+        ///         <see cref="ModelDb.MutuallyExclusiveModifiers" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册互斥修正项组，使其纳入修补后的 <see cref="ModelDb.MutuallyExclusiveModifiers" /> 列表。</para>
         /// </summary>
         public void RegisterMutuallyExclusiveModifierGroup(params Type[] modifierTypes)
@@ -1037,7 +1148,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a mutually exclusive modifier group in the patched <see cref="ModelDb.MutuallyExclusiveModifiers" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a mutually exclusive modifier group in the patched
+        ///         <see cref="ModelDb.MutuallyExclusiveModifiers" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册互斥修正项组，使其纳入修补后的 <see cref="ModelDb.MutuallyExclusiveModifiers" /> 列表。</para>
         /// </summary>
         public void RegisterMutuallyExclusiveModifierGroup(IReadOnlyList<Type> modifierTypes)
@@ -1087,7 +1201,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="poolType" /> for inclusion in <see cref="ModelDb.AllSharedCardPools" />.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="poolType" /> for inclusion in
+        ///         <see cref="ModelDb.AllSharedCardPools" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册 <paramref name="poolType" />，使其纳入 <see cref="ModelDb.AllSharedCardPools" />。</para>
         /// </summary>
         public void RegisterSharedCardPool(Type poolType)
@@ -1097,7 +1214,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a shared relic-pool model for inclusion in the patched <see cref="ModelDb.AllRelicPools" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a shared relic-pool model for inclusion in the patched
+        ///         <see cref="ModelDb.AllRelicPools" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册共享遗物池模型，使其纳入修补后的 <see cref="ModelDb.AllRelicPools" /> 列表。</para>
         /// </summary>
         public void RegisterSharedRelicPool<TPool>() where TPool : RelicPoolModel
@@ -1106,7 +1226,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="poolType" /> for inclusion in the patched <see cref="ModelDb.AllRelicPools" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="poolType" /> for inclusion in the patched
+        ///         <see cref="ModelDb.AllRelicPools" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册 <paramref name="poolType" />，使其纳入修补后的 <see cref="ModelDb.AllRelicPools" /> 列表。</para>
         /// </summary>
         public void RegisterSharedRelicPool(Type poolType)
@@ -1116,7 +1239,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a shared potion-pool model for inclusion in the patched <see cref="ModelDb.AllPotionPools" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a shared potion-pool model for inclusion in the patched
+        ///         <see cref="ModelDb.AllPotionPools" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册共享药水池模型，使其纳入修补后的 <see cref="ModelDb.AllPotionPools" /> 列表。</para>
         /// </summary>
         public void RegisterSharedPotionPool<TPool>() where TPool : PotionPoolModel
@@ -1125,7 +1251,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="poolType" /> for inclusion in the patched <see cref="ModelDb.AllPotionPools" /> list.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="poolType" /> for inclusion in the patched
+        ///         <see cref="ModelDb.AllPotionPools" /> list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册 <paramref name="poolType" />，使其纳入修补后的 <see cref="ModelDb.AllPotionPools" /> 列表。</para>
         /// </summary>
         public void RegisterSharedPotionPool(Type poolType)

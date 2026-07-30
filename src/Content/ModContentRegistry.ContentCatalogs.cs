@@ -11,13 +11,11 @@ namespace STS2RitsuLib.Content
         ///     </para>
         ///     <para xml:lang="zh-CN">定义各扩展模型目录的注册来源、缓存解析器与合并模式。</para>
         /// </summary>
-        private static readonly IReadOnlyList<ContentCatalogEntry> ModelCatalogs;
-
         private static readonly Dictionary<ContentCatalogId, ContentCatalogEntry> CatalogById;
 
         static ModContentRegistry()
         {
-            ModelCatalogs =
+            IReadOnlyList<ContentCatalogEntry> modelCatalogs =
             [
                 GlobalEntry<CharacterModel>(ContentCatalogId.Characters, static () => RegisteredCharacters),
                 GlobalEntry<ActModel>(ContentCatalogId.Acts, static () => RegisteredActs),
@@ -39,8 +37,8 @@ namespace STS2RitsuLib.Content
                 ScopedEntry<EncounterModel>(ContentCatalogId.ActEncounters, static () => RegisteredActEncounters),
                 ScopedEntry<AncientEventModel>(ContentCatalogId.ActAncients, static () => RegisteredActAncients),
             ];
-            CatalogById = ModelCatalogs.ToDictionary(static entry => entry.Id);
-            ResolvedModelCache.Configure(ModelCatalogs);
+            CatalogById = modelCatalogs.ToDictionary(static entry => entry.Id);
+            ResolvedModelCache.Configure(modelCatalogs);
         }
 
         internal static ContentCatalogEntry GetCatalog(ContentCatalogId id)

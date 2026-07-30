@@ -361,6 +361,5 @@ namespace STS2RitsuLib.Interop
             var body = Expression.Call(method, p1, arg2);
             return Expression.Lambda<Action<string, object?>>(body, p1, p2).Compile();
         }
-
     }
 }

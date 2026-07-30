@@ -31,7 +31,6 @@ namespace STS2RitsuLib.Diagnostics.CardExport
     /// </summary>
     public static class CardPngExporter
     {
-        private static int _exportInProgress;
         private const float HoverTipTargetWidth = 360f;
         private const float HoverTipVerticalGap = 5f;
         private const string HoverTipScenePath = "res://scenes/ui/hover_tip.tscn";
@@ -63,6 +62,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
         private const int MaxCaptureAttemptsPerFile = 2;
 
         private const string CardScenePath = "res://scenes/cards/card.tscn";
+        private static int _exportInProgress;
 
         /// <summary>
         ///     <para xml:lang="en">Starts the requested batch PNG export when no other card export is running.</para>

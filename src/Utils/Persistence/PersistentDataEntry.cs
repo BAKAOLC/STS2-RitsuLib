@@ -5,7 +5,10 @@ using STS2RitsuLib.Utils.Persistence.Migration;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     <para xml:lang="en">Typed JSON persistence wrapper with optional migrations, backup recovery, and change notifications.</para>
+    ///     <para xml:lang="en">
+    ///         Typed JSON persistence wrapper with optional migrations, backup recovery, and change
+    ///         notifications.
+    ///     </para>
     ///     <para xml:lang="zh-CN">支持可选迁移、备份恢复和变更通知的强类型 JSON 持久化封装。</para>
     /// </summary>
     public class PersistentDataEntry<T> where T : class, new()
@@ -19,7 +22,10 @@ namespace STS2RitsuLib.Utils.Persistence
         private readonly string _modId;
 
         /// <summary>
-        ///     <para xml:lang="en">Configures the persistent entry and initializes its in-memory data with a deep copy of <paramref name="defaultValues" />.</para>
+        ///     <para xml:lang="en">
+        ///         Configures the persistent entry and initializes its in-memory data with a deep copy of
+        ///         <paramref name="defaultValues" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">配置持久化条目，并以 <paramref name="defaultValues" /> 的深层副本初始化其内存数据。</para>
         /// </summary>
         public PersistentDataEntry(
@@ -44,13 +50,19 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Current deserialized data object; mutate it through <see cref="Modify" /> to raise change notifications.</para>
+        ///     <para xml:lang="en">
+        ///         Current deserialized data object; mutate it through <see cref="Modify" /> to raise change
+        ///         notifications.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当前反序列化的数据对象；请通过 <see cref="Modify" /> 修改它以触发变更通知。</para>
         /// </summary>
         public T Data { get; private set; }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolved Godot user-data path for this entry, using the active profile unless its context supplies another profile ID.</para>
+        ///     <para xml:lang="en">
+        ///         Resolved Godot user-data path for this entry, using the active profile unless its context
+        ///         supplies another profile ID.
+        ///     </para>
         ///     <para xml:lang="zh-CN">此条目解析后的 Godot 用户数据路径；除非上下文提供其他档案 ID，否则使用活动档案。</para>
         /// </summary>
         public string FilePath =>
@@ -69,11 +81,17 @@ namespace STS2RitsuLib.Utils.Persistence
         public event Action? Changed;
 
         /// <summary>
-        ///     <para xml:lang="en">Reads JSON from disk (with backup fallback), applies migrations, and updates <see cref="Data" />.</para>
+        ///     <para xml:lang="en">
+        ///         Reads JSON from disk (with backup fallback), applies migrations, and updates
+        ///         <see cref="Data" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">从磁盘读取 JSON（带备份回退），应用迁移，并更新 <see cref="Data" />。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> if data was loaded successfully; <see langword="false" /> if defaults were used because the file was missing or invalid.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if data was loaded successfully; <see langword="false" /> if defaults
+        ///         were used because the file was missing or invalid.
+        ///     </para>
         ///     <para xml:lang="zh-CN">成功加载数据时为 <see langword="true" />；因文件缺失或无效而使用默认值时为 <see langword="false" />。</para>
         /// </returns>
         public bool Load()
@@ -132,7 +150,10 @@ namespace STS2RitsuLib.Utils.Persistence
         ///     <para xml:lang="zh-CN">将 <see cref="Data" /> 序列化到 <see cref="FilePath" />。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> if the file was written successfully; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the file was written successfully; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">文件写入成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool Save()
@@ -145,7 +166,10 @@ namespace STS2RitsuLib.Utils.Persistence
         ///     <para xml:lang="zh-CN">将 <see cref="Data" /> 序列化到显式指定的路径，例如用于导出或测试。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> if the file was written successfully; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the file was written successfully; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">文件写入成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool SaveTo(string path)

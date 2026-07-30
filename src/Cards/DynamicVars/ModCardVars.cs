@@ -331,7 +331,10 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates a computed energy-icon variable compatible with the game's <c>energyIcons</c> formatter.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a computed energy-icon variable compatible with the game's <c>energyIcons</c>
+        ///         formatter.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建兼容游戏 <c>energyIcons</c> 格式化器的计算型能量图标变量。</para>
         /// </summary>
         public static ComputedEnergyVar ComputedEnergy(
@@ -666,7 +669,10 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates a computed damage variable with a custom dealer and preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a computed damage variable with a custom dealer and preview-specific base-value
+        ///         evaluation.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建可自定义伤害来源且支持预览专用基础值求值的计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
@@ -843,7 +849,10 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates a computed Block variable with a custom receiver and preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a computed Block variable with a custom receiver and preview-specific base-value
+        ///         evaluation.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建可自定义格挡接收者且支持预览专用基础值求值的计算型格挡变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(

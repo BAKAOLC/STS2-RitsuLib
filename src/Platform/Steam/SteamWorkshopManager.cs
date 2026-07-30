@@ -132,11 +132,13 @@ namespace STS2RitsuLib.Platform.Steam
                     $"[SteamWorkshop] Failed to load Workshop preview '{key}': {ex.Message}");
             }
 
-            if (texture != null)
-                lock (_previewTextureSyncRoot)
-                {
-                    _previewTextureCache[key] = texture;
-                }
+            if (texture == null)
+                return null;
+
+            lock (_previewTextureSyncRoot)
+            {
+                _previewTextureCache[key] = texture;
+            }
 
             return texture;
         }

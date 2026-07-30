@@ -24,7 +24,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Runs <paramref name="continuation" /> before awaiting the original task and returns the original result.</para>
+        ///     <para xml:lang="en">
+        ///         Runs <paramref name="continuation" /> before awaiting the original task and returns the
+        ///         original result.
+        ///     </para>
         ///     <para xml:lang="zh-CN">在等待原始任务前运行 <paramref name="continuation" />，并返回原始结果。</para>
         /// </summary>
         public static async Task<T> Before<T>(Task<T> originalTask, Func<Task> continuation)
@@ -63,7 +66,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Runs <paramref name="continuation" /> after the original task completes and returns the original result.</para>
+        ///     <para xml:lang="en">
+        ///         Runs <paramref name="continuation" /> after the original task completes and returns the
+        ///         original result.
+        ///     </para>
         ///     <para xml:lang="zh-CN">在原始任务完成后运行 <paramref name="continuation" />，并返回原始结果。</para>
         /// </summary>
         public static async Task<T> After<T>(Task<T> originalTask, Action<T> continuation)
@@ -77,7 +83,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Runs <paramref name="continuation" /> after the original task completes and returns the original result.</para>
+        ///     <para xml:lang="en">
+        ///         Runs <paramref name="continuation" /> after the original task completes and returns the
+        ///         original result.
+        ///     </para>
         ///     <para xml:lang="zh-CN">在原始任务完成后运行 <paramref name="continuation" />，并返回原始结果。</para>
         /// </summary>
         public static async Task<T> After<T>(Task<T> originalTask, Func<T, Task> continuation)

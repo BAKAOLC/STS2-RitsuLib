@@ -53,12 +53,10 @@ namespace STS2RitsuLib.Networking.Sidecar
             ReadOnlySpan<byte> segment)
         {
             if (segment.Length > ushort.MaxValue)
-            {
                 throw new ArgumentOutOfRangeException(
                     nameof(segment),
                     segment.Length,
                     $"A chunk segment cannot exceed {ushort.MaxValue} bytes.");
-            }
 
             if (destination.Length < FixedHeaderSize + segment.Length)
                 throw new ArgumentException("Buffer too small", nameof(destination));

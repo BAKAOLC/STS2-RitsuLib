@@ -63,14 +63,13 @@ namespace STS2RitsuLib.Diagnostics
                 return;
             }
 
-            var scanResult = FindHarmonyRuntimeDetourConflicts(bridge);
-            var conflicts = scanResult.Conflicts;
+            var (conflicts, failedQueryCount) = FindHarmonyRuntimeDetourConflicts(bridge);
             if (conflicts.Count == 0)
             {
-                if (scanResult.FailedQueryCount > 0)
+                if (failedQueryCount > 0)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"{Prefix} RuntimeDetour hook lookup failed for {scanResult.FailedQueryCount} Harmony-patched method(s), so the overlap check is incomplete.");
+                        $"{Prefix} RuntimeDetour hook lookup failed for {failedQueryCount} Harmony-patched method(s), so the overlap check is incomplete.");
                     ShowCompatibilityToast(riskMods, [], true);
                     return;
                 }
@@ -81,10 +80,10 @@ namespace STS2RitsuLib.Diagnostics
             }
 
             RitsuLibFramework.Logger.Warn(BuildConflictWarning(conflicts));
-            if (scanResult.FailedQueryCount > 0)
+            if (failedQueryCount > 0)
                 RitsuLibFramework.Logger.Warn(
-                    $"{Prefix} RuntimeDetour hook lookup also failed for {scanResult.FailedQueryCount} Harmony-patched method(s); additional overlaps may exist.");
-            ShowCompatibilityToast(riskMods, conflicts, scanResult.FailedQueryCount > 0);
+                    $"{Prefix} RuntimeDetour hook lookup also failed for {failedQueryCount} Harmony-patched method(s); additional overlaps may exist.");
+            ShowCompatibilityToast(riskMods, conflicts, failedQueryCount > 0);
         }
 
         private static IReadOnlyList<RuntimeDetourRiskMod> FindRuntimeDetourRiskMods()

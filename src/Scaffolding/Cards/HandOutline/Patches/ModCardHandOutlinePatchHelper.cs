@@ -50,7 +50,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
                     !GodotObject.IsInstanceValid(cardNode.CardHighlight))
                     return false;
 
-                var builtInShow = ShouldShowBuiltInHighlight(holder!, model);
+                var builtInShow = ShouldShowBuiltInHighlight(holder, model);
                 var force = evaluation.Rule.VisibleWhenUnplayable && !builtInShow;
                 if (!builtInShow && !force)
                     return false;
@@ -125,9 +125,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
 
             var selectModeOverride =
                 (HandField?.GetValue(holder) as NPlayerHand)?.SelectModeGoldGlowOverride;
-            var shouldGlowGold = selectModeOverride != null
-                ? selectModeOverride(model)
-                : inPlayPhase && canPlay && model.ShouldGlowGold;
+            var shouldGlowGold = selectModeOverride?.Invoke(model) ??
+                                 (inPlayPhase && canPlay && model.ShouldGlowGold);
 
             return canPlay || shouldGlowRed || shouldGlowGold;
         }

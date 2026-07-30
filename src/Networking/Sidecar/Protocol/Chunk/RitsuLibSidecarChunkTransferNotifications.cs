@@ -27,8 +27,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (subscribers == null)
                 return;
 
+            // Event invocation lists contain delegates of the event's declared type.
+            // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop
             foreach (Action<RitsuLibSidecarChunkReceiveProgress> subscriber in subscribers.GetInvocationList())
-            {
                 try
                 {
                     subscriber(progress);
@@ -39,7 +40,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                         $"chunk-receive-progress-subscriber-exception:{subscriber.Method.DeclaringType?.FullName}:{subscriber.Method.Name}:{ex.GetType().FullName}",
                         $"[Sidecar] Chunk receive-progress subscriber failed: {ex.Message}");
                 }
-            }
         }
     }
 }

@@ -5,7 +5,10 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Process-wide registration surface for mod-owned dynamic enum values, centralizing deterministic value allocation, ownership validation, and reverse lookup.</para>
+    ///     <para xml:lang="en">
+    ///         Process-wide registration surface for mod-owned dynamic enum values, centralizing deterministic
+    ///         value allocation, ownership validation, and reverse lookup.
+    ///     </para>
     ///     <para xml:lang="zh-CN">面向模组归属动态枚举值的进程级注册入口，集中处理确定性数值分配、归属校验和反向查找。</para>
     /// </summary>
     /// <typeparam name="TEnum">
@@ -13,7 +16,11 @@ namespace STS2RitsuLib.Utils
     ///     <para xml:lang="zh-CN">要扩展的 32 位底层枚举类型。</para>
     /// </typeparam>
     /// <remarks>
-    ///     <para xml:lang="en">Prefer a type-specific registry such as <c>ModCardTagRegistry</c> when available, because it may add metadata or lifecycle rules. Use this generic registry only for extension points that need a stable value and ownership validation.</para>
+    ///     <para xml:lang="en">
+    ///         Prefer a type-specific registry such as <c>ModCardTagRegistry</c> when available, because it
+    ///         may add metadata or lifecycle rules. Use this generic registry only for extension points that need a stable
+    ///         value and ownership validation.
+    ///     </para>
     ///     <para xml:lang="zh-CN">存在类型专用注册表时应优先使用，例如 <c>ModCardTagRegistry</c>，因为它可能附加元数据或生命周期规则。仅需要稳定值和归属校验的扩展点才使用此通用注册表。</para>
     /// </remarks>
     public static class DynamicEnumValueRegistry<TEnum> where TEnum : struct, Enum
@@ -214,8 +221,15 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the deterministic enum value for <paramref name="id" /> without registering a definition. Unknown IDs are recorded by the minter; prefer <see cref="Register" /> or <see cref="RegisterOwned" /> for new public extension values.</para>
-        ///     <para xml:lang="zh-CN">返回 <paramref name="id" /> 的确定性枚举值，但不注册定义。未知 ID 会由生成器登记；分配新的公开扩展值时优先使用 <see cref="Register" /> 或 <see cref="RegisterOwned" />。</para>
+        ///     <para xml:lang="en">
+        ///         Returns the deterministic enum value for <paramref name="id" /> without registering a
+        ///         definition. Unknown IDs are recorded by the minter; prefer <see cref="Register" /> or
+        ///         <see cref="RegisterOwned" /> for new public extension values.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="id" /> 的确定性枚举值，但不注册定义。未知 ID 会由生成器登记；分配新的公开扩展值时优先使用
+        ///         <see cref="Register" /> 或 <see cref="RegisterOwned" />。
+        ///     </para>
         /// </summary>
         public static TEnum GetValue(string id)
         {
@@ -224,11 +238,17 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the deterministic enum value for <paramref name="id" /> without failing on hash collisions. An unknown ID is computed without registering a definition or adding a minter reverse lookup.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the deterministic enum value for <paramref name="id" /> without failing on hash
+        ///         collisions. An unknown ID is computed without registering a definition or adding a minter reverse lookup.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回 <paramref name="id" /> 的确定性枚举值，且不会因哈希碰撞失败。未知 ID 只计算值，不注册定义，也不加入生成器的反向查找。</para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">This is an explicit escape hatch for diagnostics and compatibility code that must recover the raw value an ID would have produced after another ID minted the same numeric value.</para>
+        ///     <para xml:lang="en">
+        ///         This is an explicit escape hatch for diagnostics and compatibility code that must recover the
+        ///         raw value an ID would have produced after another ID minted the same numeric value.
+        ///     </para>
         ///     <para xml:lang="zh-CN">这是面向诊断和兼容代码的显式旁路：即使其他 ID 已生成同一数值，也可取回该 ID 本应生成的原始值。</para>
         /// </remarks>
         public static TEnum GetValueIgnoringCollisions(string id)
@@ -272,7 +292,10 @@ namespace STS2RitsuLib.Utils
         ///     <para xml:lang="zh-CN">尝试返回或生成 <paramref name="id" /> 的确定性枚举值。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="false" /> only when an unknown ID collides with an ID already recorded by the minter.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="false" /> only when an unknown ID collides with an ID already recorded by the
+        ///         minter.
+        ///     </para>
         ///     <para xml:lang="zh-CN">仅当未知 ID 与生成器已登记的 ID 发生哈希碰撞时返回 <see langword="false" />。</para>
         /// </returns>
         public static bool TryGetValue(string id, out TEnum value)
@@ -292,7 +315,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves a registered dynamic ID, a vanilla enum name or numeric literal, or an otherwise unknown ID by minting its deterministic value, in that order.</para>
+        ///     <para xml:lang="en">
+        ///         Resolves a registered dynamic ID, a vanilla enum name or numeric literal, or an otherwise
+        ///         unknown ID by minting its deterministic value, in that order.
+        ///     </para>
         ///     <para xml:lang="zh-CN">依次尝试将输入解析为已注册动态 ID、原版枚举名称或数字字面量；若均不匹配，则为未知 ID 生成确定性值。</para>
         /// </summary>
         public static bool TryResolve(string idOrEnumName, out TEnum value)
@@ -325,7 +351,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Tries to resolve the normalized mint key that produced <paramref name="value" />, including values minted by <see cref="GetValue" /> without registration.</para>
+        ///     <para xml:lang="en">
+        ///         Tries to resolve the normalized mint key that produced <paramref name="value" />, including
+        ///         values minted by <see cref="GetValue" /> without registration.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试解析生成 <paramref name="value" /> 的规范化生成键，包括通过 <see cref="GetValue" /> 生成但未注册的值。</para>
         /// </summary>
         public static bool TryGetMintedId(TEnum value, out string id)
@@ -334,7 +363,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Whether <paramref name="value" /> is recorded by this registry's minter, including values minted by <see cref="GetValue" /> without a registered definition.</para>
+        ///     <para xml:lang="en">
+        ///         Whether <paramref name="value" /> is recorded by this registry's minter, including values
+        ///         minted by <see cref="GetValue" /> without a registered definition.
+        ///     </para>
         ///     <para xml:lang="zh-CN"><paramref name="value" /> 是否已由此注册表的生成器登记，包括通过 <see cref="GetValue" /> 生成但未注册定义的值。</para>
         /// </summary>
         public static bool IsMinted(TEnum value)

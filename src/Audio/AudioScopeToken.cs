@@ -35,7 +35,10 @@ namespace STS2RitsuLib.Audio
         internal bool IsClosing => Volatile.Read(ref _disposeState) != 0;
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to stop and release all attached handles, marking the token disposed only after complete cleanup; failed cleanup can be retried.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to stop and release all attached handles, marking the token disposed only after
+        ///         complete cleanup; failed cleanup can be retried.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试停止并释放所有附加句柄；仅在清理全部完成后将令牌标记为已释放，失败的清理可再次尝试。</para>
         /// </summary>
         public void Dispose()
@@ -50,7 +53,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to stop and release all handles currently attached to this token without changing its disposed state.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to stop and release all handles currently attached to this token without changing its
+        ///         disposed state.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试停止并释放当前附加到此令牌的所有句柄，但不更改令牌的释放状态。</para>
         /// </summary>
         /// <param name="allowFadeOut">
@@ -58,7 +64,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止事件句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one handle was found and every release completed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one handle was found and every release completed;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到至少一个句柄且所有释放均已完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool StopAll(bool allowFadeOut = true)

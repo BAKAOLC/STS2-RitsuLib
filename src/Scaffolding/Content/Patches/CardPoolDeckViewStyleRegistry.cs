@@ -72,9 +72,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 case IModCardPoolDeckViewStyle { DeckViewStyle: not null } direct:
                     style = direct.DeckViewStyle;
                     return true;
-                case IModCardPoolAssetOverrides profileSource when
-                    profileSource.AssetProfile.DeckViewStyle != null:
-                    style = profileSource.AssetProfile.DeckViewStyle;
+                case IModCardPoolAssetOverrides { AssetProfile.DeckViewStyle: { } deckViewStyle }:
+                    style = deckViewStyle;
                     return true;
             }
 

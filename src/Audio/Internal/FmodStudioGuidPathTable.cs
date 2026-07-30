@@ -54,7 +54,9 @@ namespace STS2RitsuLib.Audio.Internal
         internal static int ParseAndMerge(string text, string? sourceLabel = null)
         {
             lock (ParseGate)
+            {
                 return ParseAndMergeCore(text, sourceLabel);
+            }
         }
 
         private static int ParseAndMergeCore(string text, string? sourceLabel)

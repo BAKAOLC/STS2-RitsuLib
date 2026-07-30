@@ -66,7 +66,10 @@ namespace STS2RitsuLib.Graphics
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Normalizes a configured filter name to <c>nearest</c>, <c>linear</c>, <c>nearest_mipmap</c>, or <c>linear_mipmap</c>.</para>
+        ///     <para xml:lang="en">
+        ///         Normalizes a configured filter name to <c>nearest</c>, <c>linear</c>, <c>nearest_mipmap</c>, or
+        ///         <c>linear_mipmap</c>.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将配置的过滤名称规范化为 <c>nearest</c>、<c>linear</c>、<c>nearest_mipmap</c> 或 <c>linear_mipmap</c>。</para>
         /// </summary>
         internal static string NormalizeMode(string? mode)

@@ -7,13 +7,19 @@ namespace STS2RitsuLib.Audio
     public sealed class AudioRoutingOptions
     {
         /// <summary>
-        ///     <para xml:lang="en">Gets or initializes the optional case-sensitive channel name; null, empty, or whitespace disables channel routing.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional case-sensitive channel name; null, empty, or whitespace
+        ///         disables channel routing.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或初始化可选且区分大小写的通道名称；为 <see langword="null" />、空或空白时禁用通道路由。</para>
         /// </summary>
         public string? Channel { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or initializes the optional case-sensitive tag name; null, empty, or whitespace disables tag routing.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional case-sensitive tag name; null, empty, or whitespace disables
+        ///         tag routing.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或初始化可选且区分大小写的标签名称；为 <see langword="null" />、空或空白时禁用标签路由。</para>
         /// </summary>
         public string? Tag { get; init; }
@@ -25,7 +31,10 @@ namespace STS2RitsuLib.Audio
         public AudioChannelMode ChannelMode { get; init; } = AudioChannelMode.ReplaceExisting;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or initializes whether channel and tag-group replacement cleanup may fade out previous handles.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether channel and tag-group replacement cleanup may fade out previous
+        ///         handles.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或初始化清理被通道或标签组替换的旧句柄时是否允许淡出。</para>
         /// </summary>
         public bool AllowFadeOutOnReplace { get; init; } = true;

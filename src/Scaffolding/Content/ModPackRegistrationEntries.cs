@@ -360,8 +360,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     public sealed class UnlockEpochAfterRunCountPackEntry<TEpoch> : IModContentPackEntry
         where TEpoch : EpochModel, new()
     {
-        private readonly int _requiredRuns;
         private readonly bool _requireVictory;
+        private readonly int _requiredRuns;
 
         /// <summary>
         ///     <para xml:lang="en">Creates a rule with the specified run-count threshold.</para>

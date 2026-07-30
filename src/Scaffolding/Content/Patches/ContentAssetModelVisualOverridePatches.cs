@@ -8,7 +8,6 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
-using STS2RitsuLib.Scaffolding.Characters;
 #if !STS2_AT_LEAST_0_108_0
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Utils;
@@ -1057,6 +1056,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
         {
+            // Keep the owned-character override path visually distinct from the generic interface fallback.
+            // ReSharper disable once InvertIf
             if (ModCharacterOwnedVisualOverrideHelper.TryGetExistingCardPortraitPaths(
                     __instance,
                     out var ownedPortraitPath,

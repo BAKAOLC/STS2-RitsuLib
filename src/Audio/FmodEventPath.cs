@@ -1,7 +1,10 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">A lightweight value wrapper for an FMOD Studio event or snapshot path such as <c>event:/sfx/block_gain</c>.</para>
+    ///     <para xml:lang="en">
+    ///         A lightweight value wrapper for an FMOD Studio event or snapshot path such as
+    ///         <c>event:/sfx/block_gain</c>.
+    ///     </para>
     ///     <para xml:lang="zh-CN">FMOD Studio 事件或快照路径的轻量值包装，例如 <c>event:/sfx/block_gain</c>。</para>
     /// </summary>
     /// <param name="Value">

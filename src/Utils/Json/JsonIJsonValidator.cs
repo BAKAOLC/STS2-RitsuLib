@@ -16,7 +16,10 @@ namespace STS2RitsuLib.Utils.Json
     ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para xml:lang="en">A DOM cannot reveal the original byte encoding or duplicate object names discarded before construction; validate those properties while parsing the source JSON.</para>
+    ///     <para xml:lang="en">
+    ///         A DOM cannot reveal the original byte encoding or duplicate object names discarded before
+    ///         construction; validate those properties while parsing the source JSON.
+    ///     </para>
     ///     <para xml:lang="zh-CN">DOM 无法反映原始字节编码，也无法发现构建前已被丢弃的重复对象成员名；这些属性应在解析源 JSON 时验证。</para>
     /// </remarks>
     public static class JsonIJsonValidator
@@ -26,8 +29,14 @@ namespace STS2RitsuLib.Utils.Json
         ///     <para xml:lang="zh-CN">尝试验证 DOM 节点是否符合可在 DOM 中检查的 I-JSON 约束。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> with a null <paramref name="error" /> when validation succeeds; otherwise <see langword="false" /> with a diagnostic.</para>
-        ///     <para xml:lang="zh-CN">验证成功时返回 <see langword="true" />，且 <paramref name="error" /> 为 null；否则返回 <see langword="false" /> 并提供诊断。</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> with a null <paramref name="error" /> when validation succeeds;
+        ///         otherwise <see langword="false" /> with a diagnostic.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         验证成功时返回 <see langword="true" />，且 <paramref name="error" /> 为 null；否则返回
+        ///         <see langword="false" /> 并提供诊断。
+        ///     </para>
         /// </returns>
         public static bool TryValidate(JsonNode? node, out string? error)
         {
@@ -111,6 +120,8 @@ namespace STS2RitsuLib.Utils.Json
 
         private static bool ValidateNumber(JsonNode node, string path, ref string? error)
         {
+            // Keep the validation failure and diagnostic assignment together.
+            // ReSharper disable once InvertIf
             if (!TryGetFiniteDouble(node, out _))
             {
                 error = $"I-JSON requires a finite IEEE 754 binary64 number at {path}.";
@@ -122,19 +133,17 @@ namespace STS2RitsuLib.Utils.Json
 
         private static bool TryGetFiniteDouble(JsonNode node, out double value)
         {
-            value = default;
+            value = 0;
 
             if (node is not JsonValue jsonValue)
                 return false;
 
             if (jsonValue.TryGetValue<JsonElement>(out var element))
-            {
                 return element.ValueKind == JsonValueKind.Number &&
                        element.TryGetDouble(out value) &&
                        double.IsFinite(value);
-            }
 
-            if (jsonValue.TryGetValue<double>(out value) && !double.IsFinite(value))
+            if (jsonValue.TryGetValue(out value) && !double.IsFinite(value))
                 return false;
 
             if (jsonValue.TryGetValue<float>(out var single) && !float.IsFinite(single))
@@ -177,7 +186,7 @@ namespace STS2RitsuLib.Utils.Json
 
         private static bool TryValidateUnicode(string value, out int invalidCodePoint, out int invalidIndex)
         {
-            invalidCodePoint = default;
+            invalidCodePoint = 0;
             invalidIndex = -1;
 
             for (var i = 0; i < value.Length; i++)
@@ -204,6 +213,8 @@ namespace STS2RitsuLib.Utils.Json
                     continue;
                 }
 
+                // Preserve the surrogate-pair branch as the primary loop flow.
+                // ReSharper disable once InvertIf
                 if (char.IsLowSurrogate(ch) || IsNoncharacter(ch))
                 {
                     invalidCodePoint = ch;

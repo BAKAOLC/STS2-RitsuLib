@@ -21,13 +21,19 @@ namespace STS2RitsuLib.Networking.Sidecar
     public enum RitsuLibSidecarSyncFailurePolicy : byte
     {
         /// <summary>
-        ///     <para xml:lang="en">For game-flow messages, every targeted Sidecar-capable peer must be reachable before local handling runs.</para>
+        ///     <para xml:lang="en">
+        ///         For game-flow messages, every targeted Sidecar-capable peer must be reachable before local
+        ///         handling runs.
+        ///     </para>
         ///     <para xml:lang="zh-CN">用于游戏流程消息；本地处理前，每个目标且支持 Sidecar 的对等方都必须可达。</para>
         /// </summary>
         Required = 0,
 
         /// <summary>
-        ///     <para xml:lang="en">For non-gameplay messages only; unavailable peers are skipped and failures do not block local handling.</para>
+        ///     <para xml:lang="en">
+        ///         For non-gameplay messages only; unavailable peers are skipped and failures do not block local
+        ///         handling.
+        ///     </para>
         ///     <para xml:lang="zh-CN">仅用于非游戏流程消息；不可用的对等方会被跳过，失败不会阻止本地处理。</para>
         /// </summary>
         BestEffort = 1,
@@ -40,7 +46,10 @@ namespace STS2RitsuLib.Networking.Sidecar
     public enum RitsuLibSidecarSyncBroadcastScope : byte
     {
         /// <summary>
-        ///     <para xml:lang="en">Matches the host broadcast behavior of vanilla <see cref="INetGameService.SendMessage{T}(T)" />.</para>
+        ///     <para xml:lang="en">
+        ///         Matches the host broadcast behavior of vanilla <see cref="INetGameService.SendMessage{T}(T)" />
+        ///         .
+        ///     </para>
         ///     <para xml:lang="zh-CN">与原版 <see cref="INetGameService.SendMessage{T}(T)" /> 的主机广播行为一致。</para>
         /// </summary>
         ReadyPeers = 0,
@@ -92,7 +101,10 @@ namespace STS2RitsuLib.Networking.Sidecar
     ///     <para xml:lang="zh-CN">发送消息所用的原版传输模式。</para>
     /// </param>
     /// <param name="Channel">
-    ///     <para xml:lang="en">Optional explicit channel; <see langword="null" /> uses <see cref="NetTransferModeExtensions.ToChannelId" />.</para>
+    ///     <para xml:lang="en">
+    ///         Optional explicit channel; <see langword="null" /> uses
+    ///         <see cref="NetTransferModeExtensions.ToChannelId" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">可选显式通道；<see langword="null" /> 时使用 <see cref="NetTransferModeExtensions.ToChannelId" />。</para>
     /// </param>
     /// <param name="FailurePolicy">
@@ -132,7 +144,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         bool ShouldBroadcast = false)
     {
         /// <summary>
-        ///     <para xml:lang="en">Preserves the original constructor ABI for mods compiled before transport and failure policies were added.</para>
+        ///     <para xml:lang="en">
+        ///         Preserves the original constructor ABI for mods compiled before transport and failure policies
+        ///         were added.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为传输和失败策略加入前编译的模组保留原始构造函数 ABI。</para>
         /// </summary>
         public RitsuLibSidecarSyncMessageDescriptor(
@@ -249,7 +264,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Sends a sync message using <see cref="INetGameService.SendMessage{T}(T)" />-style routing semantics.</para>
+        ///     <para xml:lang="en">
+        ///         Sends a sync message using <see cref="INetGameService.SendMessage{T}(T)" />-style routing
+        ///         semantics.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用 <see cref="INetGameService.SendMessage{T}(T)" /> 式路由语义发送同步消息。</para>
         /// </summary>
         public static bool Send<T>(
@@ -284,7 +302,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Sends a sync message from client to host, or starts local handling for host and single-player services.</para>
+        ///     <para xml:lang="en">
+        ///         Sends a sync message from client to host, or starts local handling for host and single-player
+        ///         services.
+        ///     </para>
         ///     <para xml:lang="zh-CN">从客户端向主机发送同步消息，或在主机和单人游戏服务中启动本地处理。</para>
         /// </summary>
         public static bool SendToHost<T>(

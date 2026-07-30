@@ -10,7 +10,10 @@ namespace STS2RitsuLib.Utils.Json
     public static class JsonMergePatch
     {
         /// <summary>
-        ///     <para xml:lang="en">Applies an RFC 7386 merge patch to <paramref name="target" /> and returns the merged result. A non-object <paramref name="patch" /> replaces the target.</para>
+        ///     <para xml:lang="en">
+        ///         Applies an RFC 7386 merge patch to <paramref name="target" /> and returns the merged result. A
+        ///         non-object <paramref name="patch" /> replaces the target.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 RFC 7386 合并补丁应用于 <paramref name="target" /> 并返回合并结果。非对象的 <paramref name="patch" /> 会替换目标。</para>
         /// </summary>
         public static JsonNode? Apply(JsonNode? target, JsonNode? patch)
@@ -47,7 +50,9 @@ namespace STS2RitsuLib.Utils.Json
                     JsonObject targetChild;
                     if (target.TryGetPropertyValue(kv.Key, out var existing) &&
                         TryGetObject(existing, out var existingObj))
+                    {
                         targetChild = existingObj;
+                    }
                     else
                     {
                         targetChild = new();

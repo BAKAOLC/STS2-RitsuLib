@@ -127,9 +127,9 @@ namespace STS2RitsuLib.Platform.Steam
 
         private sealed class SteamWorkshopUpdateSnapshotEntry
         {
-            [JsonPropertyName("updated")] public uint Updated { get; set; }
+            [JsonPropertyName("updated")] public uint Updated { get; init; }
 
-            [JsonPropertyName("title")] public string? Title { get; set; }
+            [JsonPropertyName("title")] public string? Title { get; init; }
         }
     }
 

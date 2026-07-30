@@ -71,34 +71,34 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private static readonly Vector2 CombatPileHoverScale = Vector2.One * 1.25f;
 
         private static readonly StringName LabelThemeType = "Label";
+        private bool _actionCountProviderFailed;
+        private bool _actionIsOpen;
 
         // Action-mode fields (null when Definition is set).
         private int _actionLastKnownCount = -1;
-        private bool _actionCountProviderFailed;
-        private bool _actionIsOpen;
         private bool _actionOpenPredicateFailed;
         private bool _actionVisibilityPredicateFailed;
 
         // Shared state between the two modes.
         private Tween? _bumpTween;
-        private Tween? _openStateTween;
 
         private Control? _countContainer;
         private MegaLabel _countLabel = null!;
         private int _currentCount;
-        private bool _hovered;
 
         private HoverTip? _hoverTip;
+        private bool _hovered;
 
         // Either the procedural TextureRect or a cloned vanilla deck-icon subtree.
         private Control _icon = null!;
         private Control _iconHost = null!;
+        private Tween? _openStateTween;
 
         // Pile-mode fields (null when ActionDefinition is set).
         private ModCardPile? _pile;
-        private bool _pileVisibilityPredicateFailed;
 
         private Vector2 _pileHoverScale = TopBarHoverScale;
+        private bool _pileVisibilityPredicateFailed;
         private Player? _player;
         private bool _pressed;
 
@@ -110,7 +110,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///         牌堆模式下的已注册牌堆定义；操作模式下为 <see langword="null" />。
         ///     </para>
         /// </summary>
-        public ModCardPileDefinition? Definition { get; private set; }
+        public ModCardPileDefinition? Definition { get; private init; }
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -120,7 +120,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///         操作模式下的已注册操作定义；牌堆模式下为 <see langword="null" />。
         ///     </para>
         /// </summary>
-        public ModTopBarButtonDefinition? ActionDefinition { get; private set; }
+        public ModTopBarButtonDefinition? ActionDefinition { get; private init; }
 
         /// <summary>
         ///     <para xml:lang="en">Whether this button runs in action mode without a backing pile.</para>
@@ -677,6 +677,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private Control? ResolveVanillaCombatPileRootForCountTemplate()
         {
+            // The local name keeps the following style and anchor checks concise.
+            // ReSharper disable once InlineTemporaryVariable
             if (Definition is not { } def)
                 return null;
             var ui = NCombatRoom.Instance?.Ui;
@@ -723,6 +725,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
         /// </summary>
         private void PollActionCount(bool force)
         {
+            // The local name keeps repeated action-definition access concise.
+            // ReSharper disable once InlineTemporaryVariable
             if (ActionDefinition is not { } def)
                 return;
 
@@ -780,6 +784,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void RefreshActionVisibility()
         {
+            // The local name keeps repeated action-definition access concise.
+            // ReSharper disable once InlineTemporaryVariable
             if (ActionDefinition is not { } def)
                 return;
 
@@ -812,6 +818,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void RefreshActionOpenState(bool immediate = false)
         {
+            // The local name keeps repeated action-definition access concise.
+            // ReSharper disable once InlineTemporaryVariable
             if (ActionDefinition is not { } def)
                 return;
 
@@ -850,6 +858,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void RefreshPileButtonVisibility()
         {
+            // The local name keeps repeated pile-definition access concise.
+            // ReSharper disable once InlineTemporaryVariable
             if (Definition is not { } def)
                 return;
 
@@ -900,6 +910,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void RefreshCombatScopedTopBarPile()
         {
+            // The local name keeps the resolved definition stable and concise for this refresh.
+            // ReSharper disable once InlineTemporaryVariable
             if (Definition is not
                 {
                     Scope: ModCardPileScope.CombatOnly,
@@ -1101,6 +1113,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 .SetEase(Tween.EaseType.Out)
                 .SetTrans(Tween.TransitionType.Expo);
 
+            // The local name avoids repeating the property in the click context.
+            // ReSharper disable once InlineTemporaryVariable
             if (ActionDefinition is { } actionDef)
             {
                 actionDef.OnClick(new(actionDef, _player, this));

@@ -497,14 +497,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             CustomMinimumSize = _style.CounterSize;
             Size = _style.CounterSize;
 
-            if (IsNodeReady())
-            {
-                if (resetIconBrightness)
-                    _icon.SetShaderBrightness(1f);
-                ApplyStyle();
-                ApplyDefinition();
-                Refresh(_boundPlayer);
-            }
+            if (!IsNodeReady())
+                return;
+
+            if (resetIconBrightness)
+                _icon.SetShaderBrightness(1f);
+            ApplyStyle();
+            ApplyDefinition();
+            Refresh(_boundPlayer);
         }
 
         /// <summary>

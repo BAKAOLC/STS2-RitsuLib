@@ -4,7 +4,10 @@ using System.Runtime.CompilerServices;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Tracks case-sensitive named channels and tag groups for playback replacement and bulk stop operations.</para>
+    ///     <para xml:lang="en">
+    ///         Tracks case-sensitive named channels and tag groups for playback replacement and bulk stop
+    ///         operations.
+    ///     </para>
     ///     <para xml:lang="zh-CN">跟踪区分大小写的命名通道和标签组，用于替换播放与批量停止操作。</para>
     /// </summary>
     public sealed class AudioChannelRegistry
@@ -45,7 +48,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止被替换的占用者时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the handle already owns or successfully claims the channel; <see langword="false" /> when an existing owner is kept.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the handle already owns or successfully claims the channel;
+        ///         <see langword="false" /> when an existing owner is kept.
+        ///     </para>
         ///     <para xml:lang="zh-CN">句柄已占用或成功占用该通道时为 <see langword="true" />；保留已有占用者时为 <see langword="false" />。</para>
         /// </returns>
         public bool TryClaimChannel(string channel, IAudioHandle handle, AudioChannelMode mode, bool allowFadeOut)
@@ -124,7 +130,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to stop and release every handle in a tag group, retaining entries whose release fails.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to stop and release every handle in a tag group, retaining entries whose release
+        ///         fails.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试停止并释放标签组中的所有句柄，并保留释放失败的条目。</para>
         /// </summary>
         /// <param name="tag">
@@ -136,11 +145,15 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one handle was found and every release completed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one handle was found and every release completed;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到至少一个句柄且所有释放均已完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool StopTag(string tag, bool allowFadeOut = true)
         {
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (!_tags.TryGetValue(tag, out var handles))
                 return false;
 
@@ -174,7 +187,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to stop and release the handle assigned to a named channel, removing it only when release succeeds.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to stop and release the handle assigned to a named channel, removing it only when
+        ///         release succeeds.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试停止并释放分配到命名通道的句柄，并且仅在释放成功时移除它。</para>
         /// </summary>
         /// <param name="channel">
@@ -186,7 +202,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when an assigned handle was found and released; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when an assigned handle was found and released; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到并成功释放已分配句柄时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool StopChannel(string channel, bool allowFadeOut = true)

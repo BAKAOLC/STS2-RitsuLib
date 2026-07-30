@@ -37,7 +37,10 @@ namespace STS2RitsuLib.Patching.Models
     ///     <para xml:lang="zh-CN">可选的描述；默认值为 <c>Patch Type.Method</c>。</para>
     /// </param>
     /// <param name="parameterTypes">
-    ///     <para xml:lang="en">Method parameter types used to resolve an overload, or <see langword="null" /> to resolve by name only.</para>
+    ///     <para xml:lang="en">
+    ///         Method parameter types used to resolve an overload, or <see langword="null" /> to resolve by
+    ///         name only.
+    ///     </para>
     ///     <para xml:lang="zh-CN">用于解析重载的方法参数类型；为 <see langword="null" /> 时仅按名称解析。</para>
     /// </param>
     /// <param name="ignoreIfTargetMissing">

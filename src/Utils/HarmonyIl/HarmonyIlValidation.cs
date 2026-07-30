@@ -97,7 +97,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns true when a matched span can be replaced without moving labels or exception blocks from the interior of the span.</para>
+        ///     <para xml:lang="en">
+        ///         Returns true when a matched span can be replaced without moving labels or exception blocks from
+        ///         the interior of the span.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当匹配区间可在不移动其内部标签或异常块的情况下安全替换时返回 true。</para>
         /// </summary>
         public static bool CanReplaceSpan(

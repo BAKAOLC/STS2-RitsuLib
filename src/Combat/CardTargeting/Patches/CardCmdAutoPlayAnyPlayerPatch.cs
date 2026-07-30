@@ -6,7 +6,6 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Godot;
@@ -119,6 +118,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             ICombatState combatState,
             AutoPlayType type)
         {
+            // The blocked branch deliberately keeps hook evaluation before moving the card and displaying feedback.
+            // ReSharper disable once InvertIf
             if (!Hook.ShouldPlay(combatState, card, out var preventer, type))
             {
                 await MoveToResultPileWithoutPlaying(choiceContext, card);
@@ -131,6 +132,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                             container,
                             NThoughtBubbleVfx.Create(line.GetFormattedText(), card.Owner.Creature, 1.0));
                 }
+
                 return;
             }
 

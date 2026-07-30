@@ -481,7 +481,7 @@ namespace STS2RitsuLib.Settings
                     return false;
                 }
 
-                snapshot = [..appliers];
+                snapshot = [.. appliers];
             }
 
             foreach (var applier in snapshot)
@@ -529,7 +529,7 @@ namespace STS2RitsuLib.Settings
             List<Func<ModSettingsPasteValidationContext, ModSettingsPasteVerdict>> snapshot;
             lock (PasteRulesLock)
             {
-                snapshot = [..PasteRules];
+                snapshot = [.. PasteRules];
             }
 
             foreach (var rule in snapshot)

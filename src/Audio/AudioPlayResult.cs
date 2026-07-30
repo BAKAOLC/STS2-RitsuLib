@@ -1,7 +1,10 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Describes the status, optional controllable handle, and diagnostic message produced by a playback request.</para>
+    ///     <para xml:lang="en">
+    ///         Describes the status, optional controllable handle, and diagnostic message produced by a
+    ///         playback request.
+    ///     </para>
     ///     <para xml:lang="zh-CN">描述播放请求产生的状态、可选可控制句柄和诊断消息。</para>
     /// </summary>
     public sealed class AudioPlayResult
@@ -20,7 +23,10 @@ namespace STS2RitsuLib.Audio
         public AudioPlayStatus Status { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the controllable handle created for the request, or null for handleless playback and failures.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the controllable handle created for the request, or null for handleless playback and
+        ///         failures.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取为请求创建的可控制句柄；无句柄播放和失败结果中为 <see langword="null" />。</para>
         /// </summary>
         public IAudioHandle? Handle { get; }
@@ -32,7 +38,10 @@ namespace STS2RitsuLib.Audio
         public string? Message { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets whether <see cref="Status" /> is <see cref="AudioPlayStatus.Started" />, independently of whether a handle exists.</para>
+        ///     <para xml:lang="en">
+        ///         Gets whether <see cref="Status" /> is <see cref="AudioPlayStatus.Started" />, independently of
+        ///         whether a handle exists.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取 <see cref="Status" /> 是否为 <see cref="AudioPlayStatus.Started" />，与是否存在句柄无关。</para>
         /// </summary>
         public bool Succeeded => Status == AudioPlayStatus.Started;
@@ -80,6 +89,8 @@ namespace STS2RitsuLib.Audio
         /// </exception>
         public static AudioPlayResult Fail(AudioPlayStatus status, string? message = null)
         {
+            // Keep the exceptional guard distinct from result construction.
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (status == AudioPlayStatus.Started)
                 throw new ArgumentOutOfRangeException(nameof(status), status, "A failed result cannot use Started.");
 

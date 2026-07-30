@@ -16,7 +16,10 @@ namespace STS2RitsuLib.Utils.Json
     public static class JsonPatch
     {
         /// <summary>
-        ///     <para xml:lang="en">Applies a JSON Patch (RFC 6902) document to <paramref name="target" /> and returns the patched result. The document must be an array of operation objects.</para>
+        ///     <para xml:lang="en">
+        ///         Applies a JSON Patch (RFC 6902) document to <paramref name="target" /> and returns the patched
+        ///         result. The document must be an array of operation objects.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 JSON 补丁（RFC 6902）文档应用于 <paramref name="target" /> 并返回应用后的结果。该文档必须是操作对象数组。</para>
         /// </summary>
         /// <exception cref="JsonPatchException">
@@ -270,7 +273,6 @@ namespace STS2RitsuLib.Utils.Json
         {
             value = root;
             foreach (var segment in segments)
-            {
                 switch (value)
                 {
                     case JsonObject obj when obj.TryGetPropertyValue(segment, out var child):
@@ -284,7 +286,6 @@ namespace STS2RitsuLib.Utils.Json
                         value = null;
                         return false;
                 }
-            }
 
             return true;
         }
@@ -337,7 +338,7 @@ namespace STS2RitsuLib.Utils.Json
         private static bool TryParseArrayIndex(string segment, out int index)
         {
             index = 0;
-            if (segment.Length == 0 || segment.Length > 1 && segment[0] == '0')
+            if (segment.Length == 0 || (segment.Length > 1 && segment[0] == '0'))
                 return false;
 
             foreach (var character in segment)
@@ -362,6 +363,8 @@ namespace STS2RitsuLib.Utils.Json
             if (candidate.Count >= path.Count)
                 return false;
 
+            // Avoid iterator allocation on this validation hot path.
+            // ReSharper disable once LoopCanBeConvertedToQuery
             for (var i = 0; i < candidate.Count; i++)
                 if (!string.Equals(candidate[i], path[i], StringComparison.Ordinal))
                     return false;
@@ -412,7 +415,6 @@ namespace STS2RitsuLib.Utils.Json
                 throw new JsonPatchException($"Member '{key}' must be a string.");
             }
         }
-
     }
 
     /// <summary>

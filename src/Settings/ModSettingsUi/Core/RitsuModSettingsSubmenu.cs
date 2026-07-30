@@ -2097,11 +2097,14 @@ namespace STS2RitsuLib.Settings
                     VisibleOnHostSurfaces: ModSettingsHostSurface.All,
                     SidebarVisibleOnlyWhenActive: false,
                     VisibleWhen: null,
+                    Sections.Count: > 0,
                 } &&
-                page.Sections.Count > 0 &&
-                page.Sections.All(section => section.VisibleWhen == null &&
-                                             section.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
-                                             section.Entries.Count > 0 &&
+                page.Sections.All(section => section is
+                                             {
+                                                 VisibleWhen: null,
+                                                 VisibleOnHostSurfaces: ModSettingsHostSurface.All,
+                                                 Entries.Count: > 0,
+                                             } &&
                                              section.Entries.All(entry =>
                                                  !ModSettingsVisibility.RequiresDynamicEvaluation(entry))))
                 return null;
@@ -4472,8 +4475,8 @@ namespace STS2RitsuLib.Settings
             public required int BuildVersion { get; set; }
             public CancellationTokenSource? BuildCancellation { get; set; }
             public Task? BuildTask { get; set; }
-            public required Control HeaderHost { get; set; }
-            public required Control ContentHost { get; set; }
+            public required Control HeaderHost { get; init; }
+            public required Control ContentHost { get; init; }
             public required string PageId { get; init; }
             public required string PageKey { get; init; }
             public required Control Root { get; init; }

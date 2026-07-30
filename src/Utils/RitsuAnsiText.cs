@@ -62,7 +62,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Parses supported ANSI SGR foreground colors plus bold and dim attributes into styled text segments.</para>
+        ///     <para xml:lang="en">
+        ///         Parses supported ANSI SGR foreground colors plus bold and dim attributes into styled text
+        ///         segments.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将受支持的 ANSI SGR 前景色以及粗体和暗淡属性解析为带样式文本片段。</para>
         /// </summary>
         public static IReadOnlyList<RitsuTextSegment> ParseSegments(string text)

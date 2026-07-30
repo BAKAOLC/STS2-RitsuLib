@@ -20,6 +20,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         private static readonly ConcurrentDictionary<Type, List<RegisteredRules>> RulesByCardType = new();
         private static int _sequence;
 
+        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> GoldSelector =
+            static rules => rules.GoldWhenBonusActive;
+
+        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> RedSelector =
+            static rules => rules.RedWhenHandWarning;
+
         /// <summary>
         ///     <para xml:lang="en">
         ///         Registers rules for <typeparamref name="TCard" />. Every matching registration is evaluated until
@@ -117,12 +123,6 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
 
             return false;
         }
-
-        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> GoldSelector =
-            static rules => rules.GoldWhenBonusActive;
-
-        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> RedSelector =
-            static rules => rules.RedWhenHandWarning;
 
         private readonly record struct RegisteredRules(ModCardHandGlowRules Rules, int Sequence);
     }

@@ -29,7 +29,6 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
     /// </summary>
     public static class CompendiumDetailPngExporter
     {
-        private static int _exportInProgress;
         private const string InspectRelicScene = "screens/inspect_relic_screen/inspect_relic_screen";
         private const string PotionScenePath = "potions/potion";
 
@@ -54,6 +53,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         private const int FramesBetweenItems = 1;
         private const int FramesBeforeRetry = 8;
         private const int MaxCaptureAttemptsPerFile = 2;
+        private static int _exportInProgress;
 
         private static readonly Vector2 RelicInspectMinUnscaledFloor = Vector2.Zero;
         private static readonly Vector2 PotionRowMinUnscaledFloor = Vector2.Zero;
@@ -475,7 +475,6 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             catch (Exception ex)
             {
                 log?.Invoke($"{logLinePrefix}{logFileTag}: {ex.Message}");
-                ok = false;
             }
             finally
             {
@@ -523,7 +522,6 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             catch (Exception ex)
             {
                 log?.Invoke($"{logLinePrefix}{logFileTag}: {ex.Message}");
-                ok = false;
             }
             finally
             {
@@ -743,6 +741,5 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             var n = ModelDb.AllPotionPools.SelectMany(pool => pool.AllPotions).Count();
             return (all, dep, n);
         }
-
     }
 }

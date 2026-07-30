@@ -3,7 +3,10 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Centralizes resource-path existence checks and startup-scoped deduplication of missing-path diagnostics for mod assets.</para>
+    ///     <para xml:lang="en">
+    ///         Centralizes resource-path existence checks and startup-scoped deduplication of missing-path
+    ///         diagnostics for mod assets.
+    ///     </para>
     ///     <para xml:lang="zh-CN">集中处理模组资源路径的存在性检查，并在启动阶段对缺失路径诊断去重。</para>
     /// </summary>
     internal static class AssetPathDiagnostics
@@ -32,7 +35,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Logs an unresolved, non-empty path supplied by a mod character asset profile, with duplicate diagnostics suppressed during startup.</para>
+        ///     <para xml:lang="en">
+        ///         Logs an unresolved, non-empty path supplied by a mod character asset profile, with duplicate
+        ///         diagnostics suppressed during startup.
+        ///     </para>
         ///     <para xml:lang="zh-CN">记录模组角色资源档案中无法解析的非空路径，并在启动阶段抑制重复诊断。</para>
         /// </summary>
         internal static void WarnModCharacterAssetOverrideMissing(object owner, string memberName, string path)

@@ -69,7 +69,10 @@ namespace STS2RitsuLib.Utils.Speculation
         object? Payload);
 
     /// <summary>
-    ///     <para xml:lang="en">Async-flowing execution context with a shadow-state overlay, ordered effect journal, and explicit operation and frame-depth budgets.</para>
+    ///     <para xml:lang="en">
+    ///         Async-flowing execution context with a shadow-state overlay, ordered effect journal, and
+    ///         explicit operation and frame-depth budgets.
+    ///     </para>
     ///     <para xml:lang="zh-CN">随异步流传播的执行上下文，包含影子状态覆盖、有序效果日志，以及显式的操作和执行帧深度预算。</para>
     /// </summary>
     public sealed class SpeculativeExecutionSession

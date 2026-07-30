@@ -34,11 +34,12 @@ namespace STS2RitsuLib.Settings
         ///     <para xml:lang="zh-CN">获取列表绑定。不支持结构化数据的绑定会由列表适配器包装。</para>
         /// </summary>
         public IModSettingsValueBinding<List<TItem>> Binding { get; } =
-            binding is null
-                ? throw new ArgumentNullException(nameof(binding))
-                : binding is IStructuredModSettingsValueBinding<List<TItem>>
-                ? binding
-                : ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List(itemDataAdapter));
+            binding switch
+            {
+                null => throw new ArgumentNullException(nameof(binding)),
+                IStructuredModSettingsValueBinding<List<TItem>> => binding,
+                _ => ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List(itemDataAdapter)),
+            };
 
         /// <summary>
         ///     <para xml:lang="en">Gets the factory invoked to create an item when the add button is pressed.</para>

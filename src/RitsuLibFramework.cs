@@ -100,7 +100,8 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets whether required framework patches completed successfully and initialization progressed to runtime services.
+        ///         Gets whether required framework patches completed successfully and initialization progressed to runtime
+        ///         services.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         获取必需的框架补丁是否已成功完成且初始化是否已进入运行时服务阶段。
@@ -378,6 +379,8 @@ namespace STS2RitsuLib
             {
                 try
                 {
+                    // The subscription is assigned before Wrapped can be published or invoked.
+                    // ReSharper disable once AccessToModifiedClosure
                     handler(evt, subscription!);
                 }
                 catch (Exception ex)
@@ -575,7 +578,8 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Ensures profile-bound services (<c>ProfileManager</c>, profile-scoped <c>ModDataStore</c>) are initialized once.
+        ///         Ensures profile-bound services (<c>ProfileManager</c>, profile-scoped <c>ModDataStore</c>) are initialized
+        ///         once.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         确保与配置档绑定的服务（<c>ProfileManager</c>、配置档作用域的 <c>ModDataStore</c>）只初始化一次。
@@ -1421,7 +1425,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     <para xml:lang="en">
         ///         Sets ordering for this mod&apos;s group in the RitsuLib mod settings sidebar (lower first). Mods without a
-        ///         value use <c>0</c> and sort by display name. Prefer <see cref="ModSettingsPageBuilder.WithModSidebarOrder" /> when
+        ///         value use <c>0</c> and sort by display name. Prefer <see cref="ModSettingsPageBuilder.WithModSidebarOrder" />
+        ///         when
         ///         registering pages.
         ///     </para>
         ///     <para xml:lang="zh-CN">
@@ -1915,6 +1920,7 @@ namespace STS2RitsuLib
                     {
                         RegisteredScriptAssemblies.Add(assemblyName);
                     }
+
                     logger?.Debug($"Godot C# scripts already registered for assembly: {assemblyName}");
                     return;
                 }
@@ -1925,6 +1931,7 @@ namespace STS2RitsuLib
                 {
                     RegisteredScriptAssemblies.Add(assemblyName);
                 }
+
                 logger?.Debug($"Registered Godot C# scripts for assembly: {assemblyName}");
             }
             catch (Exception ex)
@@ -2019,7 +2026,8 @@ namespace STS2RitsuLib
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Applies all patches on <paramref name="patcher" />; on failure logs, invokes <paramref name="disableMod" />, and
+        ///         Applies all patches on <paramref name="patcher" />; on failure logs, invokes <paramref name="disableMod" />,
+        ///         and
         ///         returns false.
         ///     </para>
         ///     <para xml:lang="zh-CN">

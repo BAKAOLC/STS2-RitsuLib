@@ -7,14 +7,17 @@ namespace STS2RitsuLib.Networking.Sidecar
     ///     <para xml:lang="en">
     ///         Request-and-reply helpers built on <see cref="RitsuLibSidecarBus.WaitForNextAsync" />.
     ///         Continuations after <c>await</c> often run on the thread pool; use
-    ///         <see cref="RitsuLibSidecarGodotMainLoopScheduling.ContinueOnGodotMainLoopAsync{T}(System.Threading.Tasks.Task{T})" />
+    ///         <see
+    ///             cref="RitsuLibSidecarGodotMainLoopScheduling.ContinueOnGodotMainLoopAsync{T}(System.Threading.Tasks.Task{T})" />
     ///         when the follow-up must touch Godot nodes or scene-tree-only APIs.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         基于 <see cref="RitsuLibSidecarBus.WaitForNextAsync" /> 的请求及等待回复辅助方法。
     ///         <c>await</c> 之后的延续通常在线程池运行；后续操作必须访问 Godot 节点或仅限场景树的 API 时，
     ///         请使用
-    ///         <see cref="RitsuLibSidecarGodotMainLoopScheduling.ContinueOnGodotMainLoopAsync{T}(System.Threading.Tasks.Task{T})" />。
+    ///         <see
+    ///             cref="RitsuLibSidecarGodotMainLoopScheduling.ContinueOnGodotMainLoopAsync{T}(System.Threading.Tasks.Task{T})" />
+    ///         。
     ///     </para>
     /// </summary>
     public static class RitsuLibSidecarRequestReply
@@ -192,7 +195,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Host → peer request/reply with correlation in the header extension; reply must echo the same correlation.</para>
+        ///     <para xml:lang="en">
+        ///         Host → peer request/reply with correlation in the header extension; reply must echo the same
+        ///         correlation.
+        ///     </para>
         ///     <para xml:lang="zh-CN">主机向对等端发送请求并等待回复，标头扩展中包含关联值；回复必须回显相同的关联值。</para>
         /// </summary>
         public static async Task<RitsuLibSidecarDispatchContext> SendCorrelatedRequestToPeerAndWaitReplyAsync(

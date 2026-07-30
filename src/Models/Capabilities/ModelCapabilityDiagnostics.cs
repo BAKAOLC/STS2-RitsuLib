@@ -52,7 +52,10 @@ namespace STS2RitsuLib.Models.Capabilities
         internal static bool ShouldInspectConflicts => ConflictLogs != ModelCapabilityConflictLogMode.Off;
 
         /// <summary>
-        ///     <para xml:lang="en">Clears the cache of conflicts already logged by <see cref="ModelCapabilityConflictLogMode.WarnOnce" />.</para>
+        ///     <para xml:lang="en">
+        ///         Clears the cache of conflicts already logged by
+        ///         <see cref="ModelCapabilityConflictLogMode.WarnOnce" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         清空 <see cref="ModelCapabilityConflictLogMode.WarnOnce" /> 已记录冲突的缓存。
         ///     </para>

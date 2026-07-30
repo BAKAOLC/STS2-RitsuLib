@@ -17,7 +17,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         When <see langword="true" /> on an attribute declared on a base type, the registration is available to concrete derived
+        ///         When <see langword="true" /> on an attribute declared on a base type, the registration is available to concrete
+        ///         derived
         ///         types. The nearest declaration wins per logical registration slot: a direct declaration can replace
         ///         inherited configuration such as a pool, count, path, placement, or threshold, while registrations for
         ///         distinct target IDs or scopes remain additive.
@@ -138,7 +139,10 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         public Type TargetModelType { get; } = targetModelType;
 
         /// <summary>
-        ///     <para xml:lang="en">Optional stable modifier ID. By default, RitsuLib derives a mod-scoped ID from the capability and target types.</para>
+        ///     <para xml:lang="en">
+        ///         Optional stable modifier ID. By default, RitsuLib derives a mod-scoped ID from the capability
+        ///         and target types.
+        ///     </para>
         ///     <para xml:lang="zh-CN">可选的稳定特效 ID。默认由 RitsuLib 根据能力类型和目标类型派生模组作用域 ID。</para>
         /// </summary>
         public string? ModifierId { get; set; }
@@ -152,7 +156,10 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     public sealed class RegisterGoodModifierAttribute : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     <para xml:lang="en">Negative values insert before the current good-modifier list segment; non-negative values insert after.</para>
+        ///     <para xml:lang="en">
+        ///         Negative values insert before the current good-modifier list segment; non-negative values
+        ///         insert after.
+        ///     </para>
         ///     <para xml:lang="zh-CN">负值插入当前正面特效列表区段之前；非负值插入之后。</para>
         /// </summary>
         public int ModifierListSortOrder { get; set; }
@@ -166,7 +173,10 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     public sealed class RegisterBadModifierAttribute : ContentRegistrationAttribute
     {
         /// <summary>
-        ///     <para xml:lang="en">Negative values insert before the current bad-modifier list segment; non-negative values insert after.</para>
+        ///     <para xml:lang="en">
+        ///         Negative values insert before the current bad-modifier list segment; non-negative values insert
+        ///         after.
+        ///     </para>
         ///     <para xml:lang="zh-CN">负值插入当前负面特效列表区段之前；非负值插入之后。</para>
         /// </summary>
         public int ModifierListSortOrder { get; set; }
@@ -707,7 +717,10 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Registers an Archaic Tooth transcendence mapping from the annotated starter card to an ancient card.</para>
+    ///     <para xml:lang="en">
+    ///         Registers an Archaic Tooth transcendence mapping from the annotated starter card to an ancient
+    ///         card.
+    ///     </para>
     ///     <para xml:lang="zh-CN">注册由“古老牙齿”将标注初始卡牌转化为指定先古卡牌的超越映射。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
@@ -735,7 +748,10 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Registers a Touch of Orobas refinement mapping from the annotated starter relic to an upgraded relic.</para>
+    ///     <para xml:lang="en">
+    ///         Registers a Touch of Orobas refinement mapping from the annotated starter relic to an upgraded
+    ///         relic.
+    ///     </para>
     ///     <para xml:lang="zh-CN">注册由“欧洛巴斯之触”将标注初始遗物变为指定升级遗物的精炼映射。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
@@ -749,7 +765,10 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Registers explicit card unlock content for the annotated epoch and requires that epoch for those cards.</para>
+    ///     <para xml:lang="en">
+    ///         Registers explicit card unlock content for the annotated epoch and requires that epoch for
+    ///         those cards.
+    ///     </para>
     ///     <para xml:lang="zh-CN">为标注历史节点注册显式卡牌解锁内容，并要求先揭示该历史节点才能解锁这些卡牌。</para>
     /// </summary>
     /// <param name="cardTypes">
@@ -785,7 +804,10 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Registers every relic in the given pool as unlock content for, and gated by, the annotated epoch.</para>
+    ///     <para xml:lang="en">
+    ///         Registers every relic in the given pool as unlock content for, and gated by, the annotated
+    ///         epoch.
+    ///     </para>
     ///     <para xml:lang="zh-CN">将指定遗物池中的每件遗物注册为标注历史节点的解锁内容，并要求先揭示该节点。</para>
     /// </summary>
     /// <param name="poolType">

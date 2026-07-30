@@ -13,12 +13,14 @@ using SavedPropertyCache = MegaCrit.Sts2.Core.Saves.Runs.SavedPropertiesTypeCach
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Stores mod-attached state on arbitrary reference objects and bridges it through <see cref="SavedProperties" /> for models that participate in vanilla save serialization.</para>
+    ///     <para xml:lang="en">
+    ///         Stores mod-attached state on arbitrary reference objects and bridges it through
+    ///         <see cref="SavedProperties" /> for models that participate in vanilla save serialization.
+    ///     </para>
     ///     <para xml:lang="zh-CN">在任意引用对象上存储模组附加状态，并通过 <see cref="SavedProperties" /> 接入参与原版存档序列化的模型。</para>
     /// </summary>
     public sealed class SavedAttachedState<TKey, TValue> where TKey : class
     {
-        private readonly SavedAttachedStateRegistration<TKey, TValue> _registration;
         private readonly ConditionalWeakTable<TKey, Box> _table = [];
         private readonly Func<TKey, TValue> _valueFactory;
 
@@ -41,9 +43,9 @@ namespace STS2RitsuLib.Utils
             SavedAttachedStateRegistry.ValidateSupportedType(typeof(TValue));
 
             _valueFactory = valueFactory ?? (_ => default!);
-            _registration = new(typeof(TKey).Name + "_" + name, order,
+            var registration = new SavedAttachedStateRegistration<TKey, TValue>(typeof(TKey).Name + "_" + name, order,
                 this);
-            SavedAttachedStateRegistry.Register(_registration);
+            SavedAttachedStateRegistry.Register(registration);
         }
 
         /// <summary>
@@ -96,7 +98,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the existing value for <paramref name="key" /> or adds <paramref name="value" /> and returns it.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the existing value for <paramref name="key" /> or adds <paramref name="value" /> and
+        ///         returns it.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的现有值；不存在时添加并返回 <paramref name="value" />。</para>
         /// </summary>
         public TValue GetOrAdd(TKey key, TValue value)
@@ -106,7 +111,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the existing value for <paramref name="key" /> or creates one with <paramref name="valueFactory" />.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the existing value for <paramref name="key" /> or creates one with
+        ///         <paramref name="valueFactory" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的现有值；不存在时使用 <paramref name="valueFactory" /> 创建一个。</para>
         /// </summary>
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
@@ -137,7 +145,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the value for <paramref name="key" /> if present; otherwise <paramref name="defaultValue" />.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the value for <paramref name="key" /> if present; otherwise
+        ///         <paramref name="defaultValue" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">存在时返回 <paramref name="key" /> 的值；否则返回 <paramref name="defaultValue" />。</para>
         /// </summary>
         public TValue GetValueOrDefault(TKey key, TValue defaultValue)
@@ -165,7 +176,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Stores <paramref name="value" /> for <paramref name="key" />, replacing any existing entry, and returns the value.</para>
+        ///     <para xml:lang="en">
+        ///         Stores <paramref name="value" /> for <paramref name="key" />, replacing any existing entry, and
+        ///         returns the value.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为 <paramref name="key" /> 存储 <paramref name="value" />，替换任何现有条目，并返回该值。</para>
         /// </summary>
         public TValue Set(TKey key, TValue value)
@@ -177,7 +191,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Updates the stored value using <paramref name="updater" />, creating the entry first when absent.</para>
+        ///     <para xml:lang="en">
+        ///         Updates the stored value using <paramref name="updater" />, creating the entry first when
+        ///         absent.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用 <paramref name="updater" /> 更新已存储值；条目不存在时会先创建。</para>
         /// </summary>
         public TValue Update(TKey key, Func<TValue, TValue> updater)

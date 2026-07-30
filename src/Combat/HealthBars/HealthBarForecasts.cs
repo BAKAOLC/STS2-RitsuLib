@@ -432,12 +432,13 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Passes each amount to <see cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?,
-        ///         Color?, bool)" /> in enumeration order.
+        ///         Passes each amount to
+        ///         <see cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" /> in
+        ///         enumeration order.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         按枚举顺序将每个数值传给 <see cref="Add(int, Color, HealthBarForecastGrowthDirection, int,
-        ///         Material?, Color?, bool)" />。
+        ///         按枚举顺序将每个数值传给
+        ///         <see cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />。
         ///     </para>
         /// </summary>
         /// <param name="amounts">

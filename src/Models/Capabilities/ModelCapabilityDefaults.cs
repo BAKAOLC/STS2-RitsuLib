@@ -117,7 +117,10 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates a capability of <paramref name="capabilityType" /> and inserts it at <paramref name="index" />.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a capability of <paramref name="capabilityType" /> and inserts it at
+        ///         <paramref name="index" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建 <paramref name="capabilityType" /> 类型能力并插入到 <paramref name="index" />。</para>
         /// </summary>
         public IModelCapability Insert(int index, Type capabilityType)

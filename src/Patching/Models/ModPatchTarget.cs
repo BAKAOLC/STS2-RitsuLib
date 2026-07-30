@@ -3,7 +3,10 @@ using HarmonyLib;
 namespace STS2RitsuLib.Patching.Models
 {
     /// <summary>
-    ///     <para xml:lang="en">Identifies a vanilla method used by <see cref="IPatchMethod.GetTargets" /> to build patch metadata.</para>
+    ///     <para xml:lang="en">
+    ///         Identifies a vanilla method used by <see cref="IPatchMethod.GetTargets" /> to build patch
+    ///         metadata.
+    ///     </para>
     ///     <para xml:lang="zh-CN">标识供 <see cref="IPatchMethod.GetTargets" /> 构建补丁元数据的原版方法。</para>
     /// </summary>
     /// <param name="TargetType">

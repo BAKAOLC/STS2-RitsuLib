@@ -35,7 +35,10 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             "[ModelCapabilities] Card lifecycle patch did not find the expected IL call site.";
 
         /// <summary>
-        ///     <para xml:lang="en">Updates capability dynamic vars through the same card preview path as vanilla card dynamic vars.</para>
+        ///     <para xml:lang="en">
+        ///         Updates capability dynamic vars through the same card preview path as vanilla card dynamic
+        ///         vars.
+        ///     </para>
         ///     <para xml:lang="zh-CN">通过与原版卡牌动态变量相同的卡牌预览路径更新能力动态变量。</para>
         /// </summary>
         internal sealed class UpdateDynamicVarPreviewPatch : IPatchMethod

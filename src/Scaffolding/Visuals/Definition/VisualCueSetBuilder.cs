@@ -16,10 +16,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         private readonly Dictionary<string, VisualFrameSequence> _sequences =
             new(StringComparer.OrdinalIgnoreCase);
 
-        private readonly Dictionary<string, string> _textures =
+        private readonly Dictionary<string, VisualNodeStyle> _textureStyles =
             new(StringComparer.OrdinalIgnoreCase);
 
-        private readonly Dictionary<string, VisualNodeStyle> _textureStyles =
+        private readonly Dictionary<string, string> _textures =
             new(StringComparer.OrdinalIgnoreCase);
 
         private VisualCueSetBuilder()

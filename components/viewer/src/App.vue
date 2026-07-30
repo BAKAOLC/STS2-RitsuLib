@@ -143,8 +143,8 @@ function formatTime(timestamp: string) {
 
         <LogList
             v-model:follow="viewer.follow.value"
-            :appended-record-keys="viewer.appendedRecordKeys.value"
             :all-selected="viewer.areAllFilteredSelected.value"
+            :appended-record-keys="viewer.appendedRecordKeys.value"
             :record-key="viewer.recordKey"
             :records="viewer.filteredRecords.value"
             :selected-ids="viewer.selectedIds.value"

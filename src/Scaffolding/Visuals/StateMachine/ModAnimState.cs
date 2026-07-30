@@ -38,7 +38,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the backend animation ID, such as a Spine track, Godot animation name, cue key, or SpriteFrames animation name.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the backend animation ID, such as a Spine track, Godot animation name, cue key, or
+        ///         SpriteFrames animation name.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取后端动画 ID，例如 Spine 轨道、Godot 动画名、视觉提示键或 SpriteFrames 动画名。</para>
         /// </summary>
         public string Id { get; }
@@ -60,7 +63,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         public ModAnimState? NextState { get; set; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets an optional bounds-container tag reported through <see cref="ModAnimStateMachine.BoundsUpdated" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets an optional bounds-container tag reported through
+        ///         <see cref="ModAnimStateMachine.BoundsUpdated" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取通过 <see cref="ModAnimStateMachine.BoundsUpdated" /> 报告的可选边界容器标签。</para>
         /// </summary>
         public string? BoundsContainer { get; init; }
@@ -102,7 +108,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the first branch for <paramref name="trigger" /> whose predicate passes, or <see langword="null" />.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the first branch for <paramref name="trigger" /> whose predicate passes, or
+        ///         <see langword="null" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回 <paramref name="trigger" /> 的第一个谓词通过的分支；没有时返回 <see langword="null" />。</para>
         /// </summary>
         public ModAnimState? CallTrigger(string trigger)

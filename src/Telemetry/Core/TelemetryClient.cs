@@ -30,6 +30,16 @@ namespace STS2RitsuLib.Telemetry
             TryCapturePayload(eventName, requestId, payload, properties);
         }
 
+        public void CaptureException(
+            Exception exception,
+            IReadOnlyDictionary<string, object?>? properties = null)
+        {
+            ArgumentNullException.ThrowIfNull(exception);
+
+            var payload = DiagnosticsTelemetryCollector.BuildExceptionPayload(exception);
+            CapturePayload("exception", "diagnostics", payload, properties);
+        }
+
         internal bool TryCapturePayload(
             string eventName,
             string requestId,
@@ -74,16 +84,6 @@ namespace STS2RitsuLib.Telemetry
                     $"[Telemetry] Capture failed for event '{eventName}' and applicant '{ApplicantId}': {ex.Message}");
                 return false;
             }
-        }
-
-        public void CaptureException(
-            Exception exception,
-            IReadOnlyDictionary<string, object?>? properties = null)
-        {
-            ArgumentNullException.ThrowIfNull(exception);
-
-            var payload = DiagnosticsTelemetryCollector.BuildExceptionPayload(exception);
-            CapturePayload("exception", "diagnostics", payload, properties);
         }
 
         private bool TryResolveRequest(

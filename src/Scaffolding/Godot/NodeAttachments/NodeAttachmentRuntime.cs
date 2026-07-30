@@ -169,7 +169,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             switch (definition.Options.AddMode)
             {
                 case NodeAttachmentAddMode.AddChildSafely:
-                    if (!NGame.IsMainThread() || attachParent.IsInsideTree() && !attachParent.IsNodeReady())
+                    if (!NGame.IsMainThread() || (attachParent.IsInsideTree() && !attachParent.IsNodeReady()))
                         return false;
 
                     attachParent.AddChild(child);

@@ -324,11 +324,11 @@ namespace STS2RitsuLib.Settings
         IStructuredModSettingsValueAdapter<TValue>? adapter = null)
         : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation, IModSettingsBindingSaveDispatch
     {
-        private readonly IModSettingsValueBinding<TSource> _parent =
-            ModSettingsBindingValidation.RequireNonNull(parent, nameof(parent));
-
         private readonly Func<TSource, TValue> _getter =
             ModSettingsBindingValidation.RequireNonNull(getter, nameof(getter));
+
+        private readonly IModSettingsValueBinding<TSource> _parent =
+            ModSettingsBindingValidation.RequireNonNull(parent, nameof(parent));
 
         private readonly Func<TSource, TValue, TSource> _setter =
             ModSettingsBindingValidation.RequireNonNull(setter, nameof(setter));
@@ -424,11 +424,11 @@ namespace STS2RitsuLib.Settings
         : IStructuredModSettingsValueBinding<TValue>, IDefaultModSettingsValueBinding<TValue>,
             IModSettingsUiRefreshPropagation, IModSettingsUiRefreshEquivalence, IModSettingsBindingSaveDispatch
     {
-        private readonly IModSettingsValueBinding<TValue> _inner =
-            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
-
         private readonly Func<TValue> _defaultValueFactory =
             ModSettingsBindingValidation.RequireNonNull(defaultValueFactory, nameof(defaultValueFactory));
+
+        private readonly IModSettingsValueBinding<TValue> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
 
         /// <inheritdoc />
         public TValue CreateDefaultValue()

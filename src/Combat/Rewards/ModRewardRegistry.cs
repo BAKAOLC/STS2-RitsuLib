@@ -368,7 +368,10 @@ namespace STS2RitsuLib.Combat.Rewards
         ///     <para xml:lang="zh-CN">找到时返回已注册的定义。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the reward type is registered; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the reward type is registered; otherwise, <see langword="false" />
+        ///         .
+        ///     </para>
         ///     <para xml:lang="zh-CN">奖励类型已注册时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryGetByRewardType(RewardType rewardType, out ModRewardDefinition definition)

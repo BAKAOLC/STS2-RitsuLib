@@ -3,7 +3,7 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
-    internal static partial class ModSettingsNativeFileDialogChrome
+    internal static class ModSettingsNativeFileDialogChrome
     {
         private const int FileDialogLayer = 132;
 

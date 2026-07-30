@@ -45,6 +45,8 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     _ring = new(Math.Clamp(options.RingBufferCapacity, 512, 100000));
                     var cts = new CancellationTokenSource();
                     _cts = cts;
+                    // The worker must start and observe cancellation inside its own shutdown path.
+                    // ReSharper disable once MethodSupportsCancellation
                     _worker = Task.Run(() => WorkerLoopAsync(cts.Token));
                     ConfigureGodotLogListener(options.MirrorGameLogs);
 

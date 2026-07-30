@@ -35,7 +35,10 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the I18N-backed table instance for a registered virtual table ID and skips the original method.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the I18N-backed table instance for a registered virtual table ID and skips the original
+        ///         method.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为已注册的虚拟表 ID 返回由 I18N 支持的表实例，并跳过原方法。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
@@ -50,8 +53,14 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Routes <c>LocTable.HasEntry</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
-    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.HasEntry</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
+    ///     <para xml:lang="en">
+    ///         Routes <c>LocTable.HasEntry</c> through <see cref="I18NLocTableBridge" /> for virtual
+    ///         <c>MODID_I18N_STEM</c> tables.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.HasEntry</c> 查询转交给
+    ///         <see cref="I18NLocTableBridge" />。
+    ///     </para>
     /// </summary>
     internal class LocTableHasEntryI18NBridgePatch : IPatchMethod
     {
@@ -68,7 +77,10 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queries the backing <see cref="STS2RitsuLib.Utils.I18N" /> dictionary when the table maps to a registered virtual table ID.</para>
+        ///     <para xml:lang="en">
+        ///         Queries the backing <see cref="STS2RitsuLib.Utils.I18N" /> dictionary when the table maps to a
+        ///         registered virtual table ID.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当表映射到已注册的虚拟表 ID 时，查询其背后的 <see cref="STS2RitsuLib.Utils.I18N" /> 字典。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
@@ -83,8 +95,14 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Routes <c>LocTable.IsLocalKey</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
-    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.IsLocalKey</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
+    ///     <para xml:lang="en">
+    ///         Routes <c>LocTable.IsLocalKey</c> through <see cref="I18NLocTableBridge" /> for virtual
+    ///         <c>MODID_I18N_STEM</c> tables.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.IsLocalKey</c> 查询转交给
+    ///         <see cref="I18NLocTableBridge" />。
+    ///     </para>
     /// </summary>
     internal class LocTableIsLocalKeyI18NBridgePatch : IPatchMethod
     {
@@ -101,7 +119,10 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Reports whether the backing I18N dictionary contains a key for the current locale, allowing SmartFormat to select the appropriate culture.</para>
+        ///     <para xml:lang="en">
+        ///         Reports whether the backing I18N dictionary contains a key for the current locale, allowing
+        ///         SmartFormat to select the appropriate culture.
+        ///     </para>
         ///     <para xml:lang="zh-CN">报告背后的 I18N 字典是否包含当前区域设置下的键，以便 SmartFormat 选择适用的区域性。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
@@ -116,8 +137,14 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Routes <c>LocTable.GetRawText</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
-    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.GetRawText</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
+    ///     <para xml:lang="en">
+    ///         Routes <c>LocTable.GetRawText</c> through <see cref="I18NLocTableBridge" /> for virtual
+    ///         <c>MODID_I18N_STEM</c> tables.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.GetRawText</c> 查询转交给
+    ///         <see cref="I18NLocTableBridge" />。
+    ///     </para>
     /// </summary>
     internal class LocTableGetRawTextI18NBridgePatch : IPatchMethod
     {
@@ -152,8 +179,14 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Routes <c>LocTable.GetLocString</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
-    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.GetLocString</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
+    ///     <para xml:lang="en">
+    ///         Routes <c>LocTable.GetLocString</c> through <see cref="I18NLocTableBridge" /> for virtual
+    ///         <c>MODID_I18N_STEM</c> tables.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.GetLocString</c> 查询转交给
+    ///         <see cref="I18NLocTableBridge" />。
+    ///     </para>
     /// </summary>
     internal class LocTableGetLocStringI18NBridgePatch : IPatchMethod
     {
@@ -170,7 +203,10 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns a <see cref="LocString" /> that points to the virtual table ID when the backing I18N dictionary contains the key.</para>
+        ///     <para xml:lang="en">
+        ///         Returns a <see cref="LocString" /> that points to the virtual table ID when the backing I18N
+        ///         dictionary contains the key.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当背后的 I18N 字典包含该键时，返回指向虚拟表 ID 的 <see cref="LocString" />。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]

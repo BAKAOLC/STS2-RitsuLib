@@ -568,6 +568,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             EnsureSafeToReplace(match);
 
             var replacements = replacement.ToList();
+            // The empty and non-empty replacement paths perform different ordered side effects.
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (replacements.Count == 0 && HarmonyIl.HasMetadata(_code[match.Index]))
                 throw new InvalidOperationException(
                     "Cannot remove a replacement span whose first instruction has labels or exception blocks.");
@@ -925,7 +927,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Replaces every instruction that satisfies <paramref name="isMatch" /> with the supplied replacement instructions.</para>
+        ///     <para xml:lang="en">
+        ///         Replaces every instruction that satisfies <paramref name="isMatch" /> with the supplied
+        ///         replacement instructions.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将每条满足 <paramref name="isMatch" /> 的指令替换为指定指令。</para>
         /// </summary>
         public HarmonyIlRewriteReport ReplaceInstructions(
@@ -946,7 +951,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Replaces every instruction that satisfies <paramref name="isMatch" /> using a per-instruction replacement builder.</para>
+        ///     <para xml:lang="en">
+        ///         Replaces every instruction that satisfies <paramref name="isMatch" /> using a per-instruction
+        ///         replacement builder.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用逐指令替换构造器替换每条满足 <paramref name="isMatch" /> 的指令。</para>
         /// </summary>
         public HarmonyIlRewriteReport ReplaceInstructions(

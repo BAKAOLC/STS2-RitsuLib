@@ -119,6 +119,8 @@ namespace STS2RitsuLib.Analyzers
             if (!TryGetOwnerType(context, accessor, true, isStatic, location, out var owner))
                 return;
 
+            // The two explicit return-shape checks read more directly than a property pattern here.
+            // ReSharper disable once MergeIntoPattern
             if (!accessor.ReturnsByRef && !accessor.ReturnsByRefReadonly)
             {
                 Report(context, InvalidShape, location, "UnsafeAccessor field accessors must return by ref.");
@@ -288,7 +290,7 @@ namespace STS2RitsuLib.Analyzers
             {
                 assembly = null!;
                 type = default;
-                var assemblyName = owner.ContainingAssembly.Identity.Name ?? string.Empty;
+                var assemblyName = owner.ContainingAssembly.Identity.Name;
                 if (!_assemblies.TryGetValue(assemblyName, out var metadataAssembly))
                 {
                     result = $"Could not inspect metadata for assembly '{assemblyName}'.";
@@ -661,7 +663,7 @@ namespace STS2RitsuLib.Analyzers
             {
                 return new(
                     GetReturnType(method),
-                    [..method.Parameters.Select(SignatureKey.FromParameter)]);
+                    [.. method.Parameters.Select(SignatureKey.FromParameter)]);
             }
 
             public static AccessorMethodSignature FromMetadata(

@@ -11,7 +11,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Audio.Patches
 {
     /// <summary>
-    ///     <para xml:lang="en">Patches run-scoped music and ambience paths that call the run proxy instead of <see cref="NAudioManager" />.</para>
+    ///     <para xml:lang="en">
+    ///         Patches run-scoped music and ambience paths that call the run proxy instead of
+    ///         <see cref="NAudioManager" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">修补不经由 <see cref="NAudioManager" />、而是直接调用局内代理的音乐和环境音路径。</para>
     /// </summary>
     internal static class NRunMusicControllerGuidMappedStudioEventsPatches
@@ -115,7 +118,9 @@ namespace STS2RitsuLib.Audio.Patches
         private static bool ReleaseOwnedMappedActBank()
         {
             lock (MappedActBankGate)
+            {
                 return ReleaseOwnedMappedActBankCore();
+            }
         }
 
         private static bool ReleaseOwnedMappedActBankCore()
@@ -148,7 +153,10 @@ namespace STS2RitsuLib.Audio.Patches
             }
 
             /// <summary>
-            ///     <para xml:lang="en">Mirrors native deterministic track selection and act-bank loading, then handles mapped tracks by GUID.</para>
+            ///     <para xml:lang="en">
+            ///         Mirrors native deterministic track selection and act-bank loading, then handles mapped tracks
+            ///         by GUID.
+            ///     </para>
             ///     <para xml:lang="zh-CN">复现原生的确定性曲目选择和章节音频库加载，并按 GUID 处理已映射曲目。</para>
             /// </summary>
             [HarmonyPriority(Priority.Last)]
@@ -168,10 +176,7 @@ namespace STS2RitsuLib.Audio.Patches
                 {
                     var musicReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
                     var bankReleased = ReleaseOwnedMappedActBank();
-                    if (!musicReleased || !bankReleased)
-                        return false;
-
-                    return true;
+                    return musicReleased && bankReleased;
                 }
 
                 var selection = NRunMusicController.ResolveMusic(
@@ -186,10 +191,7 @@ namespace STS2RitsuLib.Audio.Patches
                 {
                     var musicReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
                     var bankReleased = ReleaseOwnedMappedActBank();
-                    if (!musicReleased || !bankReleased)
-                        return false;
-
-                    return true;
+                    return musicReleased && bankReleased;
                 }
 
 #if STS2_AT_LEAST_0_108_0
@@ -402,12 +404,7 @@ namespace STS2RitsuLib.Audio.Patches
                     ambience = encounter.AmbientSfx;
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(ambience))
-                {
-                    if (!GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience())
-                        return false;
-
-                    return true;
-                }
+                    return GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
 
                 if (GuidMappedNaudioStudioProxy.HasActiveMappedRunAmbience(ambience))
                     return false;

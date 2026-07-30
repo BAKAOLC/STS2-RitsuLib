@@ -8,17 +8,26 @@ using FileAccess = Godot.FileAccess;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides direct FMOD Studio bank loading, GUID mapping, cache probes, and bank diagnostics through the Godot FMOD add-on.</para>
+    ///     <para xml:lang="en">
+    ///         Provides direct FMOD Studio bank loading, GUID mapping, cache probes, and bank diagnostics
+    ///         through the Godot FMOD add-on.
+    ///     </para>
     ///     <para xml:lang="zh-CN">通过 Godot FMOD 插件提供直接的 FMOD Studio 音频库加载、GUID 映射、缓存探测和音频库诊断。</para>
     /// </summary>
     /// <remarks>
-    ///     <para xml:lang="en">These operations bypass the game's mixer-facing playback API. Use <see cref="GameFmod.Studio" /> for gameplay audio that should follow vanilla routing.</para>
+    ///     <para xml:lang="en">
+    ///         These operations bypass the game's mixer-facing playback API. Use
+    ///         <see cref="GameFmod.Studio" /> for gameplay audio that should follow vanilla routing.
+    ///     </para>
     ///     <para xml:lang="zh-CN">这些操作不经过游戏面向混音器的播放 API。需要遵循原版路由的游戏音频请使用 <see cref="GameFmod.Studio" />。</para>
     /// </remarks>
     public static class FmodStudioServer
     {
         /// <summary>
-        ///     <para xml:lang="en">Protects references returned by <c>load_bank</c>, because the add-on's <c>FmodBank</c> destructor unloads its bank when the last reference is released.</para>
+        ///     <para xml:lang="en">
+        ///         Protects references returned by <c>load_bank</c>, because the add-on's <c>FmodBank</c>
+        ///         destructor unloads its bank when the last reference is released.
+        ///     </para>
         ///     <para xml:lang="zh-CN">保留 <c>load_bank</c> 返回的引用，因为插件的 <c>FmodBank</c> 析构函数会在最后一个引用释放时卸载对应音频库。</para>
         /// </summary>
         private static readonly Lock LoadedBankPinsGate = new();
@@ -64,7 +73,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">传递给 <c>FmodServer.load_bank</c> 的音频库加载模式。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when loading returns a valid retained bank object or a compatible boolean success result; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when loading returns a valid retained bank object or a compatible
+        ///         boolean success result; otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">加载返回可保留的有效音频库对象或兼容的布尔成功结果时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryLoadBank(string resourcePath, FmodStudioLoadBankMode mode = FmodStudioLoadBankMode.Normal)
@@ -135,7 +147,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">要检查的音频库资源路径。</para>
         /// </param>
         /// <remarks>
-        ///     <para xml:lang="en">Native <c>FMOD_RESULT</c> values are unavailable through this managed wrapper and appear only when the GDExtension itself logs them.</para>
+        ///     <para xml:lang="en">
+        ///         Native <c>FMOD_RESULT</c> values are unavailable through this managed wrapper and appear only
+        ///         when the GDExtension itself logs them.
+        ///     </para>
         ///     <para xml:lang="zh-CN">此托管包装无法取得原生 <c>FMOD_RESULT</c>；只有 GDExtension 自身记录时才能看到这些结果。</para>
         /// </remarks>
         public static void LogBankResourceDiagnostics(string resourcePath)
@@ -145,7 +160,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Releases this class's retained bank reference, or invokes <c>unload_bank</c> when a runtime provides that method and no reference is retained.</para>
+        ///     <para xml:lang="en">
+        ///         Releases this class's retained bank reference, or invokes <c>unload_bank</c> when a runtime
+        ///         provides that method and no reference is retained.
+        ///     </para>
         ///     <para xml:lang="zh-CN">释放此类保留的音频库引用；如果没有保留引用且运行时提供 <c>unload_bank</c>，则调用该方法。</para>
         /// </summary>
         /// <param name="resourcePath">
@@ -153,7 +171,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">加载时使用的准确音频库资源路径。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when a retained reference is removed or the optional runtime method completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when a retained reference is removed or the optional runtime method
+        ///         completes; otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">成功移除保留引用或可选运行时方法调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryUnloadBank(string resourcePath)
@@ -184,8 +205,14 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">查询 FMOD 插件是否仍有待完成的音频库加载。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> or <see langword="false" /> for a valid boolean result; null when the method is unavailable, invocation fails, or another Variant type is returned.</para>
-        ///     <para xml:lang="zh-CN">取得有效布尔结果时为 <see langword="true" /> 或 <see langword="false" />；方法不可用、调用失败或返回其他 Variant 类型时为 <see langword="null" />。</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> or <see langword="false" /> for a valid boolean result; null when the
+        ///         method is unavailable, invocation fails, or another Variant type is returned.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         取得有效布尔结果时为 <see langword="true" /> 或 <see langword="false" />；方法不可用、调用失败或返回其他 Variant 类型时为
+        ///         <see langword="null" />。
+        ///     </para>
         /// </returns>
         public static bool? TryBanksStillLoading()
         {
@@ -196,15 +223,24 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Validates and applies a <c>GUIDs.txt</c>-style mapping file, then logs the resulting total event-path mapping count.</para>
+        ///     <para xml:lang="en">
+        ///         Validates and applies a <c>GUIDs.txt</c>-style mapping file, then logs the resulting total
+        ///         event-path mapping count.
+        ///     </para>
         ///     <para xml:lang="zh-CN">验证并应用 <c>GUIDs.txt</c> 格式的映射文件，然后记录处理后的事件路径映射总数。</para>
         /// </summary>
         /// <param name="guidMapResourcePath">
-        ///     <para xml:lang="en">The Godot resource path of the text file, whose relevant lines use <c>{guid} event:/…</c>. Bank and bus lines are ignored by the managed fallback table.</para>
+        ///     <para xml:lang="en">
+        ///         The Godot resource path of the text file, whose relevant lines use <c>{guid} event:/…</c>. Bank
+        ///         and bus lines are ignored by the managed fallback table.
+        ///     </para>
         ///     <para xml:lang="zh-CN">文本文件的 Godot 资源路径；相关行使用 <c>{guid} event:/…</c> 格式。托管回退表会忽略音频库和总线行。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one event mapping from this file is parsed or an optional native injection method succeeds; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one event mapping from this file is parsed or an optional
+        ///         native injection method succeeds; otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">成功解析此文件中的至少一个事件映射，或可选原生注入方法成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryLoadStudioGuidMappings(string guidMapResourcePath)
@@ -234,7 +270,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Parses and merges <c>event:/…</c>-to-GUID entries for RitsuLib fallbacks, then attempts any compatible native mapping-injection method provided by the runtime.</para>
+        ///     <para xml:lang="en">
+        ///         Parses and merges <c>event:/…</c>-to-GUID entries for RitsuLib fallbacks, then attempts any
+        ///         compatible native mapping-injection method provided by the runtime.
+        ///     </para>
         ///     <para xml:lang="zh-CN">解析并合并供 RitsuLib 回退逻辑使用的 <c>event:/…</c> 到 GUID 条目，然后尝试运行时提供的兼容原生映射注入方法。</para>
         /// </summary>
         /// <param name="resourcePath">
@@ -242,11 +281,17 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN"><c>GUIDs.txt</c> 格式文本文件的 Godot 资源路径。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one event mapping from this file is parsed or native injection succeeds; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one event mapping from this file is parsed or native
+        ///         injection succeeds; otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">成功解析此文件中的至少一个事件映射，或原生注入成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         /// <remarks>
-        ///     <para xml:lang="en">Prefer <see cref="TryLoadStudioGuidMappings" /> when explicit existence validation and success-count logging are desired.</para>
+        ///     <para xml:lang="en">
+        ///         Prefer <see cref="TryLoadStudioGuidMappings" /> when explicit existence validation and
+        ///         success-count logging are desired.
+        ///     </para>
         ///     <para xml:lang="zh-CN">需要显式验证文件存在并记录成功映射数量时，优先使用 <see cref="TryLoadStudioGuidMappings" />。</para>
         /// </remarks>
         public static bool TryInjectStudioGuidMappings(string resourcePath)
@@ -280,7 +325,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Checks whether an event path is registered in the managed GUID table or present in the add-on's loaded cache.</para>
+        ///     <para xml:lang="en">
+        ///         Checks whether an event path is registered in the managed GUID table or present in the add-on's
+        ///         loaded cache.
+        ///     </para>
         ///     <para xml:lang="zh-CN">检查事件路径是否已注册到托管 GUID 表，或存在于插件已加载的缓存中。</para>
         /// </summary>
         /// <param name="eventPath">
@@ -288,8 +336,15 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">要检查的事件路径。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> for any registered mapping or a positive native probe, <see langword="false" /> for a blank path or negative native probe, and null when the native probe is unavailable or invalid.</para>
-        ///     <para xml:lang="zh-CN">存在任意注册映射或原生探测为肯定结果时为 <see langword="true" />；路径为空白或原生探测为否定结果时为 <see langword="false" />；原生探测不可用或无效时为 <see langword="null" />。</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> for any registered mapping or a positive native probe,
+        ///         <see langword="false" /> for a blank path or negative native probe, and null when the native probe is
+        ///         unavailable or invalid.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         存在任意注册映射或原生探测为肯定结果时为 <see langword="true" />；路径为空白或原生探测为否定结果时为 <see langword="false" />
+        ///         ；原生探测不可用或无效时为 <see langword="null" />。
+        ///     </para>
         /// </returns>
         public static bool? TryCheckEventPath(string eventPath)
         {
@@ -314,8 +369,14 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">要检查的总线路径。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> or <see langword="false" /> for a valid probe, <see langword="false" /> for a blank path, and null when invocation is unavailable or returns an invalid type.</para>
-        ///     <para xml:lang="zh-CN">有效探测结果为 <see langword="true" /> 或 <see langword="false" />；路径为空白时为 <see langword="false" />；调用不可用或返回无效类型时为 <see langword="null" />。</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> or <see langword="false" /> for a valid probe, <see langword="false" />
+        ///         for a blank path, and null when invocation is unavailable or returns an invalid type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         有效探测结果为 <see langword="true" /> 或 <see langword="false" />；路径为空白时为 <see langword="false" />
+        ///         ；调用不可用或返回无效类型时为 <see langword="null" />。
+        ///     </para>
         /// </returns>
         public static bool? TryCheckBusPath(string busPath)
         {
@@ -337,7 +398,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">要规范化并解析的事件 GUID。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en">The valid description object, or null when the GUID is blank, malformed, absent, or cannot be resolved.</para>
+        ///     <para xml:lang="en">
+        ///         The valid description object, or null when the GUID is blank, malformed, absent, or cannot be
+        ///         resolved.
+        ///     </para>
         ///     <para xml:lang="zh-CN">有效的描述对象；GUID 为空白、格式错误、不存在或无法解析时为 <see langword="null" />。</para>
         /// </returns>
         public static GodotObject? TryGetEventDescriptionFromGuid(string eventGuid)
@@ -367,8 +431,14 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">要规范化并检查的事件 GUID。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> or <see langword="false" /> for a valid probe; null when normalization or invocation fails or an invalid result type is returned.</para>
-        ///     <para xml:lang="zh-CN">有效探测结果为 <see langword="true" /> 或 <see langword="false" />；规范化或调用失败，或返回无效结果类型时为 <see langword="null" />。</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> or <see langword="false" /> for a valid probe; null when normalization
+        ///         or invocation fails or an invalid result type is returned.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         有效探测结果为 <see langword="true" /> 或 <see langword="false" />；规范化或调用失败，或返回无效结果类型时为
+        ///         <see langword="null" />。
+        ///     </para>
         /// </returns>
         public static bool? TryCheckEventGuid(string eventGuid)
         {
@@ -402,7 +472,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">获取 <c>FmodServer.get_all_banks</c> 当前返回的 Studio 音频库数量。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en">The array count, or <c>-1</c> when the method is unavailable, invocation fails, or the result is not an array.</para>
+        ///     <para xml:lang="en">
+        ///         The array count, or <c>-1</c> when the method is unavailable, invocation fails, or the result
+        ///         is not an array.
+        ///     </para>
         ///     <para xml:lang="zh-CN">数组条目数；方法不可用、调用失败或结果不是数组时为 <c>-1</c>。</para>
         /// </returns>
         public static int TryGetLoadedBankCount()
@@ -418,7 +491,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">获取插件 Studio 缓存当前报告的事件描述数量。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en">The array count, or <c>-1</c> when the method is unavailable, invocation fails, or the result is not an array.</para>
+        ///     <para xml:lang="en">
+        ///         The array count, or <c>-1</c> when the method is unavailable, invocation fails, or the result
+        ///         is not an array.
+        ///     </para>
         ///     <para xml:lang="zh-CN">数组条目数；方法不可用、调用失败或结果不是数组时为 <c>-1</c>。</para>
         /// </returns>
         public static int TryGetLoadedEventDescriptionCount()
@@ -430,7 +506,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the event-description count reported by the loaded bank whose Godot resource path matches exactly.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the event-description count reported by the loaded bank whose Godot resource path matches
+        ///         exactly.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取 Godot 资源路径准确匹配的已加载音频库所报告的事件描述数量。</para>
         /// </summary>
         /// <param name="bankResourcePath">
@@ -438,7 +517,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">音频库 <c>get_godot_res_path</c> 方法返回的准确值。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en">The reported 64-bit count, or <c>-1</c> for a blank path, unavailable enumeration, no matching bank, missing methods, or invocation failure.</para>
+        ///     <para xml:lang="en">
+        ///         The reported 64-bit count, or <c>-1</c> for a blank path, unavailable enumeration, no matching
+        ///         bank, missing methods, or invocation failure.
+        ///     </para>
         ///     <para xml:lang="zh-CN">报告的 64 位数量；路径为空白、无法枚举、没有匹配音频库、缺少方法或调用失败时为 <c>-1</c>。</para>
         /// </returns>
         public static long TryGetLoadedBankEventDescriptionCount(string bankResourcePath)
@@ -496,7 +578,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Logs up to forty event paths reported by an already-loaded bank's <c>get_description_list</c> result.</para>
+        ///     <para xml:lang="en">
+        ///         Logs up to forty event paths reported by an already-loaded bank's <c>get_description_list</c>
+        ///         result.
+        ///     </para>
         ///     <para xml:lang="zh-CN">记录已加载音频库通过 <c>get_description_list</c> 报告的最多四十个事件路径。</para>
         /// </summary>
         /// <param name="bankResourcePath">
@@ -504,7 +589,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">已加载音频库的准确 Godot 资源路径；空白路径会被忽略。</para>
         /// </param>
         /// <remarks>
-        ///     <para xml:lang="en">Unreadable or missing banks and banks with no events produce warnings. The method does not report global cache totals.</para>
+        ///     <para xml:lang="en">
+        ///         Unreadable or missing banks and banks with no events produce warnings. The method does not
+        ///         report global cache totals.
+        ///     </para>
         ///     <para xml:lang="zh-CN">无法读取、未找到或不含事件的音频库会产生警告。此方法不报告全局缓存总数。</para>
         /// </remarks>
         public static void TryLogLoadedStudioBankEvents(string bankResourcePath)

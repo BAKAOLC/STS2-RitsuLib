@@ -54,15 +54,13 @@ namespace STS2RitsuLib.Networking.Sidecar
                     List<Exception>? cleanupExceptions = null;
                     TryDispose(runEndedSubscription);
                     TryDispose(gameReadySubscription);
-                    if (cleanupExceptions != null)
-                    {
-                        cleanupExceptions.Insert(0, installException);
-                        throw new AggregateException(
-                            "Sidecar lifecycle installation and rollback both failed.",
-                            cleanupExceptions);
-                    }
+                    if (cleanupExceptions == null)
+                        throw;
 
-                    throw;
+                    cleanupExceptions.Insert(0, installException);
+                    throw new AggregateException(
+                        "Sidecar lifecycle installation and rollback both failed.",
+                        cleanupExceptions);
 
                     void TryDispose(IDisposable? subscription)
                     {

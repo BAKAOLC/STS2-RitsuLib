@@ -153,13 +153,8 @@ namespace STS2RitsuLib.Audio.Internal
 
             lock (Gate)
             {
-                if (!ReleaseMappedInstance(ref _musicInstance, "ReplaceMusic"))
-                {
-                    DisposeUnownedInstance(path, inst);
-                    return false;
-                }
-
-                if (!FmodStudioEventInstances.TryStart(inst))
+                if (!ReleaseMappedInstance(ref _musicInstance, "ReplaceMusic") ||
+                    !FmodStudioEventInstances.TryStart(inst))
                 {
                     DisposeUnownedInstance(path, inst);
                     return false;
@@ -282,13 +277,8 @@ namespace STS2RitsuLib.Audio.Internal
 
             lock (Gate)
             {
-                if (!ReleaseMappedInstance(ref slot, $"Replace{operation}"))
-                {
-                    DisposeUnownedInstance(path, inst);
-                    return false;
-                }
-
-                if (!FmodStudioEventInstances.TryStart(inst))
+                if (!ReleaseMappedInstance(ref slot, $"Replace{operation}") ||
+                    !FmodStudioEventInstances.TryStart(inst))
                 {
                     DisposeUnownedInstance(path, inst);
                     return false;

@@ -4,7 +4,10 @@ using STS2RitsuLib.Audio.Internal;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides guarded access to FMOD Studio bus objects alongside the path-based operations in <see cref="FmodStudioRouting" />.</para>
+    ///     <para xml:lang="en">
+    ///         Provides guarded access to FMOD Studio bus objects alongside the path-based operations in
+    ///         <see cref="FmodStudioRouting" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">提供对 FMOD Studio 总线对象的受保护访问，与 <see cref="FmodStudioRouting" /> 的路径型操作相配合。</para>
     /// </summary>
     public static class FmodStudioBusAccess
@@ -81,7 +84,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">传递给 FMOD 的线性音量。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the bus supports and completes the operation; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the bus supports and completes the operation; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">总线支持并完成该操作时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TrySetVolume(string busPath, float linearVolume)
@@ -115,7 +121,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">总线是否应静音。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the bus supports and completes the operation; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the bus supports and completes the operation; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">总线支持并完成该操作时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TrySetMute(string busPath, bool muted)
@@ -149,7 +158,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">总线是否应暂停。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the bus supports and completes the operation; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the bus supports and completes the operation; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">总线支持并完成该操作时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TrySetPaused(string busPath, bool paused)
@@ -208,7 +220,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">FMOD Studio 总线路径。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en">The integer identifier, or null for missing, unsupported, non-integral, non-finite, or out-of-range values.</para>
+        ///     <para xml:lang="en">
+        ///         The integer identifier, or null for missing, unsupported, non-integral, non-finite, or
+        ///         out-of-range values.
+        ///     </para>
         ///     <para xml:lang="zh-CN">整数标识符；缺失、不支持、非整数、非有限或超出范围时为 <see langword="null" />。</para>
         /// </returns>
         public static long? TryGetNumericId(string busPath)
@@ -284,6 +299,8 @@ namespace STS2RitsuLib.Audio
 
         private static long? ConvertFloatingNumericId(double value)
         {
+            // Exact equality with Truncate is the intended test for an integral IEEE 754 value.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
             return !double.IsFinite(value) || value != Math.Truncate(value) ||
                    value < long.MinValue || value >= 9223372036854775808d
                 ? null

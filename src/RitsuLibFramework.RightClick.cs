@@ -18,7 +18,10 @@ namespace STS2RitsuLib
         ///     <para xml:lang="zh-CN">本地绑定 ID 词干。</para>
         /// </param>
         /// <param name="canHandle">
-        ///     <para xml:lang="en">Execution-time guard, invoked after the synchronized action resolves the model on each peer; do not use it for local-only UI filtering.</para>
+        ///     <para xml:lang="en">
+        ///         Execution-time guard, invoked after the synchronized action resolves the model on each peer; do
+        ///         not use it for local-only UI filtering.
+        ///     </para>
         ///     <para xml:lang="zh-CN">执行期判定，在同步动作于各端解析模型后调用；不要将其用于仅本地的界面过滤。</para>
         /// </param>
         /// <param name="execute">
@@ -65,11 +68,20 @@ namespace STS2RitsuLib
         ///     <para xml:lang="zh-CN">绑定优先级；值越高越先运行。</para>
         /// </param>
         /// <param name="canHandleLocal">
-        ///     <para xml:lang="en">Optional local-only fast filter; use only stable local UI facts, and check mutable gameplay state in <paramref name="canExecute" /> or <paramref name="execute" />.</para>
-        ///     <para xml:lang="zh-CN">可选的仅本地快速过滤；只应使用稳定的本地界面信息，可变游戏状态应在 <paramref name="canExecute" /> 或 <paramref name="execute" /> 中检查。</para>
+        ///     <para xml:lang="en">
+        ///         Optional local-only fast filter; use only stable local UI facts, and check mutable gameplay
+        ///         state in <paramref name="canExecute" /> or <paramref name="execute" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的仅本地快速过滤；只应使用稳定的本地界面信息，可变游戏状态应在 <paramref name="canExecute" /> 或
+        ///         <paramref name="execute" /> 中检查。
+        ///     </para>
         /// </param>
         /// <param name="canExecute">
-        ///     <para xml:lang="en">Optional execution-time guard, invoked after the synchronized action resolves the model on each peer.</para>
+        ///     <para xml:lang="en">
+        ///         Optional execution-time guard, invoked after the synchronized action resolves the model on each
+        ///         peer.
+        ///     </para>
         ///     <para xml:lang="zh-CN">可选执行期判定，在同步动作于各端解析模型后调用。</para>
         /// </param>
         /// <returns>

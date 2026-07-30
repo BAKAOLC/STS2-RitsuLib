@@ -4,7 +4,10 @@ using System.Runtime.CompilerServices;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Stores mod-attached state on arbitrary reference objects without subclassing or boxing through object APIs.</para>
+    ///     <para xml:lang="en">
+    ///         Stores mod-attached state on arbitrary reference objects without subclassing or boxing through
+    ///         object APIs.
+    ///     </para>
     ///     <para xml:lang="zh-CN">在任意引用对象上存储模组附加状态，无需子类化，也无需通过 object API 装箱。</para>
     /// </summary>
     /// <param name="valueFactory">
@@ -76,7 +79,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the existing value for <paramref name="key" /> or adds <paramref name="value" /> and returns it.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the existing value for <paramref name="key" /> or adds <paramref name="value" /> and
+        ///         returns it.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的现有值；不存在时添加并返回 <paramref name="value" />。</para>
         /// </summary>
         public TValue GetOrAdd(TKey key, TValue value)
@@ -86,7 +92,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the existing value for <paramref name="key" /> or creates one with <paramref name="valueFactory" />.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the existing value for <paramref name="key" /> or creates one with
+        ///         <paramref name="valueFactory" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的现有值；不存在时使用 <paramref name="valueFactory" /> 创建一个。</para>
         /// </summary>
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
@@ -117,7 +126,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the value for <paramref name="key" /> if present; otherwise <paramref name="defaultValue" />.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the value for <paramref name="key" /> if present; otherwise
+        ///         <paramref name="defaultValue" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">存在时返回 <paramref name="key" /> 的值；否则返回 <paramref name="defaultValue" />。</para>
         /// </summary>
         public TValue GetValueOrDefault(TKey key, TValue defaultValue)
@@ -145,7 +157,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Stores <paramref name="value" /> for <paramref name="key" />, replacing any existing entry, and returns the value.</para>
+        ///     <para xml:lang="en">
+        ///         Stores <paramref name="value" /> for <paramref name="key" />, replacing any existing entry, and
+        ///         returns the value.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为 <paramref name="key" /> 存储 <paramref name="value" />，替换任何现有条目，并返回该值。</para>
         /// </summary>
         public TValue Set(TKey key, TValue value)
@@ -157,7 +172,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Updates the stored value using <paramref name="updater" />, creating the entry first when absent.</para>
+        ///     <para xml:lang="en">
+        ///         Updates the stored value using <paramref name="updater" />, creating the entry first when
+        ///         absent.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用 <paramref name="updater" /> 更新已存储值；条目不存在时会先创建。</para>
         /// </summary>
         public TValue Update(TKey key, Func<TValue, TValue> updater)
@@ -211,7 +229,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Removes all entries from the table without affecting live <typeparamref name="TKey" /> instances.</para>
+        ///     <para xml:lang="en">
+        ///         Removes all entries from the table without affecting live <typeparamref name="TKey" />
+        ///         instances.
+        ///     </para>
         ///     <para xml:lang="zh-CN">移除表中的所有条目，但不影响仍存活的 <typeparamref name="TKey" /> 实例。</para>
         /// </summary>
         public void Clear()

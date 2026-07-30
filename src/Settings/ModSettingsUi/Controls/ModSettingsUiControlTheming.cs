@@ -570,7 +570,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Applies the settings scrollbar track, grabber states, width, separation, and optional minimum grabber length to a scroll container.</para>
+        ///     <para xml:lang="en">
+        ///         Applies the settings scrollbar track, grabber states, width, separation, and optional minimum
+        ///         grabber length to a scroll container.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将设置界面的滚动条轨道、滑块状态、宽度、间距和可选滑块最小长度应用到滚动容器。</para>
         /// </summary>
         /// <param name="container">
@@ -588,7 +591,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Calculates the right content gutter from theme defaults and, when available, the scroll container's actual bar width and separation.</para>
+        ///     <para xml:lang="en">
+        ///         Calculates the right content gutter from theme defaults and, when available, the scroll
+        ///         container's actual bar width and separation.
+        ///     </para>
         ///     <para xml:lang="zh-CN">根据主题默认值以及可用时滚动容器的实际滚动条宽度与间距，计算内容右侧留白。</para>
         /// </summary>
         /// <param name="container">
@@ -624,7 +630,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Applies the settings scrollbar theme using dropdown-specific width and separation tokens with global scrollbar fallbacks.</para>
+        ///     <para xml:lang="en">
+        ///         Applies the settings scrollbar theme using dropdown-specific width and separation tokens with
+        ///         global scrollbar fallbacks.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用下拉列表专用的宽度与间距主题项应用设置滚动条主题，并以全局滚动条配置作为回退。</para>
         /// </summary>
         /// <param name="container">

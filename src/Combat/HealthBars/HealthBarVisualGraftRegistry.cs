@@ -95,8 +95,10 @@ namespace STS2RitsuLib.Combat.HealthBars
     public static class HealthBarVisualGraftRegistry
     {
         private static readonly Lock SyncRoot = new();
+
         private static readonly Dictionary<(string ModId, string SourceId), ProviderEntry> Providers =
             new(HealthBarProviderKeyComparer.Instance);
+
         private static long _nextRegistrationOrder;
 
         /// <summary>

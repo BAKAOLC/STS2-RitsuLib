@@ -422,13 +422,11 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 var pending = FindPending(handle.Id);
-                if (pending != null)
-                {
-                    pending.Request = request;
-                    return true;
-                }
+                if (pending == null)
+                    return _host?.Update(handle.Id, request, resetDuration) == true;
 
-                return _host?.Update(handle.Id, request, resetDuration) == true;
+                pending.Request = request;
+                return true;
             }
         }
 
@@ -463,13 +461,11 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 var pending = FindPending(handle.Id);
-                if (pending != null)
-                {
-                    pending.Request = pending.Request.WithBody(body);
-                    return true;
-                }
+                if (pending == null)
+                    return _host?.Update(handle.Id, request => request.WithBody(body), resetDuration) == true;
 
-                return _host?.Update(handle.Id, request => request.WithBody(body), resetDuration) == true;
+                pending.Request = pending.Request.WithBody(body);
+                return true;
             }
         }
 
@@ -509,13 +505,11 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 var pending = FindPending(handle.Id);
-                if (pending != null)
-                {
-                    pending.Request = pending.Request.WithText(body, title);
-                    return true;
-                }
+                if (pending == null)
+                    return _host?.Update(handle.Id, request => request.WithText(body, title), resetDuration) == true;
 
-                return _host?.Update(handle.Id, request => request.WithText(body, title), resetDuration) == true;
+                pending.Request = pending.Request.WithText(body, title);
+                return true;
             }
         }
 
@@ -549,13 +543,11 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 var pending = FindPending(handle.Id);
-                if (pending != null)
-                {
-                    pending.Request = pending.Request.WithTitle(title);
-                    return true;
-                }
+                if (pending == null)
+                    return _host?.Update(handle.Id, request => request.WithTitle(title), resetDuration) == true;
 
-                return _host?.Update(handle.Id, request => request.WithTitle(title), resetDuration) == true;
+                pending.Request = pending.Request.WithTitle(title);
+                return true;
             }
         }
 
@@ -589,14 +581,12 @@ namespace STS2RitsuLib.Ui.Toast
             lock (SyncRoot)
             {
                 var pending = FindPending(handle.Id);
-                if (pending != null)
-                {
-                    if (durationSeconds.HasValue)
-                        pending.Request = pending.Request.WithDuration(durationSeconds);
-                    return true;
-                }
+                if (pending == null)
+                    return _host?.ResetDuration(handle.Id, durationSeconds) == true;
 
-                return _host?.ResetDuration(handle.Id, durationSeconds) == true;
+                if (durationSeconds.HasValue)
+                    pending.Request = pending.Request.WithDuration(durationSeconds);
+                return true;
             }
         }
 

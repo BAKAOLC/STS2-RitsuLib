@@ -84,12 +84,13 @@ namespace STS2RitsuLib.Settings
             ArgumentNullException.ThrowIfNull(resolver);
             ArgumentNullException.ThrowIfNull(refreshWhenAnyOfTheseChange);
             if (refreshWhenAnyOfTheseChange.Any(static binding => binding == null))
-                throw new ArgumentException("Refresh bindings cannot contain null.", nameof(refreshWhenAnyOfTheseChange));
+                throw new ArgumentException("Refresh bindings cannot contain null.",
+                    nameof(refreshWhenAnyOfTheseChange));
 
             return new DynamicModSettingsText(
                 resolver,
                 refreshWhenAnyOfTheseChange.Length > 0
-                    ? [..refreshWhenAnyOfTheseChange]
+                    ? [.. refreshWhenAnyOfTheseChange]
                     : default);
         }
 

@@ -3,7 +3,10 @@ using Godot;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Implements <see cref="GameFmod.Playback" /> with typed handles, playback options, routing, and lifecycle ownership.</para>
+    ///     <para xml:lang="en">
+    ///         Implements <see cref="GameFmod.Playback" /> with typed handles, playback options, routing, and
+    ///         lifecycle ownership.
+    ///     </para>
     ///     <para xml:lang="zh-CN">使用类型化句柄、播放选项、路由和生命周期归属实现 <see cref="GameFmod.Playback" />。</para>
     /// </summary>
     public sealed class GameAudioService : IGameAudio
@@ -24,26 +27,11 @@ namespace STS2RitsuLib.Audio
             options ??= new();
             if (options.ScopeToken is { IsClosing: true })
                 return AudioPlayResult.Fail(AudioPlayStatus.Failed, "The audio scope token is disposed.");
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (!TryEnterCooldown(source, options))
                 return AudioPlayResult.Fail(AudioPlayStatus.SkippedCooldown);
 
             return PlayCore(source, options);
-        }
-
-        private static AudioPlayResult PlayCore(AudioSource source, AudioPlaybackOptions options)
-        {
-            return source switch
-            {
-                StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
-                StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
-                SoundFileSource fileSource => PlaySoundFile(fileSource, options),
-                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
-                StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
-                StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
-                    options),
-                SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
-                _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
-            };
         }
 
         /// <inheritdoc />
@@ -141,11 +129,28 @@ namespace STS2RitsuLib.Audio
             return AudioChannelRegistry.Shared.StopTag(tag, allowFadeOut);
         }
 
+        private static AudioPlayResult PlayCore(AudioSource source, AudioPlaybackOptions options)
+        {
+            return source switch
+            {
+                StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
+                StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
+                SoundFileSource fileSource => PlaySoundFile(fileSource, options),
+                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
+                StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
+                StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
+                    options),
+                SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
+                _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
+            };
+        }
+
         private static AudioPlayResult PlayVanillaOneShot(StudioEventSource source, AudioPlaybackOptions options)
         {
             var started = options.GetParameters().Count == 0
                 ? GameFmodAudioService.Shared.TryPlayOneShot(source.Path, options.Volume)
                 : GameFmodAudioService.Shared.TryPlayOneShot(source.Path, options.GetParameters(), options.Volume);
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (!started)
                 return AudioPlayResult.Fail(AudioPlayStatus.MissingManager);
 

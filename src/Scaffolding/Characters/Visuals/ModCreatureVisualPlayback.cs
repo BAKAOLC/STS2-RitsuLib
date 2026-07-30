@@ -371,7 +371,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 
         private static string[] RestSiteLoopFallback(string primaryCue)
         {
-            return [primaryCue, ..RestSiteLoopCueNames];
+            return [primaryCue, .. RestSiteLoopCueNames];
         }
 
         private static bool TryApplyVisualCues(Node visualsRoot, CharacterModel? character,

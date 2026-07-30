@@ -6,7 +6,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Localization.Patches
 {
     /// <summary>
-    ///     <para xml:lang="en">Injects mod-registered SmartFormat extensions after the game creates its localization formatter.</para>
+    ///     <para xml:lang="en">
+    ///         Injects mod-registered SmartFormat extensions after the game creates its localization
+    ///         formatter.
+    ///     </para>
     ///     <para xml:lang="zh-CN">在游戏创建本地化格式化器后，注入模组注册的 SmartFormat 扩展。</para>
     /// </summary>
     internal sealed class LocManagerLoadLocFormattersPostfixPatch : IPatchMethod

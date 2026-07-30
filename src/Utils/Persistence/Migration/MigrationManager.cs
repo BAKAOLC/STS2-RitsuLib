@@ -221,8 +221,17 @@ namespace STS2RitsuLib.Utils.Persistence.Migration
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Finds a shortest migration path from <paramref name="startVersion" /> to <paramref name="targetVersion" /> by breadth-first search. A migration may run when the current version is in <c>[FromVersion, ToVersion)</c>, and migrations that overshoot the target are ignored. Equally short paths follow the order of <paramref name="migrations" />.</para>
-        ///     <para xml:lang="zh-CN">通过广度优先搜索查找从 <paramref name="startVersion" /> 到 <paramref name="targetVersion" /> 的最短迁移路径。当前版本位于 <c>[FromVersion, ToVersion)</c> 时迁移可执行，超过目标版本的迁移会被忽略。长度相同的路径按 <paramref name="migrations" /> 中的顺序选择。</para>
+        ///     <para xml:lang="en">
+        ///         Finds a shortest migration path from <paramref name="startVersion" /> to
+        ///         <paramref name="targetVersion" /> by breadth-first search. A migration may run when the current version is in
+        ///         <c>[FromVersion, ToVersion)</c>, and migrations that overshoot the target are ignored. Equally short paths
+        ///         follow the order of <paramref name="migrations" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过广度优先搜索查找从 <paramref name="startVersion" /> 到 <paramref name="targetVersion" />
+        ///         的最短迁移路径。当前版本位于 <c>[FromVersion, ToVersion)</c> 时迁移可执行，超过目标版本的迁移会被忽略。长度相同的路径按 <paramref name="migrations" />
+        ///         中的顺序选择。
+        ///     </para>
         /// </summary>
         internal static bool TryBuildShortestMigrationPath(
             int startVersion,
@@ -306,7 +315,10 @@ namespace STS2RitsuLib.Utils.Persistence.Migration
         public bool Success { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Deserialized, optionally migrated instance when <see cref="Success" /> is <see langword="true" />.</para>
+        ///     <para xml:lang="en">
+        ///         Deserialized, optionally migrated instance when <see cref="Success" /> is
+        ///         <see langword="true" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN"><see cref="Success" /> 为 <see langword="true" /> 时反序列化得到的实例；该实例可能已经迁移。</para>
         /// </summary>
         public T? Data { get; init; }
@@ -330,7 +342,10 @@ namespace STS2RitsuLib.Utils.Persistence.Migration
         public int FinalVersion { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en"><see langword="true" /> when malformed JSON or an obsolete schema version indicates that the stored file should be quarantined or reset.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when malformed JSON or an obsolete schema version indicates that the
+        ///         stored file should be quarantined or reset.
+        ///     </para>
         ///     <para xml:lang="zh-CN">JSON 格式错误或架构版本过旧，表明应隔离或重置存储文件时为 <see langword="true" />。</para>
         /// </summary>
         public bool RequiresRecovery { get; init; }

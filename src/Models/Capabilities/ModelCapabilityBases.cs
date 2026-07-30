@@ -419,7 +419,10 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Owner-hook capability with a saved turn counter that removes itself when the counter reaches zero.</para>
+    ///     <para xml:lang="en">
+    ///         Owner-hook capability with a saved turn counter that removes itself when the counter reaches
+    ///         zero.
+    ///     </para>
     ///     <para xml:lang="zh-CN">保存回合计数并在计数归零后自动移除自身的所属模型钩子能力。</para>
     /// </summary>
     public abstract class TurnLimitedCapability<TModel> : OwnerHookCapability<TModel>

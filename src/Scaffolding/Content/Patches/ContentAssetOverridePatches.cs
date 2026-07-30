@@ -4,9 +4,7 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Runs;
-using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils;
 
@@ -1847,7 +1845,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             if (ExternalAssetOverrideRegistry.TryGetEventVfxScene(__instance, out var externalVfxScene,
                     out var externalVfxSceneProviderKey))
-            {
                 if (ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
                         __instance,
                         externalVfxScene,
@@ -1857,7 +1854,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     __result = true;
                     return false;
                 }
-            }
 
             if (__instance is not IModEventAssetOverrides overrides)
                 return true;
@@ -2399,6 +2395,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         /// </summary>
         public static bool Prefix(AfflictionModel __instance, ref bool __result)
         {
+            // Preserve scene-over-path override priority and separate provider diagnostics.
+            // ReSharper disable once DuplicatedSequentialIfBodies
             if (ExternalAssetOverrideRegistry.TryGetAfflictionOverlayScene(__instance, out var externalScene,
                     out var externalSceneProviderKey) &&
                 ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(

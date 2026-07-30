@@ -109,7 +109,10 @@ namespace STS2RitsuLib.Models.Capabilities
         public required string Id { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Draw order among capability overlays. Larger values are added later and render above smaller values.</para>
+        ///     <para xml:lang="en">
+        ///         Draw order among capability overlays. Larger values are added later and render above smaller
+        ///         values.
+        ///     </para>
         ///     <para xml:lang="zh-CN">能力覆盖层之间的绘制顺序。数值越大越晚加入，因此显示在更上层。</para>
         /// </summary>
         public int Order { get; init; }
@@ -225,7 +228,10 @@ namespace STS2RitsuLib.Models.Capabilities
     public interface ICardOverlayContributor
     {
         /// <summary>
-        ///     <para xml:lang="en">Returns overlays for the current card node. Return an empty sequence when no overlay should be shown.</para>
+        ///     <para xml:lang="en">
+        ///         Returns overlays for the current card node. Return an empty sequence when no overlay should be
+        ///         shown.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回当前卡牌节点的覆盖层。不需要显示覆盖层时返回空序列。</para>
         /// </summary>
         IEnumerable<CardOverlayContribution> GetCardOverlays(CardOverlayContext context);
@@ -396,7 +402,8 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Returns a card type override, or <see langword="null" /> to leave the current value unchanged. The first non-null
+        ///         Returns a card type override, or <see langword="null" /> to leave the current value unchanged. The first
+        ///         non-null
         ///         contributor result wins; additional overrides are reported when
         ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
         ///     </para>
@@ -412,7 +419,8 @@ namespace STS2RitsuLib.Models.Capabilities
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Returns a card rarity override, or <see langword="null" /> to leave the current value unchanged. The first non-null
+        ///         Returns a card rarity override, or <see langword="null" /> to leave the current value unchanged. The first
+        ///         non-null
         ///         contributor result wins; additional overrides are reported when
         ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
         ///     </para>
@@ -428,7 +436,8 @@ namespace STS2RitsuLib.Models.Capabilities
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Returns a target type override, or <see langword="null" /> to leave the current value unchanged. The first non-null
+        ///         Returns a target type override, or <see langword="null" /> to leave the current value unchanged. The first
+        ///         non-null
         ///         contributor result wins; additional overrides are reported when
         ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
         ///     </para>
@@ -502,7 +511,8 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Returns <see langword="null" /> to leave the current playability unchanged; otherwise overrides it. Contributors run in
+        ///         Returns <see langword="null" /> to leave the current playability unchanged; otherwise overrides it.
+        ///         Contributors run in
         ///         capability order and later non-null results replace earlier results. Multiple overrides are reported
         ///         when <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
         ///     </para>
@@ -540,7 +550,8 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Returns a result pile override, or <see langword="null" /> to keep the current result. The first non-null contributor
+        ///         Returns a result pile override, or <see langword="null" /> to keep the current result. The first non-null
+        ///         contributor
         ///         result wins; additional overrides are reported when
         ///         <see cref="ModelCapabilityDiagnostics.ConflictLogs" /> is enabled.
         ///     </para>

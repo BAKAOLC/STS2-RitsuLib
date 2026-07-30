@@ -38,7 +38,6 @@ namespace STS2RitsuLib.Cards
             var replacements = new List<ModifierEntry>();
             var wrappers = new List<ModifierEntry>();
             foreach (var entry in modifiers)
-            {
                 try
                 {
                     (ReferencesTypeArgument(entry.Modifier) ? wrappers : replacements).Add(entry);
@@ -47,14 +46,12 @@ namespace STS2RitsuLib.Cards
                 {
                     WarnFailure(entry.Source, card, ex);
                 }
-            }
 
             foreach (var entry in replacements)
                 originalPlaqueText = entry.Modifier;
 
             var previousTypeText = originalPlaqueText;
             foreach (var entry in wrappers)
-            {
                 try
                 {
                     var wrapper = new LocString(entry.Modifier.LocTable, entry.Modifier.LocEntryKey);
@@ -66,7 +63,6 @@ namespace STS2RitsuLib.Cards
                 {
                     WarnFailure(entry.Source, card, ex);
                 }
-            }
 
             return previousTypeText;
         }

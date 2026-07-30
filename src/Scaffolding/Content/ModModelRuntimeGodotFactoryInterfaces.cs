@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.Core.Animation;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;

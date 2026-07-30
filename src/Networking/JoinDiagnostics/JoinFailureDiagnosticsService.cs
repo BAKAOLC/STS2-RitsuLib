@@ -157,8 +157,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
                     new(T("row.modelDbHash", "ModelDb hash"), host.ModelDbHash.ToString(),
                         local.ModelDbHash.ToString()),
-                    ..BuildModelDbHashModeDetailRows(host, local),
-                    ..BuildSavedPropertyNetIdSortRows(host, local),
+                    .. BuildModelDbHashModeDetailRows(host, local),
+                    .. BuildSavedPropertyNetIdSortRows(host, local),
                 ]));
         }
 
@@ -364,8 +364,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     new(T("row.modelDbHashMode", "ModelDb hash mode"),
                         FormatModelDbHashMode(host.ModelDbHashUsesDeterministicCache),
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
-                    ..BuildModelDbHashModeDetailRows(host, local),
-                    ..BuildSavedPropertyNetIdSortRows(host, local),
+                    .. BuildModelDbHashModeDetailRows(host, local),
+                    .. BuildSavedPropertyNetIdSortRows(host, local),
                 ]));
         }
 

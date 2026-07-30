@@ -1,7 +1,10 @@
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     <para xml:lang="en">Defines the base type for framework lifecycle notifications published through <see cref="RitsuLibFramework.SubscribeLifecycle" />.</para>
+    ///     <para xml:lang="en">
+    ///         Defines the base type for framework lifecycle notifications published through
+    ///         <see cref="RitsuLibFramework.SubscribeLifecycle" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">定义通过 <see cref="RitsuLibFramework.SubscribeLifecycle" /> 发布的框架生命周期通知的基类型。</para>
     /// </summary>
     public interface IFrameworkLifecycleEvent
@@ -14,7 +17,10 @@ namespace STS2RitsuLib
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Marks events replayed to new subscribers when <c>replayCurrentState</c> is <see langword="true" />.</para>
+    ///     <para xml:lang="en">
+    ///         Marks events replayed to new subscribers when <c>replayCurrentState</c> is
+    ///         <see langword="true" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">标记在 <c>replayCurrentState</c> 为 <see langword="true" /> 时会向新订阅者重放的事件。</para>
     /// </summary>
     public interface IReplayableFrameworkLifecycleEvent : IFrameworkLifecycleEvent;
@@ -93,7 +99,10 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     <para xml:lang="en">Receives strongly typed lifecycle events from <see cref="RitsuLibFramework.SubscribeLifecycle" />.</para>
+    ///     <para xml:lang="en">
+    ///         Receives strongly typed lifecycle events from
+    ///         <see cref="RitsuLibFramework.SubscribeLifecycle" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">接收来自 <see cref="RitsuLibFramework.SubscribeLifecycle" /> 的强类型生命周期事件。</para>
     /// </summary>
     public interface ILifecycleObserver

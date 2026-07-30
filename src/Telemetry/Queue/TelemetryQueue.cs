@@ -22,6 +22,7 @@ namespace STS2RitsuLib.Telemetry
                     discarded = [.. doc.Events.Take(overflow)];
                     doc.Events.RemoveRange(0, overflow);
                 }
+
                 var write = WriteQueue(envelope.ApplicantId, doc);
                 if (!write.Success)
                 {
@@ -122,10 +123,8 @@ namespace STS2RitsuLib.Telemetry
                 var doc = ReadQueue(applicantId);
                 var write = WriteQueue(applicantId, new());
                 if (!write.Success)
-                {
                     throw new InvalidOperationException(
                         $"Failed to clear telemetry queue for '{applicantId}': {write.ErrorMessage}");
-                }
 
                 TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(doc.Events);
                 RitsuLibFramework.Logger.Info($"[Telemetry] Cleared queue for applicant '{applicantId}'.");
@@ -150,10 +149,8 @@ namespace STS2RitsuLib.Telemetry
                 {
                     var write = WriteQueue(applicantId, doc);
                     if (!write.Success)
-                    {
                         throw new InvalidOperationException(
                             $"Failed to persist unauthorized telemetry removal for '{applicantId}': {write.ErrorMessage}");
-                    }
 
                     TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(dropped);
                     RitsuLibFramework.Logger.Info(
@@ -239,6 +236,8 @@ namespace STS2RitsuLib.Telemetry
 
             var document = result is { Success: true, Data: not null } ? result.Data : new();
             document.Events ??= [];
+            // Keep migration filtering and persistence grouped as one optional transaction.
+            // ReSharper disable once InvertIf
             if (migrated)
             {
                 document.Events =
@@ -249,10 +248,8 @@ namespace STS2RitsuLib.Telemetry
                 ];
                 var migrationWrite = WriteQueue(applicantId, document);
                 if (!migrationWrite.Success)
-                {
                     RitsuLibFramework.Logger.Warn(
                         $"[Telemetry] Failed to persist migrated queue for applicant '{applicantId}': {migrationWrite.ErrorMessage}");
-                }
             }
 
             return document;
@@ -303,10 +300,8 @@ namespace STS2RitsuLib.Telemetry
         {
             var write = WriteState(applicantId, state);
             if (!write.Success)
-            {
                 RitsuLibFramework.Logger.Warn(
                     $"[Telemetry] Failed to persist queue state for applicant '{applicantId}': {write.ErrorMessage}");
-            }
         }
 
         private static void RecordFlushFailure(string applicantId, Exception exception)

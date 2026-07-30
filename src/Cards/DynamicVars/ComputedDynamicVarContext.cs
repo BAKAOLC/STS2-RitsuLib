@@ -289,7 +289,10 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to get a dynamic variable of type <typeparamref name="TVar" /> from <see cref="CardVars" />.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to get a dynamic variable of type <typeparamref name="TVar" /> from
+        ///         <see cref="CardVars" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试从 <see cref="CardVars" /> 获取 <typeparamref name="TVar" /> 类型的动态变量。</para>
         /// </summary>
         public bool TryGetCardVar<TVar>(string name, [MaybeNullWhen(false)] out TVar dynamicVar)

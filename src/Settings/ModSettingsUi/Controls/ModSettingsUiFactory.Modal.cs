@@ -14,7 +14,10 @@ namespace STS2RitsuLib.Settings
         private const int ModalCanvasLayer = 120;
 
         /// <summary>
-        ///     <para xml:lang="en">Shows a full-viewport, input-blocking confirmation dialog with themed chrome and restores the previous focus when it closes.</para>
+        ///     <para xml:lang="en">
+        ///         Shows a full-viewport, input-blocking confirmation dialog with themed chrome and restores the
+        ///         previous focus when it closes.
+        ///     </para>
         ///     <para xml:lang="zh-CN">显示一个覆盖整个视口、阻止下层输入的主题确认对话框，并在关闭时恢复此前的焦点。</para>
         /// </summary>
         /// <param name="attachParent">
@@ -30,7 +33,10 @@ namespace STS2RitsuLib.Settings
         ///     <para xml:lang="zh-CN">对话框正文；空字符串会保留一个空白正文行。</para>
         /// </param>
         /// <param name="cancelText">
-        ///     <para xml:lang="en">The cancel-button label, required when <paramref name="showCancel" /> is <see langword="true" />.</para>
+        ///     <para xml:lang="en">
+        ///         The cancel-button label, required when <paramref name="showCancel" /> is
+        ///         <see langword="true" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">取消按钮标签；<paramref name="showCancel" /> 为 <see langword="true" /> 时必须提供非空文本。</para>
         /// </param>
         /// <param name="confirmText">

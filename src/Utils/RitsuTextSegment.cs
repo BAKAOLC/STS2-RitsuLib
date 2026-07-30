@@ -16,7 +16,10 @@ namespace STS2RitsuLib.Utils
         public string Text { get; init; } = "";
 
         /// <summary>
-        ///     <para xml:lang="en">Gets an optional CSS-compatible foreground color, such as <c>#ff4747</c> or <c>rgb(255, 71, 71)</c>.</para>
+        ///     <para xml:lang="en">
+        ///         Gets an optional CSS-compatible foreground color, such as <c>#ff4747</c> or
+        ///         <c>rgb(255, 71, 71)</c>.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取可选的 CSS 兼容前景色，例如 <c>#ff4747</c> 或 <c>rgb(255, 71, 71)</c>。</para>
         /// </summary>
         [JsonPropertyName("color")]

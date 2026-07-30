@@ -2,7 +2,6 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Screens.Timeline.UnlockScreens;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
-using STS2RitsuLib.Timeline.Scaffolding;
 
 namespace STS2RitsuLib.Timeline.Patches
 {

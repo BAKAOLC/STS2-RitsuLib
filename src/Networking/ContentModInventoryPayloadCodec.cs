@@ -67,6 +67,8 @@ namespace STS2RitsuLib.Networking
             try
             {
                 var encodedPayloadChars = 0;
+                // This bounded validation exits before allocating or decoding an oversized payload.
+                // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var character in encoded)
                 {
                     if (char.IsWhiteSpace(character))

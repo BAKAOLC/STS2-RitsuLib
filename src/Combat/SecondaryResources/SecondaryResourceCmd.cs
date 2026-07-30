@@ -290,7 +290,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                             source);
                     return;
                 case SecondaryResourceTurnStartPolicy.AddMaxToCurrent:
-                    if (GetMax(player, definition.Id) is { } max && max > 0 &&
+                    if (GetMax(player, definition.Id) is > 0 and var max &&
                         TryResolve(player, definition.Id, out var gainCombatState, out _))
                         await GainCore(
                             gainCombatState,

@@ -63,19 +63,28 @@ namespace STS2RitsuLib.Settings
         public string? DataKey { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional parameterless read method used by <see cref="ModSettingsReflectionBindingSource.Callback" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the optional parameterless read method used by
+        ///         <see cref="ModSettingsReflectionBindingSource.Callback" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取 <see cref="ModSettingsReflectionBindingSource.Callback" /> 使用的可选无参数读取方法名。</para>
         /// </summary>
         public string? ReadUsing { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional single-parameter write method used by <see cref="ModSettingsReflectionBindingSource.Callback" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the optional single-parameter write method used by
+        ///         <see cref="ModSettingsReflectionBindingSource.Callback" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取 <see cref="ModSettingsReflectionBindingSource.Callback" /> 使用的可选单参数写入方法名。</para>
         /// </summary>
         public string? WriteUsing { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional parameterless save method used by <see cref="ModSettingsReflectionBindingSource.Callback" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the optional parameterless save method used by
+        ///         <see cref="ModSettingsReflectionBindingSource.Callback" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取 <see cref="ModSettingsReflectionBindingSource.Callback" /> 使用的可选无参数保存方法名。</para>
         /// </summary>
         public string? SaveUsing { get; init; }
@@ -87,7 +96,10 @@ namespace STS2RitsuLib.Settings
         public string? DefaultUsing { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional parameterless method that returns an <c>IStructuredModSettingsValueAdapter&lt;T&gt;</c>.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the optional parameterless method that returns an
+        ///         <c>IStructuredModSettingsValueAdapter&lt;T&gt;</c>.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取返回 <c>IStructuredModSettingsValueAdapter&lt;T&gt;</c> 的可选无参数方法名。</para>
         /// </summary>
         public string? AdapterUsing { get; init; }
@@ -136,7 +148,10 @@ namespace STS2RitsuLib.Settings
     public abstract class ModSettingsTitleDescriptionTextAttribute : Attribute
     {
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional parameterless provider method that returns the <see cref="Utils.I18N" /> instance used by this attribute.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the optional parameterless provider method that returns the <see cref="Utils.I18N" />
+        ///         instance used by this attribute.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取为此特性返回 <see cref="Utils.I18N" /> 实例的可选无参数提供方法名。</para>
         /// </summary>
         public string? I18NProviderUsing { get; init; }
@@ -197,7 +212,10 @@ namespace STS2RitsuLib.Settings
     public abstract class ModSettingsLabelDescriptionTextAttribute : Attribute
     {
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional parameterless provider method that returns the <see cref="Utils.I18N" /> instance used by this attribute.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the optional parameterless provider method that returns the <see cref="Utils.I18N" />
+        ///         instance used by this attribute.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取为此特性返回 <see cref="Utils.I18N" /> 实例的可选无参数提供方法名。</para>
         /// </summary>
         public string? I18NProviderUsing { get; init; }
@@ -512,7 +530,10 @@ namespace STS2RitsuLib.Settings
         public string? PlaceholderLocKey { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the maximum character count; values less than or equal to zero leave the length unrestricted.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the maximum character count; values less than or equal to zero leave the length
+        ///         unrestricted.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取最大字符数；值小于或等于零时不限制长度。</para>
         /// </summary>
         public int MaxLength { get; init; }
@@ -569,7 +590,10 @@ namespace STS2RitsuLib.Settings
         public string? PlaceholderLocKey { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the maximum character count; values less than or equal to zero leave the length unrestricted.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the maximum character count; values less than or equal to zero leave the length
+        ///         unrestricted.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取最大字符数；值小于或等于零时不限制长度。</para>
         /// </summary>
         public int MaxLength { get; init; }
@@ -645,7 +669,10 @@ namespace STS2RitsuLib.Settings
         public bool DistinguishModifierSides { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets whether the annotated member contains multiple bindings and must be a <see cref="List{T}" /> of strings.</para>
+        ///     <para xml:lang="en">
+        ///         Gets whether the annotated member contains multiple bindings and must be a
+        ///         <see cref="List{T}" /> of strings.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取带特性的成员是否包含多个绑定；启用时成员必须为字符串 <see cref="List{T}" />。</para>
         /// </summary>
         public bool Multiple { get; init; }
@@ -671,19 +698,28 @@ namespace STS2RitsuLib.Settings
         public string SectionId { get; } = sectionId;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the available values for a string-backed choice; enumeration choices derive their values from the enum type.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the available values for a string-backed choice; enumeration choices derive their values
+        ///         from the enum type.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取字符串选项可用的值；枚举选项会从枚举类型中生成可用值。</para>
         /// </summary>
         public string[]? Options { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets optional literal labels or localization fallbacks indexed in parallel with string-backed <see cref="Options" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets optional literal labels or localization fallbacks indexed in parallel with string-backed
+        ///         <see cref="Options" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取按字符串 <see cref="Options" /> 索引对应的可选标签文本；使用本地化来源时作为回退文本。</para>
         /// </summary>
         public string[]? OptionLabels { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets optional <see cref="Utils.I18N" /> keys indexed in parallel with string-backed <see cref="Options" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets optional <see cref="Utils.I18N" /> keys indexed in parallel with string-backed
+        ///         <see cref="Options" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取按字符串 <see cref="Options" /> 索引对应的可选 <see cref="Utils.I18N" /> 键。</para>
         /// </summary>
         public string[]? OptionLabelKeys { get; init; }
@@ -695,7 +731,10 @@ namespace STS2RitsuLib.Settings
         public string? OptionLabelLocTable { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets optional game localization keys indexed in parallel with string-backed <see cref="Options" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets optional game localization keys indexed in parallel with string-backed
+        ///         <see cref="Options" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取按字符串 <see cref="Options" /> 索引对应的可选游戏本地化键。</para>
         /// </summary>
         public string[]? OptionLabelLocKeys { get; init; }
@@ -727,7 +766,10 @@ namespace STS2RitsuLib.Settings
         public string SectionId { get; } = sectionId;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional literal button label or localization fallback; the method name is used when omitted.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the optional literal button label or localization fallback; the method name is used when
+        ///         omitted.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取可选的按钮标签文本或本地化回退文本；未指定时使用方法名。</para>
         /// </summary>
         public string? ButtonText { get; init; }
@@ -757,7 +799,10 @@ namespace STS2RitsuLib.Settings
         public ModSettingsButtonTone Tone { get; init; } = ModSettingsButtonTone.Normal;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets whether the action supplies the current <see cref="IModSettingsUiActionHost" />, allowing the method to accept it as its sole parameter.</para>
+        ///     <para xml:lang="en">
+        ///         Gets whether the action supplies the current <see cref="IModSettingsUiActionHost" />, allowing
+        ///         the method to accept it as its sole parameter.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取操作是否提供当前 <see cref="IModSettingsUiActionHost" />，从而允许方法将其作为唯一参数。</para>
         /// </summary>
         public bool UseHostContext { get; init; }
@@ -783,7 +828,10 @@ namespace STS2RitsuLib.Settings
         public string SectionId { get; } = sectionId;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets optional literal paragraph text or a localization fallback; without configured text or a key, the annotated method supplies dynamic text.</para>
+        ///     <para xml:lang="en">
+        ///         Gets optional literal paragraph text or a localization fallback; without configured text or a
+        ///         key, the annotated method supplies dynamic text.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取可选的段落文本或本地化回退文本；未配置文本或键时，由带特性的方法动态提供文本。</para>
         /// </summary>
         public string? Text { get; init; }
@@ -807,7 +855,10 @@ namespace STS2RitsuLib.Settings
         public string? TextLocKey { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the maximum body height in pixels; values less than or equal to zero leave the height unrestricted.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the maximum body height in pixels; values less than or equal to zero leave the height
+        ///         unrestricted.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取正文最大高度（像素）；值小于或等于零时不限制高度。</para>
         /// </summary>
         public float MaxBodyHeight { get; init; }
@@ -853,7 +904,10 @@ namespace STS2RitsuLib.Settings
         public string SectionId { get; } = sectionId;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets optional literal body text or a localization fallback; without configured text or a key, the annotated method supplies dynamic text.</para>
+        ///     <para xml:lang="en">
+        ///         Gets optional literal body text or a localization fallback; without configured text or a key,
+        ///         the annotated method supplies dynamic text.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取可选的正文文本或本地化回退文本；未配置文本或键时，由带特性的方法动态提供文本。</para>
         /// </summary>
         public string? Body { get; init; }
@@ -898,7 +952,10 @@ namespace STS2RitsuLib.Settings
         public string SectionId { get; } = sectionId;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets optional literal body text or a localization fallback; without configured text or a key, the annotated method supplies dynamic text.</para>
+        ///     <para xml:lang="en">
+        ///         Gets optional literal body text or a localization fallback; without configured text or a key,
+        ///         the annotated method supplies dynamic text.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取可选的正文文本或本地化回退文本；未配置文本或键时，由带特性的方法动态提供文本。</para>
         /// </summary>
         public string? Body { get; init; }
@@ -1048,7 +1105,10 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Exposes a method returning a Godot control as a custom settings-control factory; the method may optionally accept an <see cref="IModSettingsUiActionHost" />.</para>
+    ///     <para xml:lang="en">
+    ///         Exposes a method returning a Godot control as a custom settings-control factory; the method may
+    ///         optionally accept an <see cref="IModSettingsUiActionHost" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">将返回 Godot 控件的方法公开为自定义设置控件工厂；该方法可以选择接收一个 <see cref="IModSettingsUiActionHost" />。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]

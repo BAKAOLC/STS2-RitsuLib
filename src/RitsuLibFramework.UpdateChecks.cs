@@ -111,7 +111,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     <para xml:lang="en">
         ///         Registers a periodic non-blocking update check for a mod. Automatic checks begin before essential game
-        ///         initialization, continue while the startup error dialog is active, and show update toasts only at the main menu.
+        ///         initialization, continue while the startup error dialog is active, and show update toasts only at the main
+        ///         menu.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         为模组注册周期性非阻塞更新检查。自动检查会在游戏必要初始化前开始，在启动错误对话框活动期间继续运行，
@@ -192,7 +193,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Runs an update check immediately using string URLs and shows a toast when an update is available.</para>
+        ///     <para xml:lang="en">
+        ///         Runs an update check immediately using string URLs and shows a toast when an update is
+        ///         available.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用字符串 URL 立即运行更新检查；发现更新时显示提示。</para>
         /// </summary>
         public static Task<ModUpdateCheckResult> CheckForModUpdateAndToastAsync(

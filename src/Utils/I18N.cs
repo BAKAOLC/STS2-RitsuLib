@@ -8,7 +8,10 @@ using MegaCrit.Sts2.Core.Localization;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK paths, reacting to game locale changes when possible.</para>
+    ///     <para xml:lang="en">
+    ///         Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK
+    ///         paths, reacting to game locale changes when possible.
+    ///     </para>
     ///     <para xml:lang="zh-CN">从文件系统、嵌入资源和 PCK 路径加载并合并 JSON 翻译字典，并在可行时响应游戏语言切换。</para>
     /// </summary>
     public class I18N : IDisposable, IEnumerable<KeyValuePair<string, string>>
@@ -31,7 +34,10 @@ namespace STS2RitsuLib.Utils
         ///     <para xml:lang="zh-CN">创建实例；当配置了翻译来源时，可自动接入语言切换订阅。</para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">This overload falls back from non-English languages to <c>eng</c>, matching the game's <c>LocTable</c> fallback behavior.</para>
+        ///     <para xml:lang="en">
+        ///         This overload falls back from non-English languages to <c>eng</c>, matching the game's
+        ///         <c>LocTable</c> fallback behavior.
+        ///     </para>
         ///     <para xml:lang="zh-CN">此重载会让非英语语言回退到 <c>eng</c>，与游戏 <c>LocTable</c> 的回退行为一致。</para>
         /// </remarks>
         public I18N(string? instanceName = null,
@@ -44,7 +50,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates an instance with an explicit fallback language when <paramref name="fallbackLanguage" /> is non-blank.</para>
+        ///     <para xml:lang="en">
+        ///         Creates an instance with an explicit fallback language when
+        ///         <paramref name="fallbackLanguage" /> is non-blank.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建实例；<paramref name="fallbackLanguage" /> 非空白时将其用作显式回退语言。</para>
         /// </summary>
         public I18N(string? instanceName,
@@ -91,7 +100,10 @@ namespace STS2RitsuLib.Utils
         ///     <para xml:lang="zh-CN">以键值对形式枚举当前已合并的翻译。</para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">Enumeration uses a snapshot copy to avoid collection-modified exceptions if a reload occurs during iteration.</para>
+        ///     <para xml:lang="en">
+        ///         Enumeration uses a snapshot copy to avoid collection-modified exceptions if a reload occurs
+        ///         during iteration.
+        ///     </para>
         ///     <para xml:lang="zh-CN">枚举使用快照副本，避免迭代期间重新加载翻译造成集合已修改异常。</para>
         /// </remarks>
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
@@ -107,7 +119,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Raised by <see cref="ForceReload" />, including reloads initiated by a subscribed locale-change notification.</para>
+        ///     <para xml:lang="en">
+        ///         Raised by <see cref="ForceReload" />, including reloads initiated by a subscribed locale-change
+        ///         notification.
+        ///     </para>
         ///     <para xml:lang="zh-CN">由 <see cref="ForceReload" /> 触发，包括已订阅语言变化通知所发起的重新加载。</para>
         /// </summary>
         public event Action? Changed;
@@ -146,7 +161,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns true when <paramref name="key" /> exists in the current language before fallback language entries are considered.</para>
+        ///     <para xml:lang="en">
+        ///         Returns true when <paramref name="key" /> exists in the current language before fallback
+        ///         language entries are considered.
+        ///     </para>
         ///     <para xml:lang="zh-CN">在考虑回退语言条目前，如果 <paramref name="key" /> 已存在于当前语言中，则返回 true。</para>
         /// </summary>
         public bool ContainsLocalKey(string key)
@@ -172,7 +190,10 @@ namespace STS2RitsuLib.Utils
         ///     <para xml:lang="zh-CN">枚举当前合并字典中的翻译键。</para>
         /// </summary>
         /// <param name="prefix">
-        ///     <para xml:lang="en">When non-empty, limits results to keys beginning with this prefix using ordinal case-insensitive comparison.</para>
+        ///     <para xml:lang="en">
+        ///         When non-empty, limits results to keys beginning with this prefix using ordinal
+        ///         case-insensitive comparison.
+        ///     </para>
         ///     <para xml:lang="zh-CN">非空时，仅返回以此输入前缀开头的键，比较时按序号忽略大小写。</para>
         /// </param>
         /// <param name="orderByKey">

@@ -23,7 +23,10 @@ namespace STS2RitsuLib
         ///     <para xml:lang="zh-CN">向 <paramref name="owner" /> 的活动悬停提示集合追加文本悬停提示。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="false" /> when no hover-tip set is bound to the control or the set has no text-tip container.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="false" /> when no hover-tip set is bound to the control or the set has no
+        ///         text-tip container.
+        ///     </para>
         ///     <para xml:lang="zh-CN">该控件未绑定悬停提示集合，或集合没有文本提示容器时为 <see langword="false" />。</para>
         /// </returns>
         public static bool AddTipToOwner(Control owner, string title, string description)

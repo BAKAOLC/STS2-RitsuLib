@@ -171,8 +171,11 @@ namespace STS2RitsuLib.Settings
 
             void CloseDialog()
             {
+                // The handler is installed before CloseDialog can be invoked and cleared only during teardown.
+                // ReSharper disable AccessToModifiedClosure
                 if (GodotObject.IsInstanceValid(viewport) && viewportSizedHandler != null)
                     viewport.SizeChanged -= viewportSizedHandler;
+                // ReSharper restore AccessToModifiedClosure
                 if (GodotObject.IsInstanceValid(canvasLayer))
                     canvasLayer.QueueFree();
                 RestorePreviousFocus();

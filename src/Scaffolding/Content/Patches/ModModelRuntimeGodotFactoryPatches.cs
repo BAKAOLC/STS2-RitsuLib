@@ -404,13 +404,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(MonsterModel __instance, ref NCreatureVisuals __result)
             {
+                // Preserve the explicit preference order between current and obsolete factory interfaces.
+                // ReSharper disable once DuplicatedSequentialIfBodies
                 if (__instance is IModCreatureVisualsFactory factory &&
                     TryInvokeGodotFactory(
                         __instance,
                         nameof(IModCreatureVisualsFactory.TryCreateCreatureVisuals),
                         factory.TryCreateCreatureVisuals,
                         out NCreatureVisuals created))
-                    return UseCreatedVisuals(created, ref __result);
+                    return UseCreatedVisuals(created, out __result);
 
 #pragma warning disable CS0618
                 if (__instance is IModMonsterCreatureVisualsFactory legacyFactory &&
@@ -419,12 +421,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         nameof(IModMonsterCreatureVisualsFactory.TryCreateCreatureVisuals),
                         legacyFactory.TryCreateCreatureVisuals,
                         out created))
-                    return UseCreatedVisuals(created, ref __result);
+                    return UseCreatedVisuals(created, out __result);
 #pragma warning restore CS0618
 
                 return true;
 
-                static bool UseCreatedVisuals(NCreatureVisuals created, ref NCreatureVisuals result)
+                static bool UseCreatedVisuals(NCreatureVisuals created, out NCreatureVisuals result)
                 {
                     ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
                     result = created;
@@ -434,7 +436,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Integrates creature-visual factories and profile resources with <see cref="CharacterModel.CreateVisuals" />.</para>
+        ///     <para xml:lang="en">
+        ///         Integrates creature-visual factories and profile resources with
+        ///         <see cref="CharacterModel.CreateVisuals" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将生物视觉工厂和配置资源接入 <see cref="CharacterModel.CreateVisuals" />。</para>
         /// </summary>
         internal class CharacterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
@@ -463,14 +468,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, ref NCreatureVisuals __result)
             {
-                NCreatureVisuals created;
+                // Preserve the explicit preference order between current and obsolete factory interfaces.
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                // ReSharper disable once DuplicatedSequentialIfBodies
                 if (__instance is IModCreatureVisualsFactory factory &&
                     TryInvokeGodotFactory(
                         __instance,
                         nameof(IModCreatureVisualsFactory.TryCreateCreatureVisuals),
                         factory.TryCreateCreatureVisuals,
-                        out created))
-                    return UseCreatedVisuals(created, ref __result);
+                        out NCreatureVisuals created))
+                    return UseCreatedVisuals(created, out __result);
 
 #pragma warning disable CS0618
                 if (__instance is IModCharacterCreatureVisualsFactory legacyFactory &&
@@ -479,15 +486,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         nameof(IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals),
                         legacyFactory.TryCreateCreatureVisuals,
                         out created))
-                    return UseCreatedVisuals(created, ref __result);
+                    return UseCreatedVisuals(created, out __result);
 #pragma warning restore CS0618
 
+                // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (!TryCreateCharacterResourceVisuals(__instance, out created))
                     return true;
 
-                return UseCreatedVisuals(created, ref __result);
+                return UseCreatedVisuals(created, out __result);
 
-                static bool UseCreatedVisuals(NCreatureVisuals created, ref NCreatureVisuals result)
+                static bool UseCreatedVisuals(NCreatureVisuals created, out NCreatureVisuals result)
                 {
                     RitsuNCreatureVisualsNodeFactory.EnsureFormVfxHolder(created);
                     ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
@@ -541,7 +549,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Integrates runtime creature-animator factories with <see cref="CharacterModel.GenerateAnimator" />.</para>
+        ///     <para xml:lang="en">
+        ///         Integrates runtime creature-animator factories with
+        ///         <see cref="CharacterModel.GenerateAnimator" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将运行时生物动画器工厂接入 <see cref="CharacterModel.GenerateAnimator" />。</para>
         /// </summary>
         internal class CharacterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
@@ -569,6 +580,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
             {
+                // Preserve the explicit preference order between current and obsolete factory interfaces.
+                // ReSharper disable once DuplicatedSequentialIfBodies
+                // ReSharper disable once InvertIf
                 if (__instance is IModCreatureAnimatorFactory factory &&
                     TryInvokeFactory(
                         __instance,
@@ -581,6 +595,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 }
 
 #pragma warning disable CS0618
+                // Preserve the obsolete factory as an explicit second-choice branch.
+                // ReSharper disable once InvertIf
                 if (__instance is IModCharacterCreatureAnimatorFactory legacyFactory &&
                     TryInvokeFactory(
                         __instance,
@@ -598,7 +614,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Integrates runtime creature-animator factories with <see cref="MonsterModel.GenerateAnimator" />.</para>
+        ///     <para xml:lang="en">
+        ///         Integrates runtime creature-animator factories with
+        ///         <see cref="MonsterModel.GenerateAnimator" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将运行时生物动画器工厂接入 <see cref="MonsterModel.GenerateAnimator" />。</para>
         /// </summary>
         internal class MonsterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
@@ -628,7 +647,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         __instance,
                         nameof(IModCreatureAnimatorFactory.TryCreateCreatureAnimator),
                         () => factory.TryCreateCreatureAnimator(controller),
-                        out CreatureAnimator created))
+                        out var created))
                     return true;
 
                 __result = created;
@@ -667,7 +686,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         __instance,
                         nameof(IModEncounterCombatSceneFactory.TryCreateEncounterCombatScene),
                         factory.TryCreateEncounterCombatScene,
-                        out Control created))
+                        out var created))
                     return true;
 
                 __result = created;
@@ -706,7 +725,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         __instance,
                         nameof(IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene),
                         factory.TryCreateLayoutPackedScene,
-                        out PackedScene created))
+                        out var created))
                     return true;
 
                 __result = created;
@@ -715,7 +734,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Integrates event-background scene factories with <see cref="EventModel.CreateBackgroundScene" />.</para>
+        ///     <para xml:lang="en">
+        ///         Integrates event-background scene factories with
+        ///         <see cref="EventModel.CreateBackgroundScene" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将事件背景场景工厂接入 <see cref="EventModel.CreateBackgroundScene" />。</para>
         /// </summary>
         internal class EventBackgroundPackedSceneRuntimeFactoryPatch : IPatchMethod
@@ -756,7 +778,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         __instance,
                         nameof(IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene),
                         factory.TryCreateBackgroundPackedScene,
-                        out PackedScene created))
+                        out var created))
                     return true;
 
                 __result = created;
@@ -831,7 +853,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                         __instance,
                         nameof(IModEventVfxFactory.TryCreateEventVfx),
                         factory.TryCreateEventVfx,
-                        out Node2D created))
+                        out var created))
                     return true;
 
                 __result = created;
@@ -840,7 +862,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Integrates orb sprite factories and mod scene conversion with <see cref="OrbModel.CreateSprite" />.</para>
+        ///     <para xml:lang="en">
+        ///         Integrates orb sprite factories and mod scene conversion with
+        ///         <see cref="OrbModel.CreateSprite" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将充能球精灵工厂和模组场景转换接入 <see cref="OrbModel.CreateSprite" />。</para>
         /// </summary>
         internal class OrbSpriteRuntimeFactoryPatch : IPatchMethod
@@ -870,17 +895,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             public static bool Prefix(OrbModel __instance, ref Node2D __result)
             {
                 if (__instance is IModOrbSpriteFactory spriteFactory)
-                {
                     if (TryInvokeGodotFactory(
                             __instance,
                             nameof(IModOrbSpriteFactory.TryCreateOrbSprite),
                             spriteFactory.TryCreateOrbSprite,
-                            out Node2D fromFactory))
+                            out var fromFactory))
                     {
                         __result = fromFactory;
                         return false;
                     }
-                }
 
                 if (__instance is not IModOrbAssetOverrides)
                     return true;

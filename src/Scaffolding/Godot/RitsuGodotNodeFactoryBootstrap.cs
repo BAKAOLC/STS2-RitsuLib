@@ -14,7 +14,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
     /// </summary>
     internal static class RitsuGodotNodeFactoryBootstrap
     {
-        private static readonly object SyncRoot = new();
+        private static readonly Lock SyncRoot = new();
         private static bool _initialized;
 
         /// <summary>

@@ -55,6 +55,7 @@ namespace STS2RitsuLib.Ui.Toast
                 };
                 viewport.SizeChanged += _viewportSizeChangedHandler;
             }
+
             Visible = _settings.Enabled;
             TryDequeue();
             QueueDeferredReflow();
@@ -63,7 +64,7 @@ namespace STS2RitsuLib.Ui.Toast
         public override void _ExitTree()
         {
             if (_subscribedViewport != null &&
-                GodotObject.IsInstanceValid(_subscribedViewport) &&
+                IsInstanceValid(_subscribedViewport) &&
                 _viewportSizeChangedHandler != null)
                 _subscribedViewport.SizeChanged -= _viewportSizeChangedHandler;
 
@@ -823,13 +824,7 @@ namespace STS2RitsuLib.Ui.Toast
             for (var i = _closing.Count - 1; i >= 0; i--)
             {
                 var item = _closing[i];
-                if (!IsInstanceValid(item.Entry))
-                {
-                    FinalizeClose(item);
-                    continue;
-                }
-
-                if (!item.Exiting)
+                if (!IsInstanceValid(item.Entry) || !item.Exiting)
                 {
                     FinalizeClose(item);
                     continue;

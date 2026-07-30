@@ -79,7 +79,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns true when the instruction is a call/callvirt to a usable awaitable <c>GetAwaiter</c> method.</para>
+        ///     <para xml:lang="en">
+        ///         Returns true when the instruction is a call/callvirt to a usable awaitable <c>GetAwaiter</c>
+        ///         method.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当指令调用可用可等待对象的 <c>GetAwaiter</c> 方法时返回 true。</para>
         /// </summary>
         public static bool IsGetAwaiterCall(CodeInstruction instruction)
@@ -236,7 +239,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Throws when <paramref name="toMethod" /> cannot replace <paramref name="fromMethod" /> at an await site.</para>
+        ///     <para xml:lang="en">
+        ///         Throws when <paramref name="toMethod" /> cannot replace <paramref name="fromMethod" /> at an
+        ///         await site.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当 <paramref name="toMethod" /> 不能在等待点替换 <paramref name="fromMethod" /> 时抛出异常。</para>
         /// </summary>
         public static void EnsureCompatibleAwaitedCallReplacement(MethodInfo fromMethod, MethodInfo toMethod)

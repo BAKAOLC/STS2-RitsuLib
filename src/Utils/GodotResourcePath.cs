@@ -4,14 +4,26 @@ using Godot;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Public helpers for Godot project paths: <c>res://</c>, <c>user://</c>, <c>uid://</c> remapping and resource presence checks aligned with <see cref="ResourceLoader" /> and <see cref="ResourceUid" />.</para>
-    ///     <para xml:lang="zh-CN">提供 Godot 项目路径辅助方法，包括 <c>res://</c>、<c>user://</c>、<c>uid://</c> 重映射，以及与 <see cref="ResourceLoader" /> 和 <see cref="ResourceUid" /> 一致的资源存在性检查。</para>
+    ///     <para xml:lang="en">
+    ///         Public helpers for Godot project paths: <c>res://</c>, <c>user://</c>, <c>uid://</c> remapping
+    ///         and resource presence checks aligned with <see cref="ResourceLoader" /> and <see cref="ResourceUid" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供 Godot 项目路径辅助方法，包括 <c>res://</c>、<c>user://</c>、<c>uid://</c> 重映射，以及与
+    ///         <see cref="ResourceLoader" /> 和 <see cref="ResourceUid" /> 一致的资源存在性检查。
+    ///     </para>
     /// </summary>
     public static class GodotResourcePath
     {
         /// <summary>
-        ///     <para xml:lang="en">Yields paths the engine may use for the same logical asset: the trimmed input, <c>uid://</c> → <c>res://</c> (when applicable), and <see cref="ResourceUid.EnsurePath" /> alternatives.</para>
-        ///     <para xml:lang="zh-CN">生成引擎可能用于同一逻辑资源的路径：修剪后的输入、<c>uid://</c> → <c>res://</c>（适用时），以及 <see cref="ResourceUid.EnsurePath" /> 替代路径。</para>
+        ///     <para xml:lang="en">
+        ///         Yields paths the engine may use for the same logical asset: the trimmed input, <c>uid://</c> →
+        ///         <c>res://</c> (when applicable), and <see cref="ResourceUid.EnsurePath" /> alternatives.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         生成引擎可能用于同一逻辑资源的路径：修剪后的输入、<c>uid://</c> → <c>res://</c>（适用时），以及
+        ///         <see cref="ResourceUid.EnsurePath" /> 替代路径。
+        ///     </para>
         /// </summary>
         public static IEnumerable<string> EnumerateCandidatePaths(string? rawPath)
         {
@@ -23,8 +35,14 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves <paramref name="pathOrUid" /> via <see cref="ResourceUid.EnsurePath" /> (UID or path → project path). Returns <see langword="false" /> when the UID is unknown or resolution fails.</para>
-        ///     <para xml:lang="zh-CN">通过 <see cref="ResourceUid.EnsurePath" /> 将 <paramref name="pathOrUid" />（UID 或路径）解析为项目路径。UID 未知或解析失败时返回 <see langword="false" />。</para>
+        ///     <para xml:lang="en">
+        ///         Resolves <paramref name="pathOrUid" /> via <see cref="ResourceUid.EnsurePath" /> (UID or path →
+        ///         project path). Returns <see langword="false" /> when the UID is unknown or resolution fails.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过 <see cref="ResourceUid.EnsurePath" /> 将 <paramref name="pathOrUid" />（UID 或路径）解析为项目路径。UID
+        ///         未知或解析失败时返回 <see langword="false" />。
+        ///     </para>
         /// </summary>
         public static bool TryEnsurePath(string? pathOrUid, [NotNullWhen(true)] out string? path)
         {

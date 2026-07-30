@@ -4,7 +4,10 @@ using STS2RitsuLib.Audio.Internal;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides guarded access to FMOD Studio global parameters, system-wide event state, DSP buffer settings, and performance data.</para>
+    ///     <para xml:lang="en">
+    ///         Provides guarded access to FMOD Studio global parameters, system-wide event state, DSP buffer
+    ///         settings, and performance data.
+    ///     </para>
     ///     <para xml:lang="zh-CN">提供对 FMOD Studio 全局参数、系统级事件状态、DSP 缓冲区设置和性能数据的受保护访问。</para>
     /// </summary>
     public static class FmodStudioMixerGlobals
@@ -26,7 +29,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">传递给 FMOD 的数值。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the add-on method is available and invocation completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the add-on method is available and invocation completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">插件方法可用且调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TrySetGlobalParameter(string name, float value)
@@ -43,7 +49,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">FMOD Studio 全局参数名称。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en">The reported floating-point or integer value converted to <see cref="float" />, or <c>0</c> when the call fails or returns another Variant type.</para>
+        ///     <para xml:lang="en">
+        ///         The reported floating-point or integer value converted to <see cref="float" />, or <c>0</c>
+        ///         when the call fails or returns another Variant type.
+        ///     </para>
         ///     <para xml:lang="zh-CN">报告的浮点值，或转换为 <see cref="float" /> 的整数值；调用失败或返回其他 Variant 类型时为 <c>0</c>。</para>
         /// </returns>
         public static float TryGetGlobalParameter(string name)
@@ -72,7 +81,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">参数值标签。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the add-on method is available and invocation completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the add-on method is available and invocation completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">插件方法可用且调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TrySetGlobalParameterByLabel(string name, string label)
@@ -85,7 +97,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">尝试通过 Studio 系统的主总线将所有事件静音。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the add-on invocation completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the add-on invocation completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">插件调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryMuteAllEvents()
@@ -98,7 +113,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">尝试取消系统级事件静音。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the add-on invocation completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the add-on invocation completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">插件调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryUnmuteAllEvents()
@@ -111,7 +129,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">尝试暂停 FMOD 插件跟踪的所有事件实例。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the add-on invocation completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the add-on invocation completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">插件调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryPauseAllEvents()
@@ -124,7 +145,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">尝试恢复 FMOD 插件跟踪的所有事件实例。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the add-on invocation completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the add-on invocation completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">插件调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryUnpauseAllEvents()
@@ -133,7 +157,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to apply positive DSP buffer dimensions through a dynamically created <c>FmodDspSettings</c> resource.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to apply positive DSP buffer dimensions through a dynamically created
+        ///         <c>FmodDspSettings</c> resource.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试通过动态创建的 <c>FmodDspSettings</c> 资源应用正数 DSP 缓冲区参数。</para>
         /// </summary>
         /// <param name="bufferLength">
@@ -145,7 +172,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">正数 DSP 缓冲区数量。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the settings resource and add-on method are available and invocation completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the settings resource and add-on method are available and
+        ///         invocation completes; otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">设置资源和插件方法可用且调用完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TrySetDspBufferSize(int bufferLength, int bufferCount)

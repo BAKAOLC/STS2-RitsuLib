@@ -24,9 +24,9 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
         private readonly ConcurrentDictionary<RitsuDebugLogSseClient, byte> _clients = new();
         private readonly CancellationTokenSource _cts = new();
-        private readonly CancellationToken _shutdownToken;
         private readonly Func<int, RitsuDebugLogRecord[]> _historyProvider;
         private readonly SemaphoreSlim _requestSlots = new(MaxConcurrentRequests, MaxConcurrentRequests);
+        private readonly CancellationToken _shutdownToken;
         private readonly Func<object> _statusProvider;
         private readonly string _token;
         private Task? _acceptTask;
@@ -99,6 +99,8 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     lastException);
 
             Port = ((IPEndPoint)_listener.LocalEndpoint).Port;
+            // The accept loop must start and observe cancellation inside its own shutdown path.
+            // ReSharper disable once MethodSupportsCancellation
             _acceptTask = Task.Run(AcceptLoopAsync);
         }
 
@@ -135,6 +137,8 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     continue;
                 }
 
+                // A zero-timeout probe cannot block and does not benefit from the asynchronous overload.
+                // ReSharper disable once MethodHasAsyncOverloadWithCancellation
                 if (!_requestSlots.Wait(0))
                 {
                     client.Dispose();

@@ -7,7 +7,10 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     <para xml:lang="en">Stable LocString variable names for capability-owned dynamic variables used in shared model text.</para>
+    ///     <para xml:lang="en">
+    ///         Stable LocString variable names for capability-owned dynamic variables used in shared model
+    ///         text.
+    ///     </para>
     ///     <para xml:lang="zh-CN">共享模型文本中能力自有动态变量的稳定 LocString 变量名。</para>
     /// </summary>
     public static class ModelCapabilityDynamicVarNames
@@ -99,8 +102,16 @@ namespace STS2RitsuLib.Models.Capabilities
         object? RuntimeContext = null);
 
     /// <summary>
-    ///     <para xml:lang="en">Optional model capability that contributes a capability-owned dynamic-variable set to supported model text surfaces. The set remains separate from the model's own dynamic variables. Access capability variables through <c>{Capabilities.Scope.Variable}</c>; unscoped short names are compatibility aliases and must not be used when multiple contributors can provide the same name.</para>
-    ///     <para xml:lang="zh-CN">可选的模型能力，可向受支持的模型文本呈现位置提供能力自有的动态变量集合。该集合与模型自身的动态变量保持分离。通过 <c>{Capabilities.Scope.Variable}</c> 访问能力变量；无作用域短名称仅是兼容别名，多个贡献者可能提供同名变量时不得使用。</para>
+    ///     <para xml:lang="en">
+    ///         Optional model capability that contributes a capability-owned dynamic-variable set to supported
+    ///         model text surfaces. The set remains separate from the model's own dynamic variables. Access capability
+    ///         variables through <c>{Capabilities.Scope.Variable}</c>; unscoped short names are compatibility aliases and must
+    ///         not be used when multiple contributors can provide the same name.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的模型能力，可向受支持的模型文本呈现位置提供能力自有的动态变量集合。该集合与模型自身的动态变量保持分离。通过
+    ///         <c>{Capabilities.Scope.Variable}</c> 访问能力变量；无作用域短名称仅是兼容别名，多个贡献者可能提供同名变量时不得使用。
+    ///     </para>
     /// </summary>
     public interface IModelDynamicVarContributor
     {
@@ -164,7 +175,10 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Optional typed model capability that contributes asset paths for <typeparamref name="TModel" />.</para>
+    ///     <para xml:lang="en">
+    ///         Optional typed model capability that contributes asset paths for <typeparamref name="TModel" />
+    ///         .
+    ///     </para>
     ///     <para xml:lang="zh-CN">可选类型化能力：为 <typeparamref name="TModel" /> 贡献资源路径。</para>
     /// </summary>
     public interface IModelAssetPathContributor<in TModel> where TModel : AbstractModel
@@ -191,6 +205,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     case IModelHoverTipContributor general:
                     {
                         IReadOnlyList<IHoverTip> tips = [];
+                        // ReSharper disable once AccessToModifiedClosure
                         TryRun(capability, model, ModelHoverTipsSurface,
                             () => tips = general.GetHoverTips(model)?.ToArray() ?? []);
                         foreach (var tip in tips)
@@ -200,6 +215,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     case IModelHoverTipContributor<TModel> typed:
                     {
                         IReadOnlyList<IHoverTip> tips = [];
+                        // ReSharper disable once AccessToModifiedClosure
                         TryRun(capability, model, ModelHoverTipsSurface,
                             () => tips = typed.GetHoverTips(model)?.ToArray() ?? []);
                         foreach (var tip in tips)
@@ -218,6 +234,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     case IModelAssetPathContributor general:
                     {
                         IReadOnlyList<string> paths = [];
+                        // ReSharper disable once AccessToModifiedClosure
                         TryRun(capability, model, ModelAssetPathsSurface,
                             () => paths = general.GetAssetPaths(context)?.ToArray() ?? []);
                         foreach (var path in paths)
@@ -227,6 +244,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     case IModelAssetPathContributor<TModel> typed:
                     {
                         IReadOnlyList<string> paths = [];
+                        // ReSharper disable once AccessToModifiedClosure
                         TryRun(capability, model, ModelAssetPathsSurface,
                             () => paths = typed.GetAssetPaths(model, context)?.ToArray() ?? []);
                         foreach (var path in paths)

@@ -201,7 +201,10 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets an existing capability, or applies a new capability created by <paramref name="factory" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets an existing capability, or applies a new capability created by <paramref name="factory" />
+        ///         .
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取已有能力；不存在时应用由 <paramref name="factory" /> 创建的新能力。</para>
         /// </summary>
         public static TCapability GetOrAddCapability<TCapability>(

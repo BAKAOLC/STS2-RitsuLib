@@ -3,7 +3,10 @@ using System.Collections.Concurrent;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Tracks adaptive music plans and switches their room, combat, and victory tracks in response to run lifecycle events.</para>
+    ///     <para xml:lang="en">
+    ///         Tracks adaptive music plans and switches their room, combat, and victory tracks in response to
+    ///         run lifecycle events.
+    ///     </para>
     ///     <para xml:lang="zh-CN">跟踪自适应音乐方案，并响应跑局生命周期事件切换其房间、战斗和胜利曲目。</para>
     /// </summary>
     public sealed class AudioAdaptiveMusicDirector : IDisposable
@@ -38,7 +41,10 @@ namespace STS2RitsuLib.Audio
         public static AudioAdaptiveMusicDirector Shared { get; } = new();
 
         /// <summary>
-        ///     <para xml:lang="en">Disposes this director's lifecycle subscriptions without stopping or detaching its currently tracked handles.</para>
+        ///     <para xml:lang="en">
+        ///         Disposes this director's lifecycle subscriptions without stopping or detaching its currently
+        ///         tracked handles.
+        ///     </para>
         ///     <para xml:lang="zh-CN">释放此调度器的生命周期订阅，但不会停止或分离当前跟踪的句柄。</para>
         /// </summary>
         public void Dispose()
@@ -53,7 +59,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attaches an adaptive plan, immediately applies its room state, and returns its controlling handle.</para>
+        ///     <para xml:lang="en">
+        ///         Attaches an adaptive plan, immediately applies its room state, and returns its controlling
+        ///         handle.
+        ///     </para>
         ///     <para xml:lang="zh-CN">附加自适应方案，立即应用其房间状态，并返回控制该方案的句柄。</para>
         /// </summary>
         /// <param name="plan">

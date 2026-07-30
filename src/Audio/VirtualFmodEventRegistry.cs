@@ -186,11 +186,17 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
         /// </param>
         /// <param name="stream">
-        ///     <para xml:lang="en">Must be <see langword="true" /> because the bundled backend supports looping only for streaming music files.</para>
+        ///     <para xml:lang="en">
+        ///         Must be <see langword="true" /> because the bundled backend supports looping only for streaming
+        ///         music files.
+        ///     </para>
         ///     <para xml:lang="zh-CN">必须为 <see langword="true" />，因为随游戏提供的后端仅支持流式音乐文件循环播放。</para>
         /// </param>
         /// <exception cref="ArgumentException">
-        ///     <para xml:lang="en">Thrown when <paramref name="stream" /> is <see langword="false" /> or another definition value is invalid.</para>
+        ///     <para xml:lang="en">
+        ///         Thrown when <paramref name="stream" /> is <see langword="false" /> or another definition value
+        ///         is invalid.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当 <paramref name="stream" /> 为 <see langword="false" /> 或其他定义值无效时抛出。</para>
         /// </exception>
         public static void RegisterLoop(string eventPath, string resourcePath,
@@ -257,7 +263,7 @@ namespace STS2RitsuLib.Audio
             if (!float.IsFinite(definition.Pitch) || definition.Pitch <= 0f)
                 throw new ArgumentOutOfRangeException(nameof(definition), definition.Pitch,
                     "Virtual FMOD event pitch must be finite and positive.");
-            if (definition.Kind == VirtualFmodEventKind.Loop && !definition.Stream)
+            if (definition is { Kind: VirtualFmodEventKind.Loop, Stream: false })
                 throw new ArgumentException(
                     "Virtual FMOD loops require streaming playback because the bundled backend does not loop fully loaded sounds.",
                     nameof(definition));
@@ -281,7 +287,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Removes a virtual event definition and its round-robin position without stopping active playback.</para>
+        ///     <para xml:lang="en">
+        ///         Removes a virtual event definition and its round-robin position without stopping active
+        ///         playback.
+        ///     </para>
         ///     <para xml:lang="zh-CN">移除虚拟事件定义及其轮询位置，但不停止正在进行的播放。</para>
         /// </summary>
         /// <param name="eventPath">
@@ -310,7 +319,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">要测试的区分大小写事件路径。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when a nonblank exact path is registered; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when a nonblank exact path is registered; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">非空白的准确路径已注册时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool IsRegistered(string? eventPath)
@@ -591,7 +603,10 @@ namespace STS2RitsuLib.Audio
     ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
     /// </param>
     /// <param name="Stream">
-    ///     <para xml:lang="en">Whether file playback uses the streaming, looping backend mode. Registered loops require this to be <see langword="true" />.</para>
+    ///     <para xml:lang="en">
+    ///         Whether file playback uses the streaming, looping backend mode. Registered loops require this
+    ///         to be <see langword="true" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">文件播放是否使用流式循环后端模式。注册循环事件时必须为 <see langword="true" />。</para>
     /// </param>
     public sealed record VirtualFmodEventDefinition(
@@ -604,7 +619,10 @@ namespace STS2RitsuLib.Audio
         bool Stream = false)
     {
         /// <summary>
-        ///     <para xml:lang="en">Gets or initializes the resource variants used by a one-shot event; loops and music require exactly one.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the resource variants used by a one-shot event; loops and music require
+        ///         exactly one.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或初始化单次事件使用的资源变体；循环和音乐事件必须恰好使用一个资源。</para>
         /// </summary>
         public IReadOnlyList<string> ResourcePaths { get; init; } = [ResourcePath];

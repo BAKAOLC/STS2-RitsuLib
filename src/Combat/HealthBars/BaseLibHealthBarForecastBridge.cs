@@ -101,6 +101,7 @@ namespace STS2RitsuLib.Combat.HealthBars
                         return [];
                     _loggedLegacyImportFailure = true;
                 }
+
                 RitsuLibFramework.Logger.Warn($"[HealthBarForecast] Failed to import BaseLib forecast segments: {ex}");
                 return [];
             }
@@ -202,7 +203,8 @@ namespace STS2RitsuLib.Combat.HealthBars
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.Warn($"[HealthBarForecast] Failed to register BaseLib bridge provider: {ex}");
+                    RitsuLibFramework.Logger.Warn(
+                        $"[HealthBarForecast] Failed to register BaseLib bridge provider: {ex}");
                 }
             }
         }

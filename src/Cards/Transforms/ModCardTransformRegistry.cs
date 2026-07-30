@@ -58,7 +58,10 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers or replaces an asynchronous listener for every completed base-game card transformation.</para>
+        ///     <para xml:lang="en">
+        ///         Registers or replaces an asynchronous listener for every completed base-game card
+        ///         transformation.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册或替换异步监听器，以接收每次已完成的游戏本体卡牌转化。</para>
         /// </summary>
         public void Register(string listenerId, Func<ModCardTransformContext, Task> listener)
@@ -170,7 +173,10 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers or replaces an asynchronous listener for cards transformed from <typeparamref name="TOriginal" />.</para>
+        ///     <para xml:lang="en">
+        ///         Registers or replaces an asynchronous listener for cards transformed from
+        ///         <typeparamref name="TOriginal" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册或替换异步监听器，以处理从 <typeparamref name="TOriginal" /> 转化而来的卡牌。</para>
         /// </summary>
         public void RegisterFrom<TOriginal>(
@@ -187,7 +193,10 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers or replaces a listener for cards transformed into <typeparamref name="TReplacement" />.</para>
+        ///     <para xml:lang="en">
+        ///         Registers or replaces a listener for cards transformed into
+        ///         <typeparamref name="TReplacement" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册或替换监听器，以处理转化为 <typeparamref name="TReplacement" /> 的卡牌。</para>
         /// </summary>
         public void RegisterTo<TReplacement>(
@@ -208,7 +217,10 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers or replaces an asynchronous listener for cards transformed into <typeparamref name="TReplacement" />.</para>
+        ///     <para xml:lang="en">
+        ///         Registers or replaces an asynchronous listener for cards transformed into
+        ///         <typeparamref name="TReplacement" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册或替换异步监听器，以处理转化为 <typeparamref name="TReplacement" /> 的卡牌。</para>
         /// </summary>
         public void RegisterTo<TReplacement>(

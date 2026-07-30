@@ -7,7 +7,8 @@ namespace STS2RitsuLib.Relics.Patches
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Adds mod-provided Ancient card targets to <see cref="ArchaicTooth.TranscendenceCards" /> for Dusty Tome and other
+    ///         Adds mod-provided Ancient card targets to <see cref="ArchaicTooth.TranscendenceCards" /> for Dusty Tome and
+    ///         other
     ///         consumers.
     ///     </para>
     ///     <para xml:lang="zh-CN">

@@ -481,7 +481,10 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Mutates the instance for <paramref name="key" /> in place; call <see cref="Save" /> to persist it.</para>
+        ///     <para xml:lang="en">
+        ///         Mutates the instance for <paramref name="key" /> in place; call <see cref="Save" /> to persist
+        ///         it.
+        ///     </para>
         ///     <para xml:lang="zh-CN">原地修改 <paramref name="key" /> 对应的实例；调用 <see cref="Save" /> 可将其持久化。</para>
         /// </summary>
         public void Modify<T>(string key, Action<T> modifier) where T : class, new()

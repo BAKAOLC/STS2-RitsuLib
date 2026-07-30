@@ -14,8 +14,10 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
     {
         private static readonly Lock SyncRoot = new();
         private static readonly List<DevConsoleAutocompleteBinding> Bindings = [];
+
         private static readonly HashSet<DevConsoleAutocompleteBinding> FaultedBindings =
             new(ReferenceEqualityComparer.Instance);
+
         private static bool _builtInRegistered;
 
         static DevConsoleAutocompleteRegistry()
@@ -124,6 +126,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 bindings = [.. Bindings];
             }
 
+            // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var binding in bindings)
                 if (BindingMatches(binding, context))
                     merged |= binding.Enhancements;
@@ -157,7 +160,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             }
             catch (Exception ex)
             {
-                var shouldLog = false;
+                bool shouldLog;
                 lock (SyncRoot)
                 {
                     shouldLog = FaultedBindings.Add(binding);

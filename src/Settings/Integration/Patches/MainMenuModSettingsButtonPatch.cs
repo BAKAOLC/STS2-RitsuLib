@@ -213,6 +213,8 @@ namespace STS2RitsuLib.Settings.Patches
                 !patchNotesButton.Visible)
                 return false;
 
+            // The explicit alternatives document the three valid hidden-screen states.
+            // ReSharper disable once MergeIntoPattern
             return mainMenu.PatchNotesScreen is not { } patchNotesScreen ||
                    !GodotObject.IsInstanceValid(patchNotesScreen) ||
                    (!patchNotesScreen.IsOpen && !patchNotesScreen.Visible);

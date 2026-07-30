@@ -41,9 +41,6 @@ namespace STS2RitsuLib.Models
             TitleSource<EncounterModel>("encounters", model => model.Id.Entry + ".title", model => model.Title),
         ];
 
-        private static readonly IReadOnlyList<ModelLocStringSource> ReadOnlyTitleSources =
-            Array.AsReadOnly(TitleSources);
-
         /// <summary>
         ///     <para xml:lang="en">
         ///         Gets the known title <see cref="LocString" /> sources, ordered from more specific model families
@@ -53,7 +50,7 @@ namespace STS2RitsuLib.Models
         ///         获取已知的标题 <see cref="LocString" /> 来源，并按模型族由具体到宽泛排列。
         ///     </para>
         /// </summary>
-        public static IReadOnlyList<ModelLocStringSource> KnownTitleSources => ReadOnlyTitleSources;
+        public static IReadOnlyList<ModelLocStringSource> KnownTitleSources { get; } = Array.AsReadOnly(TitleSources);
 
         /// <summary>
         ///     <para xml:lang="en">

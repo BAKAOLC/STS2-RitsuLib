@@ -13,4 +13,3 @@
     -->
     <Import Project="Sts2PathDiscovery.props" Condition="Exists('Sts2PathDiscovery.props')"/>
 </Project>
-

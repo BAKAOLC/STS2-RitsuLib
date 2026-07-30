@@ -1,7 +1,10 @@
 namespace STS2RitsuLib.Utils.Persistence.Context
 {
     /// <summary>
-    ///     <para xml:lang="en">Represents a strongly typed key used to store and retrieve a value in <see cref="StorageContext" />.</para>
+    ///     <para xml:lang="en">
+    ///         Represents a strongly typed key used to store and retrieve a value in
+    ///         <see cref="StorageContext" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">表示在 <see cref="StorageContext" /> 中存取值时使用的强类型键。</para>
     /// </summary>
     /// <remarks>

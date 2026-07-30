@@ -51,37 +51,6 @@ namespace STS2RitsuLib.Models.Capabilities
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Invokes <paramref name="modifier" /> and marks the owning capability set dirty even if the callback
-        ///         throws.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         调用 <paramref name="modifier" />；即使回调抛出异常，也会将所属能力集合标记为脏。
-        ///     </para>
-        /// </summary>
-        /// <param name="modifier">
-        ///     <para xml:lang="en">
-        ///         The mutation to apply. External callers can use it to update capability-owned
-        ///         <see cref="DynamicVars" /> without separately marking the owner dirty.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         要应用的修改。外部调用方可借此更新能力自有的 <see cref="DynamicVars" />，无需另行将所属模型标记为脏。
-        ///     </para>
-        /// </param>
-        public void Modify(Action<ModelCapability> modifier)
-        {
-            ArgumentNullException.ThrowIfNull(modifier);
-            try
-            {
-                modifier(this);
-            }
-            finally
-            {
-                MarkDirty();
-            }
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
         ///         Gets the capability's canonical dynamic variables. Override this property to register variables
         ///         directly on the capability.
         ///     </para>
@@ -163,6 +132,37 @@ namespace STS2RitsuLib.Models.Capabilities
             var dynamicVars = DynamicVars;
             dynamicVars.InitializeWithOwner(model);
             return dynamicVars;
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Invokes <paramref name="modifier" /> and marks the owning capability set dirty even if the callback
+        ///         throws.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         调用 <paramref name="modifier" />；即使回调抛出异常，也会将所属能力集合标记为脏。
+        ///     </para>
+        /// </summary>
+        /// <param name="modifier">
+        ///     <para xml:lang="en">
+        ///         The mutation to apply. External callers can use it to update capability-owned
+        ///         <see cref="DynamicVars" /> without separately marking the owner dirty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         要应用的修改。外部调用方可借此更新能力自有的 <see cref="DynamicVars" />，无需另行将所属模型标记为脏。
+        ///     </para>
+        /// </param>
+        public void Modify(Action<ModelCapability> modifier)
+        {
+            ArgumentNullException.ThrowIfNull(modifier);
+            try
+            {
+                modifier(this);
+            }
+            finally
+            {
+                MarkDirty();
+            }
         }
 
         /// <summary>

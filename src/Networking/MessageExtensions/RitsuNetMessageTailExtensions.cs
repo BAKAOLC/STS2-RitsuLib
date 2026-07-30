@@ -131,7 +131,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
 
             var encodedBits = GetEncodedTailBitCount(entries);
             if (encodedBits > (long)MaxTailEncodedBytes * ByteBits ||
-                (long)writer.BitPosition + encodedBits > int.MaxValue)
+                writer.BitPosition + encodedBits > int.MaxValue)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[NetMessageTailExtensions] Trailer for {typeof(TMessage).Name} exceeds " +
@@ -265,13 +265,8 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(extensionId);
             if (version is < 0 or > 255)
                 throw new ArgumentOutOfRangeException(nameof(version), version, "Version must fit in 8 bits.");
-            if (string.IsNullOrWhiteSpace(payload))
-            {
-                writer.WriteBool(false);
-                return;
-            }
-
-            if (!TryEnsureStringLength(payload, MaxTailPayloadBytes, "Payload"))
+            if (string.IsNullOrWhiteSpace(payload) ||
+                !TryEnsureStringLength(payload, MaxTailPayloadBytes, "Payload"))
             {
                 writer.WriteBool(false);
                 return;
@@ -292,6 +287,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                 writer.WriteBool(false);
                 return;
             }
+
             if (payload.Length > MaxTailPayloadBytes)
             {
                 RitsuLibFramework.Logger.Warn(
@@ -412,7 +408,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
                 throw new InvalidDataException(
                     $"Tail entry count {count} is outside the allowed range 0..{MaxTailEntryCount}.");
 
-            var minimumEntryBits = IntBits + ByteBits + IntBits;
+            const int minimumEntryBits = IntBits + ByteBits + IntBits;
             if (!HasRemainingBits(reader, (long)count * minimumEntryBits))
                 throw new InvalidDataException("Tail entry count exceeds the remaining packet bytes.");
         }

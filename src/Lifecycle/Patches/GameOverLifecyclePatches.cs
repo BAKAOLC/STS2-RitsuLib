@@ -6,7 +6,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     <para xml:lang="en">Publishes a lifecycle event when <see cref="NGameOverScreen" /> is created from run state and save data.</para>
+    ///     <para xml:lang="en">
+    ///         Publishes a lifecycle event when <see cref="NGameOverScreen" /> is created from run state and
+    ///         save data.
+    ///     </para>
     ///     <para xml:lang="zh-CN">当使用局内状态和存档数据创建 <see cref="NGameOverScreen" /> 时发布生命周期事件。</para>
     /// </summary>
     internal class GameOverScreenLifecyclePatch : IPatchMethod

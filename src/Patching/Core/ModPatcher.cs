@@ -28,13 +28,13 @@ namespace STS2RitsuLib.Patching.Core
     /// </param>
     public class ModPatcher(string patcherId, Logger logger, string patcherName = "")
     {
+        private readonly Dictionary<string, IDisposable> _dynamicPatchLifetimeLeases = [];
         private readonly Harmony _harmony = new(patcherId);
 
         private readonly string _logPrefix =
             string.IsNullOrEmpty(patcherName) ? "[Patcher] " : $"[Patcher - {patcherName}] ";
 
         private readonly Dictionary<string, bool> _patchedStatus = [];
-        private readonly Dictionary<string, IDisposable> _dynamicPatchLifetimeLeases = [];
         private readonly List<DynamicPatchInfo> _registeredDynamicPatches = [];
         private readonly List<ModPatchInfo> _registeredPatches = [];
 

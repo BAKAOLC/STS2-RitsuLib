@@ -19,9 +19,12 @@ namespace STS2RitsuLib.Settings
 
         internal static Func<bool>? CreateSectionVisibilityPredicate(ModSettingsPage page, ModSettingsSection section)
         {
-            if (section.VisibleWhen == null &&
-                section.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
-                section.Entries.Count > 0 &&
+            if (section is
+                {
+                    VisibleWhen: null,
+                    VisibleOnHostSurfaces: ModSettingsHostSurface.All,
+                    Entries.Count: > 0,
+                } &&
                 section.Entries.All(entry => !RequiresDynamicEvaluation(entry)))
                 return null;
 

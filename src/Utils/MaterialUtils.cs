@@ -93,11 +93,20 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns a <see cref="ShaderMaterial" /> built from the game's HSV shader configured to preserve the original colors (identity modulation: <c>h=0</c>, <c>s=1</c>, <c>v=1</c>).</para>
-        ///     <para xml:lang="zh-CN">返回由游戏 HSV 着色器构建的 <see cref="ShaderMaterial" />，配置为保留原始颜色（恒等调制：<c>h=0</c>、<c>s=1</c>、<c>v=1</c>）。</para>
+        ///     <para xml:lang="en">
+        ///         Returns a <see cref="ShaderMaterial" /> built from the game's HSV shader configured to preserve
+        ///         the original colors (identity modulation: <c>h=0</c>, <c>s=1</c>, <c>v=1</c>).
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回由游戏 HSV 着色器构建的 <see cref="ShaderMaterial" />，配置为保留原始颜色（恒等调制：<c>h=0</c>、<c>s=1</c>、
+        ///         <c>v=1</c>）。
+        ///     </para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">Use this to override a card frame's <c>FrameMaterial</c> without additional color modulation while retaining the vanilla shader pipeline.</para>
+        ///     <para xml:lang="en">
+        ///         Use this to override a card frame's <c>FrameMaterial</c> without additional color modulation
+        ///         while retaining the vanilla shader pipeline.
+        ///     </para>
         ///     <para xml:lang="zh-CN">可在保留原版着色器管线的同时覆盖卡牌框的 <c>FrameMaterial</c>，而不引入额外颜色调制。</para>
         /// </remarks>
         public static ShaderMaterial CreateUnmodulatedHsvShaderMaterial()
@@ -107,12 +116,25 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Builds a <c>ShaderMaterial</c> using the game's Doom health bar shader (<c>doom_bar.gdshader</c>) with the same noise settings as <c>health_bar.tscn</c> and a caller-supplied gradient.</para>
-        ///     <para xml:lang="zh-CN">使用游戏的灾厄生命条着色器（<c>doom_bar.gdshader</c>）构建 <c>ShaderMaterial</c>，并采用与 <c>health_bar.tscn</c> 相同的噪声设置以及调用方提供的渐变。</para>
+        ///     <para xml:lang="en">
+        ///         Builds a <c>ShaderMaterial</c> using the game's Doom health bar shader (
+        ///         <c>doom_bar.gdshader</c>) with the same noise settings as <c>health_bar.tscn</c> and a caller-supplied
+        ///         gradient.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用游戏的灾厄生命条着色器（<c>doom_bar.gdshader</c>）构建 <c>ShaderMaterial</c>，并采用与 <c>health_bar.tscn</c>
+        ///         相同的噪声设置以及调用方提供的渐变。
+        ///     </para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">Use it as <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" /> on a custom forecast overlay to resemble the vanilla Doom strip; see also <c>CreateVanillaDoomBarGradientTexture</c>.</para>
-        ///     <para xml:lang="zh-CN">可将其用作自定义预测叠加层的 <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" />，以呈现原版灾厄条效果；另见 <c>CreateVanillaDoomBarGradientTexture</c>。</para>
+        ///     <para xml:lang="en">
+        ///         Use it as <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" /> on a custom
+        ///         forecast overlay to resemble the vanilla Doom strip; see also <c>CreateVanillaDoomBarGradientTexture</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可将其用作自定义预测叠加层的 <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" />
+        ///         ，以呈现原版灾厄条效果；另见 <c>CreateVanillaDoomBarGradientTexture</c>。
+        ///     </para>
         /// </remarks>
         public static ShaderMaterial CreateDoomBarShaderMaterial(GradientTexture1D gradientTexture)
         {

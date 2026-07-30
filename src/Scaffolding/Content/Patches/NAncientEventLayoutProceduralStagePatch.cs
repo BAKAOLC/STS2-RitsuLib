@@ -72,6 +72,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return;
             }
 
+            // Keep Godot collection enumeration and node teardown ordering explicit.
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (var child in originalChildren)
             {
                 if (!GodotObject.IsInstanceValid(child) || child.GetParent() != container)
@@ -84,6 +86,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static void RemoveNewChildren(NAncientBgContainer container, HashSet<ulong> originalInstanceIds)
         {
+            // Keep Godot collection enumeration and node teardown ordering explicit.
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (var child in container.GetChildren().ToList())
             {
                 if (!GodotObject.IsInstanceValid(child) || originalInstanceIds.Contains(child.GetInstanceId()))

@@ -435,7 +435,9 @@ namespace STS2RitsuLib.Settings
 
             public int TotalCount => _cards.Count;
             public int PendingCount => _cards.Count(static card => !card.Item.IsSubscribed);
-            public int SelectedCount => _cards.Count(static card => card.Selected && !card.Item.IsSubscribed);
+
+            public int SelectedCount =>
+                _cards.Count(static card => card is { Selected: true, Item.IsSubscribed: false });
 
             private bool AllSubscribed => _cards.Count > 0 && _cards.All(static card => card.Item.IsSubscribed);
 
@@ -444,7 +446,7 @@ namespace STS2RitsuLib.Settings
                 return
                 [
                     .. _cards
-                        .Where(static card => card.Selected && !card.Item.IsSubscribed)
+                        .Where(static card => card is { Selected: true, Item.IsSubscribed: false })
                         .Select(static card => card.Item),
                 ];
             }
@@ -476,9 +478,9 @@ namespace STS2RitsuLib.Settings
             {
                 var button = _buttonBindings
                     .Select(static binding => binding.ActionButton)
-                    .FirstOrDefault(static button => button.Visible && !button.Disabled) ?? _buttonBindings
+                    .FirstOrDefault(static button => button is { Visible: true, Disabled: false }) ?? _buttonBindings
                     .Select(static binding => binding.OpenButton)
-                    .FirstOrDefault(static button => button.Visible && !button.Disabled);
+                    .FirstOrDefault(static button => button is { Visible: true, Disabled: false });
                 if (button == null)
                     return false;
 
@@ -615,7 +617,7 @@ namespace STS2RitsuLib.Settings
                         state.Selected ? ModSettingsButtonTone.Accent : ModSettingsButtonTone.Normal,
                         state.Item.IsSubscribed,
                         () => ToggleItemSelection(state));
-                    binding.ActionButton.SetSelected(state.Selected && !state.Item.IsSubscribed);
+                    binding.ActionButton.SetSelected(state is { Selected: true, Item.IsSubscribed: false });
                 }
 
                 HideButtons(_cards.Count);

@@ -26,7 +26,10 @@ namespace STS2RitsuLib.Screens
     public static class ModScreenService
     {
         /// <summary>
-        ///     <para xml:lang="en">Gets the current Capstone screen, or <see langword="null" /> when the container is idle or unavailable.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the current Capstone screen, or <see langword="null" /> when the container is idle or
+        ///         unavailable.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取当前 Capstone 屏幕；容器空闲或不可用时为 <see langword="null" />。</para>
         /// </summary>
         public static ICapstoneScreen? CurrentCapstoneScreen => NCapstoneContainer.Instance?.CurrentCapstoneScreen;

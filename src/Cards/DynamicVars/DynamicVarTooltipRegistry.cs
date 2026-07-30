@@ -58,7 +58,10 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Copies the tooltip factory from <paramref name="source" /> to <paramref name="destination" />, if present.</para>
+        ///     <para xml:lang="en">
+        ///         Copies the tooltip factory from <paramref name="source" /> to <paramref name="destination" />,
+        ///         if present.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将工具提示工厂从 <paramref name="source" /> 复制到 <paramref name="destination" />（如果有）。</para>
         /// </summary>
         public static void CopyTo(DynamicVar source, DynamicVar destination)

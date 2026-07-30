@@ -34,7 +34,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         public MethodBase SourceMethod { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Method that owns <see cref="Instructions" />. For a resolved async method this is its generated <c>MoveNext</c> method.</para>
+        ///     <para xml:lang="en">
+        ///         Method that owns <see cref="Instructions" />. For a resolved async method this is its generated
+        ///         <c>MoveNext</c> method.
+        ///     </para>
         ///     <para xml:lang="zh-CN">拥有 <see cref="Instructions" /> 的方法。解析异步方法时，这是编译器生成的 <c>MoveNext</c> 方法。</para>
         /// </summary>
         public MethodBase BodyMethod { get; }
@@ -78,7 +81,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     <para xml:lang="en">A shortest call path found by <see cref="HarmonyIlInspectionExtensions.FindOriginalIlCallPath" />.</para>
+    ///     <para xml:lang="en">
+    ///         A shortest call path found by
+    ///         <see cref="HarmonyIlInspectionExtensions.FindOriginalIlCallPath" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN"><see cref="HarmonyIlInspectionExtensions.FindOriginalIlCallPath" /> 找到的最短调用路径。</para>
     /// </summary>
     public sealed class HarmonyIlCallPath
@@ -125,13 +131,19 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Convenience extensions for inspecting original Harmony IL and following explicitly selected calls.</para>
+    ///     <para xml:lang="en">
+    ///         Convenience extensions for inspecting original Harmony IL and following explicitly selected
+    ///         calls.
+    ///     </para>
     ///     <para xml:lang="zh-CN">用于检查 Harmony 原始 IL 并沿显式选定调用下钻的快捷扩展。</para>
     /// </summary>
     public static class HarmonyIlInspectionExtensions
     {
         /// <summary>
-        ///     <para xml:lang="en">Reads the original IL for a logical method. Async methods resolve to their generated <c>MoveNext</c> body by default.</para>
+        ///     <para xml:lang="en">
+        ///         Reads the original IL for a logical method. Async methods resolve to their generated
+        ///         <c>MoveNext</c> body by default.
+        ///     </para>
         ///     <para xml:lang="zh-CN">读取逻辑方法的原始 IL。默认将异步方法解析到编译器生成的 <c>MoveNext</c> 方法体。</para>
         /// </summary>
         /// <param name="method">
@@ -199,7 +211,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         ///     <para xml:lang="zh-CN">在选定的原始 IL 调用图中查找到匹配调用目标的最短路径。</para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">Traversal is opt-in. The helper does not infer virtual dispatch, delegate targets, reflection calls, or methods not accepted by <paramref name="shouldTraverse" />.</para>
+        ///     <para xml:lang="en">
+        ///         Traversal is opt-in. The helper does not infer virtual dispatch, delegate targets, reflection
+        ///         calls, or methods not accepted by <paramref name="shouldTraverse" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">下钻需显式启用。本工具不会推断虚调用分派、委托目标或反射调用，也不会检查未被 <paramref name="shouldTraverse" /> 接受的方法。</para>
         /// </remarks>
         /// <param name="method">

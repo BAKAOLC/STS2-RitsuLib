@@ -5,7 +5,10 @@ using Logger = MegaCrit.Sts2.Core.Logging.Logger;
 namespace STS2RitsuLib.Localization.SmartFormat
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides a per-mod registry for SmartFormat selector sources and formatters used by the game's localization formatter.</para>
+    ///     <para xml:lang="en">
+    ///         Provides a per-mod registry for SmartFormat selector sources and formatters used by the game's
+    ///         localization formatter.
+    ///     </para>
     ///     <para xml:lang="zh-CN">提供按模组划分的注册表，用于登记游戏本地化格式化器所使用的 SmartFormat 选择器数据源和格式化器。</para>
     /// </summary>
     public sealed class ModSmartFormatExtensionRegistry
@@ -36,7 +39,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
         public string ModId { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the shared registry for <paramref name="modId" />, creating it on first use. mod IDs are compared without regard to case.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the shared registry for <paramref name="modId" />, creating it on first use. mod IDs are
+        ///         compared without regard to case.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 对应的共享注册表，并在首次使用时创建。模组 ID 比较不区分大小写。</para>
         /// </summary>
         public static ModSmartFormatExtensionRegistry For(string modId)
@@ -75,7 +81,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates and registers the specified SmartFormat formatter type. Invalid types or construction failures are logged and ignored.</para>
+        ///     <para xml:lang="en">
+        ///         Creates and registers the specified SmartFormat formatter type. Invalid types or construction
+        ///         failures are logged and ignored.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建并注册指定的 SmartFormat 格式化器类型。无效类型或构造失败会被记录并忽略。</para>
         /// </summary>
         public void RegisterFormatterType(Type formatterType, int order = 0)
@@ -105,7 +114,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates and registers the specified SmartFormat selector-source type. Invalid types or construction failures are logged and ignored.</para>
+        ///     <para xml:lang="en">
+        ///         Creates and registers the specified SmartFormat selector-source type. Invalid types or
+        ///         construction failures are logged and ignored.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建并注册指定的 SmartFormat 选择器数据源类型。无效类型或构造失败会被记录并忽略。</para>
         /// </summary>
         public void RegisterSourceType(Type sourceType, int order = 0)
@@ -115,7 +127,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns a snapshot of all registered formatter definitions, ordered by owning mod ID, ordering value, implementation type, and registration sequence.</para>
+        ///     <para xml:lang="en">
+        ///         Returns a snapshot of all registered formatter definitions, ordered by owning mod ID, ordering
+        ///         value, implementation type, and registration sequence.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回全部已注册格式化器定义的快照，依次按所属模组 ID、排序值、实现类型和注册顺序排列。</para>
         /// </summary>
         public static IReadOnlyList<ModSmartFormatExtensionDefinition> GetFormattersSnapshot()
@@ -127,7 +142,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns a snapshot of all registered selector-source definitions, ordered by owning mod ID, ordering value, implementation type, and registration sequence.</para>
+        ///     <para xml:lang="en">
+        ///         Returns a snapshot of all registered selector-source definitions, ordered by owning mod ID,
+        ///         ordering value, implementation type, and registration sequence.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回全部已注册选择器数据源定义的快照，依次按所属模组 ID、排序值、实现类型和注册顺序排列。</para>
         /// </summary>
         public static IReadOnlyList<ModSmartFormatExtensionDefinition> GetSourcesSnapshot()
@@ -139,7 +157,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Finds the first registered formatter with the specified name, using the snapshot order, and returns its owning mod ID.</para>
+        ///     <para xml:lang="en">
+        ///         Finds the first registered formatter with the specified name, using the snapshot order, and
+        ///         returns its owning mod ID.
+        ///     </para>
         ///     <para xml:lang="zh-CN">按快照顺序查找首个具有指定名称的已注册格式化器，并返回其所属模组 ID。</para>
         /// </summary>
         /// <returns>

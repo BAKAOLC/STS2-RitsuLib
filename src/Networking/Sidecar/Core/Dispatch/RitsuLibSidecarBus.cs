@@ -96,7 +96,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             List<PendingWaiter> pending;
             lock (Gate)
             {
-                pending = [..Waiters];
+                pending = [.. Waiters];
                 Waiters.Clear();
             }
 
@@ -236,7 +236,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             lock (Gate)
             {
                 Handlers.TryGetValue(dispatchContext.Opcode, out handler);
-                candidates = [..Waiters.Where(w => w.Opcode == dispatchContext.Opcode)];
+                candidates = [.. Waiters.Where(w => w.Opcode == dispatchContext.Opcode)];
             }
 
             foreach (var candidate in candidates)
@@ -264,11 +264,9 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private static void ValidateTimeout(TimeSpan timeout)
         {
-            if (timeout == Timeout.InfiniteTimeSpan || timeout >= TimeSpan.Zero)
-            {
-                if (timeout <= MaximumSupportedWaitTimeout)
-                    return;
-            }
+            if ((timeout == Timeout.InfiniteTimeSpan || timeout >= TimeSpan.Zero) &&
+                timeout <= MaximumSupportedWaitTimeout)
+                return;
 
             throw new ArgumentOutOfRangeException(
                 nameof(timeout),

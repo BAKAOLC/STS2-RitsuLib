@@ -3,8 +3,15 @@ using STS2RitsuLib.Utils.Persistence.Interop;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides public entry points for registering runtime mod-data interoperability providers. Providers expose <c>CreateRitsuLibModDataSchema</c> and value synchronizers without introducing a compile-time dependency from RitsuLib to the provider assembly.</para>
-    ///     <para xml:lang="zh-CN">提供注册运行时模组数据互操作提供程序的公共入口。提供程序公开 <c>CreateRitsuLibModDataSchema</c> 和值同步器，RitsuLib 无需在编译期依赖其程序集。</para>
+    ///     <para xml:lang="en">
+    ///         Provides public entry points for registering runtime mod-data interoperability providers.
+    ///         Providers expose <c>CreateRitsuLibModDataSchema</c> and value synchronizers without introducing a compile-time
+    ///         dependency from RitsuLib to the provider assembly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供注册运行时模组数据互操作提供程序的公共入口。提供程序公开 <c>CreateRitsuLibModDataSchema</c> 和值同步器，RitsuLib
+    ///         无需在编译期依赖其程序集。
+    ///     </para>
     /// </summary>
     public static class ModDataRuntimeInterop
     {
@@ -47,7 +54,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds <typeparamref name="TProvider" /> to runtime discovery without immediately registering its schema.</para>
+        ///     <para xml:lang="en">
+        ///         Adds <typeparamref name="TProvider" /> to runtime discovery without immediately registering its
+        ///         schema.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 <typeparamref name="TProvider" /> 加入运行时发现列表，但不立即注册其架构。</para>
         /// </summary>
         /// <typeparam name="TProvider">
@@ -64,7 +74,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds <typeparamref name="TProvider" /> to runtime discovery and then attempts to register every discovered provider schema.</para>
+        ///     <para xml:lang="en">
+        ///         Adds <typeparamref name="TProvider" /> to runtime discovery and then attempts to register every
+        ///         discovered provider schema.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 <typeparamref name="TProvider" /> 加入运行时发现列表，然后尝试注册所有已发现提供程序的架构。</para>
         /// </summary>
         /// <typeparam name="TProvider">
@@ -81,7 +94,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds a provider type name to runtime discovery and then attempts to register every discovered provider schema.</para>
+        ///     <para xml:lang="en">
+        ///         Adds a provider type name to runtime discovery and then attempts to register every discovered
+        ///         provider schema.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将提供程序类型名加入运行时发现列表，然后尝试注册所有已发现提供程序的架构。</para>
         /// </summary>
         /// <param name="providerTypeFullName">
@@ -102,7 +118,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Adds a provider type to runtime discovery and then attempts to register every discovered provider schema.</para>
+        ///     <para xml:lang="en">
+        ///         Adds a provider type to runtime discovery and then attempts to register every discovered
+        ///         provider schema.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将提供程序类型加入运行时发现列表，然后尝试注册所有已发现提供程序的架构。</para>
         /// </summary>
         /// <param name="providerType">
@@ -141,7 +160,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Pushes values loaded by RitsuLib into all registered providers and invokes their post-load hooks.</para>
+        ///     <para xml:lang="en">
+        ///         Pushes values loaded by RitsuLib into all registered providers and invokes their post-load
+        ///         hooks.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 RitsuLib 加载的值推送到所有已注册提供程序，并调用其加载后钩子。</para>
         /// </summary>
         public static void PushLoadedDataToAllProviders()
@@ -150,7 +172,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Subscribes once to synchronize provider snapshots into <see cref="STS2RitsuLib.Data.ModDataStore" /> when the active profile changes.</para>
+        ///     <para xml:lang="en">
+        ///         Subscribes once to synchronize provider snapshots into
+        ///         <see cref="STS2RitsuLib.Data.ModDataStore" /> when the active profile changes.
+        ///     </para>
         ///     <para xml:lang="zh-CN">仅订阅一次，在活动档案变化时将提供程序快照同步到 <see cref="STS2RitsuLib.Data.ModDataStore" />。</para>
         /// </summary>
         public static void EnsureProfileSwitchSyncHook()

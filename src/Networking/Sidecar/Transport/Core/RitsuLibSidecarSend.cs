@@ -6,13 +6,19 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     <para xml:lang="en">Sends raw Sidecar envelopes over the vanilla transport without the game's <c>INetMessage</c> serialization path.</para>
+    ///     <para xml:lang="en">
+    ///         Sends raw Sidecar envelopes over the vanilla transport without the game's <c>INetMessage</c>
+    ///         serialization path.
+    ///     </para>
     ///     <para xml:lang="zh-CN">在不经过游戏 <c>INetMessage</c> 序列化路径的情况下，通过原版传输发送原始 Sidecar 信封。</para>
     /// </summary>
     public static class RitsuLibSidecarSend
     {
         /// <summary>
-        ///     <para xml:lang="en">Maps <see cref="NetTransferMode" /> to a recommended ENet channel distinct from vanilla channels 0 and 1.</para>
+        ///     <para xml:lang="en">
+        ///         Maps <see cref="NetTransferMode" /> to a recommended ENet channel distinct from vanilla
+        ///         channels 0 and 1.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 <see cref="NetTransferMode" /> 映射到不同于原版通道 0 和 1 的推荐 ENet 通道。</para>
         /// </summary>
         /// <param name="mode">

@@ -17,13 +17,9 @@ namespace STS2RitsuLib.RuntimeInput
 
         public static void Process()
         {
-            if (_disabled)
-            {
-                ReleaseAll();
-                return;
-            }
-
-            if (!RitsuSteamInputManifestInstaller.IsManifestInstalled || !RitsuSteamInputInterop.IsSteamAvailable)
+            if (_disabled ||
+                !RitsuSteamInputManifestInstaller.IsManifestInstalled ||
+                !RitsuSteamInputInterop.IsSteamAvailable)
             {
                 ReleaseAll();
                 return;

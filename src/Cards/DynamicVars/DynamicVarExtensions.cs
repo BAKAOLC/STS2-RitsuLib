@@ -143,7 +143,10 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the base value for <paramref name="key" />, or <paramref name="defaultValue" /> when absent.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the base value for <paramref name="key" />, or <paramref name="defaultValue" /> when
+        ///         absent.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取 <paramref name="key" /> 的基础值；变量不存在时返回 <paramref name="defaultValue" />。</para>
         /// </summary>
         public static decimal GetValueOrDefault(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m)

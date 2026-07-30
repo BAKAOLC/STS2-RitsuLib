@@ -394,6 +394,8 @@ namespace STS2RitsuLib.Settings
             try
             {
                 var parsed = JsonSerializer.Deserialize<ModSettingsPageDataClipboardPayload>(env.Payload);
+                // Deserialization can violate nullable annotations when required JSON members are missing or null.
+                // ReSharper disable once RedundantAlwaysMatchSubpattern
                 if (parsed is not { Sections: not null } ||
                     string.IsNullOrWhiteSpace(parsed.ModId) ||
                     string.IsNullOrWhiteSpace(parsed.PageId) ||
@@ -588,6 +590,8 @@ namespace STS2RitsuLib.Settings
             try
             {
                 var parsed = JsonSerializer.Deserialize<ModSettingsSectionDataClipboardPayload>(env.Payload);
+                // Deserialization can violate nullable annotations when required JSON members are missing or null.
+                // ReSharper disable once RedundantAlwaysMatchSubpattern
                 if (parsed is not { Bindings: not null } ||
                     string.IsNullOrWhiteSpace(parsed.ModId) ||
                     string.IsNullOrWhiteSpace(parsed.PageId) ||
@@ -752,13 +756,11 @@ namespace STS2RitsuLib.Settings
         {
             sections = new(StringComparer.OrdinalIgnoreCase);
             foreach (var (sectionId, sourceBindings) in source)
-            {
                 if (string.IsNullOrWhiteSpace(sectionId) ||
                     sourceBindings == null ||
                     !TryNormalizeBindings(sourceBindings, out var bindings) ||
                     !sections.TryAdd(sectionId, bindings))
                     return false;
-            }
 
             return true;
         }
@@ -769,7 +771,8 @@ namespace STS2RitsuLib.Settings
         {
             bindings = new(StringComparer.OrdinalIgnoreCase);
             foreach (var (entryId, snapshot) in source)
-            {
+                // Dictionary values may originate in deserialized, externally supplied clipboard data.
+                // ReSharper disable RedundantAlwaysMatchSubpattern
                 if (string.IsNullOrWhiteSpace(entryId) ||
                     snapshot is not
                     {
@@ -779,7 +782,7 @@ namespace STS2RitsuLib.Settings
                     } ||
                     !bindings.TryAdd(entryId, snapshot))
                     return false;
-            }
+            // ReSharper restore RedundantAlwaysMatchSubpattern
 
             return true;
         }

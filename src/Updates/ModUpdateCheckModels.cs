@@ -28,13 +28,19 @@ namespace STS2RitsuLib.Updates
         public required string CurrentVersion { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Absolute URL of the compact JSON update manifest. Use a mirror or self-hosted endpoint when broad player reachability matters.</para>
+        ///     <para xml:lang="en">
+        ///         Absolute URL of the compact JSON update manifest. Use a mirror or self-hosted endpoint when
+        ///         broad player reachability matters.
+        ///     </para>
         ///     <para xml:lang="zh-CN">精简 JSON 更新清单的绝对 URL。需要覆盖更广泛的玩家网络环境时，应使用镜像或自托管端点。</para>
         /// </summary>
         public required Uri ManifestUri { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Fallback release page opened when the update notification is selected; the manifest can override it per release.</para>
+        ///     <para xml:lang="en">
+        ///         Fallback release page opened when the update notification is selected; the manifest can
+        ///         override it per release.
+        ///     </para>
         ///     <para xml:lang="zh-CN">选中更新通知时打开的回退发布页；清单可按发布版本覆盖此页。</para>
         /// </summary>
         public Uri? ReleasePageUri { get; init; }
@@ -52,7 +58,10 @@ namespace STS2RitsuLib.Updates
         public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(8d);
 
         /// <summary>
-        ///     <para xml:lang="en">Optional notification duration override in seconds. Leave null to use RitsuLib's default duration.</para>
+        ///     <para xml:lang="en">
+        ///         Optional notification duration override in seconds. Leave null to use RitsuLib's default
+        ///         duration.
+        ///     </para>
         ///     <para xml:lang="zh-CN">可选通知显示时长覆盖值，单位秒；为 null 时使用 RitsuLib 默认时长。</para>
         /// </summary>
         public double? ToastDurationSeconds { get; init; }
@@ -70,13 +79,19 @@ namespace STS2RitsuLib.Updates
         public string? ToastBody { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">When true, skips the external manifest check when the configured installation source came from Steam Workshop.</para>
+        ///     <para xml:lang="en">
+        ///         When true, skips the external manifest check when the configured installation source came from
+        ///         Steam Workshop.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为 true 时，若配置的安装来源来自 Steam Workshop，则跳过外部清单检查。</para>
         /// </summary>
         public bool SkipWhenLoadedFromSteamWorkshop { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Steam Workshop item ID that owns this update check. When set, Workshop skipping applies only when the installation source path belongs to this item.</para>
+        ///     <para xml:lang="en">
+        ///         Steam Workshop item ID that owns this update check. When set, Workshop skipping applies only
+        ///         when the installation source path belongs to this item.
+        ///     </para>
         ///     <para xml:lang="zh-CN">拥有此更新检查的 Steam Workshop 条目 ID。设置后，仅当安装来源路径属于该条目时才跳过外部检查。</para>
         /// </summary>
         public ulong? SteamWorkshopItemId { get; init; }
@@ -88,7 +103,10 @@ namespace STS2RitsuLib.Updates
         public Assembly? InstallSourceAssembly { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Optional path used to determine whether this mod was loaded from Steam Workshop. When set, it takes precedence over <see cref="InstallSourceAssembly" />.</para>
+        ///     <para xml:lang="en">
+        ///         Optional path used to determine whether this mod was loaded from Steam Workshop. When set, it
+        ///         takes precedence over <see cref="InstallSourceAssembly" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">用于确定此模组是否从 Steam Workshop 加载的可选路径。设置后优先于 <see cref="InstallSourceAssembly" />。</para>
         /// </summary>
         public string? InstallSourcePath { get; init; }
@@ -186,7 +204,10 @@ namespace STS2RitsuLib.Updates
         public string? Message { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Optional localized notification title and body keyed by locale code, for example <c>eng</c>, <c>zhs</c>, <c>en</c>, or <c>zh-CN</c>.</para>
+        ///     <para xml:lang="en">
+        ///         Optional localized notification title and body keyed by locale code, for example <c>eng</c>,
+        ///         <c>zhs</c>, <c>en</c>, or <c>zh-CN</c>.
+        ///     </para>
         ///     <para xml:lang="zh-CN">按语言代码索引的可选本地化通知标题和正文，例如 <c>eng</c>、<c>zhs</c>、<c>en</c> 或 <c>zh-CN</c>。</para>
         /// </summary>
         [JsonPropertyName("localized")]
@@ -245,7 +266,10 @@ namespace STS2RitsuLib.Updates
         RequestFailed,
 
         /// <summary>
-        ///     <para xml:lang="en">The check was intentionally skipped, for example because Steam Workshop manages the installed copy.</para>
+        ///     <para xml:lang="en">
+        ///         The check was intentionally skipped, for example because Steam Workshop manages the installed
+        ///         copy.
+        ///     </para>
         ///     <para xml:lang="zh-CN">检查被有意跳过，例如 Steam Workshop 正在管理当前安装副本。</para>
         /// </summary>
         Skipped,

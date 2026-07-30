@@ -3,7 +3,10 @@ using System.Diagnostics;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides thread-safe, case-sensitive per-key cooldown gates measured with monotonic <see cref="Stopwatch" /> timestamps.</para>
+    ///     <para xml:lang="en">
+    ///         Provides thread-safe, case-sensitive per-key cooldown gates measured with monotonic
+    ///         <see cref="Stopwatch" /> timestamps.
+    ///     </para>
     ///     <para xml:lang="zh-CN">提供线程安全且区分大小写的逐键冷却门控，并使用单调递增的 <see cref="Stopwatch" /> 时间戳计时。</para>
     /// </summary>
     public static class FmodPlaybackThrottle
@@ -20,11 +23,17 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">区分大小写的冷却分组键。</para>
         /// </param>
         /// <param name="cooldownMs">
-        ///     <para xml:lang="en">The cooldown duration in milliseconds; zero or a negative value always passes without recording state.</para>
+        ///     <para xml:lang="en">
+        ///         The cooldown duration in milliseconds; zero or a negative value always passes without recording
+        ///         state.
+        ///     </para>
         ///     <para xml:lang="zh-CN">冷却时长（毫秒）；零或负值始终通过且不记录状态。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the gate is disabled or the prior cooldown has elapsed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the gate is disabled or the prior cooldown has elapsed; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">门控被禁用或上次冷却已经结束时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         /// <exception cref="ArgumentNullException">

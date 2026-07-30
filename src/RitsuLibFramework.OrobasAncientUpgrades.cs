@@ -9,7 +9,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     <para xml:lang="en">
         ///         Registers an <see cref="ArchaicTooth" /> transcendence pair. If the player's deck contains
-        ///         <typeparamref name="TStarterCard" />, obtaining the relic transforms it into <typeparamref name="TAncientCard" />
+        ///         <typeparamref name="TStarterCard" />, obtaining the relic transforms it into
+        ///         <typeparamref name="TAncientCard" />
         ///         while preserving upgrades and enchantments, as with vanilla starter cards.
         ///     </para>
         ///     <para xml:lang="zh-CN">
@@ -45,7 +46,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     <para xml:lang="en">
         ///         Registers an <see cref="ArchaicTooth" /> transcendence mapping from CLR types. The starter ID resolves
-        ///         lazily, so registration can occur before content registration assigns RitsuLib's fixed public <see cref="ModelDb" /> entry.
+        ///         lazily, so registration can occur before content registration assigns RitsuLib's fixed public
+        ///         <see cref="ModelDb" /> entry.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         使用 CLR 类型注册 <see cref="ArchaicTooth" /> 超越映射。初始牌 ID 会延迟解析，因此可在内容注册为类型分配
@@ -59,7 +61,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers an <see cref="ArchaicTooth" /> transcendence mapping from an explicit starter ID and Ancient-card type.</para>
+        ///     <para xml:lang="en">
+        ///         Registers an <see cref="ArchaicTooth" /> transcendence mapping from an explicit starter ID and
+        ///         Ancient-card type.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用显式初始牌 ID 和先古卡牌类型注册 <see cref="ArchaicTooth" /> 超越映射。</para>
         /// </summary>
         /// <param name="starterCardId">
@@ -118,7 +123,8 @@ namespace STS2RitsuLib
         /// <summary>
         ///     <para xml:lang="en">
         ///         Registers a <see cref="TouchOfOrobas" /> refinement mapping from CLR types. The starter ID resolves lazily,
-        ///         so registration can occur before content registration assigns RitsuLib's fixed public <see cref="ModelDb" /> entry.
+        ///         so registration can occur before content registration assigns RitsuLib's fixed public <see cref="ModelDb" />
+        ///         entry.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         使用 CLR 类型注册 <see cref="TouchOfOrobas" /> 精炼映射。初始遗物 ID 会延迟解析，因此可在内容注册为类型分配
@@ -132,7 +138,10 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a <see cref="TouchOfOrobas" /> refinement mapping from an explicit starter ID and upgraded-relic type.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a <see cref="TouchOfOrobas" /> refinement mapping from an explicit starter ID and
+        ///         upgraded-relic type.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用显式初始遗物 ID 和升级后遗物类型注册 <see cref="TouchOfOrobas" /> 精炼映射。</para>
         /// </summary>
         /// <param name="starterRelicId">

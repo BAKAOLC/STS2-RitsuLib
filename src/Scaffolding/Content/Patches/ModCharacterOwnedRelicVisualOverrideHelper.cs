@@ -27,7 +27,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static IModCharacterAssetOverrides? _cachedGlobalProfileAdapter;
 
         /// <summary>
-        ///     <para xml:lang="en">Drops the cached adapter for <paramref name="normalizedCharacterEntry" /> after its programmatic owned-visual registrations change. The entry is expected to be the canonical uppercase ID.</para>
+        ///     <para xml:lang="en">
+        ///         Drops the cached adapter for <paramref name="normalizedCharacterEntry" /> after its
+        ///         programmatic owned-visual registrations change. The entry is expected to be the canonical uppercase ID.
+        ///     </para>
         ///     <para xml:lang="zh-CN"><paramref name="normalizedCharacterEntry" /> 的编程式所属视觉注册发生变化后，丢弃其缓存适配器。该条目应为规范化的大写 ID。</para>
         /// </summary>
         internal static void InvalidateCachesForCharacterEntry(string normalizedCharacterEntry)
@@ -48,7 +51,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves a relic profile in increasing precedence order: the character's inline profile, programmatic owned-visual registrations, then registered character and global asset replacements.</para>
+        ///     <para xml:lang="en">
+        ///         Resolves a relic profile in increasing precedence order: the character's inline profile,
+        ///         programmatic owned-visual registrations, then registered character and global asset replacements.
+        ///     </para>
         ///     <para xml:lang="zh-CN">按优先级从低到高解析遗物配置：角色内联配置、编程式所属视觉注册，最后是已注册的角色级和全局资源替换。</para>
         /// </summary>
         internal static RelicAssetProfile? ResolveOwnedRelicVisualOverride(CharacterModel owner, RelicModel relic)

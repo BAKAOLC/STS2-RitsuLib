@@ -48,13 +48,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var code = instructions.ToList();
             var matches = new List<int>();
             for (var i = 1; i < code.Count; i++)
-            {
                 if (code[i].opcode == OpCodes.Castclass &&
                     code[i].operand is Type type &&
                     type == typeof(ShaderMaterial) &&
                     HarmonyIl.IsCallTo(code[i - 1], CardPoolFrameMaterialGetter))
                     matches.Add(i);
-            }
 
             if (matches.Count != 1)
             {

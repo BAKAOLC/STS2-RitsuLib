@@ -1,8 +1,14 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Defines the FMOD Studio bus paths used by the game's <c>AudioManagerProxy</c>; use them with <see cref="FmodStudioBusAccess" /> for direct bus operations.</para>
-    ///     <para xml:lang="zh-CN">定义游戏 <c>AudioManagerProxy</c> 使用的 FMOD Studio 总线路径；可配合 <see cref="FmodStudioBusAccess" /> 执行直接总线操作。</para>
+    ///     <para xml:lang="en">
+    ///         Defines the FMOD Studio bus paths used by the game's <c>AudioManagerProxy</c>; use them with
+    ///         <see cref="FmodStudioBusAccess" /> for direct bus operations.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义游戏 <c>AudioManagerProxy</c> 使用的 FMOD Studio 总线路径；可配合 <see cref="FmodStudioBusAccess" />
+    ///         执行直接总线操作。
+    ///     </para>
     /// </summary>
     public static class FmodStudioRouting
     {

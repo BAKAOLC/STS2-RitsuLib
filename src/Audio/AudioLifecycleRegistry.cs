@@ -3,7 +3,10 @@ using System.Collections.Concurrent;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Tracks audio handles by built-in lifecycle scope or manual token and cleans them up at matching lifecycle boundaries.</para>
+    ///     <para xml:lang="en">
+    ///         Tracks audio handles by built-in lifecycle scope or manual token and cleans them up at matching
+    ///         lifecycle boundaries.
+    ///     </para>
     ///     <para xml:lang="zh-CN">按内置生命周期作用域或手动令牌跟踪音频句柄，并在对应的生命周期边界清理它们。</para>
     /// </summary>
     public sealed class AudioLifecycleRegistry : IDisposable
@@ -35,7 +38,10 @@ namespace STS2RitsuLib.Audio
         public static AudioLifecycleRegistry Shared { get; } = new();
 
         /// <summary>
-        ///     <para xml:lang="en">Disposes this registry's lifecycle subscriptions without stopping or detaching currently tracked handles.</para>
+        ///     <para xml:lang="en">
+        ///         Disposes this registry's lifecycle subscriptions without stopping or detaching currently
+        ///         tracked handles.
+        ///     </para>
         ///     <para xml:lang="zh-CN">释放此注册表的生命周期订阅，但不会停止或分离当前跟踪的句柄。</para>
         /// </summary>
         public void Dispose()
@@ -72,26 +78,28 @@ namespace STS2RitsuLib.Audio
         internal bool TryAttach(IAudioHandle handle, AudioPlaybackOptions? options)
         {
             var token = options?.ScopeToken;
-            if (token is not null)
+            if (token is null)
             {
-                if (token.IsClosing)
-                {
-                    DisposeOrRetainByScope(handle);
-                    return false;
-                }
-
-                var tokenSet = _tokenHandles.GetOrAdd(token, _ => new());
-                tokenSet.TryAdd(handle, 0);
-                if (token.IsClosing && tokenSet.TryRemove(handle, out _))
-                {
-                    DisposeOrRetainByScope(handle);
-                    return false;
-                }
-
+                TrackByScope(handle);
                 return true;
             }
 
-            TrackByScope(handle);
+            if (token.IsClosing)
+            {
+                DisposeOrRetainByScope(handle);
+                return false;
+            }
+
+            var tokenSet = _tokenHandles.GetOrAdd(token, _ => new());
+            tokenSet.TryAdd(handle, 0);
+            // Keep the close-race cleanup as the exceptional branch.
+            // ReSharper disable once InvertIf
+            if (token.IsClosing && tokenSet.TryRemove(handle, out _))
+            {
+                DisposeOrRetainByScope(handle);
+                return false;
+            }
+
             return true;
         }
 
@@ -113,7 +121,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to stop and release every handle tracked under a built-in scope, retaining entries whose release fails.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to stop and release every handle tracked under a built-in scope, retaining entries
+        ///         whose release fails.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试停止并释放内置作用域下跟踪的所有句柄，并保留释放失败的条目。</para>
         /// </summary>
         /// <param name="scope">
@@ -125,7 +136,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止事件句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one handle was found and every release completed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one handle was found and every release completed;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到至少一个句柄且所有释放均已完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool StopScope(AudioLifecycleScope scope, bool allowFadeOut = true)
@@ -152,7 +166,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to stop and release every handle tracked under a manual token, retaining entries whose release fails.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to stop and release every handle tracked under a manual token, retaining entries whose
+        ///         release fails.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试停止并释放手动令牌下跟踪的所有句柄，并保留释放失败的条目。</para>
         /// </summary>
         /// <param name="token">
@@ -164,7 +181,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">停止事件句柄时是否允许淡出。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when at least one handle was found and every release completed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when at least one handle was found and every release completed;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">找到至少一个句柄且所有释放均已完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool StopScope(AudioScopeToken token, bool allowFadeOut = true)

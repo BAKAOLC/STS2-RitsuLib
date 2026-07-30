@@ -7,7 +7,10 @@ namespace STS2RitsuLib.Audio
     public static class AudioAdaptivePlans
     {
         /// <summary>
-        ///     <para xml:lang="en">Creates a combat override with optional room and victory sources and caller-supplied playback options.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a combat override with optional room and victory sources and caller-supplied playback
+        ///         options.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建战斗音乐覆盖，并可指定房间与胜利音乐源以及调用方提供的播放选项。</para>
         /// </summary>
         /// <param name="combatSource">

@@ -168,6 +168,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </returns>
         public static bool TryRefreshOutlineForHolder(NHandCardHolder? holder)
         {
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (!ModCardHandOutlinePatchHelper.TryGetRule(holder, out var model, out var evaluation))
                 return false;
 

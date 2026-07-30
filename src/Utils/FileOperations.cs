@@ -5,7 +5,10 @@ using FileAccess = Godot.FileAccess;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Provides Godot <see cref="FileAccess" /> operations with result objects, logging, and optional backup-and-replace writes.</para>
+    ///     <para xml:lang="en">
+    ///         Provides Godot <see cref="FileAccess" /> operations with result objects, logging, and optional
+    ///         backup-and-replace writes.
+    ///     </para>
     ///     <para xml:lang="zh-CN">提供带结果对象和日志记录的 Godot <see cref="FileAccess" /> 操作，并支持可选的备份替换写入。</para>
     /// </summary>
     public static class FileOperations
@@ -81,11 +84,17 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Writes text, optionally by rotating a backup, writing a temporary file, then renaming it into place.</para>
+        ///     <para xml:lang="en">
+        ///         Writes text, optionally by rotating a backup, writing a temporary file, then renaming it into
+        ///         place.
+        ///     </para>
         ///     <para xml:lang="zh-CN">写入文本；可选地轮换备份、写入临时文件，再将其重命名到目标位置。</para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">Despite the <paramref name="atomic" /> parameter name, this is a best-effort backup-and-replace sequence rather than a transactional atomic-write guarantee; each file-system step can fail independently.</para>
+        ///     <para xml:lang="en">
+        ///         Despite the <paramref name="atomic" /> parameter name, this is a best-effort backup-and-replace
+        ///         sequence rather than a transactional atomic-write guarantee; each file-system step can fail independently.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尽管参数名为 <paramref name="atomic" />，该流程只是尽力完成的备份替换序列，并不保证事务式原子写入；每个文件系统步骤都可能独立失败。</para>
         /// </remarks>
         public static WriteResult WriteText(string filePath, string content, string? logContext = null,
@@ -315,6 +324,8 @@ namespace STS2RitsuLib.Utils
                 return lastSlash < schemeRootLength ? filePath[..schemeRootLength] : filePath[..lastSlash];
             }
 
+            // The path-root cases are easier to audit as ordered guards.
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (lastSlash == 0)
                 return "/";
             if (lastSlash == 2 && filePath.Length > 2 && filePath[1] == ':')
@@ -661,7 +672,10 @@ namespace STS2RitsuLib.Utils
         public class WriteResult
         {
             /// <summary>
-            ///     <para xml:lang="en">Indicates whether the requested operation, including a no-op deletion of a missing target, completed successfully.</para>
+            ///     <para xml:lang="en">
+            ///         Indicates whether the requested operation, including a no-op deletion of a missing target,
+            ///         completed successfully.
+            ///     </para>
             ///     <para xml:lang="zh-CN">指示请求的操作是否成功完成；删除不存在的目标也视为空操作成功。</para>
             /// </summary>
             public bool Success { get; init; }

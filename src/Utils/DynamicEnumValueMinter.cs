@@ -5,19 +5,36 @@ using System.Text;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     <para xml:lang="en">Deterministically mints 32-bit integer values for string IDs and casts them into <typeparamref name="TEnum" />. Minted values occupy the reserved high-value band at or above <see cref="ReservedFloor" />, leaving the low range for vanilla enum members.</para>
-    ///     <para xml:lang="zh-CN">为字符串 ID 确定性地生成 32 位整数值并将其转换为 <typeparamref name="TEnum" />。生成值位于不低于 <see cref="ReservedFloor" /> 的保留高值区间，低值范围留给原版枚举成员。</para>
+    ///     <para xml:lang="en">
+    ///         Deterministically mints 32-bit integer values for string IDs and casts them into
+    ///         <typeparamref name="TEnum" />. Minted values occupy the reserved high-value band at or above
+    ///         <see cref="ReservedFloor" />, leaving the low range for vanilla enum members.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为字符串 ID 确定性地生成 32 位整数值并将其转换为 <typeparamref name="TEnum" />。生成值位于不低于
+    ///         <see cref="ReservedFloor" /> 的保留高值区间，低值范围留给原版枚举成员。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para xml:lang="en">Values use <c>ReservedFloor + (XxHash32(utf8(id)) mod (int.MaxValue - ReservedFloor + 1))</c>, so the same ID has a stable value across processes and runs. Recording a distinct ID that collides with an existing one is rejected.</para>
-    ///     <para xml:lang="zh-CN">值使用 <c>ReservedFloor + (XxHash32(utf8(id)) mod (int.MaxValue - ReservedFloor + 1))</c> 计算，因此同一 ID 在不同进程和运行中保持稳定。登记不同 ID 时若与现有 ID 发生哈希碰撞，该操作会被拒绝。</para>
+    ///     <para xml:lang="en">
+    ///         Values use <c>ReservedFloor + (XxHash32(utf8(id)) mod (int.MaxValue - ReservedFloor + 1))</c>,
+    ///         so the same ID has a stable value across processes and runs. Recording a distinct ID that collides with an
+    ///         existing one is rejected.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         值使用 <c>ReservedFloor + (XxHash32(utf8(id)) mod (int.MaxValue - ReservedFloor + 1))</c>
+    ///         计算，因此同一 ID 在不同进程和运行中保持稳定。登记不同 ID 时若与现有 ID 发生哈希碰撞，该操作会被拒绝。
+    ///     </para>
     ///     <para xml:lang="en">Only 32-bit-backed <c>int</c> or <c>uint</c> enums are supported.</para>
     ///     <para xml:lang="zh-CN">仅支持底层类型为 32 位 <c>int</c> 或 <c>uint</c> 的枚举。</para>
     /// </remarks>
     public sealed class DynamicEnumValueMinter<TEnum> where TEnum : struct, Enum
     {
         /// <summary>
-        ///     <para xml:lang="en">Default reserved floor. Minted values land in <c>[0x4000_0000, 0x7FFF_FFFF]</c>, reserving the lower positive range for vanilla enum members.</para>
+        ///     <para xml:lang="en">
+        ///         Default reserved floor. Minted values land in <c>[0x4000_0000, 0x7FFF_FFFF]</c>, reserving the
+        ///         lower positive range for vanilla enum members.
+        ///     </para>
         ///     <para xml:lang="zh-CN">默认保留下界。生成值落在 <c>[0x4000_0000, 0x7FFF_FFFF]</c>，为原版枚举成员保留较低的正值范围。</para>
         /// </summary>
         public const int DefaultReservedFloor = 0x4000_0000;
@@ -35,11 +52,17 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates a minter whose integer values are always <c>&gt;= <paramref name="reservedFloor" /></c>.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a minter whose integer values are always <c>&gt;= <paramref name="reservedFloor" /></c>
+        ///         .
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建一个生成器，其整数值始终 <c>&gt;= <paramref name="reservedFloor" /></c>。</para>
         /// </summary>
         /// <param name="reservedFloor">
-        ///     <para xml:lang="en">Inclusive lower bound for minted values. It must be <c>&gt;= 0</c>; <c>[0, reservedFloor)</c> remains available to vanilla enum members.</para>
+        ///     <para xml:lang="en">
+        ///         Inclusive lower bound for minted values. It must be <c>&gt;= 0</c>; <c>[0, reservedFloor)</c>
+        ///         remains available to vanilla enum members.
+        ///     </para>
         ///     <para xml:lang="zh-CN">生成值的包含下界。它必须为 <c>&gt;= 0</c>；<c>[0, reservedFloor)</c> 留给原版枚举成员。</para>
         /// </param>
         public DynamicEnumValueMinter(int reservedFloor)
@@ -63,15 +86,24 @@ namespace STS2RitsuLib.Utils
         public int ReservedFloor { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the <typeparamref name="TEnum" /> value for <paramref name="id" />, recording it on first call. Subsequent case-insensitive uses of the same ID return the same value.</para>
-        ///     <para xml:lang="zh-CN">返回 <paramref name="id" /> 对应的 <typeparamref name="TEnum" /> 值，并在首次调用时登记。之后以不区分大小写的相同 ID 调用会返回同一值。</para>
+        ///     <para xml:lang="en">
+        ///         Returns the <typeparamref name="TEnum" /> value for <paramref name="id" />, recording it on
+        ///         first call. Subsequent case-insensitive uses of the same ID return the same value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="id" /> 对应的 <typeparamref name="TEnum" /> 值，并在首次调用时登记。之后以不区分大小写的相同 ID
+        ///         调用会返回同一值。
+        ///     </para>
         /// </summary>
         /// <exception cref="ArgumentException">
         ///     <para xml:lang="en"><paramref name="id" /> is null or whitespace.</para>
         ///     <para xml:lang="zh-CN"><paramref name="id" /> 为 null 或空白。</para>
         /// </exception>
         /// <exception cref="InvalidOperationException">
-        ///     <para xml:lang="en">Two distinct IDs hash to the same <typeparamref name="TEnum" /> value; collision detection occurs while recording the ID, and callers must choose non-colliding IDs.</para>
+        ///     <para xml:lang="en">
+        ///         Two distinct IDs hash to the same <typeparamref name="TEnum" /> value; collision detection
+        ///         occurs while recording the ID, and callers must choose non-colliding IDs.
+        ///     </para>
         ///     <para xml:lang="zh-CN">两个不同 ID 哈希到同一个 <typeparamref name="TEnum" /> 值；登记 ID 时会检测此碰撞，调用方必须改用不冲突的 ID。</para>
         /// </exception>
         public TEnum Mint(string id)
@@ -99,12 +131,21 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Computes the deterministic <typeparamref name="TEnum" /> value for <paramref name="id" /> without registering it or checking whether another ID already owns the numeric value.</para>
+        ///     <para xml:lang="en">
+        ///         Computes the deterministic <typeparamref name="TEnum" /> value for <paramref name="id" />
+        ///         without registering it or checking whether another ID already owns the numeric value.
+        ///     </para>
         ///     <para xml:lang="zh-CN">计算 <paramref name="id" /> 的确定性 <typeparamref name="TEnum" /> 值，但不注册，也不检查其他 ID 是否已占用该数值。</para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">Use this only when the raw pre-validation value is required. Its result is not visible to <see cref="TryGetId" /> or <see cref="IsDynamic" /> unless <see cref="Mint" /> also records it.</para>
-        ///     <para xml:lang="zh-CN">仅在需要碰撞校验前的原始值时使用。除非也通过 <see cref="Mint" /> 登记，否则结果不会出现在 <see cref="TryGetId" /> 或 <see cref="IsDynamic" /> 中。</para>
+        ///     <para xml:lang="en">
+        ///         Use this only when the raw pre-validation value is required. Its result is not visible to
+        ///         <see cref="TryGetId" /> or <see cref="IsDynamic" /> unless <see cref="Mint" /> also records it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         仅在需要碰撞校验前的原始值时使用。除非也通过 <see cref="Mint" /> 登记，否则结果不会出现在 <see cref="TryGetId" /> 或
+        ///         <see cref="IsDynamic" /> 中。
+        ///     </para>
         /// </remarks>
         public TEnum ComputeValue(string id)
         {
@@ -136,7 +177,10 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the <typeparamref name="TEnum" /> value currently bound to <paramref name="id" /> without registering a new one.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the <typeparamref name="TEnum" /> value currently bound to <paramref name="id" />
+        ///         without registering a new one.
+        ///     </para>
         ///     <para xml:lang="zh-CN">返回当前绑定到 <paramref name="id" /> 的 <typeparamref name="TEnum" /> 值，不注册新值。</para>
         /// </summary>
         public bool TryGetValue(string id, out TEnum value)

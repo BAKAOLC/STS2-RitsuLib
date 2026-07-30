@@ -3,8 +3,14 @@ using STS2RitsuLib.Data;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     <para xml:lang="en">Coordinates profile-data readiness and publishes <see cref="ProfileDataReadyEvent" />, <see cref="ProfileDataChangedEvent" />, and <see cref="ProfileDataInvalidatedEvent" /> lifecycle events.</para>
-    ///     <para xml:lang="zh-CN">协调档案数据的就绪状态，并发布 <see cref="ProfileDataReadyEvent" />、<see cref="ProfileDataChangedEvent" /> 和 <see cref="ProfileDataInvalidatedEvent" /> 生命周期事件。</para>
+    ///     <para xml:lang="en">
+    ///         Coordinates profile-data readiness and publishes <see cref="ProfileDataReadyEvent" />,
+    ///         <see cref="ProfileDataChangedEvent" />, and <see cref="ProfileDataInvalidatedEvent" /> lifecycle events.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         协调档案数据的就绪状态，并发布 <see cref="ProfileDataReadyEvent" />、<see cref="ProfileDataChangedEvent" />
+    ///         和 <see cref="ProfileDataInvalidatedEvent" /> 生命周期事件。
+    ///     </para>
     /// </summary>
     public static class DataReadyLifecycle
     {
@@ -13,7 +19,10 @@ namespace STS2RitsuLib.Utils.Persistence
         private static ProfileDataReadyEvent? _lastReadyEvent;
 
         /// <summary>
-        ///     <para xml:lang="en"><see langword="true" /> when profile-path initialization has completed and the data is considered safe to use.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when profile-path initialization has completed and the data is
+        ///         considered safe to use.
+        ///     </para>
         ///     <para xml:lang="zh-CN">档案路径初始化完成且数据可安全使用时为 <see langword="true" />。</para>
         /// </summary>
         public static bool IsReady { get; private set; }
@@ -32,7 +41,10 @@ namespace STS2RitsuLib.Utils.Persistence
             IsReady ? DataLifecycleState.Ready : DataLifecycleState.WaitingForProfile;
 
         /// <summary>
-        ///     <para xml:lang="en">Refreshes the current profile, ensures profile services, reloads data after path changes, and publishes lifecycle events when appropriate.</para>
+        ///     <para xml:lang="en">
+        ///         Refreshes the current profile, ensures profile services, reloads data after path changes, and
+        ///         publishes lifecycle events when appropriate.
+        ///     </para>
         ///     <para xml:lang="zh-CN">刷新当前档案，确保档案服务可用，在路径变化后重新加载数据，并在适当时发布生命周期事件。</para>
         /// </summary>
         /// <param name="source">
@@ -110,7 +122,10 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Invalidates the given profile and publishes <see cref="ProfileDataInvalidatedEvent" /> if it was the active ready profile.</para>
+        ///     <para xml:lang="en">
+        ///         Invalidates the given profile and publishes <see cref="ProfileDataInvalidatedEvent" /> if it
+        ///         was the active ready profile.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使指定档案失效；如果它是当前已就绪的活动档案，则发布 <see cref="ProfileDataInvalidatedEvent" />。</para>
         /// </summary>
         public static void NotifyProfileInvalidated(int profileId, string reason)

@@ -10,7 +10,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         where T : notnull
     {
         /// <summary>
-        ///     <para xml:lang="en">User or control <c>ulong</c> opcode; must match the <see cref="RitsuLibSidecarBus" /> registration.</para>
+        ///     <para xml:lang="en">
+        ///         User or control <c>ulong</c> opcode; must match the <see cref="RitsuLibSidecarBus" />
+        ///         registration.
+        ///     </para>
         ///     <para xml:lang="zh-CN">用户或控制 <c>ulong</c> 操作码；必须与 <see cref="RitsuLibSidecarBus" /> 中的注册匹配。</para>
         /// </summary>
         ulong Opcode { get; }

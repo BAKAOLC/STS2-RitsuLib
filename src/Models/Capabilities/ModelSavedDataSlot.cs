@@ -35,6 +35,8 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private readonly Func<TPayload> _defaultFactory = defaultFactory ?? (() => new());
 
+        protected virtual bool ShouldPropagateImportExceptions => false;
+
         public string ModId { get; } = modId;
         public string Key { get; } = key;
         public Type TargetType { get; } = typeof(TTarget);
@@ -222,8 +224,6 @@ namespace STS2RitsuLib.Models.Capabilities
             return bag.IsDirty(SlotKey);
         }
 
-        protected virtual bool ShouldPropagateImportExceptions => false;
-
         private bool TryMigrate(JsonObject entry, int schema, out JsonObject migrated)
         {
             migrated = entry;
@@ -342,6 +342,8 @@ namespace STS2RitsuLib.Models.Capabilities
         where TTarget : AbstractModel
         where TPayload : class, new()
     {
+        protected override bool ShouldPropagateImportExceptions => true;
+
         protected override bool TryBuildEntry(TTarget model, ModelSavedDataBag bag, out JsonObject entry)
         {
             entry = null!;
@@ -367,8 +369,6 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             return true;
         }
-
-        protected override bool ShouldPropagateImportExceptions => true;
 
         private bool ShouldWriteComputed(TPayload value)
         {

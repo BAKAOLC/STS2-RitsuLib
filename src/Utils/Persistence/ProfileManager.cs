@@ -5,7 +5,10 @@ using STS2RitsuLib.Utils.Persistence.Context;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     <para xml:lang="en">Tracks the active game profile ID and resolves mod-data paths under Godot <c>user://</c> storage.</para>
+    ///     <para xml:lang="en">
+    ///         Tracks the active game profile ID and resolves mod-data paths under Godot <c>user://</c>
+    ///         storage.
+    ///     </para>
     ///     <para xml:lang="zh-CN">跟踪活动游戏档案 ID，并解析 Godot <c>user://</c> 存储中的模组数据路径。</para>
     /// </summary>
     public class ProfileManager
@@ -119,7 +122,10 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves the Godot user-data base path for <paramref name="scope" /> using <see cref="CurrentProfileId" />.</para>
+        ///     <para xml:lang="en">
+        ///         Resolves the Godot user-data base path for <paramref name="scope" /> using
+        ///         <see cref="CurrentProfileId" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用 <see cref="CurrentProfileId" /> 解析 <paramref name="scope" /> 的 Godot 用户数据基础路径。</para>
         /// </summary>
         public string GetBasePath(SaveScope scope)
@@ -128,7 +134,10 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves the Godot user-data base path for <paramref name="scope" /> using explicit profile and mod IDs.</para>
+        ///     <para xml:lang="en">
+        ///         Resolves the Godot user-data base path for <paramref name="scope" /> using explicit profile and
+        ///         mod IDs.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用显式指定的档案 ID 和模组 ID，解析 <paramref name="scope" /> 的 Godot 用户数据基础路径。</para>
         /// </summary>
         public static string GetBasePath(SaveScope scope, int profileId, string modId = Const.ModId)
@@ -143,8 +152,14 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves the Godot user-data base path for <paramref name="scope" /> and <paramref name="modId" /> using the supplied <paramref name="context" />.</para>
-        ///     <para xml:lang="zh-CN">使用提供的 <paramref name="context" />，解析 <paramref name="scope" /> 和 <paramref name="modId" /> 对应的 Godot 用户数据基础路径。</para>
+        ///     <para xml:lang="en">
+        ///         Resolves the Godot user-data base path for <paramref name="scope" /> and
+        ///         <paramref name="modId" /> using the supplied <paramref name="context" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用提供的 <paramref name="context" />，解析 <paramref name="scope" /> 和 <paramref name="modId" />
+        ///         对应的 Godot 用户数据基础路径。
+        ///     </para>
         /// </summary>
         public static string GetBasePath(SaveScope scope, StorageContext context, string modId = Const.ModId)
         {
@@ -163,7 +178,10 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the Godot user-data path for <paramref name="fileName" /> using the active profile and RitsuLib mod ID.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the Godot user-data path for <paramref name="fileName" /> using the active profile and
+        ///         RitsuLib mod ID.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用活动档案和 RitsuLib 模组 ID，返回 <paramref name="fileName" /> 的 Godot 用户数据路径。</para>
         /// </summary>
         public string GetFilePath(string fileName, SaveScope scope)
@@ -172,8 +190,14 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the Godot user-data path for <paramref name="fileName" /> using <paramref name="profileId" /> and the RitsuLib mod ID.</para>
-        ///     <para xml:lang="zh-CN">使用 <paramref name="profileId" /> 和 RitsuLib 模组 ID，返回 <paramref name="fileName" /> 的 Godot 用户数据路径。</para>
+        ///     <para xml:lang="en">
+        ///         Returns the Godot user-data path for <paramref name="fileName" /> using
+        ///         <paramref name="profileId" /> and the RitsuLib mod ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="profileId" /> 和 RitsuLib 模组 ID，返回 <paramref name="fileName" /> 的 Godot
+        ///         用户数据路径。
+        ///     </para>
         /// </summary>
         public static string GetFilePath(string fileName, SaveScope scope, int profileId)
         {
@@ -181,7 +205,10 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the Godot user-data path for <paramref name="fileName" /> using the active profile and <paramref name="modId" />.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the Godot user-data path for <paramref name="fileName" /> using the active profile and
+        ///         <paramref name="modId" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用活动档案和 <paramref name="modId" />，返回 <paramref name="fileName" /> 的 Godot 用户数据路径。</para>
         /// </summary>
         public string GetFilePath(string fileName, SaveScope scope, string modId)
@@ -190,7 +217,10 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the Godot user-data path for <paramref name="fileName" /> using explicit profile and mod IDs.</para>
+        ///     <para xml:lang="en">
+        ///         Returns the Godot user-data path for <paramref name="fileName" /> using explicit profile and
+        ///         mod IDs.
+        ///     </para>
         ///     <para xml:lang="zh-CN">使用显式指定的档案 ID 和模组 ID，返回 <paramref name="fileName" /> 的 Godot 用户数据路径。</para>
         /// </summary>
         public static string GetFilePath(string fileName, SaveScope scope, int profileId, string modId)
@@ -199,8 +229,14 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns the Godot user-data path for <paramref name="fileName" /> and <paramref name="modId" /> using the supplied <paramref name="context" />.</para>
-        ///     <para xml:lang="zh-CN">使用提供的 <paramref name="context" />，返回 <paramref name="fileName" /> 和 <paramref name="modId" /> 对应的 Godot 用户数据路径。</para>
+        ///     <para xml:lang="en">
+        ///         Returns the Godot user-data path for <paramref name="fileName" /> and <paramref name="modId" />
+        ///         using the supplied <paramref name="context" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用提供的 <paramref name="context" />，返回 <paramref name="fileName" /> 和
+        ///         <paramref name="modId" /> 对应的 Godot 用户数据路径。
+        ///     </para>
         /// </summary>
         public static string GetFilePath(string fileName, SaveScope scope, StorageContext context,
             string modId = Const.ModId)
@@ -212,7 +248,10 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Deletes all profile-scoped mod-data files for <paramref name="profileId" /> and <paramref name="modId" />.</para>
+        ///     <para xml:lang="en">
+        ///         Deletes all profile-scoped mod-data files for <paramref name="profileId" /> and
+        ///         <paramref name="modId" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">删除 <paramref name="profileId" /> 和 <paramref name="modId" /> 对应的所有档案作用域模组数据文件。</para>
         /// </summary>
         public static void DeleteProfileData(int profileId, string modId = Const.ModId)

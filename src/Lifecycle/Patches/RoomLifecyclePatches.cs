@@ -121,7 +121,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Publishes Act-entering and final Rewards-screen continuation events from <see cref="RunManager" />.</para>
+    ///     <para xml:lang="en">
+    ///         Publishes Act-entering and final Rewards-screen continuation events from
+    ///         <see cref="RunManager" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">从 <see cref="RunManager" /> 发布章节进入中事件以及最终奖励界面的继续事件。</para>
     /// </summary>
     internal sealed class ActEnteringLifecyclePatch : IPatchMethod

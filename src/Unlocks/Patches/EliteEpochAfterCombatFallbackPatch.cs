@@ -48,6 +48,5 @@ namespace STS2RitsuLib.Unlocks.Patches
 
             EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);
         }
-
     }
 }

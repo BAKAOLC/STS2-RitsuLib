@@ -556,6 +556,7 @@ namespace STS2RitsuLib.Settings
             private readonly
                 List<Action<IModSettingsUiActionHost, ModSettingsPageUiContext, List<ModSettingsMenuAction>>>
                 _delegates = [];
+
             private readonly Lock _lock = new();
 
             public void Add(Action<IModSettingsUiActionHost, ModSettingsPageUiContext, List<ModSettingsMenuAction>> d)
@@ -585,6 +586,7 @@ namespace STS2RitsuLib.Settings
             private readonly List<Action<IModSettingsUiActionHost, ModSettingsSectionUiContext,
                     List<ModSettingsMenuAction>>>
                 _delegates = [];
+
             private readonly Lock _lock = new();
 
             public void Add(

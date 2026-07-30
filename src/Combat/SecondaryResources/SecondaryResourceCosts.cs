@@ -346,7 +346,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private static void ValidateCost(SecondaryResourceCost cost)
         {
-            if (cost.CostsX && cost.XMultiplier <= 0)
+            if (cost is { CostsX: true, XMultiplier: <= 0 })
                 throw new ArgumentOutOfRangeException(
                     nameof(cost),
                     "An X secondary-resource cost must have a positive multiplier.");
@@ -861,7 +861,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             foreach (var group in plan.Lines
-                         .Where(static line => !line.IsFree && line.AmountToSpend > 0)
+                         .Where(static line => line is { IsFree: false, AmountToSpend: > 0 })
                          .GroupBy(static line => line.ResourceId, StringComparer.OrdinalIgnoreCase))
             {
                 var required = group.Aggregate(0L, static (sum, line) => sum + line.AmountToSpend);
@@ -969,7 +969,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 {
                     IsFree = true,
                     AmountToSpend = 0,
-                    Value = !line.CostsX && line.Kind == SecondaryResourceUseKind.OptionalSpend
+                    Value = line is { CostsX: false, Kind: SecondaryResourceUseKind.OptionalSpend }
                         ? 0
                         : line.Value,
                     OriginalShortfall = 0,
@@ -1397,16 +1397,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (string.IsNullOrWhiteSpace(use.ResourceId))
                 throw new InvalidOperationException(
                     $"Secondary-resource use '{use.Id}' does not specify a resource id.");
+            // Ordered validation guards produce field-specific diagnostics.
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (use.Cost == null)
                 throw new InvalidOperationException(
                     $"Secondary-resource use '{use.Id}' does not specify a cost.");
-            if (use.Cost.CostsX && use.Cost.XMultiplier <= 0)
+            if (use.Cost is { CostsX: true, XMultiplier: <= 0 })
                 throw new InvalidOperationException(
                     $"Secondary-resource X use '{use.Id}' must have a positive multiplier.");
             if (use.MaxExtraStacks is < 0)
                 throw new InvalidOperationException(
                     $"Secondary-resource use '{use.Id}' has a negative maximum stack count.");
-            if (use.Kind == SecondaryResourceUseKind.ExtraSpend && use.Cost.CostsX)
+            if (use is { Kind: SecondaryResourceUseKind.ExtraSpend, Cost.CostsX: true })
                 throw new InvalidOperationException(
                     $"Repeatable extra secondary-resource use '{use.Id}' cannot have an X cost.");
         }
@@ -1419,6 +1421,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             var result = cost;
             var context = new SecondaryResourceCardCostContext(card, definition, use, cost);
+            // Contributor order is significant and each result feeds the next contributor.
+            // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceCostContributor>(card))
                 result = capability.ModifySecondaryResourceCost(context, result);
 

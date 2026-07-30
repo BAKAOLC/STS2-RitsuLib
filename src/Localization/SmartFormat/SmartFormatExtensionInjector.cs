@@ -14,7 +14,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
             InjectedFormatterNamesByFormatter = new();
 
         /// <summary>
-        ///     <para xml:lang="en">Injects a snapshot of all registered selector sources first, followed by all registered formatters.</para>
+        ///     <para xml:lang="en">
+        ///         Injects a snapshot of all registered selector sources first, followed by all registered
+        ///         formatters.
+        ///     </para>
         ///     <para xml:lang="zh-CN">先注入全部已注册选择器数据源的快照，再注入全部已注册格式化器的快照。</para>
         /// </summary>
         public static void InjectAll(SmartFormatter formatter)
@@ -29,7 +32,11 @@ namespace STS2RitsuLib.Localization.SmartFormat
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to inject one registered extension into <paramref name="formatter" />. Unsupported kinds, invalid instances, duplicate formatter names, and injection failures are logged instead of being propagated.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to inject one registered extension into <paramref name="formatter" />. Unsupported
+        ///         kinds, invalid instances, duplicate formatter names, and injection failures are logged instead of being
+        ///         propagated.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试将一个已注册扩展注入 <paramref name="formatter" />。不支持的类别、无效实例、重复的格式化器名称及注入失败均会被记录，而不会向调用方继续抛出。</para>
         /// </summary>
         public static void Inject(
@@ -122,8 +129,8 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         private sealed class InjectedFormatterNames
         {
-            private readonly HashSet<string> _names = new(StringComparer.OrdinalIgnoreCase);
             private readonly SmartFormatter _formatter;
+            private readonly HashSet<string> _names = new(StringComparer.OrdinalIgnoreCase);
             private readonly Lock _syncRoot = new();
 
             public InjectedFormatterNames(SmartFormatter formatter)

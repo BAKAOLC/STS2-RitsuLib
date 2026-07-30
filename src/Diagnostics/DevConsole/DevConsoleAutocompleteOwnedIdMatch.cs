@@ -17,7 +17,10 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         ///     <para xml:lang="zh-CN">匹配完整 ID 的前缀，或已知所属 ID 中带模组限定的尾部片段。</para>
         /// </summary>
         /// <remarks>
-        ///     <para xml:lang="en">Ownership is resolved from current registry snapshots, including registrations added after an earlier match.</para>
+        ///     <para xml:lang="en">
+        ///         Ownership is resolved from current registry snapshots, including registrations added after an
+        ///         earlier match.
+        ///     </para>
         ///     <para xml:lang="zh-CN">所属关系通过当前注册表快照解析，因此也包含先前匹配之后新增的注册。</para>
         /// </remarks>
         public static bool Match(string candidate, string partial)
@@ -61,14 +64,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static bool TryGetOwnerModId(string candidate, out string ownerModId)
         {
             foreach (var s in ModContentRegistry.GetRegisteredTypeSnapshots())
-            {
                 if (string.Equals(s.ModelDbId?.Entry, candidate, StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(s.ExpectedPublicEntry, candidate, StringComparison.OrdinalIgnoreCase))
                 {
                     ownerModId = s.ModId;
                     return true;
                 }
-            }
 
             if (ModKeywordRegistry.TryGetOwnerModId(candidate, out ownerModId) ||
                 ModCardTagRegistry.TryGetOwnerModId(candidate, out ownerModId) ||

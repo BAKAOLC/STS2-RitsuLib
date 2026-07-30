@@ -90,7 +90,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues <typeparamref name="TStory" /> for base-game story discovery; call it once at the end of the column.</para>
+        ///     <para xml:lang="en">
+        ///         Queues <typeparamref name="TStory" /> for base-game story discovery; call it once at the end of
+        ///         the column.
+        ///     </para>
         ///     <para xml:lang="zh-CN">排入 <typeparamref name="TStory" /> 的游戏本体故事发现注册；应在列末尾调用一次。</para>
         /// </summary>
         public TimelineColumnBuilder<TStory> RegisterStory()
@@ -108,14 +111,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     <para xml:lang="en">
     ///         You can call these methods multiple times inside one epoch slot; they run in order. A later
     ///         <c>RequireEpoch</c> for the same model replaces the earlier epoch binding.
-    ///
     ///         Content registered through <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> is gated by
     ///         <see cref="Unlocks.ModUnlockRegistry.FilterUnlocked{TModel}" /> /
     ///         <see cref="Unlocks.ModUnlockRegistry.IsUnlocked" />. Integrations include
     ///         <see cref="CharacterUnlockFilterPatch" />, <see cref="SharedAncientUnlockFilterPatch" />,
     ///         <see cref="CardUnlockFilterPatch" />, <see cref="RelicUnlockFilterPatch" />,
     ///         <see cref="PotionUnlockFilterPatch" />, and <see cref="GeneratedRoomEventUnlockFilterPatch" />.
-    ///
     ///         <list type="bullet">
     ///             <item>
     ///                 Cards · gate an entire pool behind this epoch: <c>RequireAllCardsInPool&lt;TCardPool&gt;()</c> (only
@@ -134,7 +135,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///                 <c>RelicsFromPool&lt;TRelicPool&gt;()</c>.
     ///             </item>
     ///             <item>
-    ///                 Potions · whole pool: <c>RequireAllPotionsInPool&lt;TPotionPool&gt;()</c> (<c>RequireEpoch</c> only; does
+    ///                 Potions · whole pool: <c>RequireAllPotionsInPool&lt;TPotionPool&gt;()</c> (<c>RequireEpoch</c> only;
+    ///                 does
     ///                 not register <see cref="ModEpochGatedContentRegistry" />).
     ///             </item>
     ///             <item>
@@ -148,14 +150,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     <para xml:lang="zh-CN">
     ///         可以在一个纪元槽位内多次调用这些方法；它们会按顺序运行。后续针对同一模型的
     ///         <c>RequireEpoch</c> 会替换较早的纪元绑定。
-    ///
     ///         通过 <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> 注册的内容，会受到
     ///         <see cref="Unlocks.ModUnlockRegistry.FilterUnlocked{TModel}" /> /
     ///         <see cref="Unlocks.ModUnlockRegistry.IsUnlocked" /> 门控。集成点包括
     ///         <see cref="CharacterUnlockFilterPatch" />、<see cref="SharedAncientUnlockFilterPatch" />、
     ///         <see cref="CardUnlockFilterPatch" />、<see cref="RelicUnlockFilterPatch" />、
     ///         <see cref="PotionUnlockFilterPatch" /> 和 <see cref="GeneratedRoomEventUnlockFilterPatch" />。
-    ///
     ///         <list type="bullet">
     ///             <item>
     ///                 卡牌 · 将整个池门控在此纪元之后：<c>RequireAllCardsInPool&lt;TCardPool&gt;()</c>（仅注册
@@ -202,7 +202,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues a fixed <see cref="EpochEra" /> column and <c>EraPosition</c>; registration conflicts throw when applied.</para>
+        ///     <para xml:lang="en">
+        ///         Queues a fixed <see cref="EpochEra" /> column and <c>EraPosition</c>; registration conflicts
+        ///         throw when applied.
+        ///     </para>
         ///     <para xml:lang="zh-CN">排入固定的 <see cref="EpochEra" /> 列和 <c>EraPosition</c>；注册冲突会在应用时抛出。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> TimelineSlot(EpochEra era, int eraPosition)
@@ -214,7 +217,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues the lowest free <c>EraPosition</c> in <paramref name="era" /> after base-game occupancy is seeded.</para>
+        ///     <para xml:lang="en">
+        ///         Queues the lowest free <c>EraPosition</c> in <paramref name="era" /> after base-game occupancy
+        ///         is seeded.
+        ///     </para>
         ///     <para xml:lang="zh-CN">在设定游戏本体占用后，排入 <paramref name="era" /> 中最低的空闲 <c>EraPosition</c>。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> AutoTimelineSlot(EpochEra era)
@@ -226,7 +232,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues a column left of <paramref name="anchorEra" />, preferring a new root cell at position zero.</para>
+        ///     <para xml:lang="en">
+        ///         Queues a column left of <paramref name="anchorEra" />, preferring a new root cell at position
+        ///         zero.
+        ///     </para>
         ///     <para xml:lang="zh-CN">排入位于 <paramref name="anchorEra" /> 左侧的列，优先选择位置零的新根单元格。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> AutoTimelineSlotBeforeColumn(EpochEra anchorEra)
@@ -320,7 +329,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues an enabled axis icon with <paramref name="texturePath" /> for this epoch's resolved era column.</para>
+        ///     <para xml:lang="en">
+        ///         Queues an enabled axis icon with <paramref name="texturePath" /> for this epoch's resolved era
+        ///         column.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为此纪元解析出的时代列排入使用 <paramref name="texturePath" /> 的已启用轴图标。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> EraAxisIcon(string texturePath)
@@ -355,7 +367,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues an epoch requirement for every mod-owned <see cref="CardModel" /> in <typeparamref name="TPool" /> without adding a gated-content registry entry.</para>
+        ///     <para xml:lang="en">
+        ///         Queues an epoch requirement for every mod-owned <see cref="CardModel" /> in
+        ///         <typeparamref name="TPool" /> without adding a gated-content registry entry.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为 <typeparamref name="TPool" /> 中属于该模组的每张 <see cref="CardModel" /> 排入纪元要求，不添加受限内容注册表条目。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> RequireAllCardsInPool<TPool>()
@@ -366,7 +381,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues an epoch requirement for every mod-owned <see cref="RelicModel" /> in <typeparamref name="TPool" />.</para>
+        ///     <para xml:lang="en">
+        ///         Queues an epoch requirement for every mod-owned <see cref="RelicModel" /> in
+        ///         <typeparamref name="TPool" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为 <typeparamref name="TPool" /> 中属于该模组的每件 <see cref="RelicModel" /> 排入纪元要求。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> RequireAllRelicsInPool<TPool>()
@@ -377,7 +395,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues an epoch requirement for every mod-owned <see cref="PotionModel" /> in <typeparamref name="TPool" />.</para>
+        ///     <para xml:lang="en">
+        ///         Queues an epoch requirement for every mod-owned <see cref="PotionModel" /> in
+        ///         <typeparamref name="TPool" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为 <typeparamref name="TPool" /> 中属于该模组的每瓶 <see cref="PotionModel" /> 排入纪元要求。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> RequireAllPotionsInPool<TPool>()
@@ -412,7 +433,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues epoch requirements for explicit potion types without a gated-content registry entry. Use <see cref="PotionUnlockEpochTemplate" /> when the timeline must present those potion unlocks.</para>
+        ///     <para xml:lang="en">
+        ///         Queues epoch requirements for explicit potion types without a gated-content registry entry. Use
+        ///         <see cref="PotionUnlockEpochTemplate" /> when the timeline must present those potion unlocks.
+        ///     </para>
         ///     <para xml:lang="zh-CN">为显式药水类型排入纪元要求，不添加受限内容注册表条目。若时间线需要展示这些药水解锁，请使用 <see cref="PotionUnlockEpochTemplate" />。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> Potions(IReadOnlyList<Type> types)
@@ -423,7 +447,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues the mod's relics in <typeparamref name="TRelicPool" /> for both the gated-content registry and epoch requirements.</para>
+        ///     <para xml:lang="en">
+        ///         Queues the mod's relics in <typeparamref name="TRelicPool" /> for both the gated-content
+        ///         registry and epoch requirements.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将该模组在 <typeparamref name="TRelicPool" /> 中的遗物排入受限内容注册表和纪元要求。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> RelicsFromPool<TRelicPool>()
@@ -434,7 +461,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues the mod's cards in <typeparamref name="TCardPool" /> for both the gated-content registry and epoch requirements.</para>
+        ///     <para xml:lang="en">
+        ///         Queues the mod's cards in <typeparamref name="TCardPool" /> for both the gated-content registry
+        ///         and epoch requirements.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将该模组在 <typeparamref name="TCardPool" /> 中的卡牌排入受限内容注册表和纪元要求。</para>
         /// </summary>
         public EpochSlotBuilder<TEpoch> CardsFromPool<TCardPool>()

@@ -454,6 +454,5 @@ namespace STS2RitsuLib.Networking.Sidecar
                     .Select(static pair => pair.Key),
             ];
         }
-
     }
 }

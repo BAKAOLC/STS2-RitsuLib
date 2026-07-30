@@ -229,6 +229,7 @@ namespace STS2RitsuLib.Settings
             {
                 _suppressCallbacks = false;
             }
+
             ApplyValidationChrome(v);
         }
 

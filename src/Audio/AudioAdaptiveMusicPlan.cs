@@ -1,7 +1,10 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Defines the room, combat, and victory music states driven by <see cref="AudioAdaptiveMusicDirector" />.</para>
+    ///     <para xml:lang="en">
+    ///         Defines the room, combat, and victory music states driven by
+    ///         <see cref="AudioAdaptiveMusicDirector" />.
+    ///     </para>
     ///     <para xml:lang="zh-CN">定义由 <see cref="AudioAdaptiveMusicDirector" /> 驱动的房间、战斗和胜利音乐状态。</para>
     /// </summary>
     public sealed class AudioAdaptiveMusicPlan
@@ -44,7 +47,10 @@ namespace STS2RitsuLib.Audio
         public bool RestoreVanillaMusicOnCombatEnd { get; init; } = true;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or initializes whether room-state refreshes update the game's normal track and ambience when <see cref="RoomSource" /> is absent.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether room-state refreshes update the game's normal track and ambience
+        ///         when <see cref="RoomSource" /> is absent.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或初始化在缺少 <see cref="RoomSource" /> 时，房间状态刷新是否更新游戏的正常曲目和环境音。</para>
         /// </summary>
         public bool RefreshVanillaRoomStateOnRoomEnter { get; init; } = true;

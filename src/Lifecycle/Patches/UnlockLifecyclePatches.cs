@@ -1,8 +1,8 @@
 using MegaCrit.Sts2.Core.Saves;
+using STS2RitsuLib.Patching.Models;
 #if STS2_AT_LEAST_0_110_0
 using MegaCrit.Sts2.Core.Timeline;
 #endif
-using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {

@@ -26,8 +26,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             "res://images/atlases/ui_atlas.sprites/settings_tiny_right_arrow.tres";
 
         private float _contentHeight;
-        private Control? _contents;
         private float _contentWidth;
+        private Control? _contents;
         private Callable? _focusChangedCallable;
         private bool _isDragging;
         private NGoldArrowButton? _leftArrow;

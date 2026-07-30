@@ -3,7 +3,10 @@ using System.Collections.ObjectModel;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">A thread-safe in-memory path pool that randomly avoids selecting the same entry index twice in succession.</para>
+    ///     <para xml:lang="en">
+    ///         A thread-safe in-memory path pool that randomly avoids selecting the same entry index twice in
+    ///         succession.
+    ///     </para>
     ///     <para xml:lang="zh-CN">线程安全的内存路径池；随机选择时避免连续两次选中同一条目索引。</para>
     /// </summary>
     public sealed class FmodPathRoundRobinPool
@@ -39,7 +42,10 @@ namespace STS2RitsuLib.Audio
         public IReadOnlyList<string> Entries { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Tries to pick a random entry, excluding the previously selected index when at least two entries exist.</para>
+        ///     <para xml:lang="en">
+        ///         Tries to pick a random entry, excluding the previously selected index when at least two entries
+        ///         exist.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试随机选择条目；存在至少两个条目时排除上次选中的索引。</para>
         /// </summary>
         /// <param name="path">

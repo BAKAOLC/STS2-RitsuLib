@@ -3,7 +3,10 @@ using STS2RitsuLib.Interactions.RightClick;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     <para xml:lang="en">Controls whether a right-click capability stops or continues the capability chain after it runs.</para>
+    ///     <para xml:lang="en">
+    ///         Controls whether a right-click capability stops or continues the capability chain after it
+    ///         runs.
+    ///     </para>
     ///     <para xml:lang="zh-CN">控制右键能力执行后是否停止或继续能力链。</para>
     /// </summary>
     public enum ModelRightClickCapabilityRunMode

@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Scaffolding.Content
             ArgumentException.ThrowIfNullOrWhiteSpace(backgroundScenePath);
             ArgumentNullException.ThrowIfNull(bgLayers);
 
-            var layers = bgLayers as List<string> ?? [..bgLayers];
+            var layers = bgLayers as List<string> ?? [.. bgLayers];
             return Construct(backgroundScenePath, layers, fgLayer);
         }
 

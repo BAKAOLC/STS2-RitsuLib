@@ -22,6 +22,8 @@ namespace STS2RitsuLib.Interop.Internal
         private static readonly FieldInfo WrappedValueField =
             AccessTools.DeclaredField(typeof(InteropClassWrapper), nameof(InteropClassWrapper.Value))!;
 
+        // Retains installed transpiler handles for the lifetime of the process.
+        // ReSharper disable once CollectionNeverQueried.Local
         private static readonly List<HarmonyIlPayloadTranspilerHandle> PayloadTranspilerHandles = [];
         private static readonly Dictionary<(string, string), Type> TypeResolutionCache = new();
 
@@ -170,10 +172,15 @@ namespace STS2RitsuLib.Interop.Internal
                 var nonStaticParamInfos = method.IsStatic ? [.. methodParamInfos.Skip(1)] : methodParamInfos;
 
                 var candidates = new List<MethodInfo>();
+                // Keep AccessTools' concrete enumeration behavior and the ordered candidate filters explicit.
+                // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var possibleTarget in AccessTools.GetDeclaredMethods(targetType))
                 {
+                    // Ordered guard clauses make the candidate rejection reasons explicit.
+                    // ReSharper disable once ConvertIfStatementToSwitchStatement
                     if (possibleTarget.Name != methodName || possibleTarget.ContainsGenericParameters)
                         continue;
+                    // ReSharper disable once ConvertIfStatementToSwitchStatement
                     if (possibleTarget.IsStatic && !method.IsStatic)
                         continue;
                     if (!possibleTarget.IsStatic && method.IsStatic &&
@@ -428,17 +435,20 @@ namespace STS2RitsuLib.Interop.Internal
             string methodName,
             IReadOnlyList<MethodInfo> candidates)
         {
-            if (candidates.Count == 0)
-                throw new InvalidOperationException(
-                    $"{FormatMethod(sourceMethod)} → {targetType.FullName}.{methodName}: " +
-                    "no overload with matching parameters");
-            if (candidates.Count == 1)
-                return candidates[0];
-
-            var signatures = string.Join(", ", candidates.Select(FormatMethodSignature));
-            throw new InvalidOperationException(
-                $"{FormatMethod(sourceMethod)} → {targetType.FullName}.{methodName}: " +
-                $"multiple overloads match ({signatures}); use more specific stub parameter types");
+            switch (candidates.Count)
+            {
+                case 0:
+                    throw new InvalidOperationException(
+                        $"{FormatMethod(sourceMethod)} → {targetType.FullName}.{methodName}: " +
+                        "no overload with matching parameters");
+                case 1:
+                    return candidates[0];
+                default:
+                    var signatures = string.Join(", ", candidates.Select(FormatMethodSignature));
+                    throw new InvalidOperationException(
+                        $"{FormatMethod(sourceMethod)} → {targetType.FullName}.{methodName}: " +
+                        $"multiple overloads match ({signatures}); use more specific stub parameter types");
+            }
         }
 
         private static void AddTypeCoercion(List<CodeInstruction> instructions, Type sourceType, Type targetType)

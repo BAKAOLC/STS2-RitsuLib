@@ -326,14 +326,11 @@ namespace STS2RitsuLib.Ui.RichTextEffects
                 return propertyValue;
 
             var value = effect.Get("bbcode");
-            if (value.VariantType == Variant.Type.String)
-            {
-                var s = value.AsString();
-                if (!string.IsNullOrWhiteSpace(s))
-                    return s;
-            }
+            if (value.VariantType != Variant.Type.String)
+                return null;
 
-            return null;
+            var s = value.AsString();
+            return string.IsNullOrWhiteSpace(s) ? null : s;
         }
 
         private static void EnsureEffectBbcode(RichTextEffect effect, string bbcode)

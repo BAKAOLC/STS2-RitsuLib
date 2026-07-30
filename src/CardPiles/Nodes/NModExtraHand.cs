@@ -40,7 +40,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     <para xml:lang="en">Gets the registered definition represented by this container.</para>
         ///     <para xml:lang="zh-CN">获取此容器所表示的已注册定义。</para>
         /// </summary>
-        public ModCardPileDefinition Definition { get; private set; } = null!;
+        public ModCardPileDefinition Definition { get; private init; } = null!;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -343,6 +343,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                     + "using built-in defaults for the affected values. "
                     + $"Spacing={extra.Spacing}, CardScale={extra.CardScale}, HoverScale={extra.HoverScale}.");
             }
+
             var center = Size * 0.5f;
             if (!IsFiniteVector(center))
                 center = DefaultChromeSize * 0.5f;

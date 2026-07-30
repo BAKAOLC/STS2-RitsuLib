@@ -152,6 +152,8 @@ namespace STS2RitsuLib.Settings
             try
             {
                 envelope = JsonSerializer.Deserialize<ModSettingsClipboardEnvelope>(clipboard);
+                // Deserialization can violate nullable annotations when required JSON members are missing or null.
+                // ReSharper disable RedundantAlwaysMatchSubpattern
                 return envelope is
                 {
                     Kind.Length: > 0,
@@ -160,6 +162,7 @@ namespace STS2RitsuLib.Settings
                     SchemaSignature: not null,
                     Payload: not null,
                 };
+                // ReSharper restore RedundantAlwaysMatchSubpattern
             }
             catch (JsonException)
             {
@@ -296,6 +299,8 @@ namespace STS2RitsuLib.Settings
                 return false;
 
             var properties = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+            // Preserve JsonElement's concrete enumerator and fail immediately on duplicate members.
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
             foreach (var property in element.EnumerateObject())
                 if (!properties.TryAdd(property.Name, property.Value))
                     return false;

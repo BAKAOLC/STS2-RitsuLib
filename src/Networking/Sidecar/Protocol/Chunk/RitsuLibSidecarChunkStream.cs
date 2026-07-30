@@ -183,21 +183,21 @@ namespace STS2RitsuLib.Networking.Sidecar
                 var sent = kind switch
                 {
                     RitsuLibSidecarChunkSendKind.Client => RitsuLibSidecarHighLevelSend.TrySendAsClient(
-                            runManager,
-                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
-                            frame,
-                            semantics),
+                        runManager,
+                        RitsuLibSidecarControlOpcodes.ChunkedFrame,
+                        frame,
+                        semantics),
                     RitsuLibSidecarChunkSendKind.HostBroadcast => RitsuLibSidecarHighLevelSend.TrySendAsHostBroadcast(
-                            runManager,
-                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
-                            frame,
-                            semantics),
+                        runManager,
+                        RitsuLibSidecarControlOpcodes.ChunkedFrame,
+                        frame,
+                        semantics),
                     _ => RitsuLibSidecarHighLevelSend.TrySendAsHostToPeer(
-                            runManager,
-                            peerNetId!.Value,
-                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
-                            frame,
-                            semantics),
+                        runManager,
+                        peerNetId!.Value,
+                        RitsuLibSidecarControlOpcodes.ChunkedFrame,
+                        frame,
+                        semantics),
                 };
 
                 if (!sent)

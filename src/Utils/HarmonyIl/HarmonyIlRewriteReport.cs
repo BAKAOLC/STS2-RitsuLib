@@ -21,7 +21,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         public bool Changed => Applied > 0;
 
         /// <summary>
-        ///     <para xml:lang="en">True when this operation either changed IL or detected that the requested IL is already present.</para>
+        ///     <para xml:lang="en">
+        ///         True when this operation either changed IL or detected that the requested IL is already
+        ///         present.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当此操作实际改写了 IL，或检测到目标 IL 已存在时为 true。</para>
         /// </summary>
         public bool Succeeded => Changed || AlreadySatisfied;
@@ -66,7 +69,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Requires an exact target-site and rewrite count, or accepts an equivalent rewrite that was already present.</para>
+        ///     <para xml:lang="en">
+        ///         Requires an exact target-site and rewrite count, or accepts an equivalent rewrite that was
+        ///         already present.
+        ///     </para>
         ///     <para xml:lang="zh-CN">要求精确的目标点与改写次数，或接受已经存在的等价改写。</para>
         /// </summary>
         public void RequireExactSitesOrAlreadySatisfied(int count = 1)

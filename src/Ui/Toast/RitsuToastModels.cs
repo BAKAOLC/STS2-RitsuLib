@@ -384,7 +384,7 @@ namespace STS2RitsuLib.Ui.Toast
     /// </summary>
     public sealed record RitsuToastRequest
     {
-        private string _body = string.Empty;
+        private readonly string _body = string.Empty;
 
         /// <summary>
         ///     <para xml:lang="en">Initializes a toast request.</para>

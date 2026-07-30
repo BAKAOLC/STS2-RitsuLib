@@ -22,7 +22,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///         Existing filter icons are synchronized with <see cref="CharacterModel.IconTexture" /> so that
     ///         replacements registered through
     ///         <see
-    ///         cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
+    ///             cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
     ///         are reflected in the compendium. Character rows use
     ///         <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" /> unless the character
     ///         implements <see cref="IModCharacterCardLibraryCompendiumPlacement" />. Shared-pool filters without
@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///     <para xml:lang="zh-CN">
     ///         将现有筛选按钮的图标与 <see cref="CharacterModel.IconTexture" /> 同步，使通过
     ///         <see
-    ///         cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
+    ///             cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
     ///         注册的替换也能反映在卡牌总览中。除非角色实现了
     ///         <see cref="IModCharacterCardLibraryCompendiumPlacement" />，否则角色行使用
     ///         <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" />。未指定放置规则的共享牌池

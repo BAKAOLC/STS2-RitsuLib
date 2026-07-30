@@ -8,18 +8,18 @@ namespace STS2RitsuLib
         {
             ArgumentNullException.ThrowIfNull(exception);
 
-            if (exception is OutOfMemoryException
-                or StackOverflowException
-                or AccessViolationException
-                or SEHException
-                or OperationCanceledException
-                or ThreadInterruptedException)
-                return false;
-
-            if (exception is AggregateException aggregate)
-                return aggregate.InnerExceptions.All(IsRecoverable);
-
-            return exception.InnerException == null || IsRecoverable(exception.InnerException);
+            return exception switch
+            {
+                OutOfMemoryException
+                    or StackOverflowException
+                    or AccessViolationException
+                    or SEHException
+                    or OperationCanceledException
+                    or ThreadInterruptedException => false,
+                AggregateException aggregate => aggregate.InnerExceptions.All(IsRecoverable),
+                { InnerException: { } innerException } => IsRecoverable(innerException),
+                _ => true,
+            };
         }
     }
 }

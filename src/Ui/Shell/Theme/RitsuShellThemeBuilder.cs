@@ -366,6 +366,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private static Color ReadColor(Dictionary<string, object?> root, string path)
         {
+            // Keep parsing and range validation staged so the rounded value remains visible.
+            // ReSharper disable once InvertIf
             if (RitsuShellThemeReferenceResolver.TryFindLeaf(root, path, out var leaf) &&
                 RitsuShellThemeValueCoerce.TryAsColor(leaf, out var color))
                 return color;
@@ -396,15 +398,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private static int ReadInt(Dictionary<string, object?> root, string path)
         {
-            if (RitsuShellThemeReferenceResolver.TryFindLeaf(root, path, out var leaf) &&
-                RitsuShellThemeValueCoerce.TryAsDouble(leaf, out var v))
-            {
-                var rounded = Math.Round(v, MidpointRounding.AwayFromZero);
-                if (rounded is >= int.MinValue and <= int.MaxValue)
-                    return (int)rounded;
-            }
+            if (!RitsuShellThemeReferenceResolver.TryFindLeaf(root, path, out var leaf) ||
+                !RitsuShellThemeValueCoerce.TryAsDouble(leaf, out var v))
+                return 0;
 
-            return 0;
+            var rounded = Math.Round(v, MidpointRounding.AwayFromZero);
+            return rounded is >= int.MinValue and <= int.MaxValue ? (int)rounded : 0;
         }
 
         private static float ReadFloat(Dictionary<string, object?> root, string path)

@@ -20,7 +20,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Emits <see cref="BaseButton.SignalName.Pressed" /> for non-repeated select or confirm input while the button is enabled.</para>
+        ///     <para xml:lang="en">
+        ///         Emits <see cref="BaseButton.SignalName.Pressed" /> for non-repeated select or confirm input
+        ///         while the button is enabled.
+        ///     </para>
         ///     <para xml:lang="zh-CN">按钮启用时，对非重复的选择或确认输入发出 <see cref="BaseButton.SignalName.Pressed" /> 信号。</para>
         /// </summary>
         /// <param name="event">

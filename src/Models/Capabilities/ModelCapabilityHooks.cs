@@ -16,13 +16,19 @@ namespace STS2RitsuLib.Models.Capabilities
     public interface IModelCapabilityHookListener
     {
         /// <summary>
-        ///     <para xml:lang="en">Whether this capability should be inserted into the owning model's vanilla hook listener stream.</para>
+        ///     <para xml:lang="en">
+        ///         Whether this capability should be inserted into the owning model's vanilla hook listener
+        ///         stream.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取此能力是否应插入所属模型的游戏原版钩子监听器流。</para>
         /// </summary>
         bool ShouldReceiveOwnerHooks => true;
 
         /// <summary>
-        ///     <para xml:lang="en">Ordering relative to the owner. Negative values run before the owner, zero and positive values after.</para>
+        ///     <para xml:lang="en">
+        ///         Ordering relative to the owner. Negative values run before the owner, zero and positive values
+        ///         after.
+        ///     </para>
         ///     <para xml:lang="zh-CN">相对所属模型的顺序。负值先于所属模型运行，零和正值在其后运行。</para>
         /// </summary>
         int OwnerHookOrder => 0;

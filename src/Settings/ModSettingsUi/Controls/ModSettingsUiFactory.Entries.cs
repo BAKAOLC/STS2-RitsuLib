@@ -191,6 +191,8 @@ namespace STS2RitsuLib.Settings
                 entry.MaxValue,
                 entry.Step,
                 FormatValue,
+                // The callback cannot run until after construction assigns controlSlot.
+                // ReSharper disable once AccessToModifiedClosure
                 value =>
                 {
                     entry.Binding.Write(value);
@@ -241,6 +243,8 @@ namespace STS2RitsuLib.Settings
                 entry.MaxValue,
                 entry.Step,
                 FormatValue,
+                // The callback cannot run until after construction assigns controlSlot.
+                // ReSharper disable once AccessToModifiedClosure
                 value =>
                 {
                     entry.Binding.Write(value);
@@ -846,6 +850,8 @@ namespace STS2RitsuLib.Settings
                 entry.MaxValue,
                 entry.Step,
                 FormatValue,
+                // The callback cannot run until after construction assigns controlSlot.
+                // ReSharper disable once AccessToModifiedClosure
                 value =>
                 {
                     entry.Binding.Write(Mathf.RoundToInt(value));

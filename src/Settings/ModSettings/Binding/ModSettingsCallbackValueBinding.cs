@@ -50,8 +50,8 @@ namespace STS2RitsuLib.Settings
         Action save) : IModSettingsValueBinding<T>
     {
         private readonly Func<T> _read = ModSettingsBindingValidation.RequireNonNull(read, nameof(read));
-        private readonly Action<T> _write = ModSettingsBindingValidation.RequireNonNull(write, nameof(write));
         private readonly Action _save = ModSettingsBindingValidation.RequireNonNull(save, nameof(save));
+        private readonly Action<T> _write = ModSettingsBindingValidation.RequireNonNull(write, nameof(write));
 
         /// <inheritdoc />
         public string ModId { get; } = ModSettingsBindingValidation.RequireNonEmpty(modId, nameof(modId));

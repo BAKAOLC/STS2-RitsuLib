@@ -5,7 +5,10 @@ using HarmonyLib;
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     <para xml:lang="en">Decodes a method body into Harmony <see cref="CodeInstruction" /> values and resolves branch targets.</para>
+    ///     <para xml:lang="en">
+    ///         Decodes a method body into Harmony <see cref="CodeInstruction" /> values and resolves branch
+    ///         targets.
+    ///     </para>
     ///     <para xml:lang="zh-CN">将方法体解码为 Harmony <see cref="CodeInstruction" /> 值，并解析分支目标。</para>
     /// </summary>
     internal static class HarmonyIlMethodReader

@@ -193,15 +193,13 @@ namespace STS2RitsuLib.Audio.Patches
                 if (string.IsNullOrEmpty(path))
                     return true;
 
-                if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
-                {
-                    if (VirtualFmodEventRegistry.TryStopLoop(path))
-                        return false;
+                if (GuidMappedNaudioStudioProxy.IsMappedPath(path))
+                    return !GuidMappedNaudioStudioProxy.TryStopMappedLoop(path);
 
-                    return !VirtualFmodEventRegistry.IsRegistered(path);
-                }
+                if (VirtualFmodEventRegistry.TryStopLoop(path))
+                    return false;
 
-                return !GuidMappedNaudioStudioProxy.TryStopMappedLoop(path);
+                return !VirtualFmodEventRegistry.IsRegistered(path);
             }
         }
 
@@ -242,7 +240,10 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Stops mapped and virtual loop queues alongside <see cref="NAudioManager.StopAllLoops" />, retaining failed cleanup.</para>
+        ///     <para xml:lang="en">
+        ///         Stops mapped and virtual loop queues alongside <see cref="NAudioManager.StopAllLoops" />,
+        ///         retaining failed cleanup.
+        ///     </para>
         ///     <para xml:lang="zh-CN">随 <see cref="NAudioManager.StopAllLoops" /> 一起停止映射和虚拟循环队列，并保留清理失败的实例。</para>
         /// </summary>
         internal sealed class StopAllLoops : IPatchMethod
@@ -271,7 +272,10 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Switches between native, mapped, and virtual music without leaving the previous custom instance active.</para>
+        ///     <para xml:lang="en">
+        ///         Switches between native, mapped, and virtual music without leaving the previous custom instance
+        ///         active.
+        ///     </para>
         ///     <para xml:lang="zh-CN">在原生、映射和虚拟音乐之间切换，并确保先前的自定义实例不再活动。</para>
         /// </summary>
         internal sealed class PlayMusic : IPatchMethod
@@ -332,7 +336,10 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Stops mapped and virtual music alongside the native <see cref="NAudioManager.StopMusic" /> path.</para>
+        ///     <para xml:lang="en">
+        ///         Stops mapped and virtual music alongside the native <see cref="NAudioManager.StopMusic" />
+        ///         path.
+        ///     </para>
         ///     <para xml:lang="zh-CN">随原生 <see cref="NAudioManager.StopMusic" /> 路径一起停止映射和虚拟音乐。</para>
         /// </summary>
         internal sealed class StopMusic : IPatchMethod
@@ -361,7 +368,10 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Routes labeled music parameters to active virtual or mapped music before falling back to the native proxy.</para>
+        ///     <para xml:lang="en">
+        ///         Routes labeled music parameters to active virtual or mapped music before falling back to the
+        ///         native proxy.
+        ///     </para>
         ///     <para xml:lang="zh-CN">优先将标签型音乐参数路由到活动的虚拟或映射音乐，否则回退到原生代理。</para>
         /// </summary>
         internal sealed class UpdateMusicParameter : IPatchMethod

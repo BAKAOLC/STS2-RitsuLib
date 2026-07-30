@@ -52,6 +52,7 @@ namespace STS2RitsuLib.Settings
                        string.Equals(mod.manifest?.id, modId, StringComparison.OrdinalIgnoreCase))?.manifest?.name
                    ?? fallback;
         }
+
         public static string ResolvePageDisplayName(ModSettingsPage page)
         {
             var title = page.Title?.Resolve();

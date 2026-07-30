@@ -195,13 +195,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             ActiveFormId = formId;
             previous.Stop();
 
-            if (!replayCurrent || _currentId == null)
-            {
-                _queuedId = null;
-                return true;
-            }
-
-            if (!CurrentBackend.HasAnimation(_currentId))
+            if (!replayCurrent || _currentId == null || !CurrentBackend.HasAnimation(_currentId))
             {
                 _queuedId = null;
                 return true;

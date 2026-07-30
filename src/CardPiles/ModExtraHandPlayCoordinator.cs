@@ -75,7 +75,7 @@ namespace STS2RitsuLib.CardPiles
             {
                 try
                 {
-                    RollBackTargeting(origin, restoreInterruptedTransfer: true);
+                    RollBackTargeting(origin, true);
                 }
                 catch (Exception rollbackException)
                 {

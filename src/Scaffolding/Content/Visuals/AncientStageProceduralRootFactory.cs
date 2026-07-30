@@ -66,8 +66,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
         {
             ArgumentNullException.ThrowIfNull(host);
             ArgumentNullException.ThrowIfNull(stage);
+            // Preserve the public-facing object name in the exception.
+#pragma warning disable CA1513
             if (!GodotObject.IsInstanceValid(host))
                 throw new ObjectDisposedException(nameof(host));
+#pragma warning restore CA1513
 
             var outer = new Control { Name = "RitsuAncientStageProcedural" };
             try
@@ -108,6 +111,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             }
             catch
             {
+                // Keep cleanup conditional while preserving a single rethrow point.
+                // ReSharper disable once InvertIf
                 if (GodotObject.IsInstanceValid(outer))
                 {
                     if (outer.GetParent() is { } parent && GodotObject.IsInstanceValid(parent))

@@ -41,8 +41,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals
         private double _carry;
         private VisualNodeStyle? _defaultStyle;
         private double _frameDurationSeconds;
-        private VisualFrame[] _frames = [];
         private VisualNodeStyle?[] _frameStyles = [];
+        private VisualFrame[] _frames = [];
         private int _index;
         private bool[] _loadFailed = [];
         private bool _loop;

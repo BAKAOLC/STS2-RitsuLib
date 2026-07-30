@@ -5,7 +5,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
     ///     <para xml:lang="zh-CN">创建用于放置在顶部栏的模组卡牌牌堆按钮。</para>
     /// </summary>
     // ReSharper disable once ConvertToStaticClass
-    public sealed partial class NModTopBarPileButton
+    public sealed class NModTopBarPileButton
     {
         /// <summary>
         ///     <para xml:lang="en">

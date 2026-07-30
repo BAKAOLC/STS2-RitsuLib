@@ -16,7 +16,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Stops the current override, applies the plan's stop-restoration policy, and permanently detaches this handle from the shared director.</para>
+        ///     <para xml:lang="en">
+        ///         Stops the current override, applies the plan's stop-restoration policy, and permanently
+        ///         detaches this handle from the shared director.
+        ///     </para>
         ///     <para xml:lang="zh-CN">停止当前覆盖，应用方案的停止恢复策略，并将此句柄永久从共享调度器中分离。</para>
         /// </summary>
         public void Dispose()
@@ -39,8 +42,12 @@ namespace STS2RitsuLib.Audio
                 return;
             }
 
+            // Interlocked.Exchange returns the previous slot value, which may be null regardless of the new value.
+            // ReSharper disable once ConstantConditionalAccessQualifier
             Interlocked.Exchange(ref _current, handle)?.Dispose();
             if (Volatile.Read(ref _disposed) != 0)
+                // Interlocked.Exchange returns the previous slot value, which may already be null.
+                // ReSharper disable once ConstantConditionalAccessQualifier
                 Interlocked.Exchange(ref _current, null)?.Dispose();
         }
 
@@ -50,11 +57,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Stops the current override without detaching the plan, allowing a later lifecycle event to start it again.</para>
+        ///     <para xml:lang="en">
+        ///         Stops the current override without detaching the plan, allowing a later lifecycle event to
+        ///         start it again.
+        ///     </para>
         ///     <para xml:lang="zh-CN">停止当前覆盖但不分离方案，因此后续生命周期事件仍可再次启动该方案。</para>
         /// </summary>
         /// <param name="restoreVanillaMusic">
-        ///     <para xml:lang="en">Whether to request restoration of run music when the plan's <see cref="AudioAdaptiveMusicPlan.RestoreVanillaMusicOnStop" /> policy permits it.</para>
+        ///     <para xml:lang="en">
+        ///         Whether to request restoration of run music when the plan's
+        ///         <see cref="AudioAdaptiveMusicPlan.RestoreVanillaMusicOnStop" /> policy permits it.
+        ///     </para>
         ///     <para xml:lang="zh-CN">在方案的 <see cref="AudioAdaptiveMusicPlan.RestoreVanillaMusicOnStop" /> 策略允许时，是否请求恢复跑局音乐。</para>
         /// </param>
         public void Stop(bool restoreVanillaMusic = true)

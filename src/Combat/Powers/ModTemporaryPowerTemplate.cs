@@ -144,6 +144,18 @@ namespace STS2RitsuLib.Combat.Powers
         /// </summary>
         protected sealed override IEnumerable<DynamicVar> CanonicalVars => BuildCanonicalVars();
 
+        private int ValidatedExtraTurnCycles
+        {
+            get
+            {
+                var extraTurnCycles = LastForXExtraTurns;
+                if (extraTurnCycles < 0)
+                    throw new InvalidOperationException(
+                        $"{nameof(LastForXExtraTurns)} cannot be negative.");
+                return extraTurnCycles;
+            }
+        }
+
         /// <summary>
         ///     <para xml:lang="en">
         ///         Gets the model that granted this temporary power. It is used to resolve the title and any supported
@@ -295,18 +307,6 @@ namespace STS2RitsuLib.Combat.Powers
             yield return new IntVar(ExtraTurnCyclesVarName, 0);
             foreach (var dynVar in additionalVars)
                 yield return dynVar;
-        }
-
-        private int ValidatedExtraTurnCycles
-        {
-            get
-            {
-                var extraTurnCycles = LastForXExtraTurns;
-                if (extraTurnCycles < 0)
-                    throw new InvalidOperationException(
-                        $"{nameof(LastForXExtraTurns)} cannot be negative.");
-                return extraTurnCycles;
-            }
         }
 
         private IEnumerable<IHoverTip> ResolveExtraHoverTips()

@@ -15,12 +15,16 @@ namespace STS2RitsuLib.Networking.Sidecar
     public static class RitsuLibSidecarGodotMainLoopScheduling
     {
         /// <summary>
-        ///     <para xml:lang="en">Queues <paramref name="action" /> on the Godot main loop when a <see cref="SceneTree" /> is available.</para>
+        ///     <para xml:lang="en">
+        ///         Queues <paramref name="action" /> on the Godot main loop when a <see cref="SceneTree" /> is
+        ///         available.
+        ///     </para>
         ///     <para xml:lang="zh-CN"><see cref="SceneTree" /> 可用时，将 <paramref name="action" /> 排入 Godot 主循环。</para>
         /// </summary>
         /// <returns>
         ///     <para xml:lang="en">
-        ///         <see langword="true" /> when the delegate was queued; <see langword="false" /> when the main loop is unavailable.
+        ///         <see langword="true" /> when the delegate was queued; <see langword="false" /> when the main loop is
+        ///         unavailable.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         委托已排队时为 <see langword="true" />；主循环不可用时为 <see langword="false" />。

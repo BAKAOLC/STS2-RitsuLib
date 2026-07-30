@@ -31,7 +31,10 @@ namespace STS2RitsuLib.Platform.Patches
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Skips the original callback only when its event identifies a recorded RitsuLib-triggered Workshop download.</para>
+        ///     <para xml:lang="en">
+        ///         Skips the original callback only when its event identifies a recorded RitsuLib-triggered
+        ///         Workshop download.
+        ///     </para>
         ///     <para xml:lang="zh-CN">仅当事件标识出已记录的 RitsuLib 触发创意工坊下载时，才跳过原始回调。</para>
         /// </summary>
         public static bool Prefix(object[] __args)

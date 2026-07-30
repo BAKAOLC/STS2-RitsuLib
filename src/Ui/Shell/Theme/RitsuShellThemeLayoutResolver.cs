@@ -50,6 +50,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         internal static int ResolveInt(string path, int fallback)
         {
+            // Keep lookup and rounded-range validation as explicit stages.
+            // ReSharper disable once InvertIf
             if (RitsuShellTheme.Current.TryGetNumber(path, out var value))
             {
                 var rounded = Math.Round(value);

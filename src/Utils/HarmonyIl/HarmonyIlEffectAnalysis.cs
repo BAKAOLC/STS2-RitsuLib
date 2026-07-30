@@ -161,8 +161,11 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         public bool RetainsInstruction(int instructionIndex)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(instructionIndex);
+            // Preserve the established exception construction and message.
+#pragma warning disable CA1512
             if (instructionIndex >= ControlFlow.InstructionBlockIndexes.Count)
                 throw new ArgumentOutOfRangeException(nameof(instructionIndex));
+#pragma warning restore CA1512
 
             return RetainedBlockIndexes.Contains(
                 ControlFlow.InstructionBlockIndexes[instructionIndex]);
@@ -214,7 +217,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Discovers calls that can reach configured effect sinks and creates conservative per-method control slices.</para>
+    ///     <para xml:lang="en">
+    ///         Discovers calls that can reach configured effect sinks and creates conservative per-method
+    ///         control slices.
+    ///     </para>
     ///     <para xml:lang="zh-CN">发现可到达已配置效果终点的调用，并为每个相关方法创建保守控制切片。</para>
     /// </summary>
     public static class HarmonyIlEffectAnalyzer

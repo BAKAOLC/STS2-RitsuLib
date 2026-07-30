@@ -294,8 +294,10 @@ namespace STS2RitsuLib.Combat.HealthBars
     public static class HealthBarForecastRegistry
     {
         private static readonly Lock SyncRoot = new();
+
         private static readonly Dictionary<(string ModId, string ProviderId), ProviderEntry> Providers =
             new(HealthBarProviderKeyComparer.Instance);
+
         private static long _nextRegistrationOrder;
 
         /// <summary>

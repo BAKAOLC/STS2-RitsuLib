@@ -1,7 +1,10 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Plays FMOD Studio one-shots through the game's <see cref="MegaCrit.Sts2.Core.Nodes.Audio.NAudioManager" /> route.</para>
+    ///     <para xml:lang="en">
+    ///         Plays FMOD Studio one-shots through the game's
+    ///         <see cref="MegaCrit.Sts2.Core.Nodes.Audio.NAudioManager" /> route.
+    ///     </para>
     ///     <para xml:lang="zh-CN">通过游戏的 <see cref="MegaCrit.Sts2.Core.Nodes.Audio.NAudioManager" /> 路由播放 FMOD Studio 单次事件。</para>
     /// </summary>
     public interface IFmodOneShotPlayback

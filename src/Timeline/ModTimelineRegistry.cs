@@ -327,6 +327,21 @@ namespace STS2RitsuLib.Timeline
             field.SetValue(null, value);
         }
 
+        private static void RefreshAllEpochIdsSnapshotLocked()
+        {
+            var epochTypeDictionary =
+                GetStaticField<Dictionary<string, Type>>(typeof(EpochModel), "_epochTypeDictionary");
+            var ids = epochTypeDictionary.Keys.OrderBy(id => id, StringComparer.Ordinal).ToList();
+
+            var field = typeof(EpochModel).GetField("_allEpochIds", BindingFlags.Static | BindingFlags.NonPublic)
+                        ?? throw new MissingFieldException(typeof(EpochModel).FullName, "_allEpochIds");
+            field.SetValue(null, field.FieldType == typeof(List<string>) ? ids : ids.ToArray());
+
+            typeof(EpochModel)
+                .GetField("_epochIdsHashSet", BindingFlags.Static | BindingFlags.NonPublic)
+                ?.SetValue(null, null);
+        }
+
 #if STS2_AT_LEAST_0_108_0
         private static bool AddEpochTypeToAllEpochsLocked(Type epochType)
         {
@@ -344,20 +359,5 @@ namespace STS2RitsuLib.Timeline
             allEpochs.Remove(epochType);
         }
 #endif
-
-        private static void RefreshAllEpochIdsSnapshotLocked()
-        {
-            var epochTypeDictionary =
-                GetStaticField<Dictionary<string, Type>>(typeof(EpochModel), "_epochTypeDictionary");
-            var ids = epochTypeDictionary.Keys.OrderBy(id => id, StringComparer.Ordinal).ToList();
-
-            var field = typeof(EpochModel).GetField("_allEpochIds", BindingFlags.Static | BindingFlags.NonPublic)
-                        ?? throw new MissingFieldException(typeof(EpochModel).FullName, "_allEpochIds");
-            field.SetValue(null, field.FieldType == typeof(List<string>) ? ids : ids.ToArray());
-
-            typeof(EpochModel)
-                .GetField("_epochIdsHashSet", BindingFlags.Static | BindingFlags.NonPublic)
-                ?.SetValue(null, null);
-        }
     }
 }

@@ -18,11 +18,17 @@ namespace STS2RitsuLib.Utils.Json
     public static class JsonCanonicalizer
     {
         /// <summary>
-        ///     <para xml:lang="en">Canonicalizes a JSON DOM node into JCS JSON text. Encode the returned .NET string as UTF-8 to obtain the RFC 8785 byte representation.</para>
+        ///     <para xml:lang="en">
+        ///         Canonicalizes a JSON DOM node into JCS JSON text. Encode the returned .NET string as UTF-8 to
+        ///         obtain the RFC 8785 byte representation.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 JSON DOM 节点规范化为 JCS JSON 文本。将返回的 .NET 字符串编码为 UTF-8，即可得到 RFC 8785 字节表示。</para>
         /// </summary>
         /// <exception cref="InvalidOperationException">
-        ///     <para xml:lang="en">The DOM contains a value that JCS cannot represent, such as a non-finite IEEE 754 binary64 number, an unpaired surrogate, or a Unicode noncharacter.</para>
+        ///     <para xml:lang="en">
+        ///         The DOM contains a value that JCS cannot represent, such as a non-finite IEEE 754 binary64
+        ///         number, an unpaired surrogate, or a Unicode noncharacter.
+        ///     </para>
         ///     <para xml:lang="zh-CN">DOM 包含 JCS 无法表示的值，例如非有限 IEEE 754 binary64 数值、未配对代理项或 Unicode 非字符码点。</para>
         /// </exception>
         public static string Canonicalize(JsonNode? node)
@@ -83,7 +89,8 @@ namespace STS2RitsuLib.Utils.Json
                     return;
                 case JsonValueKind.Number:
                     if (!TryGetFiniteDouble(node, out var number))
-                        throw new InvalidOperationException("JCS requires every number to be a finite IEEE 754 binary64 value.");
+                        throw new InvalidOperationException(
+                            "JCS requires every number to be a finite IEEE 754 binary64 value.");
                     output.Append(FormatFiniteNumber(number));
                     return;
                 case JsonValueKind.True:
@@ -124,7 +131,7 @@ namespace STS2RitsuLib.Utils.Json
                         output.Append("\\\"");
                         continue;
                     case '\\':
-                        output.Append("\\\\");
+                        output.Append(@"\\");
                         continue;
                     case '\b':
                         output.Append("\\b");
@@ -193,7 +200,7 @@ namespace STS2RitsuLib.Utils.Json
 
         private static bool TryGetFiniteDouble(JsonNode node, out double value)
         {
-            value = default;
+            value = 0;
             if (node is not JsonValue jsonValue)
                 return false;
 
@@ -202,7 +209,7 @@ namespace STS2RitsuLib.Utils.Json
                        element.TryGetDouble(out value) &&
                        double.IsFinite(value);
 
-            if (jsonValue.TryGetValue<double>(out value))
+            if (jsonValue.TryGetValue(out value))
                 return double.IsFinite(value);
 
             if (jsonValue.TryGetValue<float>(out var single))
@@ -281,6 +288,8 @@ namespace STS2RitsuLib.Utils.Json
             if (negative)
                 output.Append('-');
 
+            // The RFC number-format ranges are more legible as mathematical interval guards.
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (n is > 0 and <= 21)
             {
                 if (digits.Length <= n)

@@ -81,7 +81,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             KeyValuePair<string, Func<ulong, bool>>[] checks;
             lock (Gate)
             {
-                checks = [..CapabilityChecks];
+                checks = [.. CapabilityChecks];
             }
 
             var missList = new List<SidecarRequiredCapabilityMiss>();
@@ -96,7 +96,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     missList.Add(new(peerId, missing));
             }
 
-            misses = [..missList];
+            misses = [.. missList];
             var passed = misses.Length == 0 || Policy == RitsuLibSidecarRequiredCapabilityPolicy.Warn;
             CheckCompleted?.Invoke(new(passed, Policy, misses));
             return passed;

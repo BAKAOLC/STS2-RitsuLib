@@ -8,7 +8,10 @@ namespace STS2RitsuLib
     public static partial class RitsuLibFramework
     {
         /// <summary>
-        ///     <para xml:lang="en">Registers a relic-visibility rule. Returning <see langword="false" /> hides the relic from normal relic UI.</para>
+        ///     <para xml:lang="en">
+        ///         Registers a relic-visibility rule. Returning <see langword="false" /> hides the relic from
+        ///         normal relic UI.
+        ///     </para>
         ///     <para xml:lang="zh-CN">注册遗物可见性规则。返回 <see langword="false" /> 会从正常遗物界面隐藏该遗物。</para>
         /// </summary>
         /// <returns>

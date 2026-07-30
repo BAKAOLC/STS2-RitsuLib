@@ -5,8 +5,14 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
     ///     <para xml:lang="zh-CN">通过任意 <see cref="IAnimationBackend" /> 驱动 <see cref="ModAnimState" /> 转换。</para>
     /// </summary>
     /// <remarks>
-    ///     <para xml:lang="en">Triggers prefer any-state branches to current-state branches. A terminal state leaves <see cref="ModAnimState.NextState" /> <see langword="null" />, so completion does not advance.</para>
-    ///     <para xml:lang="zh-CN">触发器优先匹配任意状态分支，再匹配当前状态分支。终止状态的 <see cref="ModAnimState.NextState" /> 保持为 <see langword="null" />，因此完成时不会推进。</para>
+    ///     <para xml:lang="en">
+    ///         Triggers prefer any-state branches to current-state branches. A terminal state leaves
+    ///         <see cref="ModAnimState.NextState" /> <see langword="null" />, so completion does not advance.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         触发器优先匹配任意状态分支，再匹配当前状态分支。终止状态的 <see cref="ModAnimState.NextState" /> 保持为
+    ///         <see langword="null" />，因此完成时不会推进。
+    ///     </para>
     /// </remarks>
     public sealed class ModAnimStateMachine
     {
@@ -29,7 +35,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the active state, or <see langword="null" /> before <see cref="Start" /> and after <see cref="Dispose" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the active state, or <see langword="null" /> before <see cref="Start" /> and after
+        ///         <see cref="Dispose" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取活动状态；在 <see cref="Start" /> 前和 <see cref="Dispose" /> 后为 <see langword="null" />。</para>
         /// </summary>
         public ModAnimState? Current { get; private set; }
@@ -119,7 +128,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Evaluates <paramref name="trigger" /> against any-state, then the current state, and enters the first matching target.</para>
+        ///     <para xml:lang="en">
+        ///         Evaluates <paramref name="trigger" /> against any-state, then the current state, and enters the
+        ///         first matching target.
+        ///     </para>
         ///     <para xml:lang="zh-CN">先对任意状态、再对当前状态求值 <paramref name="trigger" />，并进入第一个匹配的目标。</para>
         /// </summary>
         public void SetTrigger(string trigger)

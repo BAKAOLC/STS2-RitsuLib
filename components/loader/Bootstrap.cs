@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Loader
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         提供多变体 RitsuLib 捆绑包的入口程序集。它从 <c>lib/&lt;compat&gt;/</c> 将匹配的
-        ///         <c>STS2-RitsuLib.dll</c> 加载到默认 ALC，然后调用实际的框架初始化器。
+    ///         <c>STS2-RitsuLib.dll</c> 加载到默认 ALC，然后调用实际的框架初始化器。
     ///     </para>
     /// </summary>
     [ModInitializer(nameof(Initialize))]
@@ -276,7 +276,6 @@ namespace STS2RitsuLib.Loader
             catch (ReflectionTypeLoadException ex)
             {
                 Log.Error($"[RitsuLib.Loader] ReflectionTypeLoadException while scanning {realAsm.FullName}: {ex}");
-                if (ex.Types is null) return;
                 foreach (var t in ex.Types.Where(static x => x is not null))
                     TryInvokeInitializerOnType(t!);
 
@@ -448,7 +447,7 @@ namespace STS2RitsuLib.Loader
 
         private sealed class BundleVariantManifest
         {
-            public List<BundleVariantEntry>? Variants { get; set; }
+            public List<BundleVariantEntry>? Variants { get; init; }
         }
 
         private sealed class BundleVariantEntry

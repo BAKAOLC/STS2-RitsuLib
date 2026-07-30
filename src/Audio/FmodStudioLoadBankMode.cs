@@ -1,7 +1,10 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     <para xml:lang="en">Specifies the FMOD Studio bank-loading mode passed to the Godot FMOD addon's <c>load_bank</c> method.</para>
+    ///     <para xml:lang="en">
+    ///         Specifies the FMOD Studio bank-loading mode passed to the Godot FMOD addon's <c>load_bank</c>
+    ///         method.
+    ///     </para>
     ///     <para xml:lang="zh-CN">指定传递给 Godot FMOD 插件 <c>load_bank</c> 方法的 FMOD Studio 音频库加载模式。</para>
     /// </summary>
     public enum FmodStudioLoadBankMode

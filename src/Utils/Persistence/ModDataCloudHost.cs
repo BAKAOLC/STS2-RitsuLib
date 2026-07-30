@@ -7,7 +7,10 @@ using STS2RitsuLib.Platform.Steam;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     <para xml:lang="en">Uses the game's <see cref="CloudSaveStore" /> as the capability boundary for mod-data cloud synchronization, avoiding dependencies on launcher-specific cloud-storage types.</para>
+    ///     <para xml:lang="en">
+    ///         Uses the game's <see cref="CloudSaveStore" /> as the capability boundary for mod-data cloud
+    ///         synchronization, avoiding dependencies on launcher-specific cloud-storage types.
+    ///     </para>
     ///     <para xml:lang="zh-CN">以游戏的 <see cref="CloudSaveStore" /> 作为模组数据云同步的能力边界，从而避免依赖启动器专用的云存储类型。</para>
     /// </summary>
     internal static class ModDataCloudHost

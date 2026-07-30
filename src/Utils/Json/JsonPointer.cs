@@ -28,7 +28,10 @@ namespace STS2RitsuLib.Utils.Json
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Normalizes a JSON Pointer fragment for DOM navigation. Empty input remains empty; authors may omit the leading slash for non-root pointers.</para>
+        ///     <para xml:lang="en">
+        ///         Normalizes a JSON Pointer fragment for DOM navigation. Empty input remains empty; authors may
+        ///         omit the leading slash for non-root pointers.
+        ///     </para>
         ///     <para xml:lang="zh-CN">规范化用于 DOM 导航的 JSON 指针片段。空输入保持为空；非根指针编写时可省略前导斜杠。</para>
         /// </summary>
         public static string Normalize(string rawPointer)
@@ -41,7 +44,10 @@ namespace STS2RitsuLib.Utils.Json
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Resolves a node under <paramref name="root" /> by JSON Pointer, or returns <see langword="null" /> when no node exists at the pointer.</para>
+        ///     <para xml:lang="en">
+        ///         Resolves a node under <paramref name="root" /> by JSON Pointer, or returns
+        ///         <see langword="null" /> when no node exists at the pointer.
+        ///     </para>
         ///     <para xml:lang="zh-CN">通过 JSON 指针解析 <paramref name="root" /> 下的节点；该指针位置不存在节点时返回 <see langword="null" />。</para>
         /// </summary>
         public static JsonNode? Get(JsonNode root, string jsonPointer)

@@ -7,7 +7,10 @@ namespace STS2RitsuLib.Audio
     public static class FmodParameterMap
     {
         /// <summary>
-        ///     <para xml:lang="en">Creates an immutable parameter set from name/value tuples, with later duplicate names replacing earlier values.</para>
+        ///     <para xml:lang="en">
+        ///         Creates an immutable parameter set from name/value tuples, with later duplicate names replacing
+        ///         earlier values.
+        ///     </para>
         ///     <para xml:lang="zh-CN">根据名称/值元组创建不可变参数集；后出现的同名项会替换先前值。</para>
         /// </summary>
         /// <param name="pairs">
@@ -66,7 +69,10 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Creates a new mutable dictionary from name/value tuples, with later duplicate names replacing earlier values.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a new mutable dictionary from name/value tuples, with later duplicate names replacing
+        ///         earlier values.
+        ///     </para>
         ///     <para xml:lang="zh-CN">根据名称/值元组创建新的可变字典；后出现的同名项会替换先前值。</para>
         /// </summary>
         /// <param name="pairs">

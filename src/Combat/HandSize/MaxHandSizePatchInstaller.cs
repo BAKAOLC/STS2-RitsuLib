@@ -166,10 +166,10 @@ namespace STS2RitsuLib.Combat.HandSize
         {
 #if STS2_AT_LEAST_0_110_0
             return AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
-                [
-                    typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
-                    typeof(AbstractModel), typeof(bool), typeof(bool),
-                ]);
+            [
+                typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
+                typeof(AbstractModel), typeof(bool), typeof(bool),
+            ]);
 #else
             return AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
                 [

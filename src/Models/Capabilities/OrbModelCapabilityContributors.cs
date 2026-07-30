@@ -124,6 +124,8 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (capability is not IModelCapability modelCapability)
                     continue;
 
+                // TryRun invokes the callback synchronously before currentContext advances to the next contributor.
+                // ReSharper disable AccessToModifiedClosure
                 TryRun(modelCapability, context.Orb, OrbValueDisplaySurface, () =>
                 {
                     if (capability.GetValueDisplayMode(currentContext) is { } mode)
@@ -135,6 +137,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     if (capability.GetEvokeValueDisplayText(currentContext) is { } evokeText)
                         state = state with { EvokeText = evokeText };
                 });
+                // ReSharper restore AccessToModifiedClosure
 
                 currentContext = currentContext with
                 {

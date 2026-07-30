@@ -20,7 +20,10 @@ namespace STS2RitsuLib.Utils.Persistence
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Published when profile-scoped mod data becomes readable and writable after initialization or reload.</para>
+    ///     <para xml:lang="en">
+    ///         Published when profile-scoped mod data becomes readable and writable after initialization or
+    ///         reload.
+    ///     </para>
     ///     <para xml:lang="zh-CN">初始化或重新加载后，档案作用域的模组数据变为可读可写时发布。</para>
     /// </summary>
     /// <param name="ProfileId">
@@ -32,7 +35,10 @@ namespace STS2RitsuLib.Utils.Persistence
     ///     <para xml:lang="zh-CN">触发通知的子系统。</para>
     /// </param>
     /// <param name="IsInitialReady">
-    ///     <para xml:lang="en"><see langword="true" /> when this notification transitions the lifecycle from not ready to ready.</para>
+    ///     <para xml:lang="en">
+    ///         <see langword="true" /> when this notification transitions the lifecycle from not ready to
+    ///         ready.
+    ///     </para>
     ///     <para xml:lang="zh-CN">此次通知使生命周期从未就绪转换为就绪时为 <see langword="true" />。</para>
     /// </param>
     /// <param name="IsProfileSwitch">
@@ -84,7 +90,10 @@ namespace STS2RitsuLib.Utils.Persistence
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     <para xml:lang="en">Published when the currently ready profile context becomes invalid, such as after its profile is deleted.</para>
+    ///     <para xml:lang="en">
+    ///         Published when the currently ready profile context becomes invalid, such as after its profile
+    ///         is deleted.
+    ///     </para>
     ///     <para xml:lang="zh-CN">当前已就绪的档案上下文失效时发布，例如对应档案被删除后。</para>
     /// </summary>
     /// <param name="ProfileId">

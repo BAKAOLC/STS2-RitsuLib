@@ -19,7 +19,10 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Identifies controls that temporarily claim directional input, such as open dropdowns or active key-capture editors.</para>
+    ///     <para xml:lang="en">
+    ///         Identifies controls that temporarily claim directional input, such as open dropdowns or active
+    ///         key-capture editors.
+    ///     </para>
     ///     <para xml:lang="zh-CN">标识会临时占用方向输入的控件，例如已展开的下拉列表或正在捕获按键的编辑器。</para>
     /// </summary>
     internal interface IModSettingsDirectionalInputClaimant
@@ -556,7 +559,10 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Compatibility slider for the obsolete float-binding overload; Godot renders double values while normalization and callbacks remain in <see cref="float" /> space.</para>
+    ///     <para xml:lang="en">
+    ///         Compatibility slider for the obsolete float-binding overload; Godot renders double values while
+    ///         normalization and callbacks remain in <see cref="float" /> space.
+    ///     </para>
     ///     <para xml:lang="zh-CN">用于已弃用浮点绑定重载的兼容滑块；Godot 以双精度值呈现，但规范化和回调仍使用 <see cref="float" />。</para>
     /// </summary>
     public sealed partial class ModSettingsFloatSliderControl : Control
@@ -1095,7 +1101,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Selects a matching option without invoking the change callback; unmatched values leave the selection unchanged.</para>
+        ///     <para xml:lang="en">
+        ///         Selects a matching option without invoking the change callback; unmatched values leave the
+        ///         selection unchanged.
+        ///     </para>
         ///     <para xml:lang="zh-CN">选择匹配项而不调用变更回调；值不匹配时保持当前选项不变。</para>
         /// </summary>
         /// <param name="value">
@@ -1123,7 +1132,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Replaces every option and selects the matching value, or the first option, without invoking the callback.</para>
+        ///     <para xml:lang="en">
+        ///         Replaces every option and selects the matching value, or the first option, without invoking the
+        ///         callback.
+        ///     </para>
         ///     <para xml:lang="zh-CN">替换全部选项，并在不调用回调的情况下选择匹配值；没有匹配项时选择第一个选项。</para>
         /// </summary>
         /// <param name="options">
@@ -1478,7 +1490,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Selects a matching option without opening the dropdown or invoking the change callback; unmatched values leave the selection unchanged.</para>
+        ///     <para xml:lang="en">
+        ///         Selects a matching option without opening the dropdown or invoking the change callback;
+        ///         unmatched values leave the selection unchanged.
+        ///     </para>
         ///     <para xml:lang="zh-CN">选择匹配项而不展开下拉列表或调用变更回调；值不匹配时保持当前选项不变。</para>
         /// </summary>
         /// <param name="value">
@@ -1500,6 +1515,8 @@ namespace STS2RitsuLib.Settings
             {
                 _selectedIndex = idx;
                 RefreshFaceLabel();
+                // Keep the dropdown-only refresh grouped without returning from inside the try/finally.
+                // ReSharper disable once InvertIf
                 if (_dropOpen)
                 {
                     SyncVirtualDropdownRows();
@@ -1513,7 +1530,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Replaces every option and selects the matching value, or the first option, without invoking the callback.</para>
+        ///     <para xml:lang="en">
+        ///         Replaces every option and selects the matching value, or the first option, without invoking the
+        ///         callback.
+        ///     </para>
         ///     <para xml:lang="zh-CN">替换全部选项，并在不调用回调的情况下选择匹配值；没有匹配项时选择第一个选项。</para>
         /// </summary>
         /// <param name="options">
@@ -2446,11 +2466,17 @@ namespace STS2RitsuLib.Settings
         private Color _unsetPreviewColor = RitsuShellTheme.Current.Color.UnsetPreview;
 
         /// <summary>
-        ///     <para xml:lang="en">Creates a color editor with alpha enabled and HDR intensity disabled, preserving the original two-parameter API.</para>
+        ///     <para xml:lang="en">
+        ///         Creates a color editor with alpha enabled and HDR intensity disabled, preserving the original
+        ///         two-parameter API.
+        ///     </para>
         ///     <para xml:lang="zh-CN">创建启用 Alpha、禁用 HDR 强度的颜色编辑器，并保留原有双参数 API。</para>
         /// </summary>
         /// <param name="initialValue">
-        ///     <para xml:lang="en">The initial hex, Godot HTML, or BaseLib-compatible component string; null or empty leaves the value unset.</para>
+        ///     <para xml:lang="en">
+        ///         The initial hex, Godot HTML, or BaseLib-compatible component string; null or empty leaves the
+        ///         value unset.
+        ///     </para>
         ///     <para xml:lang="zh-CN">初始十六进制、Godot HTML 或 BaseLib 兼容分量字符串；为 <see langword="null" /> 或空时保持未设置状态。</para>
         /// </param>
         /// <param name="onChanged">
@@ -2467,7 +2493,10 @@ namespace STS2RitsuLib.Settings
         ///     <para xml:lang="zh-CN">创建可配置 Alpha 和 HDR 强度编辑的颜色编辑器。</para>
         /// </summary>
         /// <param name="initialValue">
-        ///     <para xml:lang="en">The initial hex, Godot HTML, or BaseLib-compatible component string; null or empty leaves the value unset.</para>
+        ///     <para xml:lang="en">
+        ///         The initial hex, Godot HTML, or BaseLib-compatible component string; null or empty leaves the
+        ///         value unset.
+        ///     </para>
         ///     <para xml:lang="zh-CN">初始十六进制、Godot HTML 或 BaseLib 兼容分量字符串；为 <see langword="null" /> 或空时保持未设置状态。</para>
         /// </param>
         /// <param name="onChanged">
@@ -2563,7 +2592,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Serializes a standard-range color as <c>#RRGGBBAA</c>, or an HDR color as a BaseLib-compatible invariant component list.</para>
+        ///     <para xml:lang="en">
+        ///         Serializes a standard-range color as <c>#RRGGBBAA</c>, or an HDR color as a BaseLib-compatible
+        ///         invariant component list.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将标准范围颜色序列化为 <c>#RRGGBBAA</c>，将 HDR 颜色序列化为 BaseLib 兼容的固定区域性分量列表。</para>
         /// </summary>
         /// <param name="color">
@@ -2596,7 +2628,10 @@ namespace STS2RitsuLib.Settings
         ///     <para xml:lang="zh-CN">成功时接收解析得到的有限颜色。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the text contains a supported finite color; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the text contains a supported finite color; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">文本包含受支持的有限颜色时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool TryDeserializeColorForSettings(string? text, out Color color)
@@ -2609,13 +2644,11 @@ namespace STS2RitsuLib.Settings
             if (TryParseHexColorString(trimmed, out color))
                 return true;
 
-            if (Color.HtmlIsValid(trimmed))
-            {
-                color = Color.FromHtml(trimmed);
-                return true;
-            }
+            if (!Color.HtmlIsValid(trimmed))
+                return TryParseBracketRgbaColor(trimmed, out color);
 
-            return TryParseBracketRgbaColor(trimmed, out color);
+            color = Color.FromHtml(trimmed);
+            return true;
         }
 
         /// <summary>
@@ -2642,7 +2675,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Parses and displays a value without invoking the change callback; invalid text restores the current presentation.</para>
+        ///     <para xml:lang="en">
+        ///         Parses and displays a value without invoking the change callback; invalid text restores the
+        ///         current presentation.
+        ///     </para>
         ///     <para xml:lang="zh-CN">解析并显示一个值而不调用变更回调；文本无效时恢复当前显示。</para>
         /// </summary>
         /// <param name="value">
@@ -2687,6 +2723,7 @@ namespace STS2RitsuLib.Settings
             {
                 _suppressCallbacks = false;
             }
+
             _lastCommitted = string.Empty;
 
             if (notify)
@@ -2709,6 +2746,7 @@ namespace STS2RitsuLib.Settings
             {
                 _suppressCallbacks = false;
             }
+
             _lastCommitted = formatted;
             _unsetPreviewColor = color;
 
@@ -2812,7 +2850,10 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     <para xml:lang="en">A single-binding editor that captures keyboard combinations and, when enabled, Godot input actions.</para>
+    ///     <para xml:lang="en">
+    ///         A single-binding editor that captures keyboard combinations and, when enabled, Godot input
+    ///         actions.
+    ///     </para>
     ///     <para xml:lang="zh-CN">捕获键盘组合，并可按配置捕获 Godot 输入动作的单绑定编辑器。</para>
     /// </summary>
     public sealed partial class ModSettingsKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
@@ -2984,7 +3025,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Replaces the displayed binding without normalizing it, entering capture mode, or invoking the change callback.</para>
+        ///     <para xml:lang="en">
+        ///         Replaces the displayed binding without normalizing it, entering capture mode, or invoking the
+        ///         change callback.
+        ///     </para>
         ///     <para xml:lang="zh-CN">替换显示的绑定，但不将其规范化、不进入捕获模式，也不调用变更回调。</para>
         /// </summary>
         /// <param name="value">
@@ -3435,15 +3479,19 @@ namespace STS2RitsuLib.Settings
         private static IReadOnlyList<ModSettingsMenuAction> FilterActions(
             IReadOnlyList<ModSettingsMenuAction>? actions)
         {
-            return actions?
-                       .Where(static action => action is
-                       {
-                           Label: not null,
-                           IsEnabled: not null,
-                           Action: not null,
-                       })
-                       .ToArray()
-                   ?? [];
+            // Mod-provided action lists may violate their declared nullable contracts at runtime.
+            // ReSharper disable RedundantAlwaysMatchSubpattern
+            var filtered = actions?
+                               .Where(static action => action is
+                               {
+                                   Label: not null,
+                                   IsEnabled: not null,
+                                   Action: not null,
+                               })
+                               .ToArray()
+                           ?? [];
+            // ReSharper restore RedundantAlwaysMatchSubpattern
+            return filtered;
         }
 
         private static StyleBoxFlat CreateActionsRowStyle(bool highlighted)
@@ -4016,7 +4064,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Normalizes and replaces the displayed bindings without entering capture mode or invoking the change callback.</para>
+        ///     <para xml:lang="en">
+        ///         Normalizes and replaces the displayed bindings without entering capture mode or invoking the
+        ///         change callback.
+        ///     </para>
         ///     <para xml:lang="zh-CN">规范化并替换显示的绑定，但不进入捕获模式，也不调用变更回调。</para>
         /// </summary>
         /// <param name="values">
@@ -5736,7 +5787,6 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class ModSettingsCollapsibleHeaderButton : ModSettingsGamepadCompatibleButton
     {
-        private readonly Action? _action;
         private bool _applyingSelectedState;
         private Label? _arrowLabel;
         private bool _contentEnabled = true;
@@ -5757,8 +5807,6 @@ namespace STS2RitsuLib.Settings
         {
             _title = title;
             _subtitle = subtitle;
-            _action = action;
-
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
@@ -5834,12 +5882,7 @@ namespace STS2RitsuLib.Settings
             AddChild(subtitleLabel);
             _subtitleLabel = subtitleLabel;
 
-            Pressed += () =>
-            {
-                if (_action == null)
-                    return;
-                _action();
-            };
+            Pressed += action;
         }
 
         public ModSettingsCollapsibleHeaderButton()
@@ -6108,12 +6151,9 @@ namespace STS2RitsuLib.Settings
 
         private static float ResolveDisabledOpacityFactor()
         {
-            if (RitsuShellTheme.Current.TryGetNumber("semantic.state.disabled.opacity", out var rawValue))
-            {
-                var v = (float)rawValue;
-                if (v is > 0.05f and <= 1.0f)
-                    return v;
-            }
+            if (RitsuShellTheme.Current.TryGetNumber("semantic.state.disabled.opacity", out var rawValue) &&
+                (float)rawValue is > 0.05f and <= 1.0f and var value)
+                return value;
 
             return 0.78f;
         }
@@ -6913,7 +6953,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Updates the selected styling used by segmented groups and previews without invoking the pressed action.</para>
+        ///     <para xml:lang="en">
+        ///         Updates the selected styling used by segmented groups and previews without invoking the pressed
+        ///         action.
+        ///     </para>
         ///     <para xml:lang="zh-CN">更新分段组和预览使用的选中样式，但不调用按下动作。</para>
         /// </summary>
         /// <param name="selected">

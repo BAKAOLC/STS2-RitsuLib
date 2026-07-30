@@ -325,10 +325,7 @@ namespace STS2RitsuLib.Cards.FreePlay
             if (state.BaseCostsFreeForRestOfTurnCharges > 0)
                 return true;
 
-            if (state.BaseCostsFreeNextPlayCharges > 0)
-                return true;
-
-            return false;
+            return state.BaseCostsFreeNextPlayCharges > 0;
         }
 
         private static bool EvaluateRegisteredDetectors(CardPlay play)
@@ -340,7 +337,6 @@ namespace STS2RitsuLib.Cards.FreePlay
             }
 
             foreach (var (bindingId, detector) in detectors)
-            {
                 try
                 {
                     if (detector(play))
@@ -352,7 +348,6 @@ namespace STS2RitsuLib.Cards.FreePlay
                         $"[FreePlay] Detector '{bindingId}' failed for card '{play.Card.Id}': {ex}");
                     throw;
                 }
-            }
 
             return false;
         }

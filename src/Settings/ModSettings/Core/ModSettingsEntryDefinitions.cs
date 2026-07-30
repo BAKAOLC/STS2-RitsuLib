@@ -412,6 +412,14 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public Func<IReadOnlyList<ModSettingsChoiceOption<TValue>>>? OptionsProvider { get; internal set; }
 
+        /// <summary>
+        ///     <para xml:lang="en">Gets the visual presentation used for the choices.</para>
+        ///     <para xml:lang="zh-CN">获取选项使用的视觉呈现方式。</para>
+        /// </summary>
+        public ModSettingsChoicePresentation Presentation { get; } = presentation;
+
+        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
+
         internal IReadOnlyList<ModSettingsChoiceOption<TValue>> ResolveOptions()
         {
             if (OptionsProvider == null)
@@ -422,14 +430,6 @@ namespace STS2RitsuLib.Settings
                               $"Dynamic choice setting '{Id}' returned a null option list.");
             return ValidateAndSnapshotOptions(options, nameof(OptionsProvider));
         }
-
-        /// <summary>
-        ///     <para xml:lang="en">Gets the visual presentation used for the choices.</para>
-        ///     <para xml:lang="zh-CN">获取选项使用的视觉呈现方式。</para>
-        /// </summary>
-        public ModSettingsChoicePresentation Presentation { get; } = presentation;
-
-        internal override bool CanResetToDefault => BindingCanResetToDefault(Binding);
 
         internal override void CollectChromeBindingSnapshots(
             Dictionary<string, ModSettingsChromeBindingSnapshot> target)
@@ -465,6 +465,8 @@ namespace STS2RitsuLib.Settings
             ArgumentNullException.ThrowIfNull(options, parameterName);
 
             var snapshot = options.ToArray();
+            // Keep validation failure separate from successful snapshot construction.
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (snapshot.Any(option => option.Label == null))
                 throw new ArgumentException("Choice option labels cannot be null.", parameterName);
 
@@ -689,7 +691,10 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Defines a keyboard binding capture row that writes a normalized token to <see cref="Binding" />.</para>
+    ///     <para xml:lang="en">
+    ///         Defines a keyboard binding capture row that writes a normalized token to <see cref="Binding" />
+    ///         .
+    ///     </para>
     ///     <para xml:lang="zh-CN">定义将规范化标记写入 <see cref="Binding" /> 的键盘绑定捕获行。</para>
     /// </summary>
     public sealed class KeyBindingModSettingsEntryDefinition(
@@ -867,11 +872,12 @@ namespace STS2RitsuLib.Settings
         ///     </para>
         /// </summary>
         public IModSettingsValueBinding<List<string>> Binding { get; } =
-            binding is null
-                ? throw new ArgumentNullException(nameof(binding))
-                : binding is IStructuredModSettingsValueBinding<List<string>>
-                ? binding
-                : ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List<string>());
+            binding switch
+            {
+                null => throw new ArgumentNullException(nameof(binding)),
+                IStructuredModSettingsValueBinding<List<string>> => binding,
+                _ => ModSettingsBindings.WithAdapter(binding, ModSettingsStructuredData.List<string>()),
+            };
 
         /// <summary>
         ///     <para xml:lang="en">Gets whether modifier-and-key combinations can be captured.</para>
@@ -1122,6 +1128,8 @@ namespace STS2RitsuLib.Settings
             ArgumentNullException.ThrowIfNull(bindings);
 
             var snapshot = bindings.ToArray();
+            // Keep validation failure separate from successful snapshot construction.
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (snapshot.Any(binding => binding == null))
                 throw new ArgumentException("Runtime hotkey binding labels cannot be null.", nameof(bindings));
 

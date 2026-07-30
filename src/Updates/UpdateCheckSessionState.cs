@@ -3,7 +3,10 @@ using MegaCrit.Sts2.Core.Rooms;
 namespace STS2RitsuLib.Updates
 {
     /// <summary>
-    ///     <para xml:lang="en">Tracks whether the current session is at the main menu or in a combat room for update-check scheduling.</para>
+    ///     <para xml:lang="en">
+    ///         Tracks whether the current session is at the main menu or in a combat room for update-check
+    ///         scheduling.
+    ///     </para>
     ///     <para xml:lang="zh-CN">跟踪当前会话是否位于主菜单或战斗房间，以供更新检查调度使用。</para>
     /// </summary>
     internal static class UpdateCheckSessionState

@@ -63,10 +63,7 @@ namespace STS2RitsuLib.Timeline
                     throw new InvalidOperationException(
                         $"Epoch type '{epochType.Name}' is already bound to story '{owner.Name}'; cannot bind to '{storyType.Name}'.");
 
-                if (!StoryToEpochs.TryGetValue(storyType, out var list))
-                {
-                    list = [];
-                }
+                if (!StoryToEpochs.TryGetValue(storyType, out var list)) list = [];
 
                 if (list.Contains(epochType))
                     throw new InvalidOperationException(

@@ -11,7 +11,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     /// <summary>
     ///     <para xml:lang="en">
     ///         Provides the no-op base implementation used by generated placeholder cards. Mods normally register
-    ///         placeholders through <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />
+    ///         placeholders through
+    ///         <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />
     ///         instead of subclassing this type.
     ///     </para>
     ///     <para xml:lang="zh-CN">

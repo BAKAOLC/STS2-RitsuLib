@@ -3,7 +3,10 @@ using System.Buffers.Binary;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     <para xml:lang="en">Parses and builds Sidecar envelopes containing magic, wire version, flags, opcode, an optional header extension, and payload.</para>
+    ///     <para xml:lang="en">
+    ///         Parses and builds Sidecar envelopes containing magic, wire version, flags, opcode, an optional
+    ///         header extension, and payload.
+    ///     </para>
     ///     <para xml:lang="zh-CN">解析和构建包含魔数、线格式版本、标志、操作码、可选头扩展和载荷的 Sidecar 信封。</para>
     /// </summary>
     public static class RitsuLibSidecarEnvelope
@@ -33,13 +36,19 @@ namespace STS2RitsuLib.Networking.Sidecar
             BadMagic,
 
             /// <summary>
-            ///     <para xml:lang="en">The wire format version is zero or exceeds <see cref="RitsuLibSidecarWire.SupportedWireFormatVersionMax" />.</para>
+            ///     <para xml:lang="en">
+            ///         The wire format version is zero or exceeds
+            ///         <see cref="RitsuLibSidecarWire.SupportedWireFormatVersionMax" />.
+            ///     </para>
             ///     <para xml:lang="zh-CN">线格式版本为零或超过 <see cref="RitsuLibSidecarWire.SupportedWireFormatVersionMax" />。</para>
             /// </summary>
             WireVersionUnsupported,
 
             /// <summary>
-            ///     <para xml:lang="en">The declared payload length is invalid, decompression fails, or decompressed data exceeds the cap.</para>
+            ///     <para xml:lang="en">
+            ///         The declared payload length is invalid, decompression fails, or decompressed data exceeds the
+            ///         cap.
+            ///     </para>
             ///     <para xml:lang="zh-CN">声明的载荷长度无效、解压失败，或解压数据超过上限。</para>
             /// </summary>
             PayloadLengthInvalid,
@@ -89,7 +98,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Parses an envelope only when <paramref name="packet" /> exactly contains the bytes in <paramref name="backing" />.</para>
+        ///     <para xml:lang="en">
+        ///         Parses an envelope only when <paramref name="packet" /> exactly contains the bytes in
+        ///         <paramref name="backing" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">仅当 <paramref name="packet" /> 精确包含 <paramref name="backing" /> 中的字节时解析信封。</para>
         /// </summary>
         /// <param name="packet">
@@ -207,7 +219,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     <para xml:lang="zh-CN">未压缩的逻辑载荷。</para>
         /// </param>
         /// <param name="gzipLogicalPayload">
-        ///     <para xml:lang="en">Whether to gzip-compress the payload and set <see cref="RitsuLibSidecarWireFlags.PayloadGzip" />.</para>
+        ///     <para xml:lang="en">
+        ///         Whether to gzip-compress the payload and set
+        ///         <see cref="RitsuLibSidecarWireFlags.PayloadGzip" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">是否 gzip 压缩载荷并设置 <see cref="RitsuLibSidecarWireFlags.PayloadGzip" />。</para>
         /// </param>
         public static byte[] Build(

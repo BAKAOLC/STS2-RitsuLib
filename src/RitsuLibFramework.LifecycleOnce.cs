@@ -85,6 +85,8 @@ namespace STS2RitsuLib
                 }
                 finally
                 {
+                    // The subscription is assigned before Wrapped can be published or invoked.
+                    // ReSharper disable once AccessToModifiedClosure
                     subscription?.Dispose();
                 }
             }

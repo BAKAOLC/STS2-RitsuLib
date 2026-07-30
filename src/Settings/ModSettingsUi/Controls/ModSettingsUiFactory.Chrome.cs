@@ -550,7 +550,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Synchronizes a control's visibility with a predicate immediately and on each settings refresh, treating predicate failures as hidden.</para>
+        ///     <para xml:lang="en">
+        ///         Synchronizes a control's visibility with a predicate immediately and on each settings refresh,
+        ///         treating predicate failures as hidden.
+        ///     </para>
         ///     <para xml:lang="zh-CN">立即并在每次设置刷新时根据谓词同步控件可见性；谓词失败时按不可见处理。</para>
         /// </summary>
         /// <param name="context">
@@ -947,7 +950,10 @@ namespace STS2RitsuLib.Settings
         ///     <para xml:lang="zh-CN">文本的水平对齐方式。</para>
         /// </param>
         /// <param name="scrollViewportHeight">
-        ///     <para xml:lang="en">An optional finite positive viewport height that enables internal scrolling; other values use fit-to-content layout.</para>
+        ///     <para xml:lang="en">
+        ///         An optional finite positive viewport height that enables internal scrolling; other values use
+        ///         fit-to-content layout.
+        ///     </para>
         ///     <para xml:lang="zh-CN">用于启用内部滚动的可选有限正数视口高度；其他值使用适应内容的布局。</para>
         /// </param>
         /// <param name="textModulate">

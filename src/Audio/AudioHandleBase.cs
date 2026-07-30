@@ -33,6 +33,8 @@ namespace STS2RitsuLib.Audio
             RawInstance = rawInstance;
         }
 
+        internal bool AllowFadeOutOnStop { get; set; } = true;
+
         /// <summary>
         ///     <para xml:lang="en">Gets the logical source represented by this handle.</para>
         ///     <para xml:lang="zh-CN">获取此句柄所代表的逻辑音频源。</para>
@@ -87,7 +89,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">通过后端支持的 <c>play</c> 或 <c>start</c> 方法开始播放。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when a supported start method completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when a supported start method completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">受支持的启动方法执行完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TryPlay()
@@ -104,11 +109,17 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">使用后端实例支持的调用形式停止播放。</para>
         /// </summary>
         /// <param name="allowFadeOut">
-        ///     <para xml:lang="en">Whether an FMOD event instance may fade out; file-backed instances use their parameterless stop method.</para>
+        ///     <para xml:lang="en">
+        ///         Whether an FMOD event instance may fade out; file-backed instances use their parameterless stop
+        ///         method.
+        ///     </para>
         ///     <para xml:lang="zh-CN">FMOD 事件实例是否允许淡出；文件型实例使用其无参数停止方法。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the supported stop method completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the supported stop method completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">受支持的停止方法执行完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TryStop(bool allowFadeOut = true)
@@ -126,7 +137,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">尝试通过 <c>set_paused</c> 暂停播放。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the backend supports and completes the call; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the backend supports and completes the call; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">后端支持且完成该调用时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TryPause()
@@ -139,7 +153,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">尝试通过 <c>set_paused</c> 恢复播放。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the backend supports and completes the call; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the backend supports and completes the call; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">后端支持且完成该调用时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TryResume()
@@ -156,7 +173,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">传递给后端的音量值。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the backend supports and completes the call; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the backend supports and completes the call; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">后端支持且完成该调用时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TrySetVolume(float volume)
@@ -173,7 +193,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">传递给后端的音高值。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the backend supports and completes the call; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the backend supports and completes the call; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">后端支持且完成该调用时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TrySetPitch(float pitch)
@@ -194,7 +217,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">参数值。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the backend supports and completes the call; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the backend supports and completes the call; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">后端支持且完成该调用时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TrySetParameter(string name, float value)
@@ -203,11 +229,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Attempts to release backend resources and detaches registry ownership only after release succeeds.</para>
+        ///     <para xml:lang="en">
+        ///         Attempts to release backend resources and detaches registry ownership only after release
+        ///         succeeds.
+        ///     </para>
         ///     <para xml:lang="zh-CN">尝试释放后端资源，并且仅在释放成功后解除注册表所有权。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when resources are released or the backend was already invalid; <see langword="false" /> when release is unsupported or fails.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when resources are released or the backend was already invalid;
+        ///         <see langword="false" /> when release is unsupported or fails.
+        ///     </para>
         ///     <para xml:lang="zh-CN">资源已释放或后端原本已无效时为 <see langword="true" />；不支持释放或释放失败时为 <see langword="false" />。</para>
         /// </returns>
         public virtual bool TryRelease()
@@ -273,7 +305,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">播放是否应暂停。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the backend supports and completes the call; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the backend supports and completes the call; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">后端支持且完成该调用时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         protected bool TrySetPaused(bool paused)
@@ -294,7 +329,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">传递给后端方法的参数。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when the method exists and completes; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the method exists and completes; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">方法存在且执行完成时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         protected bool TryCall(string method, params Variant[] args)
@@ -313,8 +351,6 @@ namespace STS2RitsuLib.Audio
                 return false;
             }
         }
-
-        internal bool AllowFadeOutOnStop { get; set; } = true;
 
         private bool TryGetInstance(out GodotObject instance)
         {

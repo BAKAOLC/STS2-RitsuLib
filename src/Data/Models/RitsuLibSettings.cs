@@ -96,7 +96,10 @@ namespace STS2RitsuLib.Data.Models
         public bool DebugLogViewerMirrorGameLogs { get; set; } = true;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets whether the viewer opens in the system browser when no client connects shortly after startup.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether the viewer opens in the system browser when no client connects shortly
+        ///         after startup.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置启动后短时间内没有客户端连接时，是否在系统浏览器中打开查看器。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_auto_open")]
@@ -138,7 +141,10 @@ namespace STS2RitsuLib.Data.Models
         public int DebugLogViewerRingBufferCapacity { get; set; } = 10000;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets the pending-event capacity before the non-blocking debug pipeline drops new events.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or sets the pending-event capacity before the non-blocking debug pipeline drops new
+        ///         events.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置非阻塞调试流程开始丢弃新事件前的待处理事件容量。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_queue_capacity")]
@@ -152,7 +158,10 @@ namespace STS2RitsuLib.Data.Models
         public bool DevConsoleHistoryNavigationPatchEnabled { get; set; } = true;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets whether developer-console autocomplete display and candidate-source enhancements are enabled.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether developer-console autocomplete display and candidate-source enhancements
+        ///         are enabled.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置是否启用开发者控制台的自动补全显示与候选来源增强。</para>
         /// </summary>
         [JsonPropertyName("dev_console_autocomplete_enhancements_enabled")]
@@ -193,7 +202,10 @@ namespace STS2RitsuLib.Data.Models
         public bool ModSourceHoverTipsIncludeVanilla { get; set; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets whether supported hover tips outside inspect and detail screens include source information.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether supported hover tips outside inspect and detail screens include source
+        ///         information.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置详情界面以外受支持的悬停提示是否包含来源信息。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_include_non_details")]
@@ -270,7 +282,10 @@ namespace STS2RitsuLib.Data.Models
         public bool ModSourceHoverTipsCreatures { get; set; } = true;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets whether base-game term hover tips, such as block and energy, show source information.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether base-game term hover tips, such as block and energy, show source
+        ///         information.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置格挡、能量等原版术语的悬停提示是否显示来源信息。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_game_terms")]
@@ -298,7 +313,10 @@ namespace STS2RitsuLib.Data.Models
         public string SelfCheckOutputFolderPath { get; set; } = "user://ritsulib_self_check";
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets whether one self-check bundle is exported after the session's first main-menu load.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether one self-check bundle is exported after the session's first main-menu
+        ///         load.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置是否在每个会话首次加载主菜单后导出一次自检包。</para>
         /// </summary>
         [JsonPropertyName("self_check_on_first_main_menu")]
@@ -506,7 +524,10 @@ namespace STS2RitsuLib.Data.Models
         public double ToastOffsetY { get; set; } = 24d;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets the maximum number of simultaneously visible toast notifications; overflow is queued.</para>
+        ///     <para xml:lang="en">
+        ///         Gets or sets the maximum number of simultaneously visible toast notifications; overflow is
+        ///         queued.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置同时可见的通知消息数量上限；超出部分将进入队列。</para>
         /// </summary>
         [JsonPropertyName("toast_max_visible")]

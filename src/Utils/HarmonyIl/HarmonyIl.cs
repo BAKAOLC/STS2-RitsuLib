@@ -708,7 +708,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Returns true when the instruction calls a method declared on <paramref name="declaringType" /> with <paramref name="methodName" />.</para>
+        ///     <para xml:lang="en">
+        ///         Returns true when the instruction calls a method declared on <paramref name="declaringType" />
+        ///         with <paramref name="methodName" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">当指令调用 <paramref name="declaringType" /> 上名为 <paramref name="methodName" /> 的方法时返回 true。</para>
         /// </summary>
         public static bool IsCallNamed(CodeInstruction instruction, Type declaringType, string methodName)
@@ -1032,7 +1035,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Moves labels and exception blocks from <paramref name="source" /> to the first replacement instruction.</para>
+        ///     <para xml:lang="en">
+        ///         Moves labels and exception blocks from <paramref name="source" /> to the first replacement
+        ///         instruction.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 <paramref name="source" /> 的标签和异常块转移到第一条替换指令上。</para>
         /// </summary>
         public static IReadOnlyList<CodeInstruction> MoveMetadataToFirst(

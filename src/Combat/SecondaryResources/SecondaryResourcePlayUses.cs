@@ -306,13 +306,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentException.ThrowIfNullOrWhiteSpace(useId);
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             ArgumentNullException.ThrowIfNull(cost);
-            if (cost.CostsX && cost.XMultiplier <= 0)
+            if (cost is { CostsX: true, XMultiplier: <= 0 })
                 throw new ArgumentOutOfRangeException(
                     nameof(cost),
                     "An X secondary-resource cost must have a positive multiplier.");
             if (maxExtraStacks is < 0)
                 throw new ArgumentOutOfRangeException(nameof(maxExtraStacks));
-            if (kind == SecondaryResourceUseKind.ExtraSpend && cost.CostsX)
+            if (kind == SecondaryResourceUseKind.ExtraSpend && cost is { CostsX: true })
                 throw new ArgumentException("Repeatable extra secondary-resource spends cannot use X costs.",
                     nameof(cost));
 

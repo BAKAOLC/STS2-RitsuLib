@@ -53,7 +53,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         public static long OutgoingSendOperations => Interlocked.Read(ref _outgoingSendOperations);
 
         /// <summary>
-        ///     <para xml:lang="en">Sum of envelope lengths passed to the vanilla send API for <see cref="OutgoingSendOperations" />.</para>
+        ///     <para xml:lang="en">
+        ///         Sum of envelope lengths passed to the vanilla send API for
+        ///         <see cref="OutgoingSendOperations" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">传给游戏原版发送 API 的 <see cref="OutgoingSendOperations" /> 信封长度总和。</para>
         /// </summary>
         public static long OutgoingWireBytes => Interlocked.Read(ref _outgoingWireBytes);

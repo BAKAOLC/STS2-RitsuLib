@@ -22,7 +22,10 @@ namespace STS2RitsuLib.Audio
         : AudioHandleBase(source, scope, rawInstance)
     {
         /// <summary>
-        ///     <para xml:lang="en">Starts replacement music and disposes this handle, discarding the returned replacement-handle reference.</para>
+        ///     <para xml:lang="en">
+        ///         Starts replacement music and disposes this handle, discarding the returned replacement-handle
+        ///         reference.
+        ///     </para>
         ///     <para xml:lang="zh-CN">启动替代音乐并释放此句柄，同时丢弃返回的替代句柄引用。</para>
         /// </summary>
         /// <param name="nextSource">
@@ -34,7 +37,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">替代播放选项；为 <see langword="null" /> 时使用带当前句柄生命周期作用域的默认值。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when replacement starts and this handle releases successfully; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when replacement starts and this handle releases successfully;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">替代音乐成功启动且此句柄成功释放时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool TrySwitchTo(AudioSource nextSource, AudioPlaybackOptions? options = null)
@@ -62,7 +68,10 @@ namespace STS2RitsuLib.Audio
         ///     <para xml:lang="zh-CN">替代播放选项；为 <see langword="null" /> 时使用带当前句柄生命周期作用域的默认值。</para>
         /// </param>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> when replacement starts and this handle releases successfully; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when replacement starts and this handle releases successfully;
+        ///         otherwise <see langword="false" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">替代音乐成功启动且此句柄成功释放时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool TrySwitchTo(AudioSource nextSource, out AudioMusicHandle? replacement,

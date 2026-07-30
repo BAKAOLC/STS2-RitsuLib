@@ -7,7 +7,8 @@ namespace STS2RitsuLib.Timeline
     /// <summary>
     ///     <para xml:lang="en">
     ///         Registers the <see cref="EpochEra" /> column and <c>EraPosition</c> used to place each
-    ///         <see cref="ModEpochTemplate" />. Base-game <see cref="EpochModel" /> instances reserve their cells first, preventing
+    ///         <see cref="ModEpochTemplate" />. Base-game <see cref="EpochModel" /> instances reserve their cells first,
+    ///         preventing
     ///         mod slots from silently overlapping them.
     ///     </para>
     ///     <para xml:lang="zh-CN">
@@ -377,8 +378,8 @@ namespace STS2RitsuLib.Timeline
                     continue;
 
                 var instance = (EpochModel)(Activator.CreateInstance(type)
-                                           ?? throw new InvalidOperationException(
-                                               $"Could not construct built-in Epoch type '{type.FullName}'."));
+                                            ?? throw new InvalidOperationException(
+                                                $"Could not construct built-in Epoch type '{type.FullName}'."));
                 Occupied.Add(ToOccupancyKey(instance.Era, instance.EraPosition));
             }
 

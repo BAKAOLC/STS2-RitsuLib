@@ -244,7 +244,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             Action<RitsuLibSidecarTypedDispatchContext<T>>[] handlers;
             lock (Gate)
             {
-                handlers = [..registration.Handlers];
+                handlers = [.. registration.Handlers];
             }
 
             var typedContext = new RitsuLibSidecarTypedDispatchContext<T>(

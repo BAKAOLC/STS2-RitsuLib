@@ -6,8 +6,14 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Localization
 {
     /// <summary>
-    ///     <para xml:lang="en">Registers virtual localization-table IDs that expose RitsuLib <see cref="I18N" /> dictionaries through the game's <c>LocString</c> and <c>LocTable</c> pipeline.</para>
-    ///     <para xml:lang="zh-CN">注册虚拟本地化表 ID，使 RitsuLib 的 <see cref="I18N" /> 字典可通过游戏的 <c>LocString</c> 和 <c>LocTable</c> 管线访问。</para>
+    ///     <para xml:lang="en">
+    ///         Registers virtual localization-table IDs that expose RitsuLib <see cref="I18N" /> dictionaries
+    ///         through the game's <c>LocString</c> and <c>LocTable</c> pipeline.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册虚拟本地化表 ID，使 RitsuLib 的 <see cref="I18N" /> 字典可通过游戏的 <c>LocString</c> 和 <c>LocTable</c>
+    ///         管线访问。
+    ///     </para>
     /// </summary>
     public static class I18NLocTableBridge
     {
@@ -24,12 +30,21 @@ namespace STS2RitsuLib.Localization
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="i18N" /> as the translation source for the virtual table ID <c>MODID_I18N_STEM</c>.</para>
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="i18N" /> as the translation source for the virtual table ID
+        ///         <c>MODID_I18N_STEM</c>.
+        ///     </para>
         ///     <para xml:lang="zh-CN">将 <paramref name="i18N" /> 注册为虚拟表 ID <c>MODID_I18N_STEM</c> 的翻译来源。</para>
         /// </summary>
         /// <returns>
-        ///     <para xml:lang="en"><see langword="true" /> if the table was registered or replaced; <see langword="false" /> if the ID already existed and <paramref name="replaceExisting" /> was <see langword="false" />.</para>
-        ///     <para xml:lang="zh-CN">成功注册或替换表时为 <see langword="true" />；ID 已存在且 <paramref name="replaceExisting" /> 为 <see langword="false" /> 时为 <see langword="false" />。</para>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the table was registered or replaced; <see langword="false" /> if
+        ///         the ID already existed and <paramref name="replaceExisting" /> was <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         成功注册或替换表时为 <see langword="true" />；ID 已存在且 <paramref name="replaceExisting" /> 为
+        ///         <see langword="false" /> 时为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryRegister(string modId, I18N i18N, string stem = "DEFAULT", bool replaceExisting = false)
         {

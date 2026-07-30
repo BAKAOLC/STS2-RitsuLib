@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using STS2RitsuLib.Patching.Models;
 
@@ -67,7 +68,10 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         public HarmonyMethod HarmonyMethod { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Removes the payload from the static registry. Call only after the owning Harmony patch is removed.</para>
+        ///     <para xml:lang="en">
+        ///         Removes the payload from the static registry. Call only after the owning Harmony patch is
+        ///         removed.
+        ///     </para>
         ///     <para xml:lang="zh-CN">从静态注册表移除此载荷。仅应在所属 Harmony 补丁已移除后调用。</para>
         /// </summary>
         public void Dispose()
@@ -118,7 +122,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         /// <remarks>
         ///     <para xml:lang="en">
-        ///         Apply the result through <see cref="STS2RitsuLib.Patching.Core.ModPatcher" />, which owns the generated payload for the
+        ///         Apply the result through <see cref="STS2RitsuLib.Patching.Core.ModPatcher" />, which owns the generated payload
+        ///         for the
         ///         applied patch's lifetime. For direct Harmony calls, use <see cref="CreateReturnInsertion" /> or
         ///         <see cref="PatchReturnInsertion" /> and retain the returned handle until the patch is removed.
         ///     </para>
@@ -281,15 +286,15 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             var assembly = AssemblyBuilder.DefineDynamicAssembly(
                 assemblyName,
                 AssemblyBuilderAccess.RunAndCollect);
-            var ignoresAccessChecksTo = typeof(System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute)
-                .GetConstructor(
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                    null,
-                    [typeof(string)],
-                    null)
-                ?? throw new MissingMethodException(
-                    typeof(System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute).FullName,
-                    ".ctor");
+            var ignoresAccessChecksTo = typeof(IgnoresAccessChecksToAttribute)
+                                            .GetConstructor(
+                                                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                                                null,
+                                                [typeof(string)],
+                                                null)
+                                        ?? throw new MissingMethodException(
+                                            typeof(IgnoresAccessChecksToAttribute).FullName,
+                                            ".ctor");
             assembly.SetCustomAttribute(new(
                 ignoresAccessChecksTo,
                 [sourceAssemblyName]));
@@ -314,7 +319,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
                 nameof(CreateDynamicTranspiler)));
             il.Emit(OpCodes.Ret);
 
-            return type.CreateType()!.GetMethod(
+            return type.CreateType().GetMethod(
                        method.Name,
                        BindingFlags.Public | BindingFlags.Static)
                    ?? throw new MissingMethodException(type.FullName, method.Name);
@@ -359,6 +364,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
             {
                 lock (Gate)
                 {
+                    // Keep overflow validation and first-lease registration as ordered state transitions.
+                    // ReSharper disable once ConvertIfStatementToSwitchStatement
                     if (_leaseCount == int.MaxValue)
                         throw new InvalidOperationException(
                             $"Harmony IL payload '{Payload.Id}' has too many active owners.");

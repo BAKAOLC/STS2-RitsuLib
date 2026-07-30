@@ -20,7 +20,10 @@ namespace STS2RitsuLib.Cards.Transforms
     ///     <para xml:lang="zh-CN">转化前包含 <paramref name="Original" /> 的牌堆。</para>
     /// </param>
     /// <param name="OriginalPileIndex">
-    ///     <para xml:lang="en">Index of <paramref name="Original" /> in <paramref name="OriginalPile" /> before the transformation.</para>
+    ///     <para xml:lang="en">
+    ///         Index of <paramref name="Original" /> in <paramref name="OriginalPile" /> before the
+    ///         transformation.
+    ///     </para>
     ///     <para xml:lang="zh-CN">转化前 <paramref name="Original" /> 在 <paramref name="OriginalPile" /> 中的索引。</para>
     /// </param>
     public readonly record struct ModCardTransformContext(

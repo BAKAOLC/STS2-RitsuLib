@@ -82,10 +82,12 @@ namespace STS2RitsuLib.Settings
         public static ModSettingsUiRefreshSpec ForBindings(params IModSettingsBinding[] bindings)
         {
             ArgumentNullException.ThrowIfNull(bindings);
+            // Keep validation failure separate from successful specification construction.
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (bindings.Any(static binding => binding == null))
                 throw new ArgumentException("Refresh bindings cannot contain null.", nameof(bindings));
 
-            return new(ModSettingsRefreshRegistrationKind.SpecificBindings, [..bindings]);
+            return new(ModSettingsRefreshRegistrationKind.SpecificBindings, [.. bindings]);
         }
 
         internal static bool ShouldRun(
