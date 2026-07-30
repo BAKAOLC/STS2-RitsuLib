@@ -20,7 +20,20 @@ namespace STS2RitsuLib.Settings
 
         internal static void NotifyValueWritten(IModSettingsBinding binding)
         {
-            ValueWritten?.Invoke(binding);
+            var handlers = ValueWritten?.GetInvocationList();
+            if (handlers == null)
+                return;
+
+            foreach (var handler in handlers)
+                try
+                {
+                    ((Action<IModSettingsBinding>)handler).Invoke(binding);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettings] ValueWritten callback failed for '{binding.GetType().FullName}': {ex}");
+                }
         }
 
         /// <summary>
@@ -36,8 +49,17 @@ namespace STS2RitsuLib.Settings
 
             ValueWritten += Wrapped;
 
-            anchor.Connect(Node.SignalName.TreeExiting, Callable.From(() => ValueWritten -= Wrapped),
-                (uint)GodotObject.ConnectFlags.OneShot);
+            try
+            {
+                anchor.Connect(Node.SignalName.TreeExiting, Callable.From(() => ValueWritten -= Wrapped),
+                    (uint)GodotObject.ConnectFlags.OneShot);
+            }
+            catch
+            {
+                ValueWritten -= Wrapped;
+                throw;
+            }
+
             return;
 
             void Wrapped(IModSettingsBinding binding)
