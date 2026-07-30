@@ -248,6 +248,12 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 if (string.IsNullOrWhiteSpace(slot.Text))
                     continue;
 
+                if (!Enum.IsDefined(slot.Corner))
+                {
+                    ReportSlotRejectedOnce(host, hostKind, in slot, "corner value is not defined");
+                    continue;
+                }
+
                 if (slot.Corner == ExtraIconAmountLabelCorner.Custom &&
                     (slot.CustomRect.Size.X <= 0f || slot.CustomRect.Size.Y <= 0f))
                     continue;
@@ -255,7 +261,11 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 if (slot.Corner != ExtraIconAmountLabelCorner.Custom)
                     if (!occupied.Add(slot.Corner))
                     {
-                        ReportCornerRejectedOnce(host, hostKind, in slot);
+                        ReportSlotRejectedOnce(
+                            host,
+                            hostKind,
+                            in slot,
+                            "requested preset corner is already occupied by another extra badge");
                         continue;
                     }
 
@@ -383,14 +393,14 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             };
         }
 
-        private static void ReportCornerRejectedOnce(
+        private static void ReportSlotRejectedOnce(
             Control host,
             ExtraCornerHostKind hostKind,
-            in ExtraIconAmountLabelSpec slot)
+            in ExtraIconAmountLabelSpec slot,
+            string reason)
         {
             var hostId = host.GetInstanceId();
             var text = slot.Text.Trim();
-            const string reason = "requested corner is already occupied by another extra badge";
             var hostKey = GetHostLogKey(host, hostKind);
 
             var key = $"{hostKind}:{hostKey}:{slot.Corner}:{reason}";
