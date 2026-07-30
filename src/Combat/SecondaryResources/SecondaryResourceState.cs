@@ -64,8 +64,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var oldAmount = Get(definition.Id);
             var newAmount = Clamp(definition, amount);
-            if (oldAmount == newAmount && _amounts.ContainsKey(definition.Id))
+            if (oldAmount == newAmount)
+            {
+                _amounts.TryAdd(definition.Id, newAmount);
                 return newAmount;
+            }
 
             _amounts[definition.Id] = newAmount;
             if (emit)
@@ -102,7 +105,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     Signed delta from old to new amount.
         ///     从旧数量到新数量的带符号差值。
         /// </summary>
-        public int Delta => NewAmount - OldAmount;
+        public int Delta => SecondaryResourceAmountMath.SubtractSaturating(NewAmount, OldAmount);
     }
 
     /// <summary>
@@ -179,7 +182,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var context = new SecondaryResourceMaxContext(combatState, player, definition);
             var modified = SecondaryResourceHook.ModifyMaxAmount(context, definition.BaseMaxAmount.Value);
-            return Math.Clamp((int)Math.Floor(modified), definition.MinAmount, definition.HardMaxAmount);
+            return SecondaryResourceAmountMath.FloorAndClamp(
+                modified,
+                definition.MinAmount,
+                definition.HardMaxAmount);
         }
 
         internal static void SetFromPersistence(Player player, string resourceId, int amount)
@@ -194,6 +200,24 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             return player.PlayerCombatState ??
                    throw new InvalidOperationException("Player does not have a combat state.");
+        }
+    }
+
+    internal static class SecondaryResourceAmountMath
+    {
+        public static int AddSaturating(int left, int right)
+        {
+            return (int)Math.Clamp((long)left + right, int.MinValue, int.MaxValue);
+        }
+
+        public static int SubtractSaturating(int left, int right)
+        {
+            return (int)Math.Clamp((long)left - right, int.MinValue, int.MaxValue);
+        }
+
+        public static int FloorAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Floor(value), min, max);
         }
     }
 }

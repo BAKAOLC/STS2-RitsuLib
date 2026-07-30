@@ -45,21 +45,38 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (amount <= 0 || !TryResolve(player, resourceId, out var combatState, out var definition))
                 return Get(player, resourceId);
 
+            return await GainCore(
+                combatState,
+                player,
+                definition,
+                amount,
+                SecondaryResourceChangeReason.Gain,
+                source);
+        }
+
+        private static async Task<int> GainCore(
+            CombatStateLike combatState,
+            Player player,
+            SecondaryResourceDefinition definition,
+            int amount,
+            SecondaryResourceChangeReason reason,
+            AbstractModel? source)
+        {
             var context = new SecondaryResourceContext(combatState, player, definition, source);
             if (!SecondaryResourceHook.ShouldGain(context, amount))
-                return Get(player, resourceId);
+                return Get(player, definition.Id);
 
             var modified = SecondaryResourceHook.ModifyGain(context, amount);
-            var effective = Math.Max(0, (int)Math.Floor(modified));
+            var effective = SecondaryResourceAmountMath.FloorAndClamp(modified, 0, int.MaxValue);
             if (effective <= 0)
-                return Get(player, resourceId);
+                return Get(player, definition.Id);
 
             return await SetCore(
                 combatState,
                 player,
                 definition,
-                Get(player, definition.Id) + effective,
-                SecondaryResourceChangeReason.Gain,
+                SecondaryResourceAmountMath.AddSaturating(Get(player, definition.Id), effective),
+                reason,
                 source);
         }
 
@@ -80,7 +97,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 combatState,
                 player,
                 definition,
-                Get(player, definition.Id) - amount,
+                SecondaryResourceAmountMath.SubtractSaturating(Get(player, definition.Id), amount),
                 SecondaryResourceChangeReason.Lose,
                 source);
         }
@@ -194,6 +211,23 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!TryResolve(player, resourceId, out var combatState, out var definition))
                 return 0;
 
+            return await ResetCore(
+                combatState,
+                player,
+                definition,
+                toMax,
+                SecondaryResourceChangeReason.Reset,
+                source);
+        }
+
+        private static async Task<int> ResetCore(
+            CombatStateLike combatState,
+            Player player,
+            SecondaryResourceDefinition definition,
+            bool toMax,
+            SecondaryResourceChangeReason reason,
+            AbstractModel? source)
+        {
             var context = new SecondaryResourceContext(combatState, player, definition, source);
             if (!SecondaryResourceHook.ShouldReset(context))
                 return Get(player, definition.Id);
@@ -208,14 +242,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 player,
                 definition,
                 target,
-                SecondaryResourceChangeReason.Reset,
+                reason,
                 source,
                 true);
 
             if (oldAmount != newAmount)
                 SecondaryResourceHistory.Reset(combatState,
-                    new(combatState, player, definition, oldAmount, newAmount, newAmount - oldAmount,
-                        SecondaryResourceChangeReason.Reset, source));
+                    new(combatState, player, definition, oldAmount, newAmount,
+                        SecondaryResourceAmountMath.SubtractSaturating(newAmount, oldAmount),
+                        reason, source));
 
             return newAmount;
         }
@@ -245,14 +280,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 case SecondaryResourceTurnStartPolicy.None:
                     return;
                 case SecondaryResourceTurnStartPolicy.ResetToMax:
-                    await Reset(player, definition.Id, true, source);
+                    if (TryResolve(player, definition.Id, out var resetCombatState, out _))
+                        await ResetCore(
+                            resetCombatState,
+                            player,
+                            definition,
+                            true,
+                            SecondaryResourceChangeReason.TurnStart,
+                            source);
                     return;
                 case SecondaryResourceTurnStartPolicy.AddMaxToCurrent:
-                    if (GetMax(player, definition.Id) is { } max)
-                        await Gain(player, definition.Id, max, source);
+                    if (GetMax(player, definition.Id) is { } max && max > 0 &&
+                        TryResolve(player, definition.Id, out var gainCombatState, out _))
+                        await GainCore(
+                            gainCombatState,
+                            player,
+                            definition,
+                            max,
+                            SecondaryResourceChangeReason.TurnStart,
+                            source);
                     return;
                 case SecondaryResourceTurnStartPolicy.Clear:
-                    await Set(player, definition.Id, definition.MinAmount, source);
+                    if (TryResolve(player, definition.Id, out var clearCombatState, out _))
+                        await SetCore(
+                            clearCombatState,
+                            player,
+                            definition,
+                            definition.MinAmount,
+                            SecondaryResourceChangeReason.TurnStart,
+                            source);
                     return;
                 default:
 #pragma warning disable CA2208
@@ -282,7 +338,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 definition,
                 oldAmount,
                 newAmount,
-                newAmount - oldAmount,
+                SecondaryResourceAmountMath.SubtractSaturating(newAmount, oldAmount),
                 reason,
                 source);
 
