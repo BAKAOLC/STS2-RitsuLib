@@ -52,8 +52,10 @@ namespace STS2RitsuLib.Platform.Steam
         uint PageSize,
         uint? TotalMatchingResults)
     {
-        internal uint? TotalPages => TotalMatchingResults is { } total
-            ? Math.Max(1u, (total + PageSize - 1) / PageSize)
+        internal uint? TotalPages => TotalMatchingResults is { } total && PageSize > 0
+            ? total == 0
+                ? 1
+                : 1 + (total - 1) / PageSize
             : null;
 
         internal bool HasPreviousPage => Page > 1;
