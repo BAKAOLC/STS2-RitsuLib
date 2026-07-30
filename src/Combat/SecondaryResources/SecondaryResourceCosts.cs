@@ -192,6 +192,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             ArgumentNullException.ThrowIfNull(cost);
+            ValidateCost(cost);
 
             var layers = GetLayers(resourceId);
             layers.RemoveAll(layer => layer.Duration == duration);
@@ -331,11 +332,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private List<SecondaryResourceCostLayer> GetLayers(string resourceId)
         {
             var id = resourceId.Trim();
-            if (_costs.TryGetValue(id, out var layers)) return layers;
+            if (_costs.TryGetValue(id, out var layers))
+                return layers;
+
             layers = [];
             _costs[id] = layers;
 
             return layers;
+        }
+
+        private static void ValidateCost(SecondaryResourceCost cost)
+        {
+            if (cost.CostsX && cost.XMultiplier <= 0)
+                throw new ArgumentOutOfRangeException(
+                    nameof(cost),
+                    "An X secondary-resource cost must have a positive multiplier.");
         }
     }
 
@@ -691,9 +702,6 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public static class SecondaryResourcePaymentResolver
     {
-        private const string CardUseContributorSurface = "secondary-resource/card-uses";
-        private const string CardCostContributorSurface = "secondary-resource/card-cost";
-
         /// <summary>
         ///     Resolves secondary-resource costs for a card.
         ///     解析卡牌的次级资源费用。
@@ -957,18 +965,25 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             uses.AddRange(GetCapabilityUses(card));
 
-            return
-            [
-                .. uses
-                    .Where(static use => use.IsMaterial)
-                    .OrderBy(static use => use.Kind switch
-                    {
-                        SecondaryResourceUseKind.RequiredCost => 0,
-                        SecondaryResourceUseKind.ExtraSpend => 1,
-                        _ => 2,
-                    })
-                    .ThenBy(static use => use.Id, StringComparer.Ordinal),
-            ];
+            var result = uses
+                .Where(static use => use.IsMaterial)
+                .OrderBy(static use => use.Kind switch
+                {
+                    SecondaryResourceUseKind.RequiredCost => 0,
+                    SecondaryResourceUseKind.ExtraSpend => 1,
+                    _ => 2,
+                })
+                .ThenBy(static use => use.Id, StringComparer.Ordinal)
+                .ToArray();
+
+            var duplicateUse = result
+                .GroupBy(static use => use.Id, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(static group => group.Count() > 1);
+            if (duplicateUse != null)
+                throw new InvalidOperationException(
+                    $"Card {card.Id.Entry} has duplicate secondary-resource use id '{duplicateUse.Key}'.");
+
+            return result;
         }
 
         internal static IReadOnlyList<SecondaryResourcePlayUse> SnapshotUsesForUpgradePreview(CardModel card)
@@ -1319,17 +1334,44 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceUseContributor>(card))
             {
-                IEnumerable<SecondaryResourcePlayUse> uses = [];
-                ModelCapabilityHost.TryRun(
-                    (IModelCapability)capability,
-                    card,
-                    CardUseContributorSurface,
-                    () => uses = capability.GetSecondaryResourceUses(card) ?? []);
+                var contributed = capability.GetSecondaryResourceUses(card)?.ToArray() ??
+                                  throw new InvalidOperationException(
+                                      $"Secondary-resource use contributor '{capability.GetType().FullName}' returned null.");
+                foreach (var use in contributed)
+                    ValidateCapabilityUse(use);
 
-                foreach (var use in uses)
+                foreach (var use in contributed.Select(static use => use with
+                         {
+                             Id = use.Id.Trim(),
+                             ResourceId = use.ResourceId.Trim(),
+                         }))
                     if (use.IsMaterial)
                         yield return use;
             }
+        }
+
+        private static void ValidateCapabilityUse(SecondaryResourcePlayUse? use)
+        {
+            if (use == null)
+                throw new InvalidOperationException("A secondary-resource use contributor returned a null use.");
+            if (string.IsNullOrWhiteSpace(use.Id))
+                throw new InvalidOperationException(
+                    "A secondary-resource use contributor returned a use without an id.");
+            if (string.IsNullOrWhiteSpace(use.ResourceId))
+                throw new InvalidOperationException(
+                    $"Secondary-resource use '{use.Id}' does not specify a resource id.");
+            if (use.Cost == null)
+                throw new InvalidOperationException(
+                    $"Secondary-resource use '{use.Id}' does not specify a cost.");
+            if (use.Cost.CostsX && use.Cost.XMultiplier <= 0)
+                throw new InvalidOperationException(
+                    $"Secondary-resource X use '{use.Id}' must have a positive multiplier.");
+            if (use.MaxExtraStacks is < 0)
+                throw new InvalidOperationException(
+                    $"Secondary-resource use '{use.Id}' has a negative maximum stack count.");
+            if (use.Kind == SecondaryResourceUseKind.ExtraSpend && use.Cost.CostsX)
+                throw new InvalidOperationException(
+                    $"Repeatable extra secondary-resource use '{use.Id}' cannot have an X cost.");
         }
 
         private static decimal ModifyLocalCost(
@@ -1341,11 +1383,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var result = cost;
             var context = new SecondaryResourceCardCostContext(card, definition, use, cost);
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceCostContributor>(card))
-                ModelCapabilityHost.TryRun(
-                    (IModelCapability)capability,
-                    card,
-                    CardCostContributorSurface,
-                    () => result = capability.ModifySecondaryResourceCost(context, result));
+                result = capability.ModifySecondaryResourceCost(context, result);
 
             return result;
         }

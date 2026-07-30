@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.SecondaryResources
@@ -282,6 +283,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentException.ThrowIfNullOrWhiteSpace(useId);
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             ArgumentNullException.ThrowIfNull(cost);
+            if (cost.CostsX && cost.XMultiplier <= 0)
+                throw new ArgumentOutOfRangeException(
+                    nameof(cost),
+                    "An X secondary-resource cost must have a positive multiplier.");
             if (maxExtraStacks is < 0)
                 throw new ArgumentOutOfRangeException(nameof(maxExtraStacks));
             if (kind == SecondaryResourceUseKind.ExtraSpend && cost.CostsX)
@@ -413,7 +418,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private List<SecondaryResourcePlayUseLayer> GetLayers(string useId)
         {
-            if (_uses.TryGetValue(useId, out var layers)) return layers;
+            if (_uses.TryGetValue(useId, out var layers))
+                return layers;
+
             layers = [];
             _uses[useId] = layers;
 
@@ -467,7 +474,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return false;
 
             return (card.TryGetSecondaryCosts(out var costs) && costs.HasCosts) ||
-                   (card.TryGetSecondaryResourceUses(out var uses) && uses.HasUses);
+                   (card.TryGetSecondaryResourceUses(out var uses) && uses.HasUses) ||
+                   ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceUseContributor>(card).Any();
         }
 
         internal static bool CopySecondaryResourceUsesTo(this CardModel source, CardModel destination)
