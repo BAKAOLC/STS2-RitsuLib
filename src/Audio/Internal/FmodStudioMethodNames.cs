@@ -3,8 +3,8 @@ using Godot;
 namespace STS2RitsuLib.Audio.Internal
 {
     /// <summary>
-    ///     GDExtension method names on <c>FmodServer</c> (Godot FMOD addon).
-    ///     <c>FmodServer</c> 上的 GDExtension 方法名（Godot FMOD addon）。
+    ///     <para xml:lang="en">Defines the bundled FMOD GDExtension method names invoked on <c>FmodServer</c>.</para>
+    ///     <para xml:lang="zh-CN">定义在 <c>FmodServer</c> 上调用的随游戏提供 FMOD GDExtension 方法名。</para>
     /// </summary>
     internal static class FmodStudioMethodNames
     {

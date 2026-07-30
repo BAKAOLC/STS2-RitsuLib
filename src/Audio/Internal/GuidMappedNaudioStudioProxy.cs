@@ -3,10 +3,14 @@ using Godot;
 namespace STS2RitsuLib.Audio.Internal
 {
     /// <summary>
-    ///     Mirrors <c>audio_manager_proxy.gd</c> bookkeeping for <c>event:/…</c> paths that exist only via guids.txt + mod
-    ///     banks (no strings.bank path table).
-    ///     复现 <c>audio_manager_proxy.gd</c> 对仅通过 guids.txt + mod
-    ///     bank 存在的 <c>event:/…</c> 路径的簿记（没有 strings.bank 路径表）。
+    ///     <para xml:lang="en">
+    ///         Mirrors the loop, music, and run-audio ownership used by <c>audio_manager_proxy.gd</c> for
+    ///         <c>event:/…</c> paths available through <c>guids.txt</c> and mod banks but absent from a strings bank.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对可通过 <c>guids.txt</c> 和模组音频库访问、但不存在于 strings bank 中的 <c>event:/…</c>
+    ///         路径，复现 <c>audio_manager_proxy.gd</c> 使用的循环、音乐和局内音频归属管理。
+    ///     </para>
     /// </summary>
     internal static class GuidMappedNaudioStudioProxy
     {

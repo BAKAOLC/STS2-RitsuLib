@@ -3,8 +3,8 @@ using Godot;
 namespace STS2RitsuLib.Audio.Internal
 {
     /// <summary>
-    ///     Centralized FmodServer lookup and guarded <see cref="GodotObject.Call(StringName, Variant[])" /> calls.
-    ///     集中式 FmodServer 查找和受保护的 <see cref="GodotObject.Call(StringName, Variant[])" /> 调用。
+    ///     <para xml:lang="en">Centralizes guarded <c>FmodServer</c> lookup and dynamic Godot method invocation.</para>
+    ///     <para xml:lang="zh-CN">集中执行受保护的 <c>FmodServer</c> 查找和 Godot 动态方法调用。</para>
     /// </summary>
     internal static class FmodStudioGateway
     {

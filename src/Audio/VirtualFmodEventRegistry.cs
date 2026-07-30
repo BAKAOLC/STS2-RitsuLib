@@ -3,11 +3,15 @@ using System.Collections.ObjectModel;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Lightweight event-path mapping for audio resources that are not authored in an FMOD Studio bank. This is a
-    ///     compatibility layer: it reuses FMOD file playback and RitsuLib lifecycle routing, but it is not a native FMOD
-    ///     Studio event and does not provide DSP graph membership or dynamic bus routing.
-    ///     非 FMOD Studio bank 音频资源的轻量 event-path 映射。这是兼容层：复用 FMOD 文件播放和 RitsuLib
-    ///     生命周期路由，但它不是 native FMOD Studio event，也不提供 DSP 图成员关系或动态 bus 路由。
+    ///     <para xml:lang="en">
+    ///         Maps FMOD-style event paths to Godot audio resources for compatibility with native game call sites. Virtual
+    ///         events use RitsuLib file playback and lifecycle tracking, but are not Studio events and do not join the FMOD
+    ///         DSP graph or follow later bus-volume changes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 FMOD 风格的事件路径映射到 Godot 音频资源，以兼容游戏的原生调用位置。虚拟事件使用 RitsuLib
+    ///         的文件播放和生命周期跟踪，但不属于 Studio 事件，也不会加入 FMOD DSP 图或跟随之后的总线音量变化。
+    ///     </para>
     /// </summary>
     public static class VirtualFmodEventRegistry
     {
@@ -21,9 +25,29 @@ namespace STS2RitsuLib.Audio
         private static IAudioHandle? _music;
 
         /// <summary>
-        ///     Registers a one-shot event path backed by a Godot resource path.
-        ///     注册由 Godot 资源路径支撑的 one-shot event path。
+        ///     <para xml:lang="en">Registers or replaces a one-shot event backed by one Godot audio resource.</para>
+        ///     <para xml:lang="zh-CN">注册或替换由单个 Godot 音频资源支撑的单次事件。</para>
         /// </summary>
+        /// <param name="eventPath">
+        ///     <para xml:lang="en">The case-sensitive virtual event path.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的虚拟事件路径。</para>
+        /// </param>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The packed, imported, or raw Godot audio-resource path.</para>
+        ///     <para xml:lang="zh-CN">打包、导入或原始 Godot 音频资源路径。</para>
+        /// </param>
+        /// <param name="busPath">
+        ///     <para xml:lang="en">The bus whose current volume is sampled when playback starts.</para>
+        ///     <para xml:lang="zh-CN">开始播放时采样当前音量的总线路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The finite, non-negative event-volume multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且非负的事件音量倍率。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The finite, positive pitch multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
+        /// </param>
         public static void RegisterOneShot(string eventPath, string resourcePath,
             string busPath = FmodStudioRouting.SfxBus, float volume = 1f, float pitch = 1f)
         {
@@ -31,9 +55,25 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Registers multiple one-shot event paths from an event-path-to-resource-path map.
-        ///     通过 event path 到资源路径的映射批量注册 one-shot event path。
+        ///     <para xml:lang="en">Registers or replaces one-shot events from an event-path-to-resource-path map.</para>
+        ///     <para xml:lang="zh-CN">根据事件路径到资源路径的映射注册或替换多个单次事件。</para>
         /// </summary>
+        /// <param name="eventResourcePaths">
+        ///     <para xml:lang="en">The case-sensitive event paths and their Godot audio resources.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的事件路径及其 Godot 音频资源。</para>
+        /// </param>
+        /// <param name="busPath">
+        ///     <para xml:lang="en">The bus whose current volume is sampled for each playback.</para>
+        ///     <para xml:lang="zh-CN">每次播放时采样当前音量的总线路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The finite, non-negative event-volume multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且非负的事件音量倍率。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The finite, positive pitch multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
+        /// </param>
         public static void RegisterOneShots(IReadOnlyDictionary<string, string> eventResourcePaths,
             string busPath = FmodStudioRouting.SfxBus, float volume = 1f, float pitch = 1f)
         {
@@ -44,10 +84,33 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Registers a one-shot event path backed by multiple resource variants. Variants are only supported for
-        ///     one-shot virtual events.
-        ///     注册由多个资源变体支撑的 one-shot event path。资源变体仅支持 one-shot 虚拟 event。
+        ///     <para xml:lang="en">Registers or replaces a one-shot event backed by multiple resource variants.</para>
+        ///     <para xml:lang="zh-CN">注册或替换由多个资源变体支撑的单次事件。</para>
         /// </summary>
+        /// <param name="eventPath">
+        ///     <para xml:lang="en">The case-sensitive virtual event path.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的虚拟事件路径。</para>
+        /// </param>
+        /// <param name="resourcePaths">
+        ///     <para xml:lang="en">The non-empty variant list, copied in enumeration order.</para>
+        ///     <para xml:lang="zh-CN">非空的变体列表；注册时按枚举顺序复制。</para>
+        /// </param>
+        /// <param name="selection">
+        ///     <para xml:lang="en">How a resource is selected for each playback.</para>
+        ///     <para xml:lang="zh-CN">每次播放时选择资源的方式。</para>
+        /// </param>
+        /// <param name="busPath">
+        ///     <para xml:lang="en">The bus whose current volume is sampled when playback starts.</para>
+        ///     <para xml:lang="zh-CN">开始播放时采样当前音量的总线路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The finite, non-negative event-volume multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且非负的事件音量倍率。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The finite, positive pitch multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
+        /// </param>
         public static void RegisterOneShotVariants(string eventPath, IReadOnlyList<string> resourcePaths,
             VirtualFmodVariantSelection selection = VirtualFmodVariantSelection.Random,
             string busPath = FmodStudioRouting.SfxBus, float volume = 1f, float pitch = 1f)
@@ -64,9 +127,29 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Registers multiple one-shot event paths from an event-path-to-resource-variants map.
-        ///     通过 event path 到资源变体列表的映射批量注册 one-shot event path。
+        ///     <para xml:lang="en">Registers or replaces variant-backed one-shot events from a map.</para>
+        ///     <para xml:lang="zh-CN">根据映射注册或替换多个由变体支撑的单次事件。</para>
         /// </summary>
+        /// <param name="eventResourcePaths">
+        ///     <para xml:lang="en">The case-sensitive event paths and their non-empty resource-variant lists.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的事件路径及其非空资源变体列表。</para>
+        /// </param>
+        /// <param name="selection">
+        ///     <para xml:lang="en">How a resource is selected for each playback.</para>
+        ///     <para xml:lang="zh-CN">每次播放时选择资源的方式。</para>
+        /// </param>
+        /// <param name="busPath">
+        ///     <para xml:lang="en">The bus whose current volume is sampled for each playback.</para>
+        ///     <para xml:lang="zh-CN">每次播放时采样当前音量的总线路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The finite, non-negative event-volume multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且非负的事件音量倍率。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The finite, positive pitch multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
+        /// </param>
         public static void RegisterOneShotVariants(
             IReadOnlyDictionary<string, IReadOnlyList<string>> eventResourcePaths,
             VirtualFmodVariantSelection selection = VirtualFmodVariantSelection.Random,
@@ -79,9 +162,37 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Registers a loop event path backed by a Godot resource path.
-        ///     注册由 Godot 资源路径支撑的 loop event path。
+        ///     <para xml:lang="en">Registers or replaces a streaming loop event backed by a Godot audio resource.</para>
+        ///     <para xml:lang="zh-CN">注册或替换由 Godot 音频资源支撑的流式循环事件。</para>
         /// </summary>
+        /// <param name="eventPath">
+        ///     <para xml:lang="en">The case-sensitive virtual event path.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的虚拟事件路径。</para>
+        /// </param>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The packed, imported, or raw Godot audio-resource path.</para>
+        ///     <para xml:lang="zh-CN">打包、导入或原始 Godot 音频资源路径。</para>
+        /// </param>
+        /// <param name="busPath">
+        ///     <para xml:lang="en">The bus whose current volume is sampled when playback starts.</para>
+        ///     <para xml:lang="zh-CN">开始播放时采样当前音量的总线路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The finite, non-negative event-volume multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且非负的事件音量倍率。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The finite, positive pitch multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
+        /// </param>
+        /// <param name="stream">
+        ///     <para xml:lang="en">Must be <see langword="true" /> because the bundled backend supports looping only for streaming music files.</para>
+        ///     <para xml:lang="zh-CN">必须为 <see langword="true" />，因为随游戏提供的后端仅支持流式音乐文件循环播放。</para>
+        /// </param>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">Thrown when <paramref name="stream" /> is <see langword="false" /> or another definition value is invalid.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="stream" /> 为 <see langword="false" /> 或其他定义值无效时抛出。</para>
+        /// </exception>
         public static void RegisterLoop(string eventPath, string resourcePath,
             string busPath = FmodStudioRouting.SfxBus, float volume = 1f, float pitch = 1f, bool stream = true)
         {
@@ -89,9 +200,29 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Registers a music event path backed by a Godot resource path.
-        ///     注册由 Godot 资源路径支撑的 music event path。
+        ///     <para xml:lang="en">Registers or replaces a streaming music event backed by a Godot audio resource.</para>
+        ///     <para xml:lang="zh-CN">注册或替换由 Godot 音频资源支撑的流式音乐事件。</para>
         /// </summary>
+        /// <param name="eventPath">
+        ///     <para xml:lang="en">The case-sensitive virtual event path.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的虚拟事件路径。</para>
+        /// </param>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The packed, imported, or raw Godot audio-resource path.</para>
+        ///     <para xml:lang="zh-CN">打包、导入或原始 Godot 音频资源路径。</para>
+        /// </param>
+        /// <param name="busPath">
+        ///     <para xml:lang="en">The bus whose current volume is sampled when playback starts.</para>
+        ///     <para xml:lang="zh-CN">开始播放时采样当前音量的总线路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The finite, non-negative event-volume multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且非负的事件音量倍率。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The finite, positive pitch multiplier.</para>
+        ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
+        /// </param>
         public static void RegisterMusic(string eventPath, string resourcePath,
             string busPath = FmodStudioRouting.MusicBus, float volume = 1f, float pitch = 1f)
         {
@@ -99,9 +230,13 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Registers or replaces a virtual event definition.
-        ///     注册或替换一个虚拟 event 定义。
+        ///     <para xml:lang="en">Validates, snapshots, and registers or replaces a virtual event definition.</para>
+        ///     <para xml:lang="zh-CN">验证并快照虚拟事件定义，然后注册或替换该定义。</para>
         /// </summary>
+        /// <param name="definition">
+        ///     <para xml:lang="en">The definition to register. Replacing an event resets its round-robin position.</para>
+        ///     <para xml:lang="zh-CN">要注册的定义。替换事件时会重置其轮询位置。</para>
+        /// </param>
         public static void Register(VirtualFmodEventDefinition definition)
         {
             ArgumentNullException.ThrowIfNull(definition);
@@ -146,9 +281,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Removes a virtual event mapping.
-        ///     移除一个虚拟 event 映射。
+        ///     <para xml:lang="en">Removes a virtual event definition and its round-robin position without stopping active playback.</para>
+        ///     <para xml:lang="zh-CN">移除虚拟事件定义及其轮询位置，但不停止正在进行的播放。</para>
         /// </summary>
+        /// <param name="eventPath">
+        ///     <para xml:lang="en">The case-sensitive virtual event path.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的虚拟事件路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when a definition was removed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">成功移除定义时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public static bool Unregister(string eventPath)
         {
             lock (Gate)
@@ -159,9 +302,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     True when <paramref name="eventPath" /> is registered as a virtual event.
-        ///     当 <paramref name="eventPath" /> 已注册为虚拟 event 时为 true。
+        ///     <para xml:lang="en">Gets whether an exact event path is registered as a virtual event.</para>
+        ///     <para xml:lang="zh-CN">获取准确事件路径是否已注册为虚拟事件。</para>
         /// </summary>
+        /// <param name="eventPath">
+        ///     <para xml:lang="en">The case-sensitive event path to test.</para>
+        ///     <para xml:lang="zh-CN">要测试的区分大小写事件路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when a nonblank exact path is registered; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">非空白的准确路径已注册时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public static bool IsRegistered(string? eventPath)
         {
             if (string.IsNullOrWhiteSpace(eventPath))
@@ -412,9 +563,37 @@ namespace STS2RitsuLib.Audio
     }
 
     /// <summary>
-    ///     Definition for a virtual FMOD event backed by a Godot audio resource.
-    ///     由 Godot 音频资源支撑的虚拟 FMOD event 定义。
+    ///     <para xml:lang="en">Defines an FMOD-style virtual event backed by one or more Godot audio resources.</para>
+    ///     <para xml:lang="zh-CN">定义由一个或多个 Godot 音频资源支撑的 FMOD 风格虚拟事件。</para>
     /// </summary>
+    /// <param name="EventPath">
+    ///     <para xml:lang="en">The case-sensitive virtual event path.</para>
+    ///     <para xml:lang="zh-CN">区分大小写的虚拟事件路径。</para>
+    /// </param>
+    /// <param name="ResourcePath">
+    ///     <para xml:lang="en">The primary packed, imported, or raw Godot audio-resource path.</para>
+    ///     <para xml:lang="zh-CN">主要的打包、导入或原始 Godot 音频资源路径。</para>
+    /// </param>
+    /// <param name="Kind">
+    ///     <para xml:lang="en">The playback role supported by the event.</para>
+    ///     <para xml:lang="zh-CN">事件支持的播放用途。</para>
+    /// </param>
+    /// <param name="BusPath">
+    ///     <para xml:lang="en">The bus whose current volume is sampled when playback starts.</para>
+    ///     <para xml:lang="zh-CN">开始播放时采样当前音量的总线路径。</para>
+    /// </param>
+    /// <param name="Volume">
+    ///     <para xml:lang="en">The finite, non-negative event-volume multiplier.</para>
+    ///     <para xml:lang="zh-CN">有限且非负的事件音量倍率。</para>
+    /// </param>
+    /// <param name="Pitch">
+    ///     <para xml:lang="en">The finite, positive pitch multiplier.</para>
+    ///     <para xml:lang="zh-CN">有限且为正的音高倍率。</para>
+    /// </param>
+    /// <param name="Stream">
+    ///     <para xml:lang="en">Whether file playback uses the streaming, looping backend mode. Registered loops require this to be <see langword="true" />.</para>
+    ///     <para xml:lang="zh-CN">文件播放是否使用流式循环后端模式。注册循环事件时必须为 <see langword="true" />。</para>
+    /// </param>
     public sealed record VirtualFmodEventDefinition(
         string EventPath,
         string ResourcePath,
@@ -425,58 +604,58 @@ namespace STS2RitsuLib.Audio
         bool Stream = false)
     {
         /// <summary>
-        ///     Resource variants used by one-shot virtual events. Loop and music virtual events must use one resource.
-        ///     one-shot 虚拟 event 使用的资源变体。loop 和 music 虚拟 event 必须只使用一个资源。
+        ///     <para xml:lang="en">Gets or initializes the resource variants used by a one-shot event; loops and music require exactly one.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化单次事件使用的资源变体；循环和音乐事件必须恰好使用一个资源。</para>
         /// </summary>
         public IReadOnlyList<string> ResourcePaths { get; init; } = [ResourcePath];
 
         /// <summary>
-        ///     Selection mode for one-shot resource variants.
-        ///     one-shot 资源变体的选择模式。
+        ///     <para xml:lang="en">Gets or initializes how one-shot resource variants are selected.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化单次事件资源变体的选择方式。</para>
         /// </summary>
         public VirtualFmodVariantSelection VariantSelection { get; init; } = VirtualFmodVariantSelection.Random;
     }
 
     /// <summary>
-    ///     Variant selection mode for one-shot virtual FMOD events.
-    ///     one-shot 虚拟 FMOD event 的资源变体选择模式。
+    ///     <para xml:lang="en">Specifies how a one-shot virtual event selects a resource variant.</para>
+    ///     <para xml:lang="zh-CN">指定单次虚拟事件选择资源变体的方式。</para>
     /// </summary>
     public enum VirtualFmodVariantSelection
     {
         /// <summary>
-        ///     Select a random resource each time the event is played.
-        ///     每次播放 event 时随机选择资源。
+        ///     <para xml:lang="en">Selects a resource independently through <see cref="Random.Shared" /> for each playback.</para>
+        ///     <para xml:lang="zh-CN">每次播放时通过 <see cref="Random.Shared" /> 独立随机选择资源。</para>
         /// </summary>
         Random,
 
         /// <summary>
-        ///     Cycle through resources in registration order.
-        ///     按注册顺序轮询资源。
+        ///     <para xml:lang="en">Cycles through resources in registration order, restarting after registration or replacement.</para>
+        ///     <para xml:lang="zh-CN">按注册顺序轮询资源；注册或替换后从头开始。</para>
         /// </summary>
         RoundRobin,
     }
 
     /// <summary>
-    ///     Playback role for a virtual FMOD event.
-    ///     虚拟 FMOD event 的播放角色。
+    ///     <para xml:lang="en">Specifies the playback role of a virtual FMOD event.</para>
+    ///     <para xml:lang="zh-CN">指定虚拟 FMOD 事件的播放用途。</para>
     /// </summary>
     public enum VirtualFmodEventKind
     {
         /// <summary>
-        ///     Short one-shot sound.
-        ///     短 one-shot 音效。
+        ///     <para xml:lang="en">A fully loaded sound played once.</para>
+        ///     <para xml:lang="zh-CN">完整加载并单次播放的音效。</para>
         /// </summary>
         OneShot,
 
         /// <summary>
-        ///     Looping sound.
-        ///     循环音效。
+        ///     <para xml:lang="en">A streaming, looping sound tracked in the room lifecycle scope.</para>
+        ///     <para xml:lang="zh-CN">在房间生命周期作用域中跟踪的流式循环音效。</para>
         /// </summary>
         Loop,
 
         /// <summary>
-        ///     Single active music track.
-        ///     单个活动音乐轨道。
+        ///     <para xml:lang="en">A streaming music track that replaces the current virtual music channel.</para>
+        ///     <para xml:lang="zh-CN">替换当前虚拟音乐通道的流式音乐轨道。</para>
         /// </summary>
         Music,
     }

@@ -11,8 +11,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Audio.Patches
 {
     /// <summary>
-    ///     Harmony patches for run-scoped music and ambience paths that bypass <see cref="NAudioManager" />.
-    ///     处理绕过 <see cref="NAudioManager" /> 的 run 级音乐和 ambience 路径的 Harmony patch。
+    ///     <para xml:lang="en">Patches run-scoped music and ambience paths that call the run proxy instead of <see cref="NAudioManager" />.</para>
+    ///     <para xml:lang="zh-CN">修补不经由 <see cref="NAudioManager" />、而是直接调用局内代理的音乐和环境音路径。</para>
     /// </summary>
     internal static class NRunMusicControllerGuidMappedStudioEventsPatches
     {
@@ -131,8 +131,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Handles mapped act BGM before it reaches the vanilla run music proxy.
-        ///     在映射的 act BGM 进入原版 run music proxy 前接管它。
+        ///     <para xml:lang="en">Loads and starts mapped act music before it reaches the native run-music proxy.</para>
+        ///     <para xml:lang="zh-CN">在映射的章节音乐进入原生局内音乐代理前加载并启动它。</para>
         /// </summary>
         internal sealed class UpdateMusic : IPatchMethod
         {
@@ -148,8 +148,8 @@ namespace STS2RitsuLib.Audio.Patches
             }
 
             /// <summary>
-            ///     Mirrors vanilla track selection and bank loading, then skips the vanilla proxy for mapped tracks.
-            ///     复现原版曲目选择和 bank 加载，然后对映射曲目跳过原版 proxy。
+            ///     <para xml:lang="en">Mirrors native deterministic track selection and act-bank loading, then handles mapped tracks by GUID.</para>
+            ///     <para xml:lang="zh-CN">复现原生的确定性曲目选择和章节音频库加载，并按 GUID 处理已映射曲目。</para>
             /// </summary>
             [HarmonyPriority(Priority.Last)]
             public static bool Prefix(
@@ -229,8 +229,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Handles combat encounter CustomBgm, which calls the run music proxy directly.
-        ///     处理会直接调用 run music proxy 的战斗遭遇 CustomBgm。
+        ///     <para xml:lang="en">Handles mapped encounter music passed directly to the run-music proxy.</para>
+        ///     <para xml:lang="zh-CN">处理直接传给局内音乐代理的已映射遭遇音乐。</para>
         /// </summary>
         internal sealed class PlayCustomMusic : IPatchMethod
         {
@@ -268,8 +268,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Restores mapped act music when leaving a custom-BGM combat.
-        ///     离开自定义 BGM 战斗时恢复映射的 act 音乐。
+        ///     <para xml:lang="en">Restores mapped act music when custom encounter music ends.</para>
+        ///     <para xml:lang="zh-CN">自定义遭遇音乐结束时恢复已映射的章节音乐。</para>
         /// </summary>
         internal sealed class StopCustomMusic : IPatchMethod
         {
@@ -308,8 +308,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Releases mapped run music and ambience alongside the vanilla proxy.
-        ///     随原版 proxy 一起释放映射的 run music 和 ambience。
+        ///     <para xml:lang="en">Stops mapped run music and ambience and releases the retained mapped act bank.</para>
+        ///     <para xml:lang="zh-CN">停止已映射的局内音乐和环境音，并释放保留的映射章节音频库。</para>
         /// </summary>
         internal sealed class StopMusic : IPatchMethod
         {
@@ -338,8 +338,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Routes numeric music parameter updates used by boss BGM progression.
-        ///     路由 boss BGM 进度使用的数值音乐参数更新。
+        ///     <para xml:lang="en">Routes numeric progression parameters to active mapped run music.</para>
+        ///     <para xml:lang="zh-CN">将数值型进度参数路由到活动的已映射局内音乐。</para>
         /// </summary>
         internal sealed class UpdateMusicParameter : IPatchMethod
         {
@@ -370,8 +370,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Handles mapped act or encounter ambience before it reaches the vanilla run music proxy.
-        ///     在映射的 act 或遭遇 ambience 进入原版 run music proxy 前接管它。
+        ///     <para xml:lang="en">Handles mapped act or encounter ambience before it reaches the native run-music proxy.</para>
+        ///     <para xml:lang="zh-CN">在映射的章节或遭遇环境音进入原生局内音乐代理前接管它。</para>
         /// </summary>
         internal sealed class UpdateAmbience : IPatchMethod
         {
@@ -425,8 +425,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Mirrors campfire ambience parameter updates for mapped ambience events.
-        ///     为映射的 ambience 事件复现营火 ambience 参数更新。
+        ///     <para xml:lang="en">Applies the native campfire parameter transition to active mapped ambience.</para>
+        ///     <para xml:lang="zh-CN">将原生营火参数转换应用到活动的已映射环境音。</para>
         /// </summary>
         internal sealed class TriggerCampfireGoingOut : IPatchMethod
         {
