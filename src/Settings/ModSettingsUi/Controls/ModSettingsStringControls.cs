@@ -4,8 +4,12 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Single-line string entry backed by a <see cref="LineEdit" />.
-    ///     Single-line string 条目 backed by a <see cref="LineEdit" />.
+    ///     <para xml:lang="en">
+    ///         Single-line string editor backed by a <see cref="LineEdit" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         由 <see cref="LineEdit" /> 实现的单行字符串编辑器。
+    ///     </para>
     /// </summary>
     public sealed partial class ModSettingsStringLineControl : HBoxContainer
     {
@@ -19,24 +23,44 @@ namespace STS2RitsuLib.Settings
         private StyleBoxFlat? _validationNeutralStyle;
 
         /// <summary>
-        ///     Creates a single-line string editor.
-        ///     创建单行字符串编辑器。
+        ///     <para xml:lang="en">
+        ///         Creates a single-line string editor.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建单行字符串编辑器。
+        ///     </para>
         /// </summary>
         /// <param name="initialValue">
-        ///     The initial text value.
-        ///     初始文本值。
+        ///     <para xml:lang="en">
+        ///         Initial text. <see langword="null" /> is treated as an empty string.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         初始文本；<see langword="null" /> 按空字符串处理。
+        ///     </para>
         /// </param>
         /// <param name="placeholder">
-        ///     Placeholder text shown when the field is empty.
-        ///     字段为空时显示的占位文本。
+        ///     <para xml:lang="en">
+        ///         Placeholder shown while the field is empty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         字段为空时显示的占位文本。
+        ///     </para>
         /// </param>
         /// <param name="maxLength">
-        ///     Optional maximum text length.
-        ///     可选的最大文本长度。
+        ///     <para xml:lang="en">
+        ///         Optional maximum text length. Values below one disable the limit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的最大文本长度；小于一时不限制长度。
+        ///     </para>
         /// </param>
         /// <param name="onChanged">
-        ///     Callback invoked after the committed value changes.
-        ///     已提交值变化后调用的回调。
+        ///     <para xml:lang="en">
+        ///         Callback invoked with each newly committed value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         每次提交新值时调用的回调。
+        ///     </para>
         /// </param>
         public ModSettingsStringLineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged)
@@ -45,29 +69,54 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a single-line string editor with optional validation chrome (e.g. red border when the predicate
-        ///     returns <see langword="false" />).
-        ///     创建带可选校验外观的单行字符串编辑器（例如谓词返回 <see langword="false" /> 时显示红色边框）。
+        ///     <para xml:lang="en">
+        ///         Creates a single-line string editor with optional validation styling. Validation affects appearance
+        ///         only and does not block commits.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建带可选验证样式的单行字符串编辑器。验证仅影响外观，不会阻止提交。
+        ///     </para>
         /// </summary>
         /// <param name="initialValue">
-        ///     The initial text value.
-        ///     初始文本值。
+        ///     <para xml:lang="en">
+        ///         Initial text. <see langword="null" /> is treated as an empty string.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         初始文本；<see langword="null" /> 按空字符串处理。
+        ///     </para>
         /// </param>
         /// <param name="placeholder">
-        ///     Placeholder text shown when the field is empty.
-        ///     字段为空时显示的占位文本。
+        ///     <para xml:lang="en">
+        ///         Placeholder shown while the field is empty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         字段为空时显示的占位文本。
+        ///     </para>
         /// </param>
         /// <param name="maxLength">
-        ///     Optional maximum text length.
-        ///     可选的最大文本长度。
+        ///     <para xml:lang="en">
+        ///         Optional maximum text length. Values below one disable the limit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的最大文本长度；小于一时不限制长度。
+        ///     </para>
         /// </param>
         /// <param name="onChanged">
-        ///     Callback invoked after the committed value changes.
-        ///     已提交值变化后调用的回调。
+        ///     <para xml:lang="en">
+        ///         Callback invoked with each newly committed value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         每次提交新值时调用的回调。
+        ///     </para>
         /// </param>
         /// <param name="validationVisual">
-        ///     When non-null, invoked for the current text to choose normal vs. error styling; commits are not blocked.
-        ///     非 null 时，对当前文本调用以选择正常或错误样式；不会阻止提交。
+        ///     <para xml:lang="en">
+        ///         Optional predicate that selects normal or error styling for the current text. Returning
+        ///         <see langword="false" /> or throwing selects the error style.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选谓词，用于按当前文本选择正常或错误样式。返回 <see langword="false" /> 或抛出异常时使用错误样式。
+        ///     </para>
         /// </param>
         public ModSettingsStringLineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged, Func<string, bool>? validationVisual)
@@ -123,26 +172,43 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the string editor for Godot scene instantiation.
-        ///     创建用于 Godot 场景实例化的字符串编辑器。
+        ///     <para xml:lang="en">
+        ///         Creates an uninitialized control for Godot scene instantiation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建供 Godot 场景实例化使用的未初始化控件。
+        ///     </para>
         /// </summary>
         public ModSettingsStringLineControl()
         {
         }
 
         /// <summary>
-        ///     Inner <see cref="LineEdit" />; null when instantiated via parameterless constructor (e.g. Godot tooling).
-        ///     内部 <see cref="LineEdit" />；通过无参构造函数实例化时为 null（例如 Godot 工具）。
+        ///     <para xml:lang="en">
+        ///         Gets the inner <see cref="LineEdit" />, or <see langword="null" /> after parameterless construction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取内部 <see cref="LineEdit" />；通过无参构造函数创建后为 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public LineEdit? Editor { get; private set; }
 
         /// <summary>
-        ///     Updates the displayed value without recreating the control.
-        ///     更新显示值而不重新创建控件。
+        ///     <para xml:lang="en">
+        ///         Updates the displayed and committed value without invoking the change callback or recreating the
+        ///         control.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         更新显示值和已提交值，不调用变更回调，也不重新创建控件。
+        ///     </para>
         /// </summary>
         /// <param name="value">
-        ///     The value to display.
-        ///     要显示的值。
+        ///     <para xml:lang="en">
+        ///         Value to display. <see langword="null" /> is treated as an empty string.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         要显示的值；<see langword="null" /> 按空字符串处理。
+        ///     </para>
         /// </param>
         public void SetValue(string? value)
         {
@@ -285,8 +351,12 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Multiline string entry backed by a <see cref="TextEdit" />.
-    ///     Multiline string 条目 backed by a <see cref="TextEdit" />.
+    ///     <para xml:lang="en">
+    ///         Multiline string editor backed by a <see cref="TextEdit" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         由 <see cref="TextEdit" /> 实现的多行字符串编辑器。
+    ///     </para>
     /// </summary>
     public sealed partial class ModSettingsStringMultilineControl : HBoxContainer
     {
@@ -296,24 +366,44 @@ namespace STS2RitsuLib.Settings
         private bool _suppressCallbacks;
 
         /// <summary>
-        ///     Creates a multiline string editor.
-        ///     创建多行字符串编辑器。
+        ///     <para xml:lang="en">
+        ///         Creates a multiline string editor.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建多行字符串编辑器。
+        ///     </para>
         /// </summary>
         /// <param name="initialValue">
-        ///     The initial text value.
-        ///     初始文本值。
+        ///     <para xml:lang="en">
+        ///         Initial text. <see langword="null" /> is treated as an empty string.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         初始文本；<see langword="null" /> 按空字符串处理。
+        ///     </para>
         /// </param>
         /// <param name="placeholder">
-        ///     Placeholder text shown when the field is empty.
-        ///     字段为空时显示的占位文本。
+        ///     <para xml:lang="en">
+        ///         Placeholder shown while the field is empty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         字段为空时显示的占位文本。
+        ///     </para>
         /// </param>
         /// <param name="maxLength">
-        ///     Optional maximum text length.
-        ///     可选的最大文本长度。
+        ///     <para xml:lang="en">
+        ///         Optional maximum text length. Values below one disable the limit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的最大文本长度；小于一时不限制长度。
+        ///     </para>
         /// </param>
         /// <param name="onChanged">
-        ///     Callback invoked after the committed value changes.
-        ///     已提交值变化后调用的回调。
+        ///     <para xml:lang="en">
+        ///         Callback invoked with each newly committed value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         每次提交新值时调用的回调。
+        ///     </para>
         /// </param>
         public ModSettingsStringMultilineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged)
@@ -355,26 +445,43 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the multiline editor for Godot scene instantiation.
-        ///     创建用于 Godot 场景实例化的多行编辑器。
+        ///     <para xml:lang="en">
+        ///         Creates an uninitialized control for Godot scene instantiation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建供 Godot 场景实例化使用的未初始化控件。
+        ///     </para>
         /// </summary>
         public ModSettingsStringMultilineControl()
         {
         }
 
         /// <summary>
-        ///     Inner <see cref="TextEdit" />; null when instantiated via parameterless constructor (e.g. Godot tooling).
-        ///     内部 <see cref="TextEdit" />；通过无参构造函数实例化时为 null（例如 Godot 工具）。
+        ///     <para xml:lang="en">
+        ///         Gets the inner <see cref="TextEdit" />, or <see langword="null" /> after parameterless construction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取内部 <see cref="TextEdit" />；通过无参构造函数创建后为 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public TextEdit? Editor { get; private set; }
 
         /// <summary>
-        ///     Updates the displayed value without recreating the control.
-        ///     更新显示值而不重新创建控件。
+        ///     <para xml:lang="en">
+        ///         Updates the displayed and committed value without invoking the change callback or recreating the
+        ///         control.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         更新显示值和已提交值，不调用变更回调，也不重新创建控件。
+        ///     </para>
         /// </summary>
         /// <param name="value">
-        ///     The value to display.
-        ///     要显示的值。
+        ///     <para xml:lang="en">
+        ///         Value to display. <see langword="null" /> is treated as an empty string.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         要显示的值；<see langword="null" /> 按空字符串处理。
+        ///     </para>
         /// </param>
         public void SetValue(string? value)
         {
