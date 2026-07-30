@@ -25,6 +25,11 @@ namespace STS2RitsuLib.Audio
 
         private static readonly Dictionary<string, GodotObject> LoadedBankPins = [];
 
+        private static readonly StringName BankGetGodotResourcePath = new("get_godot_res_path");
+        private static readonly StringName BankGetEventDescriptionCount = new("get_event_description_count");
+        private static readonly StringName BankGetDescriptionList = new("get_description_list");
+        private static readonly StringName EventDescriptionGetPath = new("get_path");
+
         private static readonly StringName[] GuidMappingInjectCandidates =
         [
             new("register_guid_path_mappings_from_file"),
@@ -81,7 +86,7 @@ namespace STS2RitsuLib.Audio
                     RitsuLibFramework.Logger.Warn(
                         $"[Audio] FMOD load_bank returned nil: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
                     return false;
-                default:
+                case Variant.Type.Object:
                 {
                     var bank = result.AsGodotObject();
                     if (bank is null || !GodotObject.IsInstanceValid(bank))
@@ -98,6 +103,10 @@ namespace STS2RitsuLib.Audio
 
                     return true;
                 }
+                default:
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Audio] FMOD load_bank returned unsupported {result.VariantType}: {resourcePath}; {DescribeResourceForDiagnostics(resourcePath)}");
+                    return false;
             }
         }
 
@@ -119,6 +128,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryUnloadBank(string resourcePath)
         {
+            if (string.IsNullOrWhiteSpace(resourcePath))
+                return false;
+
             bool hadPin;
             lock (LoadedBankPinsGate)
             {
@@ -148,7 +160,7 @@ namespace STS2RitsuLib.Audio
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.BanksStillLoading))
                 return null;
 
-            return v.AsBool();
+            return v.VariantType == Variant.Type.Bool ? v.AsBool() : null;
         }
 
         /// <summary>
@@ -219,7 +231,7 @@ namespace STS2RitsuLib.Audio
         public static bool TryInjectStudioGuidMappings(string resourcePath)
         {
             if (TryApplyStudioGuidMappingsCore(resourcePath)) return true;
-            RitsuLibFramework.Logger.Warn($"[Audio] FMOD guid map: missing or unreadable file: {resourcePath}");
+            RitsuLibFramework.Logger.Warn($"[Audio] FMOD guid map could not be applied: {resourcePath}");
             return false;
         }
 
@@ -261,7 +273,7 @@ namespace STS2RitsuLib.Audio
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CheckEventPath, eventPath))
                 return null;
 
-            return v.AsBool();
+            return v.VariantType == Variant.Type.Bool ? v.AsBool() : null;
         }
 
         /// <summary>
@@ -270,10 +282,13 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool? TryCheckBusPath(string busPath)
         {
+            if (string.IsNullOrWhiteSpace(busPath))
+                return false;
+
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CheckBusPath, busPath))
                 return null;
 
-            return v.AsBool();
+            return v.VariantType == Variant.Type.Bool ? v.AsBool() : null;
         }
 
         /// <summary>
@@ -289,6 +304,9 @@ namespace STS2RitsuLib.Audio
                 return null;
 
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetEventFromGuid, normalized))
+                return null;
+
+            if (v.VariantType != Variant.Type.Object)
                 return null;
 
             var description = v.AsGodotObject();
@@ -307,7 +325,7 @@ namespace STS2RitsuLib.Audio
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CheckEventGuid, normalized))
                 return null;
 
-            return v.AsBool();
+            return v.VariantType == Variant.Type.Bool ? v.AsBool() : null;
         }
 
         /// <summary>
@@ -367,29 +385,40 @@ namespace STS2RitsuLib.Audio
 
             foreach (var item in banksVar.AsGodotArray())
             {
+                if (item.VariantType != Variant.Type.Object)
+                    continue;
+
                 var bank = item.AsGodotObject();
-                if (bank is null)
+                if (bank is null || !GodotObject.IsInstanceValid(bank) ||
+                    !bank.HasMethod(BankGetGodotResourcePath))
                     continue;
 
                 string path;
                 try
                 {
-                    path = bank.Call("get_godot_res_path").AsString();
+                    path = bank.Call(BankGetGodotResourcePath).AsString();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Audio] FMOD bank resource-path inspection: {ex}");
                     continue;
                 }
 
                 if (!string.Equals(path, bankResourcePath, StringComparison.Ordinal))
                     continue;
 
+                if (!bank.HasMethod(BankGetEventDescriptionCount))
+                    return -1;
+
                 try
                 {
-                    return bank.Call("get_event_description_count").AsInt64();
+                    return bank.Call(BankGetEventDescriptionCount).AsInt64();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Audio] FMOD bank event-count inspection: {ex}");
                     return -1;
                 }
             }
@@ -448,35 +477,56 @@ namespace STS2RitsuLib.Audio
 
             foreach (var item in banksVar.AsGodotArray())
             {
+                if (item.VariantType != Variant.Type.Object)
+                    continue;
+
                 var bank = item.AsGodotObject();
-                if (bank is null)
+                if (bank is null || !GodotObject.IsInstanceValid(bank) ||
+                    !bank.HasMethod(BankGetGodotResourcePath))
                     continue;
 
                 string resPath;
                 try
                 {
-                    resPath = bank.Call("get_godot_res_path").AsString();
+                    resPath = bank.Call(BankGetGodotResourcePath).AsString();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Audio] FMOD bank resource-path enumeration: {ex}");
                     continue;
                 }
 
                 if (!string.Equals(resPath, bankResourcePath, StringComparison.Ordinal))
                     continue;
 
+                if (!bank.HasMethod(BankGetDescriptionList))
+                    return null;
+
                 var paths = new List<string>();
                 try
                 {
-                    var listVar = bank.Call("get_description_list");
+                    var listVar = bank.Call(BankGetDescriptionList);
                     if (listVar.VariantType != Variant.Type.Array)
-                        return paths;
+                        return null;
 
-                    paths.AddRange(listVar.AsGodotArray().Select(d => d.AsGodotObject())
-                        .Select(desc => desc.Call("get_path").AsString()));
+                    foreach (var descriptionValue in listVar.AsGodotArray())
+                    {
+                        if (descriptionValue.VariantType != Variant.Type.Object)
+                            return null;
+
+                        var description = descriptionValue.AsGodotObject();
+                        if (description is null || !GodotObject.IsInstanceValid(description) ||
+                            !description.HasMethod(EventDescriptionGetPath))
+                            return null;
+
+                        paths.Add(description.Call(EventDescriptionGetPath).AsString());
+                    }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Audio] FMOD bank event-path enumeration: {ex}");
                     return null;
                 }
 
@@ -507,7 +557,7 @@ namespace STS2RitsuLib.Audio
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD guid inject {method}: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD guid inject {method}: {ex}");
                 }
             }
 
@@ -534,7 +584,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                parts.Add($"readError={ex.GetType().Name}:{ex.Message}");
+                parts.Add($"readError={ex}");
             }
 
             try
@@ -546,7 +596,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                parts.Add($"resourceLoadError={ex.GetType().Name}:{ex.Message}");
+                parts.Add($"resourceLoadError={ex}");
             }
 
             try
@@ -558,7 +608,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                parts.Add($"globalizeError={ex.GetType().Name}:{ex.Message}");
+                parts.Add($"globalizeError={ex}");
             }
 
             parts.Add("nativeResult=unavailable-from-managed-wrapper");
