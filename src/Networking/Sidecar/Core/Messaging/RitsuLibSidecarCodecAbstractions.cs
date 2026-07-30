@@ -3,65 +3,69 @@ using System.Buffers;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Binary encode/decode for one opcode; implement one concrete type T.
-    ///     单个 opcode 的二进制编码/解码；实现一个具体类型 T。
+    ///     <para xml:lang="en">Binary codec for one message type and opcode.</para>
+    ///     <para xml:lang="zh-CN">用于一种消息类型和操作码的二进制编解码器。</para>
     /// </summary>
     public interface IRitsuLibSidecarMessageCodec<T>
         where T : notnull
     {
         /// <summary>
-        ///     User or control <c>ulong</c> opcode; must match <see cref="RitsuLibSidecarBus" /> registration.
-        ///     用户或控制 <c>ulong</c> opcode；必须与 <see cref="RitsuLibSidecarBus" /> 注册匹配。
+        ///     <para xml:lang="en">User or control <c>ulong</c> opcode; must match the <see cref="RitsuLibSidecarBus" /> registration.</para>
+        ///     <para xml:lang="zh-CN">用户或控制 <c>ulong</c> 操作码；必须与 <see cref="RitsuLibSidecarBus" /> 中的注册匹配。</para>
         /// </summary>
         ulong Opcode { get; }
 
         /// <summary>
-        ///     Decodes the sidecar logical payload (no outer magic; that is stripped by the bus).
-        ///     解码 sidecar 逻辑载荷（不含外层 magic；bus 已将其剥离）。
+        ///     <para xml:lang="en">Decodes the Sidecar logical payload after the envelope has been removed.</para>
+        ///     <para xml:lang="zh-CN">解码已移除信封后的 Sidecar 逻辑载荷。</para>
         /// </summary>
         /// <param name="input">
-        ///     Bytes after the fixed envelope header and optional extension.
-        ///     固定 envelope header 和可选扩展之后的字节。
+        ///     <para xml:lang="en">Bytes after the fixed envelope header and optional extension.</para>
+        ///     <para xml:lang="zh-CN">固定信封标头和可选扩展之后的字节。</para>
         /// </param>
         /// <param name="message">
-        ///     Set when the return value is <c>true</c>.
-        ///     返回值为 <c>true</c> 时设置。
+        ///     <para xml:lang="en">Set when the return value is <see langword="true" />.</para>
+        ///     <para xml:lang="zh-CN">返回值为 <see langword="true" /> 时设置。</para>
         /// </param>
         bool TryDecode(ReadOnlySpan<byte> input, out T? message);
 
         /// <summary>
-        ///     Appends the wire form of <paramref name="message" /> to <paramref name="writer" />.
-        ///     将 <paramref name="message" /> 的线格式追加到 <paramref name="writer" />。
+        ///     <para xml:lang="en">Appends the binary representation of <paramref name="message" /> to <paramref name="writer" />.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="message" /> 的二进制表示追加到 <paramref name="writer" />。</para>
         /// </summary>
         /// <param name="writer">
-        ///     Destination buffer writer.
-        ///     目标缓冲区 writer。
+        ///     <para xml:lang="en">Destination buffer writer.</para>
+        ///     <para xml:lang="zh-CN">目标缓冲区写入器。</para>
         /// </param>
         /// <param name="message">
-        ///     Value to encode.
-        ///     要编码的值。
+        ///     <para xml:lang="en">Value to encode.</para>
+        ///     <para xml:lang="zh-CN">要编码的值。</para>
         /// </param>
         void Encode(IBufferWriter<byte> writer, T message);
     }
 
     /// <summary>
-    ///     Apply a decoded value after <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" />; thread matches the
-    ///     sidecar receive path unless you register with
-    ///     <see cref="RitsuLibSidecarMessageBinding.RegisterForGodotMainLoop{T}" />.
-    ///     在 <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" /> 之后应用解码值；线程与
-    ///     sidecar 接收路径一致，除非通过
-    ///     <see cref="RitsuLibSidecarMessageBinding.RegisterForGodotMainLoop{T}" /> 注册。
+    ///     <para xml:lang="en">
+    ///         Processes a decoded value after <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" />. It runs on
+    ///         the Sidecar receive thread unless registered through
+    ///         <see cref="RitsuLibSidecarMessageBinding.RegisterForGodotMainLoop{T}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         处理 <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" /> 解码出的值。除非通过
+    ///         <see cref="RitsuLibSidecarMessageBinding.RegisterForGodotMainLoop{T}" /> 注册，否则会在
+    ///         Sidecar 接收线程上运行。
+    ///     </para>
     /// </summary>
     public interface IRitsuLibSidecarSyncProcessor<in T>
         where T : notnull
     {
         /// <param name="message">
-        ///     Value from <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" />.
-        ///     来自 <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" /> 的值。
+        ///     <para xml:lang="en">Value from <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" />.</para>
+        ///     <para xml:lang="zh-CN">来自 <see cref="IRitsuLibSidecarMessageCodec{T}.TryDecode" /> 的值。</para>
         /// </param>
         /// <param name="context">
-        ///     Per-packet transport and envelope information.
-        ///     每个数据包的传输和 envelope 信息。
+        ///     <para xml:lang="en">Per-packet transport and envelope information.</para>
+        ///     <para xml:lang="zh-CN">每个数据包的传输与信封信息。</para>
         /// </param>
         void Apply(T message, in RitsuLibSidecarDispatchContext context);
     }

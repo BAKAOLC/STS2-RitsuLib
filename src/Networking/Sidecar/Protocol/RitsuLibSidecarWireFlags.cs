@@ -1,29 +1,43 @@
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Sidecar envelope flags (uint32, big-endian on wire). Unknown bits are cleared on read for forward
-    ///     compatibility.
-    ///     Sidecar envelope 标志（uint32，线上 big-endian）。读取时清除未知位以保持向前
-    ///     兼容。
+    ///     <para xml:lang="en">
+    ///         Defines the 32-bit, big-endian flags in a sidecar envelope. Unknown bits are cleared when read.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义 sidecar 信封中采用大端序编码的 32 位标志；读取时会清除未知位。
+    ///     </para>
     /// </summary>
     [Flags]
     public enum RitsuLibSidecarWireFlags : uint
     {
         /// <summary>
-        ///     No flags.
-        ///     无标志。
+        ///     <para xml:lang="en">
+        ///         No flags are set.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不设置任何标志。
+        ///     </para>
         /// </summary>
         None = 0,
 
         /// <summary>
-        ///     Payload bytes are gzip-compressed (RFC 1952); handlers see decompressed bytes.
-        ///     载荷字节经过 gzip 压缩（RFC 1952）；处理器看到解压后的字节。
+        ///     <para xml:lang="en">
+        ///         The payload uses gzip compression; handlers receive decompressed bytes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         载荷使用 gzip 压缩；处理器接收解压后的字节。
+        ///     </para>
         /// </summary>
         PayloadGzip = 1u << 0,
 
         /// <summary>
-        ///     Payload bytes are Brotli-compressed (RFC 7932); handlers see decompressed bytes.
-        ///     载荷字节经过 Brotli 压缩（RFC 7932）；处理器看到解压后的字节。
+        ///     <para xml:lang="en">
+        ///         The payload uses Brotli compression; handlers receive decompressed bytes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         载荷使用 Brotli 压缩；处理器接收解压后的字节。
+        ///     </para>
         /// </summary>
         PayloadBrotli = 1u << 1,
     }

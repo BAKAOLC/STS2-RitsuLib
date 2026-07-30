@@ -6,8 +6,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Networking.Sidecar.Patches
 {
     /// <summary>
-    ///     Intercepts inbound sidecar and coalesced hook packets before <see cref="NetMessageBus" /> runs.
-    ///     在 <see cref="NetMessageBus" /> 运行前拦截入站 sidecar 和合并的 hook 数据包。
+    ///     <para xml:lang="en">
+    ///         Inspects and dispatches inbound sidecar and coalesced packets before vanilla network deserialization.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在原版网络反序列化前检查并分发收到的 sidecar 数据包和合并数据包。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuLibSidecarNetReceivePatch : IPatchMethod
     {

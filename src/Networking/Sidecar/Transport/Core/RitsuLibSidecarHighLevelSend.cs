@@ -5,46 +5,47 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Higher-level send helpers: builds envelopes with a delivery tag and picks channel / transfer mode. Control
-    ///     opcodes and chunked streams should use <see cref="RitsuLibSidecarDeliverySemantics.StableSync" />.
-    ///     较高层发送辅助方法：构建带投递标签的 envelope，并选择 channel / transfer mode。控制
-    ///     opcode 和分块流应使用 <see cref="RitsuLibSidecarDeliverySemantics.StableSync" />。
+    ///     <para xml:lang="en">
+    ///         Builds sidecar envelopes with delivery metadata and sends them using the corresponding transport mode
+    ///         and channel.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         构建包含投递元数据的 sidecar 信封，并使用对应的传输模式和通道发送。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarHighLevelSend
     {
         /// <summary>
-        ///     Client → host (single connection).
-        ///     客户端 → 主机（单连接）。
+        ///     <para xml:lang="en">Tries to send one sidecar message from a client to the host.</para>
+        ///     <para xml:lang="zh-CN">尝试从客户端向主机发送一条 sidecar 消息。</para>
         /// </summary>
         /// <param name="runManager">
-        ///     Current run; must expose a connected <c>NetClientGameService</c> when sending.
-        ///     当前跑局；发送时必须暴露已连接的 <c>NetClientGameService</c>。
+        ///     <para xml:lang="en">The current run, which must use a connected client network service.</para>
+        ///     <para xml:lang="zh-CN">当前一局游戏，且必须使用已连接的客户端网络服务。</para>
         /// </param>
         /// <param name="opcode">
-        ///     Sidecar opcode (user or control).
-        ///     Sidecar opcode（用户或控制）。
+        ///     <para xml:lang="en">The user or control opcode.</para>
+        ///     <para xml:lang="zh-CN">用户或控制操作码。</para>
         /// </param>
         /// <param name="payload">
-        ///     Logical payload bytes placed after the envelope header.
-        ///     放在 envelope header 之后的逻辑载荷字节。
+        ///     <para xml:lang="en">The logical payload.</para>
+        ///     <para xml:lang="zh-CN">逻辑载荷。</para>
         /// </param>
         /// <param name="deliverySemantics">
-        ///     Maps to transfer mode and channel;
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" /> is treated as stable sync.
-        ///     映射到 transfer mode 和 channel；
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" /> 会按 stable sync 处理。
+        ///     <para xml:lang="en">The requested delivery semantics.</para>
+        ///     <para xml:lang="zh-CN">请求的投递语义。</para>
         /// </param>
         /// <param name="extraFlags">
-        ///     Additional wire flags OR’d into the envelope.
-        ///     按 OR 写入 envelope 的额外线标志。
+        ///     <para xml:lang="en">Additional wire flags.</para>
+        ///     <para xml:lang="zh-CN">其他线路标志。</para>
         /// </param>
         /// <param name="gzip">
-        ///     When <c>true</c>, gzip-compresses the logical payload and sets the gzip flag.
-        ///     为 <c>true</c> 时，对逻辑载荷进行 gzip 压缩并设置 gzip 标志。
+        ///     <para xml:lang="en">Whether to force gzip compression.</para>
+        ///     <para xml:lang="zh-CN">是否强制使用 gzip 压缩。</para>
         /// </param>
         /// <param name="additionalHeaderExtension">
-        ///     Bytes appended after the delivery tag in the header extension.
-        ///     追加到 header 扩展中投递标签之后的字节。
+        ///     <para xml:lang="en">Bytes appended after the delivery tag.</para>
+        ///     <para xml:lang="zh-CN">追加到投递标签之后的字节。</para>
         /// </param>
         public static bool TrySendAsClient(
             RunManager? runManager,
@@ -94,42 +95,40 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Host → one peer.
-        ///     主机 → 一个 peer。
+        ///     <para xml:lang="en">Tries to send one sidecar message from the host to a peer.</para>
+        ///     <para xml:lang="zh-CN">尝试从主机向一个对等端发送一条 sidecar 消息。</para>
         /// </summary>
         /// <param name="runManager">
-        ///     Current run; must expose a connected <c>NetHostGameService</c> when sending.
-        ///     当前跑局；发送时必须暴露已连接的 <c>NetHostGameService</c>。
+        ///     <para xml:lang="en">The current run, which must use a connected host network service.</para>
+        ///     <para xml:lang="zh-CN">当前一局游戏，且必须使用已连接的主机网络服务。</para>
         /// </param>
         /// <param name="peerNetId">
-        ///     Vanilla peer id for <c>SendMessageToClient</c>.
-        ///     <c>SendMessageToClient</c> 使用的原版 peer id。
+        ///     <para xml:lang="en">The target peer's network ID.</para>
+        ///     <para xml:lang="zh-CN">目标对等端的网络 ID。</para>
         /// </param>
         /// <param name="opcode">
-        ///     Sidecar opcode (user or control).
-        ///     Sidecar opcode（用户或控制）。
+        ///     <para xml:lang="en">The user or control opcode.</para>
+        ///     <para xml:lang="zh-CN">用户或控制操作码。</para>
         /// </param>
         /// <param name="payload">
-        ///     Logical payload bytes placed after the envelope header.
-        ///     放在 envelope header 之后的逻辑载荷字节。
+        ///     <para xml:lang="en">The logical payload.</para>
+        ///     <para xml:lang="zh-CN">逻辑载荷。</para>
         /// </param>
         /// <param name="deliverySemantics">
-        ///     Maps to transfer mode and channel;
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" /> is treated as stable sync.
-        ///     映射到 transfer mode 和 channel；
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" /> 会按 stable sync 处理。
+        ///     <para xml:lang="en">The requested delivery semantics.</para>
+        ///     <para xml:lang="zh-CN">请求的投递语义。</para>
         /// </param>
         /// <param name="extraFlags">
-        ///     Additional wire flags OR’d into the envelope.
-        ///     按 OR 写入 envelope 的额外线标志。
+        ///     <para xml:lang="en">Additional wire flags.</para>
+        ///     <para xml:lang="zh-CN">其他线路标志。</para>
         /// </param>
         /// <param name="gzip">
-        ///     When <c>true</c>, gzip-compresses the logical payload and sets the gzip flag.
-        ///     为 <c>true</c> 时，对逻辑载荷进行 gzip 压缩并设置 gzip 标志。
+        ///     <para xml:lang="en">Whether to force gzip compression.</para>
+        ///     <para xml:lang="zh-CN">是否强制使用 gzip 压缩。</para>
         /// </param>
         /// <param name="additionalHeaderExtension">
-        ///     Bytes appended after the delivery tag in the header extension.
-        ///     追加到 header 扩展中投递标签之后的字节。
+        ///     <para xml:lang="en">Bytes appended after the delivery tag.</para>
+        ///     <para xml:lang="zh-CN">追加到投递标签之后的字节。</para>
         /// </param>
         public static bool TrySendAsHostToPeer(
             RunManager? runManager,
@@ -180,38 +179,36 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Host → all ready-to-broadcast peers.
-        ///     主机 → 所有 ready-to-broadcast peer。
+        ///     <para xml:lang="en">Tries to send one sidecar message to every peer ready for broadcast.</para>
+        ///     <para xml:lang="zh-CN">尝试向所有已准备好接收广播的对等端发送一条 sidecar 消息。</para>
         /// </summary>
         /// <param name="runManager">
-        ///     Current run; must expose a connected <c>NetHostGameService</c> when sending.
-        ///     当前跑局；发送时必须暴露已连接的 <c>NetHostGameService</c>。
+        ///     <para xml:lang="en">The current run, which must use a connected host network service.</para>
+        ///     <para xml:lang="zh-CN">当前一局游戏，且必须使用已连接的主机网络服务。</para>
         /// </param>
         /// <param name="opcode">
-        ///     Sidecar opcode (user or control).
-        ///     Sidecar opcode（用户或控制）。
+        ///     <para xml:lang="en">The user or control opcode.</para>
+        ///     <para xml:lang="zh-CN">用户或控制操作码。</para>
         /// </param>
         /// <param name="payload">
-        ///     Logical payload bytes placed after the envelope header.
-        ///     放在 envelope header 之后的逻辑载荷字节。
+        ///     <para xml:lang="en">The logical payload.</para>
+        ///     <para xml:lang="zh-CN">逻辑载荷。</para>
         /// </param>
         /// <param name="deliverySemantics">
-        ///     Maps to transfer mode and channel;
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" /> is treated as stable sync.
-        ///     映射到 transfer mode 和 channel；
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" /> 会按 stable sync 处理。
+        ///     <para xml:lang="en">The requested delivery semantics.</para>
+        ///     <para xml:lang="zh-CN">请求的投递语义。</para>
         /// </param>
         /// <param name="extraFlags">
-        ///     Additional wire flags OR’d into the envelope.
-        ///     按 OR 写入 envelope 的额外线标志。
+        ///     <para xml:lang="en">Additional wire flags.</para>
+        ///     <para xml:lang="zh-CN">其他线路标志。</para>
         /// </param>
         /// <param name="gzip">
-        ///     When <c>true</c>, gzip-compresses the logical payload and sets the gzip flag.
-        ///     为 <c>true</c> 时，对逻辑载荷进行 gzip 压缩并设置 gzip 标志。
+        ///     <para xml:lang="en">Whether to force gzip compression.</para>
+        ///     <para xml:lang="zh-CN">是否强制使用 gzip 压缩。</para>
         /// </param>
         /// <param name="additionalHeaderExtension">
-        ///     Bytes appended after the delivery tag in the header extension.
-        ///     追加到 header 扩展中投递标签之后的字节。
+        ///     <para xml:lang="en">Bytes appended after the delivery tag.</para>
+        ///     <para xml:lang="zh-CN">追加到投递标签之后的字节。</para>
         /// </param>
         public static bool TrySendAsHostBroadcast(
             RunManager? runManager,
@@ -263,8 +260,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Host → every connected client, including before vanilla marks peers ready to broadcast (e.g. lobby handshake).
-        ///     主机 → 每个已连接客户端，包括原版将 peer 标记为 ready to broadcast 之前的阶段（例如 lobby handshake）。
+        ///     <para xml:lang="en">
+        ///         Tries to send one sidecar message to every connected client, including clients not yet ready for
+        ///         vanilla broadcast.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试向所有已连接客户端发送一条 sidecar 消息，包括尚未准备好接收原版广播的客户端。
+        ///     </para>
         /// </summary>
         public static bool TrySendAsHostBroadcastToAllConnected(
             INetGameService? netService,

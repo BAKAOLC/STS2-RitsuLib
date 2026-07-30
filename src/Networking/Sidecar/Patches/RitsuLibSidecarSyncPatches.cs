@@ -7,8 +7,13 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
 {
 #if STS2_AT_LEAST_0_106_1
     /// <summary>
-    ///     Releases sidecar sync packets inside the vanilla <see cref="NetMessageBus" /> buffer order.
-    ///     在原版 <see cref="NetMessageBus" /> 缓冲顺序中释放 sidecar 同步包。
+    ///     <para xml:lang="en">
+    ///         Releases queued sidecar synchronization packets within the vanilla <see cref="NetMessageBus" /> buffer
+    ///         ordering.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按照原版 <see cref="NetMessageBus" /> 的缓冲顺序释放排队的 sidecar 同步数据包。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuLibSidecarSyncNetBufferPatch : IPatchMethod
     {
@@ -36,8 +41,12 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
 #endif
 
     /// <summary>
-    ///     Releases sidecar sync packets inside the vanilla run-location buffer order.
-    ///     在原版 run-location 缓冲顺序中释放 sidecar 同步包。
+    ///     <para xml:lang="en">
+    ///         Releases queued sidecar synchronization packets within the vanilla run-location buffer ordering.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按照原版局内位置的缓冲顺序释放排队的 sidecar 同步数据包。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuLibSidecarSyncLocationChangedPatch : IPatchMethod
     {

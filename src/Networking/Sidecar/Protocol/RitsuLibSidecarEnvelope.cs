@@ -60,6 +60,12 @@ namespace STS2RitsuLib.Networking.Sidecar
             /// </summary>
             TotalLengthMismatch,
 
+            /// <summary>
+            ///     <para xml:lang="en">
+            ///         The supplied span does not contain exactly the bytes in the array used for returned memory views.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">提供的跨度与用于返回内存视图的数组内容不完全一致。</para>
+            /// </summary>
             BackingMismatch,
         }
 

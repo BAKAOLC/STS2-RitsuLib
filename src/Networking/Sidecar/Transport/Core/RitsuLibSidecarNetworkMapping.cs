@@ -3,30 +3,36 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Maps <see cref="RitsuLibSidecarDeliverySemantics" /> to ENet/Steam <see cref="NetTransferMode" /> and channel.
-    ///     将 <see cref="RitsuLibSidecarDeliverySemantics" /> 映射到 ENet/Steam <see cref="NetTransferMode" /> 和 channel。
+    ///     <para xml:lang="en">
+    ///         Maps <see cref="RitsuLibSidecarDeliverySemantics" /> to a transport mode and channel.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="RitsuLibSidecarDeliverySemantics" /> 映射到传输模式和通道。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarNetworkMapping
     {
         /// <summary>
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.BestEffort" /> → unreliable + best-effort channel; all other
-        ///     values (including <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" />) → reliable + sidecar
-        ///     reliable channel.
-        ///     <see cref="RitsuLibSidecarDeliverySemantics.BestEffort" /> → unreliable + best-effort channel；所有其他
-        ///     值（包括 <see cref="RitsuLibSidecarDeliverySemantics.Unspecified" />）→ reliable + sidecar
-        ///     reliable channel。
+        ///     <para xml:lang="en">
+        ///         Maps <see cref="RitsuLibSidecarDeliverySemantics.BestEffort" /> to unreliable transport and the
+        ///         best-effort channel; all other values use reliable transport and the sidecar synchronization channel.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="RitsuLibSidecarDeliverySemantics.BestEffort" /> 映射到不可靠传输和尽力而为通道；
+        ///         其他值均使用可靠传输和 sidecar 同步通道。
+        ///     </para>
         /// </summary>
         /// <param name="semantics">
-        ///     Delivery intent from the envelope extension or caller.
-        ///     来自 envelope 扩展或调用方的投递意图。
+        ///     <para xml:lang="en">The requested delivery semantics.</para>
+        ///     <para xml:lang="zh-CN">请求的投递语义。</para>
         /// </param>
         /// <param name="mode">
-        ///     Resulting <see cref="NetTransferMode" /> for the vanilla send API.
-        ///     用于原版发送 API 的结果 <see cref="NetTransferMode" />。
+        ///     <para xml:lang="en">The resulting transport mode.</para>
+        ///     <para xml:lang="zh-CN">生成的传输模式。</para>
         /// </param>
         /// <param name="channel">
-        ///     ENet channel index for the vanilla send API.
-        ///     用于原版发送 API 的 ENet channel 索引。
+        ///     <para xml:lang="en">The resulting channel index.</para>
+        ///     <para xml:lang="zh-CN">生成的通道索引。</para>
         /// </param>
         public static void GetNetworkParameters(
             RitsuLibSidecarDeliverySemantics semantics,

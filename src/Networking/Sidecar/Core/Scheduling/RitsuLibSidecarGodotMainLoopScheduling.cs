@@ -3,20 +3,28 @@ using Godot;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Defers work to the Godot scene tree main loop via <see cref="Callable.CallDeferred" />, and optional
-    ///     continuation helpers for sidecar <see cref="Task" /> results.
-    ///     通过 <see cref="Callable.CallDeferred" /> 将工作延后到 Godot 场景树主循环，并提供可选的
-    ///     sidecar <see cref="Task" /> 结果 continuation 辅助方法。
+    ///     <para xml:lang="en">
+    ///         Defers work to the Godot scene-tree main loop through <see cref="Callable.CallDeferred" /> and provides
+    ///         continuation helpers for Sidecar <see cref="Task" /> results.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="Callable.CallDeferred" /> 将处理延后到 Godot 场景树主循环，
+    ///         并为 Sidecar <see cref="Task" /> 结果提供延续方法。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarGodotMainLoopScheduling
     {
         /// <summary>
-        ///     Queues <paramref name="action" /> on the Godot main loop when a <see cref="SceneTree" /> is available.
-        ///     将 <paramref name="action" /> 排入 Godot 主循环，当 <see cref="SceneTree" /> 可用时。
+        ///     <para xml:lang="en">Queues <paramref name="action" /> on the Godot main loop when a <see cref="SceneTree" /> is available.</para>
+        ///     <para xml:lang="zh-CN"><see cref="SceneTree" /> 可用时，将 <paramref name="action" /> 排入 Godot 主循环。</para>
         /// </summary>
         /// <returns>
-        ///     <c>true</c> when the delegate was queued; <c>false</c> when the main loop is not available.
-        ///     委托已排队时为 <c>true</c>；主循环不可用时为 <c>false</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the delegate was queued; <see langword="false" /> when the main loop is unavailable.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         委托已排队时为 <see langword="true" />；主循环不可用时为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryPostToMainLoop(Action action)
         {
@@ -29,10 +37,14 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     After <paramref name="task" /> completes, completes the returned task on the Godot main loop when
-        ///     possible; otherwise on the current continuation context.
-        ///     <paramref name="task" /> 完成后，尽可能在 Godot 主循环上完成返回的任务；
-        ///     否则在当前 continuation 上下文中完成。
+        ///     <para xml:lang="en">
+        ///         After <paramref name="task" /> completes, completes the returned task on the Godot main loop when
+        ///         possible; otherwise completes it on the thread-pool continuation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="task" /> 完成后，尽可能在 Godot 主循环上完成返回的任务；
+        ///         否则在线程池延续中完成。
+        ///     </para>
         /// </summary>
         public static Task ContinueOnGodotMainLoopAsync(this Task task)
         {

@@ -4,44 +4,52 @@ using System.Text;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Sidecar opcodes are 64-bit. Values <c>0</c> through <see cref="FixedProtocolOpcodeMaxInclusive" /> are
-    ///     reserved for framework and shared-library fixed protocols; <see cref="For" /> only yields values in
-    ///     <c>[<see cref="HashDerivedOpcodeMin" />, ulong.MaxValue]</c>.
-    ///     Sidecar opcode 为 64 位。<c>0</c> 到 <see cref="FixedProtocolOpcodeMaxInclusive" /> 的值
-    ///     保留给框架和共享库固定协议；<see cref="For" /> 只生成
-    ///     <c>[<see cref="HashDerivedOpcodeMin" />, ulong.MaxValue]</c> 范围内的值。
+    ///     <para xml:lang="en">
+    ///         Provides 64-bit sidecar opcodes. Values from <c>0</c> through
+    ///         <see cref="FixedProtocolOpcodeMaxInclusive" /> are reserved for fixed framework and shared-library
+    ///         protocols; <see cref="For" /> returns only values above that range.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供 64 位 sidecar 操作码。<c>0</c> 至 <see cref="FixedProtocolOpcodeMaxInclusive" /> 保留给框架和
+    ///         共享库的固定协议；<see cref="For" /> 只返回高于该范围的值。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarOpcodes
     {
         private const string Separator = "\0";
 
         /// <summary>
-        ///     Upper bound of the reserved range for fixed (non-hashed) framework / library opcodes.
-        ///     框架 / 库固定（非哈希）opcode 保留范围的上界。
+        ///     <para xml:lang="en">
+        ///         The inclusive upper bound of the range reserved for fixed, non-hashed opcodes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         固定非哈希操作码保留范围的上界（含）。
+        ///     </para>
         /// </summary>
         public const ulong FixedProtocolOpcodeMaxInclusive = 0xFFFF;
 
         /// <summary>
-        ///     Lower bound of opcodes returned by <see cref="For" /> (above the reserved range).
-        ///     <see cref="For" /> 返回的 opcode 下界（高于保留范围）。
+        ///     <para xml:lang="en">
+        ///         The inclusive lower bound of opcodes returned by <see cref="For" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <see cref="For" /> 返回的操作码下界（含）。
+        ///     </para>
         /// </summary>
         public const ulong HashDerivedOpcodeMin = FixedProtocolOpcodeMaxInclusive + 1;
 
         private const ulong HashTag = HashDerivedOpcodeMin;
 
         /// <summary>
-        ///     Returns a stable opcode for a mod-owned message kind. Input is UTF-8 concatenation
-        ///     <c>modId + U+0000 + messageKind</c>. The value is always at least
-        ///     <see cref="HashDerivedOpcodeMin" />, so it never falls in the reserved block
-        ///     <c>0</c>–<see cref="FixedProtocolOpcodeMaxInclusive" />. Change <paramref name="messageKind" /> when the
-        ///     payload contract changes.
-        ///     payload contract changes.
-        ///     为 mod 拥有的消息种类返回稳定 opcode。输入是 UTF-8 拼接
-        ///     <c>modId + U+0000 + messageKind</c>。该值始终至少为
-        ///     <see cref="HashDerivedOpcodeMin" />，因此永远不会落入保留块
-        ///     <c>0</c>–<see cref="FixedProtocolOpcodeMaxInclusive" />。载荷契约变化时请更改 <paramref name="messageKind" />。
-        ///     载荷契约变化时请更改。
-        ///     载荷契约变化时请更改。
+        ///     <para xml:lang="en">
+        ///         Returns a stable opcode for a mod-owned message kind by hashing the UTF-8 bytes of
+        ///         <c>modId + U+0000 + messageKind</c>. Change <paramref name="messageKind" /> whenever the payload
+        ///         contract changes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过哈希 <c>modId + U+0000 + messageKind</c> 的 UTF-8 字节，为模组消息类型返回稳定操作码。
+        ///         载荷契约发生变化时，应同时更改 <paramref name="messageKind" />。
+        ///     </para>
         /// </summary>
         public static ulong For(string modId, string messageKind)
         {

@@ -1,16 +1,19 @@
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Sidecar diagnostics settings that are not related to log-level gating.
-    ///     与日志级别 gating 无关的 sidecar 诊断设置。
+    ///     <para xml:lang="en">Sidecar diagnostic settings unrelated to log-level filtering.</para>
+    ///     <para xml:lang="zh-CN">与日志级别过滤无关的 Sidecar 诊断设置。</para>
     /// </summary>
     public static class RitsuLibSidecarNetDiagnosticsOptions
     {
         /// <summary>
-        ///     Incomplete chunked streams older than this span are discarded server-side (receiver); defaults to two
-        ///     minutes.
-        ///     服务端（接收方）会丢弃早于此时间跨度的未完成分块流；默认值为两
-        ///     分钟。
+        ///     <para xml:lang="en">
+        ///         Incomplete chunked streams older than this duration are discarded by the receiver. The default is
+        ///         two minutes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         接收方会丢弃存在时间超过此时长的未完成分块流。默认值为两分钟。
+        ///     </para>
         /// </summary>
         public static TimeSpan IncompleteChunkStreamRetention { get; set; } =
             RitsuLibSidecarChunkReassembly.IncompleteStreamRetentionDefault;

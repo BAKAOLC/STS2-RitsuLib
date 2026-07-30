@@ -1,32 +1,52 @@
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Compression mode for sidecar envelope payload bytes.
-    ///     Sidecar envelope payload 字节的压缩模式。
+    ///     <para xml:lang="en">
+    ///         Specifies the compression mode for a sidecar envelope payload.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         指定 sidecar 信封载荷的压缩模式。
+    ///     </para>
     /// </summary>
     public enum RitsuLibSidecarPayloadCompression
     {
         /// <summary>
-        ///     Write payload bytes unchanged.
-        ///     原样写入 payload 字节。
+        ///     <para xml:lang="en">
+        ///         Writes the payload without compression.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不压缩载荷。
+        ///     </para>
         /// </summary>
         None = 0,
 
         /// <summary>
-        ///     Compress payload bytes with gzip.
-        ///     使用 gzip 压缩 payload 字节。
+        ///     <para xml:lang="en">
+        ///         Compresses the payload with gzip.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 gzip 压缩载荷。
+        ///     </para>
         /// </summary>
         Gzip = 1,
 
         /// <summary>
-        ///     Compress payload bytes with Brotli.
-        ///     使用 Brotli 压缩 payload 字节。
+        ///     <para xml:lang="en">
+        ///         Compresses the payload with Brotli.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 Brotli 压缩载荷。
+        ///     </para>
         /// </summary>
         Brotli = 2,
 
         /// <summary>
-        ///     Use Brotli only when the payload is large enough and compression reduces the wire size.
-        ///     仅当 payload 足够大且压缩可减小线上大小时使用 Brotli。
+        ///     <para xml:lang="en">
+        ///         Uses Brotli only when the payload meets the size threshold and compression saves enough bytes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         仅在载荷达到大小阈值且压缩可节省足够字节时使用 Brotli。
+        ///     </para>
         /// </summary>
         Auto = 3,
     }

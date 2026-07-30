@@ -9,26 +9,26 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 namespace STS2RitsuLib.Networking.ManagedActions
 {
     /// <summary>
-    ///     Abstract base for RitsuLib-managed vanilla queue action carriers.
-    ///     RitsuLib 管理的原版队列动作 carrier 抽象基类。
+    ///     <para xml:lang="en">Base class for vanilla queue-action messages that carry RitsuLib-managed actions.</para>
+    ///     <para xml:lang="zh-CN">承载 RitsuLib 托管动作的游戏原版队列动作消息基类。</para>
     /// </summary>
     public abstract class RitsuLibManagedNetAction : INetAction
     {
         /// <summary>
-        ///     Stable descriptor opcode that identifies the managed action executor.
-        ///     标识 managed action 执行器的稳定 descriptor opcode。
+        ///     <para xml:lang="en">Stable descriptor opcode that identifies the managed-action executor.</para>
+        ///     <para xml:lang="zh-CN">标识托管动作执行器的稳定描述符操作码。</para>
         /// </summary>
         public ulong DescriptorOpcode { get; private set; }
 
         /// <summary>
-        ///     Vanilla queue action type used by the resulting <see cref="GameAction" />.
-        ///     生成的 <see cref="GameAction" /> 使用的原版队列动作类型。
+        ///     <para xml:lang="en">Vanilla queue action type used by the resulting <see cref="GameAction" />.</para>
+        ///     <para xml:lang="zh-CN">生成的 <see cref="GameAction" /> 使用的原版队列动作类型。</para>
         /// </summary>
         public GameActionType ManagedActionType { get; private set; }
 
         /// <summary>
-        ///     Serialized action payload owned by the registered descriptor.
-        ///     由已注册 descriptor 管理的序列化 action 载荷。
+        ///     <para xml:lang="en">Serialized action payload owned by the registered descriptor.</para>
+        ///     <para xml:lang="zh-CN">由已注册描述符管理的序列化动作载荷。</para>
         /// </summary>
         public byte[] Payload { get; private set; } = [];
 
