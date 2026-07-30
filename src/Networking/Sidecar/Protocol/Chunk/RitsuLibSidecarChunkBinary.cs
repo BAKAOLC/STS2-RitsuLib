@@ -4,28 +4,44 @@ using System.IO.Hashing;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Layout for <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> user payload.
-    ///     <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> 用户载荷的布局。
+    ///     <para xml:lang="en">
+    ///         Encodes and decodes <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> payloads.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         编码和解码 <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> 载荷。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarChunkBinary
     {
         /// <summary>
-        ///     Size in bytes of the fixed prefix (all big-endian): <c>userOpcode</c>, <c>streamId</c>, <c>index</c>,
-        ///     <c>count</c>, <c>totalSize</c>, <c>segment length</c>, <c>segmentCrc32</c>.
-        ///     固定前缀的字节大小（全部为 big-endian）：<c>userOpcode</c>、<c>streamId</c>、<c>index</c>、
-        ///     <c>count</c>、<c>totalSize</c>、<c>segment length</c>、<c>segmentCrc32</c>。
+        ///     <para xml:lang="en">
+        ///         The byte size of the fixed, big-endian frame header.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         采用大端序的固定帧头的字节数。
+        ///     </para>
         /// </summary>
         public const int FixedHeaderSize = RitsuLibSidecarChunkFrameLayout.FixedHeaderSize;
 
         /// <summary>
-        ///     Default max bytes per segment (excluding the fixed header).
-        ///     每个 segment 的默认最大字节数（不包括固定 header）。
+        ///     <para xml:lang="en">
+        ///         The default maximum segment-data size, excluding the fixed header.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         默认的分段数据大小上限，不包含固定帧头。
+        ///     </para>
         /// </summary>
         public const int DefaultMaxSegmentDataBytes = 16 * RitsuLibSidecarBinaryLayout.KiB;
 
         /// <summary>
-        ///     Serializes one chunk frame and returns total bytes written.
-        ///     序列化一个 chunk frame，并返回写入的总字节数。
+        ///     <para xml:lang="en">
+        ///         Writes one chunk frame and returns the total number of bytes written. The segment may not exceed
+        ///         <c>ushort.MaxValue</c> bytes, because its encoded length is 16-bit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         写入一个分块帧，并返回写入的总字节数。由于编码后的长度为 16 位，分段不得超过
+        ///         <c>ushort.MaxValue</c> 字节。
+        ///     </para>
         /// </summary>
         public static int WriteFrame(
             Span<byte> destination,
@@ -81,8 +97,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Parses one chunk frame from a full <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> message body.
-        ///     从完整的 <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> 消息体解析一个 chunk frame。
+        ///     <para xml:lang="en">
+        ///         Reads one chunk frame from a complete <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" />
+        ///         message body.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从完整的 <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> 消息体中读取一个分块帧。
+        ///     </para>
         /// </summary>
         public static void ReadFrame(
             ReadOnlySpan<byte> source,

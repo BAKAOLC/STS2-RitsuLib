@@ -3,20 +3,35 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Splits a large user payload into <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> messages with
-    ///     per-segment CRC32; loss recovery uses selective gap reports and re-sends only missing parts (see
-    ///     <see cref="RitsuLibSidecarControlOpcodes.ChunkStreamSelectiveNack" />).
-    ///     将大型用户载荷拆分为带逐 segment CRC32 的 <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> 消息；
-    ///     丢包恢复使用选择性缺口报告，并只重发缺失部分（见
-    ///     <see cref="RitsuLibSidecarControlOpcodes.ChunkStreamSelectiveNack" />）。
+    ///     <para xml:lang="en">
+    ///         Splits large user payloads into CRC-protected chunk frames and retains them for selective retransmission.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将大型用户载荷拆分为带 CRC 校验的分块帧，并保留这些帧以供选择性重传。
+    ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         Frames are fully constructed and registered for retransmission before the first transport attempt. If the
+    ///         first attempt fails, its outbound state is removed. A later failed attempt stops the remaining sends while
+    ///         retaining the state for frames that may already have reached the peer.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         会在首次传输尝试前完整构造帧并注册重传状态。首次尝试失败时会移除其出站状态；之后的尝试失败时，
+    ///         会停止发送剩余帧，但保留已可能到达对等方的帧的重传状态。
+    ///     </para>
+    /// </remarks>
     public static class RitsuLibSidecarChunkStream
     {
         private static long _streamIdMonotonic;
 
         /// <summary>
-        ///     Generates a new monotonically increasing stream id (per process) for chunked sends.
-        ///     为分块发送生成新的单调递增 stream id（按进程）。
+        ///     <para xml:lang="en">
+        ///         Allocates a process-local, monotonically increasing stream ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         分配进程内单调递增的流 ID。
+        ///     </para>
         /// </summary>
         public static ulong AllocateStreamId()
         {
@@ -24,10 +39,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Sends <paramref name="full" /> in multiple <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> envelopes
-        ///     to the host.
-        ///     将 <paramref name="full" /> 放入多个 <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> envelope
-        ///     发送到主机。
+        ///     <para xml:lang="en">
+        ///         Attempts to send <paramref name="full" /> to the host as a chunked stream.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试将 <paramref name="full" /> 作为分块流发送到主机。
+        ///     </para>
         /// </summary>
         public static void TrySendToHost(
             RunManager? runManager,
@@ -49,8 +66,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Sends a chunked stream from host to a single client.
-        ///     从主机向单个客户端发送分块流。
+        ///     <para xml:lang="en">
+        ///         Attempts to send a chunked stream from the host to one peer.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从主机向一个对等端发送分块流。
+        ///     </para>
         /// </summary>
         public static void TrySendToPeer(
             RunManager? runManager,
@@ -73,8 +94,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Host: sends a chunked stream to every ready-to-broadcast peer.
-        ///     主机：向每个 ready-to-broadcast peer 发送分块流。
+        ///     <para xml:lang="en">
+        ///         Attempts to broadcast a chunked stream from the host to every eligible peer.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从主机向所有符合条件的对等端广播分块流。
+        ///     </para>
         /// </summary>
         public static void TrySendBroadcast(
             RunManager? runManager,

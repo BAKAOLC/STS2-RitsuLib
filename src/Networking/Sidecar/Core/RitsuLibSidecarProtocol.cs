@@ -3,10 +3,12 @@ using STS2RitsuLib.Interactions.RightClick;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Installs default sidecar control handlers (handshake, chunked reassembly) once. Idempotent. Called from
-    ///     receive and from <see cref="RitsuLibSidecarHighLevelSend" />.
-    ///     安装默认 sidecar 控制处理器（握手、分块重组），只执行一次。幂等。由
-    ///     接收路径和 <see cref="RitsuLibSidecarHighLevelSend" /> 调用。
+    ///     <para xml:lang="en">
+    ///         Coordinates one-time installation of RitsuLib Sidecar's built-in protocol handlers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         协调 RitsuLib Sidecar 内置协议处理器的一次性安装。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarProtocol
     {
@@ -16,11 +18,25 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static int _registering;
 
         /// <summary>
-        ///     Registers built-in handlers for control opcodes and chunked reassembly once per process. Safe to call
-        ///     from send/receive paths; subsequent calls are no-ops.
-        ///     按进程注册一次控制 opcode 和分块重组的内置处理器。可安全地
-        ///     从发送/接收路径调用；后续调用为空操作。
+        ///     <para xml:lang="en">
+        ///         Registers the built-in control, synchronization, right-click, lifecycle, and capability handlers once
+        ///         per process.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在每个进程中注册一次内置的控制、同步、右键交互、生命周期和能力处理器。
+        ///     </para>
         /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         The completed marker is written only after every registration succeeds. An installation failure clears
+        ///         the in-progress marker, allowing a later call to retry. Calls that arrive while installation is in
+        ///         progress return without waiting, including reentrant calls.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         仅在所有注册成功后才写入完成标记。安装失败会清除进行中标记，使后续调用可以重试。
+        ///         在安装进行期间到达的调用（包括重入调用）会直接返回而不会等待。
+        ///     </para>
+        /// </remarks>
         public static void EnsureDefaultHandlers()
         {
             if (Volatile.Read(ref _registered) != 0 || Volatile.Read(ref _registering) != 0)
