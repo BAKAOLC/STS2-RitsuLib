@@ -47,8 +47,9 @@ namespace STS2RitsuLib.TopBar.Patches
             // The right-side cluster (%Deck / %Map / %Pause / Options …) lives inside the
             // `RightAlignedStuff` container, not directly on NTopBar. `ModTopBarLayout.Place` handles
             // that re-parenting for us so buttons end up as siblings of %Deck.
-            foreach (var definition in definitions)
+            for (var i = definitions.Length - 1; i >= 0; i--)
             {
+                var definition = definitions[i];
                 var button = NModCardPileButton.CreateAction(definition);
                 __instance.AddChildSafely(button);
                 ModTopBarLayout.Place(__instance, button, definition.Offset);
