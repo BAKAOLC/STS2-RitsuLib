@@ -106,19 +106,32 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
             {
                 if (_globalHandlersInitialized)
                     return;
-                _globalHandlersInitialized = true;
-            }
 
-            AppDomain.CurrentDomain.UnhandledException += (_, args) =>
-            {
-                if (args.ExceptionObject is Exception exception)
-                    CaptureExceptionForAuthorizedApplicants(exception, "dotnet_unhandled_exception");
-            };
-            TaskScheduler.UnobservedTaskException += (_, args) =>
-            {
-                CaptureExceptionForAuthorizedApplicants(args.Exception, "dotnet_unobserved_task_exception");
-                args.SetObserved();
-            };
+                try
+                {
+                    AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+                    TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+                    _globalHandlersInitialized = true;
+                }
+                catch
+                {
+                    AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+                    TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+                    throw;
+                }
+            }
+        }
+
+        private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+        {
+            if (args.ExceptionObject is Exception exception)
+                CaptureExceptionForAuthorizedApplicants(exception, "dotnet_unhandled_exception");
+        }
+
+        private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
+        {
+            CaptureExceptionForAuthorizedApplicants(args.Exception, "dotnet_unobserved_task_exception");
+            args.SetObserved();
         }
 
         private static bool TryMarkRecent(Exception exception, string source)

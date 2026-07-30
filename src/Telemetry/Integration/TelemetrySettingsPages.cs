@@ -29,8 +29,22 @@ namespace STS2RitsuLib.Telemetry.Integration
                 }
             }
 
-            if (shouldRegister)
+            if (!shouldRegister)
+                return;
+
+            try
+            {
                 RegisterRootPage();
+            }
+            catch
+            {
+                lock (Sync)
+                {
+                    _rootRegistered = false;
+                }
+
+                throw;
+            }
         }
 
         /// <summary>

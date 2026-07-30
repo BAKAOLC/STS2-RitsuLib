@@ -32,10 +32,23 @@ namespace STS2RitsuLib.Telemetry
             if (_initialized)
                 return;
 
-            _initialized = true;
             DiagnosticsTelemetryCollector.InitializeGlobalExceptionHandlers();
-            RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(RunHistoryTelemetryCollector.CaptureEndedRun);
-            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => InitializeMainMenuTelemetry());
+            IDisposable? runEndedSubscription = null;
+            IDisposable? mainMenuSubscription = null;
+            try
+            {
+                runEndedSubscription =
+                    RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(RunHistoryTelemetryCollector.CaptureEndedRun);
+                mainMenuSubscription =
+                    RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => InitializeMainMenuTelemetry());
+                _initialized = true;
+            }
+            catch
+            {
+                mainMenuSubscription?.Dispose();
+                runEndedSubscription?.Dispose();
+                throw;
+            }
         }
 
         private static void InitializeMainMenuTelemetry()
