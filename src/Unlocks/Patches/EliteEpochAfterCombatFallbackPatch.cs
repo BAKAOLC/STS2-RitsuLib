@@ -48,22 +48,5 @@ namespace STS2RitsuLib.Unlocks.Patches
             EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);
         }
 
-        public static Exception? Finalizer(
-            Exception? __exception,
-            ProgressSaveManager __instance,
-            Player localPlayer,
-            CombatRoom room)
-        {
-            if (__exception == null)
-                return null;
-
-            if (EliteEpochModHandling.HasDedicatedEliteEpochCheckMethod || room.RoomType != RoomType.Elite ||
-                !ModCharacterTimelinePolicy.IsOwnedOrUsesTimelinePolicy(localPlayer.Character) ||
-                __exception is not ArgumentOutOfRangeException { ParamName: "character" })
-                return __exception;
-
-            EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);
-            return null;
-        }
     }
 }
