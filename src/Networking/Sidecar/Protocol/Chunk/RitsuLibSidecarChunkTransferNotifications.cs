@@ -18,7 +18,23 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         internal static void RaiseReceive(in RitsuLibSidecarChunkReceiveProgress progress)
         {
-            ReceiveProgress?.Invoke(progress);
+            var subscribers = ReceiveProgress;
+            if (subscribers == null)
+                return;
+
+            foreach (Action<RitsuLibSidecarChunkReceiveProgress> subscriber in subscribers.GetInvocationList())
+            {
+                try
+                {
+                    subscriber(progress);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibSidecarRepeatedWarningLog.Warn(
+                        $"chunk-receive-progress-subscriber-exception:{subscriber.Method.DeclaringType?.FullName}:{subscriber.Method.Name}:{ex.GetType().FullName}",
+                        $"[Sidecar] Chunk receive-progress subscriber failed: {ex.Message}");
+                }
+            }
         }
     }
 }

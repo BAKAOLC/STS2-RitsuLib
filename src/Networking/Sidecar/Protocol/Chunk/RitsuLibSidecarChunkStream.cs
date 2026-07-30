@@ -122,7 +122,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             var span = full.Span;
             var count = (int)((totalU + (uint)maxSegment - 1) / (uint)maxSegment);
             var frames = new byte[count][];
-            var logicalSent = 0L;
             for (var i = 0; i < count; i++)
             {
                 var off = i * maxSegment;
@@ -138,35 +137,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                     totalU,
                     seg);
                 frames[i] = frame;
-
-                switch (kind)
-                {
-                    case RitsuLibSidecarChunkSendKind.Client:
-                        RitsuLibSidecarHighLevelSend.TrySendAsClient(
-                            runManager,
-                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
-                            frame,
-                            semantics);
-                        break;
-                    case RitsuLibSidecarChunkSendKind.HostBroadcast:
-                        RitsuLibSidecarHighLevelSend.TrySendAsHostBroadcast(
-                            runManager,
-                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
-                            frame,
-                            semantics);
-                        break;
-                    default:
-                        RitsuLibSidecarHighLevelSend.TrySendAsHostToPeer(
-                            runManager,
-                            peerNetId!.Value,
-                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
-                            frame,
-                            semantics);
-                        break;
-                }
-
-                logicalSent += len;
-                progress?.Report(new(i + 1, count, logicalSent, totalU));
             }
 
             RitsuLibSidecarChunkOutboundRegistry.Register(
@@ -180,6 +150,45 @@ namespace STS2RitsuLib.Networking.Sidecar
                     Semantics = semantics,
                     UnicastClientNetId = kind == RitsuLibSidecarChunkSendKind.HostToPeer ? peerNetId : null,
                 });
+
+            var logicalSent = 0L;
+            for (var i = 0; i < frames.Length; i++)
+            {
+                var frame = frames[i];
+                var sent = kind switch
+                {
+                    RitsuLibSidecarChunkSendKind.Client => RitsuLibSidecarHighLevelSend.TrySendAsClient(
+                            runManager,
+                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
+                            frame,
+                            semantics),
+                    RitsuLibSidecarChunkSendKind.HostBroadcast => RitsuLibSidecarHighLevelSend.TrySendAsHostBroadcast(
+                            runManager,
+                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
+                            frame,
+                            semantics),
+                    _ => RitsuLibSidecarHighLevelSend.TrySendAsHostToPeer(
+                            runManager,
+                            peerNetId!.Value,
+                            RitsuLibSidecarControlOpcodes.ChunkedFrame,
+                            frame,
+                            semantics),
+                };
+
+                if (!sent)
+                {
+                    if (i == 0)
+                        RitsuLibSidecarChunkOutboundRegistry.TryRemove(stream);
+
+                    RitsuLibSidecarRepeatedWarningLog.Warn(
+                        $"chunk-send-failed:peer={peerNetId?.ToString() ?? "broadcast"}:op={userOpcode}",
+                        "[Sidecar] Chunked send failed; remaining frames were not sent.");
+                    return;
+                }
+
+                logicalSent += frame.Length - RitsuLibSidecarChunkBinary.FixedHeaderSize;
+                progress?.Report(new(i + 1, count, logicalSent, totalU));
+            }
         }
     }
 }
