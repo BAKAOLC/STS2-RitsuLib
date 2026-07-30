@@ -27,7 +27,10 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             BaseLibHealthBarForecastBridge.TryRegisterSecondary();
             BaseLibVisualGraftBridge.TryRegisterSecondary();
             if (BaseLibHealthBarForecastBridge.ShouldRitsuRendererStandDown())
+            {
+                HideAllCustomSegments(healthBar);
                 return;
+            }
 
             var suppressBaseLibRenderer = BaseLibHealthBarForecastBridge.ShouldSuppressBaseLibRenderer();
             var creature = healthBar._creature;

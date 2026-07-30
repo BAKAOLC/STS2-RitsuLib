@@ -16,7 +16,10 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         {
             BaseLibVisualGraftBridge.TryRegisterSecondary();
             if (BaseLibVisualGraftBridge.ShouldRitsuGraftStandDown())
+            {
+                HideGraftStrip(healthBar);
                 return;
+            }
 
             var creature = healthBar._creature;
             if (creature.CurrentHp <= 0 || creature.IsInfiniteHpDisplayed())
@@ -84,17 +87,18 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
         private static void ResetGraft(NHealthBar healthBar)
         {
-            if (!GraftStates.TryGetValue(healthBar, out var state))
+            HideGraftStrip(healthBar);
+            SyncHpBarToHitbox(healthBar, 1f);
+        }
+
+        private static void HideGraftStrip(NHealthBar healthBar)
+        {
+            if (!GraftStates.TryGetValue(healthBar, out var state) || state.Strip == null)
                 return;
 
-            if (state.Strip != null)
-            {
-                state.Strip.Visible = false;
-                state.Strip.Material = null;
-                state.Strip.SelfModulate = Colors.White;
-            }
-
-            SyncHpBarToHitbox(healthBar, 1f);
+            state.Strip.Visible = false;
+            state.Strip.Material = null;
+            state.Strip.SelfModulate = Colors.White;
         }
 
         private static void SyncHpBarToHitbox(NHealthBar healthBar, float widthMultiplier)
