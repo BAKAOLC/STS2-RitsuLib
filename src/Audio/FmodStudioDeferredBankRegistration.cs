@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Audio
     public static class FmodStudioDeferredBankRegistration
     {
         private static readonly Lock Gate = new();
+        private static readonly Lock FlushGate = new();
         private static readonly HashSet<string> PendingBanks = new(StringComparer.Ordinal);
         private static readonly HashSet<string> PendingGuidFiles = new(StringComparer.Ordinal);
         private static bool _flushHookRegistered;
@@ -23,10 +24,9 @@ namespace STS2RitsuLib.Audio
                 return;
 
             lock (Gate)
-            {
                 PendingBanks.Add(resourcePath.Trim());
-                EnsureFlushHookRegisteredLocked();
-            }
+
+            EnsureFlushHookRegistered();
         }
 
         /// <summary>
@@ -41,22 +41,47 @@ namespace STS2RitsuLib.Audio
                 return;
 
             lock (Gate)
-            {
                 PendingGuidFiles.Add(guidMapResourcePath.Trim());
-                EnsureFlushHookRegisteredLocked();
+
+            EnsureFlushHookRegistered();
+        }
+
+        private static void EnsureFlushHookRegistered()
+        {
+            lock (Gate)
+            {
+                if (_flushHookRegistered)
+                    return;
+
+                _flushHookRegistered = true;
+            }
+
+            try
+            {
+                RitsuLibFramework.SubscribeLifecycleOnce<DeferredInitializationCompletedEvent>(_ =>
+                {
+                    lock (Gate)
+                        _flushHookRegistered = false;
+
+                    FlushPending();
+                });
+            }
+            catch
+            {
+                lock (Gate)
+                    _flushHookRegistered = false;
+
+                throw;
             }
         }
 
-        private static void EnsureFlushHookRegisteredLocked()
+        private static void FlushPending()
         {
-            if (_flushHookRegistered)
-                return;
-
-            _flushHookRegistered = true;
-            RitsuLibFramework.SubscribeLifecycle<DeferredInitializationCompletedEvent>(_ => FlushPending());
+            lock (FlushGate)
+                FlushPendingCore();
         }
 
-        private static void FlushPending()
+        private static void FlushPendingCore()
         {
             if (FmodStudioServer.TryGet() is null)
             {
@@ -80,17 +105,40 @@ namespace STS2RitsuLib.Audio
             if (banks.Count == 0 && guids.Count == 0)
                 return;
 
+            var failedBanks = new List<string>();
+            var failedGuids = new List<string>();
+
             foreach (var path in banks)
-                FmodStudioServer.TryLoadBank(path);
+                if (!FmodStudioServer.TryLoadBank(path))
+                    failedBanks.Add(path);
 
             foreach (var path in guids)
-                FmodStudioServer.TryLoadStudioGuidMappings(path);
+                if (!FmodStudioServer.TryLoadStudioGuidMappings(path))
+                    failedGuids.Add(path);
 
-            FmodStudioServer.TryWaitForAllLoads();
+            if (failedBanks.Count < banks.Count || failedGuids.Count < guids.Count)
+                FmodStudioServer.TryWaitForAllLoads();
+
+            if (failedBanks.Count > 0 || failedGuids.Count > 0)
+            {
+                lock (Gate)
+                {
+                    PendingBanks.UnionWith(failedBanks);
+                    PendingGuidFiles.UnionWith(failedGuids);
+                }
+            }
 
             RitsuLibFramework.Logger.Info(
-                $"[Audio] deferred FMOD flush complete (banks={banks.Count}, guid files={guids.Count})."
+                $"[Audio] deferred FMOD flush complete " +
+                $"(banks={banks.Count - failedBanks.Count}/{banks.Count}, " +
+                $"guid files={guids.Count - failedGuids.Count}/{guids.Count})."
             );
+
+            if (failedBanks.Count > 0 || failedGuids.Count > 0)
+                RitsuLibFramework.Logger.Warn(
+                    $"[Audio] deferred FMOD flush retained {failedBanks.Count} bank(s) and " +
+                    $"{failedGuids.Count} GUID file(s) for retry."
+                );
         }
     }
 }
