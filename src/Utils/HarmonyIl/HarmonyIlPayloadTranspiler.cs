@@ -165,8 +165,16 @@ namespace STS2RitsuLib.Utils.HarmonyIl
                 mode,
                 moveLabelsAndBlocksToInserted,
                 validateOutput);
-            harmony.Patch(originalMethod, transpiler: handle.HarmonyMethod);
-            return handle;
+            try
+            {
+                harmony.Patch(originalMethod, transpiler: handle.HarmonyMethod);
+                return handle;
+            }
+            catch
+            {
+                handle.Dispose();
+                throw;
+            }
         }
 
         internal static void Remove(string payloadId)

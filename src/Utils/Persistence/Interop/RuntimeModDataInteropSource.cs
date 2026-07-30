@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
         private static readonly ConcurrentDictionary<Type, MethodInfo> ApplySyncTypedClosedByDataType = new();
 
-        private static readonly ConcurrentDictionary<string, Type?> ResolvedExternalTypeByName =
+        private static readonly ConcurrentDictionary<string, Type> ResolvedExternalTypeByName =
             new(StringComparer.Ordinal);
 
         private static MethodInfo GetModDataStoreRegisterWithCloudOpen()
@@ -239,8 +239,8 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 if (_profileChangedHooked)
                     return;
 
-                _profileChangedHooked = true;
                 ProfileManager.Instance.ProfileChanged += OnProfileChangedSyncFromProviders;
+                _profileChangedHooked = true;
             }
         }
 
@@ -635,13 +635,17 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
         private static Type? ResolveExternalType(string typeName)
         {
-            return ResolvedExternalTypeByName.GetOrAdd(typeName,
-                static name =>
-                {
-                    return AppDomain.CurrentDomain.GetAssemblies()
-                        .Select(asm => asm.GetType(name, false))
-                        .OfType<Type>().FirstOrDefault();
-                });
+            if (ResolvedExternalTypeByName.TryGetValue(typeName, out var cached))
+                return cached;
+
+            var resolved = AppDomain.CurrentDomain.GetAssemblies()
+                .Select(asm => asm.GetType(typeName, false))
+                .OfType<Type>()
+                .FirstOrDefault();
+            if (resolved != null)
+                ResolvedExternalTypeByName.TryAdd(typeName, resolved);
+
+            return resolved;
         }
 
         private static SaveScope ParseScope(string? value)

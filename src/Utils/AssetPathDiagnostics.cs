@@ -8,6 +8,7 @@ namespace STS2RitsuLib.Utils
         private static readonly HashSet<string> StartupMissingPathCache = [];
         private static bool _startupMissingPathCacheEnabled = true;
         private static bool _startupMissingPathCacheShutdownRegistered;
+        private static bool _startupMissingPathCacheShutdownRegistering;
 
         internal static bool Exists(string path, object owner, string memberName)
         {
@@ -95,13 +96,28 @@ namespace STS2RitsuLib.Utils
 
             lock (StartupMissingPathCacheGate)
             {
-                if (_startupMissingPathCacheShutdownRegistered)
+                if (_startupMissingPathCacheShutdownRegistered ||
+                    _startupMissingPathCacheShutdownRegistering)
                     return;
 
-                _startupMissingPathCacheShutdownRegistered = true;
+                _startupMissingPathCacheShutdownRegistering = true;
             }
 
-            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => DisableStartupMissingPathCache());
+            try
+            {
+                RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => DisableStartupMissingPathCache());
+                lock (StartupMissingPathCacheGate)
+                {
+                    _startupMissingPathCacheShutdownRegistered = true;
+                }
+            }
+            finally
+            {
+                lock (StartupMissingPathCacheGate)
+                {
+                    _startupMissingPathCacheShutdownRegistering = false;
+                }
+            }
         }
 
         private static void DisableStartupMissingPathCache()
