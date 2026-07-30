@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters;
 
@@ -51,6 +52,9 @@ namespace STS2RitsuLib.Unlocks.Patches
             }
 
             if (SaveManager.Instance.Progress.IsEpochObtained(rule.EpochId))
+                return false;
+
+            if (Sts2RunGameModeCompat.AreMidRunEpochsLockedFor(localPlayer))
                 return false;
 
             var bossIds = ModelDb.Acts
