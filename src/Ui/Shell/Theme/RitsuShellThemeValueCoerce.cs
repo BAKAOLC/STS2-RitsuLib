@@ -76,9 +76,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             {
                 case null:
                     return false;
-                case double d:
+                case double d when double.IsFinite(d):
                     value = d;
                     return true;
+                case double:
+                    return false;
                 case long l:
                     value = l;
                     return true;
@@ -88,8 +90,13 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 case bool b:
                     value = b ? 1d : 0d;
                     return true;
-                case string s:
-                    return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+                case string s when double.TryParse(
+                    s,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var parsed) && double.IsFinite(parsed):
+                    value = parsed;
+                    return true;
                 default:
                     return false;
             }
@@ -110,9 +117,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 case long l:
                     value = l != 0;
                     return true;
-                case double d:
+                case double d when double.IsFinite(d):
                     value = d >= 0.5;
                     return true;
+                case double:
+                    return false;
                 case string s when bool.TryParse(s, out var parsed):
                     value = parsed;
                     return true;

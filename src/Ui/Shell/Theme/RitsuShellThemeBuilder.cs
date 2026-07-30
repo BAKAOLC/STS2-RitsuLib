@@ -373,14 +373,20 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         {
             if (RitsuShellThemeReferenceResolver.TryFindLeaf(root, path, out var leaf) &&
                 RitsuShellThemeValueCoerce.TryAsDouble(leaf, out var v))
-                return (int)Math.Round(v, MidpointRounding.AwayFromZero);
+            {
+                var rounded = Math.Round(v, MidpointRounding.AwayFromZero);
+                if (rounded is >= int.MinValue and <= int.MaxValue)
+                    return (int)rounded;
+            }
+
             return 0;
         }
 
         private static float ReadFloat(Dictionary<string, object?> root, string path)
         {
             if (RitsuShellThemeReferenceResolver.TryFindLeaf(root, path, out var leaf) &&
-                RitsuShellThemeValueCoerce.TryAsDouble(leaf, out var v))
+                RitsuShellThemeValueCoerce.TryAsDouble(leaf, out var v) &&
+                v is >= -float.MaxValue and <= float.MaxValue)
                 return (float)v;
             return 0f;
         }
