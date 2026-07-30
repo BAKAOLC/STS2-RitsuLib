@@ -5,17 +5,42 @@ using MegaCrit.Sts2.Core.Localization.Fonts;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Builds a <see cref="RitsuShellTheme" /> snapshot from a merged + reference-resolved DTFM token tree.
-    ///     Reads concrete values at canonical paths to populate typed records.
-    ///     从合并并完成引用解析的 DTFM 令牌树构建 <see cref="RitsuShellTheme" /> 快照。
-    ///     读取规范路径处的具体值，以填充类型化记录。
+    ///     <para xml:lang="en">
+    ///         Builds a <see cref="RitsuShellTheme" /> snapshot from a merged, reference-resolved Design Tokens
+    ///         Format Module token tree by reading the canonical paths into typed token groups.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从已合并并完成引用解析的设计令牌格式模块令牌树构建 <see cref="RitsuShellTheme" /> 快照，
+    ///         将规范路径中的值读取到类型化令牌组中。
+    ///     </para>
     /// </summary>
     internal static class RitsuShellThemeBuilder
     {
         /// <summary>
-        ///     Builds a snapshot for <paramref name="resolvedId" /> from the merged tree.
-        ///     从合并后的树为 <paramref name="resolvedId" /> 构建快照。
+        ///     <para xml:lang="en">
+        ///         Builds a typed snapshot for <paramref name="resolvedId" /> from the resolved token tree and
+        ///         merged extension data.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         根据已解析的令牌树及合并后的扩展数据，为 <paramref name="resolvedId" /> 构建类型化快照。
+        ///     </para>
         /// </summary>
+        /// <param name="resolvedId">
+        ///     <para xml:lang="en">The normalized identifier assigned to the snapshot.</para>
+        ///     <para xml:lang="zh-CN">分配给快照的规范化标识符。</para>
+        /// </param>
+        /// <param name="root">
+        ///     <para xml:lang="en">The merged and reference-resolved token tree.</para>
+        ///     <para xml:lang="zh-CN">已合并并完成引用解析的令牌树。</para>
+        /// </param>
+        /// <param name="extensions">
+        ///     <para xml:lang="en">The merged extension data indexed by mod identifier.</para>
+        ///     <para xml:lang="zh-CN">按模组标识符索引的合并扩展数据。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The completed theme snapshot.</para>
+        ///     <para xml:lang="zh-CN">构建完成的主题快照。</para>
+        /// </returns>
         public static RitsuShellTheme Build(string resolvedId,
             Dictionary<string, object?> root,
             Dictionary<string, JsonElement> extensions)

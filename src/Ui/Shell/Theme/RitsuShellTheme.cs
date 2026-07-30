@@ -5,26 +5,27 @@ using Godot;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Immutable snapshot of a resolved shell theme. Exposes typed groups of color, text, surface,
-    ///     component, metric, and font tokens as well as path-based dynamic accessors and per-mod extension
-    ///     blobs.
-    ///     已解析 shell 主题的不可变快照。公开颜色、文本、表面、
-    ///     组件、度量和字体令牌的类型化分组，以及基于路径的动态访问器和按 mod 划分的扩展
-    ///     blob。
+    ///     <para xml:lang="en">
+    ///         Represents an immutable snapshot of a resolved shell theme. It exposes typed color, text, surface,
+    ///         component, metric, and font tokens, as well as path-based access and per-mod extension data.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示已解析外壳主题的不可变快照。该快照公开类型化的颜色、文本、表面、组件、度量及字体令牌，
+    ///         同时提供基于路径的访问方式和各模组的扩展数据。
+    ///     </para>
     /// </summary>
     public sealed class RitsuShellTheme
     {
         private readonly Dictionary<string, JsonElement> _extensions;
 
         /// <summary>
-        ///     Per-path leaf-resolution cache. This snapshot is immutable after construction, so resolving a
-        ///     dotted path is a pure function of <see cref="_root" /> and can be memoized. Each token read
-        ///     (number, color, dimension, …) goes through <see cref="TryFindLeaf" />; without this cache every
-        ///     read re-splits the path and walks the nested token tree, which the settings UI does thousands of
-        ///     times while building a page. A miss is cached as <see langword="null" />.
-        ///     逐路径的叶节点解析缓存。该快照在构造后不可变，因此解析点分路径是 <see cref="_root" /> 的纯函数，可被记忆化。
-        ///     每次令牌读取（数值、颜色、尺寸等）都经过 <see cref="TryFindLeaf" />；没有此缓存时，每次读取都会重新切分路径并
-        ///     遍历嵌套令牌树，而设置 UI 构建一个页面时会执行成千上万次。未命中以 <see langword="null" /> 缓存。
+        ///     <para xml:lang="en">
+        ///         Caches leaf lookup results by dotted path. Because the token tree is immutable after snapshot
+        ///         construction, both successful lookups and misses can be reused safely.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按点分路径缓存叶令牌查找结果。令牌树在快照构建后保持不变，因此命中结果和未命中结果均可安全复用。
+        ///     </para>
         /// </summary>
         private readonly ConcurrentDictionary<string, LeafToken?> _leafCache = new(StringComparer.Ordinal);
 
@@ -48,68 +49,76 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Convenience accessor for <see cref="RitsuShellThemeRuntime.Current" />.
-        ///     <see cref="RitsuShellThemeRuntime.Current" /> 的便捷访问器。
+        ///     <para xml:lang="en">
+        ///         Gets the snapshot currently published by <see cref="RitsuShellThemeRuntime" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="RitsuShellThemeRuntime" /> 当前发布的主题快照。
+        ///     </para>
         /// </summary>
         public static RitsuShellTheme Current => RitsuShellThemeRuntime.Current;
 
         /// <summary>
-        ///     Resolved theme id (lowercase).
-        ///     resolved theme id (lowercase).
-        ///     解析后的主题 id (小写)。
-        ///     解析后的 theme id (小写)。
+        ///     <para xml:lang="en">Gets the normalized, lowercase identifier of the resolved theme.</para>
+        ///     <para xml:lang="zh-CN">获取已解析主题的规范化小写标识符。</para>
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        ///     Top-level palette colors (white, transparent, divider, ...).
-        ///     顶层调色板颜色 (white, transparent, divider,...)。
+        ///     <para xml:lang="en">Gets the top-level palette and shadow colors.</para>
+        ///     <para xml:lang="zh-CN">获取顶层调色板及阴影颜色。</para>
         /// </summary>
         public ColorTokens Color { get; }
 
         /// <summary>
-        ///     Typography colors (rich text, labels, hints).
-        ///     排版颜色 (富文本, 标签, 提示)。
+        ///     <para xml:lang="en">Gets the colors used for rich text, labels, hints, and related text.</para>
+        ///     <para xml:lang="zh-CN">获取富文本、标签、提示及相关文本所用的颜色。</para>
         /// </summary>
         public TextTokens Text { get; }
 
         /// <summary>
-        ///     Surface backgrounds (panes + entry chrome).
-        ///     表面背景 (窗格 + 条目 chrome)。
+        ///     <para xml:lang="en">Gets the colors used by panes, entries, and framed surfaces.</para>
+        ///     <para xml:lang="zh-CN">获取窗格、条目及带框表面所用的颜色。</para>
         /// </summary>
         public SurfaceTokens Surface { get; }
 
         /// <summary>
-        ///     Component tokens (toggle, dropdown, sidebar button, ...).
-        ///     组件令牌（开关、下拉框、侧边栏按钮等）。
+        ///     <para xml:lang="en">Gets the visual tokens for shell UI components.</para>
+        ///     <para xml:lang="zh-CN">获取外壳界面组件的视觉令牌。</para>
         /// </summary>
         public ComponentTokens Component { get; }
 
         /// <summary>
-        ///     Numeric metrics (radius, border width, sizing, font size, ...).
-        ///     数值指标 (半径, 边框宽度, 尺寸, 字体大小,...)。
+        ///     <para xml:lang="en">Gets radii, border widths, dimensions, font sizes, and other metrics.</para>
+        ///     <para xml:lang="zh-CN">获取圆角半径、边框宽度、尺寸、字号及其他度量。</para>
         /// </summary>
         public MetricTokens Metric { get; }
 
         /// <summary>
-        ///     Theme-resolved fonts.
-        ///     Theme-resolved fonts.
-        ///     主题解析后的 字体。
-        ///     主题解析后的 字体。
+        ///     <para xml:lang="en">Gets the fonts resolved for the theme.</para>
+        ///     <para xml:lang="zh-CN">获取为该主题解析的字体。</para>
         /// </summary>
         public FontTokens Font { get; }
 
         /// <summary>
-        ///     Resolves a color leaf at <paramref name="path" /> (e.g. <c>components.toggle.on.bg</c>).
-        ///     解析 <paramref name="path" /> 处的颜色叶节点（例如 <c>components.toggle.on.bg</c>）。
+        ///     <para xml:lang="en">
+        ///         Gets the color at <paramref name="path" />, such as <c>components.toggle.on.bg</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="path" /> 处的颜色，例如 <c>components.toggle.on.bg</c>。
+        ///     </para>
         /// </summary>
         /// <param name="path">
-        ///     Dotted DTFM path.
-        ///     点分隔的 DTFM 路径。
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
         /// </param>
         /// <returns>
-        ///     The resolved color, or <see cref="Colors.Magenta" /> when missing.
-        ///     解析出的颜色；缺失时为 <see cref="Colors.Magenta" />。
+        ///     <para xml:lang="en">
+        ///         The resolved color, or <see cref="Colors.Magenta" /> if the token is missing or invalid.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析出的颜色；令牌缺失或无效时为 <see cref="Colors.Magenta" />。
+        ///     </para>
         /// </returns>
         public Color GetColor(string path)
         {
@@ -120,9 +129,29 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Tries to resolve a color leaf at <paramref name="path" />.
-        ///     尝试解析 <paramref name="path" /> 处的颜色叶节点。
+        ///     <para xml:lang="en">Tries to get the color at <paramref name="path" />.</para>
+        ///     <para xml:lang="zh-CN">尝试获取 <paramref name="path" /> 处的颜色。</para>
         /// </summary>
+        /// <param name="path">
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">
+        ///         Receives the resolved color, or <see cref="Colors.Transparent" /> on failure.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         接收解析出的颜色；解析失败时为 <see cref="Colors.Transparent" />。
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if a valid color was resolved; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若解析出有效颜色，则为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public bool TryGetColor(string path, out Color color)
         {
             color = Colors.Transparent;
@@ -130,16 +159,21 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Resolves a numeric leaf at <paramref name="path" /> as <see cref="float" />.
-        ///     将 <paramref name="path" /> 处的数值叶节点解析为 <see cref="float" />。
+        ///     <para xml:lang="en">Gets the numeric token at <paramref name="path" /> as a <see cref="float" />.</para>
+        ///     <para xml:lang="zh-CN">以 <see cref="float" /> 获取 <paramref name="path" /> 处的数值令牌。</para>
         /// </summary>
         /// <param name="path">
-        ///     Dotted DTFM path.
-        ///     点分隔的 DTFM 路径。
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
         /// </param>
         /// <returns>
-        ///     The resolved number, or <c>0</c> when missing.
-        ///     解析出的数字；缺失时为 <c>0</c>。
+        ///     <para xml:lang="en">
+        ///         The resolved value, or <c>0</c> if the token is missing, invalid, or outside the
+        ///         <see cref="float" /> range.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析出的值；令牌缺失、无效或超出 <see cref="float" /> 范围时为 <c>0</c>。
+        ///     </para>
         /// </returns>
         public float GetDimension(string path)
         {
@@ -150,16 +184,20 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Resolves a numeric leaf at <paramref name="path" /> as <see cref="double" />.
-        ///     将 <paramref name="path" /> 处的数值叶节点解析为 <see cref="double" />。
+        ///     <para xml:lang="en">Gets the numeric token at <paramref name="path" /> as a <see cref="double" />.</para>
+        ///     <para xml:lang="zh-CN">以 <see cref="double" /> 获取 <paramref name="path" /> 处的数值令牌。</para>
         /// </summary>
         /// <param name="path">
-        ///     Dotted DTFM path.
-        ///     点分隔的 DTFM 路径。
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
         /// </param>
         /// <returns>
-        ///     The resolved number, or <c>0</c> when missing.
-        ///     解析出的数字；缺失时为 <c>0</c>。
+        ///     <para xml:lang="en">
+        ///         The resolved finite value, or <c>0</c> if the token is missing or invalid.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析出的有限数值；令牌缺失或无效时为 <c>0</c>。
+        ///     </para>
         /// </returns>
         public double GetDimensionDouble(string path)
         {
@@ -170,9 +208,30 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Tries to resolve a numeric leaf at <paramref name="path" /> as <see cref="double" />.
-        ///     尝试将 <paramref name="path" /> 处的数值叶节点解析为 <see cref="double" />。
+        ///     <para xml:lang="en">
+        ///         Tries to get the numeric token at <paramref name="path" /> as a finite <see cref="double" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试以有限 <see cref="double" /> 获取 <paramref name="path" /> 处的数值令牌。
+        ///     </para>
         /// </summary>
+        /// <param name="path">
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
+        /// </param>
+        /// <param name="value">
+        ///     <para xml:lang="en">Receives the resolved value, or <c>0</c> on failure.</para>
+        ///     <para xml:lang="zh-CN">接收解析出的值；解析失败时为 <c>0</c>。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if a valid finite value was resolved; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若解析出有效的有限数值，则为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public bool TryGetNumber(string path, out double value)
         {
             value = 0d;
@@ -180,16 +239,26 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Resolves a numeric leaf at <paramref name="path" /> as <see cref="int" /> (rounded).
-        ///     将 <paramref name="path" /> 处的数值叶节点解析为 <see cref="int" />（四舍五入）。
+        ///     <para xml:lang="en">
+        ///         Gets the numeric token at <paramref name="path" /> as an <see cref="int" />, rounding midpoint
+        ///         values away from zero.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <see cref="int" /> 获取 <paramref name="path" /> 处的数值令牌，中点值向远离零的方向舍入。
+        ///     </para>
         /// </summary>
         /// <param name="path">
-        ///     Dotted DTFM path.
-        ///     点分隔的 DTFM 路径。
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
         /// </param>
         /// <returns>
-        ///     The resolved integer, or <c>0</c> when missing.
-        ///     解析出的整数；缺失时为 <c>0</c>。
+        ///     <para xml:lang="en">
+        ///         The rounded value, or <c>0</c> if the token is missing, invalid, or outside the
+        ///         <see cref="int" /> range.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         舍入后的值；令牌缺失、无效或超出 <see cref="int" /> 范围时为 <c>0</c>。
+        ///     </para>
         /// </returns>
         public int GetDimensionInt(string path)
         {
@@ -200,16 +269,20 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Resolves a boolean leaf at <paramref name="path" />.
-        ///     解析 <paramref name="path" /> 处的布尔叶节点。
+        ///     <para xml:lang="en">Gets the Boolean token at <paramref name="path" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="path" /> 处的布尔令牌。</para>
         /// </summary>
         /// <param name="path">
-        ///     Dotted DTFM path.
-        ///     点分隔的 DTFM 路径。
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
         /// </param>
         /// <returns>
-        ///     The resolved boolean, or <c>false</c> when missing.
-        ///     解析出的布尔值；缺失时为 <c>false</c>。
+        ///     <para xml:lang="en">
+        ///         The resolved value, or <see langword="false" /> if the token is missing or invalid.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析出的值；令牌缺失或无效时为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public bool GetBool(string path)
         {
@@ -220,18 +293,21 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Resolves a font family leaf at <paramref name="path" />. Falls back to the shared body font
-        ///     when the resource cannot be loaded.
-        ///     解析 <paramref name="path" /> 处的字体族叶节点。资源无法加载时，
-        ///     回退到共享的正文字体。
+        ///     <para xml:lang="en">
+        ///         Gets the font family at <paramref name="path" />, using the configured fallback font when the
+        ///         token cannot be loaded.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="path" /> 处的字体族；令牌无法加载时使用配置的后备字体。
+        ///     </para>
         /// </summary>
         /// <param name="path">
-        ///     Dotted DTFM path.
-        ///     点分隔的 DTFM 路径。
+        ///     <para xml:lang="en">The dotted token path.</para>
+        ///     <para xml:lang="zh-CN">点分令牌路径。</para>
         /// </param>
         /// <returns>
-        ///     The resolved font.
-        ///     解析出的字体。
+        ///     <para xml:lang="en">The resolved font or the configured fallback font.</para>
+        ///     <para xml:lang="zh-CN">解析出的字体或配置的后备字体。</para>
         /// </returns>
         public Font GetFontFamily(string path)
         {
@@ -240,20 +316,33 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Returns the merged extension blob owned by <paramref name="modId" />.
-        ///     返回 合并后扩展 blob 拥有者 <paramref name="modId" />。
+        ///     <para xml:lang="en">
+        ///         Tries to get the merged extension data contributed under <paramref name="modId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取以 <paramref name="modId" /> 名义贡献并合并后的扩展数据。
+        ///     </para>
         /// </summary>
         /// <param name="modId">
-        ///     Mod identifier.
-        ///     Mod 标识符。
+        ///     <para xml:lang="en">The exact mod identifier used by the extension entry.</para>
+        ///     <para xml:lang="zh-CN">扩展条目使用的精确模组标识符。</para>
         /// </param>
         /// <param name="json">
-        ///     Extension JSON, or <see langword="default" /> when none.
-        ///     扩展 JSON, or <see langword="default" /> 没有时。
+        ///     <para xml:lang="en">
+        ///         Receives the extension JSON, or <see langword="default" /> if no entry exists.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         接收扩展 JSON；条目不存在时为 <see langword="default" />。
+        ///     </para>
         /// </param>
         /// <returns>
-        ///     <see langword="true" /> if an extension entry exists for the mod.
-        ///     如果该 mod 存在扩展条目，则为 <see langword="true" />。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if an extension entry exists for the identifier; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若该标识符存在扩展条目，则为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public bool TryGetExtension(string modId, out JsonElement json)
         {
@@ -261,12 +350,16 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Mod ids that contributed an <c>extensions.&lt;modId&gt;</c> blob to this snapshot.
-        ///     向此快照贡献了 <c>extensions.&lt;modId&gt;</c> blob 的 mod id。
+        ///     <para xml:lang="en">
+        ///         Lists the mod identifiers that contributed <c>extensions.&lt;modId&gt;</c> data to this snapshot.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         列出向此快照贡献 <c>extensions.&lt;modId&gt;</c> 数据的模组标识符。
+        ///     </para>
         /// </summary>
         /// <returns>
-        ///     Sorted mod identifier list.
-        ///     排序后的 mod 标识符列表。
+        ///     <para xml:lang="en">A new list sorted by ordinal identifier order.</para>
+        ///     <para xml:lang="zh-CN">按标识符序数顺序排列的新列表。</para>
         /// </returns>
         public IReadOnlyList<string> ListExtensionModIds()
         {
