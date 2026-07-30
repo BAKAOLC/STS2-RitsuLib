@@ -565,7 +565,7 @@ namespace STS2RitsuLib.Diagnostics
             }
             catch
             {
-                return text;
+                return "<redaction failed>";
             }
         }
 
