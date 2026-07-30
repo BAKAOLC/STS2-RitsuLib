@@ -6,32 +6,34 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Cards.DynamicVars
 {
     /// <summary>
-    ///     <see cref="DynamicVar" /> whose displayed value is produced by delegates instead of a fixed base amount.
-    ///     显示值由委托生成、而不是使用固定基础数值的 <see cref="DynamicVar" />。
+    ///     <para xml:lang="en">Represents a <see cref="DynamicVar" /> whose displayed value is computed by delegates.</para>
+    ///     <para xml:lang="zh-CN">表示显示值由委托计算的 <see cref="DynamicVar" />。</para>
     /// </summary>
     public sealed class ComputedDynamicVar : DynamicVar, IComputedDynamicVar
     {
         private readonly ComputedDynamicVarEvaluator _evaluator;
 
         /// <summary>
-        ///     Creates a computed variable with optional preview-specific logic.
-        ///     创建带可选预览专用逻辑的计算变量。
+        ///     <para xml:lang="en">Creates a computed variable with optional preview-specific evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建可指定预览求值逻辑的计算变量。</para>
         /// </summary>
         /// <param name="name">
-        ///     Dynamic var key.
-        ///     动态变量 key。
+        ///     <para xml:lang="en">Dynamic-variable key.</para>
+        ///     <para xml:lang="zh-CN">动态变量键。</para>
         /// </param>
         /// <param name="baseValue">
-        ///     Fallback numeric base when no preview override applies.
-        ///     没有预览覆盖时使用的后备基础数值。
+        ///     <para xml:lang="en">
+        ///         Initial stored base value. The evaluator does not return it automatically.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始存储的基础值；求值器不会自动返回此值。</para>
         /// </param>
         /// <param name="currentValueFactory">
-        ///     Resolves the live value from the owning <see cref="CardModel" /> (may be null outside card context).
-        ///     从所属 <see cref="CardModel" /> 解析实时值（在卡牌上下文外可为 null）。
+        ///     <para xml:lang="en">Computes the current value from the owning card, which may be <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">根据所属卡牌计算当前值；卡牌可能为 <see langword="null" />。</para>
         /// </param>
         /// <param name="previewValueFactory">
-        ///     Optional override used during card preview; when null, <paramref name="currentValueFactory" /> is used.
-        ///     卡牌预览期间使用的可选覆盖；为 null 时使用 <paramref name="currentValueFactory" />。
+        ///     <para xml:lang="en">Optional preview evaluator; when omitted, <paramref name="currentValueFactory" /> is used.</para>
+        ///     <para xml:lang="zh-CN">可选的预览求值器；省略时使用 <paramref name="currentValueFactory" />。</para>
         /// </param>
         public ComputedDynamicVar(
             string name,
@@ -44,24 +46,26 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed variable with target-aware evaluation.
-        ///     创建支持目标感知求值的计算变量。
+        ///     <para xml:lang="en">Creates a computed variable with target-aware evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建支持目标感知求值的计算变量。</para>
         /// </summary>
         /// <param name="name">
-        ///     Dynamic var key.
-        ///     动态变量 key。
+        ///     <para xml:lang="en">Dynamic-variable key.</para>
+        ///     <para xml:lang="zh-CN">动态变量键。</para>
         /// </param>
         /// <param name="baseValue">
-        ///     Fallback numeric base when no preview override applies.
-        ///     没有预览覆盖时使用的后备基础数值。
+        ///     <para xml:lang="en">
+        ///         Initial stored base value. The evaluator does not return it automatically.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始存储的基础值；求值器不会自动返回此值。</para>
         /// </param>
         /// <param name="currentValueFactory">
-        ///     Resolves the live value from the owning <see cref="CardModel" /> and current target.
-        ///     从所属 <see cref="CardModel" /> 和当前目标解析实时值。
+        ///     <para xml:lang="en">Computes the current value from the owning card and current target.</para>
+        ///     <para xml:lang="zh-CN">根据所属卡牌和当前目标计算当前值。</para>
         /// </param>
         /// <param name="previewValueFactory">
-        ///     Optional override used during card preview; when null, <paramref name="currentValueFactory" /> is used.
-        ///     卡牌预览期间使用的可选覆盖；为 null 时使用 <paramref name="currentValueFactory" />。
+        ///     <para xml:lang="en">Optional preview evaluator; when omitted, <paramref name="currentValueFactory" /> is used.</para>
+        ///     <para xml:lang="zh-CN">可选的预览求值器；省略时使用 <paramref name="currentValueFactory" />。</para>
         /// </param>
         public ComputedDynamicVar(
             string name,
@@ -77,8 +81,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed variable from one context-aware factory used for current and preview evaluation.
-        ///     使用同一个上下文感知工厂创建用于当前值和预览求值的计算型变量。
+        ///     <para xml:lang="en">Creates a computed variable from a context-aware evaluator.</para>
+        ///     <para xml:lang="zh-CN">使用上下文感知求值器创建计算变量。</para>
         /// </summary>
         public ComputedDynamicVar(
             string name,
@@ -101,8 +105,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the dynamic value for the current owner and target.
-        ///     计算当前拥有者和目标对应的动态值。
+        ///     <para xml:lang="en">Computes the value for the owning card, if any, and <paramref name="target" />.</para>
+        ///     <para xml:lang="zh-CN">计算当前所属卡牌（若有）和 <paramref name="target" /> 对应的值。</para>
         /// </summary>
         public decimal Calculate(Creature? target)
         {
@@ -110,8 +114,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the dynamic value for the current owner.
-        ///     计算当前拥有者对应的动态值。
+        ///     <para xml:lang="en">Computes the value for the owning card, if any, without a target.</para>
+        ///     <para xml:lang="zh-CN">计算当前所属卡牌（若有）在没有目标时的值。</para>
         /// </summary>
         public decimal Calculate()
         {
@@ -141,8 +145,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Returns the computed value as a string.
-        ///     以字符串形式返回计算值。
+        ///     <para xml:lang="en">Returns the computed value as a string.</para>
+        ///     <para xml:lang="zh-CN">以字符串形式返回计算值。</para>
         /// </summary>
         public override string ToString()
         {

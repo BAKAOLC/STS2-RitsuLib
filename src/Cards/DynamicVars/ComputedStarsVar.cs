@@ -6,16 +6,16 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Cards.DynamicVars
 {
     /// <summary>
-    ///     <see cref="StarsVar" /> whose displayed icon count is produced by delegates.
-    ///     由委托生成显示图标数量的 <see cref="StarsVar" />。
+    ///     <para xml:lang="en">Represents a <see cref="StarsVar" /> whose displayed icon count is computed by delegates.</para>
+    ///     <para xml:lang="zh-CN">表示显示图标数量由委托计算的 <see cref="StarsVar" />。</para>
     /// </summary>
     public sealed class ComputedStarsVar : StarsVar, IComputedDynamicVar
     {
         private readonly ComputedDynamicVarEvaluator _evaluator;
 
         /// <summary>
-        ///     Creates a computed star variable with optional preview-specific logic.
-        ///     创建带可选预览专用逻辑的计算型星星变量。
+        ///     <para xml:lang="en">Creates a computed star variable with optional preview-specific evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建可指定预览求值逻辑的计算型星星变量。</para>
         /// </summary>
         public ComputedStarsVar(
             string name,
@@ -28,8 +28,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a target-aware computed star variable.
-        ///     创建支持目标感知求值的计算型星星变量。
+        ///     <para xml:lang="en">Creates a target-aware computed star variable.</para>
+        ///     <para xml:lang="zh-CN">创建支持目标感知求值的计算型星星变量。</para>
         /// </summary>
         public ComputedStarsVar(
             string name,
@@ -46,8 +46,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed star variable.
-        ///     创建上下文感知的计算型星星变量。
+        ///     <para xml:lang="en">Creates a context-aware computed star variable.</para>
+        ///     <para xml:lang="zh-CN">创建上下文感知的计算型星星变量。</para>
         /// </summary>
         public ComputedStarsVar(
             string name,
@@ -71,8 +71,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the live icon count for the current owner and target.
-        ///     计算当前拥有者和目标对应的实时图标数量。
+        ///     <para xml:lang="en">Computes the icon count for the owning card, if any, and <paramref name="target" />.</para>
+        ///     <para xml:lang="zh-CN">计算当前所属卡牌（若有）和 <paramref name="target" /> 对应的图标数量。</para>
         /// </summary>
         public decimal Calculate(Creature? target)
         {
@@ -80,8 +80,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the live icon count for the current owner.
-        ///     计算当前拥有者对应的实时图标数量。
+        ///     <para xml:lang="en">Computes the icon count for the owning card, if any, without a target.</para>
+        ///     <para xml:lang="zh-CN">计算当前所属卡牌（若有）在没有目标时的图标数量。</para>
         /// </summary>
         public decimal Calculate()
         {

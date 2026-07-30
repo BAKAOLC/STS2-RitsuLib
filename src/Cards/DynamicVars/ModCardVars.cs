@@ -8,15 +8,14 @@ using MegaCrit.Sts2.Core.ValueProps;
 namespace STS2RitsuLib.Cards.DynamicVars
 {
     /// <summary>
-    ///     Factory helpers for common mod card <see cref="DynamicVar" /> shapes.
-    ///     常见 mod 卡牌 <see cref="DynamicVar" /> 形态的工厂辅助方法。
+    ///     <para xml:lang="en">Provides factories for common mod card <see cref="DynamicVar" /> types.</para>
+    ///     <para xml:lang="zh-CN">提供常见模组卡牌 <see cref="DynamicVar" /> 类型的工厂方法。</para>
     /// </summary>
     public static class ModCardVars
     {
         /// <summary>
-        ///     Creates an integer-backed dynamic var named <paramref name="name" /> with amount
-        ///     <paramref name="amount" />.
-        ///     创建名为 <paramref name="name" />、数值为 <paramref name="amount" /> 的整数型动态变量。
+        ///     <para xml:lang="en">Creates an integer dynamic variable with the specified name and value.</para>
+        ///     <para xml:lang="zh-CN">创建具有指定名称和值的整数动态变量。</para>
         /// </summary>
         public static IntVar Int(string name, decimal amount)
         {
@@ -24,8 +23,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a string dynamic var named <paramref name="name" />.
-        ///     创建名为 <paramref name="name" /> 的字符串动态变量。
+        ///     <para xml:lang="en">Creates a string dynamic variable.</para>
+        ///     <para xml:lang="zh-CN">创建字符串动态变量。</para>
         /// </summary>
         public static StringVar String(string name, string value = "")
         {
@@ -33,8 +32,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a boolean dynamic variable.
-        ///     创建布尔动态变量。
+        ///     <para xml:lang="en">Creates a Boolean dynamic variable.</para>
+        ///     <para xml:lang="zh-CN">创建布尔动态变量。</para>
         /// </summary>
         public static BoolVar Bool(string name, bool value = false)
         {
@@ -42,8 +41,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default card-count variable.
-        ///     创建默认卡牌数量变量。
+        ///     <para xml:lang="en">Creates the default card-count variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认卡牌数量变量。</para>
         /// </summary>
         public static CardsVar Cards(int amount)
         {
@@ -51,8 +50,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named card-count variable.
-        ///     创建具名卡牌数量变量。
+        ///     <para xml:lang="en">Creates a named card-count variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名卡牌数量变量。</para>
         /// </summary>
         public static CardsVar Cards(string name, int amount)
         {
@@ -60,8 +59,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default damage variable.
-        ///     创建默认伤害变量。
+        ///     <para xml:lang="en">Creates the default damage variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认伤害变量。</para>
         /// </summary>
         public static DamageVar Damage(decimal amount, ValueProp props = ValueProp.Move)
         {
@@ -69,8 +68,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named damage variable.
-        ///     创建具名伤害变量。
+        ///     <para xml:lang="en">Creates a named damage variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名伤害变量。</para>
         /// </summary>
         public static DamageVar Damage(string name, decimal amount, ValueProp props = ValueProp.Move)
         {
@@ -78,8 +77,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default Osty damage variable.
-        ///     创建默认奥斯蒂伤害变量。
+        ///     <para xml:lang="en">Creates the default Osty damage variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认奥斯蒂伤害变量。</para>
         /// </summary>
         public static OstyDamageVar OstyDamage(decimal amount, ValueProp props = ValueProp.Move)
         {
@@ -87,8 +86,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named Osty damage variable.
-        ///     创建具名奥斯蒂伤害变量。
+        ///     <para xml:lang="en">Creates a named Osty damage variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名奥斯蒂伤害变量。</para>
         /// </summary>
         public static OstyDamageVar OstyDamage(string name, decimal amount, ValueProp props = ValueProp.Move)
         {
@@ -96,8 +95,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default block variable.
-        ///     创建默认格挡变量。
+        ///     <para xml:lang="en">Creates the default Block variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认格挡变量。</para>
         /// </summary>
         public static BlockVar Block(decimal amount, ValueProp props = ValueProp.Move)
         {
@@ -105,8 +104,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named block variable.
-        ///     创建具名格挡变量。
+        ///     <para xml:lang="en">Creates a named Block variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名格挡变量。</para>
         /// </summary>
         public static BlockVar Block(string name, decimal amount, ValueProp props = ValueProp.Move)
         {
@@ -114,8 +113,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default gold variable.
-        ///     创建默认金币变量。
+        ///     <para xml:lang="en">Creates the default Gold variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认金币变量。</para>
         /// </summary>
         public static GoldVar Gold(int amount)
         {
@@ -123,8 +122,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named gold variable.
-        ///     创建具名金币变量。
+        ///     <para xml:lang="en">Creates a named Gold variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名金币变量。</para>
         /// </summary>
         public static GoldVar Gold(string name, int amount)
         {
@@ -132,8 +131,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default healing variable.
-        ///     创建默认治疗变量。
+        ///     <para xml:lang="en">Creates the default healing variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认治疗变量。</para>
         /// </summary>
         public static HealVar Heal(decimal amount)
         {
@@ -141,8 +140,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named healing variable.
-        ///     创建具名治疗变量。
+        ///     <para xml:lang="en">Creates a named healing variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名治疗变量。</para>
         /// </summary>
         public static HealVar Heal(string name, decimal amount)
         {
@@ -150,8 +149,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default HP-loss variable.
-        ///     创建默认生命损失变量。
+        ///     <para xml:lang="en">Creates the default HP-loss variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认生命损失变量。</para>
         /// </summary>
         public static HpLossVar HpLoss(decimal amount)
         {
@@ -159,8 +158,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named HP-loss variable.
-        ///     创建具名生命损失变量。
+        ///     <para xml:lang="en">Creates a named HP-loss variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名生命损失变量。</para>
         /// </summary>
         public static HpLossVar HpLoss(string name, decimal amount)
         {
@@ -168,8 +167,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default max-HP variable.
-        ///     创建默认最大生命变量。
+        ///     <para xml:lang="en">Creates the default maximum-HP variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认最大生命值变量。</para>
         /// </summary>
         public static MaxHpVar MaxHp(decimal amount)
         {
@@ -177,8 +176,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named max-HP variable.
-        ///     创建具名最大生命变量。
+        ///     <para xml:lang="en">Creates a named maximum-HP variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名最大生命值变量。</para>
         /// </summary>
         public static MaxHpVar MaxHp(string name, decimal amount)
         {
@@ -186,8 +185,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default repeat-count variable.
-        ///     创建默认重复次数变量。
+        ///     <para xml:lang="en">Creates the default repeat-count variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认重复次数变量。</para>
         /// </summary>
         public static RepeatVar Repeat(int amount)
         {
@@ -195,8 +194,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named repeat-count variable.
-        ///     创建具名重复次数变量。
+        ///     <para xml:lang="en">Creates a named repeat-count variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名重复次数变量。</para>
         /// </summary>
         public static RepeatVar Repeat(string name, int amount)
         {
@@ -204,8 +203,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default forge-count variable.
-        ///     创建默认锻造次数变量。
+        ///     <para xml:lang="en">Creates the default forge-count variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认锻造次数变量。</para>
         /// </summary>
         public static ForgeVar Forge(int amount)
         {
@@ -213,8 +212,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named forge-count variable.
-        ///     创建具名锻造次数变量。
+        ///     <para xml:lang="en">Creates a named forge-count variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名锻造次数变量。</para>
         /// </summary>
         public static ForgeVar Forge(string name, int amount)
         {
@@ -222,8 +221,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default summon-amount variable.
-        ///     创建默认召唤数量变量。
+        ///     <para xml:lang="en">Creates the default summon-amount variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认召唤数量变量。</para>
         /// </summary>
         public static SummonVar Summon(decimal amount)
         {
@@ -231,8 +230,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named summon-amount variable.
-        ///     创建具名召唤数量变量。
+        ///     <para xml:lang="en">Creates a named summon-amount variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名召唤数量变量。</para>
         /// </summary>
         public static SummonVar Summon(string name, decimal amount)
         {
@@ -240,8 +239,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default energy icon variable.
-        ///     创建默认能量图标变量。
+        ///     <para xml:lang="en">Creates the default energy-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认能量图标变量。</para>
         /// </summary>
         public static EnergyVar Energy(int amount)
         {
@@ -249,8 +248,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named energy icon variable.
-        ///     创建具名能量图标变量。
+        ///     <para xml:lang="en">Creates a named energy-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名能量图标变量。</para>
         /// </summary>
         public static EnergyVar Energy(string name, int amount)
         {
@@ -258,8 +257,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates the default star icon variable.
-        ///     创建默认星星图标变量。
+        ///     <para xml:lang="en">Creates the default star-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建默认星星图标变量。</para>
         /// </summary>
         public static StarsVar Stars(int amount)
         {
@@ -267,8 +266,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named star icon variable.
-        ///     创建具名星星图标变量。
+        ///     <para xml:lang="en">Creates a named star-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名星星图标变量。</para>
         /// </summary>
         public static StarsVar Stars(string name, int amount)
         {
@@ -276,8 +275,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a power amount variable named after <typeparamref name="T" />.
-        ///     创建以 <typeparamref name="T" /> 命名的能力层数变量。
+        ///     <para xml:lang="en">Creates a power-amount variable named after <typeparamref name="T" />.</para>
+        ///     <para xml:lang="zh-CN">创建以 <typeparamref name="T" /> 命名的能力层数变量。</para>
         /// </summary>
         public static PowerVar<T> Power<T>(decimal amount) where T : PowerModel
         {
@@ -285,8 +284,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named power amount variable.
-        ///     创建具名能力层数变量。
+        ///     <para xml:lang="en">Creates a named power-amount variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名能力层数变量。</para>
         /// </summary>
         public static PowerVar<T> Power<T>(string name, decimal amount) where T : PowerModel
         {
@@ -294,8 +293,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a <see cref="ComputedDynamicVar" /> with optional preview-specific computation.
-        ///     创建带可选预览专用计算的 <see cref="ComputedDynamicVar" />。
+        ///     <para xml:lang="en">Creates a <see cref="ComputedDynamicVar" /> with optional preview-specific evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建可指定预览求值逻辑的 <see cref="ComputedDynamicVar" />。</para>
         /// </summary>
         public static ComputedDynamicVar Computed(
             string name,
@@ -307,8 +306,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a <see cref="ComputedDynamicVar" /> with target-aware computation.
-        ///     创建支持目标感知计算的 <see cref="ComputedDynamicVar" />。
+        ///     <para xml:lang="en">Creates a target-aware <see cref="ComputedDynamicVar" />.</para>
+        ///     <para xml:lang="zh-CN">创建支持目标感知求值的 <see cref="ComputedDynamicVar" />。</para>
         /// </summary>
         public static ComputedDynamicVar Computed(
             string name,
@@ -320,9 +319,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed variable from one context-aware factory used for both current-value and preview
-        ///     evaluation.
-        ///     使用同一个上下文感知工厂创建计算型变量；该工厂同时用于当前值与预览求值。
+        ///     <para xml:lang="en">Creates a computed variable from a context-aware evaluator.</para>
+        ///     <para xml:lang="zh-CN">使用上下文感知求值器创建计算型变量。</para>
         /// </summary>
         public static ComputedDynamicVar Computed(
             string name,
@@ -333,8 +331,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed energy icon variable compatible with the game's <c>energyIcons</c> formatter.
-        ///     创建兼容游戏 <c>energyIcons</c> formatter 的计算型能量图标变量。
+        ///     <para xml:lang="en">Creates a computed energy-icon variable compatible with the game's <c>energyIcons</c> formatter.</para>
+        ///     <para xml:lang="zh-CN">创建兼容游戏 <c>energyIcons</c> 格式化器的计算型能量图标变量。</para>
         /// </summary>
         public static ComputedEnergyVar ComputedEnergy(
             string name,
@@ -346,8 +344,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a target-aware computed energy icon variable.
-        ///     创建支持目标感知求值的计算型能量图标变量。
+        ///     <para xml:lang="en">Creates a target-aware computed energy-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建支持目标感知求值的计算型能量图标变量。</para>
         /// </summary>
         public static ComputedEnergyVar ComputedEnergy(
             string name,
@@ -359,8 +357,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed energy icon variable.
-        ///     创建上下文感知的计算型能量图标变量。
+        ///     <para xml:lang="en">Creates a context-aware computed energy-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建上下文感知的计算型能量图标变量。</para>
         /// </summary>
         public static ComputedEnergyVar ComputedEnergy(
             string name,
@@ -371,8 +369,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed star icon variable compatible with the game's <c>starIcons</c> formatter.
-        ///     创建兼容游戏 <c>starIcons</c> formatter 的计算型星星图标变量。
+        ///     <para xml:lang="en">Creates a computed star-icon variable compatible with the game's <c>starIcons</c> formatter.</para>
+        ///     <para xml:lang="zh-CN">创建兼容游戏 <c>starIcons</c> 格式化器的计算型星星图标变量。</para>
         /// </summary>
         public static ComputedStarsVar ComputedStars(
             string name,
@@ -384,8 +382,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a target-aware computed star icon variable.
-        ///     创建支持目标感知求值的计算型星星图标变量。
+        ///     <para xml:lang="en">Creates a target-aware computed star-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建支持目标感知求值的计算型星星图标变量。</para>
         /// </summary>
         public static ComputedStarsVar ComputedStars(
             string name,
@@ -397,8 +395,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed star icon variable.
-        ///     创建上下文感知的计算型星星图标变量。
+        ///     <para xml:lang="en">Creates a context-aware computed star-icon variable.</para>
+        ///     <para xml:lang="zh-CN">创建上下文感知的计算型星星图标变量。</para>
         /// </summary>
         public static ComputedStarsVar ComputedStars(
             string name,
@@ -409,8 +407,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed power amount variable named after <typeparamref name="T" />.
-        ///     创建以 <typeparamref name="T" /> 命名的计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a computed power-amount variable named after <typeparamref name="T" />.</para>
+        ///     <para xml:lang="zh-CN">创建以 <typeparamref name="T" /> 命名的计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPower<T>(
             decimal baseValue,
@@ -422,8 +420,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named computed power amount variable.
-        ///     创建具名计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a named computed power-amount variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPower<T>(
             string name,
@@ -436,8 +434,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a target-aware computed power amount variable named after <typeparamref name="T" />.
-        ///     创建以 <typeparamref name="T" /> 命名、支持目标感知求值的计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a target-aware computed power-amount variable named after <typeparamref name="T" />.</para>
+        ///     <para xml:lang="zh-CN">创建以 <typeparamref name="T" /> 命名且支持目标感知求值的计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPower<T>(
             decimal baseValue,
@@ -449,8 +447,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a target-aware named computed power amount variable.
-        ///     创建支持目标感知求值的具名计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a named, target-aware computed power-amount variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名且支持目标感知求值的计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPower<T>(
             string name,
@@ -463,8 +461,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed power amount variable named after <typeparamref name="T" />.
-        ///     创建以 <typeparamref name="T" /> 命名的上下文感知计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a context-aware computed power-amount variable named after <typeparamref name="T" />.</para>
+        ///     <para xml:lang="zh-CN">创建以 <typeparamref name="T" /> 命名的上下文感知计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPower<T>(
             ComputedDynamicVarFactory factory,
@@ -475,8 +473,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named context-aware computed power amount variable.
-        ///     创建具名的上下文感知计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a named, context-aware computed power-amount variable.</para>
+        ///     <para xml:lang="zh-CN">创建具名的上下文感知计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPower<T>(
             string name,
@@ -488,9 +486,15 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed power amount variable whose card preview is processed through
-        ///     <see cref="Hook.ModifyPowerAmountGiven" /> when global hooks are enabled.
-        ///     创建计算型能力层数变量；启用全局 hook 的卡牌预览会经过 <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     <para xml:lang="en">
+        ///         Creates a computed power-amount variable whose previews pass through
+        ///         <see cref="Hook.ModifyPowerAmountGiven" /> when global hooks are enabled and combat context is
+        ///         available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建计算型能力层数变量；启用全局钩子且存在战斗上下文时，预览值会经过
+        ///         <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     </para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPowerAmountGiven<T>(
             decimal baseValue,
@@ -501,9 +505,15 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named computed power amount variable whose card preview is processed through
-        ///     <see cref="Hook.ModifyPowerAmountGiven" /> when global hooks are enabled.
-        ///     创建具名计算型能力层数变量；启用全局 hook 的卡牌预览会经过 <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     <para xml:lang="en">
+        ///         Creates a named computed power-amount variable whose previews pass through
+        ///         <see cref="Hook.ModifyPowerAmountGiven" /> when global hooks are enabled and combat context is
+        ///         available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建具名计算型能力层数变量；启用全局钩子且存在战斗上下文时，预览值会经过
+        ///         <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     </para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPowerAmountGiven<T>(
             string name,
@@ -515,8 +525,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed power amount variable with preview-specific base-value computation.
-        ///     创建支持预览专用基础值计算的计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a computed power-amount variable with preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建支持预览专用基础值求值的计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPowerAmountGiven<T>(
             decimal baseValue,
@@ -532,8 +542,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named computed power amount variable with preview-specific base-value computation.
-        ///     创建支持预览专用基础值计算的具名计算型能力层数变量。
+        ///     <para xml:lang="en">Creates a named computed power-amount variable with preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建支持预览专用基础值求值的具名计算型能力层数变量。</para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPowerAmountGiven<T>(
             string name,
@@ -546,9 +556,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed power amount whose previews pass through
-        ///     <see cref="Hook.ModifyPowerAmountGiven" />.
-        ///     创建上下文感知的计算型能力层数；其预览会经过 <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     <para xml:lang="en">
+        ///         Creates a context-aware computed power amount whose previews pass through
+        ///         <see cref="Hook.ModifyPowerAmountGiven" /> when requested and combat context is available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建上下文感知的计算型能力层数；请求全局钩子且存在战斗上下文时，预览值会经过
+        ///         <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     </para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPowerAmountGiven<T>(
             ComputedDynamicVarFactory factory,
@@ -559,9 +574,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a named context-aware computed power amount whose previews pass through
-        ///     <see cref="Hook.ModifyPowerAmountGiven" />.
-        ///     创建具名的上下文感知计算型能力层数；其预览会经过 <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     <para xml:lang="en">
+        ///         Creates a named, context-aware computed power amount whose previews pass through
+        ///         <see cref="Hook.ModifyPowerAmountGiven" /> when requested and combat context is available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建具名的上下文感知计算型能力层数；请求全局钩子且存在战斗上下文时，预览值会经过
+        ///         <see cref="Hook.ModifyPowerAmountGiven" />。
+        ///     </para>
         /// </summary>
         public static ComputedPowerVar<T> ComputedPowerAmountGiven<T>(
             string name,
@@ -578,9 +598,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed damage variable whose card preview is processed through
-        ///     <see cref="Hook.ModifyDamage" /> when global hooks are enabled.
-        ///     创建计算型伤害变量；启用全局 hook 的卡牌预览会经过 <see cref="Hook.ModifyDamage" />。
+        ///     <para xml:lang="en">
+        ///         Creates a computed damage variable whose previews pass through <see cref="Hook.ModifyDamage" /> when
+        ///         global hooks are enabled and run and combat context are available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建计算型伤害变量；启用全局钩子且存在一局游戏与战斗上下文时，预览值会经过
+        ///         <see cref="Hook.ModifyDamage" />。
+        ///     </para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
             string name,
@@ -592,8 +617,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed damage variable with preview-specific base-value computation.
-        ///     创建支持预览专用基础值计算的计算型伤害变量。
+        ///     <para xml:lang="en">Creates a computed damage variable with preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建支持预览专用基础值求值的计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
             string name,
@@ -612,8 +637,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed damage variable whose value does not depend on a target.
-        ///     创建不依赖目标的计算型伤害变量。
+        ///     <para xml:lang="en">Creates a computed damage variable whose value does not depend on a target.</para>
+        ///     <para xml:lang="zh-CN">创建数值不依赖目标的计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
             string name,
@@ -627,8 +652,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed damage variable with a custom damage dealer, such as Osty.
-        ///     创建可自定义伤害来源（例如奥斯蒂）的计算型伤害变量。
+        ///     <para xml:lang="en">Creates a computed damage variable with a custom damage dealer, such as Osty.</para>
+        ///     <para xml:lang="zh-CN">创建可自定义伤害来源（例如奥斯蒂）的计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
             string name,
@@ -641,8 +666,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed damage variable with a custom dealer and preview-specific base-value computation.
-        ///     创建可自定义伤害来源、并支持预览专用基础值计算的计算型伤害变量。
+        ///     <para xml:lang="en">Creates a computed damage variable with a custom dealer and preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建可自定义伤害来源且支持预览专用基础值求值的计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
             string name,
@@ -662,9 +687,13 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed damage variable whose previews pass through normal damage and
-        ///     enchantment modifiers.
-        ///     创建上下文感知的计算型伤害变量；其预览会经过普通伤害与附魔修正。
+        ///     <para xml:lang="en">
+        ///         Creates a context-aware computed damage variable whose previews apply enchantment modifiers and,
+        ///         when requested context is available, normal damage hooks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建上下文感知的计算型伤害变量；预览值会应用附魔修正，并在请求钩子且所需上下文可用时应用普通伤害钩子。
+        ///     </para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
             string name,
@@ -681,8 +710,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed damage variable with a custom damage dealer.
-        ///     创建可自定义伤害来源的上下文感知计算型伤害变量。
+        ///     <para xml:lang="en">Creates a context-aware computed damage variable with a custom damage dealer.</para>
+        ///     <para xml:lang="zh-CN">创建可自定义伤害来源的上下文感知计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedDamage(
             string name,
@@ -695,8 +724,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed damage variable whose damage dealer is the owner's Osty.
-        ///     创建伤害来源为拥有者奥斯蒂的计算型伤害变量。
+        ///     <para xml:lang="en">Creates a computed damage variable whose damage dealer is the owner's Osty.</para>
+        ///     <para xml:lang="zh-CN">创建伤害来源为拥有者奥斯蒂的计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedOstyDamage(
             string name,
@@ -708,8 +737,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates an Osty damage variable with preview-specific base-value computation.
-        ///     创建支持预览专用基础值计算的奥斯蒂伤害变量。
+        ///     <para xml:lang="en">Creates a computed Osty damage variable with preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建支持预览专用基础值求值的奥斯蒂计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedOstyDamage(
             string name,
@@ -728,8 +757,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates context-aware computed damage whose dealer is the owner's Osty.
-        ///     创建伤害来源为拥有者奥斯蒂的上下文感知计算型伤害变量。
+        ///     <para xml:lang="en">Creates context-aware computed damage whose dealer is the owner's Osty.</para>
+        ///     <para xml:lang="zh-CN">创建伤害来源为拥有者奥斯蒂的上下文感知计算型伤害变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedOstyDamage(
             string name,
@@ -746,9 +775,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed block variable whose card preview is processed through
-        ///     <see cref="Hook.ModifyBlock" /> when global hooks are enabled.
-        ///     创建计算型格挡变量；启用全局 hook 的卡牌预览会经过 <see cref="Hook.ModifyBlock" />。
+        ///     <para xml:lang="en">
+        ///         Creates a computed Block variable whose previews pass through <see cref="Hook.ModifyBlock" /> when
+        ///         global hooks are enabled and combat context is available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建计算型格挡变量；启用全局钩子且存在战斗上下文时，预览值会经过
+        ///         <see cref="Hook.ModifyBlock" />。
+        ///     </para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(
             string name,
@@ -760,8 +794,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed block variable with preview-specific base-value computation.
-        ///     创建支持预览专用基础值计算的计算型格挡变量。
+        ///     <para xml:lang="en">Creates a computed Block variable with preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建支持预览专用基础值求值的计算型格挡变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(
             string name,
@@ -780,8 +814,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed block variable whose value does not depend on a target.
-        ///     创建不依赖目标的计算型格挡变量。
+        ///     <para xml:lang="en">Creates a computed Block variable whose value does not depend on a target.</para>
+        ///     <para xml:lang="zh-CN">创建数值不依赖目标的计算型格挡变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(
             string name,
@@ -795,8 +829,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed block variable with a custom block receiver.
-        ///     创建可自定义格挡接收者的计算型格挡变量。
+        ///     <para xml:lang="en">Creates a computed Block variable with a custom receiver.</para>
+        ///     <para xml:lang="zh-CN">创建可自定义格挡接收者的计算型格挡变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(
             string name,
@@ -809,8 +843,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a computed block variable with a custom receiver and preview-specific base-value computation.
-        ///     创建可自定义格挡接收者、并支持预览专用基础值计算的计算型格挡变量。
+        ///     <para xml:lang="en">Creates a computed Block variable with a custom receiver and preview-specific base-value evaluation.</para>
+        ///     <para xml:lang="zh-CN">创建可自定义格挡接收者且支持预览专用基础值求值的计算型格挡变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(
             string name,
@@ -830,9 +864,13 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed block variable whose previews pass through normal block and
-        ///     enchantment modifiers.
-        ///     创建上下文感知的计算型格挡变量；其预览会经过普通格挡与附魔修正。
+        ///     <para xml:lang="en">
+        ///         Creates a context-aware computed Block variable whose previews apply enchantment modifiers and,
+        ///         when requested context is available, normal Block hooks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建上下文感知的计算型格挡变量；预览值会应用附魔修正，并在请求钩子且所需上下文可用时应用普通格挡钩子。
+        ///     </para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(
             string name,
@@ -849,8 +887,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Creates a context-aware computed block variable with a custom receiver.
-        ///     创建可自定义接收者的上下文感知计算型格挡变量。
+        ///     <para xml:lang="en">Creates a context-aware computed Block variable with a custom receiver.</para>
+        ///     <para xml:lang="zh-CN">创建可自定义接收者的上下文感知计算型格挡变量。</para>
         /// </summary>
         public static ComputedDynamicVar ComputedBlock(
             string name,

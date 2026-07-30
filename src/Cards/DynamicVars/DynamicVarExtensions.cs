@@ -9,16 +9,19 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Cards.DynamicVars
 {
     /// <summary>
-    ///     Extension helpers for binding tooltips to <see cref="DynamicVar" /> instances and reading
-    ///     <see cref="DynamicVarSet" /> values.
-    ///     用于将工具提示绑定到 <see cref="DynamicVar" /> 实例并读取 <see cref="DynamicVarSet" /> 值的扩展辅助方法。
+    ///     <para xml:lang="en">
+    ///         Provides extensions for attaching tooltips to <see cref="DynamicVar" /> instances and reading
+    ///         <see cref="DynamicVarSet" /> values.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供为 <see cref="DynamicVar" /> 实例关联工具提示以及读取 <see cref="DynamicVarSet" /> 值的扩展方法。
+    ///     </para>
     /// </summary>
     public static class DynamicVarExtensions
     {
         /// <summary>
-        ///     Registers a factory that builds a hover tip for this variable (see
-        ///     <see cref="DynamicVarTooltipRegistry" />).
-        ///     注册一个为此变量构建悬停提示的工厂（见 <see cref="DynamicVarTooltipRegistry" />）。
+        ///     <para xml:lang="en">Registers a hover-tip factory for this variable.</para>
+        ///     <para xml:lang="zh-CN">为此变量注册悬停提示工厂。</para>
         /// </summary>
         public static DynamicVar WithTooltip(this DynamicVar dynamicVar, Func<DynamicVar, IHoverTip> tooltipFactory)
         {
@@ -29,9 +32,12 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Registers a localized <see cref="HoverTip" /> from table keys, optionally with a separate description
-        ///     table/key and icon path.
-        ///     根据表 key 注册本地化 <see cref="HoverTip" />，可选指定单独的描述表/key 和图标路径。
+        ///     <para xml:lang="en">
+        ///         Registers a localized <see cref="HoverTip" /> from localization-table keys, with an optional icon.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         根据本地化表键注册 <see cref="HoverTip" />，并可指定图标。
+        ///     </para>
         /// </summary>
         public static DynamicVar WithTooltip(this DynamicVar dynamicVar, string titleTable,
             string titleKey,
@@ -62,9 +68,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Shorthand for <c>static_hover_tips</c> entries sharing <paramref name="entryPrefix" />.title and
-        ///     .description keys.
-        ///     <c>static_hover_tips</c> 条目的简写形式，共用 <paramref name="entryPrefix" />.title 和 .description key。
+        ///     <para xml:lang="en">
+        ///         Registers a tooltip from the <c>static_hover_tips</c> table using
+        ///         <c>{entryPrefix}.title</c> and <c>{entryPrefix}.description</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <c>{entryPrefix}.title</c> 和 <c>{entryPrefix}.description</c> 键，从
+        ///         <c>static_hover_tips</c> 表注册工具提示。
+        ///     </para>
         /// </summary>
         public static DynamicVar WithSharedTooltip(this DynamicVar dynamicVar, string entryPrefix,
             string? iconPath = null)
@@ -75,8 +86,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Builds a hover tip using the registry factory for this variable, if any.
-        ///     使用此变量的注册表工厂构建悬停提示（如果存在）。
+        ///     <para xml:lang="en">Creates a hover tip using this variable's registered factory, if any.</para>
+        ///     <para xml:lang="zh-CN">使用为此变量注册的工厂创建悬停提示（如果有）。</para>
         /// </summary>
         public static IHoverTip? CreateHoverTip(this DynamicVar dynamicVar)
         {
@@ -84,8 +95,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Tries to read a typed dynamic variable.
-        ///     尝试读取指定类型的动态变量。
+        ///     <para xml:lang="en">Attempts to get a dynamic variable of type <typeparamref name="TVar" />.</para>
+        ///     <para xml:lang="zh-CN">尝试获取 <typeparamref name="TVar" /> 类型的动态变量。</para>
         /// </summary>
         public static bool TryGet<TVar>(
             this DynamicVarSet dynamicVars,
@@ -107,8 +118,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Reads a required typed dynamic variable.
-        ///     读取必需的指定类型动态变量。
+        ///     <para xml:lang="en">Gets a required dynamic variable of type <typeparamref name="TVar" />.</para>
+        ///     <para xml:lang="zh-CN">获取必需的 <typeparamref name="TVar" /> 类型动态变量。</para>
         /// </summary>
         public static TVar GetRequired<TVar>(this DynamicVarSet dynamicVars, string key)
             where TVar : DynamicVar
@@ -121,8 +132,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Reads an integer dynamic var, or <paramref name="defaultValue" /> when missing.
-        ///     读取整数动态变量；缺失时返回 <paramref name="defaultValue" />。
+        ///     <para xml:lang="en">Gets a dynamic variable's integer value, or <paramref name="defaultValue" /> when absent.</para>
+        ///     <para xml:lang="zh-CN">获取动态变量的整数值；变量不存在时返回 <paramref name="defaultValue" />。</para>
         /// </summary>
         public static int GetIntOrDefault(this DynamicVarSet dynamicVars, string key, int defaultValue = 0)
         {
@@ -132,9 +143,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Reads the base numeric value for <paramref name="key" />, or <paramref name="defaultValue" /> when
-        ///     missing.
-        ///     读取 <paramref name="key" /> 的基础数值；缺失时返回 <paramref name="defaultValue" />。
+        ///     <para xml:lang="en">Gets the base value for <paramref name="key" />, or <paramref name="defaultValue" /> when absent.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="key" /> 的基础值；变量不存在时返回 <paramref name="defaultValue" />。</para>
         /// </summary>
         public static decimal GetValueOrDefault(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m)
         {
@@ -144,8 +154,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Returns whether the numeric value for <paramref name="key" /> is strictly greater than zero.
-        ///     返回 <paramref name="key" /> 的数值是否严格大于零。
+        ///     <para xml:lang="en">Returns whether the base value for <paramref name="key" /> is greater than zero.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="key" /> 的基础值是否大于零。</para>
         /// </summary>
         public static bool HasPositiveValue(this DynamicVarSet dynamicVars, string key)
         {
@@ -153,8 +163,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Tries to calculate any RitsuLib computed dynamic variable through its common interface.
-        ///     尝试通过统一接口计算任意 RitsuLib 计算型动态变量。
+        ///     <para xml:lang="en">Attempts to compute a RitsuLib computed dynamic variable.</para>
+        ///     <para xml:lang="zh-CN">尝试计算 RitsuLib 计算型动态变量。</para>
         /// </summary>
         public static bool TryComputeValue(
             this DynamicVarSet dynamicVars,
@@ -177,8 +187,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Calculates a required RitsuLib computed dynamic variable.
-        ///     计算必需的 RitsuLib 计算型动态变量。
+        ///     <para xml:lang="en">Computes a required RitsuLib computed dynamic variable.</para>
+        ///     <para xml:lang="zh-CN">计算必需的 RitsuLib 计算型动态变量。</para>
         /// </summary>
         public static decimal GetComputedValue(
             this DynamicVarSet dynamicVars,
@@ -193,9 +203,13 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Calculates a computed variable or reads a regular variable's base value. Missing variables return
-        ///     <paramref name="defaultValue" />.
-        ///     计算计算型变量，或读取普通变量的基础值。变量不存在时返回 <paramref name="defaultValue" />。
+        ///     <para xml:lang="en">
+        ///         Computes a computed variable, or reads a regular variable's base value. Returns
+        ///         <paramref name="defaultValue" /> when the variable is absent.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         计算计算型变量；对于普通变量则读取基础值。变量不存在时返回 <paramref name="defaultValue" />。
+        ///     </para>
         /// </summary>
         public static decimal EvaluateValueOrDefault(
             this DynamicVarSet dynamicVars,
@@ -215,13 +229,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the current value of a <see cref="ComputedDynamicVar" />.
-        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
-        ///     a <see cref="ComputedDynamicVar" />. Optionally accepts <paramref name="target" /> for target-aware
-        ///     computation.
-        ///     计算指定 ID 的 <see cref="ComputedDynamicVar" /> 的当前值。
-        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
-        ///     <paramref name="target" /> 用于目标感知计算。
+        ///     <para xml:lang="en">
+        ///         Computes a <see cref="ComputedDynamicVar" /> for <paramref name="target" />. Returns
+        ///         <paramref name="defaultValue" /> when the key is absent or the variable has another type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="target" /> 计算 <see cref="ComputedDynamicVar" />。键不存在或变量类型不匹配时
+        ///         返回 <paramref name="defaultValue" />。
+        ///     </para>
         /// </summary>
         public static decimal ComputeDynamicValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m,
             Creature? target = null)
@@ -234,13 +249,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the current value of a <see cref="ComputedEnergyVar" />.
-        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
-        ///     a <see cref="ComputedEnergyVar" />. Optionally accepts <paramref name="target" /> for target-aware
-        ///     computation.
-        ///     计算指定 ID 的 <see cref="ComputedEnergyVar" /> 的当前值。
-        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
-        ///     <paramref name="target" /> 用于目标感知计算。
+        ///     <para xml:lang="en">
+        ///         Computes a <see cref="ComputedEnergyVar" /> for <paramref name="target" />. Returns
+        ///         <paramref name="defaultValue" /> when the key is absent or the variable has another type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="target" /> 计算 <see cref="ComputedEnergyVar" />。键不存在或变量类型不匹配时
+        ///         返回 <paramref name="defaultValue" />。
+        ///     </para>
         /// </summary>
         public static decimal ComputeEnergyValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m,
             Creature? target = null)
@@ -253,13 +269,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the current value of a <see cref="ComputedPowerVar{T}" />.
-        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
-        ///     a <see cref="ComputedPowerVar{T}" />. Optionally accepts <paramref name="target" /> for target-aware
-        ///     computation.
-        ///     计算指定 ID 的 <see cref="ComputedPowerVar{T}" /> 的当前值。
-        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
-        ///     <paramref name="target" /> 用于目标感知计算。
+        ///     <para xml:lang="en">
+        ///         Computes a <see cref="ComputedPowerVar{T}" /> for <paramref name="target" />. Returns
+        ///         <paramref name="defaultValue" /> when the key is absent or the variable has another type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="target" /> 计算 <see cref="ComputedPowerVar{T}" />。键不存在或变量类型不匹配时
+        ///         返回 <paramref name="defaultValue" />。
+        ///     </para>
         /// </summary>
         public static decimal ComputePowerValue<T>(this DynamicVarSet dynamicVars, string key,
             decimal defaultValue = 0m, Creature? target = null) where T : PowerModel
@@ -272,13 +289,14 @@ namespace STS2RitsuLib.Cards.DynamicVars
         }
 
         /// <summary>
-        ///     Computes the current value of a <see cref="ComputedStarsVar" />.
-        ///     Returns <paramref name="defaultValue" /> when <paramref name="key" /> is missing or the variable is not
-        ///     a <see cref="ComputedStarsVar" />. Optionally accepts <paramref name="target" /> for target-aware
-        ///     computation.
-        ///     计算指定 ID 的 <see cref="ComputedStarsVar" /> 的当前值。
-        ///     <paramref name="key" /> 不存在或变量类型不匹配时返回 <paramref name="defaultValue" />。可提供
-        ///     <paramref name="target" /> 用于目标感知计算。
+        ///     <para xml:lang="en">
+        ///         Computes a <see cref="ComputedStarsVar" /> for <paramref name="target" />. Returns
+        ///         <paramref name="defaultValue" /> when the key is absent or the variable has another type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="target" /> 计算 <see cref="ComputedStarsVar" />。键不存在或变量类型不匹配时
+        ///         返回 <paramref name="defaultValue" />。
+        ///     </para>
         /// </summary>
         public static decimal ComputeStarsValue(this DynamicVarSet dynamicVars, string key, decimal defaultValue = 0m,
             Creature? target = null)

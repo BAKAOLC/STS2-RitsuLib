@@ -4,8 +4,8 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Cards.Transforms
 {
     /// <summary>
-    ///     Per-mod registration surface for vanilla card transform listeners.
-    ///     原版卡牌转换监听器的按 mod 注册入口。
+    ///     <para xml:lang="en">Provides per-mod registration for base-game card-transformation listeners.</para>
+    ///     <para xml:lang="zh-CN">提供按模组注册游戏本体卡牌转化监听器的功能。</para>
     /// </summary>
     public sealed class ModCardTransformRegistry
     {
@@ -25,8 +25,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Returns the singleton transform registry for <paramref name="modId" />, creating it on first use.
-        ///     返回 <paramref name="modId" /> 对应的单例转换注册表，并在首次使用时创建。
+        ///     <para xml:lang="en">Gets the transformation registry for <paramref name="modId" />, creating it on first use.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 的转化注册表，并在首次使用时创建。</para>
         /// </summary>
         public static ModCardTransformRegistry For(string modId)
         {
@@ -44,8 +44,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a listener that receives every completed vanilla card transform.
-        ///     注册或替换一个监听器，以接收每次完成的原版卡牌转换。
+        ///     <para xml:lang="en">Registers or replaces a listener for every completed base-game card transformation.</para>
+        ///     <para xml:lang="zh-CN">注册或替换监听器，以接收每次已完成的游戏本体卡牌转化。</para>
         /// </summary>
         public void Register(string listenerId, Action<ModCardTransformContext> listener)
         {
@@ -58,8 +58,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces an async listener that receives every completed vanilla card transform.
-        ///     注册或替换一个异步监听器，以接收每次完成的原版卡牌转换。
+        ///     <para xml:lang="en">Registers or replaces an asynchronous listener for every completed base-game card transformation.</para>
+        ///     <para xml:lang="zh-CN">注册或替换异步监听器，以接收每次已完成的游戏本体卡牌转化。</para>
         /// </summary>
         public void Register(string listenerId, Func<ModCardTransformContext, Task> listener)
         {
@@ -68,8 +68,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a listener with a custom predicate.
-        ///     注册或替换一个带自定义谓词的监听器。
+        ///     <para xml:lang="en">Registers or replaces a listener with a custom predicate.</para>
+        ///     <para xml:lang="zh-CN">注册或替换带自定义谓词的监听器。</para>
         /// </summary>
         public void Register(
             string listenerId,
@@ -85,8 +85,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces an async listener with a custom predicate.
-        ///     注册或替换一个带自定义谓词的异步监听器。
+        ///     <para xml:lang="en">Registers or replaces an asynchronous listener with a custom predicate.</para>
+        ///     <para xml:lang="zh-CN">注册或替换带自定义谓词的异步监听器。</para>
         /// </summary>
         public void Register(
             string listenerId,
@@ -109,8 +109,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a typed listener for a card transform pair.
-        ///     注册或替换一个针对卡牌转换类型对的类型化监听器。
+        ///     <para xml:lang="en">Registers or replaces a typed listener for an original and replacement card pair.</para>
+        ///     <para xml:lang="zh-CN">注册或替换针对原卡牌与替换卡牌类型组合的监听器。</para>
         /// </summary>
         public void Register<TOriginal, TReplacement>(
             string listenerId,
@@ -131,8 +131,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a typed async listener for a card transform pair.
-        ///     注册或替换一个针对卡牌转换类型对的类型化异步监听器。
+        ///     <para xml:lang="en">Registers or replaces a typed asynchronous listener for an original and replacement card pair.</para>
+        ///     <para xml:lang="zh-CN">注册或替换针对原卡牌与替换卡牌类型组合的异步监听器。</para>
         /// </summary>
         public void Register<TOriginal, TReplacement>(
             string listenerId,
@@ -149,8 +149,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a typed listener for cards transformed away from <typeparamref name="TOriginal" />.
-        ///     注册或替换一个监听器，用于处理从 <typeparamref name="TOriginal" /> 转换出去的卡牌。
+        ///     <para xml:lang="en">Registers or replaces a listener for cards transformed from <typeparamref name="TOriginal" />.</para>
+        ///     <para xml:lang="zh-CN">注册或替换监听器，以处理从 <typeparamref name="TOriginal" /> 转化而来的卡牌。</para>
         /// </summary>
         public void RegisterFrom<TOriginal>(
             string listenerId,
@@ -170,8 +170,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a typed async listener for cards transformed away from <typeparamref name="TOriginal" />.
-        ///     注册或替换一个异步监听器，用于处理从 <typeparamref name="TOriginal" /> 转换出去的卡牌。
+        ///     <para xml:lang="en">Registers or replaces an asynchronous listener for cards transformed from <typeparamref name="TOriginal" />.</para>
+        ///     <para xml:lang="zh-CN">注册或替换异步监听器，以处理从 <typeparamref name="TOriginal" /> 转化而来的卡牌。</para>
         /// </summary>
         public void RegisterFrom<TOriginal>(
             string listenerId,
@@ -187,8 +187,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a typed listener for cards transformed into <typeparamref name="TReplacement" />.
-        ///     注册或替换一个监听器，用于处理转换成 <typeparamref name="TReplacement" /> 的卡牌。
+        ///     <para xml:lang="en">Registers or replaces a listener for cards transformed into <typeparamref name="TReplacement" />.</para>
+        ///     <para xml:lang="zh-CN">注册或替换监听器，以处理转化为 <typeparamref name="TReplacement" /> 的卡牌。</para>
         /// </summary>
         public void RegisterTo<TReplacement>(
             string listenerId,
@@ -208,8 +208,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Registers or replaces a typed async listener for cards transformed into <typeparamref name="TReplacement" />.
-        ///     注册或替换一个异步监听器，用于处理转换成 <typeparamref name="TReplacement" /> 的卡牌。
+        ///     <para xml:lang="en">Registers or replaces an asynchronous listener for cards transformed into <typeparamref name="TReplacement" />.</para>
+        ///     <para xml:lang="zh-CN">注册或替换异步监听器，以处理转化为 <typeparamref name="TReplacement" /> 的卡牌。</para>
         /// </summary>
         public void RegisterTo<TReplacement>(
             string listenerId,
@@ -225,8 +225,8 @@ namespace STS2RitsuLib.Cards.Transforms
         }
 
         /// <summary>
-        ///     Removes a previously registered listener from this registry's mod.
-        ///     从当前注册表 mod 移除先前注册的监听器。
+        ///     <para xml:lang="en">Removes a listener registered by this mod.</para>
+        ///     <para xml:lang="zh-CN">移除此模组注册的监听器。</para>
         /// </summary>
         public bool Unregister(string listenerId)
         {

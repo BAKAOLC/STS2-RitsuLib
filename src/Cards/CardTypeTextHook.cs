@@ -5,9 +5,13 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Cards
 {
     /// <summary>
-    ///     Dispatches BaseLib-compatible card type text modifiers from cards, model capabilities, run/combat hook
-    ///     listeners, and registered global modifiers.
-    ///     从卡牌、模型能力、跑局/战斗 hook listener 和已注册的全局修改器分发与 BaseLib 兼容的卡牌类型文本修改。
+    ///     <para xml:lang="en">
+    ///         Applies BaseLib-compatible card-type text modifiers supplied by cards, model capabilities, run or combat
+    ///         listeners, and registered global modifiers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         应用由卡牌、模型能力、一局游戏或战斗监听器以及已注册全局修改器提供的 BaseLib 兼容卡牌类型文本修改。
+    ///     </para>
     /// </summary>
     public static class CardTypeTextHook
     {
@@ -15,9 +19,13 @@ namespace STS2RitsuLib.Cards
         private static readonly ModelHookListenerRegistry<ICardTypeTextModifier> GlobalModifiers = new();
 
         /// <summary>
-        ///     Registers a process-wide modifier. Model-owned effects should usually implement
-        ///     <see cref="ICardTypeTextModifier" /> directly.
-        ///     注册一个进程级修改器。模型所属效果通常应直接实现 <see cref="ICardTypeTextModifier" />。
+        ///     <para xml:lang="en">
+        ///         Registers a process-wide modifier. Effects owned by a model should normally implement
+        ///         <see cref="ICardTypeTextModifier" /> directly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一个进程级修改器。由模型持有的效果通常应直接实现 <see cref="ICardTypeTextModifier" />。
+        ///     </para>
         /// </summary>
         public static void RegisterGlobalModifier(ICardTypeTextModifier modifier)
         {
