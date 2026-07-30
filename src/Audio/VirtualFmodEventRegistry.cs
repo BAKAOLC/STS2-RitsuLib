@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
@@ -50,6 +52,9 @@ namespace STS2RitsuLib.Audio
             VirtualFmodVariantSelection selection = VirtualFmodVariantSelection.Random,
             string busPath = FmodStudioRouting.SfxBus, float volume = 1f, float pitch = 1f)
         {
+            if (!Enum.IsDefined(selection))
+                throw new ArgumentOutOfRangeException(nameof(selection), selection, null);
+
             var normalizedResourcePaths = ValidateResourcePaths(resourcePaths, nameof(resourcePaths));
             Register(new(eventPath, normalizedResourcePaths[0], VirtualFmodEventKind.OneShot, busPath, volume, pitch)
             {
@@ -105,13 +110,29 @@ namespace STS2RitsuLib.Audio
                 throw new ArgumentException("Virtual FMOD event path must be non-empty.", nameof(definition));
             if (string.IsNullOrWhiteSpace(definition.ResourcePath))
                 throw new ArgumentException("Virtual FMOD event resource path must be non-empty.", nameof(definition));
+            if (!Enum.IsDefined(definition.Kind))
+                throw new ArgumentOutOfRangeException(nameof(definition), definition.Kind,
+                    "Virtual FMOD event kind is not defined.");
+            if (!Enum.IsDefined(definition.VariantSelection))
+                throw new ArgumentOutOfRangeException(nameof(definition), definition.VariantSelection,
+                    "Virtual FMOD variant selection mode is not defined.");
+            if (!float.IsFinite(definition.Volume) || definition.Volume < 0f)
+                throw new ArgumentOutOfRangeException(nameof(definition), definition.Volume,
+                    "Virtual FMOD event volume must be finite and non-negative.");
+            if (!float.IsFinite(definition.Pitch) || definition.Pitch <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(definition), definition.Pitch,
+                    "Virtual FMOD event pitch must be finite and positive.");
 
             var resourcePaths = ValidateResourcePaths(definition.ResourcePaths, nameof(definition));
-            if (definition.Kind != VirtualFmodEventKind.OneShot && resourcePaths.Length > 1)
+            if (definition.Kind != VirtualFmodEventKind.OneShot && resourcePaths.Count > 1)
                 throw new ArgumentException("Only one-shot virtual FMOD events can use resource variants.",
                     nameof(definition));
 
-            definition = definition with { ResourcePaths = resourcePaths };
+            definition = definition with
+            {
+                ResourcePath = resourcePaths[0],
+                ResourcePaths = resourcePaths,
+            };
 
             lock (Gate)
             {
@@ -311,7 +332,8 @@ namespace STS2RitsuLib.Audio
             }
         }
 
-        private static string[] ValidateResourcePaths(IReadOnlyList<string>? resourcePaths, string parameterName)
+        private static IReadOnlyList<string> ValidateResourcePaths(IReadOnlyList<string>? resourcePaths,
+            string parameterName)
         {
             if (resourcePaths is null || resourcePaths.Count == 0)
                 throw new ArgumentException("Virtual FMOD event resource paths must be non-empty.", parameterName);
@@ -327,7 +349,7 @@ namespace STS2RitsuLib.Audio
                 result[i] = resourcePath;
             }
 
-            return result;
+            return new ReadOnlyCollection<string>(result);
         }
 
         private static AudioPlaybackOptions BuildOptions(VirtualFmodEventDefinition definition, float callVolume,
