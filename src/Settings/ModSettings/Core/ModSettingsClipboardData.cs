@@ -142,9 +142,16 @@ namespace STS2RitsuLib.Settings
             try
             {
                 envelope = JsonSerializer.Deserialize<ModSettingsClipboardEnvelope>(clipboard);
-                return envelope is { Kind.Length: > 0 };
+                return envelope is
+                {
+                    Kind.Length: > 0,
+                    TypeName: not null,
+                    TargetSignature: not null,
+                    SchemaSignature: not null,
+                    Payload: not null,
+                };
             }
-            catch
+            catch (JsonException)
             {
                 envelope = null;
                 return false;
@@ -247,7 +254,7 @@ namespace STS2RitsuLib.Settings
                 using var document = JsonDocument.Parse(json);
                 return MatchesElement(type, document.RootElement);
             }
-            catch
+            catch (JsonException)
             {
                 return false;
             }
@@ -278,8 +285,10 @@ namespace STS2RitsuLib.Settings
             if (members.Length == 0)
                 return false;
 
-            var properties = element.EnumerateObject()
-                .ToDictionary(property => property.Name, property => property.Value, StringComparer.Ordinal);
+            var properties = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+            foreach (var property in element.EnumerateObject())
+                if (!properties.TryAdd(property.Name, property.Value))
+                    return false;
 
             foreach (var member in members)
             {
@@ -462,7 +471,7 @@ namespace STS2RitsuLib.Settings
                 using var document = JsonDocument.Parse(json);
                 return TryConvertNumericElement(document.RootElement, numericType, out _);
             }
-            catch
+            catch (JsonException)
             {
                 return false;
             }
@@ -476,7 +485,7 @@ namespace STS2RitsuLib.Settings
                 using var doc = JsonDocument.Parse(json);
                 return TryCoerceJsonElement(doc.RootElement, out value);
             }
-            catch
+            catch (JsonException)
             {
                 return false;
             }
@@ -562,7 +571,11 @@ namespace STS2RitsuLib.Settings
                         return false;
                 }
             }
-            catch
+            catch (InvalidCastException)
+            {
+                return false;
+            }
+            catch (OverflowException)
             {
                 return false;
             }
@@ -594,7 +607,22 @@ namespace STS2RitsuLib.Settings
                         return false;
                 }
             }
-            catch
+            catch (JsonException)
+            {
+                converted = null!;
+                return false;
+            }
+            catch (FormatException)
+            {
+                converted = null!;
+                return false;
+            }
+            catch (InvalidCastException)
+            {
+                converted = null!;
+                return false;
+            }
+            catch (OverflowException)
             {
                 converted = null!;
                 return false;
