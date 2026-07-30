@@ -6,9 +6,32 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Ui.RichTextEffects
 {
     /// <summary>
-    ///     Global registry for custom <see cref="RichTextEffect" /> instances used by <see cref="MegaRichTextLabel" />.
-    ///     用于 <see cref="MegaRichTextLabel" /> 的自定义 <see cref="RichTextEffect" /> 全局注册表。
+    ///     <para xml:lang="en">
+    ///         Registers custom <see cref="RichTextEffect" /> instances for
+    ///         <see cref="MegaRichTextLabel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="MegaRichTextLabel" /> 注册自定义 <see cref="RichTextEffect" /> 实例。
+    ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         BBCode tag names are global. Repeating a registration returns the existing definition only
+    ///         when the owning mod and effect instance are the same; every other collision fails.
+    ///     </para>
+    ///     <para xml:lang="en">
+    ///         RitsuLib installs registered effects into BBCode-enabled labels when they become ready, after
+    ///         text updates, and after the Godot editor restores scene data following a save.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         BBCode 标签名属于全局命名空间。仅当归属 mod 和特效实例都相同时，重复注册才会返回已有定义；
+    ///         其他冲突都会失败。
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         RitsuLib 会在启用 BBCode 的标签进入就绪状态、文本更新后，以及 Godot 编辑器在保存后恢复
+    ///         场景数据时安装已注册特效。
+    ///     </para>
+    /// </remarks>
     public static class ModRichTextEffectRegistry
     {
         private const string QualifiedBbcodeTypeSegment = "RICHTEXT";
@@ -19,14 +42,22 @@ namespace STS2RitsuLib.Ui.RichTextEffects
             new(StringComparer.Ordinal);
 
         /// <summary>
-        ///     Builds a mod-scoped BBCode tag name from a local stem.
-        ///     从本地词干构建 mod 作用域 BBCode tag 名。
+        ///     <para xml:lang="en">
+        ///         Builds a lowercase, mod-qualified BBCode tag name from <paramref name="localTagStem" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         根据 <paramref name="localTagStem" /> 构建小写的 mod 限定 BBCode 标签名。
+        ///     </para>
         /// </summary>
         /// <remarks>
-        ///     The name follows RitsuLib's compound-id convention and is lowercased for BBCode use:
-        ///     <c>{normalizedModId}_RICHTEXT_{normalizedLocalTagStem}</c>.
-        ///     名称遵循 RitsuLib 复合 id 约定，并为 BBCode 使用转为小写：
-        ///     <c>{normalizedModId}_RICHTEXT_{normalizedLocalTagStem}</c>。
+        ///     <para xml:lang="en">
+        ///         The result follows RitsuLib's compound-ID convention; for example, mod ID
+        ///         <c>My Mod</c> and local stem <c>Glitch</c> produce <c>mymod_richtext_glitch</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         结果遵循 RitsuLib 的复合 ID 约定。例如，mod ID <c>My Mod</c> 和本地名称
+        ///         <c>Glitch</c> 会生成 <c>mymod_richtext_glitch</c>。
+        ///     </para>
         /// </remarks>
         public static string GetQualifiedBbcode(string modId, string localTagStem)
         {
@@ -35,8 +66,14 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Registers a rich-text effect with a mod-scoped BBCode tag built from <paramref name="localTagStem" />.
-        ///     使用从 <paramref name="localTagStem" /> 构建的 mod 作用域 BBCode tag 注册富文本特效。
+        ///     <para xml:lang="en">
+        ///         Creates and registers <typeparamref name="TEffect" /> under the mod-qualified tag derived
+        ///         from <paramref name="localTagStem" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建 <typeparamref name="TEffect" />，并使用根据 <paramref name="localTagStem" /> 派生的
+        ///         mod 限定标签进行注册。
+        ///     </para>
         /// </summary>
         public static ModRichTextEffectRegistration RegisterOwned<TEffect>(string modId, string localTagStem)
             where TEffect : RichTextEffect, new()
@@ -45,9 +82,14 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Registers a rich-text effect instance with a mod-scoped BBCode tag built from
-        ///     <paramref name="localTagStem" />.
-        ///     使用从 <paramref name="localTagStem" /> 构建的 mod 作用域 BBCode tag 注册富文本特效实例。
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="effect" /> under the mod-qualified tag derived from
+        ///         <paramref name="localTagStem" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用根据 <paramref name="localTagStem" /> 派生的 mod 限定标签注册
+        ///         <paramref name="effect" />。
+        ///     </para>
         /// </summary>
         public static ModRichTextEffectRegistration RegisterOwned(
             string modId,
@@ -58,10 +100,15 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Registers a rich-text effect whose raw global BBCode name is read from its <c>bbcode</c> field or
-        ///     property. Prefer <see cref="RegisterOwned{TEffect}" /> for mod-owned effects.
-        ///     注册富文本特效；原始全局 BBCode 名会从其 <c>bbcode</c> 字段或属性读取。mod 自有特效优先使用
-        ///     <see cref="RegisterOwned{TEffect}" />。
+        ///     <para xml:lang="en">
+        ///         Creates and registers <typeparamref name="TEffect" /> using the global tag name exposed by
+        ///         its <c>bbcode</c> field or property. Prefer <see cref="RegisterOwned{TEffect}" /> for
+        ///         mod-owned effects.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建 <typeparamref name="TEffect" />，并使用其 <c>bbcode</c> 字段或属性公开的全局标签名
+        ///         进行注册。mod 自有特效建议使用 <see cref="RegisterOwned{TEffect}" />。
+        ///     </para>
         /// </summary>
         public static ModRichTextEffectRegistration Register<TEffect>(string modId)
             where TEffect : RichTextEffect, new()
@@ -70,10 +117,15 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Registers a rich-text effect with an explicit raw global BBCode name. Prefer
-        ///     <see cref="RegisterOwned{TEffect}" /> for mod-owned effects.
-        ///     使用显式原始全局 BBCode 名注册富文本特效。mod 自有特效优先使用
-        ///     <see cref="RegisterOwned{TEffect}" />。
+        ///     <para xml:lang="en">
+        ///         Creates and registers <typeparamref name="TEffect" /> under an explicit global
+        ///         <paramref name="bbcode" /> tag. Prefer <see cref="RegisterOwned{TEffect}" /> for
+        ///         mod-owned effects.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建 <typeparamref name="TEffect" />，并使用显式全局 <paramref name="bbcode" /> 标签
+        ///         进行注册。mod 自有特效建议使用 <see cref="RegisterOwned{TEffect}" />。
+        ///     </para>
         /// </summary>
         public static ModRichTextEffectRegistration Register<TEffect>(string modId, string bbcode)
             where TEffect : RichTextEffect, new()
@@ -82,10 +134,15 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Registers a rich-text effect instance whose raw global BBCode name is read from its <c>bbcode</c> field
-        ///     or property. Prefer <see cref="RegisterOwned(string,string,RichTextEffect)" /> for mod-owned effects.
-        ///     注册富文本特效实例；原始全局 BBCode 名会从其 <c>bbcode</c> 字段或属性读取。mod 自有特效优先使用
-        ///     <see cref="RegisterOwned(string,string,RichTextEffect)" />。
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="effect" /> using the global tag name exposed by its
+        ///         <c>bbcode</c> field or property. Prefer
+        ///         <see cref="RegisterOwned(string,string,RichTextEffect)" /> for mod-owned effects.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="effect" /> 的 <c>bbcode</c> 字段或属性公开的全局标签名注册该特效。
+        ///         mod 自有特效建议使用 <see cref="RegisterOwned(string,string,RichTextEffect)" />。
+        ///     </para>
         /// </summary>
         public static ModRichTextEffectRegistration Register(string modId, RichTextEffect effect)
         {
@@ -99,10 +156,15 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Registers a rich-text effect instance with an explicit raw global BBCode name. Prefer
-        ///     <see cref="RegisterOwned(string,string,RichTextEffect)" /> for mod-owned effects.
-        ///     使用显式原始全局 BBCode 名注册富文本特效实例。mod 自有特效优先使用
-        ///     <see cref="RegisterOwned(string,string,RichTextEffect)" />。
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="effect" /> under an explicit global <paramref name="bbcode" />
+        ///         tag. The effect must expose a writable string <c>bbcode</c> member or already use the
+        ///         requested name.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用显式全局 <paramref name="bbcode" /> 标签注册 <paramref name="effect" />。
+        ///         该特效必须公开可写的字符串 <c>bbcode</c> 成员，或已经使用所请求的名称。
+        ///     </para>
         /// </summary>
         public static ModRichTextEffectRegistration Register(string modId, string bbcode, RichTextEffect effect)
         {
@@ -135,8 +197,8 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Attempts to resolve a registered rich-text effect.
-        ///     尝试解析已注册的富文本特效。
+        ///     <para xml:lang="en">Attempts to find a registered effect by global BBCode tag name.</para>
+        ///     <para xml:lang="zh-CN">尝试按全局 BBCode 标签名查找已注册特效。</para>
         /// </summary>
         public static bool TryGet(string bbcode, out ModRichTextEffectRegistration registration)
         {
@@ -149,8 +211,8 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Returns all registered rich-text effects in BBCode-name order.
-        ///     按 BBCode 名顺序返回所有已注册的富文本特效。
+        ///     <para xml:lang="en">Returns all registered effects in ordinal BBCode-name order.</para>
+        ///     <para xml:lang="zh-CN">按 BBCode 标签名的序号顺序返回所有已注册特效。</para>
         /// </summary>
         public static ModRichTextEffectRegistration[] GetRegistrationsSnapshot()
         {
@@ -165,8 +227,14 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Wraps <paramref name="text" /> with a registered rich-text tag.
-        ///     用已注册的富文本 tag 包装 <paramref name="text" />。
+        ///     <para xml:lang="en">
+        ///         Wraps <paramref name="text" /> in the global <paramref name="bbcode" /> tag.
+        ///         This method does not require the tag to be registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用全局 <paramref name="bbcode" /> 标签包裹 <paramref name="text" />。
+        ///         此方法不要求该标签已经注册。
+        ///     </para>
         /// </summary>
         public static string Wrap(string bbcode, string text, params ModRichTextTagParameter[] parameters)
         {
@@ -174,8 +242,14 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Wraps <paramref name="text" /> with a mod-scoped rich-text tag built from <paramref name="localTagStem" />.
-        ///     用从 <paramref name="localTagStem" /> 构建的 mod 作用域富文本 tag 包装 <paramref name="text" />。
+        ///     <para xml:lang="en">
+        ///         Wraps <paramref name="text" /> in the mod-qualified tag derived from
+        ///         <paramref name="localTagStem" />. This method does not require the tag to be registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用根据 <paramref name="localTagStem" /> 派生的 mod 限定标签包裹
+        ///         <paramref name="text" />。此方法不要求该标签已经注册。
+        ///     </para>
         /// </summary>
         public static string WrapOwned(
             string modId,
@@ -187,8 +261,12 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Wraps <paramref name="text" /> with a registered rich-text tag.
-        ///     用已注册的富文本 tag 包装 <paramref name="text" />。
+        ///     <para xml:lang="en">
+        ///         Wraps <paramref name="text" /> in the tag described by <paramref name="registration" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="registration" /> 描述的标签包裹 <paramref name="text" />。
+        ///     </para>
         /// </summary>
         public static string Wrap(
             ModRichTextEffectRegistration registration,

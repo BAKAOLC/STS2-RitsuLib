@@ -4,14 +4,18 @@ using Godot;
 namespace STS2RitsuLib.Ui.RichTextEffects
 {
     /// <summary>
-    ///     Helpers for building mod rich-text BBCode tags.
-    ///     构建 mod 富文本 BBCode tag 的辅助工具。
+    ///     <para xml:lang="en">Builds BBCode tags for mod rich-text effects.</para>
+    ///     <para xml:lang="zh-CN">为 mod 富文本特效构建 BBCode 标签。</para>
     /// </summary>
     public static class ModRichTextTag
     {
         /// <summary>
-        ///     Creates a rich-text tag parameter.
-        ///     创建富文本 tag 参数。
+        ///     <para xml:lang="en">
+        ///         Creates a rich-text tag parameter. Its name is validated when the tag is built.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建富文本标签参数。参数名会在构建标签时进行验证。
+        ///     </para>
         /// </summary>
         public static ModRichTextTagParameter Param(string name, object? value)
         {
@@ -19,8 +23,15 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Wraps <paramref name="text" /> with a BBCode tag.
-        ///     用 BBCode tag 包装 <paramref name="text" />。
+        ///     <para xml:lang="en">
+        ///         Wraps <paramref name="text" /> in a BBCode tag with the supplied parameters.
+        ///         Parameter values are formatted with culture-invariant syntax; <see langword="null" /> values
+        ///         are omitted.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用带有指定参数的 BBCode 标签包裹 <paramref name="text" />。
+        ///         参数值使用与区域性无关的格式；值为 <see langword="null" /> 的参数会被省略。
+        ///     </para>
         /// </summary>
         public static string Wrap(string bbcode, string text, params ModRichTextTagParameter[] parameters)
         {
@@ -34,8 +45,12 @@ namespace STS2RitsuLib.Ui.RichTextEffects
         }
 
         /// <summary>
-        ///     Wraps <paramref name="text" /> with a BBCode tag.
-        ///     用 BBCode tag 包装 <paramref name="text" />。
+        ///     <para xml:lang="en">
+        ///         Wraps <paramref name="text" /> in a BBCode tag with parameters from an enumerable sequence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用带有可枚举参数序列的 BBCode 标签包裹 <paramref name="text" />。
+        ///     </para>
         /// </summary>
         public static string Wrap(string bbcode, string text, IEnumerable<ModRichTextTagParameter> parameters)
         {
