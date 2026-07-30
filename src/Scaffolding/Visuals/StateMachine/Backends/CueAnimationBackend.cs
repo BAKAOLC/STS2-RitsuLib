@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             CueFrameSequencePlayer.StopUnder(OwnerNode);
 
             _queuedId = null;
-            _currentId = id;
+            _currentId = null;
 
             if (_cues.FrameSequenceByCue is { Count: > 0 } sequences &&
                 TryGetOrdinalIgnoreCase(sequences, id, out var sequence) &&
@@ -108,6 +108,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
                 if (!player.TryStart(_sprite, playbackSequence))
                     return;
 
+                _currentId = id;
                 SubscribePlayer(player);
                 Started?.Invoke(id);
                 return;
@@ -120,6 +121,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             if (tex == null)
                 return;
 
+            _currentId = id;
             _sprite.Texture = tex;
             if (_cues.TextureStyleByCue is { Count: > 0 } styles &&
                 TryGetOrdinalIgnoreCase(styles, id, out var style))

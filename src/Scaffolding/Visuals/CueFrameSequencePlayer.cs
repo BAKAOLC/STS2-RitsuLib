@@ -78,6 +78,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals
 
         internal bool TryStart(Sprite2D sprite, VisualFrameSequence sequence)
         {
+            StopAndReset();
+
             if (sequence.Frames.Count == 0)
                 return false;
 
@@ -91,7 +93,6 @@ namespace STS2RitsuLib.Scaffolding.Visuals
                 frames[i] = f;
             }
 
-            StopAndReset();
             _sprite = sprite;
             _frames = frames;
             _defaultStyle = sequence.DefaultStyle;
@@ -102,7 +103,11 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             _index = 0;
             _carry = 0;
             _frameDurationSeconds = ClampFrameDuration(frames[0].DurationSeconds);
-            ApplyFrame(0);
+            if (!ApplyFrame(0))
+            {
+                StopAndReset();
+                return false;
+            }
 
             _active = true;
             SetProcess(true);
@@ -154,22 +159,22 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             return !float.IsFinite(seconds) || seconds <= 0f ? 1.0 / 60.0 : seconds;
         }
 
-        private void ApplyFrame(int i)
+        private bool ApplyFrame(int i)
         {
             if (_sprite == null || i < 0 || i >= _frames.Length)
-                return;
+                return false;
 
             var tex = _cache[i];
             if (tex == null)
             {
                 if (_loadFailed[i])
-                    return;
+                    return false;
 
                 tex = ResourceLoader.Load<Texture2D>(_frames[i].TexturePath);
                 if (tex == null)
                 {
                     _loadFailed[i] = true;
-                    return;
+                    return false;
                 }
 
                 _cache[i] = tex;
@@ -178,6 +183,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             _sprite.Texture = tex;
             var style = _frameStyles.Length > i ? _frameStyles[i] : null;
             (style ?? _defaultStyle).ApplyTo(_sprite);
+            return true;
         }
 
         private static VisualNodeStyle?[] BuildFrameStyleArray(VisualFrameSequence sequence, int frameCount)

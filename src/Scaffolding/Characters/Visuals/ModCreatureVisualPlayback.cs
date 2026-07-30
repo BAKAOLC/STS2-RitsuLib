@@ -390,9 +390,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                     if (!TryGetFrameSequence(sequences, name, out var sequence) || sequence == null)
                         continue;
 
-                    matched = true;
                     seconds = GetSequenceDuration(sequence);
-                    return seconds > 0f;
+                    if (seconds <= 0f)
+                        continue;
+
+                    matched = true;
+                    return true;
                 }
 
             if (cues.TexturePathByCue is not { Count: > 0 } textures)
