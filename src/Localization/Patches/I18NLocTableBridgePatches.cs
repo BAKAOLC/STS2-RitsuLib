@@ -17,8 +17,8 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     Resolves registered virtual I18N tables through <c>LocManager.GetTable</c>.
-    ///     通过 <c>LocManager.GetTable</c> 解析已注册的虚拟 I18N table。
+    ///     <para xml:lang="en">Resolves registered virtual I18N tables through <c>LocManager.GetTable</c>.</para>
+    ///     <para xml:lang="zh-CN">使 <c>LocManager.GetTable</c> 能够解析已注册的虚拟 I18N 表。</para>
     /// </summary>
     internal class LocManagerGetTableI18NBridgePatch : IPatchMethod
     {
@@ -35,8 +35,8 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     Returns the I18N-backed table instance for registered virtual table ids.
-        ///     对已注册的虚拟 table id 返回 I18N-backed table 实例。
+        ///     <para xml:lang="en">Returns the I18N-backed table instance for a registered virtual table ID and skips the original method.</para>
+        ///     <para xml:lang="zh-CN">为已注册的虚拟表 ID 返回由 I18N 支持的表实例，并跳过原方法。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(string name, ref LocTable __result)
@@ -50,8 +50,8 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     Bridges <c>LocTable.HasEntry</c> to <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.
-    ///     将 <c>LocTable.HasEntry</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c> table。
+    ///     <para xml:lang="en">Routes <c>LocTable.HasEntry</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
+    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.HasEntry</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
     /// </summary>
     internal class LocTableHasEntryI18NBridgePatch : IPatchMethod
     {
@@ -68,10 +68,8 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     Resolves the key lookup through <see cref="STS2RitsuLib.Utils.I18N" /> when the table name matches a
-        ///     registered virtual I18N table id.
-        ///     当表名匹配已注册的虚拟 I18N 表 id 时，通过 <see cref="STS2RitsuLib.Utils.I18N" />
-        ///     解析 key 查找。
+        ///     <para xml:lang="en">Queries the backing <see cref="STS2RitsuLib.Utils.I18N" /> dictionary when the table maps to a registered virtual table ID.</para>
+        ///     <para xml:lang="zh-CN">当表映射到已注册的虚拟表 ID 时，查询其背后的 <see cref="STS2RitsuLib.Utils.I18N" /> 字典。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref bool __result)
@@ -85,10 +83,8 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     Bridges <c>LocTable.IsLocalKey</c> to <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c>
-    ///     tables.
-    ///     将 <c>LocTable.IsLocalKey</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c>
-    ///     table。
+    ///     <para xml:lang="en">Routes <c>LocTable.IsLocalKey</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
+    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.IsLocalKey</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
     /// </summary>
     internal class LocTableIsLocalKeyI18NBridgePatch : IPatchMethod
     {
@@ -105,8 +101,8 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     Reports I18N-backed keys as local keys for SmartFormat culture selection.
-        ///     为 SmartFormat culture 选择把 I18N-backed keys 报告为本地 key。
+        ///     <para xml:lang="en">Reports whether the backing I18N dictionary contains a key for the current locale, allowing SmartFormat to select the appropriate culture.</para>
+        ///     <para xml:lang="zh-CN">报告背后的 I18N 字典是否包含当前区域设置下的键，以便 SmartFormat 选择适用的区域性。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref bool __result)
@@ -120,8 +116,8 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     Bridges <c>LocTable.GetRawText</c> to <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.
-    ///     将 <c>LocTable.GetRawText</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c> table。
+    ///     <para xml:lang="en">Routes <c>LocTable.GetRawText</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
+    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.GetRawText</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
     /// </summary>
     internal class LocTableGetRawTextI18NBridgePatch : IPatchMethod
     {
@@ -138,8 +134,8 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     Returns the I18N-backed raw template when the table name matches a registered virtual I18N table id.
-        ///     当 table name 匹配已注册的虚拟 I18N table id 时，返回 I18N-backed raw template。
+        ///     <para xml:lang="en">Returns the raw template from the backing I18N dictionary when it contains the requested key.</para>
+        ///     <para xml:lang="zh-CN">当背后的 I18N 字典包含请求的键时，返回其中的原始模板文本。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref string __result)
@@ -156,10 +152,8 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     Bridges <c>LocTable.GetLocString</c> to <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c>
-    ///     tables.
-    ///     将 <c>LocTable.GetLocString</c> 桥接到 <see cref="I18NLocTableBridge" />，用于虚拟 <c>MODID_I18N_STEM</c>
-    ///     table。
+    ///     <para xml:lang="en">Routes <c>LocTable.GetLocString</c> through <see cref="I18NLocTableBridge" /> for virtual <c>MODID_I18N_STEM</c> tables.</para>
+    ///     <para xml:lang="zh-CN">针对虚拟 <c>MODID_I18N_STEM</c> 表，将 <c>LocTable.GetLocString</c> 查询转交给 <see cref="I18NLocTableBridge" />。</para>
     /// </summary>
     internal class LocTableGetLocStringI18NBridgePatch : IPatchMethod
     {
@@ -176,8 +170,8 @@ namespace STS2RitsuLib.Localization.Patches
         }
 
         /// <summary>
-        ///     Returns a <see cref="LocString" /> pointing at the virtual table id when the I18N dictionary contains the key.
-        ///     当 I18N 字典包含该 key 时，返回指向虚拟表 id 的 <see cref="LocString" />。
+        ///     <para xml:lang="en">Returns a <see cref="LocString" /> that points to the virtual table ID when the backing I18N dictionary contains the key.</para>
+        ///     <para xml:lang="zh-CN">当背后的 I18N 字典包含该键时，返回指向虚拟表 ID 的 <see cref="LocString" />。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(LocTable __instance, string key, ref LocString __result)
