@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Godot;
 
 namespace STS2RitsuLib.Settings
@@ -239,7 +238,8 @@ namespace STS2RitsuLib.Settings
     {
         private static readonly List<Func<ModSettingsPasteValidationContext, ModSettingsPasteVerdict>> PasteRules = [];
         private static readonly Lock PasteRulesLock = new();
-        private static readonly ConcurrentDictionary<Type, List<Delegate>> PasteAppliers = new();
+        private static readonly Dictionary<Type, List<Delegate>> PasteAppliers = [];
+        private static readonly Lock PasteAppliersLock = new();
 
         /// <summary>
         ///     When true, envelope <c>TargetSignature</c> must match the current binding (legacy strict paste).
@@ -275,7 +275,16 @@ namespace STS2RitsuLib.Settings
         public static void RegisterPasteApplier<TValue>(ModSettingsTryPasteApplier<TValue> applier)
         {
             ArgumentNullException.ThrowIfNull(applier);
-            PasteAppliers.GetOrAdd(typeof(TValue), _ => []).Add(applier);
+            lock (PasteAppliersLock)
+            {
+                if (!PasteAppliers.TryGetValue(typeof(TValue), out var appliers))
+                {
+                    appliers = [];
+                    PasteAppliers.Add(typeof(TValue), appliers);
+                }
+
+                appliers.Add(applier);
+            }
         }
 
         /// <summary>
@@ -288,12 +297,21 @@ namespace STS2RitsuLib.Settings
             TValue value)
         {
             var args = new ModSettingsCopyActionEventArgs(binding, typeof(TValue), value, scope);
-            var h = BindingValueCopyRequested;
-            if (h != null)
-                foreach (var @delegate in h.GetInvocationList())
+            if (BindingValueCopyRequested is { } handlers)
+                foreach (var @delegate in handlers.GetInvocationList())
                 {
-                    var d = (Action<ModSettingsCopyActionEventArgs>)@delegate;
-                    d(args);
+                    var suppressDefaultBeforeHandler = args.SuppressDefaultClipboardWrite;
+                    try
+                    {
+                        ((Action<ModSettingsCopyActionEventArgs>)@delegate)(args);
+                    }
+                    catch (Exception ex)
+                    {
+                        args.SuppressDefaultClipboardWrite = suppressDefaultBeforeHandler;
+                        var bindingType = binding.GetType();
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Settings] A binding copy handler failed for '{bindingType.FullName ?? bindingType.Name}': {ex}");
+                    }
                 }
 
             if (!args.SuppressDefaultClipboardWrite)
@@ -368,15 +386,30 @@ namespace STS2RitsuLib.Settings
         private static bool TryInvokePasteApplier<TValue>(IModSettingsValueBinding<TValue> binding,
             IStructuredModSettingsValueAdapter<TValue> adapter, string clipboardText, out TValue value)
         {
-            if (!PasteAppliers.TryGetValue(typeof(TValue), out var list) || list.Count == 0)
+            Delegate[] snapshot;
+            lock (PasteAppliersLock)
             {
-                value = default!;
-                return false;
+                if (!PasteAppliers.TryGetValue(typeof(TValue), out var appliers) || appliers.Count == 0)
+                {
+                    value = default!;
+                    return false;
+                }
+
+                snapshot = [..appliers];
             }
 
-            foreach (var d in list)
-                if (((ModSettingsTryPasteApplier<TValue>)d)(binding, adapter, clipboardText, out value))
-                    return true;
+            foreach (var applier in snapshot)
+                try
+                {
+                    if (((ModSettingsTryPasteApplier<TValue>)applier)(binding, adapter, clipboardText, out value))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    var bindingType = binding.GetType();
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] A custom paste parser failed for '{bindingType.FullName ?? bindingType.Name}': {ex}");
+                }
 
             value = default!;
             return false;
@@ -413,7 +446,21 @@ namespace STS2RitsuLib.Settings
                 snapshot = [..PasteRules];
             }
 
-            return snapshot.All(rule => rule(ctx) != ModSettingsPasteVerdict.Deny);
+            foreach (var rule in snapshot)
+                try
+                {
+                    if (rule(ctx) == ModSettingsPasteVerdict.Deny)
+                        return false;
+                }
+                catch (Exception ex)
+                {
+                    var bindingType = binding.GetType();
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] A paste validation rule failed for '{bindingType.FullName ?? bindingType.Name}': {ex}");
+                    return false;
+                }
+
+            return true;
         }
     }
 }
