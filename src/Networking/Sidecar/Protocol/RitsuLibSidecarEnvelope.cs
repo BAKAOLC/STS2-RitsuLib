@@ -59,6 +59,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             ///     数据包总长度与 header 字段不匹配。
             /// </summary>
             TotalLengthMismatch,
+
+            BackingMismatch,
         }
 
         private const RitsuLibSidecarWireFlags PayloadCompressionFlags =
@@ -103,6 +105,9 @@ namespace STS2RitsuLib.Networking.Sidecar
         public static ParseOutcome TryParse(ReadOnlySpan<byte> packet, byte[] backing, out ParsedEnvelope parsed)
         {
             parsed = default;
+            if (backing == null || packet.Length != backing.Length || !packet.SequenceEqual(backing))
+                return ParseOutcome.BackingMismatch;
+
             if (packet.Length < RitsuLibSidecarWire.MinEnvelopeSize)
                 return ParseOutcome.TooSmall;
 
