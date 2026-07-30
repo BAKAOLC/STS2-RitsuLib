@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.RunData;
@@ -117,16 +118,19 @@ namespace STS2RitsuLib.CardPiles
             CardPile pile,
             SerializableCard serializableCard)
         {
+            CardModel card;
             try
             {
-                var card = runState.LoadCard(serializableCard, player);
-                pile.AddInternal(card, -1, true);
+                card = runState.LoadCard(serializableCard, player);
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] Failed to restore card in run-persistent pile '{pile.Type}': {ex.Message}");
+                    $"[CardPiles] Failed to load a card for run-persistent pile '{pile.Type}': {ex}");
+                return;
             }
+
+            pile.AddInternal(card, -1, true);
         }
 
         private static bool HasRunPersistentDefinitions()
