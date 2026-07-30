@@ -130,7 +130,7 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.debugCompatibility.label", "Debug compatibility mode"),
                             ui.DebugCompatibility,
                             T("ritsulib.debugCompatibility.description",
-                                "Enable compatibility fallbacks for localization, unlock, and ancient-dialogue edge cases. Sub-toggles default to on.")))
+                                "Enable compatibility fallbacks for localization, unlock, and The Architect dialogue edge cases. Per-feature toggles default to on.")))
                     .AddSection(
                         "debug_compat_shims",
                         section => section
@@ -145,16 +145,16 @@ namespace STS2RitsuLib.Settings
                                     "Resolve missing keys to placeholder LocString values and log one [Localization][DebugCompat] warning per key."))
                             .AddToggle(
                                 "debug_compat_unlock_epoch",
-                                T("ritsulib.debugCompatUnlockEpoch.label", "Invalid unlock Epochs"),
+                                T("ritsulib.debugCompatUnlockEpoch.label", "Invalid epoch grants"),
                                 ui.DebugCompatUnlockEpoch,
                                 T("ritsulib.debugCompatUnlockEpoch.description",
                                     "Skip invalid epoch grants on RitsuLib-registered unlock paths and log one [Unlocks][DebugCompat] warning per stable key."))
                             .AddToggle(
                                 "debug_compat_ancient_architect",
-                                T("ritsulib.debugCompatAncientArchitect.label", "THE_ARCHITECT missing dialogue"),
+                                T("ritsulib.debugCompatAncientArchitect.label", "The Architect missing dialogue"),
                                 ui.DebugCompatAncientArchitect,
                                 T("ritsulib.debugCompatAncientArchitect.description",
-                                    "Inject empty Lines entries for ModContentRegistry ancients when vanilla provides no dialogue."))),
+                                    "Inject a dialogue entry with no lines when The Architect has no vanilla dialogue for a ModContentRegistry character."))),
                 "compatibility");
         }
 
@@ -329,7 +329,7 @@ namespace STS2RitsuLib.Settings
                             "harmony-patch-dump",
                             T("button.open", "Open"),
                             T("ritsulib.section.harmonyDump.description",
-                                "Export a text report of patched methods (prefix/postfix/transpiler/finalizer) for debugging mod interactions."))
+                                "Export a text report of Harmony-patched methods and their prefixes, postfixes, transpilers, and finalizers for diagnosing mod interactions."))
                         .AddSubpage(
                             "self_check_open",
                             T("ritsulib.section.selfCheck.title", "Self-check mode"),
