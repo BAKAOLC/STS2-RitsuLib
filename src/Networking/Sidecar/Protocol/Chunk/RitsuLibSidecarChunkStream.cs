@@ -107,6 +107,7 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             RitsuLibSidecarProtocol.EnsureDefaultHandlers();
             ArgumentOutOfRangeException.ThrowIfLessThan(maxSegment, 1);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(maxSegment, ushort.MaxValue);
 
             var totalU = (uint)full.Length;
             if (totalU == 0)
