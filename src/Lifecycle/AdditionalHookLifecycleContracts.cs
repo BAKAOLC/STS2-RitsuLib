@@ -18,8 +18,8 @@ using MegaCrit.Sts2.Core.ValueProps;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     An attack hook is about to resolve.
-    ///     攻击 hook 即将结算。
+    ///     <para xml:lang="en">An attack is about to resolve.</para>
+    ///     <para xml:lang="zh-CN">一次攻击即将结算。</para>
     /// </summary>
     public readonly record struct AttackStartingEvent(
         CombatStateCompat CombatState,
@@ -28,8 +28,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     An attack hook has resolved.
-    ///     攻击 hook 已结算。
+    ///     <para xml:lang="en">An attack has finished resolving.</para>
+    ///     <para xml:lang="zh-CN">一次攻击已完成结算。</para>
     /// </summary>
     public readonly record struct AttackEndedEvent(
         CombatStateCompat CombatState,
@@ -39,8 +39,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Block gain is about to be processed.
-    ///     格挡获得即将处理。
+    ///     <para xml:lang="en">A creature is about to gain Block.</para>
+    ///     <para xml:lang="zh-CN">一名生物即将获得格挡。</para>
     /// </summary>
     public readonly record struct BlockGainingEvent(
         CombatStateCompat CombatState,
@@ -52,8 +52,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Block gain has been processed.
-    ///     格挡获得已处理。
+    ///     <para xml:lang="en">A creature has gained Block.</para>
+    ///     <para xml:lang="zh-CN">一名生物已获得格挡。</para>
     /// </summary>
     public readonly record struct BlockGainedEvent(
         CombatStateCompat CombatState,
@@ -65,8 +65,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A creature's block was broken.
-    ///     生物格挡被打破。
+    ///     <para xml:lang="en">A creature's Block has been broken.</para>
+    ///     <para xml:lang="zh-CN">一名生物的格挡已被击破。</para>
     /// </summary>
     public readonly record struct BlockBrokenEvent(
         CombatStateCompat CombatState,
@@ -75,8 +75,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A creature's block was cleared.
-    ///     生物格挡被清除。
+    ///     <para xml:lang="en">A creature's Block has been cleared.</para>
+    ///     <para xml:lang="zh-CN">一名生物的格挡已被清除。</para>
     /// </summary>
     public readonly record struct BlockClearedEvent(
         CombatStateCompat CombatState,
@@ -85,8 +85,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A card is about to be auto-played.
-    ///     卡牌即将自动打出。
+    ///     <para xml:lang="en">A card is about to be played automatically.</para>
+    ///     <para xml:lang="zh-CN">一张牌即将被自动打出。</para>
     /// </summary>
     public readonly record struct CardAutoPlayingEvent(
         CombatStateCompat CombatState,
@@ -97,8 +97,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A card entered combat.
-    ///     卡牌进入了战斗。
+    ///     <para xml:lang="en">A card has entered combat.</para>
+    ///     <para xml:lang="zh-CN">一张牌已进入战斗。</para>
     /// </summary>
     public readonly record struct CardEnteredCombatEvent(
         CombatStateCompat CombatState,
@@ -107,8 +107,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A card was generated during combat.
-    ///     战斗中生成了卡牌。
+    ///     <para xml:lang="en">A card has been generated during combat.</para>
+    ///     <para xml:lang="zh-CN">一张牌已在战斗中生成。</para>
     /// </summary>
     public readonly record struct CardGeneratedForCombatEvent(
         CombatStateCompat CombatState,
@@ -119,8 +119,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A card is about to be removed from the run.
-    ///     卡牌即将从跑局中移除。
+    ///     <para xml:lang="en">A card is about to be removed from the run.</para>
+    ///     <para xml:lang="zh-CN">一张牌即将从一局游戏中移除。</para>
     /// </summary>
     public readonly record struct CardRemovingEvent(
         IRunState RunState,
@@ -129,8 +129,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A creature was added to combat.
-    ///     生物已加入战斗。
+    ///     <para xml:lang="en">A creature has been added to combat.</para>
+    ///     <para xml:lang="zh-CN">一名生物已加入战斗。</para>
     /// </summary>
     public readonly record struct CreatureAddedToCombatEvent(
         CombatStateCompat CombatState,
@@ -139,8 +139,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A creature's current HP changed.
-    ///     生物当前生命发生变化。
+    ///     <para xml:lang="en">A creature's current HP has changed.</para>
+    ///     <para xml:lang="zh-CN">一名生物的当前生命值已发生变化。</para>
     /// </summary>
     public readonly record struct CurrentHpChangedEvent(
         IRunState RunState,
@@ -151,8 +151,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Energy was gained.
-    ///     能量已获得。
+    ///     <para xml:lang="en">A player has gained Energy.</para>
+    ///     <para xml:lang="zh-CN">一名玩家已获得能量。</para>
     /// </summary>
     public readonly record struct EnergyGainedEvent(
         CombatStateCompat CombatState,
@@ -162,8 +162,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Player energy was reset.
-    ///     玩家能量已重置。
+    ///     <para xml:lang="en">A player's Energy has been reset.</para>
+    ///     <para xml:lang="zh-CN">一名玩家的能量已被重置。</para>
     /// </summary>
     public readonly record struct EnergyResetEvent(
         CombatStateCompat CombatState,
@@ -172,8 +172,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Energy was spent for a card.
-    ///     为卡牌消耗了能量。
+    ///     <para xml:lang="en">Energy has been spent to play a card.</para>
+    ///     <para xml:lang="zh-CN">打出一张牌所需的能量已被消耗。</para>
     /// </summary>
     public readonly record struct EnergySpentEvent(
         CombatStateCompat CombatState,
@@ -183,8 +183,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A hand draw is about to run.
-    ///     手牌抽牌即将执行。
+    ///     <para xml:lang="en">A player's hand draw is about to begin.</para>
+    ///     <para xml:lang="zh-CN">一名玩家的手牌抽取即将开始。</para>
     /// </summary>
     public readonly record struct HandDrawingEvent(
         CombatStateCompat CombatState,
@@ -194,8 +194,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A hand became empty.
-    ///     手牌已清空。
+    ///     <para xml:lang="en">A player's hand has become empty.</para>
+    ///     <para xml:lang="zh-CN">一名玩家的手牌已变为空。</para>
     /// </summary>
     public readonly record struct HandEmptiedEvent(
         CombatStateCompat CombatState,
@@ -205,8 +205,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A player turn has started.
-    ///     玩家回合已开始。
+    ///     <para xml:lang="en">A player's turn has started.</para>
+    ///     <para xml:lang="zh-CN">一名玩家的回合已开始。</para>
     /// </summary>
     public readonly record struct PlayerTurnStartedEvent(
         CombatStateCompat CombatState,
@@ -216,8 +216,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A potion is about to be used.
-    ///     药水即将使用。
+    ///     <para xml:lang="en">A potion is about to be used.</para>
+    ///     <para xml:lang="zh-CN">一瓶药水即将被使用。</para>
     /// </summary>
     public readonly record struct PotionUsingEvent(
         IRunState RunState,
@@ -228,8 +228,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A potion was used.
-    ///     药水已使用。
+    ///     <para xml:lang="en">A potion has been used.</para>
+    ///     <para xml:lang="zh-CN">一瓶药水已被使用。</para>
     /// </summary>
     public readonly record struct PotionUsedEvent(
         IRunState RunState,
@@ -240,8 +240,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A player's deck was shuffled.
-    ///     玩家牌组已洗牌。
+    ///     <para xml:lang="en">A player's draw pile has been shuffled.</para>
+    ///     <para xml:lang="zh-CN">一名玩家的抽牌堆已被洗牌。</para>
     /// </summary>
     public readonly record struct ShuffledEvent(
         CombatStateCompat CombatState,
@@ -251,8 +251,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Stars were gained.
-    ///     星星已获得。
+    ///     <para xml:lang="en">A player has gained Stars.</para>
+    ///     <para xml:lang="zh-CN">一名玩家已获得星星。</para>
     /// </summary>
     public readonly record struct StarsGainedEvent(
         CombatStateCompat CombatState,
@@ -262,8 +262,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Stars were spent.
-    ///     星星已消耗。
+    ///     <para xml:lang="en">A player has spent Stars.</para>
+    ///     <para xml:lang="zh-CN">一名玩家已消耗星星。</para>
     /// </summary>
     public readonly record struct StarsSpentEvent(
         CombatStateCompat CombatState,
@@ -273,8 +273,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A summon hook resolved.
-    ///     召唤 hook 已结算。
+    ///     <para xml:lang="en">A summon has finished resolving.</para>
+    ///     <para xml:lang="zh-CN">一次召唤已完成结算。</para>
     /// </summary>
     public readonly record struct SummonedEvent(
         CombatStateCompat CombatState,
@@ -285,8 +285,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A player took an extra turn.
-    ///     玩家获得了额外回合。
+    ///     <para xml:lang="en">A player has taken an extra turn.</para>
+    ///     <para xml:lang="zh-CN">一名玩家已进行一个额外回合。</para>
     /// </summary>
     public readonly record struct ExtraTurnTakenEvent(
         CombatStateCompat CombatState,
@@ -295,8 +295,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A side's turn is about to end.
-    ///     某一方回合即将结束。
+    ///     <para xml:lang="en">A combat side's turn is about to end.</para>
+    ///     <para xml:lang="zh-CN">战斗中一方的回合即将结束。</para>
     /// </summary>
     public readonly record struct SideTurnEndingEvent(
         CombatStateCompat CombatState,
@@ -306,8 +306,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A side's turn ended.
-    ///     某一方回合已结束。
+    ///     <para xml:lang="en">A combat side's turn has ended.</para>
+    ///     <para xml:lang="zh-CN">战斗中一方的回合已结束。</para>
     /// </summary>
     public readonly record struct SideTurnEndedEvent(
         CombatStateCompat CombatState,
@@ -317,8 +317,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A merchant item was purchased.
-    ///     已购买商店物品。
+    ///     <para xml:lang="en">A player has purchased a merchant item.</para>
+    ///     <para xml:lang="zh-CN">一名玩家已购买一件商人物品。</para>
     /// </summary>
     public readonly record struct ItemPurchasedEvent(
         IRunState RunState,
@@ -329,8 +329,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     An act map was generated.
-    ///     章节地图已生成。
+    ///     <para xml:lang="en">An Act map has been generated.</para>
+    ///     <para xml:lang="zh-CN">一张章节地图已生成。</para>
     /// </summary>
     public readonly record struct MapGeneratedEvent(
         IRunState RunState,
@@ -340,8 +340,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A rest-site heal resolved.
-    ///     休息点治疗已结算。
+    ///     <para xml:lang="en">A Rest Site healing action has finished resolving.</para>
+    ///     <para xml:lang="zh-CN">休息处的治疗操作已完成结算。</para>
     /// </summary>
     public readonly record struct RestSiteHealedEvent(
         IRunState RunState,
@@ -351,8 +351,8 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A rest-site smith resolved.
-    ///     休息点锻造已结算。
+    ///     <para xml:lang="en">A Rest Site Smith action has finished resolving.</para>
+    ///     <para xml:lang="zh-CN">休息处的锻造操作已完成结算。</para>
     /// </summary>
     public readonly record struct RestSiteSmithedEvent(
         IRunState RunState,

@@ -11,10 +11,14 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Replaces <c>ModelDb.GetById&lt;CharacterModel&gt;</c> and <c>GetById&lt;ActModel&gt;</c> in run-history UI with
-    ///     <see cref="RunHistoryMissingModelSupport" /> so missing mod content does not throw.
-    ///     将跑局历史 UI 中的 <c>ModelDb.GetById&lt;CharacterModel&gt;</c> 和 <c>GetById&lt;ActModel&gt;</c> 替换为
-    ///     <see cref="RunHistoryMissingModelSupport" />，使缺失 mod 内容时不会抛错。
+    ///     <para xml:lang="en">
+    ///         Redirects character and Act lookups on the Run History UI to <see cref="RunHistoryMissingModelSupport" />,
+    ///         allowing history from unavailable mods to use deprecated-model placeholders.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将游戏历史界面中的角色与章节查找重定向到 <see cref="RunHistoryMissingModelSupport" />，
+    ///         使来自当前不可用模组的历史记录可使用已弃用模型占位项。
+    ///     </para>
     /// </summary>
     internal class RunHistoryMissingModelDbGetByIdTranspilerPatch : IPatchMethod
     {
@@ -50,8 +54,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Harmony transpiler: redirect ModelDb lookups to RitsuLib fallbacks.
-        ///     Harmony transpiler：将 ModelDb 查找重定向到 RitsuLib 回退实现。
+        ///     <para xml:lang="en">Redirects supported <c>ModelDb.GetById</c> calls to RitsuLib fallbacks.</para>
+        ///     <para xml:lang="zh-CN">将受支持的 <c>ModelDb.GetById</c> 调用重定向到 RitsuLib 回退实现。</para>
         /// </summary>
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {

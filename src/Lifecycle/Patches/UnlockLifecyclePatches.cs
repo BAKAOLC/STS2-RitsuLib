@@ -7,8 +7,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Publishes epoch obtain and reveal lifecycle events from <see cref="SaveManager" />.
-    ///     从 <see cref="SaveManager" /> 发布 epoch 取得和揭示生命周期事件。
+    ///     <para xml:lang="en">Publishes Epoch acquisition and reveal lifecycle events from <see cref="SaveManager" />.</para>
+    ///     <para xml:lang="zh-CN">从 <see cref="SaveManager" /> 发布纪元获得与显示生命周期事件。</para>
     /// </summary>
     internal sealed class EpochObtainedLifecyclePatch : IPatchMethod
     {

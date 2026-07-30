@@ -5,9 +5,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Publishes profile initialization, switching, progress save, and profile deletion lifecycle events around
-    ///     <see cref="SaveManager" /> APIs.
-    ///     围绕 <see cref="SaveManager" /> API 发布档案初始化、切换、进度保存和档案删除生命周期事件。
+    ///     <para xml:lang="en">
+    ///         Publishes lifecycle events around <see cref="SaveManager" /> profile initialization, switching, progress
+    ///         saving, and profile deletion.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         围绕 <see cref="SaveManager" /> 的档案初始化、切换、进度保存和档案删除操作发布生命周期事件。
+    ///     </para>
     /// </summary>
     internal static class SaveLifecycleProfileId
     {
@@ -137,8 +141,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes lifecycle events when a run is saved through <see cref="SaveManager.SaveRun" />.
-    ///     当通过 <see cref="SaveManager.SaveRun" /> 保存跑局时发布生命周期事件。
+    ///     <para xml:lang="en">Publishes lifecycle events when <see cref="SaveManager.SaveRun" /> saves the current run.</para>
+    ///     <para xml:lang="zh-CN">当 <see cref="SaveManager.SaveRun" /> 保存当前一局游戏时发布生命周期事件。</para>
     /// </summary>
     internal class RunSavingLifecyclePatch : IPatchMethod
     {

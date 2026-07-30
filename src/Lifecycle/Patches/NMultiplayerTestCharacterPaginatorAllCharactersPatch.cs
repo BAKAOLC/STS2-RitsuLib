@@ -9,10 +9,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Multiplayer debug test uses a hard-coded array of five vanilla characters. Replace it with
-    ///     <see cref="ModelDb.AllCharacters" /> so mod-registered characters appear in the paginator.
-    ///     多人调试测试使用硬编码的五个原版角色数组。这里将其替换为
-    ///     <see cref="ModelDb.AllCharacters" />，使 mod 注册角色出现在分页器中。
+    ///     <para xml:lang="en">
+    ///         Replaces the multiplayer test's fixed base-game character list with
+    ///         <see cref="ModelDb.AllCharacters" /> so registered mod characters appear in its paginator.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将多人测试中固定的原版角色列表替换为 <see cref="ModelDb.AllCharacters" />，
+    ///         使已注册的模组角色显示在分页列表中。
+    ///     </para>
     /// </summary>
     internal class NMultiplayerTestCharacterPaginatorAllCharactersPatch : IPatchMethod
     {

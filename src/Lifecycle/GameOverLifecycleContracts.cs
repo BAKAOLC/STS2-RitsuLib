@@ -5,24 +5,24 @@ using MegaCrit.Sts2.Core.Saves;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     Game over UI was created for a finished run.
-    ///     已为结束的跑局创建游戏结束 UI。
+    ///     <para xml:lang="en">The Game Over screen was created for a finished run.</para>
+    ///     <para xml:lang="zh-CN">已为结束的一局游戏创建游戏结束界面。</para>
     /// </summary>
     /// <param name="RunState">
-    ///     Run state presented on the screen.
-    ///     屏幕上呈现的跑局状态。
+    ///     <para xml:lang="en">Run state presented on the screen.</para>
+    ///     <para xml:lang="zh-CN">屏幕上呈现的局内状态。</para>
     /// </param>
     /// <param name="SerializableRun">
-    ///     Serialized run payload.
-    ///     已序列化的跑局载荷。
+    ///     <para xml:lang="en">Serialized data for the finished run.</para>
+    ///     <para xml:lang="zh-CN">已结束游戏的序列化数据。</para>
     /// </param>
     /// <param name="Screen">
-    ///     Game over screen node.
-    ///     游戏结束界面节点。
+    ///     <para xml:lang="en">Game over screen node.</para>
+    ///     <para xml:lang="zh-CN">游戏结束界面节点。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct GameOverScreenCreatedEvent(
         RunState RunState,

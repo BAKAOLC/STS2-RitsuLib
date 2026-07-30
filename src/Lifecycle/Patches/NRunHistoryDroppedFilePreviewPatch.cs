@@ -18,9 +18,14 @@ using GodotFileAccess = Godot.FileAccess;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Allows a user to preview a dropped <c>.run</c> or <c>.save</c> file in the vanilla run-history screen without
-    ///     importing it into the real run-history save list.
-    ///     允许用户在原版跑局历史界面预览拖入的 <c>.run</c> 或 <c>.save</c> 文件，而不会导入真实跑局历史列表。
+    ///     <para xml:lang="en">
+    ///         Lets the user preview a dropped <c>.run</c> or <c>.save</c> file on the base-game Run History screen
+    ///         without importing it into the saved run-history list.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         允许用户在原版游戏的游戏历史界面中预览拖入的 <c>.run</c> 或 <c>.save</c> 文件，
+    ///         而不将其导入已保存的历史记录列表。
+    ///     </para>
     /// </summary>
     internal class NRunHistoryDroppedFilePreviewPatch : IPatchMethod
     {

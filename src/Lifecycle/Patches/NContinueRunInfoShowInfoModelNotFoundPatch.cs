@@ -7,12 +7,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     <see cref="NContinueRunInfo.ShowInfo" /> uses <c>ModelDb.GetById</c> for act and character; missing mod
-    ///     content throws during <see cref="NMainMenu._Ready" /> / <c>RefreshButtons</c> before the player presses Continue.
-    ///     Fall back to the same error UI as a bad read result.
-    ///     <see cref="NContinueRunInfo.ShowInfo" /> 会对 act 和 character 使用 <c>ModelDb.GetById</c>；缺失 mod
-    ///     内容会在玩家按 Continue 之前，于 <see cref="NMainMenu._Ready" /> / <c>RefreshButtons</c> 期间抛出。
-    ///     回退到与读取结果错误相同的错误 UI。
+    ///     <para xml:lang="en">
+    ///         Converts missing Act or character models encountered by <see cref="NContinueRunInfo.ShowInfo" /> into the
+    ///         same error state used for an unreadable save.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="NContinueRunInfo.ShowInfo" /> 遇到的章节或角色模型缺失错误转换为与存档无法读取时相同的错误状态。
+    ///     </para>
     /// </summary>
     internal class NContinueRunInfoShowInfoModelNotFoundPatch : IPatchMethod
     {

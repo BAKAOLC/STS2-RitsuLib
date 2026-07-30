@@ -5,8 +5,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     After the main menu node is ready, publishes the shared main-menu lifecycle event (deferred).
-    ///     主菜单节点就绪后，延迟发布共享主菜单生命周期事件。
+    ///     <para xml:lang="en">Defers publication of the shared main-menu lifecycle event until the main menu node is ready.</para>
+    ///     <para xml:lang="zh-CN">主菜单节点就绪后，延迟发布共享的主菜单生命周期事件。</para>
     /// </summary>
     internal class NMainMenuReadyLifecyclePatch : IPatchMethod
     {

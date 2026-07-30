@@ -3,20 +3,20 @@ using MegaCrit.Sts2.Core.Saves;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     Player obtained a new epoch (unlock tier).
-    ///     玩家取得了新的 epoch（解锁层级）。
+    ///     <para xml:lang="en">The player obtained a new Epoch unlock tier.</para>
+    ///     <para xml:lang="zh-CN">玩家已获得新的纪元解锁层级。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="EpochId">
-    ///     Epoch identifier.
-    ///     epoch 标识符。
+    ///     <para xml:lang="en">Epoch identifier.</para>
+    ///     <para xml:lang="zh-CN">纪元标识符。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct EpochObtainedEvent(
         SaveManager SaveManager,
@@ -25,24 +25,24 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Epoch became visible in UI (may include debug epochs).
-    ///     epoch 在 UI 中变为可见（可能包含调试 epoch）。
+    ///     <para xml:lang="en">An Epoch became visible in the UI, including through a debug reveal.</para>
+    ///     <para xml:lang="zh-CN">一个纪元已在界面中显示，包括通过调试方式显示的情况。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="EpochId">
-    ///     Epoch identifier.
-    ///     epoch 标识符。
+    ///     <para xml:lang="en">Epoch identifier.</para>
+    ///     <para xml:lang="zh-CN">纪元标识符。</para>
     /// </param>
     /// <param name="IsDebug">
-    ///     True for debug-only reveal paths.
-    ///     调试专用揭示路径为 true。
+    ///     <para xml:lang="en">True for debug-only reveal paths.</para>
+    ///     <para xml:lang="zh-CN">调试专用揭示路径为 true。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct EpochRevealedEvent(
         SaveManager SaveManager,

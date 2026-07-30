@@ -23,12 +23,12 @@ namespace STS2RitsuLib.Lifecycle.Patches
     /// <summary>
     ///     <para xml:lang="en">
     ///         Publishes <see cref="EssentialInitializationStartingEvent" /> /
-    ///         <see cref="DeferredInitializationStartingEvent" /> and matching completed events around vanilla one-time
+    ///         <see cref="DeferredInitializationStartingEvent" /> and their completed events around base-game one-time
     ///         initialization.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         在原版一次性初始化前后发布 <see cref="EssentialInitializationStartingEvent" /> /
-    ///         <see cref="DeferredInitializationStartingEvent" /> 以及对应的 completed 事件。
+    ///         在原版游戏的一次性初始化前后发布 <see cref="EssentialInitializationStartingEvent" /> /
+    ///         <see cref="DeferredInitializationStartingEvent" /> 及其完成事件。
     ///     </para>
     /// </summary>
     internal class CoreInitializationLifecyclePatch : IPatchMethod
@@ -90,10 +90,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Hooks <see cref="ModelDb" /> and related init to freeze registries, inject models, and publish
+    ///         Hooks <see cref="ModelDb" /> and related initialization to freeze registries, inject models, and publish
     ///         model lifecycle events.
     ///     </para>
-    ///     <para xml:lang="zh-CN">hook <see cref="ModelDb" /> 和相关 init，以冻结注册表、注入模型并发布模型生命周期事件。</para>
+    ///     <para xml:lang="zh-CN">挂接 <see cref="ModelDb" /> 及相关初始化过程，以冻结注册表、注入模型并发布模型生命周期事件。</para>
     /// </summary>
     internal class ModelRegistryLifecyclePatch : IPatchMethod
     {
@@ -196,11 +196,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Clears the vanilla mod-type cache at the first post-mod-load game initialization point, before other mods
+    ///         Clears the base-game mod-type cache at the first initialization point after mods load, before other mods
     ///         such as BaseLib consume <see cref="ReflectionHelper.ModTypes" />.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         在第一个 mod 加载后游戏初始化点清理原版 mod type 缓存，早于 BaseLib 等其它 mod 消费
+    ///         在模组加载后的第一个游戏初始化点清理原版游戏的模组类型缓存，早于 BaseLib 等其他模组使用
     ///         <see cref="ReflectionHelper.ModTypes" />。
     ///     </para>
     /// </summary>
@@ -292,11 +292,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Publishes <see cref="RunStartedEvent" /> and <see cref="RunLoadedEvent" /> from
+    ///         Publishes <see cref="RunStartedEvent" /> and <see cref="RunLoadedEvent" /> for
     ///         <see cref="RunManager" />.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         从 <see cref="RunManager" /> 发布 <see cref="RunStartedEvent" /> 和
+    ///         通过 <see cref="RunManager" /> 发布 <see cref="RunStartedEvent" /> 和
     ///         <see cref="RunLoadedEvent" />。
     ///     </para>
     /// </summary>
@@ -343,10 +343,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Publishes <see cref="RunEndedEvent" /> and forwards run end to <see cref="ModUnlockRegistry" />
-    ///         .
+    ///         Publishes <see cref="RunEndedEvent" /> and forwards the end of the run to
+    ///         <see cref="ModUnlockRegistry" />.
     ///     </para>
-    ///     <para xml:lang="zh-CN">发布 <see cref="RunEndedEvent" />，并将跑局结束转发给 <see cref="ModUnlockRegistry" />。</para>
+    ///     <para xml:lang="zh-CN">发布 <see cref="RunEndedEvent" />，并将一局游戏结束转发给 <see cref="ModUnlockRegistry" />。</para>
     /// </summary>
     internal class RunEndedLifecyclePatch : IPatchMethod
     {

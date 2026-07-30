@@ -8,10 +8,14 @@ using STS2RitsuLib.Saves;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Before <c>OnContinueButtonPressedAsync</c> reaches <c>RunState.FromSerializable</c>, rejects saves
-    ///     that reference unregistered characters. The normal vanilla continue flow is left untouched.
-    ///     在 <c>OnContinueButtonPressedAsync</c> 进入 <c>RunState.FromSerializable</c> 前拒绝引用未注册角色的存档。
-    ///     正常原版继续跑局流程保持不变。
+    ///     <para xml:lang="en">
+    ///         Rejects saves that reference unregistered characters before <c>OnContinueButtonPressedAsync</c> reaches
+    ///         <c>RunState.FromSerializable</c>, without changing the normal base-game continuation flow.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <c>OnContinueButtonPressedAsync</c> 调用 <c>RunState.FromSerializable</c> 前拒绝引用未注册角色的存档，
+    ///         且不改变原版游戏的正常继续流程。
+    ///     </para>
     /// </summary>
     internal class NMainMenuContinueRunMissingCharacterPatch : IPatchMethod
     {
