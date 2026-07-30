@@ -148,7 +148,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 nameof(RegisterCardAttribute),
                                 () => contentRegistry.RegisterCard(registerCard.PoolType, type,
                                     ResolvePublicEntryOptions(registerCard)),
-                                [TypeDependencyKey(type)]));
+                                providedKeys: [TypeDependencyKey(type)]));
                         });
                         break;
                     case RegisterRelicAttribute registerRelic:
@@ -160,7 +160,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 nameof(RegisterRelicAttribute),
                                 () => contentRegistry.RegisterRelic(registerRelic.PoolType, type,
                                     ResolvePublicEntryOptions(registerRelic)),
-                                [TypeDependencyKey(type)]));
+                                providedKeys: [TypeDependencyKey(type)]));
                         });
                         break;
                     case RegisterPotionAttribute registerPotion:
@@ -172,7 +172,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 nameof(RegisterPotionAttribute),
                                 () => contentRegistry.RegisterPotion(registerPotion.PoolType, type,
                                     ResolvePublicEntryOptions(registerPotion)),
-                                [TypeDependencyKey(type)]));
+                                providedKeys: [TypeDependencyKey(type)]));
                         });
                         break;
                     case RegisterTrashHeapCardAttribute registerTrashHeapCard:
