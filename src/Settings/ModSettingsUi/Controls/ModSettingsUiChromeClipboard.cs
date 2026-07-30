@@ -13,7 +13,8 @@ namespace STS2RitsuLib.Settings
         ///     Page context being copied.
         ///     正在复制的页面上下文。
         /// </summary>
-        public ModSettingsPageUiContext Context { get; } = context;
+        public ModSettingsPageUiContext Context { get; } =
+            context ?? throw new ArgumentNullException(nameof(context));
 
         /// <summary>
         ///     When true, <see cref="ModSettingsUiChromeClipboard" /> skips writing the default envelope.
@@ -37,7 +38,8 @@ namespace STS2RitsuLib.Settings
         ///     Page receiving the paste.
         ///     接收粘贴的页面。
         /// </summary>
-        public ModSettingsPageUiContext Target { get; } = target;
+        public ModSettingsPageUiContext Target { get; } =
+            target ?? throw new ArgumentNullException(nameof(target));
 
         /// <summary>
         ///     Deserialized page payload from the clipboard, when valid.
@@ -68,7 +70,8 @@ namespace STS2RitsuLib.Settings
         ///     Section context being copied.
         ///     正在复制的 section 上下文。
         /// </summary>
-        public ModSettingsSectionUiContext Context { get; } = context;
+        public ModSettingsSectionUiContext Context { get; } =
+            context ?? throw new ArgumentNullException(nameof(context));
 
         /// <summary>
         ///     When true, default envelope write is skipped.
@@ -90,7 +93,8 @@ namespace STS2RitsuLib.Settings
         ///     Section receiving the paste.
         ///     接收粘贴的 section。
         /// </summary>
-        public ModSettingsSectionUiContext Target { get; } = target;
+        public ModSettingsSectionUiContext Target { get; } =
+            target ?? throw new ArgumentNullException(nameof(target));
 
         /// <summary>
         ///     Deserialized section payload when the clipboard is valid.
@@ -174,6 +178,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool TryCopyPage(ModSettingsPageUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             var args = new ModSettingsPageCopyEventArgs(context);
             PageCopyRequested?.Invoke(args);
             if (args.SuppressDefaultClipboardWrite)
@@ -184,7 +189,8 @@ namespace STS2RitsuLib.Settings
                     StringComparer.OrdinalIgnoreCase);
             foreach (var section in context.Page.Sections)
             {
-                var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(StringComparer.Ordinal);
+                var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(
+                    StringComparer.OrdinalIgnoreCase);
                 foreach (var entry in section.Entries)
                     entry.CollectChromeBindingSnapshots(map);
 
@@ -213,6 +219,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool TryGetPageDataPayload(string clipboardText, out ModSettingsPageDataClipboardPayload? payload)
         {
+            ArgumentNullException.ThrowIfNull(clipboardText);
             payload = null;
             if (!ModSettingsClipboardData.TryDeserializeEnvelope(clipboardText, out var env) || env == null)
                 return false;
@@ -225,10 +232,21 @@ namespace STS2RitsuLib.Settings
 
             try
             {
-                payload = JsonSerializer.Deserialize<ModSettingsPageDataClipboardPayload>(env.Payload);
-                return payload != null;
+                var parsed = JsonSerializer.Deserialize<ModSettingsPageDataClipboardPayload>(env.Payload);
+                if (parsed is not { Sections: not null } ||
+                    string.IsNullOrWhiteSpace(parsed.ModId) ||
+                    string.IsNullOrWhiteSpace(parsed.PageId) ||
+                    !TryNormalizeSections(parsed.Sections, out var sections))
+                    return false;
+
+                payload = parsed with { Sections = sections };
+                return true;
             }
-            catch
+            catch (JsonException)
+            {
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 return false;
             }
@@ -241,6 +259,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool CanPastePage(ModSettingsPageUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             if (!EnablePagePasteUi)
                 return false;
 
@@ -248,8 +267,7 @@ namespace STS2RitsuLib.Settings
                 !TryGetPageDataPayload(clip, out var payload) || payload == null)
                 return false;
 
-            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal) &&
-                   string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
+            return IsPagePayloadForTarget(payload, context);
         }
 
         /// <summary>
@@ -258,6 +276,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool TryPastePage(ModSettingsPageUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             ModSettingsClipboardAccess.TryGetText(out var clip);
             TryGetPageDataPayload(clip, out var payload);
 
@@ -281,12 +300,14 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool TryCopySection(ModSettingsSectionUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             var args = new ModSettingsSectionCopyEventArgs(context);
             SectionCopyRequested?.Invoke(args);
             if (args.SuppressDefaultClipboardWrite)
                 return true;
 
-            var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(StringComparer.Ordinal);
+            var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(
+                StringComparer.OrdinalIgnoreCase);
             foreach (var entry in context.Section.Entries)
                 entry.CollectChromeBindingSnapshots(map);
 
@@ -314,6 +335,7 @@ namespace STS2RitsuLib.Settings
         public static bool TryGetSectionDataPayload(string clipboardText,
             out ModSettingsSectionDataClipboardPayload? payload)
         {
+            ArgumentNullException.ThrowIfNull(clipboardText);
             payload = null;
             if (!ModSettingsClipboardData.TryDeserializeEnvelope(clipboardText, out var env) || env == null)
                 return false;
@@ -326,10 +348,22 @@ namespace STS2RitsuLib.Settings
 
             try
             {
-                payload = JsonSerializer.Deserialize<ModSettingsSectionDataClipboardPayload>(env.Payload);
-                return payload != null;
+                var parsed = JsonSerializer.Deserialize<ModSettingsSectionDataClipboardPayload>(env.Payload);
+                if (parsed is not { Bindings: not null } ||
+                    string.IsNullOrWhiteSpace(parsed.ModId) ||
+                    string.IsNullOrWhiteSpace(parsed.PageId) ||
+                    string.IsNullOrWhiteSpace(parsed.SectionId) ||
+                    !TryNormalizeBindings(parsed.Bindings, out var bindings))
+                    return false;
+
+                payload = parsed with { Bindings = bindings };
+                return true;
             }
-            catch
+            catch (JsonException)
+            {
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 return false;
             }
@@ -341,6 +375,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool CanPasteSection(ModSettingsSectionUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             if (!EnableSectionPasteUi)
                 return false;
 
@@ -348,8 +383,7 @@ namespace STS2RitsuLib.Settings
                 !TryGetSectionDataPayload(clip, out var payload) || payload == null)
                 return false;
 
-            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal) &&
-                   string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
+            return IsSectionPayloadForTarget(payload, context);
         }
 
         /// <summary>
@@ -358,6 +392,7 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static bool TryPasteSection(ModSettingsSectionUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             ModSettingsClipboardAccess.TryGetText(out var clip);
             TryGetSectionDataPayload(clip, out var payload);
 
@@ -378,18 +413,18 @@ namespace STS2RitsuLib.Settings
         private static bool TryApplyDefaultPageDataPaste(ModSettingsPageUiContext target,
             ModSettingsPageDataClipboardPayload? payload)
         {
-            if (payload?.Sections.Count is not > 0)
+            if (payload?.Sections is not { Count: > 0 } || !IsPagePayloadForTarget(payload, target))
                 return false;
 
             var any = false;
             foreach (var section in target.Page.Sections)
             {
-                if (!payload.Sections.TryGetValue(section.Id, out var map) || map.Count == 0)
+                if (!payload.Sections.TryGetValue(section.Id, out var map) || map is not { Count: > 0 })
                     continue;
 
                 foreach (var entry in section.Entries)
                 {
-                    if (!map.TryGetValue(entry.Id, out var snap))
+                    if (!map.TryGetValue(entry.Id, out var snap) || snap == null)
                         continue;
                     if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
                         any = true;
@@ -402,19 +437,74 @@ namespace STS2RitsuLib.Settings
         private static bool TryApplyDefaultSectionDataPaste(ModSettingsSectionUiContext target,
             ModSettingsSectionDataClipboardPayload? payload)
         {
-            if (payload?.Bindings.Count is not > 0)
+            if (payload?.Bindings is not { Count: > 0 } || !IsSectionPayloadForTarget(payload, target))
                 return false;
 
             var any = false;
             foreach (var entry in target.Section.Entries)
             {
-                if (!payload.Bindings.TryGetValue(entry.Id, out var snap))
+                if (!payload.Bindings.TryGetValue(entry.Id, out var snap) || snap == null)
                     continue;
                 if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
                     any = true;
             }
 
             return any;
+        }
+
+        private static bool IsPagePayloadForTarget(
+            ModSettingsPageDataClipboardPayload payload,
+            ModSettingsPageUiContext target)
+        {
+            return string.Equals(payload.ModId, target.Page.ModId, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(payload.PageId, target.Page.Id, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsSectionPayloadForTarget(
+            ModSettingsSectionDataClipboardPayload payload,
+            ModSettingsSectionUiContext target)
+        {
+            return string.Equals(payload.ModId, target.Page.ModId, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(payload.PageId, target.Page.Id, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(payload.SectionId, target.Section.Id, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool TryNormalizeSections(
+            Dictionary<string, Dictionary<string, ModSettingsChromeBindingSnapshot>> source,
+            out Dictionary<string, Dictionary<string, ModSettingsChromeBindingSnapshot>> sections)
+        {
+            sections = new(StringComparer.OrdinalIgnoreCase);
+            foreach (var (sectionId, sourceBindings) in source)
+            {
+                if (string.IsNullOrWhiteSpace(sectionId) ||
+                    sourceBindings == null ||
+                    !TryNormalizeBindings(sourceBindings, out var bindings) ||
+                    !sections.TryAdd(sectionId, bindings))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryNormalizeBindings(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> source,
+            out Dictionary<string, ModSettingsChromeBindingSnapshot> bindings)
+        {
+            bindings = new(StringComparer.OrdinalIgnoreCase);
+            foreach (var (entryId, snapshot) in source)
+            {
+                if (string.IsNullOrWhiteSpace(entryId) ||
+                    snapshot is not
+                    {
+                        TypeFullName: not null,
+                        SchemaSignature: not null,
+                        JsonPayload: not null,
+                    } ||
+                    !bindings.TryAdd(entryId, snapshot))
+                    return false;
+            }
+
+            return true;
         }
     }
 }
