@@ -9,6 +9,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
     {
         private static readonly Lock SyncRoot = new();
         private static readonly List<DevConsoleAutocompleteBinding> Bindings = [];
+        private static readonly HashSet<DevConsoleAutocompleteBinding> FaultedBindings =
+            new(ReferenceEqualityComparer.Instance);
         private static bool _builtInRegistered;
 
         static DevConsoleAutocompleteRegistry()
@@ -23,6 +25,18 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         {
             ArgumentNullException.ThrowIfNull(binding);
             ArgumentException.ThrowIfNullOrWhiteSpace(binding.CommandName);
+            if (binding.ArgumentIndex is < 0)
+                throw new ArgumentOutOfRangeException(nameof(binding), binding.ArgumentIndex,
+                    "The autocomplete argument index cannot be negative.");
+            ValidateEnhancements(binding.Enhancements, nameof(binding));
+
+            binding = new()
+            {
+                CommandName = binding.CommandName.Trim(),
+                ArgumentIndex = binding.ArgumentIndex,
+                AppliesWhen = binding.AppliesWhen,
+                Enhancements = binding.Enhancements,
+            };
 
             lock (SyncRoot)
             {
@@ -79,12 +93,16 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
             var context = new DevConsoleAutocompleteContext(command, completedArgs, argumentIndex);
             var merged = DevConsoleAutocompleteEnhancements.None;
+            DevConsoleAutocompleteBinding[] bindings;
 
             lock (SyncRoot)
             {
-                merged = Bindings.Where(binding => BindingMatches(binding, context))
-                    .Aggregate(merged, (current, binding) => current | binding.Enhancements);
+                bindings = [.. Bindings];
             }
+
+            foreach (var binding in bindings)
+                if (BindingMatches(binding, context))
+                    merged |= binding.Enhancements;
 
             return merged;
         }
@@ -108,7 +126,45 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (binding.ArgumentIndex is { } index && index != context.ArgumentIndex)
                 return false;
 
-            return binding.AppliesWhen?.Invoke(context) ?? true;
+            try
+            {
+                return binding.AppliesWhen?.Invoke(context) ?? true;
+            }
+            catch (Exception ex)
+            {
+                var shouldLog = false;
+                lock (SyncRoot)
+                {
+                    shouldLog = FaultedBindings.Add(binding);
+                }
+
+                if (shouldLog)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[DevConsole] Autocomplete predicate for '{binding.CommandName}' failed: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static void ValidateEnhancements(
+            DevConsoleAutocompleteEnhancements enhancements,
+            string paramName)
+        {
+            const DevConsoleAutocompleteEnhancements allSupported =
+                DevConsoleAutocompleteEnhancements.LocalizedTitleMatch |
+                DevConsoleAutocompleteEnhancements.LocalizedDisplayLabels |
+                DevConsoleAutocompleteEnhancements.RitsuLibOwnedIdShorthandMatch |
+                DevConsoleAutocompleteEnhancements.DeduplicateCandidates |
+                DevConsoleAutocompleteEnhancements.IncludeModPileCandidates |
+                DevConsoleAutocompleteEnhancements.PileNameLocalizedTitleMatch |
+                DevConsoleAutocompleteEnhancements.PileNameDisplayLabels |
+                DevConsoleAutocompleteEnhancements.AncientChoiceLocalizedTitleMatch |
+                DevConsoleAutocompleteEnhancements.AncientChoiceDisplayLabels |
+                DevConsoleAutocompleteEnhancements.IncludeSecondaryResourceCandidates |
+                DevConsoleAutocompleteEnhancements.SecondaryResourceLocalizedTitleMatch |
+                DevConsoleAutocompleteEnhancements.SecondaryResourceDisplayLabels;
+            if ((enhancements & ~allSupported) != 0)
+                throw new ArgumentOutOfRangeException(paramName, enhancements,
+                    "The autocomplete binding contains unsupported enhancement flags.");
         }
 
         private static void RegisterBuiltInBindings()
