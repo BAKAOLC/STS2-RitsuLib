@@ -64,6 +64,7 @@ namespace STS2RitsuLib.Telemetry
         /// </summary>
         public static TelemetryRequest BasicUsage(string description)
         {
+            ArgumentNullException.ThrowIfNull(description);
             return new()
             {
                 RequestId = "basic_usage",
@@ -94,6 +95,7 @@ namespace STS2RitsuLib.Telemetry
         /// </summary>
         public static TelemetryRequest ModInventory(string description)
         {
+            ArgumentNullException.ThrowIfNull(description);
             return new()
             {
                 RequestId = "mod_inventory",
@@ -127,6 +129,7 @@ namespace STS2RitsuLib.Telemetry
             IReadOnlyList<string>? sharedContributionSubscriptions = null,
             Func<RunEndedEvent, bool>? captureFilter = null)
         {
+            ArgumentNullException.ThrowIfNull(description);
             return new()
             {
                 RequestId = "run_history",
@@ -166,6 +169,7 @@ namespace STS2RitsuLib.Telemetry
             string description,
             IReadOnlyList<string>? sharedContributionSubscriptions = null)
         {
+            ArgumentNullException.ThrowIfNull(description);
             return new()
             {
                 RequestId = "diagnostics",
@@ -201,6 +205,7 @@ namespace STS2RitsuLib.Telemetry
         public static TelemetryRequest Custom(string requestId, string description)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(requestId);
+            ArgumentNullException.ThrowIfNull(description);
             return new()
             {
                 RequestId = requestId,

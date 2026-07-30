@@ -24,11 +24,7 @@ namespace STS2RitsuLib.Telemetry
         public static void RegisterApplicant(TelemetryApplicant applicant)
         {
             ArgumentNullException.ThrowIfNull(applicant);
-
-            ArgumentException.ThrowIfNullOrWhiteSpace(applicant.ApplicantId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(applicant.OwnerModId);
-            ArgumentException.ThrowIfNullOrWhiteSpace(applicant.DisplayName);
-            ArgumentNullException.ThrowIfNull(applicant.Adapter);
+            applicant = NormalizeApplicant(applicant);
 
             lock (Sync)
             {
@@ -61,6 +57,11 @@ namespace STS2RitsuLib.Telemetry
 
             ArgumentException.ThrowIfNullOrWhiteSpace(provider.ContributorModId);
             ArgumentException.ThrowIfNullOrWhiteSpace(provider.ContributionId);
+            ValidateCategory(provider.Category, nameof(provider));
+            if (!Enum.IsDefined(provider.Visibility))
+                throw new ArgumentOutOfRangeException(nameof(provider), provider.Visibility,
+                    "The contribution visibility is not supported.");
+
             lock (Sync)
             {
                 ContributionProviders[BuildContributionKey(provider.ContributorModId, provider.ContributionId)] =
@@ -229,7 +230,70 @@ namespace STS2RitsuLib.Telemetry
 
         private static string BuildContributionKey(string contributorModId, string contributionId)
         {
-            return $"{contributorModId}\n{contributionId}";
+            return $"{contributorModId.Length}:{contributorModId}{contributionId}";
+        }
+
+        private static TelemetryApplicant NormalizeApplicant(TelemetryApplicant applicant)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(applicant.ApplicantId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(applicant.OwnerModId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(applicant.DisplayName);
+            ArgumentNullException.ThrowIfNull(applicant.Adapter);
+            ArgumentNullException.ThrowIfNull(applicant.Requests);
+
+            var requests = new List<TelemetryRequest>(applicant.Requests.Count);
+            var requestIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var request in applicant.Requests)
+            {
+                if (request == null)
+                    throw new ArgumentException("Telemetry request collections cannot contain null entries.",
+                        nameof(applicant));
+
+                ArgumentException.ThrowIfNullOrWhiteSpace(request.RequestId);
+                ArgumentNullException.ThrowIfNull(request.Description);
+                ValidateCategory(request.Category, nameof(applicant));
+                if (!requestIds.Add(request.RequestId))
+                    throw new ArgumentException(
+                        $"Telemetry request id '{request.RequestId}' is registered more than once for applicant '{applicant.ApplicantId}'.",
+                        nameof(applicant));
+
+                var subscriptions = request.ContributionSubscriptions ??
+                                    throw new ArgumentException(
+                                        $"Telemetry request '{request.RequestId}' has a null contribution subscription collection.",
+                                        nameof(applicant));
+                requests.Add(new()
+                {
+                    RequestId = request.RequestId,
+                    Category = request.Category,
+                    Description = request.Description,
+                    DescriptionText = request.DescriptionText,
+                    ContributionSubscriptions =
+                    [
+                        .. subscriptions
+                            .Where(subscription => !string.IsNullOrWhiteSpace(subscription))
+                            .Select(subscription => subscription.Trim())
+                            .Distinct(StringComparer.OrdinalIgnoreCase),
+                    ],
+                    RunHistoryCaptureFilter = request.RunHistoryCaptureFilter,
+                });
+            }
+
+            return new()
+            {
+                ApplicantId = applicant.ApplicantId,
+                OwnerModId = applicant.OwnerModId,
+                DisplayName = applicant.DisplayName,
+                DisplayNameText = applicant.DisplayNameText,
+                Adapter = applicant.Adapter,
+                Requests = requests,
+            };
+        }
+
+        private static void ValidateCategory(TelemetryDataCategory category, string paramName)
+        {
+            if (category == TelemetryDataCategory.None || !Enum.IsDefined(category))
+                throw new ArgumentOutOfRangeException(paramName, category,
+                    "A telemetry request or contribution must use one supported data category.");
         }
     }
 }
