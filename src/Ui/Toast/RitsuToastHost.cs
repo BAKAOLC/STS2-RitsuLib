@@ -16,6 +16,8 @@ namespace STS2RitsuLib.Ui.Toast
         private int _hoveringCount;
         private Control? _root;
         private RitsuToastSettings _settings = RitsuToastSettings.Default;
+        private Viewport? _subscribedViewport;
+        private Action? _viewportSizeChangedHandler;
         private Control? _warmupRoot;
 
         public RitsuToastHost()
@@ -44,14 +46,29 @@ namespace STS2RitsuLib.Ui.Toast
             AddChild(_warmupRoot);
             var viewport = GetViewport();
             if (viewport != null)
-                viewport.SizeChanged += () =>
+            {
+                _subscribedViewport = viewport;
+                _viewportSizeChangedHandler = () =>
                 {
                     Reflow(false);
                     QueueDeferredReflow();
                 };
+                viewport.SizeChanged += _viewportSizeChangedHandler;
+            }
             Visible = _settings.Enabled;
             TryDequeue();
             QueueDeferredReflow();
+        }
+
+        public override void _ExitTree()
+        {
+            if (_subscribedViewport != null &&
+                GodotObject.IsInstanceValid(_subscribedViewport) &&
+                _viewportSizeChangedHandler != null)
+                _subscribedViewport.SizeChanged -= _viewportSizeChangedHandler;
+
+            _subscribedViewport = null;
+            _viewportSizeChangedHandler = null;
         }
 
         public override void _Process(double delta)
@@ -66,6 +83,12 @@ namespace STS2RitsuLib.Ui.Toast
             for (var i = _visible.Count - 1; i >= 0; i--)
             {
                 var item = _visible[i];
+                if (!IsInstanceValid(item.Entry))
+                {
+                    FinalizeClose(item);
+                    continue;
+                }
+
                 if (item.IsClosing || item.Entering || item.Request.IsPersistent || item.TotalSeconds <= 0d)
                     continue;
                 item.RemainingSeconds -= delta;
@@ -219,11 +242,15 @@ namespace STS2RitsuLib.Ui.Toast
 
         public void RefreshTheme()
         {
-            foreach (var toast in _visible)
+            foreach (var toast in _prewarming.Concat(_visible).Distinct())
             {
+                if (!IsInstanceValid(toast.Entry))
+                    continue;
+
                 var style = toast.Request.StyleOverride ?? RitsuToastThemeResolver.Resolve(toast.Request.Level);
                 toast.Style = style;
                 toast.Entry.ApplyStyle(style);
+                toast.HasMeasuredSize = false;
                 UpdateProgress(toast);
             }
 
@@ -280,7 +307,14 @@ namespace STS2RitsuLib.Ui.Toast
 
         private double ResolveDuration(RitsuToastRequest request)
         {
-            return Math.Max(0d, request.DurationSeconds ?? _settings.DurationSeconds);
+            var fallback = double.IsFinite(_settings.DurationSeconds)
+                ? Math.Max(0d, _settings.DurationSeconds)
+                : RitsuToastSettings.DefaultDurationSeconds;
+            if (!request.DurationSeconds.HasValue)
+                return fallback;
+
+            var duration = request.DurationSeconds.Value;
+            return double.IsFinite(duration) ? Math.Max(0d, duration) : fallback;
         }
 
         private static void UpdateProgress(VisibleToast item)
@@ -351,17 +385,28 @@ namespace STS2RitsuLib.Ui.Toast
             item.ExitSlideDistance = item.Style.ExitSlideDistance;
             item.ExitFromPosition = item.Entry.Position;
             item.ExitFromScale = item.Entry.Scale;
+            item.ExitFromAlpha = item.Entry.Modulate.A;
         }
 
         private void FinalizeClose(VisibleToast item)
         {
             _closing.Remove(item);
-            if (!IsInstanceValid(item.Entry))
-                return;
-            item.Entry.ResetForPool();
-            item.Entry.GetParent()?.RemoveChild(item.Entry);
-            _entryPool.Push(item.Entry);
+            _prewarming.Remove(item);
+            _pendingEnter.Remove(item);
             _visible.Remove(item);
+            if (item.IsHovering)
+            {
+                item.IsHovering = false;
+                _hoveringCount = Math.Max(0, _hoveringCount - 1);
+            }
+
+            if (IsInstanceValid(item.Entry))
+            {
+                item.Entry.ResetForPool();
+                item.Entry.GetParent()?.RemoveChild(item.Entry);
+                _entryPool.Push(item.Entry);
+            }
+
             TryDequeue(true);
             Reflow(false);
         }
@@ -396,11 +441,10 @@ namespace STS2RitsuLib.Ui.Toast
             try
             {
                 callback?.Invoke();
-                entry.GetViewport()?.SetInputAsHandled();
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Warn($"[Toast] Click callback failed: {ex.Message}");
+                RitsuLibFramework.Logger.Warn($"[Toast] Click callback failed: {ex}");
             }
         }
 
@@ -751,8 +795,15 @@ namespace STS2RitsuLib.Ui.Toast
                 return;
             }
 
-            var duration = Math.Max(0.01f, item.Style.MoveDuration);
-            item.Moving = duration > 0.01f;
+            var duration = Math.Max(0f, item.Style.MoveDuration);
+            if (duration <= 0.01f)
+            {
+                item.Moving = false;
+                item.Entry.SetPositionImmediate(target);
+                return;
+            }
+
+            item.Moving = true;
             item.MoveElapsed = 0f;
             item.MoveDuration = duration;
             item.MoveFromPosition = item.Entry.Position;
@@ -774,7 +825,7 @@ namespace STS2RitsuLib.Ui.Toast
                 var item = _closing[i];
                 if (!IsInstanceValid(item.Entry))
                 {
-                    _closing.RemoveAt(i);
+                    FinalizeClose(item);
                     continue;
                 }
 
@@ -845,14 +896,13 @@ namespace STS2RitsuLib.Ui.Toast
             var p = EaseInCubic(t);
 
             var c = item.Entry.Modulate;
-            item.Entry.Modulate = new(c.R, c.G, c.B, 1f - t);
+            item.Entry.Modulate = new(c.R, c.G, c.B, Mathf.Lerp(item.ExitFromAlpha, 0f, t));
 
             switch (item.ExitPreset)
             {
                 case RitsuToastAnimationPreset.FadeScale:
                 {
-                    var s = Mathf.Lerp(1f, 0.94f, p);
-                    item.Entry.Scale = new(s, s);
+                    item.Entry.Scale = item.ExitFromScale.Lerp(Vector2.One * 0.94f, p);
                     break;
                 }
                 case RitsuToastAnimationPreset.FadeSlide:
@@ -937,6 +987,7 @@ namespace STS2RitsuLib.Ui.Toast
             public float ExitSlideDistance { get; set; }
             public Vector2 ExitFromPosition { get; set; }
             public Vector2 ExitFromScale { get; set; }
+            public float ExitFromAlpha { get; set; }
         }
 
         private enum ToastHorizontalAnchor
