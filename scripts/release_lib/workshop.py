@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -14,6 +15,8 @@ WORKSHOP_CONFIG_NAME = "workshop.json"
 WORKSHOP_CONTENT_DIR_NAME = "content"
 WORKSHOP_PREVIEW_IMAGE_NAME = "image.png"
 WORKSHOP_MOD_ID_NAME = "mod_id.txt"
+WORKSHOP_CHANGE_NOTE_MAX_UTF8_BYTES = 6000
+_WORKSHOP_CHANGE_NOTE_TRUNCATION_MARKER = "\n\n…"
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_MARKDOWN_STEAM_BBCODE_PROJECT = (
     _REPO_ROOT / "tools" / "MarkdownSteamBbCode" / "MarkdownSteamBbCode.csproj"
@@ -29,7 +32,66 @@ def read_workshop_change_note(release_notes: Path | None, *, fallback: str) -> s
         return fallback
 
     english = text.split("\n---", 1)[0].strip()
-    return markdown_to_steam_bbcode(english) if english else fallback
+    return _markdown_to_bounded_workshop_change_note(english) if english else fallback
+
+
+def _markdown_to_bounded_workshop_change_note(markdown: str) -> str:
+    converted = markdown_to_steam_bbcode(markdown)
+    if _utf8_size(converted) <= WORKSHOP_CHANGE_NOTE_MAX_UTF8_BYTES:
+        return converted
+
+    lines = markdown.splitlines()
+    low = 1
+    high = len(lines)
+    best = ""
+    kept_lines = 0
+    while low <= high:
+        middle = (low + high) // 2
+        candidate = _convert_truncated_markdown("\n".join(lines[:middle]))
+        if _utf8_size(candidate) <= WORKSHOP_CHANGE_NOTE_MAX_UTF8_BYTES:
+            best = candidate
+            kept_lines = middle
+            low = middle + 1
+        else:
+            high = middle - 1
+
+    if not best:
+        first_line = lines[0] if lines else markdown
+        best = _truncate_single_markdown_line(first_line)
+        kept_lines = 1 if best else 0
+
+    print(
+        "[release] warning: Steam Workshop change note exceeded "
+        f"{WORKSHOP_CHANGE_NOTE_MAX_UTF8_BYTES} UTF-8 bytes; "
+        f"kept the first {kept_lines} complete line(s).",
+        file=sys.stderr,
+        flush=True,
+    )
+    return best or "…"
+
+
+def _convert_truncated_markdown(markdown: str) -> str:
+    converted = markdown_to_steam_bbcode(markdown.rstrip())
+    return converted.rstrip() + _WORKSHOP_CHANGE_NOTE_TRUNCATION_MARKER
+
+
+def _truncate_single_markdown_line(line: str) -> str:
+    low = 0
+    high = len(line)
+    best = ""
+    while low <= high:
+        middle = (low + high) // 2
+        candidate = _convert_truncated_markdown(line[:middle])
+        if _utf8_size(candidate) <= WORKSHOP_CHANGE_NOTE_MAX_UTF8_BYTES:
+            best = candidate
+            low = middle + 1
+        else:
+            high = middle - 1
+    return best
+
+
+def _utf8_size(text: str) -> int:
+    return len(text.encode("utf-8"))
 
 
 def markdown_to_steam_bbcode(markdown: str) -> str:
