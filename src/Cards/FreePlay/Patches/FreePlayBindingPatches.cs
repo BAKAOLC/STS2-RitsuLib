@@ -81,9 +81,15 @@ namespace STS2RitsuLib.Cards.FreePlay.Patches
 
         private static async Task After(CardModel card, Task original)
         {
-            await original;
-            if (FreePlayBindingRegistry.ClearCardFreeAfterPlayed(card))
-                FreePlayCardVisuals.Refresh(card);
+            try
+            {
+                await original;
+            }
+            finally
+            {
+                if (FreePlayBindingRegistry.ClearCardFreeAfterPlayed(card))
+                    FreePlayCardVisuals.Refresh(card);
+            }
         }
     }
 
