@@ -96,6 +96,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         // Pile-mode fields (null when ActionDefinition is set).
         private ModCardPile? _pile;
+        private bool _pileVisibilityPredicateFailed;
 
         private Vector2 _pileHoverScale = TopBarHoverScale;
         private Player? _player;
@@ -496,7 +497,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModCardPileButton] Could not clone vanilla %Deck icon for action button: {ex.Message}");
+                    $"[ModCardPileButton] Could not clone vanilla %Deck icon for action button: {ex}");
             }
         }
 
@@ -546,7 +547,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModCardPileButton] Could not clone vanilla %Deck count label: {ex.Message}");
+                    $"[ModCardPileButton] Could not clone vanilla %Deck count label: {ex}");
             }
         }
 
@@ -594,7 +595,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 _countContainer?.QueueFree();
                 _countContainer = null;
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModCardPileButton] Could not clone vanilla combat CountContainer: {ex.Message}");
+                    $"[ModCardPileButton] Could not clone vanilla combat CountContainer: {ex}");
                 RestoreCombatFallbackCountLabel(text, visible);
             }
         }
@@ -816,11 +817,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
             try
             {
                 visible = def.VisibleWhen(new(def, _player, this, _pile));
+                _pileVisibilityPredicateFailed = false;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[CardPile] VisibleWhen predicate for '{def.Id}' threw: {ex.Message}; hiding button.");
+                if (!_pileVisibilityPredicateFailed)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardPile] VisibleWhen predicate for '{def.Id}' threw; hiding button: {ex}");
+                _pileVisibilityPredicateFailed = true;
                 visible = false;
             }
 
