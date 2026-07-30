@@ -2,13 +2,11 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Audio;
-using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.TestSupport;
 using STS2RitsuLib.Audio.Internal;
 using STS2RitsuLib.Patching.Models;
-using GdArray = Godot.Collections.Array;
 
 namespace STS2RitsuLib.Audio.Patches
 {
@@ -21,7 +19,9 @@ namespace STS2RitsuLib.Audio.Patches
         private static readonly StringName StopMusicMethod = new("stop_music");
         private static readonly StringName StopAmbienceMethod = new("stop_ambience");
         private static readonly StringName SetGlobalParameterMethod = new("update_global_parameter");
-        private static readonly StringName LoadActBanksMethod = new("load_act_banks");
+
+        private static readonly Lock MappedActBankGate = new();
+        private static string? _ownedMappedActBankPath;
 
         private static bool ShouldUseVanilla()
         {
@@ -81,6 +81,47 @@ namespace STS2RitsuLib.Audio.Patches
             return false;
         }
 
+        private static bool TryEnsureMappedActBank(string bankPath, string eventPath)
+        {
+            if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(eventPath, out var eventGuid))
+                return false;
+
+            lock (MappedActBankGate)
+            {
+                if (FmodStudioServer.TryCheckEventGuid(eventGuid) == true)
+                    return true;
+
+                ReleaseOwnedMappedActBankCore();
+                if (!FmodStudioServer.TryLoadBank(bankPath))
+                    return false;
+
+                FmodStudioServer.TryWaitForAllLoads();
+                if (FmodStudioServer.TryCheckEventGuid(eventGuid) != true)
+                {
+                    FmodStudioServer.TryUnloadBank(bankPath);
+                    return false;
+                }
+
+                _ownedMappedActBankPath = bankPath;
+                return true;
+            }
+        }
+
+        private static void ReleaseOwnedMappedActBank()
+        {
+            lock (MappedActBankGate)
+                ReleaseOwnedMappedActBankCore();
+        }
+
+        private static void ReleaseOwnedMappedActBankCore()
+        {
+            if (_ownedMappedActBankPath is null)
+                return;
+
+            FmodStudioServer.TryUnloadBank(_ownedMappedActBankPath);
+            _ownedMappedActBankPath = null;
+        }
+
         /// <summary>
         ///     Handles mapped act BGM before it reaches the vanilla run music proxy.
         ///     在映射的 act BGM 进入原版 run music proxy 前接管它。
@@ -107,33 +148,63 @@ namespace STS2RitsuLib.Audio.Patches
                 NRunMusicController __instance,
                 IRunState ____runState,
                 ref string ____currentTrack,
+#if STS2_AT_LEAST_0_108_0
+                ref string? ____failedTrack,
+#endif
                 Node ____proxy)
             {
                 if (ShouldUseVanilla())
                     return true;
 
-                var bgMusicOptions = ____runState.Act.BgMusicOptions;
-                var musicBankPaths = ____runState.Act.MusicBankPaths;
-                if (bgMusicOptions.Length == 0 || musicBankPaths.Length < bgMusicOptions.Length)
+                if (____runState.Act.BgMusicOptions.Length == 0)
                 {
                     GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                    ReleaseOwnedMappedActBank();
                     return true;
                 }
 
-                var index = new Rng(____runState.Rng.Seed).NextInt(0, bgMusicOptions.Length);
-                var track = bgMusicOptions[index];
-                if (!GuidMappedNaudioStudioProxy.IsMappedPath(track))
+                var selection = NRunMusicController.ResolveMusic(
+                    ____currentTrack,
+                    ____runState.Act.BgMusicOptions,
+                    ____runState.Act.MusicBankPaths,
+                    ____runState.Rng.Seed);
+                if (selection is not { } music)
+                    return true;
+
+                if (!GuidMappedNaudioStudioProxy.IsMappedPath(music.Track))
                 {
                     GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                    ReleaseOwnedMappedActBank();
                     return true;
                 }
 
-                var bankPaths = new GdArray { musicBankPaths[index] };
-                TryCall(____proxy, LoadActBanksMethod, bankPaths);
-                ____currentTrack = track;
+#if STS2_AT_LEAST_0_108_0
+                if (string.Equals(music.Track, ____failedTrack, StringComparison.Ordinal))
+                    return false;
+#endif
+
+                if (!TryEnsureMappedActBank(music.BankPath, music.Track))
+                {
+#if STS2_AT_LEAST_0_108_0
+                    ____failedTrack = music.Track;
+#endif
+                    return false;
+                }
+
                 StopVanillaRunMusic(____proxy);
                 GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
-                TryStartMappedRunMusic("UpdateMusic", track);
+                if (!TryStartMappedRunMusic("UpdateMusic", music.Track))
+                {
+#if STS2_AT_LEAST_0_108_0
+                    ____failedTrack = music.Track;
+#endif
+                    return false;
+                }
+
+#if STS2_AT_LEAST_0_108_0
+                ____failedTrack = null;
+#endif
+                ____currentTrack = music.Track;
                 TryCall(____proxy, SetGlobalParameterMethod, "Progress", 0);
                 __instance.UpdateAmbience();
                 return false;
@@ -237,6 +308,7 @@ namespace STS2RitsuLib.Audio.Patches
 
                 GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
                 GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
+                ReleaseOwnedMappedActBank();
             }
         }
 
