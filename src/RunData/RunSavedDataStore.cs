@@ -80,9 +80,18 @@ namespace STS2RitsuLib.RunData
             {
                 if (!_slots.TryAdd(slot.Key, slot))
                     throw new InvalidOperationException($"RunSavedData key is already registered: {ModId}::{slot.Key}");
-            }
 
-            RunSavedDataRegistry.Register(slot);
+                try
+                {
+                    RunSavedDataRegistry.Register(slot);
+                }
+                catch
+                {
+                    if (_slots.TryGetValue(slot.Key, out var current) && ReferenceEquals(current, slot))
+                        _slots.Remove(slot.Key);
+                    throw;
+                }
+            }
         }
     }
 }
