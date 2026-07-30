@@ -230,7 +230,8 @@ namespace STS2RitsuLib.Combat.HealthBars
     public static class HealthBarForecastRegistry
     {
         private static readonly Lock SyncRoot = new();
-        private static readonly Dictionary<(string ModId, string ProviderId), ProviderEntry> Providers = [];
+        private static readonly Dictionary<(string ModId, string ProviderId), ProviderEntry> Providers =
+            new(HealthBarProviderKeyComparer.Instance);
         private static long _nextRegistrationOrder;
 
         /// <summary>
@@ -280,14 +281,16 @@ namespace STS2RitsuLib.Combat.HealthBars
             ArgumentException.ThrowIfNullOrWhiteSpace(sourceId);
             ArgumentNullException.ThrowIfNull(source);
 
+            var normalizedModId = modId.Trim();
+            var normalizedSourceId = sourceId.Trim();
             lock (SyncRoot)
             {
-                var key = (modId, sourceId);
+                var key = (normalizedModId, normalizedSourceId);
                 var registrationOrder = Providers.TryGetValue(key, out var existing)
                     ? existing.RegistrationOrder
                     : _nextRegistrationOrder++;
 
-                Providers[key] = new(modId, sourceId, source, registrationOrder);
+                Providers[key] = new(normalizedModId, normalizedSourceId, source, registrationOrder);
             }
         }
 
@@ -314,7 +317,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
             lock (SyncRoot)
             {
-                return Providers.Remove((modId, sourceId));
+                return Providers.Remove((modId.Trim(), sourceId.Trim()));
             }
         }
 
@@ -372,9 +375,10 @@ namespace STS2RitsuLib.Combat.HealthBars
             try
             {
                 var providedSegments = source.GetHealthBarForecastSegments(context);
-                segments.AddRange(from segment in providedSegments
+                var snapshot = (from segment in providedSegments
                     where segment.Amount > 0
-                    select new RegisteredHealthBarForecastSegment(segment, sequenceOrder));
+                    select new RegisteredHealthBarForecastSegment(segment, sequenceOrder)).ToArray();
+                segments.AddRange(snapshot);
             }
             catch (Exception ex)
             {
@@ -405,5 +409,26 @@ namespace STS2RitsuLib.Combat.HealthBars
             string SourceId,
             IHealthBarForecastSource Source,
             long RegistrationOrder);
+    }
+
+    internal sealed class HealthBarProviderKeyComparer :
+        IEqualityComparer<(string ModId, string SourceId)>
+    {
+        internal static HealthBarProviderKeyComparer Instance { get; } = new();
+
+        public bool Equals(
+            (string ModId, string SourceId) x,
+            (string ModId, string SourceId) y)
+        {
+            return string.Equals(x.ModId, y.ModId, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(x.SourceId, y.SourceId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode((string ModId, string SourceId) obj)
+        {
+            return HashCode.Combine(
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.ModId),
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.SourceId));
+        }
     }
 }

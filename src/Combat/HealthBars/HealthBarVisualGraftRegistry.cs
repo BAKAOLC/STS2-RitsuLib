@@ -67,7 +67,8 @@ namespace STS2RitsuLib.Combat.HealthBars
     public static class HealthBarVisualGraftRegistry
     {
         private static readonly Lock SyncRoot = new();
-        private static readonly Dictionary<(string ModId, string SourceId), ProviderEntry> Providers = [];
+        private static readonly Dictionary<(string ModId, string SourceId), ProviderEntry> Providers =
+            new(HealthBarProviderKeyComparer.Instance);
         private static long _nextRegistrationOrder;
 
         /// <summary>
@@ -90,14 +91,16 @@ namespace STS2RitsuLib.Combat.HealthBars
             ArgumentException.ThrowIfNullOrWhiteSpace(sourceId);
             ArgumentNullException.ThrowIfNull(source);
 
+            var normalizedModId = modId.Trim();
+            var normalizedSourceId = sourceId.Trim();
             lock (SyncRoot)
             {
-                var key = (modId, sourceId);
+                var key = (normalizedModId, normalizedSourceId);
                 var registrationOrder = Providers.TryGetValue(key, out var existing)
                     ? existing.RegistrationOrder
                     : _nextRegistrationOrder++;
 
-                Providers[key] = new(modId, sourceId, source, registrationOrder);
+                Providers[key] = new(normalizedModId, normalizedSourceId, source, registrationOrder);
             }
         }
 
@@ -112,7 +115,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
             lock (SyncRoot)
             {
-                return Providers.Remove((modId, sourceId));
+                return Providers.Remove((modId.Trim(), sourceId.Trim()));
             }
         }
 
