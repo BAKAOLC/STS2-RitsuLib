@@ -123,10 +123,11 @@ namespace STS2RitsuLib.Platform.Steam
                     $"[SteamWorkshop] Failed to load Workshop preview '{key}': {ex.Message}");
             }
 
-            lock (_previewTextureSyncRoot)
-            {
-                _previewTextureCache[key] = texture;
-            }
+            if (texture != null)
+                lock (_previewTextureSyncRoot)
+                {
+                    _previewTextureCache[key] = texture;
+                }
 
             return texture;
         }
@@ -146,8 +147,7 @@ namespace STS2RitsuLib.Platform.Steam
                 var pair = part.Split('=', 2);
                 if (pair.Length != 2 ||
                     !string.Equals(pair[0], "id", StringComparison.OrdinalIgnoreCase) ||
-                    !ulong.TryParse(Uri.UnescapeDataString(pair[1]), out itemId) ||
-                    itemId == 0)
+                    !TryParseEncodedItemId(pair[1], out itemId))
                     continue;
 
                 return true;
@@ -187,7 +187,7 @@ namespace STS2RitsuLib.Platform.Steam
             if (bytes.Length < 12)
                 return null;
 
-            var image = new Image();
+            using var image = new Image();
             var error = DetectImageFormat(bytes) switch
             {
                 PreviewImageFormat.Png => image.LoadPngFromBuffer(bytes),
@@ -244,7 +244,20 @@ namespace STS2RitsuLib.Platform.Steam
             if (end >= 0)
                 value = value[..end];
 
-            return ulong.TryParse(Uri.UnescapeDataString(value), out itemId) && itemId != 0;
+            return TryParseEncodedItemId(value, out itemId);
+        }
+
+        private static bool TryParseEncodedItemId(string value, out ulong itemId)
+        {
+            itemId = 0;
+            try
+            {
+                return ulong.TryParse(Uri.UnescapeDataString(value), out itemId) && itemId != 0;
+            }
+            catch (UriFormatException)
+            {
+                return false;
+            }
         }
 
         private static IEnumerable<ulong> EnumerateDigitRunItemIds(string text)
