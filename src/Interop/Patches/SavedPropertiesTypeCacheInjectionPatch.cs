@@ -64,9 +64,9 @@ namespace STS2RitsuLib.Interop.Patches
         }
 
 #if STS2_AT_LEAST_0_109_0
-        public static void Postfix(XxHash32? __1, byte[]? __2)
+        public static void Postfix(XxHash32? __1)
         {
-            if (__1 == null || __2 == null)
+            if (__1 == null)
                 return;
 
             IReadOnlyList<string> syntheticNames;
@@ -92,7 +92,7 @@ namespace STS2RitsuLib.Interop.Patches
                 beforeCount = GetPropertyNameCount();
                 syntheticNames = SavedAttachedStateRegistry.FinalizePropertyNameRegistration(false);
                 foreach (var name in syntheticNames)
-                    InjectSyntheticName(name, __1, __2);
+                    InjectSyntheticName(name, __1);
                 afterCount = GetPropertyNameCount();
                 UsesDeterministicNetIdTable = true;
             }
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Interop.Patches
                     $"cache initialization; property net IDs: {beforeCount} -> {afterCount}.");
         }
 
-        private static void InjectSyntheticName(string name, XxHash32 hash, byte[] buffer)
+        private static void InjectSyntheticName(string name, XxHash32 hash)
         {
             var propertyNameToNetIdMap = GetPropertyNameToNetIdMap() ??
                                          throw new InvalidOperationException(
@@ -117,8 +117,8 @@ namespace STS2RitsuLib.Interop.Patches
 
             propertyNameToNetIdMap[name] = netIdToPropertyNameMap.Count;
             netIdToPropertyNameMap.Add(name);
-            var bytes = Encoding.UTF8.GetBytes(name, 0, name.Length, buffer, 0);
-            hash.Append(buffer.AsSpan(0, bytes));
+            var bytes = Encoding.UTF8.GetBytes(name);
+            hash.Append(bytes);
         }
 #else
         /// <summary>
