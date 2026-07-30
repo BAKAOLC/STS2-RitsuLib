@@ -233,5 +233,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             return (int)Math.Min(int.MaxValue, (long)Math.Max(0, left) * Math.Max(0, right));
         }
+
+        public static int RoundAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Round(value, 0, MidpointRounding.ToEven), min, max);
+        }
+
+        public static int TruncateAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Truncate(value), min, max);
+        }
     }
 }

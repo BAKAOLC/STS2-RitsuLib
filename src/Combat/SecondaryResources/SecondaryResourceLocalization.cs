@@ -147,7 +147,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     return TryResolveMarkerOptions(formattingInfo.FormatterOptions, out resourceId, out amount);
                 case SecondaryResourceVar secondaryResourceVar:
                     resourceId = secondaryResourceVar.ResourceId;
-                    amount = Convert.ToInt32(secondaryResourceVar.PreviewValue);
+                    amount = SecondaryResourceAmountMath.RoundAndClamp(
+                        secondaryResourceVar.PreviewValue,
+                        int.MinValue,
+                        int.MaxValue);
                     dynamicVar = secondaryResourceVar;
                     return true;
                 case DynamicVar value:
@@ -155,7 +158,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         return false;
 
                     resourceId = options;
-                    amount = Convert.ToInt32(value.PreviewValue);
+                    amount = SecondaryResourceAmountMath.RoundAndClamp(
+                        value.PreviewValue,
+                        int.MinValue,
+                        int.MaxValue);
                     dynamicVar = value;
                     return true;
                 case SecondaryResourceDefinition definition:
@@ -171,7 +177,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         return false;
 
                     resourceId = options;
-                    amount = (int)value;
+                    amount = SecondaryResourceAmountMath.TruncateAndClamp(value, int.MinValue, int.MaxValue);
                     return true;
                 case int value:
                     if (string.IsNullOrWhiteSpace(options))
