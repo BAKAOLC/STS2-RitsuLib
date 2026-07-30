@@ -6,15 +6,13 @@ using FileAccess = Godot.FileAccess;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Load loose audio files into the FMOD runtime (wav/ogg/mp3 per addon). For <c>res://</c>, only paths that are
-    ///     still visible as raw files to <see cref="FileAccess" /> are accepted (e.g. Import dock &quot;Keep File (No Import)
-    ///     &quot;).
-    ///     Resolves <c>user://</c> to an absolute filesystem path. Tracks loaded paths so you can unload deterministically.
-    ///     将松散音频文件加载到 FMOD runtime（按 addon 支持 wav/ogg/mp3）。对于 <c>res://</c>，只接受
-    ///     对 <see cref="FileAccess" /> 仍可见的原始文件路径（例如 Import dock 的 &quot;Keep File (No Import)
-    ///     &quot;）。
-    ///     将 <c>user://</c> 解析为绝对文件系统路径。跟踪已加载路径，以便确定性卸载。
+    ///     <para xml:lang="en">Loads loose audio files through the FMOD add-on, creates paused sound or streaming-music instances, and tracks successfully loaded paths for deterministic unload.</para>
+    ///     <para xml:lang="zh-CN">通过 FMOD 插件加载松散音频文件，创建初始暂停的音效或流式音乐实例，并跟踪成功加载的路径以便确定性卸载。</para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">Accepted inputs are existing absolute paths, globalized <c>user://</c> paths, and <c>res://</c> files visible to <see cref="FileAccess" />. Packed or imported Godot audio resources must use a resource-specific method, which materializes WAV, Ogg Vorbis, or MP3 data into a private cache.</para>
+    ///     <para xml:lang="zh-CN">可接受的输入包括现有绝对路径、全局化后的 <c>user://</c> 路径，以及 <see cref="FileAccess" /> 可见的 <c>res://</c> 文件。打包或导入的 Godot 音频资源必须使用资源专用方法，将 WAV、Ogg Vorbis 或 MP3 数据写入私有缓存。</para>
+    /// </remarks>
     public static class FmodStudioStreamingFiles
     {
         private static readonly ConcurrentDictionary<string, LoadedKind> Loaded = new(StringComparer.Ordinal);
@@ -24,9 +22,21 @@ namespace STS2RitsuLib.Audio
         private static readonly StringName Play = new("play");
 
         /// <summary>
-        ///     Creates a typed handle for a short loose-file sound.
-        ///     为短音效松散文件创建类型化句柄。
+        ///     <para xml:lang="en">Attempts to create a typed, initially paused sound handle from a supported loose-file path.</para>
+        ///     <para xml:lang="zh-CN">尝试根据受支持的松散文件路径创建类型化且初始暂停的音效句柄。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">Optional playback metadata. Only its manual-token scope or lifecycle scope is copied to the new handle.</para>
+        ///     <para xml:lang="zh-CN">可选的播放元数据。新句柄只会复制其中手动令牌的作用域或生命周期作用域。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The typed handle, or null when resolution, loading, or instance creation fails.</para>
+        ///     <para xml:lang="zh-CN">类型化句柄；路径解析、加载或实例创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static AudioFileHandle? TryCreateSoundHandle(string absolutePath, AudioPlaybackOptions? options = null)
         {
             options ??= new();
@@ -38,9 +48,21 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Creates a typed handle for a packed/imported Godot audio resource by materializing it to a private cache file.
-        ///     将 Godot 打包/导入音频资源 materialize 到私有缓存文件后，为短音效创建类型化句柄。
+        ///     <para xml:lang="en">Attempts to materialize a packed or imported Godot audio resource and create a typed, initially paused sound handle.</para>
+        ///     <para xml:lang="zh-CN">尝试将打包或导入的 Godot 音频资源写入缓存，并创建类型化且初始暂停的音效句柄。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">Optional playback metadata. Only its manual-token scope or lifecycle scope is copied to the new handle.</para>
+        ///     <para xml:lang="zh-CN">可选的播放元数据。新句柄只会复制其中手动令牌的作用域或生命周期作用域。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The typed handle, or null when materialization, loading, or instance creation fails.</para>
+        ///     <para xml:lang="zh-CN">类型化句柄；缓存写入、加载或实例创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static AudioFileHandle? TryCreateResourceSoundHandle(string resourcePath,
             AudioPlaybackOptions? options = null)
         {
@@ -53,9 +75,21 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Creates a typed handle for a streaming loose-file music instance.
-        ///     为流式松散文件音乐实例创建类型化句柄。
+        ///     <para xml:lang="en">Attempts to create a typed, initially paused streaming-music handle from a supported loose-file path.</para>
+        ///     <para xml:lang="zh-CN">尝试根据受支持的松散文件路径创建类型化且初始暂停的流式音乐句柄。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">Optional playback metadata. Only its manual-token scope or lifecycle scope is copied to the new handle.</para>
+        ///     <para xml:lang="zh-CN">可选的播放元数据。新句柄只会复制其中手动令牌的作用域或生命周期作用域。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The typed music handle, or null when resolution, loading, or instance creation fails.</para>
+        ///     <para xml:lang="zh-CN">类型化音乐句柄；路径解析、加载或实例创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static AudioMusicHandle? TryCreateStreamingMusicHandle(string absolutePath,
             AudioPlaybackOptions? options = null)
         {
@@ -68,10 +102,21 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Creates a typed music handle for a packed/imported Godot audio resource by materializing it to a private cache
-        ///     file.
-        ///     将 Godot 打包/导入音频资源 materialize 到私有缓存文件后，为流式音乐创建类型化句柄。
+        ///     <para xml:lang="en">Attempts to materialize a packed or imported Godot audio resource and create a typed, initially paused streaming-music handle.</para>
+        ///     <para xml:lang="zh-CN">尝试将打包或导入的 Godot 音频资源写入缓存，并创建类型化且初始暂停的流式音乐句柄。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">Optional playback metadata. Only its manual-token scope or lifecycle scope is copied to the new handle.</para>
+        ///     <para xml:lang="zh-CN">可选的播放元数据。新句柄只会复制其中手动令牌的作用域或生命周期作用域。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The typed music handle, or null when materialization, loading, or instance creation fails.</para>
+        ///     <para xml:lang="zh-CN">类型化音乐句柄；缓存写入、加载或实例创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static AudioMusicHandle? TryCreateResourceStreamingMusicHandle(string resourcePath,
             AudioPlaybackOptions? options = null)
         {
@@ -84,11 +129,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Preloads the loose audio file at <paramref name="absolutePath" /> as a sound; succeeds immediately if already
-        ///     tracked.
-        ///     将 <paramref name="absolutePath" /> 处的松散音频文件预加载为 sound；如果已
-        ///     跟踪则立即成功。
+        ///     <para xml:lang="en">Attempts to load a supported loose file as a fully buffered sound and records its resolved path.</para>
+        ///     <para xml:lang="zh-CN">尝试将受支持的松散文件加载为完整缓冲的音效，并记录解析后的路径。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when the same resolved path is already tracked as a sound or loading returns a valid file object; otherwise <see langword="false" />. A path tracked as streaming music is rejected.</para>
+        ///     <para xml:lang="zh-CN">同一解析路径已作为音效跟踪，或加载返回有效文件对象时为 <see langword="true" />；否则为 <see langword="false" />。已作为流式音乐跟踪的路径会被拒绝。</para>
+        /// </returns>
         public static bool TryPreloadAsSound(string absolutePath)
         {
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
@@ -108,9 +159,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Materializes a packed/imported Godot audio resource and preloads it as a sound.
-        ///     将 Godot 打包/导入音频资源 materialize 后预加载为 sound。
+        ///     <para xml:lang="en">Attempts to materialize a Godot audio resource and preload its cached file as a fully buffered sound.</para>
+        ///     <para xml:lang="zh-CN">尝试将 Godot 音频资源写入缓存，并将缓存文件预加载为完整缓冲的音效。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when materialization and sound preloading succeed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">缓存写入和音效预加载均成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public static bool TryPreloadResourceAsSound(string resourcePath)
         {
             return FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) &&
@@ -118,11 +177,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Preloads the loose audio file at <paramref name="absolutePath" /> as streaming music; succeeds immediately if
-        ///     already tracked.
-        ///     将 <paramref name="absolutePath" /> 处的松散音频文件预加载为流式音乐；如果
-        ///     已跟踪则立即成功。
+        ///     <para xml:lang="en">Attempts to load a supported loose file as streaming, looping music and records its resolved path.</para>
+        ///     <para xml:lang="zh-CN">尝试将受支持的松散文件加载为流式循环音乐，并记录解析后的路径。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when the same resolved path is already tracked as streaming music or loading returns a valid file object; otherwise <see langword="false" />. A path tracked as a sound is rejected.</para>
+        ///     <para xml:lang="zh-CN">同一解析路径已作为流式音乐跟踪，或加载返回有效文件对象时为 <see langword="true" />；否则为 <see langword="false" />。已作为音效跟踪的路径会被拒绝。</para>
+        /// </returns>
         public static bool TryPreloadAsStreamingMusic(string absolutePath)
         {
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
@@ -142,9 +207,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Materializes a packed/imported Godot audio resource and preloads it as streaming music.
-        ///     将 Godot 打包/导入音频资源 materialize 后预加载为流式音乐。
+        ///     <para xml:lang="en">Attempts to materialize a Godot audio resource and preload its cached file as streaming, looping music.</para>
+        ///     <para xml:lang="zh-CN">尝试将 Godot 音频资源写入缓存，并将缓存文件预加载为流式循环音乐。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when materialization and streaming-music preloading succeed; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">缓存写入和流式音乐预加载均成功时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public static bool TryPreloadResourceAsStreamingMusic(string resourcePath)
         {
             return FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) &&
@@ -152,14 +225,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Returns a playable sound instance for the loose audio file at <paramref name="absolutePath" />, preloading as sound
-        ///     when needed.
-        ///     Accepts <c>res://</c> only when the path is a raw file for <see cref="FileAccess" />, absolute paths, and
-        ///     <c>user://</c> (globalized).
-        ///     返回 <paramref name="absolutePath" /> 处松散音频文件的可播放 sound 实例，必要时预加载为 sound。
-        ///     仅当 <c>res://</c> 路径是 <see cref="FileAccess" /> 的原始文件时才接受，同时接受绝对路径和
-        ///     <c>user://</c>（globalized）。
+        ///     <para xml:lang="en">Attempts to preload a supported loose file as a sound and create an initially paused playback instance.</para>
+        ///     <para xml:lang="zh-CN">尝试将受支持的松散文件预加载为音效，并创建初始暂停的播放实例。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A valid paused sound instance, or null when resolution, preloading, or creation fails.</para>
+        ///     <para xml:lang="zh-CN">有效的暂停音效实例；路径解析、预加载或创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static GodotObject? TryCreateSoundInstance(string absolutePath)
         {
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
@@ -172,9 +248,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Returns a playable sound instance for a packed/imported Godot audio resource.
-        ///     返回 Godot 打包/导入音频资源的可播放 sound 实例。
+        ///     <para xml:lang="en">Attempts to materialize a Godot audio resource and create an initially paused sound instance from its cached file.</para>
+        ///     <para xml:lang="zh-CN">尝试将 Godot 音频资源写入缓存，并根据缓存文件创建初始暂停的音效实例。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A valid paused sound instance, or null when materialization, preloading, or creation fails.</para>
+        ///     <para xml:lang="zh-CN">有效的暂停音效实例；缓存写入、预加载或创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static GodotObject? TryCreateResourceSoundInstance(string resourcePath)
         {
             return !FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath)
@@ -183,13 +267,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Returns a streaming music instance, preloading as music when needed.
-        ///     Accepts <c>res://</c> only when the path is a raw file for <see cref="FileAccess" />, absolute paths, and
-        ///     <c>user://</c> (globalized).
-        ///     返回流式音乐实例，必要时预加载为 music。
-        ///     仅当 <c>res://</c> 路径是 <see cref="FileAccess" /> 的原始文件时才接受，同时接受绝对路径和
-        ///     <c>user://</c>（globalized）。
+        ///     <para xml:lang="en">Attempts to preload a supported loose file as streaming music and create an initially paused playback instance.</para>
+        ///     <para xml:lang="zh-CN">尝试将受支持的松散文件预加载为流式音乐，并创建初始暂停的播放实例。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A valid paused streaming-music instance, or null when resolution, preloading, or creation fails.</para>
+        ///     <para xml:lang="zh-CN">有效的暂停流式音乐实例；路径解析、预加载或创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static GodotObject? TryCreateStreamingMusicInstance(string absolutePath)
         {
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
@@ -202,9 +290,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Returns a streaming music instance for a packed/imported Godot audio resource.
-        ///     返回 Godot 打包/导入音频资源的 streaming music 实例。
+        ///     <para xml:lang="en">Attempts to materialize a Godot audio resource and create an initially paused streaming-music instance from its cached file.</para>
+        ///     <para xml:lang="zh-CN">尝试将 Godot 音频资源写入缓存，并根据缓存文件创建初始暂停的流式音乐实例。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A valid paused streaming-music instance, or null when materialization, preloading, or creation fails.</para>
+        ///     <para xml:lang="zh-CN">有效的暂停流式音乐实例；缓存写入、预加载或创建失败时为 <see langword="null" />。</para>
+        /// </returns>
         public static GodotObject? TryCreateResourceStreamingMusicInstance(string resourcePath)
         {
             return !FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath)
@@ -213,9 +309,25 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Creates a sound instance from an absolute filesystem path and calls <c>play</c> with volume and pitch.
-        ///     从绝对文件系统路径创建 sound 实例，并用 volume 和 pitch 调用 <c>play</c>。
+        ///     <para xml:lang="en">Attempts to create a loose-file sound instance, apply volume and pitch, and start playback.</para>
+        ///     <para xml:lang="zh-CN">尝试创建松散文件音效实例，应用音量和音高并开始播放。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The unclamped linear volume passed to the sound instance.</para>
+        ///     <para xml:lang="zh-CN">传递给音效实例的未钳制线性音量。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The unclamped pitch multiplier passed to the sound instance.</para>
+        ///     <para xml:lang="zh-CN">传递给音效实例的未钳制音高倍率。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when creation, setup, and start complete; otherwise <see langword="false" />. An instance that fails before start is stopped through its release method.</para>
+        ///     <para xml:lang="zh-CN">创建、设置和启动均完成时为 <see langword="true" />；否则为 <see langword="false" />。启动前失败的实例会通过其释放方法停止。</para>
+        /// </returns>
         public static bool TryPlaySoundFile(string absolutePath, float volume = 1f, float pitch = 1f)
         {
             var sound = TryCreateSoundInstance(absolutePath);
@@ -223,9 +335,25 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Materializes a packed/imported Godot audio resource, creates a sound instance, and plays it.
-        ///     将 Godot 打包/导入音频资源 materialize，创建 sound 实例并播放。
+        ///     <para xml:lang="en">Attempts to materialize a Godot audio resource, create a sound instance, apply volume and pitch, and start playback.</para>
+        ///     <para xml:lang="zh-CN">尝试将 Godot 音频资源写入缓存，创建音效实例，应用音量和音高并开始播放。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <param name="volume">
+        ///     <para xml:lang="en">The unclamped linear volume passed to the sound instance.</para>
+        ///     <para xml:lang="zh-CN">传递给音效实例的未钳制线性音量。</para>
+        /// </param>
+        /// <param name="pitch">
+        ///     <para xml:lang="en">The unclamped pitch multiplier passed to the sound instance.</para>
+        ///     <para xml:lang="zh-CN">传递给音效实例的未钳制音高倍率。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when materialization, creation, setup, and start complete; otherwise <see langword="false" />. An instance that fails before start is stopped through its release method.</para>
+        ///     <para xml:lang="zh-CN">缓存写入、创建、设置和启动均完成时为 <see langword="true" />；否则为 <see langword="false" />。启动前失败的实例会通过其释放方法停止。</para>
+        /// </returns>
         public static bool TryPlayResourceSound(string resourcePath, float volume = 1f, float pitch = 1f)
         {
             var sound = TryCreateResourceSoundInstance(resourcePath);
@@ -233,9 +361,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Unloads a tracked file from FMOD and removes it from the local registry.
-        ///     从 FMOD 卸载已跟踪文件，并将其从本地注册表移除。
+        ///     <para xml:lang="en">Attempts to unload a resolved path from FMOD and removes its local tracking entry only after invocation succeeds.</para>
+        ///     <para xml:lang="zh-CN">尝试从 FMOD 卸载解析后的路径，并且只在调用成功后移除本地跟踪条目。</para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">An absolute, <c>user://</c>, or raw <c>res://</c> audio path.</para>
+        ///     <para xml:lang="zh-CN">绝对路径、<c>user://</c> 路径或原始 <c>res://</c> 音频路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when the path is not tracked or unload invocation succeeds; otherwise <see langword="false" />. Failed unloads remain tracked for retry.</para>
+        ///     <para xml:lang="zh-CN">路径未被跟踪或卸载调用成功时为 <see langword="true" />；否则为 <see langword="false" />。卸载失败的路径会继续保留以供重试。</para>
+        /// </returns>
         public static bool TryUnloadFile(string absolutePath)
         {
             if (!TryResolveSupportedPath(absolutePath, out var resolvedPath))
@@ -255,9 +391,17 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Materializes a packed/imported resource path and unloads the cached file from FMOD if it is tracked.
-        ///     将打包/导入资源路径 materialize，并在已跟踪时从 FMOD 卸载缓存文件。
+        ///     <para xml:lang="en">Attempts to materialize a Godot audio resource and unload its cached file from FMOD.</para>
+        ///     <para xml:lang="zh-CN">尝试将 Godot 音频资源写入缓存，并从 FMOD 卸载对应缓存文件。</para>
         /// </summary>
+        /// <param name="resourcePath">
+        ///     <para xml:lang="en">The <c>res://</c> or <c>user://</c> audio resource path.</para>
+        ///     <para xml:lang="zh-CN"><c>res://</c> 或 <c>user://</c> 音频资源路径。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when materialization succeeds and the cached file is untracked or unloads successfully; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">缓存写入成功，且缓存文件未被跟踪或成功卸载时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public static bool TryUnloadResourceFile(string resourcePath)
         {
             return FmodPackedAudioResourceCache.TryMaterialize(resourcePath, out var absolutePath) &&
@@ -265,9 +409,13 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Unloads every path currently tracked by this helper.
-        ///     卸载此 helper 当前跟踪的每个路径。
+        ///     <para xml:lang="en">Attempts to unload a snapshot of every path currently tracked by this helper.</para>
+        ///     <para xml:lang="zh-CN">尝试卸载此辅助类当前跟踪的所有路径快照。</para>
         /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">Failed unloads and paths added concurrently after the snapshot remain tracked.</para>
+        ///     <para xml:lang="zh-CN">卸载失败的路径，以及生成快照后并发加入的路径，仍会继续保留在跟踪表中。</para>
+        /// </remarks>
         public static void TryUnloadAllTracked()
         {
             foreach (var key in Loaded.Keys.ToArray())
