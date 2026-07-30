@@ -7,13 +7,11 @@ namespace STS2RitsuLib.Keywords.Patches
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Uses registered mod keyword metadata when the native <c>CardKeywordExtensions.GetTitle</c> method
-    ///         receives a registered mod <see cref="CardKeyword" />. Native keywords and unregistered values continue
-    ///         through the original method.
+    ///         Routes native <c>CardKeywordExtensions.GetTitle</c> calls for minted values through the corresponding
+    ///         registered mod keyword metadata.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         当原版 <c>CardKeywordExtensions.GetTitle</c> 方法收到已注册的模组 <see cref="CardKeyword" /> 时，
-    ///         使用其注册信息。原版关键词和未注册值仍由原方法处理。
+    ///         将动态生成关键词值的原版 <c>CardKeywordExtensions.GetTitle</c> 调用路由到对应的模组关键词注册信息。
     ///     </para>
     /// </summary>
     [HarmonyBefore(Const.BaseLibHarmonyId)]
@@ -50,13 +48,11 @@ namespace STS2RitsuLib.Keywords.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Uses registered mod keyword metadata when the native <c>CardKeywordExtensions.GetDescription</c>
-    ///         method receives a registered mod <see cref="CardKeyword" />. Native keywords and unregistered values
-    ///         continue through the original method.
+    ///         Routes native <c>CardKeywordExtensions.GetDescription</c> calls for minted values through the
+    ///         corresponding registered mod keyword metadata.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         当原版 <c>CardKeywordExtensions.GetDescription</c> 方法收到已注册的模组
-    ///         <see cref="CardKeyword" /> 时，使用其注册信息。原版关键词和未注册值仍由原方法处理。
+    ///         将动态生成关键词值的原版 <c>CardKeywordExtensions.GetDescription</c> 调用路由到对应的模组关键词注册信息。
     ///     </para>
     /// </summary>
     [HarmonyBefore(Const.BaseLibHarmonyId)]
@@ -93,13 +89,11 @@ namespace STS2RitsuLib.Keywords.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Uses registered localization when the native <c>CardKeywordExtensions.GetCardText</c> method receives
-    ///         a registered mod <see cref="CardKeyword" />. Native keywords and unregistered values continue through
-    ///         the original method.
+    ///         Routes native <c>CardKeywordExtensions.GetCardText</c> calls for minted values through the corresponding
+    ///         registered mod keyword metadata.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         当原版 <c>CardKeywordExtensions.GetCardText</c> 方法收到已注册的模组
-    ///         <see cref="CardKeyword" /> 时，使用其注册的本地化文本。原版关键词和未注册值仍由原方法处理。
+    ///         将动态生成关键词值的原版 <c>CardKeywordExtensions.GetCardText</c> 调用路由到对应的模组关键词注册信息。
     ///     </para>
     /// </summary>
     [HarmonyBefore(Const.BaseLibHarmonyId)]

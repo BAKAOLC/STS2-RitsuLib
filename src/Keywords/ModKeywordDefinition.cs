@@ -3,14 +3,24 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
-    ///     Immutable registration data for a mod keyword (localization tables, keys, optional icon).
-    ///     mod 关键词的不可变注册数据（本地化表、键、可选图标）。
+    ///     <para xml:lang="en">
+    ///         Immutable registration data for a mod keyword, including localization sources, display behavior, and an
+    ///         optional icon.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         模组关键词的不可变注册数据，包括本地化来源、显示行为和可选图标。
+    ///     </para>
     /// </summary>
     public sealed record ModKeywordDefinition
     {
         /// <summary>
-        ///     Original binary-compatible constructor (seven CLR parameters); prior RitsuLib keyword definitions.
-        ///     原始二进制兼容构造函数（七个 CLR 参数）；用于旧版 RitsuLib keyword definition。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition through the original seven-parameter constructor retained for binary
+        ///         compatibility with older RitsuLib versions.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过为兼容旧版 RitsuLib 二进制接口而保留的原始七参数构造函数初始化定义。
+        ///     </para>
         /// </summary>
         public ModKeywordDefinition(
             string ModId,
@@ -33,8 +43,13 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     Extended constructor: same as the legacy seven-parameter ABI plus placement and hover-tip inclusion.
-        ///     扩展构造函数：与旧七参数 ABI 相同，并额外包含 placement 与 hover-tip inclusion。
+        ///     <para xml:lang="en">
+        ///         Initializes a definition with the legacy fields plus card-description placement and hover-tip
+        ///         inclusion behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用旧版字段以及卡牌描述插入位置和悬停提示包含行为初始化定义。
+        ///     </para>
         /// </summary>
         public ModKeywordDefinition(
             string ModId,
@@ -59,76 +74,111 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     Owning mod manifest id.
-        ///     所属 mod manifest id。
+        ///     <para xml:lang="en">
+        ///         Gets the owning mod's manifest ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取所属模组的清单 ID。
+        ///     </para>
         /// </summary>
         public string ModId { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Normalized keyword id (lowercase).
-        ///     normalized keyword id（小写）。
+        ///     <para xml:lang="en">
+        ///         Gets the normalized keyword ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取规范化后的关键词 ID。
+        ///     </para>
         /// </summary>
         public string Id { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Localization table for the title.
-        ///     title 使用的本地化 table。
+        ///     <para xml:lang="en">
+        ///         Gets the localization table containing the title.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取标题所在的本地化表。
+        ///     </para>
         /// </summary>
         public string TitleTable { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Key for the title string.
-        ///     标题字符串使用的键。
+        ///     <para xml:lang="en">
+        ///         Gets the title's localization key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取标题的本地化键。
+        ///     </para>
         /// </summary>
         public string TitleKey { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Localization table for the body text.
-        ///     body text 使用的本地化 table。
+        ///     <para xml:lang="en">
+        ///         Gets the localization table containing the description.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取描述所在的本地化表。
+        ///     </para>
         /// </summary>
         public string DescriptionTable { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Key for the description string.
-        ///     描述字符串使用的键。
+        ///     <para xml:lang="en">
+        ///         Gets the description's localization key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取描述的本地化键。
+        ///     </para>
         /// </summary>
         public string DescriptionKey { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Optional Godot resource path for hover icon.
-        ///     hover icon 使用的可选 Godot ResourcePath。
+        ///     <para xml:lang="en">
+        ///         Gets the optional Godot resource path for the hover-tip icon.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取悬停提示图标的可选 Godot 资源路径。
+        ///     </para>
         /// </summary>
         public string? IconPath { get; init; }
 
         /// <summary>
-        ///     Whether and where to inject keyword BBCode into card descriptions.
-        ///     是否以及在哪里将关键词 BBCode 注入卡牌描述。
+        ///     <para xml:lang="en">
+        ///         Gets whether and where the keyword's BBCode is injected into card descriptions.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取是否以及在何处将关键词 BBCode 注入卡牌描述。
+        ///     </para>
         /// </summary>
         public ModKeywordCardDescriptionPlacement CardDescriptionPlacement { get; init; } =
             ModKeywordCardDescriptionPlacement.None;
 
         /// <summary>
-        ///     When true, this keyword’s hover tip is included from <c>RegisteredKeywordIds</c> / runtime mod-keyword sets
-        ///     on cards and other mod templates.
-        ///     为 true 时，此关键词的悬停提示会从 <c>RegisteredKeywordIds</c>、
-        ///     运行时 mod 关键词集合
-        ///     包含到卡牌和其它 mod 模板上。
+        ///     <para xml:lang="en">
+        ///         Gets whether card and template hover-tip helpers include this keyword. This does not affect
+        ///         registration or card-description injection.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取卡牌和模板的悬停提示辅助方法是否包含此关键词。此设置不影响注册或卡牌描述注入。
+        ///     </para>
         /// </summary>
         public bool IncludeInCardHoverTip { get; init; }
 
         /// <summary>
-        ///     Deterministic <see cref="CardKeyword" /> value minted for this keyword (hash of <see cref="Id" />,
-        ///     forced above the vanilla enum range). Stored directly inside <c>CardModel.Keywords</c> so the mod
-        ///     keyword rides vanilla workflows (lookups, cloning, canonical seeding, per-run saves) without any
-        ///     parallel side-loaded state. Populated by <see cref="ModKeywordRegistry" /> at registration time;
-        ///     remains <see cref="CardKeyword.None" /> for definitions constructed outside the registry.
-        ///     <see cref="CardKeyword.None" />。
-        ///     为此关键词铸造的确定性 <see cref="CardKeyword" /> 值（<see cref="Id" /> 的 hash，
-        ///     强制高于原版 enum 范围）。它会直接存入 <c>CardModel.Keywords</c>，使 mod
-        ///     关键词沿用原版流程（查找、克隆、规范种入、逐跑局保存），无需任何
-        ///     并行 side-loaded 状态。由 <see cref="ModKeywordRegistry" /> 在注册时填充；
-        ///     在注册表外构造的定义保持 <see cref="CardKeyword.None" />。
-        ///     <see cref="CardKeyword.None" />。
+        ///     <para xml:lang="en">
+        ///         Gets the deterministic <see cref="CardKeyword" /> value minted for this keyword above the native enum
+        ///         range. The value is stored directly in <c>CardModel.Keywords</c>, allowing native lookup, cloning,
+        ///         canonical seeding, and run-save paths to carry the keyword without parallel state.
+        ///         <see cref="ModKeywordRegistry" /> populates it during registration; definitions created outside the
+        ///         registry retain <see cref="CardKeyword.None" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取为此关键词确定性生成且位于原版枚举范围以上的 <see cref="CardKeyword" /> 值。该值直接存入
+        ///         <c>CardModel.Keywords</c>，因此原版查询、克隆、初始关键词填充和单局存档流程均可携带该关键词，
+        ///         无需维护并行状态。<see cref="ModKeywordRegistry" /> 会在注册时填充此值；在注册表外创建的定义
+        ///         保持为 <see cref="CardKeyword.None" />。
+        ///     </para>
         /// </summary>
         public CardKeyword CardKeywordValue { get; init; } = CardKeyword.None;
     }

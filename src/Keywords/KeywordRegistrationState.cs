@@ -1,20 +1,33 @@
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
-    ///     Whether <see cref="ModKeywordRegistry" /> still accepts new keyword registrations from mods.
-    ///     <see cref="ModKeywordRegistry" /> 是否仍接受来自 mod 的新 keyword 注册。
+    ///     <para xml:lang="en">
+    ///         Indicates whether <see cref="ModKeywordRegistry" /> still accepts keyword registrations from mods.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示 <see cref="ModKeywordRegistry" /> 当前是否仍接受模组注册关键词。
+    ///     </para>
     /// </summary>
     public enum KeywordRegistrationState
     {
         /// <summary>
-        ///     Registrations are allowed until the framework freezes them (with other model registries).
-        ///     在框架与其它模型注册表一起冻结注册前允许注册。
+        ///     <para xml:lang="en">
+        ///         Registrations are allowed until the framework freezes this registry alongside the other model
+        ///         registries.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在框架随其他模型注册表一同冻结此注册表之前，均可注册关键词。
+        ///     </para>
         /// </summary>
         Open = 0,
 
         /// <summary>
-        ///     Further registration throws; the global keyword table is considered sealed.
-        ///     后续注册会抛出异常；全局 keyword table 视为已 sealed。
+        ///     <para xml:lang="en">
+        ///         The global keyword registry is sealed, and further registration attempts throw.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         全局关键词注册表已封闭，继续尝试注册会抛出异常。
+        ///     </para>
         /// </summary>
         Frozen = 1,
     }

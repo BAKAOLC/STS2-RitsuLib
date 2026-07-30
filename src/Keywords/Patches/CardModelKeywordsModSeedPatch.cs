@@ -7,16 +7,20 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Keywords.Patches
 {
     /// <summary>
-    ///     Seeds minted mod <see cref="CardKeyword" /> values onto every <see cref="ModCardTemplate" /> instance
-    ///     after vanilla <c>CardModel.get_Keywords</c> materializes the underlying local keyword set. Keeps
-    ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> as an independent channel from vanilla
-    ///     <see cref="CardModel.CanonicalKeywords" /> so downstream mods can still override
-    ///     <c>CanonicalKeywords</c> without dropping their mod keyword declarations.
-    ///     在原版 <c>CardModel.get_Keywords</c> 实体化底层本地关键词集合后，将铸造的 mod <see cref="CardKeyword" /> 值种入每个
-    ///     <see cref="ModCardTemplate" /> 实例。保持
-    ///     <see cref="ModCardTemplate.RegisteredKeywordIds" /> 作为独立于原版
-    ///     <see cref="CardModel.CanonicalKeywords" /> 的通道，使下游 mod 仍可覆盖
-    ///     <c>CanonicalKeywords</c> 而不会丢失其 mod 关键词声明。
+    ///     <para xml:lang="en">
+    ///         Seeds minted mod <see cref="CardKeyword" /> values into each <see cref="ModCardTemplate" /> when the game
+    ///         first materializes its local keyword set. Keeping
+    ///         <see cref="ModCardTemplate.RegisteredKeywordIds" /> separate from
+    ///         <see cref="CardModel.CanonicalKeywords" /> lets derived mods override
+    ///         <c>CanonicalKeywords</c> without discarding keywords declared through the template.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         游戏首次创建本地关键词集合时，将动态生成的模组 <see cref="CardKeyword" /> 值加入每个
+    ///         <see cref="ModCardTemplate" />。由于
+    ///         <see cref="ModCardTemplate.RegisteredKeywordIds" /> 与
+    ///         <see cref="CardModel.CanonicalKeywords" /> 是相互独立的数据来源，派生模组即使重写
+    ///         <c>CanonicalKeywords</c>，也不会丢失通过模板声明的关键词。
+    ///     </para>
     /// </summary>
     internal sealed class CardModelKeywordsModSeedPatch : IPatchMethod
     {

@@ -3,10 +3,14 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
-    ///     Injects registered keyword BBCode into <see cref="CardModel" /> description strings based on
-    ///     <see cref="ModKeywordDefinition.CardDescriptionPlacement" />.
-    ///     根据 <see cref="ModKeywordDefinition.CardDescriptionPlacement" /> 将已注册 keyword BBCode 注入
-    ///     <see cref="CardModel" /> description 字符串。
+    ///     <para xml:lang="en">
+    ///         Injects registered keyword BBCode into <see cref="CardModel" /> description strings according to
+    ///         <see cref="ModKeywordDefinition.CardDescriptionPlacement" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         根据 <see cref="ModKeywordDefinition.CardDescriptionPlacement" />，将已注册关键词的 BBCode
+    ///         注入 <see cref="CardModel" /> 的描述文本。
+    ///     </para>
     /// </summary>
     internal static class ModKeywordCardDescriptionInjector
     {
