@@ -257,7 +257,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (string.IsNullOrWhiteSpace(path))
                 return false;
 
-            iconTag = $"[img]{path}[/img]";
+            iconTag = $"[img]{path.Trim()}[/img]";
             return true;
         }
 

@@ -570,7 +570,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             }
 
             var path = _definition.LargeIconPath ?? _definition.SmallIconPath;
-            _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
+            _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path.Trim());
         }
 
         private SecondaryResourcePaymentLine? FindLine(SecondaryResourcePaymentPlan plan)

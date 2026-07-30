@@ -1074,7 +1074,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             }
 
             var path = _definition.LargeIconPath ?? _definition.SmallIconPath;
-            _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
+            _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path.Trim());
         }
 
         private void RefreshHoverTipBinding()
@@ -1701,7 +1701,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static Texture2D? LoadIcon(SecondaryResourceDefinition definition)
         {
             var path = definition.LargeIconPath ?? definition.SmallIconPath;
-            return string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
+            return string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path.Trim());
         }
 
         private static string ResolveTitle(SecondaryResourceDefinition definition)

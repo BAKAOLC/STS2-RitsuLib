@@ -132,21 +132,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     <para xml:lang="en">Gets the effective localization table.</para>
         ///     <para xml:lang="zh-CN">获取实际使用的本地化表。</para>
         /// </summary>
-        public string EffectiveLocTable => string.IsNullOrWhiteSpace(LocTable) ? DefaultLocTable : LocTable;
+        public string EffectiveLocTable => string.IsNullOrWhiteSpace(LocTable) ? DefaultLocTable : LocTable.Trim();
 
         /// <summary>
         ///     <para xml:lang="en">Gets the effective display-title localization key.</para>
         ///     <para xml:lang="zh-CN">获取实际使用的显示标题本地化键。</para>
         /// </summary>
         public string EffectiveTitleKey =>
-            string.IsNullOrWhiteSpace(TitleKey) ? $"{Id}.title" : TitleKey;
+            string.IsNullOrWhiteSpace(TitleKey) ? $"{Id}.title" : TitleKey.Trim();
 
         /// <summary>
         ///     <para xml:lang="en">Gets the effective hover-tip description localization key.</para>
         ///     <para xml:lang="zh-CN">获取实际使用的悬浮提示说明本地化键。</para>
         /// </summary>
         public string EffectiveDescriptionKey =>
-            string.IsNullOrWhiteSpace(DescriptionKey) ? $"{Id}.description" : DescriptionKey;
+            string.IsNullOrWhiteSpace(DescriptionKey) ? $"{Id}.description" : DescriptionKey.Trim();
 
         /// <summary>
         ///     <para xml:lang="en">Gets the optional small icon path used in text and card UI.</para>
