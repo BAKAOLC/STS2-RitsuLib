@@ -60,7 +60,7 @@ namespace STS2RitsuLib.Compat
 
         private static bool IsAllZero(Version v)
         {
-            return v.Major == 0 && v is { Minor: 0, Build: 0, Revision: 0 };
+            return v.Major == 0 && v.Minor == 0 && v.Build <= 0 && v.Revision <= 0;
         }
 
         private static bool TryCaptureVersionLabel(
