@@ -1,5 +1,5 @@
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Models.Characters;
+using MegaCrit.Sts2.Core.Saves;
 
 namespace STS2RitsuLib.Saves
 {
@@ -19,8 +19,8 @@ namespace STS2RitsuLib.Saves
 
             RitsuLibFramework.Logger.Warn(
                 "[Saves] Run history references character not in ModelDb (mod likely unloaded): " + id +
-                ". Using Ironclad for preview UI.");
-            return ModelDb.Character<Ironclad>();
+                ". Using DeprecatedCharacter for preview UI.");
+            return SaveUtil.CharacterOrDeprecated(id);
         }
 
         internal static ActModel ActForRunHistory(ModelId id)
@@ -31,8 +31,8 @@ namespace STS2RitsuLib.Saves
 
             RitsuLibFramework.Logger.Warn(
                 "[Saves] Run history references act not in ModelDb (mod likely unloaded): " + id +
-                ". Using first vanilla act for section header.");
-            return ModelDb.Acts.First();
+                ". Using DeprecatedAct for section header.");
+            return SaveUtil.ActOrDeprecated(id);
         }
     }
 }
