@@ -125,6 +125,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public static class SecondaryResourceUiRuntime
     {
+        private static readonly Lock CallbackFailureSync = new();
+        private static readonly HashSet<Delegate> LoggedCallbackFailures = [];
+
         private static readonly AttachedState<Node, List<Action<Player?>>> CombatUpdaters = new(() => []);
 
         private static readonly AttachedState<Node, List<Action<SecondaryResourceChangeContext>>> CombatChangeHandlers =
@@ -298,13 +301,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             CombatHiders.GetOrCreate(parent).Add(() => HideNode(node));
             CombatUpdaters.GetOrCreate(parent).Add(player =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                update(new(
+                var context = new SecondaryResourceCombatUiContext<TParent, TNode>(
                     parent,
                     node,
                     player,
                     definitions,
-                    SecondaryResourceVisibility.GetCombatUiDefinitions(player, true)));
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(player, true));
+                InvokeCallback(update, "combat UI update", () => update(context));
             });
 
             if (changed == null)
@@ -312,13 +319,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             CombatChangeHandlers.GetOrCreate(parent).Add(change =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                changed(new(
+                var context = new SecondaryResourceCombatUiChangeContext<TParent, TNode>(
                     parent,
                     node,
                     change,
                     definitions,
-                    SecondaryResourceVisibility.GetCombatUiDefinitions(change.Player, true)));
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(change.Player, true));
+                InvokeCallback(changed, "combat UI change", () => changed(context));
             });
         }
 
@@ -331,12 +342,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             CardUpdaters.GetOrCreate(parent).Add((card, pileType, previewMode) =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var plan = SecondaryResourcePaymentResolver.Plan(
                     card,
                     SecondaryResourcePaymentFreeMode.FromCardCostScope(
                         FreePlayBindingRegistry.ResolveCardCostScopeForUpcomingPlay(card)));
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                update(new(
+                var context = new SecondaryResourceCardUiContext<TParent, TNode>(
                     parent,
                     node,
                     card,
@@ -344,7 +358,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     pileType,
                     previewMode,
                     definitions,
-                    SecondaryResourceVisibility.GetCardUiDefinitions(card, plan)));
+                    SecondaryResourceVisibility.GetCardUiDefinitions(card, plan));
+                InvokeCallback(update, "card UI update", () => update(context));
             });
         }
 
@@ -357,20 +372,43 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             MultiplayerPlayerStateHiders.GetOrCreate(parent).Add(() => HideNode(node));
             MultiplayerPlayerStateUpdaters.GetOrCreate(parent).Add(() =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                update(new(
+                var context = new SecondaryResourceMultiplayerPlayerStateUiContext<TNode>(
                     parent,
                     node,
                     parent.Player,
                     definitions,
-                    SecondaryResourceVisibility.GetCombatUiDefinitions(parent.Player)));
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(parent.Player));
+                InvokeCallback(update, "multiplayer player-state UI update", () => update(context));
             });
         }
 
         private static void HideNode(Node node)
         {
-            if (node is CanvasItem canvasItem)
+            if (GodotObject.IsInstanceValid(node) && node is CanvasItem canvasItem)
                 canvasItem.Visible = false;
+        }
+
+        private static void InvokeCallback(Delegate callback, string surface, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                lock (CallbackFailureSync)
+                {
+                    if (!LoggedCallbackFailures.Add(callback))
+                        return;
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[SecondaryResource] Registered {surface} callback failed: {ex}");
+            }
         }
     }
 
