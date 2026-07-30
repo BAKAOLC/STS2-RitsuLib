@@ -114,7 +114,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong[] seededPeers = [];
             lock (Gate)
             {
-                if (IsSemanticallySameService(_currentNetService, netService))
+                if (ReferenceEquals(_currentNetService, netService))
                     return;
 
                 _epoch++;
@@ -444,15 +444,5 @@ namespace STS2RitsuLib.Networking.Sidecar
             ];
         }
 
-        private static bool IsSemanticallySameService(INetGameService? a, INetGameService? b)
-        {
-            if (ReferenceEquals(a, b))
-                return true;
-
-            if (a is null || b is null)
-                return false;
-
-            return a.Type == b.Type && a.NetId == b.NetId;
-        }
     }
 }
