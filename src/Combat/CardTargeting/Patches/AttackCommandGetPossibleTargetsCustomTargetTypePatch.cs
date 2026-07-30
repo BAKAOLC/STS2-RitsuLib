@@ -6,14 +6,19 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Replaces <see cref="AttackCommand.GetPossibleTargets" /> result when custom filtered targets are attached.
-    ///     当攻击命令附加了自定义筛选目标时，替换 <see cref="AttackCommand.GetPossibleTargets" /> 的返回结果。
+    ///     <para xml:lang="en">
+    ///         Replaces the result of <see cref="AttackCommand.GetPossibleTargets" /> when custom filtered targets are
+    ///         attached.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当攻击命令附加了自定义筛选目标时，替换 <see cref="AttackCommand.GetPossibleTargets" /> 的返回结果。
+    ///     </para>
     /// </summary>
     internal sealed class AttackCommandGetPossibleTargetsCustomTargetTypePatch : IPatchMethod
     {
         /// <summary>
-        ///     Per-command custom target storage.
-        ///     按命令实例保存的自定义目标集合。
+        ///     <para xml:lang="en">Stores custom targets for each command instance.</para>
+        ///     <para xml:lang="zh-CN">按命令实例保存自定义目标集合。</para>
         /// </summary>
         internal static readonly ConditionalWeakTable<AttackCommand, StrongBox<IReadOnlyList<Creature>>>
             CustomTargets = new();

@@ -5,21 +5,22 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Combat.HandSize
 {
     /// <summary>
-    ///     Calculator for effective max-hand-size values.
-    ///     有效最大手牌数值的计算器。
+    ///     <para xml:lang="en">Calculates effective maximum hand sizes.</para>
+    ///     <para xml:lang="zh-CN">计算实际手牌上限。</para>
     /// </summary>
     public static class MaxHandSizeCalculator
     {
         private const int DefaultMaxHandSize = 10;
 
         /// <summary>
-        ///     Calculates the effective max hand size for <paramref name="player" />.
-        ///     Uses BaseLib value as the base amount when available, then applies
-        ///     RitsuLib hook-listener modifiers exactly once.
-        ///     计算 <paramref name="player" /> 的有效最大手牌数。
-        ///     可用时使用 BaseLib 值作为基础数值，然后只应用一次
-        ///     RitsuLib hook-listener modifier。
-        ///     RitsuLib hook-listener modifier。
+        ///     <para xml:lang="en">
+        ///         Calculates the effective maximum hand size for <paramref name="player" />. Uses BaseLib's value as
+        ///         the base when available, then applies RitsuLib hook-listener modifiers once.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         计算 <paramref name="player" /> 的实际手牌上限。BaseLib 的值可用时以其为基础，然后应用一次
+        ///         RitsuLib 钩子监听器修正。
+        ///     </para>
         /// </summary>
         public static int Calculate(Player player)
         {
@@ -30,8 +31,8 @@ namespace STS2RitsuLib.Combat.HandSize
         }
 
         /// <summary>
-        ///     Applies combat hook-listener modifiers on top of an existing base amount.
-        ///     在现有基础数值上应用战斗 hook-listener modifier。
+        ///     <para xml:lang="en">Applies combat hook-listener modifiers to an existing base hand size.</para>
+        ///     <para xml:lang="zh-CN">在现有基础手牌上限上应用战斗钩子监听器修正。</para>
         /// </summary>
         public static int ApplyHookListenerModifiers(Player player, int currentMaxHandSize)
         {

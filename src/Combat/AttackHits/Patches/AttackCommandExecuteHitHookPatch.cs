@@ -13,9 +13,13 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Combat.AttackHits.Patches
 {
     /// <summary>
-    ///     Redirects the per-hit damage call inside <see cref="AttackCommand.Execute" /> through
-    ///     <see cref="AttackHitHook" />.
-    ///     将 <see cref="AttackCommand.Execute" /> 内每段的伤害调用重定向到 <see cref="AttackHitHook" />。
+    ///     <para xml:lang="en">
+    ///         Redirects each damage call in <see cref="AttackCommand.Execute" /> through <see cref="AttackHitHook" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="AttackCommand.Execute" /> 中每次命中的伤害调用重定向到
+    ///         <see cref="AttackHitHook" />。
+    ///     </para>
     /// </summary>
     internal sealed class AttackCommandExecuteHitHookPatch : IPatchMethod
     {

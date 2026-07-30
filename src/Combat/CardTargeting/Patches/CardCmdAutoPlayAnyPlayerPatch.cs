@@ -14,12 +14,16 @@ using STS2RitsuLib.Scaffolding.Godot;
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Fixes <see cref="CardCmd.AutoPlay" /> for <see cref="TargetType.AnyPlayer" />.
-    ///     Vanilla only resolves random targets for AnyEnemy and AnyAlly when target is null.
-    ///     This patch adds the same RNG fallback for AnyPlayer (pick a random living player).
-    ///     修复 <see cref="CardCmd.AutoPlay" /> 对 <see cref="TargetType.AnyPlayer" /> 的处理。
-    ///     原版只会在目标为 null 时为 AnyEnemy 和 AnyAlly 解析随机目标。
-    ///     此补丁为 AnyPlayer 添加相同的 RNG 后备逻辑（随机选择一名存活玩家）。
+    ///     <para xml:lang="en">
+    ///         Makes <see cref="CardCmd.AutoPlay" /> choose a random living player for
+    ///         <see cref="TargetType.AnyPlayer" /> when no target is supplied, matching the vanilla fallback for
+    ///         <see cref="TargetType.AnyEnemy" /> and <see cref="TargetType.AnyAlly" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当未提供目标时，使 <see cref="CardCmd.AutoPlay" /> 为 <see cref="TargetType.AnyPlayer" />
+    ///         随机选择一名存活玩家，与原版对 <see cref="TargetType.AnyEnemy" /> 和
+    ///         <see cref="TargetType.AnyAlly" /> 的回退行为一致。
+    ///     </para>
     /// </summary>
     internal sealed class CardCmdAutoPlayAnyPlayerPatch : IPatchMethod
     {
@@ -51,9 +55,13 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Resolves a random legal target for custom single-target cards when <see cref="CardCmd.AutoPlay" /> is called
-    ///     without an explicit target.
-    ///     当 <see cref="CardCmd.AutoPlay" /> 未传入明确目标时，为自定义单体目标卡牌随机解析一个合法目标。
+    ///     <para xml:lang="en">
+    ///         Chooses a random valid target for a custom single-target card when <see cref="CardCmd.AutoPlay" /> is
+    ///         called without an explicit target.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当调用 <see cref="CardCmd.AutoPlay" /> 时未提供明确目标，为自定义单体目标卡牌随机选择一个有效目标。
+    ///     </para>
     /// </summary>
     internal sealed class CardCmdAutoPlayCustomSingleTargetPatch : IPatchMethod
     {

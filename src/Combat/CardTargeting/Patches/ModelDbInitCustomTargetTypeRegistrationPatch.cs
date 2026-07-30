@@ -5,8 +5,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Registers built-in custom target predicates after <see cref="ModelDb.Init" />.
-    ///     在 <see cref="ModelDb.Init" /> 完成后注册内置自定义目标谓词。
+    ///     <para xml:lang="en">
+    ///         Registers the built-in custom target predicates after <see cref="ModelDb.Init" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="ModelDb.Init" /> 完成后注册内置的自定义目标谓词。
+    ///     </para>
     /// </summary>
     internal sealed class ModelDbInitCustomTargetTypeRegistrationPatch : IPatchMethod
     {

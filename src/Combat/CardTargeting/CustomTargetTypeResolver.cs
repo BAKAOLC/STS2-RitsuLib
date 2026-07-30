@@ -5,7 +5,8 @@ using MegaCrit.Sts2.Core.Entities.Players;
 namespace STS2RitsuLib.Combat.CardTargeting
 {
     /// <summary>
-    ///     Unified custom TargetType lookup across RitsuLib and compatible external registries.
+    ///     <para xml:lang="en">Resolves custom target types from RitsuLib and compatible external registries.</para>
+    ///     <para xml:lang="zh-CN">从 RitsuLib 及兼容的外部注册表中解析自定义目标类型。</para>
     /// </summary>
     internal static class CustomTargetTypeResolver
     {

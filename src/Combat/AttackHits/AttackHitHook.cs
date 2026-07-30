@@ -15,14 +15,14 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Combat.AttackHits
 {
     /// <summary>
-    ///     Dispatches per-hit attack hooks to game hook listeners and attached model capabilities.
-    ///     将每段攻击 hook 分发给游戏 hook listener 和附加的模型 capability。
+    ///     <para xml:lang="en">Dispatches per-hit attack hooks to game hook listeners and attached model capabilities.</para>
+    ///     <para xml:lang="zh-CN">将每次攻击命中钩子分发给游戏钩子监听器和附加的模型能力。</para>
     /// </summary>
     public static class AttackHitHook
     {
         /// <summary>
-        ///     Wrapper used by the <c>AttackCommand.Execute</c> transpiler.
-        ///     由 <c>AttackCommand.Execute</c> 转译器调用的包装器。
+        ///     <para xml:lang="en">Executes damage with per-hit hooks for the <c>AttackCommand.Execute</c> transpiler.</para>
+        ///     <para xml:lang="zh-CN">供 <c>AttackCommand.Execute</c> 指令转换器调用，在伤害前后运行单次命中钩子。</para>
         /// </summary>
         public static Task<IEnumerable<DamageResult>> DamageWithAttackHitHooks(
             PlayerChoiceContext choiceContext,
@@ -92,8 +92,8 @@ namespace STS2RitsuLib.Combat.AttackHits
         }
 
         /// <summary>
-        ///     Runs before-hit hooks.
-        ///     运行前置命中 hook。
+        ///     <para xml:lang="en">Runs before-hit hooks.</para>
+        ///     <para xml:lang="zh-CN">运行前置命中钩子。</para>
         /// </summary>
         public static async Task BeforeAttackHit(AttackHitContext context)
         {
@@ -102,8 +102,8 @@ namespace STS2RitsuLib.Combat.AttackHits
         }
 
         /// <summary>
-        ///     Runs after-hit hooks.
-        ///     运行后置命中 hook。
+        ///     <para xml:lang="en">Runs after-hit hooks.</para>
+        ///     <para xml:lang="zh-CN">运行后置命中钩子。</para>
         /// </summary>
         public static async Task AfterAttackHit(AttackHitContext context)
         {

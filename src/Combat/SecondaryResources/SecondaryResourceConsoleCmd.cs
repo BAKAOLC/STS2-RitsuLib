@@ -7,8 +7,8 @@ using STS2RitsuLib.Diagnostics.DevConsole;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Dev-console command for inspecting and mutating secondary resources.
-    ///     用于查看和修改次级资源的开发控制台指令。
+    ///     <para xml:lang="en">Provides a developer-console command for inspecting and changing secondary resources.</para>
+    ///     <para xml:lang="zh-CN">提供用于查看和修改次级资源的开发者控制台命令。</para>
     /// </summary>
     public sealed class SecondaryResourceConsoleCmd : AbstractConsoleCmd
     {

@@ -1430,8 +1430,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Displays multiple secondary-resource counters in a built-in horizontal row.</para>
-    ///     <para xml:lang="zh-CN">在内置水平行中显示多个次级资源计数器。</para>
+    ///     <para xml:lang="en">Displays multiple secondary-resource counters in a built-in horizontal layout.</para>
+    ///     <para xml:lang="zh-CN">使用内置横向布局显示多个次级资源计数器。</para>
     /// </summary>
     public partial class NSecondaryResourceCounterRow : Control
     {
@@ -1451,9 +1451,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets or sets whether the row refreshes when the bound player's secondary-resource state changes.
+        ///         Gets or sets whether the layout refreshes when the bound player's secondary-resource state changes.
         ///     </para>
-        ///     <para xml:lang="zh-CN">获取或设置已绑定玩家的次级资源状态变化时是否自动刷新该行。</para>
+        ///     <para xml:lang="zh-CN">获取或设置已绑定玩家的次级资源状态变化时是否自动刷新该布局。</para>
         /// </summary>
         public bool AutoRefresh
         {
@@ -1468,8 +1468,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Applies the row style to its layout and existing counters.</para>
-        ///     <para xml:lang="zh-CN">将行样式应用于布局及已有计数器。</para>
+        ///     <para xml:lang="en">Applies the style to the layout and its existing counters.</para>
+        ///     <para xml:lang="zh-CN">将样式应用于布局及已有计数器。</para>
         /// </summary>
         public void Configure(SecondaryResourceCounterStyle? style = null)
         {
@@ -1481,9 +1481,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Binds the row to a player and resource definitions for automatic or manual refresh.
+        ///         Binds the layout to a player and resource definitions for automatic or manual refresh.
         ///     </para>
-        ///     <para xml:lang="zh-CN">将该行绑定到一名玩家及一组资源定义，以便自动或手动刷新。</para>
+        ///     <para xml:lang="zh-CN">将该布局绑定到一名玩家及一组资源定义，以便自动或手动刷新。</para>
         /// </summary>
         public void Bind(
             Player? player,

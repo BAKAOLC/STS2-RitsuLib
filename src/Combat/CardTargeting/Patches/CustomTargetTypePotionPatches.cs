@@ -23,8 +23,8 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Shows "throw" for potions that use custom creature-target types.
-    ///     对使用自定义生物目标类型的药水显示“投掷”。
+    ///     <para xml:lang="en">Shows “throw” for potions that use custom creature-target types.</para>
+    ///     <para xml:lang="zh-CN">为使用自定义生物目标类型的药水显示“投掷”。</para>
     /// </summary>
     internal sealed class NPotionPopupCustomTargetLabelPatch : IPatchMethod
     {
@@ -59,8 +59,12 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Routes custom single-target potions into creature targeting instead of self-use.
-    ///     将自定义单体目标药水路由到生物选目标流程，而不是自用。
+    ///     <para xml:lang="en">
+    ///         Routes custom single-target potions through creature selection instead of using them on their owner.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将自定义单体目标药水路由到生物选目标流程，而不是对其所有者使用。
+    ///     </para>
     /// </summary>
     internal sealed class NPotionHolderUsePotionCustomSingleTargetPatch : IPatchMethod
     {
@@ -168,8 +172,10 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 
 #if STS2_AT_LEAST_0_106_0
     /// <summary>
-    ///     Validates custom single-target potion targets through their registered predicate.
-    ///     通过注册谓词校验自定义单体目标药水的目标。
+    ///     <para xml:lang="en">
+    ///         Validates targets for custom single-target potions with their registered predicate.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">使用已注册的谓词验证自定义单体目标药水的目标。</para>
     /// </summary>
     internal sealed class PotionModelIsValidTargetCustomTargetTypePatch : IPatchMethod
     {
@@ -207,8 +213,12 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
 #endif
 
     /// <summary>
-    ///     Uses custom multi-target predicates to place potion throw VFX over the affected creature group.
-    ///     使用自定义群体目标谓词，将药水投掷特效定位到实际受影响的生物集合中心。
+    ///     <para xml:lang="en">
+    ///         Uses custom multi-target predicates to place the potion throw effect over the affected creatures.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用自定义群体目标谓词，将药水投掷特效定位到实际受影响的生物集合中心。
+    ///     </para>
     /// </summary>
     internal sealed class PotionModelOnUseWrapperCustomMultiTargetVfxPatch : IPatchMethod
     {

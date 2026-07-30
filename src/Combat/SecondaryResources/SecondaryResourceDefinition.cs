@@ -99,7 +99,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">Gets the persistence scope in run saves.</para>
-        ///     <para xml:lang="zh-CN">获取在跑局存档中的持久化范围。</para>
+        ///     <para xml:lang="zh-CN">获取在一局游戏存档中的持久化范围。</para>
         /// </summary>
         public SecondaryResourcePersistencePolicy PersistencePolicy { get; init; }
 

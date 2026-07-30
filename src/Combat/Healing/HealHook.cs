@@ -3,17 +3,21 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Combat.Healing
 {
     /// <summary>
-    ///     Dispatches creature healing amount hooks to model, capability, and registered global listeners.
-    ///     将生物治疗数值 hook 分发给模型、capability 和已注册的全局监听器。
+    ///     <para xml:lang="en">Dispatches healing-amount hooks to models, capabilities, and registered global listeners.</para>
+    ///     <para xml:lang="zh-CN">将治疗量钩子分发给模型、模型能力和已注册的全局监听器。</para>
     /// </summary>
     public static class HealHook
     {
         private static readonly ModelHookListenerRegistry<IHealHookListener> GlobalListeners = new();
 
         /// <summary>
-        ///     Registers a process-wide listener. Model-owned effects should usually implement
-        ///     <see cref="IHealHookListener" /> directly.
-        ///     注册一个进程级监听器。模型所属效果通常应直接实现 <see cref="IHealHookListener" />。
+        ///     <para xml:lang="en">
+        ///         Registers a process-wide listener. Effects owned by a model should normally implement
+        ///         <see cref="IHealHookListener" /> directly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册进程级监听器。由模型持有的效果通常应直接实现 <see cref="IHealHookListener" />。
+        ///     </para>
         /// </summary>
         public static void RegisterGlobalListener(IHealHookListener listener)
         {
@@ -21,8 +25,8 @@ namespace STS2RitsuLib.Combat.Healing
         }
 
         /// <summary>
-        ///     Applies healing amount hooks.
-        ///     应用治疗数值 hook。
+        ///     <para xml:lang="en">Applies healing-amount hooks and clamps the result to zero or greater.</para>
+        ///     <para xml:lang="zh-CN">应用治疗量钩子，并将结果限制为不小于零。</para>
         /// </summary>
         public static decimal ModifyAmount(HealContext context, decimal amount)
         {

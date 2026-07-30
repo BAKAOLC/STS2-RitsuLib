@@ -6,8 +6,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.Healing.Patches
 {
     /// <summary>
-    ///     Applies RitsuLib healing amount hooks before <see cref="CreatureCmd.Heal" /> resolves.
-    ///     在 <see cref="CreatureCmd.Heal" /> 结算前应用 RitsuLib 治疗数值 hook。
+    ///     <para xml:lang="en">Applies RitsuLib healing-amount hooks before <see cref="CreatureCmd.Heal" /> resolves.</para>
+    ///     <para xml:lang="zh-CN">在 <see cref="CreatureCmd.Heal" /> 结算前应用 RitsuLib 治疗量钩子。</para>
     /// </summary>
     internal sealed class CreatureCmdHealHookPatch : IPatchMethod
     {

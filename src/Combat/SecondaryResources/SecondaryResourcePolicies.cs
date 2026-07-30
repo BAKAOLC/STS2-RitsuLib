@@ -202,7 +202,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     {
         /// <summary>
         ///     <para xml:lang="en">Does not write the resource to run saves.</para>
-        ///     <para xml:lang="zh-CN">不将资源写入跑局存档。</para>
+        ///     <para xml:lang="zh-CN">不将资源写入一局游戏的存档。</para>
         /// </summary>
         None = 0,
 
@@ -212,14 +212,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///         synchronization excludes it.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         仅在显式请求的战斗范围快照中包含资源；常规跑局存档同步会排除该资源。
+        ///         仅在显式请求的战斗范围快照中包含资源；常规的一局游戏存档同步会排除该资源。
         ///     </para>
         /// </summary>
         Combat = 1,
 
         /// <summary>
         ///     <para xml:lang="en">Persists the resource across combats in the current run.</para>
-        ///     <para xml:lang="zh-CN">使资源在当前跑局中跨战斗持久化。</para>
+        ///     <para xml:lang="zh-CN">使资源在当前一局游戏中跨战斗持久化。</para>
         /// </summary>
         Run = 2,
     }

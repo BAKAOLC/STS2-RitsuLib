@@ -9,17 +9,21 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Combat.PlayerResources
 {
     /// <summary>
-    ///     Dispatches built-in player resource hooks to model, capability, and registered global listeners.
-    ///     将内建玩家资源 hook 分发给模型、capability 和已注册的全局监听器。
+    ///     <para xml:lang="en">Dispatches built-in player-resource hooks to models, capabilities, and global listeners.</para>
+    ///     <para xml:lang="zh-CN">将游戏内置玩家资源钩子分发给模型、模型能力和全局监听器。</para>
     /// </summary>
     public static class PlayerResourceHook
     {
         private static readonly ModelHookListenerRegistry<IPlayerResourceHookListener> GlobalListeners = new();
 
         /// <summary>
-        ///     Registers a process-wide listener. Model-owned effects should usually implement
-        ///     <see cref="IPlayerResourceHookListener" /> directly.
-        ///     注册一个进程级监听器。模型所属效果通常应直接实现 <see cref="IPlayerResourceHookListener" />。
+        ///     <para xml:lang="en">
+        ///         Registers a process-wide listener. Effects owned by a model should normally implement
+        ///         <see cref="IPlayerResourceHookListener" /> directly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册进程级监听器。由模型持有的效果通常应直接实现 <see cref="IPlayerResourceHookListener" />。
+        ///     </para>
         /// </summary>
         public static void RegisterGlobalListener(IPlayerResourceHookListener listener)
         {
@@ -27,8 +31,8 @@ namespace STS2RitsuLib.Combat.PlayerResources
         }
 
         /// <summary>
-        ///     Runs after-energy-gained hooks.
-        ///     运行能量获得后 hook。
+        ///     <para xml:lang="en">Runs after-energy-gained hooks.</para>
+        ///     <para xml:lang="zh-CN">运行获得能量后的钩子。</para>
         /// </summary>
         public static async Task AfterEnergyGained(PlayerResourceGainContext context)
         {
@@ -37,8 +41,8 @@ namespace STS2RitsuLib.Combat.PlayerResources
         }
 
         /// <summary>
-        ///     Runs after-stars-gained hooks.
-        ///     运行辉星获得后 hook。
+        ///     <para xml:lang="en">Runs after-stars-gained hooks.</para>
+        ///     <para xml:lang="zh-CN">运行获得辉星后的钩子。</para>
         /// </summary>
         public static async Task AfterStarsGained(PlayerResourceGainContext context)
         {

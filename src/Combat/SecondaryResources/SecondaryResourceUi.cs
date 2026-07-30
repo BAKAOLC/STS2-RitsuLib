@@ -111,9 +111,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Provides update data for a secondary-resource node attached to a multiplayer player-state row.
+    ///         Provides update data for a secondary-resource node attached to a multiplayer player-state display.
     ///     </para>
-    ///     <para xml:lang="zh-CN">提供附加到多人玩家状态行的次级资源节点所需的更新数据。</para>
+    ///     <para xml:lang="zh-CN">提供附加到多人玩家状态栏的次级资源节点所需的更新数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceMultiplayerPlayerStateUiContext<TNode>(
         NMultiplayerPlayerState Parent,
@@ -259,9 +259,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Updates every secondary-resource UI attachment on one multiplayer player-state row.
+        ///         Updates every secondary-resource UI attachment on one multiplayer player-state display.
         ///     </para>
-        ///     <para xml:lang="zh-CN">更新一个多人玩家状态行上的所有次级资源界面挂载项。</para>
+        ///     <para xml:lang="zh-CN">更新一个多人玩家状态栏上的所有次级资源界面挂载项。</para>
         /// </summary>
         public static void UpdateMultiplayerPlayerStateUi(NMultiplayerPlayerState parent)
         {
@@ -282,9 +282,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Marks whether a multiplayer player-state row is currently displaying combat resources.
+        ///         Marks whether a multiplayer player-state display is currently showing combat resources.
         ///     </para>
-        ///     <para xml:lang="zh-CN">标记多人玩家状态行当前是否应显示战斗资源。</para>
+        ///     <para xml:lang="zh-CN">标记多人玩家状态栏当前是否应显示战斗资源。</para>
         /// </summary>
         public static void SetMultiplayerPlayerStateCombatActive(NMultiplayerPlayerState parent, bool active)
         {
@@ -296,9 +296,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Hides every secondary-resource UI attachment on one multiplayer player-state row.
+        ///         Hides every secondary-resource UI attachment on one multiplayer player-state display.
         ///     </para>
-        ///     <para xml:lang="zh-CN">隐藏一个多人玩家状态行上的所有次级资源界面挂载项。</para>
+        ///     <para xml:lang="zh-CN">隐藏一个多人玩家状态栏上的所有次级资源界面挂载项。</para>
         /// </summary>
         public static void HideMultiplayerPlayerStateUi(NMultiplayerPlayerState parent)
         {
@@ -565,8 +565,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a secondary-resource UI child for each multiplayer player-state row.</para>
-        ///     <para xml:lang="zh-CN">为每个多人玩家状态行注册次级资源界面子节点。</para>
+        ///     <para xml:lang="en">Registers a secondary-resource UI child for each multiplayer player-state display.</para>
+        ///     <para xml:lang="zh-CN">为每个多人玩家状态栏注册次级资源界面子节点。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterMultiplayerPlayerStateUi<TNode>(
             string localId,

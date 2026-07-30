@@ -45,7 +45,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///         are included only when <paramref name="includeCombatScoped" /> is <see langword="true" />.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         创建可序列化快照。始终包含跑局范围资源；仅当 <paramref name="includeCombatScoped" /> 为
+        ///         创建可序列化快照。始终包含一局游戏范围的资源；仅当 <paramref name="includeCombatScoped" /> 为
         ///         <see langword="true" /> 时包含战斗范围资源。
         ///     </para>
         /// </summary>
@@ -67,7 +67,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">Restores registered run- and combat-scoped values into a combat.</para>
-        ///     <para xml:lang="zh-CN">将已注册的跑局范围与战斗范围资源值恢复到一场战斗中。</para>
+        ///     <para xml:lang="zh-CN">将已注册的一局游戏范围与战斗范围资源值恢复到一场战斗中。</para>
         /// </summary>
         public static void RestoreSnapshot(CombatStateLike combatState, SecondaryResourceRunSaveState snapshot)
         {

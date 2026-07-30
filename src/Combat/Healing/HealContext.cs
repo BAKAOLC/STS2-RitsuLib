@@ -9,8 +9,8 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Combat.Healing
 {
     /// <summary>
-    ///     Context for a creature healing amount modification.
-    ///     生物治疗数值修正的上下文。
+    ///     <para xml:lang="en">Provides context for modifying an amount of healing received by a creature.</para>
+    ///     <para xml:lang="zh-CN">提供修正生物所受治疗量的上下文。</para>
     /// </summary>
     public sealed class HealContext
     {
@@ -24,38 +24,38 @@ namespace STS2RitsuLib.Combat.Healing
         }
 
         /// <summary>
-        ///     Creature receiving healing.
-        ///     接受治疗的生物。
+        ///     <para xml:lang="en">Gets the creature receiving healing.</para>
+        ///     <para xml:lang="zh-CN">获取接受治疗的生物。</para>
         /// </summary>
         public Creature Creature { get; }
 
         /// <summary>
-        ///     Amount passed to <c>CreatureCmd.Heal</c> before RitsuLib listeners modify it.
-        ///     RitsuLib 监听器修正前传给 <c>CreatureCmd.Heal</c> 的数值。
+        ///     <para xml:lang="en">Gets the amount passed to <c>CreatureCmd.Heal</c> before RitsuLib listeners modify it.</para>
+        ///     <para xml:lang="zh-CN">获取 RitsuLib 监听器修正前传给 <c>CreatureCmd.Heal</c> 的数值。</para>
         /// </summary>
         public decimal OriginalAmount { get; }
 
         /// <summary>
-        ///     Whether the vanilla heal animation argument is enabled for this heal command.
-        ///     此治疗命令的原版治疗动画参数是否启用。
+        ///     <para xml:lang="en">Gets whether this heal command requests the vanilla healing animation.</para>
+        ///     <para xml:lang="zh-CN">获取此治疗命令是否请求播放原版治疗动画。</para>
         /// </summary>
         public bool PlayAnim { get; }
 
         /// <summary>
-        ///     Combat state containing the creature, when the heal happens in combat.
-        ///     包含该生物的战斗状态；非战斗治疗时可能为空。
+        ///     <para xml:lang="en">Gets the combat containing the creature, or <see langword="null" /> outside combat.</para>
+        ///     <para xml:lang="zh-CN">获取生物所在的战斗；非战斗治疗时为 <see langword="null" />。</para>
         /// </summary>
         public CombatStateLike? CombatState { get; }
 
         /// <summary>
-        ///     Run state associated with this heal, when available.
-        ///     与本次治疗关联的跑局状态；不可用时为空。
+        ///     <para xml:lang="en">Gets the run associated with this healing, if available.</para>
+        ///     <para xml:lang="zh-CN">获取与此次治疗关联的局内状态（如果有）。</para>
         /// </summary>
         public IRunState? RunState { get; }
 
         /// <summary>
-        ///     Remaining HP this creature can currently recover.
-        ///     该生物当前还能恢复的生命值。
+        ///     <para xml:lang="en">Gets the amount of HP the creature can currently recover.</para>
+        ///     <para xml:lang="zh-CN">获取该生物当前可恢复的生命值。</para>
         /// </summary>
         public decimal MissingHp => Math.Max(0m, Creature.MaxHp - Creature.CurrentHp);
     }

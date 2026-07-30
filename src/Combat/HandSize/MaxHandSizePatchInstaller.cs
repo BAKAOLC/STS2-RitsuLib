@@ -21,8 +21,8 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Combat.HandSize
 {
     /// <summary>
-    ///     Installs RitsuLib max-hand-size patches.
-    ///     安装 RitsuLib 最大手牌数补丁。
+    ///     <para xml:lang="en">Installs RitsuLib maximum-hand-size patches.</para>
+    ///     <para xml:lang="zh-CN">安装 RitsuLib 手牌上限补丁。</para>
     /// </summary>
     internal static class MaxHandSizePatchInstaller
     {
