@@ -151,10 +151,13 @@ namespace STS2RitsuLib.Cards.FreePlay
         public static void MarkCurrentPlayFree(CardPlay play)
         {
             ArgumentNullException.ThrowIfNull(play);
-            PlayStates.Set(play, new()
+            PlayStates.Update(play, state =>
             {
-                IsResolved = true,
-                Resolution = new(false, true, false),
+                state.Resolution = state.IsResolved
+                    ? state.Resolution with { IsCardBindingFree = true }
+                    : new(play.IsAutoPlay, true, false);
+                state.IsResolved = true;
+                return state;
             });
         }
 
@@ -223,17 +226,12 @@ namespace STS2RitsuLib.Cards.FreePlay
                 return new(false, false);
 
             var combatState = ResolveCombatState(card);
-            var isFullFree = state.ThisTurnCharges > 0 ||
-                             state.NextPlayCharges > 0 ||
-                             (state.FreeThisCombatState != null &&
-                              ReferenceEquals(state.FreeThisCombatState, combatState));
-            var isBaseCostFree = isFullFree ||
-                                 state.BaseCostsFreeNextPlayCharges > 0 ||
+            var isBaseCostFree = state.BaseCostsFreeNextPlayCharges > 0 ||
                                  state.BaseCostsFreeThisTurnCharges > 0 ||
                                  state.BaseCostsFreeForRestOfTurnCharges > 0 ||
                                  (state.BaseCostsFreeThisCombatState != null &&
                                   ReferenceEquals(state.BaseCostsFreeThisCombatState, combatState));
-            return new(isBaseCostFree, isFullFree);
+            return new(isBaseCostFree, false);
         }
 
         /// <summary>
@@ -255,10 +253,8 @@ namespace STS2RitsuLib.Cards.FreePlay
             var changed = false;
             CardStates.Update(card, state =>
             {
-                changed = state.ThisTurnCharges > 0 ||
-                          state.BaseCostsFreeThisTurnCharges > 0 ||
+                changed = state.BaseCostsFreeThisTurnCharges > 0 ||
                           state.BaseCostsFreeForRestOfTurnCharges > 0;
-                state.ThisTurnCharges = 0;
                 state.BaseCostsFreeThisTurnCharges = 0;
                 state.BaseCostsFreeForRestOfTurnCharges = 0;
                 return state;
@@ -285,12 +281,8 @@ namespace STS2RitsuLib.Cards.FreePlay
             var changed = false;
             CardStates.Update(card, state =>
             {
-                changed = state.ThisTurnCharges > 0 ||
-                          state.NextPlayCharges > 0 ||
-                          state.BaseCostsFreeNextPlayCharges > 0 ||
+                changed = state.BaseCostsFreeNextPlayCharges > 0 ||
                           state.BaseCostsFreeThisTurnCharges > 0;
-                state.ThisTurnCharges = 0;
-                state.NextPlayCharges = Math.Max(0, state.NextPlayCharges - 1);
                 state.BaseCostsFreeNextPlayCharges = Math.Max(0, state.BaseCostsFreeNextPlayCharges - 1);
                 state.BaseCostsFreeThisTurnCharges = 0;
                 return state;
@@ -314,9 +306,6 @@ namespace STS2RitsuLib.Cards.FreePlay
             var state = CardStates.GetOrCreate(card);
             var combatState = ResolveCombatState(card);
 
-            if (state.FreeThisCombatState != null && ReferenceEquals(state.FreeThisCombatState, combatState))
-                return true;
-
             if (state.BaseCostsFreeThisCombatState != null &&
                 ReferenceEquals(state.BaseCostsFreeThisCombatState, combatState))
                 return true;
@@ -330,33 +319,42 @@ namespace STS2RitsuLib.Cards.FreePlay
             if (state.BaseCostsFreeNextPlayCharges > 0)
                 return true;
 
-            if (state.ThisTurnCharges > 0)
-                return true;
-
-            return state.NextPlayCharges > 0;
+            return false;
         }
 
         private static bool EvaluateRegisteredDetectors(CardPlay play)
         {
-            Func<CardPlay, bool>[] detectors;
+            KeyValuePair<string, Func<CardPlay, bool>>[] detectors;
             lock (Gate)
             {
-                detectors = [.. RegisteredDetectors.Values];
+                detectors = [.. RegisteredDetectors];
             }
 
-            return detectors.Any(detector => detector(play));
+            foreach (var (bindingId, detector) in detectors)
+            {
+                try
+                {
+                    if (detector(play))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[FreePlay] Detector '{bindingId}' failed for card '{play.Card.Id}': {ex.Message}");
+                    throw;
+                }
+            }
+
+            return false;
         }
 
         private static CombatStateLike? ResolveCombatState(CardModel card)
         {
-            return card.CombatState ?? card.Owner?.Creature?.CombatState;
+            return card.CombatState ?? (card.IsMutable ? card.Owner.Creature.CombatState : null);
         }
 
         private sealed class CardFreeBindingState
         {
-            public int ThisTurnCharges { get; set; }
-            public int NextPlayCharges { get; set; }
-            public CombatStateLike? FreeThisCombatState { get; set; }
             public int BaseCostsFreeNextPlayCharges { get; set; }
             public int BaseCostsFreeThisTurnCharges { get; set; }
             public int BaseCostsFreeForRestOfTurnCharges { get; set; }
