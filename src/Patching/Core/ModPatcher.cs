@@ -412,20 +412,30 @@ namespace STS2RitsuLib.Patching.Core
             }
 
             logger.Info($"{_logPrefix}Removing {appliedCount} applied patches...");
+            var preserveAppliedStateOnFailure = IsApplied;
+            var failureCount = 0;
 
             foreach (var patchInfo in _registeredPatches.Where(patchInfo =>
                          _patchedStatus.GetValueOrDefault(patchInfo.Id, false)))
                 try
                 {
                     var originalMethod = GetOriginalMethod(patchInfo);
-                    if (originalMethod == null) continue;
+                    if (originalMethod == null)
+                    {
+                        failureCount++;
+                        logger.ErrorNoTrace(
+                            $"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - original method unavailable");
+                        continue;
+                    }
+
                     _harmony.Unpatch(originalMethod, HarmonyPatchType.All, _harmony.Id);
                     _patchedStatus[patchInfo.Id] = false;
                     logger.Debug($"{_logPrefix}✓ Removed patch: {patchInfo.Id}");
                 }
                 catch (Exception ex)
                 {
-                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - {ex.Message}");
+                    failureCount++;
+                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - {ex}");
                 }
 
             foreach (var patchInfo in _registeredDynamicPatches.Where(patchInfo =>
@@ -438,11 +448,16 @@ namespace STS2RitsuLib.Patching.Core
                 }
                 catch (Exception ex)
                 {
-                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove dynamic patch: {patchInfo.Id} - {ex.Message}");
+                    failureCount++;
+                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove dynamic patch: {patchInfo.Id} - {ex}");
                 }
 
-            IsApplied = false;
-            logger.Info($"{_logPrefix}All patches removed");
+            IsApplied = failureCount > 0 && preserveAppliedStateOnFailure;
+            if (failureCount == 0)
+                logger.Info($"{_logPrefix}All patches removed");
+            else
+                logger.ErrorNoTrace(
+                    $"{_logPrefix}Patch removal incomplete: {failureCount} patch(es) remain available for retry");
         }
 
         private ModPatchResult ApplyPatch(ModPatchInfo modPatchInfo)
