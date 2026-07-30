@@ -31,7 +31,8 @@ namespace STS2RitsuLib.Audio
         /// </returns>
         public static GodotObject? TryGetBus(string busPath)
         {
-            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetBus, busPath))
+            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetBus, busPath) ||
+                v.VariantType != Variant.Type.Object)
                 return null;
 
             var bus = v.AsGodotObject();

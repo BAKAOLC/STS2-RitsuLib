@@ -28,28 +28,30 @@ namespace STS2RitsuLib.Audio.Patches
             return NonInteractiveMode.IsActive || TestMode.IsOn;
         }
 
-        private static void StopVanillaRunMusic(Node? proxy)
+        private static bool StopVanillaRunMusic(Node? proxy)
         {
-            TryCall(proxy, StopMusicMethod);
+            return TryCall(proxy, StopMusicMethod);
         }
 
-        private static void StopVanillaRunAmbience(Node? proxy)
+        private static bool StopVanillaRunAmbience(Node? proxy)
         {
-            TryCall(proxy, StopAmbienceMethod);
+            return TryCall(proxy, StopAmbienceMethod);
         }
 
-        private static void TryCall(Node? proxy, StringName method, params Variant[] args)
+        private static bool TryCall(Node? proxy, StringName method, params Variant[] args)
         {
             if (proxy is null)
-                return;
+                return false;
 
             try
             {
                 proxy.Call(method, args);
+                return true;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] run music proxy {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] run music proxy {method}: {ex}");
+                return false;
             }
         }
 
@@ -91,14 +93,17 @@ namespace STS2RitsuLib.Audio.Patches
                 if (FmodStudioServer.TryCheckEventGuid(eventGuid) == true)
                     return true;
 
-                ReleaseOwnedMappedActBankCore();
+                if (!ReleaseOwnedMappedActBankCore())
+                    return false;
+
                 if (!FmodStudioServer.TryLoadBank(bankPath))
                     return false;
 
                 FmodStudioServer.TryWaitForAllLoads();
                 if (FmodStudioServer.TryCheckEventGuid(eventGuid) != true)
                 {
-                    FmodStudioServer.TryUnloadBank(bankPath);
+                    if (!FmodStudioServer.TryUnloadBank(bankPath))
+                        _ownedMappedActBankPath = bankPath;
                     return false;
                 }
 
@@ -107,19 +112,22 @@ namespace STS2RitsuLib.Audio.Patches
             }
         }
 
-        private static void ReleaseOwnedMappedActBank()
+        private static bool ReleaseOwnedMappedActBank()
         {
             lock (MappedActBankGate)
-                ReleaseOwnedMappedActBankCore();
+                return ReleaseOwnedMappedActBankCore();
         }
 
-        private static void ReleaseOwnedMappedActBankCore()
+        private static bool ReleaseOwnedMappedActBankCore()
         {
             if (_ownedMappedActBankPath is null)
-                return;
+                return true;
 
-            FmodStudioServer.TryUnloadBank(_ownedMappedActBankPath);
+            if (!FmodStudioServer.TryUnloadBank(_ownedMappedActBankPath))
+                return false;
+
             _ownedMappedActBankPath = null;
+            return true;
         }
 
         /// <summary>
@@ -158,8 +166,11 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (____runState.Act.BgMusicOptions.Length == 0)
                 {
-                    GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
-                    ReleaseOwnedMappedActBank();
+                    var musicReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                    var bankReleased = ReleaseOwnedMappedActBank();
+                    if (!musicReleased || !bankReleased)
+                        return false;
+
                     return true;
                 }
 
@@ -173,8 +184,11 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(music.Track))
                 {
-                    GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
-                    ReleaseOwnedMappedActBank();
+                    var musicReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                    var bankReleased = ReleaseOwnedMappedActBank();
+                    if (!musicReleased || !bankReleased)
+                        return false;
+
                     return true;
                 }
 
@@ -191,8 +205,11 @@ namespace STS2RitsuLib.Audio.Patches
                     return false;
                 }
 
-                StopVanillaRunMusic(____proxy);
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                var vanillaStopped = StopVanillaRunMusic(____proxy);
+                var mappedReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                if (!vanillaStopped || !mappedReleased)
+                    return false;
+
                 if (!TryStartMappedRunMusic("UpdateMusic", music.Track))
                 {
 #if STS2_AT_LEAST_0_108_0
@@ -236,11 +253,15 @@ namespace STS2RitsuLib.Audio.Patches
                 if (ShouldUseVanilla() || string.IsNullOrEmpty(customMusic))
                     return true;
 
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                if (!GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic())
+                    return false;
+
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(customMusic))
                     return true;
 
-                StopVanillaRunMusic(____proxy);
+                if (!StopVanillaRunMusic(____proxy))
+                    return false;
+
                 TryStartMappedRunMusic("PlayCustomMusic", customMusic);
                 return false;
             }
@@ -270,12 +291,16 @@ namespace STS2RitsuLib.Audio.Patches
                 if (ShouldUseVanilla())
                     return true;
 
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                if (!GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic())
+                    return false;
+
                 if (string.IsNullOrEmpty(____currentTrack) ||
                     !GuidMappedNaudioStudioProxy.IsMappedPath(____currentTrack))
                     return true;
 
-                StopVanillaRunMusic(____proxy);
+                if (!StopVanillaRunMusic(____proxy))
+                    return false;
+
                 TryStartMappedRunMusic("StopCustomMusic", ____currentTrack);
                 TryCall(____proxy, SetGlobalParameterMethod, "Progress", 7f);
                 return false;
@@ -378,17 +403,23 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(ambience))
                 {
-                    GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
+                    if (!GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience())
+                        return false;
+
                     return true;
                 }
 
                 if (GuidMappedNaudioStudioProxy.HasActiveMappedRunAmbience(ambience))
                     return false;
 
+                var vanillaStopped = StopVanillaRunAmbience(____proxy);
+                var mappedReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
+                if (!vanillaStopped || !mappedReleased)
+                    return false;
+                if (!TryStartMappedRunAmbience("UpdateAmbience", ambience))
+                    return false;
+
                 ____currentAmbience = ambience;
-                StopVanillaRunAmbience(____proxy);
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
-                TryStartMappedRunAmbience("UpdateAmbience", ambience);
                 return false;
             }
         }

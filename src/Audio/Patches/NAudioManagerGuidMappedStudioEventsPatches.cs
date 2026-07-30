@@ -19,6 +19,13 @@ namespace STS2RitsuLib.Audio.Patches
         private static readonly Lock MissingStudioPathWarningGate = new();
         private static readonly HashSet<string> MissingStudioPathWarningLoggedKeys = new(StringComparer.Ordinal);
 
+        private static bool TryStopCustomMusic()
+        {
+            var mappedReleased = GuidMappedNaudioStudioProxy.ReleaseMappedMusic();
+            var virtualReleased = VirtualFmodEventRegistry.StopMusic();
+            return mappedReleased && virtualReleased;
+        }
+
         private static void LogMissingStudioPathOnce(string operation, string path)
         {
             if (!path.StartsWith("event:/", StringComparison.Ordinal))
@@ -186,11 +193,10 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
                 {
-                    if (!VirtualFmodEventRegistry.IsRegistered(path))
-                        return true;
+                    if (VirtualFmodEventRegistry.TryStopLoop(path))
+                        return false;
 
-                    VirtualFmodEventRegistry.TryStopLoop(path);
-                    return false;
+                    return !VirtualFmodEventRegistry.IsRegistered(path);
                 }
 
                 return !GuidMappedNaudioStudioProxy.TryStopMappedLoop(path);
@@ -289,6 +295,9 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (VirtualFmodEventRegistry.IsRegistered(music))
                 {
+                    if (!TryStopCustomMusic())
+                        return false;
+
                     __instance.StopMusic();
                     if (!VirtualFmodEventRegistry.TryPlayMusic(music))
                         RitsuLibFramework.Logger.Warn(
@@ -298,9 +307,15 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(music))
                 {
+                    if (!TryStopCustomMusic())
+                        return false;
+
                     LogMissingStudioPathOnce("PlayMusic", music);
                     return true;
                 }
+
+                if (!TryStopCustomMusic())
+                    return false;
 
                 __instance.StopMusic();
 

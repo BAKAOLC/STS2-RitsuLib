@@ -122,6 +122,10 @@ namespace STS2RitsuLib.Audio
             if (!float.IsFinite(definition.Pitch) || definition.Pitch <= 0f)
                 throw new ArgumentOutOfRangeException(nameof(definition), definition.Pitch,
                     "Virtual FMOD event pitch must be finite and positive.");
+            if (definition.Kind == VirtualFmodEventKind.Loop && !definition.Stream)
+                throw new ArgumentException(
+                    "Virtual FMOD loops require streaming playback because the bundled backend does not loop fully loaded sounds.",
+                    nameof(definition));
 
             var resourcePaths = ValidateResourcePaths(definition.ResourcePaths, nameof(definition));
             if (definition.Kind != VirtualFmodEventKind.OneShot && resourcePaths.Count > 1)
@@ -137,6 +141,7 @@ namespace STS2RitsuLib.Audio
             lock (Gate)
             {
                 Definitions[definition.EventPath] = definition;
+                VariantIndexes.Remove(definition.EventPath);
             }
         }
 
@@ -179,10 +184,10 @@ namespace STS2RitsuLib.Audio
 
             WarnIgnoredParameters(eventPath, parameters);
             var resourcePath = SelectResourcePath(definition);
-            var result = GameFmod.Playback.PlayOneShot(
-                AudioSource.ResourceFile(resourcePath),
-                BuildOptions(definition, volume, null, AudioLifecycleScope.Manual));
-            return result.Succeeded;
+            return FmodStudioStreamingFiles.TryPlayResourceSound(
+                resourcePath,
+                ResolveVolume(definition, volume),
+                definition.Pitch);
         }
 
         internal static bool TryPlayLoop(string eventPath)
@@ -198,7 +203,7 @@ namespace STS2RitsuLib.Audio
                 : AudioSource.ResourceFile(definition.ResourcePath);
             var result = GameFmod.Playback.Play(source,
                 BuildOptions(definition, 1f, null, AudioLifecycleScope.Room));
-            if (!result.Succeeded || result.Handle is null)
+            if (!result.Succeeded || result.Handle is not { IsValid: true })
                 return false;
 
             lock (Gate)
@@ -217,35 +222,44 @@ namespace STS2RitsuLib.Audio
 
         internal static bool TryStopLoop(string eventPath)
         {
-            IAudioHandle? handle = null;
             lock (Gate)
             {
-                if (Loops.TryGetValue(eventPath, out var queue) && queue.Count > 0)
-                {
-                    handle = queue.Dequeue();
-                    if (queue.Count == 0)
-                        Loops.Remove(eventPath);
-                }
+                if (!Loops.TryGetValue(eventPath, out var queue) || queue.Count == 0)
+                    return false;
+
+                var handle = queue.Peek();
+                handle.Dispose();
+                if (!handle.IsReleased)
+                    return false;
+
+                queue.Dequeue();
+                if (queue.Count == 0)
+                    Loops.Remove(eventPath);
+                return true;
             }
-
-            if (handle is null)
-                return false;
-
-            handle.Dispose();
-            return true;
         }
 
         internal static void StopAllLoops()
         {
-            IAudioHandle[] handles;
             lock (Gate)
             {
-                handles = [.. Loops.Values.SelectMany(static q => q)];
-                Loops.Clear();
-            }
+                foreach (var path in Loops.Keys.ToArray())
+                {
+                    var queue = Loops[path];
+                    var retained = new Queue<IAudioHandle>();
+                    foreach (var handle in queue)
+                    {
+                        handle.Dispose();
+                        if (!handle.IsReleased)
+                            retained.Enqueue(handle);
+                    }
 
-            foreach (var handle in handles)
-                handle.Dispose();
+                    if (retained.Count == 0)
+                        Loops.Remove(path);
+                    else
+                        Loops[path] = retained;
+                }
+            }
         }
 
         internal static bool TryPlayMusic(string eventPath)
@@ -256,7 +270,9 @@ namespace STS2RitsuLib.Audio
             if (definition.Kind != VirtualFmodEventKind.Music)
                 return false;
 
-            StopMusic();
+            if (!StopMusic())
+                return false;
+
             var result = GameFmod.Playback.PlayMusic(
                 AudioSource.StreamingResourceMusic(definition.ResourcePath),
                 BuildOptions(definition, 1f, "virtual-music", AudioLifecycleScope.Run));
@@ -271,16 +287,20 @@ namespace STS2RitsuLib.Audio
             return true;
         }
 
-        internal static void StopMusic()
+        internal static bool StopMusic()
         {
-            IAudioHandle? music;
             lock (Gate)
             {
-                music = _music;
-                _music = null;
-            }
+                if (_music is null)
+                    return true;
 
-            music?.Dispose();
+                _music.Dispose();
+                if (!_music.IsReleased)
+                    return false;
+
+                _music = null;
+                return true;
+            }
         }
 
         internal static bool HasActiveMusic()
@@ -355,16 +375,20 @@ namespace STS2RitsuLib.Audio
         private static AudioPlaybackOptions BuildOptions(VirtualFmodEventDefinition definition, float callVolume,
             string? channel, AudioLifecycleScope scope)
         {
-            var volume = definition.Volume * callVolume * ResolveBusVolume(definition.BusPath);
             return new()
             {
-                Volume = volume,
+                Volume = ResolveVolume(definition, callVolume),
                 Pitch = definition.Pitch,
                 Scope = scope,
                 Routing = string.IsNullOrWhiteSpace(channel)
                     ? null
                     : new AudioRoutingOptions { Channel = channel, ChannelMode = AudioChannelMode.ReplaceExisting },
             };
+        }
+
+        private static float ResolveVolume(VirtualFmodEventDefinition definition, float callVolume)
+        {
+            return definition.Volume * callVolume * ResolveBusVolume(definition.BusPath);
         }
 
         private static float ResolveBusVolume(string? busPath)

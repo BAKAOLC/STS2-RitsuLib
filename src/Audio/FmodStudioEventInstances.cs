@@ -105,7 +105,7 @@ namespace STS2RitsuLib.Audio
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CheckEventPath, eventPath))
                 return null;
 
-            return v.AsBool();
+            return v.VariantType == Variant.Type.Bool ? v.AsBool() : null;
         }
 
         /// <summary>
@@ -136,7 +136,8 @@ namespace STS2RitsuLib.Audio
             if (FmodStudioServer.TryCheckEventGuid(normalized) == false)
                 return null;
 
-            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstanceWithGuid, normalized))
+            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstanceWithGuid, normalized) ||
+                v.VariantType != Variant.Type.Object)
                 return null;
 
             var instance = v.AsGodotObject();
@@ -148,7 +149,9 @@ namespace STS2RitsuLib.Audio
             if (string.IsNullOrWhiteSpace(eventOrSnapshotPath))
                 return null;
 
-            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstance, eventOrSnapshotPath))
+            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstance,
+                    eventOrSnapshotPath) ||
+                v.VariantType != Variant.Type.Object)
                 return null;
 
             var instance = v.AsGodotObject();
@@ -227,22 +230,29 @@ namespace STS2RitsuLib.Audio
         /// </param>
         public static void TryRelease(GodotObject? instance)
         {
+            TryScheduleRelease(instance);
+        }
+
+        internal static bool TryScheduleRelease(GodotObject? instance)
+        {
             if (!IsUsable(instance))
-                return;
+                return true;
 
             if (!instance.HasMethod(Release))
             {
                 RitsuLibFramework.Logger.Warn("[Audio] FMOD event release: instance does not expose release.");
-                return;
+                return false;
             }
 
             try
             {
                 instance.Call(Release);
+                return true;
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event release: {ex}");
+                return false;
             }
         }
     }
