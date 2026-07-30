@@ -3,8 +3,8 @@ using Godot;
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     One extra rich-text badge on a combat UI icon. Each slot is laid out independently.
-    ///     战斗 UI 图标上的一个额外富文本徽标。每个槽位独立布局。
+    ///     <para xml:lang="en">Describes one independently positioned rich-text badge on a combat icon.</para>
+    ///     <para xml:lang="zh-CN">描述战斗图标上一个独立定位的富文本角标。</para>
     /// </summary>
     public readonly record struct ExtraIconRichTextLabelSlot(
         string Text,
@@ -14,8 +14,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         Color? FontOutlineColor)
     {
         /// <summary>
-        ///     Preset-corner rich-text slot: default <c>CustomRect</c>, no color overrides.
-        ///     预设角富文本槽位：默认 <c>CustomRect</c>，无颜色覆盖。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner without color overrides.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建不带颜色覆盖的条目。</para>
         /// </summary>
         public ExtraIconRichTextLabelSlot(string text, ExtraIconAmountLabelCorner corner)
             : this(text, corner, default, null, null)
@@ -23,8 +23,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-corner rich-text slot from bounds, no color overrides.
-        ///     由边界创建的自定义角富文本槽位，无颜色覆盖。
+        ///     <para xml:lang="en">Creates an entry with explicit bounds and no color overrides.</para>
+        ///     <para xml:lang="zh-CN">创建具有显式边界且不带颜色覆盖的条目。</para>
         /// </summary>
         public ExtraIconRichTextLabelSlot(string text, ExtraIconAmountLabelCorner corner, Rect2 customRect)
             : this(text, corner, customRect, null, null)
@@ -32,8 +32,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Preset-corner rich-text slot.
-        ///     预设角富文本槽位。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot At(ExtraIconAmountLabelCorner corner, string text)
         {
@@ -41,8 +41,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Preset-corner rich-text slot with foreground override.
-        ///     带有前景色覆盖的预设角富文本槽位。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner with a foreground-color override.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建带前景色覆盖的条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot At(ExtraIconAmountLabelCorner corner, string text, Color? fontColor)
         {
@@ -50,8 +50,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Preset-corner rich-text slot with foreground and outline overrides.
-        ///     带有前景色和描边覆盖的预设角富文本槽位。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner with optional color overrides.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建带可选颜色覆盖的条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot At(ExtraIconAmountLabelCorner corner, string text, Color? fontColor,
             Color? fontOutlineColor)
@@ -60,8 +60,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-bounds rich-text slot.
-        ///     自定义边界富文本槽位。
+        ///     <para xml:lang="en">Creates a custom-bounds entry.</para>
+        ///     <para xml:lang="zh-CN">创建使用自定义边界的条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot WithCustom(string text, Rect2 customRect)
         {
@@ -69,8 +69,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-bounds rich-text slot with foreground override.
-        ///     带有前景色覆盖的自定义边界富文本槽位。
+        ///     <para xml:lang="en">Creates a custom-bounds entry with a foreground-color override.</para>
+        ///     <para xml:lang="zh-CN">创建带前景色覆盖的自定义边界条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot WithCustom(string text, Rect2 customRect, Color? fontColor)
         {
@@ -78,8 +78,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-bounds rich-text slot with foreground and outline overrides.
-        ///     带有前景色和描边覆盖的自定义边界富文本槽位。
+        ///     <para xml:lang="en">Creates a custom-bounds entry with optional color overrides.</para>
+        ///     <para xml:lang="zh-CN">创建带可选颜色覆盖的自定义边界条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot WithCustom(string text, Rect2 customRect, Color? fontColor,
             Color? fontOutlineColor)
@@ -88,8 +88,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom edge rich-text slot.
-        ///     自定义边缘富文本槽位。
+        ///     <para xml:lang="en">Creates a custom entry from host-local edge offsets.</para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建自定义条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot WithCustom(string text, float left, float top, float right,
             float bottom)
@@ -99,8 +99,10 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom edge rich-text slot with foreground override.
-        ///     带有前景色覆盖的自定义边缘富文本槽位。
+        ///     <para xml:lang="en">
+        ///         Creates a custom entry from host-local edge offsets with a foreground-color override.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建带前景色覆盖的自定义条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot WithCustom(string text, float left, float top, float right,
             float bottom, Color? fontColor)
@@ -110,8 +112,10 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom edge rich-text slot with foreground and outline overrides.
-        ///     带有前景色和描边覆盖的自定义边缘富文本槽位。
+        ///     <para xml:lang="en">
+        ///         Creates a custom entry from host-local edge offsets with optional color overrides.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建带可选颜色覆盖的自定义条目。</para>
         /// </summary>
         public static ExtraIconRichTextLabelSlot WithCustom(string text, float left, float top, float right,
             float bottom, Color? fontColor, Color? fontOutlineColor)

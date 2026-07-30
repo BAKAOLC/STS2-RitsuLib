@@ -4,10 +4,13 @@ using MegaCrit.Sts2.addons.mega_text;
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     Visuals for extra badges on <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NIntent" />, matched to intent
-    ///     <c>%Value</c> (MegaRichTextLabel; see sts-2-source <c>scenes/combat/intent.tscn</c>).
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NIntent" /> 上额外徽标的视觉样式，与意图
-    ///     <c>%Value</c> 匹配（MegaRichTextLabel；见 sts-2-source <c>scenes/combat/intent.tscn</c>）。
+    ///     <para xml:lang="en">
+    ///         Copies an <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NIntent" /> value label's typography to its extra
+    ///         badges.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NIntent" /> 数值标签的排版样式复制到额外角标。
+    ///     </para>
     /// </summary>
     internal static class ExtraCornerIntentValueStyle
     {

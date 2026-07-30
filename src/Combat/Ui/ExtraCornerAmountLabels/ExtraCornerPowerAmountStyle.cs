@@ -4,10 +4,13 @@ using MegaCrit.Sts2.addons.mega_text;
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     Visuals for extra badges on <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NPower" />, matched to
-    ///     <c>%AmountLabel</c> (see sts-2-source <c>scenes/combat/power.tscn</c>).
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NPower" /> 上额外徽标的视觉样式，匹配
-    ///     <c>%AmountLabel</c>（见 sts-2-source <c>scenes/combat/power.tscn</c>）。
+    ///     <para xml:lang="en">
+    ///         Copies an <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NPower" /> amount label's typography to its extra
+    ///         badges.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NPower" /> 数量标签的排版样式复制到额外角标。
+    ///     </para>
     /// </summary>
     internal static class ExtraCornerPowerAmountStyle
     {

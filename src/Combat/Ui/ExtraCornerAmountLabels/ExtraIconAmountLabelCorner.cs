@@ -1,40 +1,40 @@
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     Preset corners for extra icon badges. Vanilla stack/value UI uses bottom-right; mods use the other three
-    ///     corners, or <see cref="Custom" /> with explicit bounds on <see cref="ExtraIconAmountLabelSlot" />.
-    ///     额外图标徽标的预设角。原版层数/数值 UI 使用右下角；mod 使用另外三个
-    ///     角，或使用带 <see cref="ExtraIconAmountLabelSlot" /> 显式边界的 <see cref="Custom" />。
+    ///     <para xml:lang="en">Defines built-in and custom positions for an extra icon badge.</para>
+    ///     <para xml:lang="zh-CN">定义额外图标角标的内置位置和自定义位置。</para>
     /// </summary>
     public enum ExtraIconAmountLabelCorner
     {
         /// <summary>
-        ///     Top-left band (built-in layout per host kind).
-        ///     左上带区（按宿主类型使用内置布局）。
+        ///     <para xml:lang="en">Uses the host's built-in top-left area.</para>
+        ///     <para xml:lang="zh-CN">使用宿主的内置左上区域。</para>
         /// </summary>
         TopLeft,
 
         /// <summary>
-        ///     Top-right band (built-in layout per host kind).
-        ///     右上带区（按宿主类型使用内置布局）。
+        ///     <para xml:lang="en">Uses the host's built-in top-right area.</para>
+        ///     <para xml:lang="zh-CN">使用宿主的内置右上区域。</para>
         /// </summary>
         TopRight,
 
         /// <summary>
-        ///     Bottom-left band (built-in layout per host kind).
-        ///     左下带区（按宿主类型使用内置布局）。
+        ///     <para xml:lang="en">Uses the host's built-in bottom-left area.</para>
+        ///     <para xml:lang="zh-CN">使用宿主的内置左下区域。</para>
         /// </summary>
         BottomLeft,
 
         /// <summary>
-        ///     Bottom-right band (built-in layout per host kind).
-        ///     右下带区（按宿主类型使用内置布局）。
+        ///     <para xml:lang="en">Uses the host's built-in bottom-right area.</para>
+        ///     <para xml:lang="zh-CN">使用宿主的内置右下区域。</para>
         /// </summary>
         BottomRight,
 
         /// <summary>
-        ///     Use <see cref="ExtraIconAmountLabelSlot.CustomRect" />; horizontal and vertical alignment are centered.
-        ///     使用 <see cref="ExtraIconAmountLabelSlot.CustomRect" />；水平和垂直对齐均居中。
+        ///     <para xml:lang="en">
+        ///         Uses the entry's custom bounds with centered horizontal and vertical alignment.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用条目的自定义边界，并采用水平和垂直居中对齐。</para>
         /// </summary>
         Custom,
     }
