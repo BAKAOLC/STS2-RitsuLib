@@ -1444,8 +1444,14 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 {
                     var node = factoryProvider?.CreateNode(parent) ?? CreateNodeByDefaultConstructor(nodeType);
                     if (!nodeType.IsInstanceOfType(node))
+                    {
+                        var actualType = node?.GetType().FullName ?? "<null>";
+                        if (node != null && GodotObject.IsInstanceValid(node))
+                            node.Free();
                         throw new InvalidOperationException(
-                            $"Node attachment factory '{declaringType.FullName}' returned {node.GetType().FullName}, expected {nodeType.FullName}.");
+                            $"Node attachment factory '{declaringType.FullName}' returned {actualType}, " +
+                            $"expected {nodeType.FullName}.");
+                    }
                     return node;
                 },
                 ComposeNodeAttachmentSetup(setup),
@@ -1564,6 +1570,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             if (nodeType.IsInstanceOfType(node))
                 return node;
 
+            node.Free();
             throw new InvalidOperationException(
                 $"Scene '{scenePath}' instantiated {node.GetType().FullName}, expected {nodeType.FullName}.");
         }
