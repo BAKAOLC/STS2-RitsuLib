@@ -68,6 +68,10 @@ namespace STS2RitsuLib.CardPiles
                 .OrderBy(b => b.Definition!.Id, StringComparer.Ordinal)
                 .ToList();
 
+            var primarySlotCount = Math.Max(
+                1,
+                row.Count(button =>
+                    button.Definition!.Anchor.Kind != ModCardPileAnchorKind.BottomRightSecondary));
             var primaryIndex = 0;
             var secondaryIndex = 0;
             foreach (var button in row)
@@ -78,7 +82,7 @@ namespace STS2RitsuLib.CardPiles
                 {
                     button.Position = exhaust.Position
                                       + new Vector2(
-                                          BottomRightStackDeltaX * (primaryIndex + secondaryIndex + 2),
+                                          BottomRightStackDeltaX * (primarySlotCount + secondaryIndex + 1),
                                           0f)
                                       + anchor.Offset;
                     secondaryIndex++;

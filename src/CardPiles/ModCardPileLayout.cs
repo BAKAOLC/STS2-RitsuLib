@@ -64,12 +64,11 @@ namespace STS2RitsuLib.CardPiles
 
             var button = ModCardPileButtonRegistry.TryGetButton(definition);
             if (button != null && button.IsInsideTree())
-                return ApplyCardNodeOffset(button.GlobalPosition + button.Size * 0.5f + definition.Anchor.Offset, node);
+                return ApplyCardNodeOffset(button.GlobalPosition + button.Size * 0.5f, node);
 
             var extraHand = ModCardPileButtonRegistry.TryGetExtraHand(definition);
             if (extraHand != null && extraHand.IsInsideTree())
-                return ApplyCardNodeOffset(extraHand.GlobalPosition + extraHand.Size * 0.5f + definition.Anchor.Offset,
-                    node);
+                return ApplyCardNodeOffset(extraHand.GlobalPosition + extraHand.Size * 0.5f, node);
 
             if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
             {
