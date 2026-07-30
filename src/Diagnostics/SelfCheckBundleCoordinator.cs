@@ -26,21 +26,27 @@ namespace STS2RitsuLib.Diagnostics
             TryRunWithConfiguredPath(outputPath, "[SelfCheck][Manual]", true, true, out _, out _);
         }
 
+        internal static void TryOpenOutputFolderFromSettings()
+        {
+            TryOpenOutputFolderFromSettings(out _);
+        }
+
         internal static bool TryManualRunFromConsole(out string message)
         {
             var (outputPath, _) = RitsuLibSettingsStore.GetSelfCheckOptions();
             return TryRunWithConfiguredPath(outputPath, "[SelfCheck][Console]", false, true, out _, out message);
         }
 
-        internal static void TryOpenOutputFolderFromSettings()
+        internal static bool TryOpenOutputFolderFromSettings(out string message)
         {
             var (outputPath, _) = RitsuLibSettingsStore.GetSelfCheckOptions();
             var resolvedOutputDirectory = SelfCheckBundleWriter.TryResolveOutputDirectory(outputPath);
             if (string.IsNullOrEmpty(resolvedOutputDirectory))
             {
-                RitsuLibFramework.Logger.Warn(
-                    "[SelfCheck][OpenFolder] Output folder is empty or invalid. Configure a valid path in RitsuLib settings.");
-                return;
+                message =
+                    "Output folder is empty or invalid. Configure a valid path in RitsuLib settings.";
+                RitsuLibFramework.Logger.Warn($"[SelfCheck][OpenFolder] {message}");
+                return false;
             }
 
             try
@@ -52,16 +58,21 @@ namespace STS2RitsuLib.Diagnostics
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[SelfCheck][OpenFolder] Failed to open folder '{resolvedOutputDirectory}' (Error: {shellOpenError}).");
-                    return;
+                    message = $"Could not open the self-check output folder: {shellOpenError}.";
+                    return false;
                 }
 
                 RitsuLibFramework.Logger.Info(
                     $"[SelfCheck][OpenFolder] Opened output folder: {resolvedOutputDirectory}");
+                message = $"Opened RitsuLib self-check output folder: {resolvedOutputDirectory}";
+                return true;
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[SelfCheck][OpenFolder] Failed to open output folder '{resolvedOutputDirectory}': {ex.Message}");
+                message = $"Could not open the self-check output folder: {ex.Message}";
+                return false;
             }
         }
 

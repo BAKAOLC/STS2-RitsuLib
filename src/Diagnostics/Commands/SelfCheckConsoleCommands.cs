@@ -58,16 +58,16 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length < 2 || !args[0].Equals("selfcheck", StringComparison.OrdinalIgnoreCase))
                 return new(false, UsageText());
 
-            if (args[1].Equals("run", StringComparison.OrdinalIgnoreCase))
+            if (args.Length == 2 && args[1].Equals("run", StringComparison.OrdinalIgnoreCase))
             {
                 var ok = SelfCheckBundleCoordinator.TryManualRunFromConsole(out var message);
                 return new(ok, message);
             }
 
-            if (!args[1].Equals("open-output", StringComparison.OrdinalIgnoreCase))
+            if (args.Length != 2 || !args[1].Equals("open-output", StringComparison.OrdinalIgnoreCase))
                 return new(false, UsageText());
-            SelfCheckBundleCoordinator.TryOpenOutputFolderFromSettings();
-            return new(true, "Requested to open RitsuLib self-check output folder.");
+            var opened = SelfCheckBundleCoordinator.TryOpenOutputFolderFromSettings(out var openMessage);
+            return new(opened, openMessage);
         }
 
         private static CmdResult ProcessSettings(string[] args)
