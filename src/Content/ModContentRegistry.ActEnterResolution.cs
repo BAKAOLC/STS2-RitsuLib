@@ -371,7 +371,7 @@ namespace STS2RitsuLib.Content
             if (weightedBaselines.TryGetValue(slotIndex, out var baselineWeightFn))
             {
                 var w = baselineWeightFn(ctx);
-                if (w > 0d)
+                if (double.IsFinite(w) && w > 0d)
                     weighted.Add((runState.Acts[slotIndex], w));
             }
 
@@ -384,7 +384,7 @@ namespace STS2RitsuLib.Content
                     continue;
 
                 var ww = c.Weight(ctx);
-                if (ww <= 0d)
+                if (!double.IsFinite(ww) || ww <= 0d)
                     continue;
 
                 var act = ModelDb.GetById<ActModel>(ModelDb.GetId(c.CandidateActType)).ToMutable();

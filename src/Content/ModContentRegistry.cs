@@ -1054,9 +1054,16 @@ namespace STS2RitsuLib.Content
             foreach (var modifierType in modifierTypes)
             {
                 EnsureModelType(modifierType, typeof(ModifierModel), nameof(modifierTypes));
-                if (!members.Add(modifierType))
-                    continue;
+                members.Add(modifierType);
+            }
 
+            if (members.Count < 2)
+                throw new ArgumentException(
+                    "At least two distinct modifier types are required for a mutually exclusive group.",
+                    nameof(modifierTypes));
+
+            foreach (var modifierType in members)
+            {
                 PrimeOwnedType(modifierType);
                 RegistrationConflictDetector.ThrowIfModelIdConflicts(modifierType);
             }
