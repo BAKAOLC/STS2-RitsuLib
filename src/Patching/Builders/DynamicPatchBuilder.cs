@@ -6,12 +6,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Patching.Builders
 {
     /// <summary>
-    ///     Fluent builder for runtime-discovered Harmony patches.
-    ///     用于运行时发现 Harmony patch 的流式构建器。
+    ///     <para xml:lang="en">Provides a fluent builder for Harmony patches whose targets are resolved at runtime.</para>
+    ///     <para xml:lang="zh-CN">提供流式构建器，用于创建在运行时解析目标的 Harmony 补丁。</para>
     /// </summary>
     /// <param name="idPrefix">
-    ///     Prefix for auto-generated patch ids unless <c>patchId</c> is passed to an overload.
-    ///     自动生成 patch id 的前缀，除非向重载传入 <c>patchId</c>。
+    ///     <para xml:lang="en">Prefix used for generated patch IDs when an overload receives no <c>patchId</c>.</para>
+    ///     <para xml:lang="zh-CN">重载未收到 <c>patchId</c> 时，用于生成补丁 ID 的前缀。</para>
     /// </param>
     public sealed class DynamicPatchBuilder(string idPrefix)
     {
@@ -19,22 +19,20 @@ namespace STS2RitsuLib.Patching.Builders
         private int _counter;
 
         /// <summary>
-        ///     Id prefix used when synthesizing patch identifiers.
-        ///     合成 patch 标识符时使用的 id 前缀。
+        ///     <para xml:lang="en">Gets the prefix used for generated patch IDs.</para>
+        ///     <para xml:lang="zh-CN">获取用于生成补丁 ID 的前缀。</para>
         /// </summary>
         public string IdPrefix { get; } = idPrefix;
 
         /// <summary>
-        ///     Patches accumulated so far (not applied until registered with a
-        ///     <see cref="STS2RitsuLib.Patching.Core.ModPatcher" />).
-        ///     目前累计的 patch（在注册到
-        ///     <see cref="STS2RitsuLib.Patching.Core.ModPatcher" /> 之前不会应用）。
+        ///     <para xml:lang="en">Gets the patches accumulated by this builder. They are not applied automatically.</para>
+        ///     <para xml:lang="zh-CN">获取此构建器已收集的补丁。这些补丁不会自动应用。</para>
         /// </summary>
         public IReadOnlyList<DynamicPatchInfo> Patches => _patches;
 
         /// <summary>
-        ///     Appends a <see cref="DynamicPatchInfo" /> for <paramref name="originalMethod" />.
-        ///     追加一个 <see cref="DynamicPatchInfo" />，用于 <paramref name="originalMethod" />。
+        ///     <para xml:lang="en">Adds a patch for <paramref name="originalMethod" />.</para>
+        ///     <para xml:lang="zh-CN">添加以 <paramref name="originalMethod" /> 为目标的补丁。</para>
         /// </summary>
         public DynamicPatchBuilder Add(
             MethodBase originalMethod,
@@ -64,10 +62,8 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
-        ///     Resolves <paramref name="target" /> via <see cref="PatchTargetMethodResolver" /> and appends the result to
-        ///     <see cref="Patches" />.
-        ///     解析 <paramref name="target" />，通过 <see cref="PatchTargetMethodResolver" />，并将结果追加到
-        ///     <see cref="Patches" />。
+        ///     <para xml:lang="en">Resolves <paramref name="target" /> and adds a patch for the resulting method.</para>
+        ///     <para xml:lang="zh-CN">解析 <paramref name="target" />，并为解析得到的方法添加补丁。</para>
         /// </summary>
         public DynamicPatchBuilder Add(
             ModPatchTarget target,
@@ -98,8 +94,8 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
-        ///     Resolves a property getter on <paramref name="targetType" /> and appends it to <see cref="Patches" />.
-        ///     解析 <paramref name="targetType" /> 上的属性 getter，并将其追加到 <see cref="Patches" />。
+        ///     <para xml:lang="en">Resolves a property getter on <paramref name="targetType" /> and adds a patch for it.</para>
+        ///     <para xml:lang="zh-CN">解析 <paramref name="targetType" /> 上的属性 getter，并为其添加补丁。</para>
         /// </summary>
         public DynamicPatchBuilder AddPropertyGetter(
             Type targetType,
@@ -130,10 +126,8 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
-        ///     Legacy overload: resolves with <see cref="MethodType.Normal" /> (same behavior as before
-        ///     <see cref="HarmonyLib.MethodType" /> was exposed on this API).
-        ///     旧版重载：使用 <see cref="MethodType.Normal" /> 解析（与此 API 暴露
-        ///     <see cref="HarmonyLib.MethodType" /> 之前的行为相同）。
+        ///     <para xml:lang="en">Resolves a normal method on <paramref name="targetType" /> and adds a patch for it.</para>
+        ///     <para xml:lang="zh-CN">解析 <paramref name="targetType" /> 上的普通方法，并为其添加补丁。</para>
         /// </summary>
         public DynamicPatchBuilder AddMethod(
             Type targetType,
@@ -162,12 +156,14 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
-        ///     Resolves a method on <paramref name="targetType" /> (optionally by <paramref name="parameterTypes" />)
-        ///     using <paramref name="harmonyMethodType" /> (same semantics as <see cref="ModPatchTarget.HarmonyMethodType" />),
-        ///     then appends it to <see cref="Patches" />.
-        ///     解析 <paramref name="targetType" /> 上的方法（可选按 <paramref name="parameterTypes" />），
-        ///     使用 <paramref name="harmonyMethodType" />（语义与 <see cref="ModPatchTarget.HarmonyMethodType" /> 相同），
-        ///     然后将其追加到 <see cref="Patches" />。
+        ///     <para xml:lang="en">
+        ///         Resolves a method on <paramref name="targetType" /> using <paramref name="parameterTypes" /> and
+        ///         <paramref name="harmonyMethodType" />, then adds a patch for it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="parameterTypes" /> 和 <paramref name="harmonyMethodType" /> 解析
+        ///         <paramref name="targetType" /> 上的方法，并为其添加补丁。
+        ///     </para>
         /// </summary>
         public DynamicPatchBuilder AddMethod(
             Type targetType,
@@ -201,11 +197,14 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
-        ///     Attempts to resolve and append a method patch. Returns false when the target type is null or the target method
-        ///     is missing, instead of throwing. Use this for optional compatibility patches against another mod or a
-        ///     version-varying game API.
-        ///     尝试解析并追加方法 patch。目标类型为 null 或目标方法缺失时返回 false，而不是抛出异常。
-        ///     适用于针对其他 mod 或跨版本游戏 API 的可选兼容 patch。
+        ///     <para xml:lang="en">
+        ///         Attempts to resolve and add a method patch. Returns <see langword="false" /> without modifying the builder
+        ///         when the target type is <see langword="null" /> or the method cannot be resolved.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试解析并添加方法补丁。目标类型为 <see langword="null" /> 或无法解析方法时返回
+        ///         <see langword="false" />，且不修改构建器。
+        ///     </para>
         /// </summary>
         public bool TryAddMethod(
             Type? targetType,
@@ -242,11 +241,14 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
-        ///     Attempts to resolve <paramref name="targetTypeName" /> with Harmony <see cref="AccessTools.TypeByName" /> and
-        ///     append a method patch. Returns false when the type or method is absent. This keeps optional inter-mod patches
-        ///     from needing their own reflection boilerplate.
-        ///     使用 Harmony <see cref="AccessTools.TypeByName" /> 尝试解析 <paramref name="targetTypeName" /> 并追加方法
-        ///     patch。类型或方法不存在时返回 false，用于减少可选跨 mod patch 的反射样板代码。
+        ///     <para xml:lang="en">
+        ///         Resolves <paramref name="targetTypeName" /> with <see cref="AccessTools.TypeByName" /> and attempts to
+        ///         add a method patch. Returns <see langword="false" /> when the type or method cannot be resolved.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <see cref="AccessTools.TypeByName" /> 解析 <paramref name="targetTypeName" /> 并尝试添加方法补丁。
+        ///         无法解析类型或方法时返回 <see langword="false" />。
+        ///     </para>
         /// </summary>
         public bool TryAddMethodByName(
             string targetTypeName,
@@ -278,8 +280,8 @@ namespace STS2RitsuLib.Patching.Builders
         }
 
         /// <summary>
-        ///     Wraps a static patch method on <paramref name="patchType" /> as a <see cref="HarmonyMethod" />.
-        ///     将 <paramref name="patchType" /> 上的静态 patch 方法包装为 <see cref="HarmonyMethod" />。
+        ///     <para xml:lang="en">Wraps a static patch method on <paramref name="patchType" /> in a <see cref="HarmonyMethod" />.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="patchType" /> 上的静态补丁方法包装为 <see cref="HarmonyMethod" />。</para>
         /// </summary>
         public static HarmonyMethod FromMethod(Type patchType, string methodName)
         {

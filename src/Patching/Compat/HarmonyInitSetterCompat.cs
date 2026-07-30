@@ -5,7 +5,12 @@ using HarmonyLib;
 namespace STS2RitsuLib.Patching.Compat
 {
     /// <summary>
-    ///     Preserves init-only setter signatures when Harmony/MonoMod imports reflected methods into Cecil wrappers.
+    ///     <para xml:lang="en">
+    ///         Preserves init-only setter signatures when Harmony or MonoMod imports reflected methods into Cecil wrappers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 Harmony 或 MonoMod 将反射方法导入 Cecil 包装对象时，保留仅初始化 setter 的签名。
+    ///     </para>
     /// </summary>
     internal static class HarmonyInitSetterCompat
     {

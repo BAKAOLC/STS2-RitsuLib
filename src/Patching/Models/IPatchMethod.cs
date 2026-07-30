@@ -1,50 +1,57 @@
 namespace STS2RitsuLib.Patching.Models
 {
     /// <summary>
-    ///     Interface for patch classes that can generate their own ModPatchInfo
-    ///     Supports patching multiple targets with the same logic
-    ///     用于可生成自身 ModPatchInfo 的 patch 类的接口
-    ///     支持用相同逻辑 patch 多个目标
+    ///     <para xml:lang="en">
+    ///         Defines a patch type that can create <see cref="ModPatchInfo" /> instances for one or more targets.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义可为一个或多个目标创建 <see cref="ModPatchInfo" /> 实例的补丁类型。
+    ///     </para>
     /// </summary>
     public interface IPatchMethod
     {
         /// <summary>
-        ///     The unique identifier prefix for this patch
-        ///     此 patch 的唯一标识符前缀
+        ///     <para xml:lang="en">Gets the unique ID prefix for this patch.</para>
+        ///     <para xml:lang="zh-CN">获取此补丁的唯一 ID 前缀。</para>
         /// </summary>
         static abstract string PatchId { get; }
 
         /// <summary>
-        ///     Whether this patch is critical (default: true)
-        ///     此 patch 是否关键（默认：true）
+        ///     <para xml:lang="en">Gets whether failure to apply this patch is critical. The default is <see langword="true" />.</para>
+        ///     <para xml:lang="zh-CN">获取补丁应用失败是否属于严重错误。默认值为 <see langword="true" />。</para>
         /// </summary>
         static virtual bool IsCritical => true;
 
         /// <summary>
-        ///     Description of what this patch does
-        ///     此 patch 作用的描述
+        ///     <para xml:lang="en">Gets a description of the patch.</para>
+        ///     <para xml:lang="zh-CN">获取补丁的描述。</para>
         /// </summary>
         static virtual string Description => "Patch";
 
         /// <summary>
-        ///     Get all patch targets (Type + MethodName combinations)
-        ///     获取所有 patch 目标（Type + MethodName 组合）。
+        ///     <para xml:lang="en">Gets all targets to which the patch applies.</para>
+        ///     <para xml:lang="zh-CN">获取此补丁要应用到的所有目标。</para>
         /// </summary>
         static abstract ModPatchTarget[] GetTargets();
 
         /// <summary>
-        ///     Create ModPatchInfo array for all targets.
-        ///     为所有目标创建 ModPatchInfo 数组。
+        ///     <para xml:lang="en">Creates patch metadata for all targets declared by <typeparamref name="TPatch" />.</para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TPatch" /> 声明的所有目标创建补丁元数据。</para>
         /// </summary>
         /// <remarks>
-        ///     When <see cref="GetTargets" /> lists more than one entry with the same <see cref="ModPatchTarget.TargetType" />
-        ///     and <see cref="ModPatchTarget.MethodName" /> (e.g. multiple <c>.ctor</c> overloads), the generated
-        ///     <see cref="ModPatchInfo.Id" /> appends <c>__1</c>, <c>__2</c>, … in source order so
-        ///     <see cref="Patching.Core.ModPatcher.RegisterPatch(ModPatchInfo)" /> does not treat later rows as duplicates.
-        ///     当 <see cref="GetTargets" /> 列出多个具有相同 <see cref="ModPatchTarget.TargetType" />
-        ///     和 <see cref="ModPatchTarget.MethodName" /> 的条目（例如多个 <c>.ctor</c> 重载）时，生成的
-        ///     <see cref="ModPatchInfo.Id" /> 会按源顺序追加 <c>__1</c>、<c>__2</c>、…，使
-        ///     <see cref="Patching.Core.ModPatcher.RegisterPatch(ModPatchInfo)" /> 不会把后续行视为重复项。
+        ///     <para xml:lang="en">
+        ///         When <see cref="GetTargets" /> contains multiple entries with the same
+        ///         <see cref="ModPatchTarget.TargetType" /> and <see cref="ModPatchTarget.MethodName" />, such as
+        ///         several <c>.ctor</c> overloads, the generated <see cref="ModPatchInfo.Id" /> values receive
+        ///         <c>__1</c>, <c>__2</c>, and subsequent suffixes in declaration order. This prevents
+        ///         <see cref="Patching.Core.ModPatcher.RegisterPatch(ModPatchInfo)" /> from treating them as duplicates.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <see cref="GetTargets" /> 包含多个 <see cref="ModPatchTarget.TargetType" /> 和
+        ///         <see cref="ModPatchTarget.MethodName" /> 均相同的条目时（例如多个 <c>.ctor</c> 重载），
+        ///         生成的 <see cref="ModPatchInfo.Id" /> 会按声明顺序追加 <c>__1</c>、<c>__2</c> 等后缀，
+        ///         以免 <see cref="Patching.Core.ModPatcher.RegisterPatch(ModPatchInfo)" /> 将它们视为重复项。
+        ///     </para>
         /// </remarks>
         static ModPatchInfo[] CreatePatchInfos<TPatch>() where TPatch : IPatchMethod
         {

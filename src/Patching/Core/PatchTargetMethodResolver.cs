@@ -5,11 +5,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Patching.Core
 {
     /// <summary>
-    ///     Resolves a vanilla <see cref="MethodBase" /> from patch-target metadata, matching
-    ///     <see cref="ModPatcher" /> / <see cref="ModPatchTarget" /> semantics.
-    ///     根据 patch-target 元数据解析原版 <see cref="MethodBase" />，语义与
-    ///     <see cref="ModPatcher" />
-    ///     <see cref="ModPatchTarget" /> 一致。
+    ///     <para xml:lang="en">
+    ///         Resolves a vanilla <see cref="MethodBase" /> from patch-target metadata using the same semantics as
+    ///         <see cref="ModPatcher" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用与 <see cref="ModPatcher" /> 相同的语义，从补丁目标元数据解析原版
+    ///         <see cref="MethodBase" />。
+    ///     </para>
     /// </summary>
     public static class PatchTargetMethodResolver
     {
@@ -18,8 +21,8 @@ namespace STS2RitsuLib.Patching.Core
             BindingFlags.DeclaredOnly;
 
         /// <summary>
-        ///     Resolves using fields from <see cref="ModPatchInfo" />.
-        ///     使用 <see cref="ModPatchInfo" /> 中的字段解析。
+        ///     <para xml:lang="en">Resolves a target from <paramref name="modPatchInfo" />.</para>
+        ///     <para xml:lang="zh-CN">从 <paramref name="modPatchInfo" /> 解析目标。</para>
         /// </summary>
         public static MethodBase? Resolve(ModPatchInfo modPatchInfo)
         {
@@ -31,8 +34,8 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Resolves using <see cref="ModPatchTarget" />.
-        ///     使用 <see cref="ModPatchTarget" /> 解析。
+        ///     <para xml:lang="en">Resolves <paramref name="target" />.</para>
+        ///     <para xml:lang="zh-CN">解析 <paramref name="target" />。</para>
         /// </summary>
         public static MethodBase? Resolve(ModPatchTarget target)
         {
@@ -40,8 +43,8 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Like <see cref="Resolve(ModPatchTarget)" /> but throws <see cref="MissingMethodException" /> when unresolved.
-        ///     类似 <see cref="Resolve(ModPatchTarget)" />，但在无法解析时抛出 <see cref="MissingMethodException" />。
+        ///     <para xml:lang="en">Resolves <paramref name="target" /> or throws <see cref="MissingMethodException" />.</para>
+        ///     <para xml:lang="zh-CN">解析 <paramref name="target" />；无法解析时抛出 <see cref="MissingMethodException" />。</para>
         /// </summary>
         public static MethodBase ResolveRequired(ModPatchTarget target)
         {
@@ -51,8 +54,8 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Like <see cref="Resolve(System.Type,string,System.Type[],HarmonyLib.MethodType)" /> but throws when unresolved.
-        ///     类似 <see cref="Resolve(System.Type,string,System.Type[],HarmonyLib.MethodType)" />，但在无法解析时抛出异常。
+        ///     <para xml:lang="en">Resolves the specified target or throws <see cref="MissingMethodException" />.</para>
+        ///     <para xml:lang="zh-CN">解析指定目标；无法解析时抛出 <see cref="MissingMethodException" />。</para>
         /// </summary>
         public static MethodBase ResolveRequired(
             Type targetType,
@@ -65,10 +68,14 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Core resolution: <see cref="MethodType.Normal" /> uses reflection <c>Type.GetMethod</c> (inheritance-aware);
-        ///     other <see cref="MethodType" /> values use Harmony <see cref="AccessTools" /> helpers.
-        ///     核心解析：<see cref="MethodType.Normal" /> 使用反射 <c>Type.GetMethod</c>（支持继承）；
-        ///     其他 <see cref="MethodType" /> 值使用 Harmony <see cref="AccessTools" /> 辅助方法。
+        ///     <para xml:lang="en">
+        ///         Resolves a target method. <see cref="MethodType.Normal" /> uses reflection with inherited-member
+        ///         lookup; other method types use Harmony <see cref="AccessTools" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析目标方法。<see cref="MethodType.Normal" /> 使用包含继承成员的反射查找；
+        ///         其他方法类型使用 Harmony <see cref="AccessTools" />。
+        ///     </para>
         /// </summary>
         public static MethodBase? Resolve(
             Type targetType,
