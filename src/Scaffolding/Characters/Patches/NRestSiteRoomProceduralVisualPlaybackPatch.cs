@@ -11,10 +11,16 @@ using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     After the rest-site room finishes layout, drives procedural rest visuals (per-act loop cues) for characters
-    ///     that use <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c>.
-    ///     在休息点房间完成布局后，为使用 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c> 的角色驱动程序化休息点视觉（按章节
-    ///     loop cue）。
+    ///     <para xml:lang="en">
+    ///         After the rest-site room finishes layout, starts the act-specific loop on character visuals backed by
+    ///         a rest-site state machine or
+    ///         <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         休息处房间完成布局后，对由休息处状态机或
+    ///         <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c>
+    ///         驱动的角色形象播放当前章节对应的循环动画。
+    ///     </para>
     /// </summary>
     internal class NRestSiteRoomProceduralVisualPlaybackPatch : IPatchMethod
     {

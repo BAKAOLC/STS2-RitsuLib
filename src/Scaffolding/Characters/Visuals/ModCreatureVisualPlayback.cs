@@ -15,18 +15,26 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 {
     /// <summary>
-    ///     Central playback for mod creature visuals: optional per-cue textures and data-only frame sequences from
-    ///     <see cref="IModCharacterAssetOverrides.VisualCues" />, Spine tracks when present, otherwise Godot
-    ///     <see cref="AnimationPlayer" /> / <see cref="AnimatedSprite2D" /> under the visuals subtree. Procedural roots from
-    ///     <see cref="RitsuGodotNodeFactories" /> (explicit <c>CreateFromResource</c> / <c>CreateFromScenePath</c>, e.g.
-    ///     <c>Texture2D</c> → <see cref="NCreatureVisuals" />) use the same cue names and trigger mapping as patched
-    ///     <see cref="NCreature.SetAnimationTrigger" />.
-    ///     Mod 生物视觉的集中播放入口：优先使用 <see cref="IModCharacterAssetOverrides.VisualCues" /> 中可选的逐 cue 贴图和
-    ///     纯数据帧序列；存在 Spine 时使用 Spine track；否则使用视觉子树下的 Godot <see cref="AnimationPlayer" />
-    ///     <see cref="AnimatedSprite2D" />。来自 <see cref="RitsuGodotNodeFactories" /> 的程序化根节点（显式
-    ///     <c>CreateFromResource</c> / <c>CreateFromScenePath</c>，例如 <c>Texture2D</c> →
-    ///     <see cref="NCreatureVisuals" />）使用与已 patch 的 <see cref="NCreature.SetAnimationTrigger" /> 相同的 cue
-    ///     名称和 trigger 映射。
+    ///     <para xml:lang="en">
+    ///         Provides shared animation playback for mod creature visuals. It first checks textures and data-driven
+    ///         frame sequences in <see cref="IModCharacterAssetOverrides.VisualCues" />, then tries Spine tracks or
+    ///         Godot <see cref="AnimationPlayer" />, <see cref="AnimationTree" />, and
+    ///         <see cref="AnimatedSprite2D" /> nodes as appropriate.
+    ///     </para>
+    ///     <para xml:lang="en">
+    ///         Procedural roots created through <see cref="RitsuGodotNodeFactories" /> use the same cue aliases and
+    ///         trigger mapping as the patched <see cref="NCreature.SetAnimationTrigger" /> path.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组生物形象提供统一的动画播放入口。它会先检查
+    ///         <see cref="IModCharacterAssetOverrides.VisualCues" /> 中的纹理和数据驱动帧序列，再根据情况尝试
+    ///         Spine 轨道或 Godot 的 <see cref="AnimationPlayer" />、<see cref="AnimationTree" /> 及
+    ///         <see cref="AnimatedSprite2D" /> 节点。
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="RitsuGodotNodeFactories" /> 创建的程序化根节点，与已补丁处理的
+    ///         <see cref="NCreature.SetAnimationTrigger" /> 路径使用相同的提示别名和触发器映射。
+    ///     </para>
     /// </summary>
     public static class ModCreatureVisualPlayback
     {
@@ -80,32 +88,42 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         }
 
         /// <summary>
-        ///     Attempts to play a logical cue (idle, die, hurt, …) on combat-style <see cref="NCreatureVisuals" />.
-        ///     尝试在战斗风格 <see cref="NCreatureVisuals" /> 上播放逻辑 cue（idle、die、hurt、…）。
+        ///     <para xml:lang="en">
+        ///         Attempts to play a logical animation cue on combat <see cref="NCreatureVisuals" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试在战斗 <see cref="NCreatureVisuals" /> 上播放逻辑动画提示。
+        ///     </para>
         /// </summary>
         /// <param name="visuals">
-        ///     Creature visuals root.
-        ///     生物视觉根节点。
+        ///     <para xml:lang="en">The creature-visuals root.</para>
+        ///     <para xml:lang="zh-CN">生物形象根节点。</para>
         /// </param>
         /// <param name="character">
-        ///     Owning character model, for cue texture lookup.
-        ///     拥有者角色模型，用于 cue 贴图查找。
+        ///     <para xml:lang="en">The owning character model used to resolve visual cues.</para>
+        ///     <para xml:lang="zh-CN">用于解析形象提示的所属角色模型。</para>
         /// </param>
         /// <param name="primaryCue">
-        ///     Primary name (e.g. <c>die</c>).
-        ///     主名称（例如 <c>die</c>）。
+        ///     <para xml:lang="en">The primary cue name, such as <c>die</c>.</para>
+        ///     <para xml:lang="zh-CN">主要提示名称，例如 <c>die</c>。</para>
         /// </param>
         /// <param name="alternateCueNames">
-        ///     Extra names to try for textures / Spine / Godot nodes.
-        ///     为贴图 / Spine / Godot 节点额外尝试的名称。
+        ///     <para xml:lang="en">Optional cue aliases to try instead of the default aliases.</para>
+        ///     <para xml:lang="zh-CN">用于替代默认别名进行尝试的可选提示别名。</para>
         /// </param>
         /// <param name="loop">
-        ///     Spine loop flag when a Spine body is used.
-        ///     使用 Spine body 时的 Spine 循环标记。
+        ///     <para xml:lang="en">Whether Spine playback should loop.</para>
+        ///     <para xml:lang="zh-CN">Spine 动画是否循环播放。</para>
         /// </param>
         /// <returns>
-        ///     <see langword="true" /> when some layer applied the cue.
-        ///     当某一层成功应用 cue 时返回 <see langword="true" />。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if any supported playback path applied the cue; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         任一受支持的播放路径成功应用提示时返回 <see langword="true" />；否则返回
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryPlayCue(NCreatureVisuals visuals, CharacterModel? character, string primaryCue,
             ReadOnlySpan<string> alternateCueNames = default, bool loop = false)
@@ -126,31 +144,41 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         }
 
         /// <summary>
-        ///     Plays a merchant-room style animation or static cue on an arbitrary root (typically
-        ///     <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Shops.NMerchantCharacter" />).
-        ///     在任意根节点上播放商人房间风格动画或静态 cue（通常是
+        ///     <para xml:lang="en">
+        ///         Attempts to play a world-scene animation or static cue on an arbitrary visual root, such as an
+        ///         <see cref="NMerchantCharacter" /> or rest-site character.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试在任意世界场景形象根节点上播放动画或静态提示，例如 <see cref="NMerchantCharacter" /> 或
+        ///         休息处角色。
+        ///     </para>
         /// </summary>
         /// <param name="root">
-        ///     Visual root (merchant, rest-site character, …).
-        ///     视觉根节点（商人、休息点角色、…）。
+        ///     <para xml:lang="en">The visual root.</para>
+        ///     <para xml:lang="zh-CN">形象根节点。</para>
         /// </param>
         /// <param name="character">
-        ///     Owner for cue lookup.
-        ///     用于 cue 查找的拥有者。
+        ///     <para xml:lang="en">The character model used to resolve visual cues.</para>
+        ///     <para xml:lang="zh-CN">用于解析形象提示的角色模型。</para>
         /// </param>
         /// <param name="animName">
-        ///     Logical animation / cue name.
-        ///     逻辑动画 / cue 名称。
+        ///     <para xml:lang="en">The logical animation or cue name.</para>
+        ///     <para xml:lang="zh-CN">逻辑动画或提示名称。</para>
         /// </param>
         /// <param name="loop">
-        ///     Loop hint for Spine (non-Spine paths ignore where not applicable).
-        ///     Spine 循环提示（非 Spine 路径在不适用时忽略）。
+        ///     <para xml:lang="en">Whether Spine playback should loop.</para>
+        ///     <para xml:lang="zh-CN">Spine 动画是否循环播放。</para>
         /// </param>
         /// <param name="cueSetOverride">
-        ///     When set (e.g. <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /> merchant / rest cues),
-        ///     used instead of <see cref="IModCharacterAssetOverrides.VisualCues" /> for texture / frame lookup.
-        ///     设置时（例如 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /> 的商人 / 休息点 cue），
-        ///     用它替代 <see cref="IModCharacterAssetOverrides.VisualCues" /> 进行贴图 / 帧查找。
+        ///     <para xml:lang="en">
+        ///         An optional cue set to use instead of <see cref="IModCharacterAssetOverrides.VisualCues" />, such
+        ///         as a merchant or rest-site cue set from
+        ///         <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         用于替代 <see cref="IModCharacterAssetOverrides.VisualCues" /> 的可选提示集合，例如
+        ///         <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /> 中的商人或休息处提示集合。
+        ///     </para>
         /// </param>
         public static bool TryPlayOnVisualRoot(Node root, CharacterModel? character, string animName, bool loop = false,
             VisualCueSet? cueSetOverride = null)
@@ -167,12 +195,24 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         }
 
         /// <summary>
-        ///     When the creature has no Spine animator, plays the mapped cue on <see cref="NCreature.Visuals" />.
-        ///     当生物没有 Spine animator 时，在 <see cref="NCreature.Visuals" /> 上播放映射后的 cue。
+        ///     <para xml:lang="en">
+        ///         For a RitsuLib-managed creature without a Spine animator, maps an animator trigger to a cue and
+        ///         attempts to play it on <see cref="NCreature.Visuals" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         对由 RitsuLib 管理且没有 Spine 动画器的生物，将动画器触发器映射为提示，并尝试在
+        ///         <see cref="NCreature.Visuals" /> 上播放。
+        ///     </para>
         /// </summary>
         /// <returns>
-        ///     <see langword="false" /> when Spine is active (caller should run vanilla).
-        ///     Spine 激活时返回 <see langword="false" />（调用方应继续运行原版逻辑）。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the mapped cue was played; otherwise, <see langword="false" />. A
+        ///         Spine-backed or unmanaged creature always returns <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         成功播放映射后的提示时返回 <see langword="true" />；否则返回 <see langword="false" />。基于 Spine
+        ///         或不由 RitsuLib 管理的生物始终返回 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryPlayFromCreatureAnimatorTrigger(NCreature creature, string trigger)
         {
@@ -225,10 +265,14 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         }
 
         /// <summary>
-        ///     Resolves the owning <see cref="CharacterModel" /> for a merchant-booth <see cref="NMerchantCharacter" />
-        ///     in either <see cref="NMerchantRoom" /> or the fake-merchant event screen.
-        ///     为 <see cref="CharacterModel" /> 或 fake-merchant 事件界面中的商人摊位 <see cref="NMerchantCharacter" />
-        ///     解析所属 <see cref="NMerchantRoom" />。
+        ///     <para xml:lang="en">
+        ///         Resolves the owning <see cref="CharacterModel" /> for a merchant-booth
+        ///         <see cref="NMerchantCharacter" /> in either <see cref="NMerchantRoom" /> or the Fake Merchant event.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析 <see cref="NMerchantRoom" /> 或“伪装商人”事件中摊位
+        ///         <see cref="NMerchantCharacter" /> 所属的 <see cref="CharacterModel" />。
+        ///     </para>
         /// </summary>
         internal static bool TryResolveMerchantCharacterModel(NMerchantCharacter visual,
             out CharacterModel? character)

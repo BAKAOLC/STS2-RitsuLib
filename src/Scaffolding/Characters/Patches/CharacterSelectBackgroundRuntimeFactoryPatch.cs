@@ -13,12 +13,17 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Converts character-select background scenes through <see cref="RitsuGodotNodeFactories" /> so ordinary
-    ///     <see cref="Node" /> / <see cref="CanvasItem" /> roots can be safely wrapped as <see cref="Control" />;
-    ///     <see cref="Texture2D" /> paths become full-cover background controls.
-    ///     通过 <see cref="RitsuGodotNodeFactories" /> 转换角色选择背景场景，使普通 <see cref="Node" /> /
-    ///     <see cref="CanvasItem" /> 根节点可以安全包装为 <see cref="Control" />；<see cref="Texture2D" /> 路径会成为全覆盖背景
-    ///     control。
+    ///     <para xml:lang="en">
+    ///         Creates character-select backgrounds through <see cref="RitsuGodotNodeFactories" />, allowing scenes
+    ///         with ordinary <see cref="Node" /> or <see cref="CanvasItem" /> roots to be wrapped as
+    ///         <see cref="Control" /> nodes. <see cref="Texture2D" /> resources are displayed in full-cover
+    ///         background controls.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="RitsuGodotNodeFactories" /> 创建角色选择背景，使以普通 <see cref="Node" /> 或
+    ///         <see cref="CanvasItem" /> 为根节点的场景能够包装为 <see cref="Control" /> 节点。
+    ///         <see cref="Texture2D" /> 资源会显示在铺满父控件的背景控件中。
+    ///     </para>
     /// </summary>
     internal class CharacterSelectBackgroundRuntimeFactoryPatch : IPatchMethod
     {

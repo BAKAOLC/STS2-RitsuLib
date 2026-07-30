@@ -14,10 +14,15 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Replaces only vanilla merchant-character instantiation so RitsuLib procedural or resource overrides can
-    ///     supply the node while vanilla keeps ownership of room setup, layout, and ready-time animation startup.
-    ///     仅替换原版商人角色实例化，使 RitsuLib 的程序化或资源覆盖可以提供节点，同时由原版继续负责房间初始化、布局和 ready
-    ///     阶段的动画启动。
+    ///     <para xml:lang="en">
+    ///         Replaces only the base game's merchant-character instantiation so RitsuLib procedural or resource
+    ///         overrides can supply the node while the base game retains room setup, layout, and ready-time animation
+    ///         startup.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         仅替换游戏本体创建商人角色的步骤，使 RitsuLib 的程序化形象或资源替换能够提供节点，而房间初始化、
+    ///         布局及节点准备就绪时的动画启动仍由游戏本体负责。
+    ///     </para>
     /// </summary>
     internal class NMerchantRoomProceduralCharacterInstantiationPatch : IPatchMethod
     {

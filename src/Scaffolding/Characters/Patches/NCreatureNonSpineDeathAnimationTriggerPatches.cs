@@ -9,75 +9,36 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Fires the <c>Dead</c> animation trigger for RitsuLib-managed creatures without a Spine animator after
-    ///     <see cref="NCreature.StartDeathAnim" /> runs. Vanilla gates the entire trigger dispatch (including death
-    ///     SFX) behind <c>_spineAnimator != null</c>, so mod creatures using <c>AnimatedSprite2D</c>, Godot
-    ///     <c>AnimationPlayer</c>, or cue-frame-sequence backends never receive the trigger — the most visible symptom
-    ///     for players is that the death animation does not play when the run is abandoned or the player dies in
-    ///     combat.
-    ///     在 <see cref="NCreature.StartDeathAnim" /> 运行后，为没有 Spine animator 的 RitsuLib 管理生物触发
-    ///     <c>Dead</c> 动画触发器。原版将整个触发器派发（包括死亡
-    ///     SFX）门控在 <c>_spineAnimator != null</c> 之后，因此使用 <c>AnimatedSprite2D</c>、Godot
-    ///     <c>AnimationPlayer</c> 或 cue-frame-sequence 后端的 mod 生物永远收不到该触发器，最明显的玩家症状
-    ///     是跑局被放弃或玩家在战斗中死亡时，死亡动画不会播放。
+    ///     <para xml:lang="en">
+    ///         Dispatches the <c>Dead</c> animation trigger after <see cref="NCreature.StartDeathAnim" /> for
+    ///         RitsuLib-managed creatures without a Spine animator. The base implementation only dispatches this
+    ///         trigger through its Spine path, so non-Spine animation backends would otherwise receive no death
+    ///         trigger.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对由 RitsuLib 管理且没有 Spine 动画器的生物，在 <see cref="NCreature.StartDeathAnim" /> 后派发
+    ///         <c>Dead</c> 动画触发器。游戏本体只会通过 Spine 路径派发该触发器，因此其他动画后端原本无法收到
+    ///         死亡触发器。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         <b>Scope:</b> the postfix only fires when all of the following hold, so foreign creatures that do not
-    ///         opt into the RitsuLib visuals pipeline are untouched:
-    ///         <list type="bullet">
-    ///             <item>
-    ///                 <description>the creature has no Spine animator;</description>
-    ///             </item>
-    ///             <item>
-    ///                 <description>
-    ///                     the creature's model (either <c>Entity.Player?.Character</c> or <c>Entity.Monster</c>)
-    ///                     opts into RitsuLib visuals by implementing
-    ///                     <see cref="IModCreatureCombatAnimationStateMachineFactory" /> (or the legacy
-    ///                     <see cref="IModNonSpineAnimationStateMachineFactory" />), or — for players only —
-    ///                     <see cref="IModCharacterAssetOverrides" /> (which pulls the cue-playback path).
-    ///                 </description>
-    ///             </item>
-    ///         </list>
+    ///     <para xml:lang="en">
+    ///         The patch applies only when the creature has no Spine animator and its character or monster model
+    ///         provides a RitsuLib animation-state-machine factory, or its player character implements
+    ///         <see cref="IModCharacterAssetOverrides" />. Other creatures are unaffected.
     ///     </para>
-    ///     <para>
-    ///         When all guards pass, the patch calls <see cref="NCreature.SetAnimationTrigger" />, which
-    ///         <see cref="ModCreatureCombatAnimationPlaybackPatch" /> routes through the model's
-    ///         <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.ModAnimStateMachine" /> (when registered)
-    ///         or the legacy cue playback
-    ///         (<see cref="STS2RitsuLib.Scaffolding.Characters.Visuals.ModCreatureVisualPlayback" />).
+    ///     <para xml:lang="en">
+    ///         When a finite animation duration is available, the returned duration is raised to that value, capped
+    ///         at 30 seconds. Creatures scheduled for removal also receive a matching
+    ///         <see cref="RitsuNonSpineDeathAnimationDelayer" />.
     ///     </para>
-    ///     <para>
-    ///         This patch does not attempt to backfill the death-animation length returned from
-    ///         <see cref="NCreature.StartDeathAnim" /> — vanilla already returns <c>0f</c> for non-Spine creatures
-    ///         unless a monster sets <see cref="MonsterModel.DeathAnimLengthOverride" />.
+    ///     <para xml:lang="zh-CN">
+    ///         此补丁仅适用于没有 Spine 动画器，且其角色或怪物模型提供 RitsuLib 动画状态机工厂的生物；玩家角色
+    ///         实现 <see cref="IModCharacterAssetOverrides" /> 时也适用。其他生物不受影响。
     ///     </para>
-    ///     <para>
-    ///         <b>Scope:</b> postfix 仅在以下所有条件成立时触发，因此未选择加入 RitsuLib 视觉管线的外部生物不受影响：
-    ///         <list type="bullet">
-    ///             <item>
-    ///                 <description>该生物没有 Spine animator；</description>
-    ///             </item>
-    ///             <item>
-    ///                 <description>
-    ///                     该生物的模型（<c>Entity.Player?.Character</c> 或 <c>Entity.Monster</c>）
-    ///                     通过实现 <see cref="IModCreatureCombatAnimationStateMachineFactory" />（或旧版
-    ///                     <see cref="IModNonSpineAnimationStateMachineFactory" />），或者仅对玩家通过
-    ///                     <see cref="IModCharacterAssetOverrides" />（它会拉取 cue 播放路径），选择加入 RitsuLib 视觉。
-    ///                 </description>
-    ///             </item>
-    ///         </list>
-    ///     </para>
-    ///     <para>
-    ///         当所有 guard 通过时，patch 调用 <see cref="NCreature.SetAnimationTrigger" />；
-    ///         <see cref="ModCreatureCombatAnimationPlaybackPatch" /> 会将其通过模型的
-    ///         <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.ModAnimStateMachine" />（已注册时）
-    ///         或旧版 cue 播放
-    ///     </para>
-    ///     <para>
-    ///         此 patch 不尝试回填从
-    ///         <see cref="NCreature.StartDeathAnim" /> 返回的死亡动画长度；原版已对非 Spine 生物返回 <c>0f</c>，
-    ///         除非某个怪物设置了 <see cref="MonsterModel.DeathAnimLengthOverride" />。
+    ///     <para xml:lang="zh-CN">
+    ///         能够取得有效动画时长时，方法返回的时长会提高到该值，但最多为 30 秒。计划移除的生物还会获得时长
+    ///         相同的 <see cref="RitsuNonSpineDeathAnimationDelayer" />。
     ///     </para>
     /// </remarks>
     internal class NCreatureNonSpineDeathAnimationTriggerPatch : IPatchMethod
@@ -117,31 +78,32 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     }
 
     /// <summary>
-    ///     Fires the <c>Revive</c> animation trigger for RitsuLib-managed creatures after
-    ///     <see cref="NCreature.StartReviveAnim" /> when vanilla would not dispatch it. Vanilla only dispatches the
-    ///     trigger when a Spine animator exists and <see cref="CreatureAnimator.HasTrigger" /> reports
-    ///     <c>Revive</c>; otherwise it falls back to <c>AnimTempRevive</c> (a fade-out / fade-in tween on the visuals
-    ///     root), which silently swallows any <c>Revive</c> state the mod creature registered on a
-    ///     <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.ModAnimStateMachine" /> without a matching
-    ///     <c>Revive</c> branch on the vanilla <see cref="CreatureAnimator" />.
-    ///     在 <see cref="NCreature.StartReviveAnim" /> 后、原版不会派发时，为 RitsuLib 管理的生物触发
-    ///     <c>Revive</c> 动画触发器。原版只会在存在 Spine animator 且 <see cref="CreatureAnimator.HasTrigger" /> 报告
-    ///     <c>Revive</c> 时派发该触发器；否则会 fallback 到 <c>AnimTempRevive</c>（视觉
-    ///     根节点上的淡出/淡入 tween），这会静默吞掉 mod 生物在
-    ///     <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.ModAnimStateMachine" /> 上注册但在原版
-    ///     <see cref="CreatureAnimator" /> 上没有匹配
-    ///     <c>Revive</c> 分支的任何 <c>Revive</c> 状态。
+    ///     <para xml:lang="en">
+    ///         Dispatches the <c>Revive</c> animation trigger after <see cref="NCreature.StartReviveAnim" /> for
+    ///         RitsuLib-managed creatures when the base implementation did not dispatch it.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对由 RitsuLib 管理的生物，在游戏本体没有派发 <c>Revive</c> 动画触发器时，于
+    ///         <see cref="NCreature.StartReviveAnim" /> 后补充派发该触发器。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Scope mirrors <see cref="NCreatureNonSpineDeathAnimationTriggerPatch" /> for non-Spine creatures. For
-    ///     Spine-backed creatures with a combat state machine that declares <c>Revive</c>, the postfix may dispatch
-    ///     <c>Revive</c> when the vanilla animator does not expose that trigger (see interface remarks on keeping both
-    ///     in sync). The vanilla fade tween still runs alongside the triggered animation when <c>AnimTempRevive</c>
-    ///     also ran; mods that want a clean revive animation should treat the brief fade as expected behaviour.
-    ///     作用域与非 Spine 生物的 <see cref="NCreatureNonSpineDeathAnimationTriggerPatch" /> 保持一致。对于
-    ///     带有声明 <c>Revive</c> 的战斗状态机的 Spine 支持生物，当原版 animator 未暴露该触发器时，postfix 可能派发
-    ///     <c>Revive</c>（关于保持两者同步，见接口备注）。当 <c>AnimTempRevive</c>
-    ///     也运行时，原版淡化 tween 仍会与触发的动画并行运行；想要干净复活动画的 mod 应将这段短暂淡化视为预期行为。
+    ///     <para xml:lang="en">
+    ///         For non-Spine creatures, the scope matches
+    ///         <see cref="NCreatureNonSpineDeathAnimationTriggerPatch" />. A Spine-backed creature is included only
+    ///         when its mod combat state machine declares <c>Revive</c> and the base animator does not.
+    ///     </para>
+    ///     <para xml:lang="en">
+    ///         If the base implementation also ran <c>AnimTempRevive</c>, its fade tween continues alongside the mod
+    ///         animation.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对非 Spine 生物，适用范围与 <see cref="NCreatureNonSpineDeathAnimationTriggerPatch" /> 相同。对于
+    ///         基于 Spine 的生物，仅当模组战斗状态机声明了 <c>Revive</c> 而游戏本体动画器没有该触发器时才适用。
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         如果游戏本体同时运行了 <c>AnimTempRevive</c>，其淡入淡出补间动画仍会与模组动画并行播放。
+    ///     </para>
     /// </remarks>
     internal class NCreatureNonSpineReviveAnimationTriggerPatch : IPatchMethod
     {
@@ -177,10 +139,14 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     }
 
     /// <summary>
-    ///     Shared gate used by combat animation lifecycle postfixes so scope stays consistent across
-    ///     <see cref="NCreature.StartDeathAnim" /> / <see cref="NCreature.StartReviveAnim" />.
-    ///     战斗动画生命周期 postfix 使用的共享 gate，使作用域在
-    ///     <see cref="NCreature.StartDeathAnim" /> / <see cref="NCreature.StartReviveAnim" /> 之间保持一致。
+    ///     <para xml:lang="en">
+    ///         Defines the shared eligibility checks used by the <see cref="NCreature.StartDeathAnim" /> and
+    ///         <see cref="NCreature.StartReviveAnim" /> postfixes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义 <see cref="NCreature.StartDeathAnim" /> 与 <see cref="NCreature.StartReviveAnim" /> 后置补丁
+    ///         共用的适用条件。
+    ///     </para>
     /// </summary>
     internal static class CombatAnimationStateMachineTriggerScope
     {

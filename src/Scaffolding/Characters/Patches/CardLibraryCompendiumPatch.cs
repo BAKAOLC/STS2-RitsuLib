@@ -13,33 +13,35 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Adds a pool-filter button for each registered mod character in the card library compendium (skips
-    ///     characters with <see cref="IModCharacterVanillaSelectionPolicy.HideInCardLibraryCompendium" />), and
-    ///     re-applies pool-filter art from <see cref="CharacterModel.IconTexture" /> (so
-    ///     <see
+    ///     <para xml:lang="en">
+    ///         Adds card-pool filter buttons for registered mod characters and shared pools to the card library
+    ///         compendium. Characters hidden by
+    ///         <see cref="IModCharacterVanillaSelectionPolicy.HideInCardLibraryCompendium" /> are skipped.
+    ///     </para>
+    ///     <para xml:lang="en">
+    ///         Existing filter icons are synchronized with <see cref="CharacterModel.IconTexture" /> so that
+    ///         replacements registered through
+    ///         <see
     ///         cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
-    ///     cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)"
-    ///     />
-    ///     icons match everywhere).
-    ///     Icons match everywhere).
-    ///     Without this patch, mod character cards are not visible in any filter category, and opening
-    ///     the card library during a run with a mod character causes a KeyNotFoundException crash.
-    ///     Mod-character rows use <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" /> unless
-    ///     overridden via <see cref="IModCharacterCardLibraryCompendiumPlacement" /> (or the template virtual). Optional
-    ///     shared-pool filters use end-of-strip placement when no rules are supplied. All rows share one placement pass
-    ///     (vanilla anchor priority list, mod-to-mod constraint relaxation, unified sort, then insertion).
-    ///     为卡牌库 compendium 中每个已注册 mod 角色添加牌池过滤按钮（跳过
-    ///     带 <see cref="IModCharacterVanillaSelectionPolicy.HideInCardLibraryCompendium" /> 的角色），并
-    ///     从 <see cref="CharacterModel.IconTexture" /> 重新应用牌池过滤美术（因此
-    ///     <see />
-    ///     图标在各处保持一致）。
-    ///     图标在各处保持一致）。
-    ///     没有此 patch 时，mod 角色卡牌不会在任何过滤类别中可见，并且在使用 mod 角色的跑局中打开
-    ///     卡牌库会导致 KeyNotFoundException 崩溃。
-    ///     mod 角色行使用 <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" />，除非
-    ///     通过 <see cref="IModCharacterCardLibraryCompendiumPlacement" />（或模板 virtual）覆盖。没有提供规则时，可选
-    ///     共享池过滤器使用条带末尾放置。所有行共享一次放置流程
-    ///     （原版锚点优先级列表、mod 到 mod 约束放宽、统一排序，然后插入）。
+    ///         are reflected in the compendium. Character rows use
+    ///         <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" /> unless the character
+    ///         implements <see cref="IModCharacterCardLibraryCompendiumPlacement" />. Shared-pool filters without
+    ///         placement rules are appended to the end of the filter strip.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在卡牌总览中为已注册的模组角色和共享牌池添加牌池筛选按钮。由
+    ///         <see cref="IModCharacterVanillaSelectionPolicy.HideInCardLibraryCompendium" />
+    ///         隐藏的角色会被跳过。
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将现有筛选按钮的图标与 <see cref="CharacterModel.IconTexture" /> 同步，使通过
+    ///         <see
+    ///         cref="ModContentRegistry.RegisterCharacterAssetReplacement(string, Scaffolding.Characters.CharacterAssetProfile)" />
+    ///         注册的替换也能反映在卡牌总览中。除非角色实现了
+    ///         <see cref="IModCharacterCardLibraryCompendiumPlacement" />，否则角色行使用
+    ///         <see cref="CardLibraryCompendiumPlacementDefaults.DefaultCharacterRowRules" />。未指定放置规则的共享牌池
+    ///         筛选按钮会追加到筛选栏末尾。
+    ///     </para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -141,16 +143,18 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         }
 
         /// <summary>
-        ///     A pool-filter control to clone the Image <see cref="ShaderMaterial" /> from, and the fallback icon
-        ///     source for shared compendium rows. When the base game has already created mod character filters,
-        ///     the leftmost of those in the pool strip; otherwise the first present vanilla
-        ///     <see cref="NCardPoolFilter" /> (strip order) from
-        ///     <see cref="CardLibraryCompendiumVanillaFilterNames.AllInStripOrder" />.
-        ///     用于克隆 Image <see cref="ShaderMaterial" /> 的牌池过滤控件，以及共享 compendium 行的 fallback 图标
-        ///     来源。当基础游戏已经创建 mod 角色过滤器时，使用
-        ///     牌池条带中这些过滤器最左侧的一个；否则使用
-        ///     <see cref="CardLibraryCompendiumVanillaFilterNames.AllInStripOrder" /> 中第一个存在的原版
-        ///     <see cref="NCardPoolFilter" />（条带顺序）。
+        ///     <para xml:lang="en">
+        ///         Finds a pool-filter control whose Image <see cref="ShaderMaterial" /> can be cloned and whose icon
+        ///         can serve as the fallback for shared-pool filters. If the base game has already created character
+        ///         filters, the leftmost such filter is selected; otherwise, the first available vanilla filter in
+        ///         <see cref="CardLibraryCompendiumVanillaFilterNames.AllInStripOrder" /> is used.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         查找一个牌池筛选控件，以便克隆其 Image <see cref="ShaderMaterial" />，并将其图标用作共享牌池
+        ///         筛选按钮的回退图标。如果游戏本体已创建角色筛选按钮，则选择其中最靠左的一个；否则使用
+        ///         <see cref="CardLibraryCompendiumVanillaFilterNames.AllInStripOrder" />
+        ///         中第一个实际存在的原版筛选按钮。
+        ///     </para>
         /// </summary>
         private static bool TryGetCompendiumTemplateFilter(
             NCardLibrary library,
@@ -175,12 +179,16 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         }
 
         /// <summary>
-        ///     Leftmost <see cref="NCardPoolFilter" /> under the compendium pool strip that is in
-        ///     <paramref name="cardPoolFilters" />, for a stable clone source; otherwise
-        ///     <c>Values.First()</c>.
-        ///     compendium 牌池条带下、存在于
-        ///     <paramref name="cardPoolFilters" /> 中的最左侧 <see cref="NCardPoolFilter" />，用作稳定克隆来源；否则使用
-        ///     <c>Values.First()</c>。
+        ///     <para xml:lang="en">
+        ///         Returns the leftmost <see cref="NCardPoolFilter" /> in the compendium filter strip that also appears
+        ///         in <paramref name="cardPoolFilters" />. Falls back to <c>Values.First()</c> when the strip cannot be
+        ///         inspected or contains none of those filters.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回卡牌总览筛选栏中同时存在于 <paramref name="cardPoolFilters" /> 的最左侧
+        ///         <see cref="NCardPoolFilter" />。无法检查筛选栏或其中没有对应筛选按钮时，回退到
+        ///         <c>Values.First()</c>。
+        ///     </para>
         /// </summary>
         private static NCardPoolFilter GetLeftmostPoolFilterInStripModSubset(
             Dictionary<CharacterModel, NCardPoolFilter> cardPoolFilters)

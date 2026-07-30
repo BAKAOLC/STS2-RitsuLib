@@ -16,10 +16,14 @@ using STS2RitsuLib.Scaffolding.Characters.Visuals;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Replaces <c>MoveCreaturesToDifferentLayerAndDisableUi</c> so game-over layout works for mod characters that
-    ///     use non-Spine or differently structured combat visuals.
-    ///     替换 <c>MoveCreaturesToDifferentLayerAndDisableUi</c>，使游戏结束布局可用于
-    ///     使用非 Spine 或结构不同的战斗视觉的 mod 角色。
+    ///     <para xml:lang="en">
+    ///         Replaces <c>MoveCreaturesToDifferentLayerAndDisableUi</c> so the game-over screen can arrange mod
+    ///         characters whose combat visuals do not use Spine or use a different node structure.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         替换 <c>MoveCreaturesToDifferentLayerAndDisableUi</c>，使游戏结束界面能够排列不使用 Spine 或采用
+    ///         不同节点结构的模组角色战斗形象。
+    ///     </para>
     /// </summary>
     internal class CharacterGameOverScreenCompatibilityPatch : IPatchMethod
     {

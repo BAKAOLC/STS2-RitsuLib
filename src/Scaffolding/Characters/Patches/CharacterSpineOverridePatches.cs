@@ -7,10 +7,15 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     After a combat creature node becomes ready, optionally swaps in mod Spine skeleton data from
-    ///     <see cref="IModCharacterAssetOverrides.CustomCombatSpineSkeletonDataPath" /> when visuals support it.
-    ///     战斗生物节点 ready 后，如果视觉支持，则可选择从
-    ///     <see cref="IModCharacterAssetOverrides.CustomCombatSpineSkeletonDataPath" /> 换入 mod Spine skeleton 数据。
+    ///     <para xml:lang="en">
+    ///         After a combat creature node becomes ready, applies the mod character's Spine skeleton data from
+    ///         <see cref="IModCharacterAssetOverrides.CustomCombatSpineSkeletonDataPath" /> when its visuals support
+    ///         skeleton replacement.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         战斗生物节点准备就绪后，如果其形象支持替换骨骼，则应用模组角色通过
+    ///         <see cref="IModCharacterAssetOverrides.CustomCombatSpineSkeletonDataPath" /> 指定的 Spine 骨骼数据。
+    ///     </para>
     /// </summary>
     internal class CharacterCombatSpineOverridePatch : IPatchMethod
     {

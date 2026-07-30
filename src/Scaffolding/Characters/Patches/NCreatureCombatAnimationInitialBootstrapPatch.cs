@@ -5,8 +5,13 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Eagerly builds combat animation state machines once combat visuals are ready for opted-in creature models.
-    ///     在选择加入的生物模型的战斗视觉 ready 后，立即构建战斗动画状态机。
+    ///     <para xml:lang="en">
+    ///         Eagerly builds combat animation state machines after the combat visuals are ready for creature models
+    ///         that provide a compatible state-machine factory.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对提供兼容状态机工厂的生物模型，在战斗形象准备就绪后立即创建战斗动画状态机。
+    ///     </para>
     /// </summary>
     internal class NCreatureCombatAnimationInitialBootstrapPatch : IPatchMethod
     {

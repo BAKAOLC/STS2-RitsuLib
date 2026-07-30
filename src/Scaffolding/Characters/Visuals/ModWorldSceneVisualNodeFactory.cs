@@ -10,8 +10,13 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 {
     /// <summary>
-    ///     Builds minimal in-memory merchant / rest-site character nodes so mods can omit custom <c>tscn</c> scenes.
-    ///     构建最小化的内存商人 / 休息点角色节点，让 mod 可以省略自定义 <c>tscn</c> 场景。
+    ///     <para xml:lang="en">
+    ///         Builds minimal merchant and rest-site character nodes in memory so mods can omit custom <c>tscn</c>
+    ///         scenes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在内存中创建最精简的商人和休息处角色节点，使模组无需提供自定义 <c>tscn</c> 场景。
+    ///     </para>
     /// </summary>
     public static class ModWorldSceneVisualNodeFactory
     {
@@ -21,13 +26,15 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             AccessTools.FieldRefAccess<NRestSiteCharacter, int>("_characterIndex");
 
         /// <summary>
-        ///     When <paramref name="character" /> defines <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" />
-        ///     merchant data, returns a new <see cref="NMerchantCharacter" /> with a non-Spine sprite child; otherwise
-        ///     <see langword="null" />.
-        ///     <see langword="null" />。
-        ///     当 <paramref name="character" /> 定义了 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /> 商人数据时，返回带非
-        ///     Spine sprite 子节点的新 <see cref="NMerchantCharacter" />；否则返回 <see langword="null" />。
-        ///     <see langword="null" />。
+        ///     <para xml:lang="en">
+        ///         Returns a new <see cref="NMerchantCharacter" /> with a non-Spine sprite child when
+        ///         <paramref name="character" /> defines procedural merchant visuals; otherwise, returns
+        ///         <see langword="null" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <paramref name="character" /> 定义了程序化商人形象时，返回带有非 Spine 精灵子节点的新
+        ///         <see cref="NMerchantCharacter" />；否则返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public static NMerchantCharacter? TryInstantiateMerchantCharacter(CharacterModel character)
         {
@@ -46,14 +53,18 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         }
 
         /// <summary>
-        ///     When the player character defines rest-site procedural visuals, builds an <see cref="NRestSiteCharacter" />
-        ///     tree compatible with vanilla scripts (hitbox, thought anchors, selection reticle from base game assets).
-        ///     The <see cref="Sprite2D" /> named <c>Visuals</c> is parented under <c>ControlRoot</c> so vanilla
-        ///     <c>FlipX</c> matches BaseLib <c>NRestSiteCharacterFactory</c> rest-site layouts.
-        ///     当玩家角色定义休息点程序化视觉时，构建与原版脚本兼容的 <see cref="NRestSiteCharacter" /> 树
-        ///     （hitbox、思考气泡 anchor、来自基础游戏资源的选择 reticle）。名为 <see cref="Sprite2D" /> 的
-        ///     <c>Visuals</c> 会挂在 <c>ControlRoot</c> 下，使原版 <c>FlipX</c> 与 BaseLib
-        ///     <c>NRestSiteCharacterFactory</c> 的休息点布局匹配。
+        ///     <para xml:lang="en">
+        ///         When the player's character defines procedural rest-site visuals, builds an
+        ///         <see cref="NRestSiteCharacter" /> tree containing the hitbox, thought-bubble anchors, base-game
+        ///         selection reticle, and a non-Spine <c>Visuals</c> sprite under <c>ControlRoot</c>. Returns
+        ///         <see langword="null" /> when no definition is present or the required reticle resource is missing.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当玩家角色定义了程序化休息处形象时，创建 <see cref="NRestSiteCharacter" /> 节点树，其中包含
+        ///         点击区域、思考气泡锚点、游戏本体的选择指示器，以及位于 <c>ControlRoot</c> 下的非 Spine
+        ///         <c>Visuals</c> 精灵。没有对应定义或缺少必需的选择指示器资源时返回
+        ///         <see langword="null" />。
+        ///     </para>
         /// </summary>
         public static NRestSiteCharacter? TryCreateRestSiteCharacter(Player player, int characterIndex)
         {

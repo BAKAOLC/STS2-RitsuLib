@@ -74,8 +74,13 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     }
 
     /// <summary>
-    ///     Maintains selection-policy scope for vanilla character-select flows.
-    ///     为原版角色选择流程维护选择策略作用域。
+    ///     <para xml:lang="en">
+    ///         Maintains the selection-policy scope used by the base game's character visibility and random-selection
+    ///         flows.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为游戏本体的角色可见性和随机选择流程维护选择策略作用域。
+    ///     </para>
     /// </summary>
     internal class CharacterVanillaSelectionPolicyPatches : IPatchMethod
     {
@@ -109,8 +114,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     }
 
     /// <summary>
-    ///     Applies scoped selection policy to <see cref="ModelDb.AllCharacters" />.
-    ///     将带作用域的选择策略应用到 <see cref="ModelDb.AllCharacters" />。
+    ///     <para xml:lang="en">
+    ///         Applies the active selection-policy scope to <see cref="ModelDb.AllCharacters" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将当前选择策略作用域应用到 <see cref="ModelDb.AllCharacters" />。
+    ///     </para>
     /// </summary>
     internal class CharacterVanillaSelectionPolicyAllCharactersPatch : IPatchMethod
     {
@@ -124,8 +133,12 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         }
 
         /// <summary>
-        ///     Filters getter result according to current selection scope.
-        ///     根据当前选择作用域过滤 getter 结果。
+        ///     <para xml:lang="en">
+        ///         Filters the getter result according to the active selection-policy scope.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         根据当前选择策略作用域过滤属性返回结果。
+        ///     </para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId, Const.FrameworkContentRegistryHarmonyId)]
         [HarmonyPriority(Priority.Last)]

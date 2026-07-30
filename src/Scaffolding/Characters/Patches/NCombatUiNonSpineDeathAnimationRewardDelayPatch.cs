@@ -15,7 +15,13 @@ using MegaCrit.Sts2.Core.Context;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Includes RitsuLib-managed non-Spine death animation durations in combat reward timing.
+    ///     <para xml:lang="en">
+    ///         Includes RitsuLib-managed non-Spine death-animation durations when calculating the delay before combat
+    ///         rewards are offered.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         计算战斗奖励出现前的等待时间时，计入由 RitsuLib 管理的非 Spine 死亡动画时长。
+    ///     </para>
     /// </summary>
     internal class NCombatUiNonSpineDeathAnimationRewardDelayPatch : IPatchMethod
     {

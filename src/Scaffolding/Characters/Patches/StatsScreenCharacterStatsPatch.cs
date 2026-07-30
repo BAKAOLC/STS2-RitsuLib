@@ -9,12 +9,15 @@ using STS2RitsuLib.Scaffolding.Godot;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Appends playable mod character history sections to the general stats screen.
-    ///     Base game NGeneralStatsGrid.LoadStats hard-codes five vanilla characters,
-    ///     so non-vanilla character records never render without this patch.
-    ///     向通用统计界面追加可玩 mod 角色历史区段。
-    ///     基础游戏 NGeneralStatsGrid.LoadStats 硬编码了五个原版角色，
-    ///     没有此补丁时，mod 角色记录永远不会渲染。
+    ///     <para xml:lang="en">
+    ///         Appends saved statistics for playable mod characters to the general statistics screen. The base
+    ///         <see cref="NGeneralStatsGrid.LoadStats" /> implementation creates sections only for the five built-in
+    ///         characters.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将可玩模组角色的已保存统计数据追加到综合统计界面。游戏本体的
+    ///         <see cref="NGeneralStatsGrid.LoadStats" /> 实现只会为五名内置角色创建区段。
+    ///     </para>
     /// </summary>
     internal class StatsScreenCharacterStatsPatch : IPatchMethod
     {
