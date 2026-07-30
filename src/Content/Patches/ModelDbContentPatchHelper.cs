@@ -4,10 +4,11 @@ namespace STS2RitsuLib.Content.Patches
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Applies <see cref="ModelDbGetterMerge" /> then mod append delegates for patched
-    ///         <see cref="ModelDb" /> getter postfixes.
+    ///         Applies model-sequence merge functions while protecting nested <see cref="ModelDb" /> lookups.
     ///     </para>
-    ///     <para xml:lang="zh-CN">为已修补的 <see cref="ModelDb" /> getter postfix 应用 <see cref="ModelDbGetterMerge" /> 与 mod 追加委托。</para>
+    ///     <para xml:lang="zh-CN">
+    ///         应用模型序列合并函数，同时保护嵌套的 <see cref="ModelDb" /> 查找。
+    ///     </para>
     /// </summary>
     internal static class ModelDbContentPatchHelper
     {

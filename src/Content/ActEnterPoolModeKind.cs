@@ -1,36 +1,29 @@
 namespace STS2RitsuLib.Content
 {
     /// <summary>
-    ///     How eligible pool candidates are combined for an act slot when no force wins.
-    ///     没有强制项胜出时，章节槽位的合格池候选项如何组合。
+    ///     <para xml:lang="en">
+    ///         Specifies how eligible act candidates are selected when no forced candidate wins.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">指定没有强制候选章节胜出时如何选择符合条件的章节。</para>
     /// </summary>
     public enum ActEnterPoolModeKind
     {
         /// <summary>
-        ///     Uniform over
-        ///     Uniform over
-        ///     <c>
-        ///         { act already in <see cref="MegaCrit.Sts2.Core.Runs.RunState.Acts" />[slot] } ∪ eligible
-        ///         candidates
-        ///     </c>
-        ///     .
-        ///     对以下集合做均匀抽取：
-        ///     对以下集合做均匀抽取：
-        ///     <c>
-        ///         { <see cref="MegaCrit.Sts2.Core.Runs.RunState.Acts" />[slot] 中已有的章节 } ∪ 合格
-        ///         候选项
-        ///     </c>
-        ///     。
+        ///     <para xml:lang="en">
+        ///         Selects uniformly from the act already occupying the slot and all eligible candidates.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在槽位中已有的章节与全部符合条件的候选章节之间进行均匀选择。</para>
         /// </summary>
         Uniform = 0,
 
         /// <summary>
-        ///     Weighted draw over eligible candidates and optional baseline weight (see
-        ///     <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" />). Acts with non-positive weight are
-        ///     skipped.
-        ///     在合格候选项和可选基线权重上进行加权抽取（参见
-        ///     <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" />）。权重非正的章节会
-        ///     被跳过。
+        ///     <para xml:lang="en">
+        ///         Selects by weight from eligible candidates and the optional baseline. Candidates with
+        ///         non-positive weights are excluded.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按权重从符合条件的候选章节与可选基线中选择。权重不大于零的候选章节会被排除。
+        ///     </para>
         /// </summary>
         Weighted = 1,
     }

@@ -43,11 +43,13 @@ namespace STS2RitsuLib.Content
                 new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Registers global asset overrides applied to all characters for the current <see cref="ModId" />.
-        ///     Character-specific overrides still win.
-        ///     注册应用于当前 <see cref="ModId" /> 的所有角色的全局资源覆盖。
-        ///     角色专用覆盖仍然优先。
-        ///     角色专用覆盖仍然优先。
+        ///     <para xml:lang="en">
+        ///         Registers this mod's asset replacements for all characters. Character-specific replacements
+        ///         take precedence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册此模组应用于所有角色的资源替换。角色专用替换优先。
+        ///     </para>
         /// </summary>
         public void RegisterGlobalCharacterAssetReplacement(CharacterAssetProfile assetProfile)
         {
@@ -66,10 +68,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers asset overrides for any character id (vanilla or mod), merged field-by-field with existing
-        ///     registrations. Later calls win for non-null fields.
-        ///     为任意角色 id（原版或 mod）注册资源覆盖，并与现有
-        ///     注册按字段合并。非 null 字段以后续调用为准。
+        ///     <para xml:lang="en">
+        ///         Registers asset replacements for a character ID. Non-null fields from later registrations
+        ///         take precedence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为角色 ID 注册资源替换。后注册的非空字段优先。
+        ///     </para>
         /// </summary>
         public void RegisterCharacterAssetReplacement(string characterEntry, CharacterAssetProfile assetProfile)
         {
@@ -94,12 +99,17 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Removes global character asset overrides registered by the current <see cref="ModId" />.
-        ///     移除当前 <see cref="ModId" /> 注册的全局角色资源覆盖。
+        ///     <para xml:lang="en">Removes this mod's global character asset replacements.</para>
+        ///     <para xml:lang="zh-CN">移除此模组的全局角色资源替换。</para>
         /// </summary>
         /// <returns>
-        ///     <c>true</c> when this mod had a global override and it was removed.
-        ///     当此 mod 曾有全局覆盖且已移除时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when a registration was removed; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除了注册时为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public bool ClearGlobalCharacterAssetReplacement()
         {
@@ -119,12 +129,17 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Removes this mod's registered asset overrides for the specified character id.
-        ///     移除此 mod 为指定角色 id 注册的资源覆盖。
+        ///     <para xml:lang="en">Removes this mod's asset replacements for the specified character ID.</para>
+        ///     <para xml:lang="zh-CN">移除此模组为指定角色 ID 注册的资源替换。</para>
         /// </summary>
         /// <returns>
-        ///     <c>true</c> when this mod had an override and it was removed.
-        ///     当此 mod 曾有覆盖且已移除时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when a registration was removed; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除了注册时为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public bool RemoveCharacterAssetReplacement(string characterEntry)
         {
@@ -146,8 +161,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Returns merged registered asset overrides for <paramref name="characterEntry" />, if any.
-        ///     返回 <paramref name="characterEntry" /> 的已注册合并资源覆盖（如果有）。
+        ///     <para xml:lang="en">
+        ///         Tries to get the merged character-specific replacements for
+        ///         <paramref name="characterEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取 <paramref name="characterEntry" /> 合并后的角色专用替换。
+        ///     </para>
         /// </summary>
         internal static bool TryGetRegisteredCharacterAssetReplacement(
             string characterEntry,
@@ -167,8 +187,8 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Returns global asset overrides, if any.
-        ///     返回全局资源覆盖（如果有）。
+        ///     <para xml:lang="en">Tries to get the merged global character asset replacements.</para>
+        ///     <para xml:lang="zh-CN">尝试获取合并后的全局角色资源替换。</para>
         /// </summary>
         internal static bool TryGetGlobalCharacterAssetReplacement(out CharacterAssetProfile assetProfile)
         {
@@ -181,10 +201,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Returns registry-only overrides (global + per-character <see cref="RegisterCharacterAssetReplacement" />),
-        ///     without programmatic owned-visual registrations.
-        ///     返回仅来自注册表的覆盖（全局 + 每角色 <see cref="RegisterCharacterAssetReplacement" />），
-        ///     不包括程序化所属视觉注册。
+        ///     <para xml:lang="en">
+        ///         Tries to get the effective global and character-specific registry replacements without
+        ///         programmatic owned-visual replacements.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取全局与角色专用注册表替换的最终结果，不包含编程式所属视觉替换。
+        ///     </para>
         /// </summary>
         internal static bool TryGetRegistryOnlyEffectiveCharacterAssetReplacement(
             string characterEntry,
@@ -210,23 +233,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Returns effective overrides for a character: programmatic owned relic / potion / card art merged
-        ///     underneath registry overrides from <see cref="RegisterGlobalCharacterAssetReplacement" /> and
-        ///     <see cref="RegisterCharacterAssetReplacement" /> (registry wins on conflicts). Character
-        ///     <see>
-        ///         <cref>T:STS2RitsuLib.Scaffolding.Characters.ModCharacterTemplate</cref>
-        ///     </see>
-        ///     <c>AssetProfile</c> rows are merged in
-        ///     <c>TryGetVanilla*</c> below
-        ///     both registry and programmatic tiers.
-        ///     返回某个角色的有效覆盖：程序化所属遗物/药水/卡牌美术会合并在
-        ///     <see cref="RegisterGlobalCharacterAssetReplacement" /> 和
-        ///     <see cref="RegisterCharacterAssetReplacement" /> 的注册表覆盖之下（冲突时注册表胜出）。角色
-        ///     <see>
-        ///     </see>
-        ///     <c>AssetProfile</c> 行会在下面的
-        ///     <c>TryGetVanilla*</c> 中合并，
-        ///     低于注册表和程序化两层。
+        ///     <para xml:lang="en">
+        ///         Tries to get effective registry and programmatic owned-visual replacements for a character.
+        ///         Registry replacements take precedence on conflicts.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取角色的最终注册表与编程式所属视觉替换。发生冲突时注册表替换优先。
+        ///     </para>
         /// </summary>
         internal static bool TryGetEffectiveCharacterAssetReplacement(
             string characterEntry,
@@ -404,40 +417,38 @@ namespace STS2RitsuLib.Content
             Func<CharacterAssetProfile, string?> Selector);
 
         /// <summary>
-        ///     Well-known base-game character ids for
-        ///     <see cref="RegisterCharacterAssetReplacement(string,CharacterAssetProfile)" />.
-        ///     用于 <see cref="RegisterCharacterAssetReplacement(string,CharacterAssetProfile)" /> 的
-        ///     知名基础游戏角色 id。
+        ///     <para xml:lang="en">Provides well-known base-game character IDs.</para>
+        ///     <para xml:lang="zh-CN">提供常用的原版角色 ID。</para>
         /// </summary>
         public static class VanillaCharacterIds
         {
             /// <summary>
-            ///     Vanilla Ironclad character id.
-            ///     原版 Ironclad 角色 id。
+            ///     <para xml:lang="en">The Ironclad character ID.</para>
+            ///     <para xml:lang="zh-CN">铁甲战士角色 ID。</para>
             /// </summary>
             public const string Ironclad = "IRONCLAD";
 
             /// <summary>
-            ///     Vanilla Silent character id.
-            ///     原版 Silent 角色 id。
+            ///     <para xml:lang="en">The Silent character ID.</para>
+            ///     <para xml:lang="zh-CN">静默猎手角色 ID。</para>
             /// </summary>
             public const string Silent = "SILENT";
 
             /// <summary>
-            ///     Vanilla Defect character id.
-            ///     原版 Defect 角色 id。
+            ///     <para xml:lang="en">The Defect character ID.</para>
+            ///     <para xml:lang="zh-CN">故障机器人角色 ID。</para>
             /// </summary>
             public const string Defect = "DEFECT";
 
             /// <summary>
-            ///     Vanilla Regent character id.
-            ///     原版 Regent 角色 id。
+            ///     <para xml:lang="en">The Regent character ID.</para>
+            ///     <para xml:lang="zh-CN">储君角色 ID。</para>
             /// </summary>
             public const string Regent = "REGENT";
 
             /// <summary>
-            ///     Vanilla Necrobinder character id.
-            ///     原版 Necrobinder 角色 id。
+            ///     <para xml:lang="en">The Necrobinder character ID.</para>
+            ///     <para xml:lang="zh-CN">亡灵契约师角色 ID。</para>
             /// </summary>
             public const string Necrobinder = "NECROBINDER";
         }

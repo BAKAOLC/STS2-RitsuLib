@@ -2,13 +2,9 @@ namespace STS2RitsuLib.Content
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Keys for <see cref="ContentCatalogEntry" /> rows wired into patched
-    ///         <see cref="MegaCrit.Sts2.Core.Models.ModelDb" /> getters.
+    ///         Identifies the model catalogs extended by RitsuLib.
     ///     </para>
-    ///     <para xml:lang="zh-CN">
-    ///         接入 patched <see cref="MegaCrit.Sts2.Core.Models.ModelDb" /> getter 的
-    ///         <see cref="ContentCatalogEntry" /> 行键。
-    ///     </para>
+    ///     <para xml:lang="zh-CN">标识由 RitsuLib 扩展的模型目录。</para>
     /// </summary>
     internal enum ContentCatalogId
     {

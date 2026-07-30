@@ -6,8 +6,10 @@ namespace STS2RitsuLib.Content
     public sealed partial class ModContentRegistry
     {
         /// <summary>
-        ///     Registers an initial-option injection rule for <typeparamref name="TAncient" />.
-        ///     为 <typeparamref name="TAncient" /> 注册初始选项注入规则。
+        ///     <para xml:lang="en">
+        ///         Registers an initial-option rule for <typeparamref name="TAncient" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TAncient" /> 注册初始选项规则。</para>
         /// </summary>
         public void RegisterAncientOption<TAncient>(ModAncientOptionRule rule)
             where TAncient : AncientEventModel
@@ -17,8 +19,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers an initial-option injection rule for <paramref name="ancientType" />.
-        ///     为 <paramref name="ancientType" /> 注册初始选项注入规则。
+        ///     <para xml:lang="en">
+        ///         Registers an initial-option rule for <paramref name="ancientType" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="ancientType" /> 注册初始选项规则。</para>
         /// </summary>
         public void RegisterAncientOption(Type ancientType, ModAncientOptionRule rule)
         {

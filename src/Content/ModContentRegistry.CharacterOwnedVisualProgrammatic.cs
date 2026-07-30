@@ -14,10 +14,13 @@ namespace STS2RitsuLib.Content
                 new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Merges programmatic per-character relic / potion / card art registrations for
-        ///     <paramref name="characterEntry" /> (all mods, ordered by registration time).
-        ///     为 <paramref name="characterEntry" /> 合并程序化的每角色遗物/药水/卡牌美术注册
-        ///     （所有 mod，按注册时间排序）。
+        ///     <para xml:lang="en">
+        ///         Tries to build the programmatic owned-visual profile registered for
+        ///         <paramref name="characterEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试构建为 <paramref name="characterEntry" /> 注册的编程式所属视觉配置。
+        ///     </para>
         /// </summary>
         internal static bool TryBuildProgrammaticCharacterOwnedVisualProfile(
             string characterEntry,
@@ -58,20 +61,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers per–model-id relic icon paths when <paramref name="characterEntry" /> owns the relic.
-        ///     Priority: <see cref="RegisterCharacterAssetReplacement" /> /
-        ///     Priority: <c>RegisterCharacterAssetReplacement</c> /
-        ///     <see cref="RegisterGlobalCharacterAssetReplacement" /> (highest), then this API, then character
-        ///     <see>
-        ///         <cref>T:STS2RitsuLib.Scaffolding.Characters.ModCharacterTemplate</cref>
-        ///     </see>
-        ///     <c>AssetProfile</c> inline rows (lowest).
-        ///     当 <paramref name="characterEntry" /> 拥有该遗物时，注册按模型 id 区分的遗物图标路径。
-        ///     优先级：<see cref="RegisterCharacterAssetReplacement" />；
-        ///     <see cref="RegisterGlobalCharacterAssetReplacement" />（最高），然后是此 API，然后是角色
-        ///     <see>
-        ///     </see>
-        ///     内联 <c>AssetProfile</c> 行（最低）。
+        ///     <para xml:lang="en">
+        ///         Registers relic visuals used when <paramref name="characterEntry" /> owns the specified relic.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册 <paramref name="characterEntry" /> 拥有指定遗物时使用的遗物视觉资源。
+        ///     </para>
         /// </summary>
         public void RegisterCharacterOwnedRelicVisualOverride(
             string characterEntry,
@@ -103,10 +98,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers per–model-id potion art when <paramref name="characterEntry" /> holds or encounters the potion.
-        ///     Priority matches <see cref="RegisterCharacterOwnedRelicVisualOverride(string,string,RelicAssetProfile)" />.
-        ///     当 <paramref name="characterEntry" /> 持有或遭遇该药水时，注册按模型 id 区分的药水美术。
-        ///     优先级与 <see cref="RegisterCharacterOwnedRelicVisualOverride(string,string,RelicAssetProfile)" /> 相同。
+        ///     <para xml:lang="en">
+        ///         Registers potion visuals used when <paramref name="characterEntry" /> owns the specified potion.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册 <paramref name="characterEntry" /> 拥有指定药水时使用的药水视觉资源。
+        ///     </para>
         /// </summary>
         public void RegisterCharacterOwnedPotionVisualOverride(
             string characterEntry,
@@ -138,10 +135,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers per–model-id card art when <paramref name="characterEntry" /> holds or encounters the card.
-        ///     Priority matches <see cref="RegisterCharacterOwnedRelicVisualOverride(string,string,RelicAssetProfile)" />.
-        ///     当 <paramref name="characterEntry" /> 持有或遭遇该卡牌时，注册按模型 id 区分的卡牌美术。
-        ///     优先级与 <see cref="RegisterCharacterOwnedRelicVisualOverride(string,string,RelicAssetProfile)" /> 相同。
+        ///     <para xml:lang="en">
+        ///         Registers card visuals used when <paramref name="characterEntry" /> owns the specified card.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册 <paramref name="characterEntry" /> 拥有指定卡牌时使用的卡牌视觉资源。
+        ///     </para>
         /// </summary>
         public void RegisterCharacterOwnedCardVisualOverride(
             string characterEntry,

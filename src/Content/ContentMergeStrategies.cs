@@ -4,10 +4,9 @@ namespace STS2RitsuLib.Content
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Merge strategies for combining vanilla <see cref="ModelDb" /> getter output with resolved mod
-    ///         models.
+    ///         Defines a strategy for combining a model sequence with resolved mod models.
     ///     </para>
-    ///     <para xml:lang="zh-CN">将原版 <see cref="ModelDb" /> getter 输出与已解析 mod 模型合并的策略。</para>
+    ///     <para xml:lang="zh-CN">定义将模型序列与已解析模组模型合并的策略。</para>
     /// </summary>
     internal interface IContentEnumerableMergeStrategy<TModel>
         where TModel : AbstractModel
@@ -16,8 +15,8 @@ namespace STS2RitsuLib.Content
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Merge strategy for <see cref="IReadOnlyList{T}" /> getter output.</para>
-    ///     <para xml:lang="zh-CN">用于 <see cref="IReadOnlyList{T}" /> getter 输出的合并策略。</para>
+    ///     <para xml:lang="en">Defines a strategy for combining a model list with resolved mod models.</para>
+    ///     <para xml:lang="zh-CN">定义将模型列表与已解析模组模型合并的策略。</para>
     /// </summary>
     internal interface IContentListMergeStrategy<TModel>
         where TModel : AbstractModel
@@ -48,7 +47,7 @@ namespace STS2RitsuLib.Content
         ///         Appends items whose <see cref="AbstractModel.Id" /> is not already in
         ///         <paramref name="destination" />.
         ///     </para>
-        ///     <para xml:lang="zh-CN">追加 Id 尚未出现在 <paramref name="destination" /> 中的项。</para>
+        ///     <para xml:lang="zh-CN">追加 ID 尚未出现在 <paramref name="destination" /> 中的项。</para>
         /// </summary>
         internal static void AppendDistinctById<TModel>(List<TModel> destination, IEnumerable<TModel> items)
             where TModel : AbstractModel

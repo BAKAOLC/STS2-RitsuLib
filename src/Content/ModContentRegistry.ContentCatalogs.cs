@@ -6,10 +6,10 @@ namespace STS2RitsuLib.Content
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Catalog table for patched <see cref="ModelDb" /> getters: registration source, warm path, and
-        ///         merge mode per row.
+        ///         Defines the registration source, cache resolver, and merge mode for each extended model
+        ///         catalog.
         ///     </para>
-        ///     <para xml:lang="zh-CN">patched <see cref="ModelDb" /> getter 的目录表：每行绑定注册源、预热路径与合并模式。</para>
+        ///     <para xml:lang="zh-CN">定义各扩展模型目录的注册来源、缓存解析器与合并模式。</para>
         /// </summary>
         private static readonly IReadOnlyList<ContentCatalogEntry> ModelCatalogs;
 
@@ -50,10 +50,9 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Warms resolved model caches once after <see cref="ModelDb.Init" /> to avoid repeated
-        ///         <see cref="ModelDb.GetId" /> during Preload.
+        ///         Warms all resolved-model caches after <see cref="ModelDb.Init" />.
         ///     </para>
-        ///     <para xml:lang="zh-CN">在 <see cref="ModelDb.Init" /> 后一次性预热已解析模型缓存，避免 Preload 期间重复 <see cref="ModelDb.GetId" />。</para>
+        ///     <para xml:lang="zh-CN">在 <see cref="ModelDb.Init" /> 后预热所有已解析模型缓存。</para>
         /// </summary>
         internal static void WarmResolvedModelCaches()
         {

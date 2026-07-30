@@ -6,12 +6,10 @@ namespace STS2RitsuLib.Content
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Merges vanilla getter output with a global catalog row via <see cref="ResolvedModelCache" />
-        ///         and <see cref="ContentMergeStrategies" />.
+        ///         Merges a source sequence with the resolved models in a global catalog.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         通过 <see cref="ResolvedModelCache" /> 与 <see cref="ContentMergeStrategies" /> 将原版 getter
-        ///         输出与全局 catalog 行合并。
+        ///         将来源序列与全局目录中已解析的模型合并。
         ///     </para>
         /// </summary>
         internal static IEnumerable<TModel> MergeGlobalCatalog<TModel>(
@@ -25,8 +23,8 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Merges vanilla getter output with an act-scoped catalog row.</para>
-        ///     <para xml:lang="zh-CN">将原版 getter 输出与 act 作用域 catalog 行合并。</para>
+        ///     <para xml:lang="en">Merges a source sequence with the resolved models in an act-scoped catalog.</para>
+        ///     <para xml:lang="zh-CN">将来源序列与章节作用域目录中已解析的模型合并。</para>
         /// </summary>
         internal static IEnumerable<TModel> MergeScopedCatalog<TModel>(
             ContentCatalogId catalogId,
@@ -40,8 +38,8 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Merges a read-only list getter with a global catalog row.</para>
-        ///     <para xml:lang="zh-CN">将只读列表 getter 与全局 catalog 行合并。</para>
+        ///     <para xml:lang="en">Merges a source list with the resolved models in a global catalog.</para>
+        ///     <para xml:lang="zh-CN">将来源列表与全局目录中已解析的模型合并。</para>
         /// </summary>
         internal static IReadOnlyList<TModel> MergeGlobalCatalogList<TModel>(
             ContentCatalogId catalogId,

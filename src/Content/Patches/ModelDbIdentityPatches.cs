@@ -5,10 +5,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Content.Patches
 {
     /// <summary>
-    ///     Force RitsuLib-registered content to use one fixed public entry format.
-    ///     This keeps game localization keys and default asset paths predictable without extra rewrite patches.
-    ///     强制 RitsuLib 注册内容使用一种固定公共条目格式。
-    ///     这让游戏本地化键和默认资源路径保持可预测，而无需额外的重写补丁。
+    ///     <para xml:lang="en">
+    ///         Supplies the registered public model entry for RitsuLib-owned model types.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">为 RitsuLib 所属模型类型提供已注册的公共模型条目。</para>
     /// </summary>
     internal class ModelDbModdedEntryPatch : IPatchMethod
     {
@@ -25,10 +25,13 @@ namespace STS2RitsuLib.Content.Patches
         }
 
         /// <summary>
-        ///     Replaces <paramref name="__result" /> with the RitsuLib fixed entry when <paramref name="type" /> is owned by a
-        ///     mod.
-        ///     当 <paramref name="type" /> 由某个 mod 拥有时，将 <paramref name="__result" /> 替换为
-        ///     RitsuLib 固定条目。
+        ///     <para xml:lang="en">
+        ///         Replaces <paramref name="__result" /> with the registered public entry when
+        ///         <paramref name="type" /> is owned by a mod.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <paramref name="type" /> 由模组拥有时，将 <paramref name="__result" /> 替换为已注册公共条目。
+        ///     </para>
         /// </summary>
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(Type type, ref string __result)

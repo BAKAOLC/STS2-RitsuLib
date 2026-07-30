@@ -5,8 +5,8 @@ using MegaCrit.Sts2.Core.Entities.Relics;
 namespace STS2RitsuLib.Content
 {
     /// <summary>
-    ///     Shape-only configuration for a generated placeholder card (no card logic).
-    ///     仅形状配置，用于生成式占位卡牌（无卡牌逻辑）。
+    ///     <para xml:lang="en">Configures the model properties of a generated placeholder card.</para>
+    ///     <para xml:lang="zh-CN">配置生成的占位卡牌模型属性。</para>
     /// </summary>
     public readonly record struct PlaceholderCardDescriptor(
         int BaseCost = 1,
@@ -16,8 +16,8 @@ namespace STS2RitsuLib.Content
         bool ShowInCardLibrary = false);
 
     /// <summary>
-    ///     Shape-only configuration for a generated placeholder relic (no relic logic).
-    ///     仅形状配置，用于生成式占位遗物（无遗物逻辑）。
+    ///     <para xml:lang="en">Configures the model properties of a generated placeholder relic.</para>
+    ///     <para xml:lang="zh-CN">配置生成的占位遗物模型属性。</para>
     /// </summary>
     public readonly record struct PlaceholderRelicDescriptor(
         RelicRarity Rarity = RelicRarity.Common,
@@ -35,8 +35,8 @@ namespace STS2RitsuLib.Content
         bool ShouldFlashOnPlayer = true);
 
     /// <summary>
-    ///     Shape-only configuration for a generated placeholder potion (no potion effect).
-    ///     仅形状配置，用于生成式占位药水（无药水效果）。
+    ///     <para xml:lang="en">Configures the model properties of a generated placeholder potion.</para>
+    ///     <para xml:lang="zh-CN">配置生成的占位药水模型属性。</para>
     /// </summary>
     public readonly record struct PlaceholderPotionDescriptor(
         PotionRarity Rarity = PotionRarity.Common,

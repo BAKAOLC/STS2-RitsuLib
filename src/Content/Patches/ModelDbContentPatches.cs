@@ -22,7 +22,7 @@ namespace STS2RitsuLib.Content.Patches
 
         /// <summary>
         ///     <para xml:lang="en">Concatenates mod-registered characters onto the vanilla sequence.</para>
-        ///     <para xml:lang="zh-CN">将 mod 注册的角色拼接到原版序列之后。</para>
+        ///     <para xml:lang="zh-CN">将模组注册的角色追加到原版序列。</para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -74,7 +74,7 @@ namespace STS2RitsuLib.Content.Patches
 
         /// <summary>
         ///     <para xml:lang="en">Concatenates mod-registered acts onto the vanilla sequence.</para>
-        ///     <para xml:lang="zh-CN">将 mod 注册的章节拼接到原版序列之后。</para>
+        ///     <para xml:lang="zh-CN">将模组注册的章节追加到原版序列。</para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -89,7 +89,7 @@ namespace STS2RitsuLib.Content.Patches
     ///     <para xml:lang="en">
     ///         Prevents registered mod acts from entering vanilla act-list randomization unless they explicitly opt in.
     ///     </para>
-    ///     <para xml:lang="zh-CN">阻止已注册 mod 章节默认进入原版章节列表随机逻辑，除非其显式选择加入。</para>
+    ///     <para xml:lang="zh-CN">阻止已注册模组章节默认参与原版章节列表随机选择，除非其显式加入。</para>
     /// </summary>
     internal class ActsByIndexPatch : IPatchMethod
     {
@@ -161,7 +161,7 @@ namespace STS2RitsuLib.Content.Patches
 
         /// <summary>
         ///     <para xml:lang="en">Concatenates mod shared events onto the vanilla sequence.</para>
-        ///     <para xml:lang="zh-CN">将 mod 共享事件拼接到原版序列之后。</para>
+        ///     <para xml:lang="zh-CN">将模组共享事件追加到原版序列。</para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -230,7 +230,7 @@ namespace STS2RitsuLib.Content.Patches
 
         /// <summary>
         ///     <para xml:lang="en">Concatenates mod shared card pools onto the vanilla sequence.</para>
-        ///     <para xml:lang="zh-CN">将 mod 共享卡牌池拼接到原版序列之后。</para>
+        ///     <para xml:lang="zh-CN">将模组共享卡牌池追加到原版序列。</para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -263,7 +263,7 @@ namespace STS2RitsuLib.Content.Patches
 
     /// <summary>
     ///     <para xml:lang="en">Appends RitsuLib-registered shared ancients to <see cref="ModelDb.AllSharedAncients" />.</para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的共享ancient追加到 <see cref="ModelDb.AllSharedAncients" />。</para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的共享先古之民事件追加到 <see cref="ModelDb.AllSharedAncients" />。</para>
     /// </summary>
     internal class AllSharedAncientsPatch : IPatchMethod
     {
@@ -278,7 +278,7 @@ namespace STS2RitsuLib.Content.Patches
 
         /// <summary>
         ///     <para xml:lang="en">Concatenates mod shared ancients onto the vanilla sequence.</para>
-        ///     <para xml:lang="zh-CN">将 mod 共享ancient拼接到原版序列之后。</para>
+        ///     <para xml:lang="zh-CN">将模组共享先古之民事件追加到原版序列。</para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -293,7 +293,9 @@ namespace STS2RitsuLib.Content.Patches
     ///         Appends RitsuLib-registered shared and act-scoped ancients to
     ///         <see cref="ModelDb.AllAncients" />.
     ///     </para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的共享和 act-scoped ancient 追加到 <see cref="ModelDb.AllAncients" />。</para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 RitsuLib 注册的共享与章节作用域先古之民事件追加到 <see cref="ModelDb.AllAncients" />。
+    ///     </para>
     /// </summary>
     internal class AllAncientsPatch : IPatchMethod
     {
@@ -380,7 +382,7 @@ namespace STS2RitsuLib.Content.Patches
 
     /// <summary>
     ///     <para xml:lang="en">Appends RitsuLib-registered modifiers to <see cref="ModelDb.GoodModifiers" />.</para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的修饰符追加到 <see cref="ModelDb.GoodModifiers" />。</para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的修正项追加到 <see cref="ModelDb.GoodModifiers" />。</para>
     /// </summary>
     internal class GoodModifiersPatch : IPatchMethod
     {
@@ -398,7 +400,9 @@ namespace STS2RitsuLib.Content.Patches
         ///         Merges mod good modifiers into the current list using
         ///         <see cref="ModifierRegistration.ModifierListSortOrder" />.
         ///     </para>
-        ///     <para xml:lang="zh-CN">按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将 mod 正面修饰符合并到当前列表中。</para>
+        ///     <para xml:lang="zh-CN">
+        ///         按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将模组正面修正项合并到当前列表。
+        ///     </para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -410,7 +414,7 @@ namespace STS2RitsuLib.Content.Patches
 
     /// <summary>
     ///     <para xml:lang="en">Appends RitsuLib-registered modifiers to <see cref="ModelDb.BadModifiers" />.</para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的修饰符追加到 <see cref="ModelDb.BadModifiers" />。</para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的修正项追加到 <see cref="ModelDb.BadModifiers" />。</para>
     /// </summary>
     internal class BadModifiersPatch : IPatchMethod
     {
@@ -428,7 +432,9 @@ namespace STS2RitsuLib.Content.Patches
         ///         Merges mod bad modifiers into the current list using
         ///         <see cref="ModifierRegistration.ModifierListSortOrder" />.
         ///     </para>
-        ///     <para xml:lang="zh-CN">按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将 mod 负面修饰符合并到当前列表中。</para>
+        ///     <para xml:lang="zh-CN">
+        ///         按 <see cref="ModifierRegistration.ModifierListSortOrder" /> 将模组负面修正项合并到当前列表。
+        ///     </para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
@@ -443,7 +449,7 @@ namespace STS2RitsuLib.Content.Patches
     ///         Merges RitsuLib-registered modifier exclusivity groups into
     ///         <see cref="ModelDb.MutuallyExclusiveModifiers" />.
     ///     </para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的修饰符互斥组合并到 <see cref="ModelDb.MutuallyExclusiveModifiers" />。</para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的修正项互斥组合并到 <see cref="ModelDb.MutuallyExclusiveModifiers" />。</para>
     /// </summary>
     internal class MutuallyExclusiveModifiersPatch : IPatchMethod
     {
@@ -461,7 +467,7 @@ namespace STS2RitsuLib.Content.Patches
 
         /// <summary>
         ///     <para xml:lang="en">Merges mod exclusivity groups into the current list, including overlapping vanilla sets.</para>
-        ///     <para xml:lang="zh-CN">将 mod 互斥组合并到当前列表，并与存在交集的原版集合合并。</para>
+        ///     <para xml:lang="zh-CN">将模组互斥组合并到当前列表，并合并存在交集的原版集合。</para>
         /// </summary>
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]

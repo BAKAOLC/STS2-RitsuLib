@@ -6,8 +6,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Content.Patches
 {
     /// <summary>
-    ///     Appends registered card candidates to the Trash Heap event's vanilla card pool.
-    ///     将已注册的候选卡牌追加到垃圾堆事件的原版卡牌池。
+    ///     <para xml:lang="en">Adds registered card candidates to the Trash Heap event.</para>
+    ///     <para xml:lang="zh-CN">将已注册的候选卡牌加入“垃圾堆”事件。</para>
     /// </summary>
     internal sealed class TrashHeapCardsRegistryPatch : IPatchMethod
     {
@@ -29,8 +29,8 @@ namespace STS2RitsuLib.Content.Patches
     }
 
     /// <summary>
-    ///     Appends registered relic candidates to the Trash Heap event's vanilla relic pool.
-    ///     将已注册的候选遗物追加到垃圾堆事件的原版遗物池。
+    ///     <para xml:lang="en">Adds registered relic candidates to the Trash Heap event.</para>
+    ///     <para xml:lang="zh-CN">将已注册的候选遗物加入“垃圾堆”事件。</para>
     /// </summary>
     internal sealed class TrashHeapRelicsRegistryPatch : IPatchMethod
     {

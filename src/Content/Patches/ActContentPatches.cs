@@ -4,10 +4,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Content.Patches
 {
     /// <summary>
-    ///     Bootstrap dynamic act patching after all mods are loaded but before ModelDb begins caching content.
-    ///     This avoids hardcoding base-game acts and supports act/map mods from other assemblies.
-    ///     在所有 mod 加载完成后、ModelDb 开始缓存内容前引导动态章节补丁。
-    ///     这避免了硬编码基础游戏章节，并支持来自其它程序集的章节/地图 mod。
+    ///     <para xml:lang="en">
+    ///         Applies dynamic content patches to all loaded act types before <see cref="ModelDb" />
+    ///         initializes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="ModelDb" /> 初始化前向所有已加载章节类型应用动态内容补丁。
+    ///     </para>
     /// </summary>
     internal class DynamicActContentPatchBootstrap : IPatchMethod
     {
