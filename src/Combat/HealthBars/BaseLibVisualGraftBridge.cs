@@ -5,10 +5,16 @@ using STS2RitsuLib.Compat;
 namespace STS2RitsuLib.Combat.HealthBars
 {
     /// <summary>
-    ///     When BaseLib is loaded, registers <see cref="HealthBarVisualGraftRegistry.Aggregate" /> with BaseLib's
-    ///     <c>HealthBarVisualGraftRegistry.RegisterForeign</c> so a single consumer can merge Ritsu graft metrics.
-    ///     加载 BaseLib 时，将 <see cref="HealthBarVisualGraftRegistry.Aggregate" /> 注册到 BaseLib 的
-    ///     <c>HealthBarVisualGraftRegistry.RegisterForeign</c>，使单个消费者可以合并 Ritsu graft 指标。
+    ///     <para xml:lang="en">
+    ///         Bridges <see cref="HealthBarVisualGraftRegistry.Aggregate" /> to BaseLib's
+    ///         <c>HealthBarVisualGraftRegistry.RegisterForeign</c> API so a single renderer can consume both libraries'
+    ///         visual-extension metrics.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="HealthBarVisualGraftRegistry.Aggregate" /> 桥接到 BaseLib 的
+    ///         <c>HealthBarVisualGraftRegistry.RegisterForeign</c> API，使同一个渲染器能够处理两个库的
+    ///         生命条视觉扩展参数。
+    ///     </para>
     /// </summary>
     internal static class BaseLibVisualGraftBridge
     {
