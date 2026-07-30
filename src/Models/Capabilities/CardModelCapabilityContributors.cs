@@ -513,16 +513,10 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string CanPlaySurface = "card play/can-play";
         private const string TurnEndInHandSurface = "card play/turn-end-in-hand";
         private const string ResultPileSurface = "card play/result-pile";
-        private const string TransformCarryOverSurface = "card transform/carry-over";
         private const string DynamicVarPreviewSurface = "card dynamic-var/preview";
         private const string DescriptionSurface = "card description/fragments";
         private const string EnergyCostSurface = "card energy-cost/local";
         private const string StarCostSurface = "card star-cost/local";
-        private const string UpgradeLifecycleSurface = "card lifecycle/upgraded";
-        private const string FinalizeUpgradeLifecycleSurface = "card lifecycle/finalize-upgrade";
-        private const string DowngradeLifecycleSurface = "card lifecycle/downgraded";
-        private const string TransformFromLifecycleSurface = "card lifecycle/transform-from";
-        private const string TransformToLifecycleSurface = "card lifecycle/transform-to";
         private const string TitleSurface = "card display/title";
         private const string HoverTipsSurface = "card display/hover-tips";
         private const string OverlaySurface = "card display/overlay";
@@ -653,8 +647,9 @@ namespace STS2RitsuLib.Models.Capabilities
             List<CardTag>? extraTags = null;
             foreach (var capability in GetCapabilities<ICardPropertyContributor>(card))
             {
-                IEnumerable<CardTag> tags = [];
-                TryRun(capability, card, TagsSurface, () => tags = capability.GetTags(card));
+                IReadOnlyList<CardTag> tags = [];
+                TryRun(capability, card, TagsSurface,
+                    () => tags = capability.GetTags(card)?.ToArray() ?? []);
                 foreach (var tag in tags)
                 {
                     extraTags ??= [];
@@ -740,14 +735,23 @@ namespace STS2RitsuLib.Models.Capabilities
                 return;
 
             foreach (var capability in GetCapabilities<ICardTransformCarryOverCapability>(original))
-                TryRun(capability, original, TransformCarryOverSurface, () =>
-                {
-                    if (!capability.ShouldCarryOverToTransformResult(original, replacement))
-                        return;
+            {
+                if (!capability.ShouldCarryOverToTransformResult(original, replacement))
+                    continue;
 
-                    var carried = capability.CreateCarryOverCapability(original, replacement);
-                    replacement.Capabilities().Apply(carried);
-                });
+                var carried = capability.CreateCarryOverCapability(original, replacement);
+                if (carried.Owner != null)
+                {
+                    if (!ReferenceEquals(carried.Owner, replacement))
+                        throw new InvalidOperationException(
+                            $"Transform carry-over capability '{carried.CapabilityId}' was attached to an " +
+                            "unexpected model.");
+
+                    carried.Detach(true);
+                }
+
+                replacement.Capabilities().Apply(carried);
+            }
         }
 
         internal static void UpdateDynamicVarPreviews(
@@ -762,11 +766,8 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (dynamicVars == null)
                     continue;
 
-                TryRun(capability, card, DynamicVarPreviewSurface, () =>
-                {
-                    dynamicVars.ClearPreview();
-                    card.UpdateDynamicVarPreview(previewMode, target, dynamicVars);
-                });
+                dynamicVars.ClearPreview();
+                card.UpdateDynamicVarPreview(previewMode, target, dynamicVars);
             }
         }
 
@@ -853,17 +854,11 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!IsStillAttachedToCard(capability, card))
                     continue;
 
-                TryRun(capability, card, UpgradeLifecycleSurface, () =>
-                {
-                    if (!IsStillAttachedToCard(capability, card))
-                        return;
+                capability.NotifyOwnerCardUpgraded(card);
+                if (!IsStillAttachedToCard(capability, card))
+                    continue;
 
-                    capability.NotifyOwnerCardUpgraded(card);
-                    if (!IsStillAttachedToCard(capability, card))
-                        return;
-
-                    capability.RecalculateDynamicVarsForUpgradeOrEnchant();
-                });
+                capability.RecalculateDynamicVarsForUpgradeOrEnchant();
             }
         }
 
@@ -874,17 +869,11 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!IsStillAttachedToCard(capability, card))
                     continue;
 
-                TryRun(capability, card, FinalizeUpgradeLifecycleSurface, () =>
-                {
-                    if (!IsStillAttachedToCard(capability, card))
-                        return;
+                capability.FinalizeDynamicVarUpgrade();
+                if (!IsStillAttachedToCard(capability, card))
+                    continue;
 
-                    capability.FinalizeDynamicVarUpgrade();
-                    if (!IsStillAttachedToCard(capability, card))
-                        return;
-
-                    capability.NotifyOwnerCardUpgradeFinalized(card);
-                });
+                capability.NotifyOwnerCardUpgradeFinalized(card);
             }
         }
 
@@ -895,13 +884,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!IsStillAttachedToCard(capability, card))
                     continue;
 
-                TryRun(capability, card, DowngradeLifecycleSurface, () =>
-                {
-                    if (!IsStillAttachedToCard(capability, card))
-                        return;
-
-                    capability.NotifyOwnerCardDowngraded(card);
-                });
+                capability.NotifyOwnerCardDowngraded(card);
             }
         }
 
@@ -912,8 +895,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!IsStillAttachedToCard(capability, card))
                     continue;
 
-                TryRun(capability, card, TransformFromLifecycleSurface,
-                    () => capability.NotifyOwnerCardTransformedFrom(card));
+                capability.NotifyOwnerCardTransformedFrom(card);
             }
         }
 
@@ -924,8 +906,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!IsStillAttachedToCard(capability, card))
                     continue;
 
-                TryRun(capability, card, TransformToLifecycleSurface,
-                    () => capability.NotifyOwnerCardTransformedTo(card));
+                capability.NotifyOwnerCardTransformedTo(card);
             }
         }
 
@@ -1000,8 +981,9 @@ namespace STS2RitsuLib.Models.Capabilities
 
             foreach (var capability in GetCapabilities<ICardHoverTipContributor>(card))
             {
-                IEnumerable<IHoverTip> tips = [];
-                TryRun(capability, card, HoverTipsSurface, () => tips = capability.GetHoverTips(card));
+                IReadOnlyList<IHoverTip> tips = [];
+                TryRun(capability, card, HoverTipsSurface,
+                    () => tips = capability.GetHoverTips(card)?.ToArray() ?? []);
 
                 foreach (var tip in tips)
                     yield return tip;
@@ -1031,16 +1013,28 @@ namespace STS2RitsuLib.Models.Capabilities
                 () => contributions = [.. source.GetCardOverlays(context) ?? []]);
 
             foreach (var contribution in contributions)
+            {
+                if (contribution == null)
+                {
+                    LogFailure(
+                        source,
+                        context.Card,
+                        OverlaySurface,
+                        new InvalidOperationException("Card overlay contributors cannot return null entries."));
+                    continue;
+                }
+
                 yield return new(source, contribution, sourceIndex);
+            }
         }
 
         internal static IEnumerable<string> GetOverlayAssetPaths(CardModel card)
         {
             foreach (var capability in GetCapabilities<ICardOverlayAssetPathContributor>(card))
             {
-                IEnumerable<string> paths = [];
+                IReadOnlyList<string> paths = [];
                 TryRun(capability, card, OverlayAssetPathsSurface,
-                    () => paths = capability.GetCardOverlayAssetPaths(card));
+                    () => paths = capability.GetCardOverlayAssetPaths(card)?.ToArray() ?? []);
 
                 foreach (var path in paths)
                     yield return path;

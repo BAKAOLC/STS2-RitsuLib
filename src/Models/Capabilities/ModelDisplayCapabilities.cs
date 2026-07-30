@@ -187,16 +187,18 @@ namespace STS2RitsuLib.Models.Capabilities
                 {
                     case IModelHoverTipContributor general:
                     {
-                        IEnumerable<IHoverTip> tips = [];
-                        TryRun(capability, model, ModelHoverTipsSurface, () => tips = general.GetHoverTips(model));
+                        IReadOnlyList<IHoverTip> tips = [];
+                        TryRun(capability, model, ModelHoverTipsSurface,
+                            () => tips = general.GetHoverTips(model)?.ToArray() ?? []);
                         foreach (var tip in tips)
                             yield return tip;
                         break;
                     }
                     case IModelHoverTipContributor<TModel> typed:
                     {
-                        IEnumerable<IHoverTip> tips = [];
-                        TryRun(capability, model, ModelHoverTipsSurface, () => tips = typed.GetHoverTips(model));
+                        IReadOnlyList<IHoverTip> tips = [];
+                        TryRun(capability, model, ModelHoverTipsSurface,
+                            () => tips = typed.GetHoverTips(model)?.ToArray() ?? []);
                         foreach (var tip in tips)
                             yield return tip;
                         break;
@@ -212,17 +214,18 @@ namespace STS2RitsuLib.Models.Capabilities
                 {
                     case IModelAssetPathContributor general:
                     {
-                        IEnumerable<string> paths = [];
-                        TryRun(capability, model, ModelAssetPathsSurface, () => paths = general.GetAssetPaths(context));
+                        IReadOnlyList<string> paths = [];
+                        TryRun(capability, model, ModelAssetPathsSurface,
+                            () => paths = general.GetAssetPaths(context)?.ToArray() ?? []);
                         foreach (var path in paths)
                             yield return path;
                         break;
                     }
                     case IModelAssetPathContributor<TModel> typed:
                     {
-                        IEnumerable<string> paths = [];
+                        IReadOnlyList<string> paths = [];
                         TryRun(capability, model, ModelAssetPathsSurface,
-                            () => paths = typed.GetAssetPaths(model, context));
+                            () => paths = typed.GetAssetPaths(model, context)?.ToArray() ?? []);
                         foreach (var path in paths)
                             yield return path;
                         break;
@@ -249,8 +252,8 @@ namespace STS2RitsuLib.Models.Capabilities
                     continue;
 
                 DynamicVarSet? dynamicVars = null;
-                TryRun(capability, model, ModelDynamicVarsSurface, () =>
-                    dynamicVars = dynamicVarCapability.GetDynamicVars(model));
+                TryRun(capability, model, ModelDynamicVarsSurface,
+                    () => dynamicVars = dynamicVarCapability.GetDynamicVars(model));
                 if (dynamicVars != null)
                     AddDynamicVarsTo(
                         model,
