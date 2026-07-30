@@ -52,14 +52,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public static ModSecondaryResourceRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            var normalizedModId = modId.Trim();
 
             lock (SyncRoot)
             {
-                if (Registries.TryGetValue(modId, out var existing))
+                if (Registries.TryGetValue(normalizedModId, out var existing))
                     return existing;
 
-                var created = new ModSecondaryResourceRegistry(modId);
-                Registries[modId] = created;
+                var created = new ModSecondaryResourceRegistry(normalizedModId);
+                Registries[normalizedModId] = created;
                 return created;
             }
         }

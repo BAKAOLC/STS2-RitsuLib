@@ -187,13 +187,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(localId);
 
+            var normalizedModId = modId.Trim();
             var normalizedLocalId = localId.Trim();
-            var id = ModSecondaryResourceRegistry.GetResourceId(modId, normalizedLocalId);
+            var id = ModSecondaryResourceRegistry.GetResourceId(normalizedModId, normalizedLocalId);
             Validate(id);
             return this with
             {
                 Id = id,
-                ModId = modId,
+                ModId = normalizedModId,
                 LocalId = normalizedLocalId,
             };
         }
