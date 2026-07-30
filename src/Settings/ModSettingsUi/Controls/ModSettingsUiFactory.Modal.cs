@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -363,7 +364,7 @@ namespace STS2RitsuLib.Settings
                        @event.IsActionPressed(MegaInput.left) ||
                        @event.IsActionPressed(MegaInput.right) ||
                        @event.IsActionPressed(MegaInput.select) ||
-                       @event.IsActionPressed(MegaInput.accept) ||
+                       @event.IsActionPressed(Sts2InputCompat.ConfirmAction) ||
                        @event.IsActionPressed(MegaInput.cancel) ||
                        @event.IsActionPressed(MegaInput.pauseAndBack);
             }

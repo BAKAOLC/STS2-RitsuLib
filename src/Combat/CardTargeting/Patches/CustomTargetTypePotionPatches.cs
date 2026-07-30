@@ -12,11 +12,11 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Utils.HarmonyIl;
 
@@ -110,7 +110,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             var room = NCombatRoom.Instance;
             var targetManager = NTargetManager.Instance;
             var targetType = potion.TargetType;
-            var isUsingController = NControllerManager.Instance?.IsUsingController == true;
+            var isUsingDirectionalNavigation = Sts2InputCompat.IsUsingDirectionalNavigation;
 
             if (room == null)
             {
@@ -118,7 +118,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 return;
             }
 
-            var controllerTargets = isUsingController
+            var controllerTargets = isUsingDirectionalNavigation
                 ? room.CreatureNodes
                     .Where(n =>
                         CustomTargetTypeResolver.TryIsAllowedSingleTarget(targetType,
@@ -128,7 +128,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                     .ToList()
                 : [];
 
-            if (isUsingController && controllerTargets.Count == 0)
+            if (isUsingDirectionalNavigation && controllerTargets.Count == 0)
             {
                 holder.TryGrabFocus();
                 return;
@@ -142,11 +142,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             targetManager.StartTargeting(
                 targetType,
                 startPosition,
-                isUsingController ? TargetMode.Controller : TargetMode.ClickMouseToTarget,
+                isUsingDirectionalNavigation ? TargetMode.Controller : TargetMode.ClickMouseToTarget,
                 () => ShouldCancelTargeting(holder),
                 node => node is NCreature);
 
-            if (isUsingController)
+            if (isUsingDirectionalNavigation)
             {
                 room.RestrictControllerNavigation(controllerTargets.Select(n => n.Hitbox));
                 controllerTargets.First().Hitbox.TryGrabFocus();

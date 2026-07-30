@@ -7,11 +7,11 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
@@ -195,7 +195,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 targetManager.StartTargeting(
                     TargetType.AnyPlayer, cardNode, TargetMode.Controller,
                     () => !GodotObject.IsInstanceValid(instance)
-                          || !NControllerManager.Instance!.IsUsingController,
+                          || !Sts2InputCompat.IsUsingDirectionalNavigation,
                     null);
 
                 NCombatRoom.Instance!.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));

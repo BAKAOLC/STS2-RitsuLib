@@ -4,8 +4,8 @@ using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Interactions.RightClick.Patches
@@ -120,7 +120,7 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
                 return true;
 
             var trigger = new ModRightClickTrigger(
-                NControllerManager.Instance?.IsUsingController == true,
+                Sts2InputCompat.IsUsingController,
                 null,
                 ModRightClickSource.CombatPileCard,
                 expectedPile);

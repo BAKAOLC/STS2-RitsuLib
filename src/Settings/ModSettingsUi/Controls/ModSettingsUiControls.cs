@@ -4,6 +4,7 @@ using Godot.Collections;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Ui.Shell;
@@ -404,7 +405,7 @@ namespace STS2RitsuLib.Settings
             if (_slider == null)
                 return;
 
-            var blockMouse = NControllerManager.Instance?.IsUsingController == true;
+            var blockMouse = Sts2InputCompat.IsUsingDirectionalNavigation;
             _slider.MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Pass;
         }
 
@@ -766,7 +767,7 @@ namespace STS2RitsuLib.Settings
             if (_slider == null)
                 return;
 
-            var blockMouse = NControllerManager.Instance?.IsUsingController == true;
+            var blockMouse = Sts2InputCompat.IsUsingDirectionalNavigation;
             _slider.MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Pass;
         }
 
@@ -4495,14 +4496,14 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyDragHandleMousePolicy()
         {
-            var blockMouse = NControllerManager.Instance?.IsUsingController == true;
+            var blockMouse = Sts2InputCompat.IsUsingDirectionalNavigation;
             MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
             FocusMode = FocusModeEnum.All;
         }
 
         public override Variant _GetDragData(Vector2 atPosition)
         {
-            if (NControllerManager.Instance?.IsUsingController == true)
+            if (Sts2InputCompat.IsUsingDirectionalNavigation)
                 return default;
 
             if (_dragDataProvider == null)
@@ -5349,8 +5350,8 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyDropSlotInputPolicy()
         {
-            var controller = NControllerManager.Instance?.IsUsingController == true;
-            MouseFilter = controller ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
+            var directionalNavigation = Sts2InputCompat.IsUsingDirectionalNavigation;
+            MouseFilter = directionalNavigation ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
         }
 
         public override bool _CanDropData(Vector2 atPosition, Variant data)

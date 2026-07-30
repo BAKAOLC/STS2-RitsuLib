@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using STS2RitsuLib.Scaffolding.Visuals.Definition;
 
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
@@ -16,6 +17,9 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
     internal sealed class RitsuNCreatureVisualsNodeFactory() : RitsuGodotNodeFactory<NCreatureVisuals>([
         new RitsuGodotNodeSlot<Node2D>("%Visuals"),
         new RitsuGodotNodeSlot<Node2D>("%PhobiaModeVisuals"),
+#if STS2_AT_LEAST_0_110_0
+        new RitsuGodotNodeSlot<Control>("%FormVfx"),
+#endif
         new RitsuGodotNodeSlot<Control>("Bounds"),
         new RitsuGodotNodeSlot<Marker2D>("%CenterPos"),
         new RitsuGodotNodeSlot<Marker2D>("IntentPos"),
@@ -23,6 +27,47 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
         new RitsuGodotNodeSlot<Marker2D>("%TalkPos"),
     ])
     {
+        public override Node CreateFromNode(Node source)
+        {
+            var created = (NCreatureVisuals)base.CreateFromNode(source);
+            EnsureFormVfxHolder(created);
+            return created;
+        }
+
+        public override Node CreateFromNode(Node source, VisualNodeStyle? style)
+        {
+            var created = (NCreatureVisuals)base.CreateFromNode(source, style);
+            EnsureFormVfxHolder(created);
+            return created;
+        }
+
+        internal static void EnsureFormVfxHolder(NCreatureVisuals visuals)
+        {
+#if STS2_AT_LEAST_0_110_0
+            if (visuals.GetNodeOrNull<Control>("%FormVfx") != null)
+                return;
+
+            var namedChild = visuals.GetNodeOrNull("FormVfx");
+            if (namedChild is Control existingHolder)
+            {
+                existingHolder.UniqueNameInOwner = true;
+                existingHolder.Owner = visuals;
+                return;
+            }
+
+            if (namedChild != null)
+                throw new InvalidOperationException(
+                    $"NCreatureVisuals child 'FormVfx' must be a {nameof(Control)}, but was {namedChild.GetType().Name}.");
+
+            var formVfxHolder = new Control
+            {
+                Position = Vector2.Zero,
+            };
+            visuals.AddUniqueChild(formVfxHolder, "FormVfx");
+            visuals.MoveChild(formVfxHolder, 0);
+#endif
+        }
+
         protected override NCreatureVisuals CreateBareFromResourceImpl(object resource)
         {
             return resource switch
@@ -63,6 +108,11 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
         {
             switch (required.Path)
             {
+#if STS2_AT_LEAST_0_110_0
+                case "%FormVfx":
+                    EnsureFormVfxHolder(target);
+                    break;
+#endif
                 case "Bounds":
                 {
                     var bounds = new Control

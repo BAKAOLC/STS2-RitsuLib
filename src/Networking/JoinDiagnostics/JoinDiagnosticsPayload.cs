@@ -99,8 +99,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             {
                 var cacheStatus = ModelIdSerializationCacheDynamicContentPatch.GetDeterministicCacheStatus();
                 var payload = new JoinDiagnosticsPayloadV5(
-                    message.version,
-                    message.idDatabaseHash,
+                    GetGameVersion(message),
+                    GetModelDbHash(message),
                     message.gameMode.ToString(),
                     message.sessionState.ToString(),
                     CreateLocalModEntries(),
@@ -219,8 +219,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         {
             var contentMods = CreateHostContentModEntries(message, payload, out var hasProcessedContentMods);
             return new(
-                message.version,
-                message.idDatabaseHash,
+                GetGameVersion(message),
+                GetModelDbHash(message),
                 message.gameMode.ToString(),
                 message.sessionState.ToString(),
                 payload?.GameplayMods.Count > 0
@@ -278,7 +278,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static IReadOnlyList<string>? GetFallbackGameplayModKeys(InitialGameInfoMessage message)
         {
 #if STS2_AT_LEAST_0_107_1
-            return message.gameplayAffectingMods;
+            return GetGameplayAffectingMods(message);
 #else
             return message.mods;
 #endif
@@ -287,9 +287,45 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static IReadOnlyList<string>? GetFallbackContentModKeys(InitialGameInfoMessage message)
         {
 #if STS2_AT_LEAST_0_107_1
-            return MergeModKeys(message.gameplayAffectingMods, message.otherMods);
+            return MergeModKeys(GetGameplayAffectingMods(message), GetOtherMods(message));
 #else
             return message.mods;
+#endif
+        }
+
+        private static string GetGameVersion(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.version;
+#else
+            return message.version;
+#endif
+        }
+
+        private static uint GetModelDbHash(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.idDatabaseHash;
+#else
+            return message.idDatabaseHash;
+#endif
+        }
+
+        private static IReadOnlyList<string>? GetGameplayAffectingMods(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.gameplayAffectingMods;
+#else
+            return message.gameplayAffectingMods;
+#endif
+        }
+
+        private static IReadOnlyList<string>? GetOtherMods(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.otherMods;
+#else
+            return message.otherMods;
 #endif
         }
 

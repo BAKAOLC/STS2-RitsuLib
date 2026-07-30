@@ -1,13 +1,12 @@
 using Godot;
-using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using STS2RitsuLib.CardPiles.Nodes;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -54,9 +53,9 @@ namespace STS2RitsuLib.CardPiles
                 handPile.CardRemoved += origin.HandCardRemoved;
 
                 holder.BeginDrag();
-                NCardPlay cardPlay = NControllerManager.Instance?.IsUsingController == true
+                NCardPlay cardPlay = Sts2InputCompat.IsUsingDirectionalNavigation
                     ? NControllerCardPlay.Create(holder)
-                    : NMouseCardPlay.Create(holder, MegaInput.releaseCard, false);
+                    : NMouseCardPlay.Create(holder, Sts2InputCompat.CancelCardPlayAction, false);
                 origin.CardPlay = cardPlay;
                 container.AddChild(cardPlay);
                 cardPlay.Connect(NCardPlay.SignalName.Finished,

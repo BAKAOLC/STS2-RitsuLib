@@ -9,6 +9,7 @@ using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Scaffolding.Characters.Patches;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
 using STS2RitsuLib.Scaffolding.Godot;
+using STS2RitsuLib.Scaffolding.Godot.NodeFactories;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
@@ -365,6 +366,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 #pragma warning restore CS0618
 
                 if (created == null && !TryCreateCharacterResourceVisuals(__instance, out created)) return true;
+                RitsuNCreatureVisualsNodeFactory.EnsureFormVfxHolder(created);
                 ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
                 __result = created;
                 return false;

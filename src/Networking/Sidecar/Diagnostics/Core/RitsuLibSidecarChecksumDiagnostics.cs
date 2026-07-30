@@ -60,7 +60,11 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
+#if STS2_AT_LEAST_0_110_0
+        private static void OnClientStateDiverged(ulong _, NetFullCombatState __)
+#else
         private static void OnClientStateDiverged(NetFullCombatState _)
+#endif
         {
             try
             {

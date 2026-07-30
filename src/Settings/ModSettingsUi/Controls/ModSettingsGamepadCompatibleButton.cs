@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {
@@ -33,7 +34,8 @@ namespace STS2RitsuLib.Settings
         public override void _GuiInput(InputEvent @event)
         {
             if (!Disabled && !@event.IsEcho() &&
-                (@event.IsActionPressed(MegaInput.select) || @event.IsActionPressed(MegaInput.accept)))
+                (@event.IsActionPressed(MegaInput.select) ||
+                 @event.IsActionPressed(Sts2InputCompat.ConfirmAction)))
             {
                 EmitSignal(BaseButton.SignalName.Pressed);
                 AcceptEvent();

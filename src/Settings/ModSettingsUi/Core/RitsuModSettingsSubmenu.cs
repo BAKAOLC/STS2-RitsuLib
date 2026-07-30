@@ -747,7 +747,7 @@ namespace STS2RitsuLib.Settings
                 return;
 
             if ((!ReferenceEquals(node, this) && !IsAncestorOf(node)) ||
-                NControllerManager.Instance?.IsUsingController != true)
+                !Sts2InputCompat.IsUsingDirectionalNavigation)
                 return;
 
             if (_suppressScrollSync)
@@ -1022,7 +1022,7 @@ namespace STS2RitsuLib.Settings
             if (_paneHotkeyHintRow == null)
                 return;
 
-            var usingController = NControllerManager.Instance?.IsUsingController ?? false;
+            var usingController = Sts2InputCompat.IsUsingController;
             _paneHotkeyHintRow.Visible = usingController && Visible;
             if (!usingController)
                 return;
@@ -2870,14 +2870,14 @@ namespace STS2RitsuLib.Settings
             var focusLost = owner == null || !IsInstanceValid(owner) || !IsAncestorOf(owner);
             if (focusLost)
                 GrabControlDeferred(_initialFocusedControl,
-                    _initialFocusedControl is ModSettingsSidebarList && IsControllerInputActive());
+                    _initialFocusedControl is ModSettingsSidebarList && IsDirectionalNavigationActive());
             else
                 _initialFocusedControl?.TryGrabFocus();
         }
 
-        private static bool IsControllerInputActive()
+        private static bool IsDirectionalNavigationActive()
         {
-            return NControllerManager.Instance?.IsUsingController ?? false;
+            return Sts2InputCompat.IsUsingDirectionalNavigation;
         }
 
         private void GrabControlDeferred(Control? target, bool showSidebarFocusTooltip = false)
@@ -3128,7 +3128,7 @@ namespace STS2RitsuLib.Settings
                    @event.IsActionPressed(MegaInput.left) ||
                    @event.IsActionPressed(MegaInput.right) ||
                    @event.IsActionPressed(MegaInput.select) ||
-                   @event.IsActionPressed(MegaInput.accept) ||
+                   @event.IsActionPressed(Sts2InputCompat.ConfirmAction) ||
                    @event.IsActionPressed(MegaInput.cancel) ||
                    @event.IsActionPressed(MegaInput.pauseAndBack) ||
                    @event.IsActionPressed(PaneSidebarHotkey) ||
@@ -3691,7 +3691,8 @@ namespace STS2RitsuLib.Settings
                 }
 
                 if (!@event.IsEcho() &&
-                    (@event.IsActionPressed(MegaInput.select) || @event.IsActionPressed(MegaInput.accept) ||
+                    (@event.IsActionPressed(MegaInput.select) ||
+                     @event.IsActionPressed(Sts2InputCompat.ConfirmAction) ||
                      @event.IsActionPressed("ui_accept")))
                 {
                     ActivateCurrent();

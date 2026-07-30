@@ -1,5 +1,4 @@
-#if STS2_AT_LEAST_0_107_1
-
+#if STS2_AT_LEAST_0_107_1 && !STS2_AT_LEAST_0_110_0
 using System.Reflection;
 using Godot;
 using HarmonyLib;

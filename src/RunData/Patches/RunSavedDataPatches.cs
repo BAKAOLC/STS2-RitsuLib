@@ -1,3 +1,11 @@
+#if STS2_AT_LEAST_0_110_0
+using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.StartRunLobbyPlayer;
+#else
+using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.LobbyPlayer;
+#endif
+#if STS2_AT_LEAST_0_110_0
+using MegaCrit.Sts2.Core.Multiplayer;
+#endif
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -753,12 +761,17 @@ namespace STS2RitsuLib.RunData.Patches
         {
             return
             [
+#if STS2_AT_LEAST_0_110_0
+                new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
+                    [typeof(SerializableUnlockState), typeof(int), typeof(PeerVersionInfo), typeof(ulong)]),
+#else
                 new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
                     [typeof(SerializableUnlockState), typeof(int), typeof(ulong)]),
+#endif
             ];
         }
 
-        public static void Postfix(StartRunLobby __instance, LobbyPlayer? __result)
+        public static void Postfix(StartRunLobby __instance, LobbyPlayerCompat? __result)
         {
             if (__result == null || __instance.NetService.Type == NetGameType.Client)
                 return;

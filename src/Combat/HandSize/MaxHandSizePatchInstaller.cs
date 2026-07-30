@@ -4,7 +4,6 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -14,6 +13,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Builders;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Utils.HarmonyIl;
@@ -346,7 +346,7 @@ namespace STS2RitsuLib.Combat.HandSize
         private static StringName GetShortcutOrDefault(NPlayerHand hand, int idx)
         {
             var arr = hand._selectCardShortcuts;
-            return idx >= 0 && idx < arr.Length ? arr[idx] : MegaInput.releaseCard;
+            return idx >= 0 && idx < arr.Length ? arr[idx] : Sts2InputCompat.CancelCardPlayAction;
         }
 
         private static IEnumerable<CodeInstruction> StartCardPlayTranspiler(IEnumerable<CodeInstruction> instructions)
