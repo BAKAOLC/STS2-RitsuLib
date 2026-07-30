@@ -19,14 +19,21 @@ namespace STS2RitsuLib.Platform.Steam
         internal static bool TryGetWorkshopItemIdFromAssembly(Assembly assembly, out ulong itemId)
         {
             ArgumentNullException.ThrowIfNull(assembly);
-            if (TryGetWorkshopItemIdFromPath(assembly.Location, out itemId))
-                return true;
+            try
+            {
+                if (TryGetWorkshopItemIdFromPath(assembly.Location, out itemId))
+                    return true;
+            }
+            catch (NotSupportedException)
+            {
+                // Dynamic assemblies may not expose a location.
+            }
 
             try
             {
                 return TryGetWorkshopItemIdFromPath(assembly.ManifestModule.FullyQualifiedName, out itemId);
             }
-            catch
+            catch (NotSupportedException)
             {
                 itemId = 0;
                 return false;
