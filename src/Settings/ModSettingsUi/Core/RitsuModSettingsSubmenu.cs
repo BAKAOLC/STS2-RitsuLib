@@ -339,24 +339,37 @@ namespace STS2RitsuLib.Settings
             if (!RitsuShellThemePaths.TryEnsureShellThemesDirectory(out var themesAbs))
                 return;
 
+            FileSystemWatcher? watcher = null;
             try
             {
-                var watcher = new FileSystemWatcher(themesAbs, "*.theme.json")
+                watcher = new(themesAbs, "*.theme.json")
                 {
                     IncludeSubdirectories = false,
                     NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
-                    EnableRaisingEvents = true,
                 };
                 watcher.Changed += OnShellThemeFileChanged;
                 watcher.Created += OnShellThemeFileChanged;
                 watcher.Deleted += OnShellThemeFileChanged;
                 watcher.Renamed += OnShellThemeFileRenamed;
+                watcher.EnableRaisingEvents = true;
                 _shellThemeWatcher = watcher;
             }
-            catch
+            catch (Exception ex)
             {
-                // Best-effort: live theme reload is optional.
-                _shellThemeWatcher = null;
+                try
+                {
+                    watcher?.Dispose();
+                    _shellThemeWatcher = null;
+                }
+                catch (Exception cleanupEx)
+                {
+                    _shellThemeWatcher = watcher;
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to dispose the inactive shell-theme watcher: {cleanupEx}");
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Live shell-theme reload is unavailable: {ex}");
             }
         }
 
@@ -374,9 +387,11 @@ namespace STS2RitsuLib.Settings
                 _shellThemeWatcher.Renamed -= OnShellThemeFileRenamed;
                 _shellThemeWatcher.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Failed to stop the live shell-theme watcher: {ex}");
+                return;
             }
 
             _shellThemeWatcher = null;
