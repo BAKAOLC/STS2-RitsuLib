@@ -3212,15 +3212,8 @@ namespace STS2RitsuLib.Settings
             if (_localeSubscribed)
                 return;
 
-            try
-            {
-                LocManager.Instance.SubscribeToLocaleChange(OnLocaleChanged);
-                _localeSubscribed = true;
-            }
-            catch
-            {
-                // ignored
-            }
+            LocManager.Instance.SubscribeToLocaleChange(OnLocaleChanged);
+            _localeSubscribed = true;
         }
 
         private void UnsubscribeLocaleChanges()
@@ -3228,15 +3221,7 @@ namespace STS2RitsuLib.Settings
             if (!_localeSubscribed)
                 return;
 
-            try
-            {
-                LocManager.Instance.UnsubscribeToLocaleChange(OnLocaleChanged);
-            }
-            catch
-            {
-                // ignored
-            }
-
+            LocManager.Instance.UnsubscribeToLocaleChange(OnLocaleChanged);
             _localeSubscribed = false;
         }
 
