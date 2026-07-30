@@ -80,7 +80,12 @@ namespace STS2RitsuLib.Audio.Patches
                     return false;
 
                 if (VirtualFmodEventRegistry.IsRegistered(path))
-                    return !VirtualFmodEventRegistry.TryPlayOneShot(path, volume, parameters);
+                {
+                    if (!VirtualFmodEventRegistry.TryPlayOneShot(path, volume, parameters))
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] Virtual FMOD event is not a playable one-shot: {path}");
+                    return false;
+                }
 
                 if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(path, out var mappedGuid))
                 {
@@ -127,7 +132,12 @@ namespace STS2RitsuLib.Audio.Patches
                     return false;
 
                 if (VirtualFmodEventRegistry.IsRegistered(path))
-                    return !VirtualFmodEventRegistry.TryPlayLoop(path);
+                {
+                    if (!VirtualFmodEventRegistry.TryPlayLoop(path))
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] Virtual FMOD event is not a playable loop: {path}");
+                    return false;
+                }
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
                 {
@@ -171,8 +181,17 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(path) || !GuidMappedNaudioStudioProxy.IsMappedPath(path))
-                    return string.IsNullOrEmpty(path) || !VirtualFmodEventRegistry.TryStopLoop(path);
+                if (string.IsNullOrEmpty(path))
+                    return true;
+
+                if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
+                {
+                    if (!VirtualFmodEventRegistry.IsRegistered(path))
+                        return true;
+
+                    VirtualFmodEventRegistry.TryStopLoop(path);
+                    return false;
+                }
 
                 return !GuidMappedNaudioStudioProxy.TryStopMappedLoop(path);
             }
@@ -271,7 +290,10 @@ namespace STS2RitsuLib.Audio.Patches
                 if (VirtualFmodEventRegistry.IsRegistered(music))
                 {
                     __instance.StopMusic();
-                    return !VirtualFmodEventRegistry.TryPlayMusic(music);
+                    if (!VirtualFmodEventRegistry.TryPlayMusic(music))
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] Virtual FMOD event is not playable as music: {music}");
+                    return false;
                 }
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(music))
