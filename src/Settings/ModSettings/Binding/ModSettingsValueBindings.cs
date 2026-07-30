@@ -16,17 +16,23 @@ namespace STS2RitsuLib.Settings
         : IModSettingsValueBinding<TValue>
         where TModel : class, new()
     {
+        private readonly Func<TModel, TValue> _getter =
+            ModSettingsBindingValidation.RequireNonNull(getter, nameof(getter));
+
+        private readonly Action<TModel, TValue> _setter =
+            ModSettingsBindingValidation.RequireNonNull(setter, nameof(setter));
+
         /// <summary>
         ///     Mod id used to resolve <see cref="RitsuLibFramework.GetDataStore" />.
         ///     用于解析 <see cref="RitsuLibFramework.GetDataStore" /> 的 mod id。
         /// </summary>
-        public string ModId { get; } = modId;
+        public string ModId { get; } = ModSettingsBindingValidation.RequireNonEmpty(modId, nameof(modId));
 
         /// <summary>
         ///     Key of the persisted model blob.
         ///     持久化模型 blob 的键。
         /// </summary>
-        public string DataKey { get; } = dataKey;
+        public string DataKey { get; } = ModSettingsBindingValidation.RequireNonEmpty(dataKey, nameof(dataKey));
 
         /// <summary>
         ///     Persistence scope for the backing store entry.
@@ -41,7 +47,7 @@ namespace STS2RitsuLib.Settings
         public TValue Read()
         {
             var store = RitsuLibFramework.GetDataStore(ModId);
-            return getter(store.Get<TModel>(DataKey));
+            return _getter(store.Get<TModel>(DataKey));
         }
 
         /// <summary>
@@ -51,7 +57,7 @@ namespace STS2RitsuLib.Settings
         public void Write(TValue value)
         {
             var store = RitsuLibFramework.GetDataStore(ModId);
-            store.Modify<TModel>(DataKey, model => setter(model, value));
+            store.Modify<TModel>(DataKey, model => _setter(model, value));
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
@@ -86,13 +92,13 @@ namespace STS2RitsuLib.Settings
         ///     Logical mod id (for UI identity; not persisted by this type).
         ///     Logical mod id (用于 UI identity; not persisted 通过 this type).
         /// </summary>
-        public string ModId { get; } = modId;
+        public string ModId { get; } = ModSettingsBindingValidation.RequireNonEmpty(modId, nameof(modId));
 
         /// <summary>
         ///     Logical data key segment.
         ///     逻辑 data key 片段。
         /// </summary>
-        public string DataKey { get; } = dataKey;
+        public string DataKey { get; } = ModSettingsBindingValidation.RequireNonEmpty(dataKey, nameof(dataKey));
 
         /// <summary>
         ///     Always <see cref="SaveScope.Global" />; <see cref="Save" /> is a no-op.
@@ -142,46 +148,50 @@ namespace STS2RitsuLib.Settings
             IModSettingsUiRefreshEquivalence,
             IModSettingsBindingSaveDispatch
     {
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+        private readonly IModSettingsValueBinding<TValue> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_inner];
 
         /// <inheritdoc />
-        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [inner];
+        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [_inner];
 
         /// <inheritdoc />
-        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [_inner];
 
         /// <inheritdoc />
-        public string ModId => inner.ModId;
+        public string ModId => _inner.ModId;
 
         /// <inheritdoc />
-        public string DataKey => inner.DataKey;
+        public string DataKey => _inner.DataKey;
 
         /// <inheritdoc />
-        public SaveScope Scope => inner.Scope;
+        public SaveScope Scope => _inner.Scope;
 
         /// <summary>
         ///     Adapter used for serialization and clipboard.
         ///     用于序列化和剪贴板的适配器。
         /// </summary>
-        public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } = adapter;
+        public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } =
+            ModSettingsBindingValidation.RequireNonNull(adapter, nameof(adapter));
 
         /// <inheritdoc />
         public TValue Read()
         {
-            return inner.Read();
+            return _inner.Read();
         }
 
         /// <inheritdoc />
         public void Write(TValue value)
         {
-            inner.Write(value);
+            _inner.Write(value);
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            inner.Save();
+            _inner.Save();
         }
     }
 
@@ -197,13 +207,22 @@ namespace STS2RitsuLib.Settings
         IStructuredModSettingsValueAdapter<TValue>? adapter = null)
         : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation, IModSettingsBindingSaveDispatch
     {
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [parent];
+        private readonly IModSettingsValueBinding<TSource> _parent =
+            ModSettingsBindingValidation.RequireNonNull(parent, nameof(parent));
+
+        private readonly Func<TSource, TValue> _getter =
+            ModSettingsBindingValidation.RequireNonNull(getter, nameof(getter));
+
+        private readonly Func<TSource, TValue, TSource> _setter =
+            ModSettingsBindingValidation.RequireNonNull(setter, nameof(setter));
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_parent];
 
         /// <inheritdoc />
-        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [parent];
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [_parent];
 
         /// <inheritdoc />
-        public string ModId => parent.ModId;
+        public string ModId => _parent.ModId;
 
         /// <summary>
         ///     Composite key <c>parent.DataKey.{segment}</c> when the constructor segment is non-empty; otherwise the parent
@@ -211,10 +230,11 @@ namespace STS2RitsuLib.Settings
         ///     当构造函数 segment 非空时为复合 key <c>parent.DataKey.{segment}</c>；否则为父级
         ///     data key。
         /// </summary>
-        public string DataKey => string.IsNullOrWhiteSpace(dataKey) ? parent.DataKey : $"{parent.DataKey}.{dataKey}";
+        public string DataKey =>
+            string.IsNullOrWhiteSpace(dataKey) ? _parent.DataKey : $"{_parent.DataKey}.{dataKey}";
 
         /// <inheritdoc />
-        public SaveScope Scope => parent.Scope;
+        public SaveScope Scope => _parent.Scope;
 
         /// <summary>
         ///     Adapter for the projected type; defaults to JSON when the parent is not structured.
@@ -226,21 +246,21 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public TValue Read()
         {
-            return getter(parent.Read());
+            return _getter(_parent.Read());
         }
 
         /// <inheritdoc />
         public void Write(TValue value)
         {
-            var source = parent.Read();
-            parent.Write(setter(source, value));
+            var source = _parent.Read();
+            _parent.Write(_setter(source, value));
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            parent.Save();
+            _parent.Save();
         }
     }
 
@@ -255,28 +275,34 @@ namespace STS2RitsuLib.Settings
         : IStructuredModSettingsValueBinding<TValue>, IDefaultModSettingsValueBinding<TValue>,
             IModSettingsUiRefreshPropagation, IModSettingsUiRefreshEquivalence, IModSettingsBindingSaveDispatch
     {
+        private readonly IModSettingsValueBinding<TValue> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
+
+        private readonly Func<TValue> _defaultValueFactory =
+            ModSettingsBindingValidation.RequireNonNull(defaultValueFactory, nameof(defaultValueFactory));
+
         /// <inheritdoc />
         public TValue CreateDefaultValue()
         {
-            return defaultValueFactory();
+            return _defaultValueFactory();
         }
 
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_inner];
 
         /// <inheritdoc />
-        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [inner];
+        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [_inner];
 
         /// <inheritdoc />
-        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [_inner];
 
         /// <inheritdoc />
-        public string ModId => inner.ModId;
+        public string ModId => _inner.ModId;
 
         /// <inheritdoc />
-        public string DataKey => inner.DataKey;
+        public string DataKey => _inner.DataKey;
 
         /// <inheritdoc />
-        public SaveScope Scope => inner.Scope;
+        public SaveScope Scope => _inner.Scope;
 
         /// <summary>
         ///     Adapter from the inner structured binding when present; otherwise the optional constructor adapter or JSON
@@ -292,20 +318,20 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public TValue Read()
         {
-            return inner.Read();
+            return _inner.Read();
         }
 
         /// <inheritdoc />
         public void Write(TValue value)
         {
-            inner.Write(value);
+            _inner.Write(value);
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            inner.Save();
+            _inner.Save();
         }
     }
 

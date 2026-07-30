@@ -18,34 +18,37 @@ namespace STS2RitsuLib.Settings
     public sealed class ModSettingsDoubleFromFloatBinding(IModSettingsValueBinding<float> inner)
         : IModSettingsValueBinding<double>, IModSettingsBindingSaveDispatch
     {
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+        private readonly IModSettingsValueBinding<float> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_inner];
 
         /// <inheritdoc />
-        public string ModId => inner.ModId;
+        public string ModId => _inner.ModId;
 
         /// <inheritdoc />
-        public string DataKey => inner.DataKey;
+        public string DataKey => _inner.DataKey;
 
         /// <inheritdoc />
-        public SaveScope Scope => inner.Scope;
+        public SaveScope Scope => _inner.Scope;
 
         /// <inheritdoc />
         public double Read()
         {
-            return inner.Read();
+            return _inner.Read();
         }
 
         /// <inheritdoc />
         public void Write(double value)
         {
-            inner.Write((float)value);
+            _inner.Write((float)value);
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            inner.Save();
+            _inner.Save();
         }
     }
 
@@ -58,34 +61,37 @@ namespace STS2RitsuLib.Settings
     public sealed class ModSettingsDoubleFromIntBinding(IModSettingsValueBinding<int> inner)
         : IModSettingsValueBinding<double>, IModSettingsBindingSaveDispatch
     {
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+        private readonly IModSettingsValueBinding<int> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_inner];
 
         /// <inheritdoc />
-        public string ModId => inner.ModId;
+        public string ModId => _inner.ModId;
 
         /// <inheritdoc />
-        public string DataKey => inner.DataKey;
+        public string DataKey => _inner.DataKey;
 
         /// <inheritdoc />
-        public SaveScope Scope => inner.Scope;
+        public SaveScope Scope => _inner.Scope;
 
         /// <inheritdoc />
         public double Read()
         {
-            return inner.Read();
+            return _inner.Read();
         }
 
         /// <inheritdoc />
         public void Write(double value)
         {
-            inner.Write(Mathf.RoundToInt(value));
+            _inner.Write(Mathf.RoundToInt(value));
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            inner.Save();
+            _inner.Save();
         }
     }
 
@@ -96,34 +102,37 @@ namespace STS2RitsuLib.Settings
     public sealed class ModSettingsIntFromDoubleBinding(IModSettingsValueBinding<double> inner)
         : IModSettingsValueBinding<int>, IModSettingsBindingSaveDispatch
     {
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+        private readonly IModSettingsValueBinding<double> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_inner];
 
         /// <inheritdoc />
-        public string ModId => inner.ModId;
+        public string ModId => _inner.ModId;
 
         /// <inheritdoc />
-        public string DataKey => inner.DataKey;
+        public string DataKey => _inner.DataKey;
 
         /// <inheritdoc />
-        public SaveScope Scope => inner.Scope;
+        public SaveScope Scope => _inner.Scope;
 
         /// <inheritdoc />
         public int Read()
         {
-            return Mathf.RoundToInt(inner.Read());
+            return Mathf.RoundToInt(_inner.Read());
         }
 
         /// <inheritdoc />
         public void Write(int value)
         {
-            inner.Write(value);
+            _inner.Write(value);
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            inner.Save();
+            _inner.Save();
         }
     }
 }

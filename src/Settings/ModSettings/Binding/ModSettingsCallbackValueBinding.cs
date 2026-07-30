@@ -49,11 +49,15 @@ namespace STS2RitsuLib.Settings
         Action<T> write,
         Action save) : IModSettingsValueBinding<T>
     {
-        /// <inheritdoc />
-        public string ModId { get; } = modId;
+        private readonly Func<T> _read = ModSettingsBindingValidation.RequireNonNull(read, nameof(read));
+        private readonly Action<T> _write = ModSettingsBindingValidation.RequireNonNull(write, nameof(write));
+        private readonly Action _save = ModSettingsBindingValidation.RequireNonNull(save, nameof(save));
 
         /// <inheritdoc />
-        public string DataKey { get; } = dataKey;
+        public string ModId { get; } = ModSettingsBindingValidation.RequireNonEmpty(modId, nameof(modId));
+
+        /// <inheritdoc />
+        public string DataKey { get; } = ModSettingsBindingValidation.RequireNonEmpty(dataKey, nameof(dataKey));
 
         /// <inheritdoc />
         public SaveScope Scope { get; } = scope;
@@ -61,20 +65,20 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public T Read()
         {
-            return read();
+            return _read();
         }
 
         /// <inheritdoc />
         public void Write(T value)
         {
-            write(value);
+            _write(value);
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            save();
+            _save();
         }
     }
 }
