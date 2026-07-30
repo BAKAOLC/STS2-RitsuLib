@@ -293,13 +293,6 @@ namespace STS2RitsuLib.Models.Capabilities
             return NotifyOwnerCardPlayed(context.ChoiceContext, context.CardPlay, context.OriginalOnPlayRan);
         }
 
-        /// <inheritdoc />
-        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
-        public Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
-        {
-            return NotifyOwnerCardPlayed(context.ChoiceContext, context.CardPlay);
-        }
-
         internal Task NotifyOwnerCardPlayed(
             PlayerChoiceContext choiceContext,
             CardPlay cardPlay,

@@ -1,6 +1,5 @@
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
 using SmartFormat.Core.Extensions;
@@ -480,37 +479,6 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Queues obsolete type-erased custom hand-outline rules.</para>
-        ///     <para xml:lang="zh-CN">将已过时的类型擦除自定义手牌描边规则加入队列。</para>
-        /// </summary>
-        [Obsolete("Use CardHandOutline<TCard>(ModCardHandOutlineRules<TCard>).")]
-        public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineRules rules) where TCard : CardModel
-        {
-            return AddStep(_ => ModCardHandOutlineRegistry.Register<TCard>(rules));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Queues one obsolete type-erased custom hand-outline rule.</para>
-        ///     <para xml:lang="zh-CN">将一条已过时的类型擦除自定义手牌描边规则加入队列。</para>
-        /// </summary>
-        [Obsolete("Use CardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
-        public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineSwitchRule rule) where TCard : CardModel
-        {
-            return AddStep(_ => ModCardHandOutlineRegistry.Register<TCard>(rule));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Queues multiple obsolete type-erased custom hand-outline rules.</para>
-        ///     <para xml:lang="zh-CN">将多条已过时的类型擦除自定义手牌描边规则加入队列。</para>
-        /// </summary>
-        [Obsolete("Use CardHandOutline<TCard>(params ModCardHandOutlineSwitchRule<TCard>[]).")]
-        public ModContentPackBuilder CardHandOutline<TCard>(params ModCardHandOutlineSwitchRule[] rules)
-            where TCard : CardModel
-        {
-            return AddStep(_ => ModCardHandOutlineRegistry.Register<TCard>(ModCardHandOutlineRules.Of(rules)));
-        }
-
-        /// <summary>
         ///     <para xml:lang="en">Queues a delegate-based custom hand-outline rule.</para>
         ///     <para xml:lang="zh-CN">将基于委托的自定义手牌描边规则加入队列。</para>
         /// </summary>
@@ -526,17 +494,6 @@ namespace STS2RitsuLib.Scaffolding.Content
                 priority,
                 visibleWhenUnplayable,
                 refreshEveryFrame));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Queues an obsolete custom hand-outline rule.</para>
-        ///     <para xml:lang="zh-CN">将已过时的自定义手牌描边规则加入队列。</para>
-        /// </summary>
-        [Obsolete(
-            "Use CardHandOutline<TCard>(ModCardHandOutlineRules<TCard>), CardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>), or CardHandOutline<TCard>(Func<TCard, Color?>).")]
-        public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineRule rule) where TCard : CardModel
-        {
-            return AddStep(_ => ModCardHandOutlineRegistry.Register<TCard>(rule.ToSwitchRule()));
         }
 
         /// <summary>
@@ -973,60 +930,6 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">
-        ///         Queues obsolete flat-ID card-keyword registration with placement and hover-tip options.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">将已过时的扁平 ID 卡牌关键词注册及其位置和悬停提示选项加入队列。</para>
-        /// </summary>
-        [Obsolete(
-            "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
-        public ModContentPackBuilder CardKeyword(
-            string id,
-            string? entryStem,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            return AddStep(ctx =>
-            {
-                ArgumentException.ThrowIfNullOrWhiteSpace(id);
-                var prefix = string.IsNullOrWhiteSpace(entryStem)
-                    ? StringHelper.Slugify(id)
-                    : entryStem.Trim();
-
-                ctx.Keywords.RegisterCore(
-                    id,
-                    "card_keywords",
-                    $"{prefix}.title",
-                    "card_keywords",
-                    $"{prefix}.description",
-                    iconPath,
-                    cardDescriptionPlacement,
-                    includeInCardHoverTip);
-            });
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Provides the obsolete flat-ID <c>CardKeyword</c> signature with its legacy hover-tip behavior.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         提供已过时的扁平 ID <c>CardKeyword</c> 签名，并保留其旧版悬停提示行为。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
-        public ModContentPackBuilder CardKeyword(string id, string? entryStem = null, string? iconPath = null)
-        {
-            return CardKeyword(
-                id,
-                entryStem,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
         ///     <para xml:lang="en">Queues a mod-owned keyword using a local stem.</para>
         ///     <para xml:lang="zh-CN">使用本地词干将模组所属关键词注册加入队列。</para>
         /// </summary>
@@ -1059,58 +962,6 @@ namespace STS2RitsuLib.Scaffolding.Content
         {
             return KeywordOwned(
                 localKeywordStem,
-                titleTable,
-                titleKey,
-                descriptionTable,
-                descriptionKey,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Queues obsolete flat-ID keyword registration with placement and hover-tip options.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">将已过时的扁平 ID 关键词注册及其位置和悬停提示选项加入队列。</para>
-        /// </summary>
-        [Obsolete(
-            "Prefer KeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
-        public ModContentPackBuilder Keyword(
-            string id,
-            string titleTable,
-            string? titleKey,
-            string? descriptionTable,
-            string? descriptionKey,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            return AddStep(ctx =>
-                ctx.Keywords.RegisterCore(id, titleTable, titleKey, descriptionTable, descriptionKey, iconPath,
-                    cardDescriptionPlacement, includeInCardHoverTip));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Provides the obsolete flat-ID <c>Keyword</c> signature with its legacy hover-tip behavior.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         提供已过时的扁平 ID <c>Keyword</c> 签名，并保留其旧版悬停提示行为。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Prefer KeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
-        public ModContentPackBuilder Keyword(
-            string id,
-            string titleTable = "card_keywords",
-            string? titleKey = null,
-            string? descriptionTable = null,
-            string? descriptionKey = null,
-            string? iconPath = null)
-        {
-            return Keyword(
-                id,
                 titleTable,
                 titleKey,
                 descriptionTable,

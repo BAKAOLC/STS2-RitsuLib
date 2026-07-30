@@ -291,41 +291,6 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     <para xml:lang="en">A card has been Retained for the next turn.</para>
-    ///     <para xml:lang="zh-CN">一张牌已被保留到下一回合。</para>
-    /// </summary>
-    /// <remarks>
-    ///     <para xml:lang="en">
-    ///         On host API 0.105.0 and later, the underlying <c>Hook.AfterCardRetained</c> callback no longer
-    ///         exists. For compatibility, this event is replayed once per retained card from <c>Hook.AfterFlush</c>. Subscribe
-    ///         to <see cref="CardsFlushedEvent" /> instead to observe the corresponding flushed cards and player.
-    ///     </para>
-    ///     <para xml:lang="zh-CN">
-    ///         在宿主 API 0.105.0 及更高版本中，底层 <c>Hook.AfterCardRetained</c> 回调已不存在。为保持兼容性，此事件会从
-    ///         <c>Hook.AfterFlush</c> 按每张保留卡牌重放一次。请改为订阅 <see cref="CardsFlushedEvent" />，以观察对应的已清理卡牌和玩家。
-    ///     </para>
-    /// </remarks>
-    /// <param name="CombatState">
-    ///     <para xml:lang="en">Active combat state.</para>
-    ///     <para xml:lang="zh-CN">当前活动战斗状态。</para>
-    /// </param>
-    /// <param name="Card">
-    ///     <para xml:lang="en">Retained card.</para>
-    ///     <para xml:lang="zh-CN">被保留的卡牌。</para>
-    /// </param>
-    /// <param name="OccurredAtUtc">
-    ///     <para xml:lang="en">When the event was raised.</para>
-    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
-    /// </param>
-    [Obsolete(
-        "Use CardsFlushedEvent. CardRetainedEvent is replayed from Hook.AfterFlush on host API 0.105.0 and newer.")]
-    public readonly record struct CardRetainedEvent(
-        CombatStateCompat CombatState,
-        CardModel Card,
-        DateTimeOffset OccurredAtUtc
-    ) : IFrameworkLifecycleEvent;
-
-    /// <summary>
     ///     <para xml:lang="en">A player's hand is about to be flushed.</para>
     ///     <para xml:lang="zh-CN">一名玩家的手牌即将被清理。</para>
     /// </summary>
@@ -354,12 +319,11 @@ namespace STS2RitsuLib
     /// <remarks>
     ///     <para xml:lang="en">
     ///         Raised from <c>Hook.AfterFlush</c> on host API 0.105.0 and later. Older host APIs do not
-    ///         provide <c>Hook.AfterFlush</c>, so this event is not raised; use the legacy <see cref="CardRetainedEvent" />
-    ///         there.
+    ///         provide <c>Hook.AfterFlush</c>, so this event is not raised there.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         在宿主 API 0.105.0 及更高版本中由 <c>Hook.AfterFlush</c> 触发。旧版宿主 API 不提供 <c>Hook.AfterFlush</c>
-    ///         ，因此不会触发此事件；请改用遗留的 <see cref="CardRetainedEvent" />。
+    ///         ，因此不会触发此事件。
     ///     </para>
     /// </remarks>
     /// <param name="CombatState">

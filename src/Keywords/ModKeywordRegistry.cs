@@ -1,6 +1,5 @@
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using STS2RitsuLib.Content;
@@ -257,133 +256,8 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     <para xml:lang="en">
-        ///         Registers a keyword under a raw global ID. Prefer <c>RegisterOwned</c> to avoid collisions between
-        ///         mods.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         使用未经限定的全局 ID 注册关键词。应优先使用 <c>RegisterOwned</c>，以免不同模组之间发生冲突。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterOwned / RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
-        public ModKeywordDefinition Register(
-            string id,
-            string titleTable,
-            string? titleKey,
-            string? descriptionTable,
-            string? descriptionKey,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            return RegisterCore(
-                id,
-                titleTable,
-                titleKey,
-                descriptionTable,
-                descriptionKey,
-                iconPath,
-                cardDescriptionPlacement,
-                includeInCardHoverTip);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Registers a raw-ID keyword through the legacy signature retained for older mods, using the prior
-        ///         hover-tip defaults.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         通过为兼容旧版模组而保留的签名注册原始 ID 关键词，并沿用旧版悬停提示默认行为。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterOwned / RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
-        public ModKeywordDefinition Register(
-            string id,
-            string titleTable = "card_keywords",
-            string? titleKey = null,
-            string? descriptionTable = null,
-            string? descriptionKey = null,
-            string? iconPath = null)
-        {
-            return RegisterCore(
-                id,
-                titleTable,
-                titleKey,
-                descriptionTable,
-                descriptionKey,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Registers a <c>card_keywords</c> keyword under a raw global ID. Prefer
-        ///         <c>RegisterCardKeywordOwnedByLocNamespace</c>.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         使用未经限定的全局 ID 注册 <c>card_keywords</c> 关键词。应优先使用
-        ///         <c>RegisterCardKeywordOwnedByLocNamespace</c>。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
-        public ModKeywordDefinition RegisterCardKeyword(
-            string id,
-            string? entryStem,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(id);
-
-            var prefix = string.IsNullOrWhiteSpace(entryStem)
-                ? StringHelper.Slugify(id)
-                : entryStem.Trim();
-
-            return RegisterCore(
-                id,
-                "card_keywords",
-                $"{prefix}.title",
-                "card_keywords",
-                $"{prefix}.description",
-                iconPath,
-                cardDescriptionPlacement,
-                includeInCardHoverTip);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Registers a raw-ID <c>card_keywords</c> keyword through the legacy signature retained for older mods,
-        ///         using the prior hover-tip defaults.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         通过为兼容旧版模组而保留的签名注册原始 ID 的 <c>card_keywords</c> 关键词，并沿用旧版悬停提示
-        ///         默认行为。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Flat keyword ids are global: they collide across mods and do not follow fixed public entry naming. Use RegisterCardKeywordOwnedByLocNamespace, or ModContentRegistry.GetQualifiedKeywordId for cross-mod references.")]
-        public ModKeywordDefinition RegisterCardKeyword(string id, string? entryStem = null, string? iconPath = null)
-        {
-            return RegisterCardKeyword(
-                id,
-                entryStem,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Implements the full obsolete <c>Register</c> behavior without producing obsolete warnings when
-        ///         manifests forward registrations inside RitsuLib.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         实现已弃用完整参数 <c>Register</c> 的相同行为，供 RitsuLib 在库内转发清单注册时避免产生弃用警告。
-        ///     </para>
+        ///     <para xml:lang="en">Implements keyword registration after an owned ID has been resolved.</para>
+        ///     <para xml:lang="zh-CN">在解析归属当前模组的 ID 后执行关键词注册。</para>
         /// </summary>
         internal ModKeywordDefinition RegisterCore(
             string id,

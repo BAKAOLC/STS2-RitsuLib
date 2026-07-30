@@ -43,45 +43,6 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Registers type-erased in-hand outline rules for <typeparamref name="TCard" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册类型擦除的手牌描边规则。</para>
-        /// </summary>
-        [Obsolete("Use RegisterCardHandOutline<TCard>(ModCardHandOutlineRules<TCard>).")]
-        public void RegisterCardHandOutline<TCard>(ModCardHandOutlineRules rules) where TCard : CardModel
-        {
-            EnsureMutable("register card hand outline rules");
-            ModCardHandOutlineRegistry.Register<TCard>(rules);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Registers one type-erased in-hand outline rule for <typeparamref name="TCard" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册一条类型擦除的手牌描边规则。</para>
-        /// </summary>
-        [Obsolete("Use RegisterCardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
-        public void RegisterCardHandOutline<TCard>(ModCardHandOutlineSwitchRule rule) where TCard : CardModel
-        {
-            EnsureMutable("register card hand outline rule");
-            ModCardHandOutlineRegistry.Register<TCard>(rule);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Registers multiple type-erased in-hand outline rules for <typeparamref name="TCard" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册多条类型擦除的手牌描边规则。</para>
-        /// </summary>
-        [Obsolete("Use RegisterCardHandOutline<TCard>(params ModCardHandOutlineSwitchRule<TCard>[]).")]
-        public void RegisterCardHandOutline<TCard>(params ModCardHandOutlineSwitchRule[] rules) where TCard : CardModel
-        {
-            EnsureMutable("register card hand outline rules");
-            ModCardHandOutlineRegistry.Register<TCard>(ModCardHandOutlineRules.Of(rules));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
         ///         Registers an in-hand outline resolver for <typeparamref name="TCard" />.
         ///     </para>
         ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册手牌描边解析器。</para>
@@ -100,35 +61,5 @@ namespace STS2RitsuLib.Content
                 refreshEveryFrame));
         }
 
-        /// <summary>
-        ///     <para xml:lang="en">Registers one legacy in-hand outline rule for <typeparamref name="TCard" />.</para>
-        ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册一条旧版手牌描边规则。</para>
-        /// </summary>
-        [Obsolete(
-            "Use RegisterCardHandOutline<TCard>(ModCardHandOutlineRules<TCard>), RegisterCardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>), or RegisterCardHandOutline<TCard>(Func<TCard, Color?>).")]
-        public void RegisterCardHandOutline<TCard>(ModCardHandOutlineRule rule) where TCard : CardModel
-        {
-            EnsureMutable("register card hand outline rule");
-            ModCardHandOutlineRegistry.Register<TCard>(rule.ToSwitchRule());
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Registers multiple legacy <see cref="ModCardHandOutlineRule" /> values for
-        ///         <typeparamref name="TCard" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         为 <typeparamref name="TCard" /> 注册多条旧版 <see cref="ModCardHandOutlineRule" />。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Use RegisterCardHandOutline<TCard>(ModCardHandOutlineRules<TCard>) or RegisterCardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
-        public void RegisterCardHandOutline<TCard>(params ModCardHandOutlineRule[] rules) where TCard : CardModel
-        {
-            ArgumentNullException.ThrowIfNull(rules);
-            EnsureMutable("register card hand outline rules");
-            ModCardHandOutlineRegistry.Register<TCard>(
-                ModCardHandOutlineRules.Of([.. rules.Select(static rule => rule.ToSwitchRule())]));
-        }
     }
 }

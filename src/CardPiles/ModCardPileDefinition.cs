@@ -28,8 +28,8 @@ namespace STS2RitsuLib.CardPiles
     public sealed record ModCardPileDefinition
     {
         /// <summary>
-        ///     <para xml:lang="en">Initializes a card-pile definition without default-screen capabilities.</para>
-        ///     <para xml:lang="zh-CN">初始化不带默认牌堆界面扩展能力的卡牌牌堆定义。</para>
+        ///     <para xml:lang="en">Initializes a card-pile definition and its optional presentation capabilities.</para>
+        ///     <para xml:lang="zh-CN">初始化卡牌牌堆定义及其可选展示能力。</para>
         /// </summary>
         /// <param name="modId">
         ///     <para xml:lang="en">The ID of the mod that owns the registry.</para>
@@ -98,6 +98,14 @@ namespace STS2RitsuLib.CardPiles
         ///     <para xml:lang="en">The optional resolver for shuffle-flight start positions.</para>
         ///     <para xml:lang="zh-CN">用于解析洗牌飞行动画起始位置的可选解析器。</para>
         /// </param>
+        /// <param name="view">
+        ///     <para xml:lang="en">Optional capabilities for the default pile screen.</para>
+        ///     <para xml:lang="zh-CN">默认牌堆界面的可选扩展能力。</para>
+        /// </param>
+        /// <param name="extraHand">
+        ///     <para xml:lang="en">Optional extra-hand presentation settings.</para>
+        ///     <para xml:lang="zh-CN">可选的额外手牌展示设置。</para>
+        /// </param>
         public ModCardPileDefinition(
             string modId,
             string id,
@@ -108,71 +116,14 @@ namespace STS2RitsuLib.CardPiles
             string? iconPath,
             string[]? hotkeys,
             bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen,
-            Vector2 hoverTipScreenOffset,
-            ModCardPileHoverTipPlacement hoverTipPlacement,
-            Func<ModCardPileVisibilityContext, bool>? visibleWhen,
-            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver,
-            Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                hoverTipScreenOffset, hoverTipPlacement, visibleWhen, flightTargetPositionResolver,
-                flightStartPositionResolver, null)
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a card-pile definition with optional capabilities for the default pile screen.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">初始化带有默认牌堆界面可选扩展能力的卡牌牌堆定义。</para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen,
-            Vector2 hoverTipScreenOffset,
-            ModCardPileHoverTipPlacement hoverTipPlacement,
-            Func<ModCardPileVisibilityContext, bool>? visibleWhen,
-            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver,
-            Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver,
-            ModCardPileViewSpec? view)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                hoverTipScreenOffset, hoverTipPlacement, visibleWhen, flightTargetPositionResolver,
-                flightStartPositionResolver, view, new())
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a card-pile definition with default-screen and extra-hand capabilities.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">初始化带有默认牌堆界面与额外手牌能力的卡牌牌堆定义。</para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen,
-            Vector2 hoverTipScreenOffset,
-            ModCardPileHoverTipPlacement hoverTipPlacement,
-            Func<ModCardPileVisibilityContext, bool>? visibleWhen,
-            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver,
-            Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver,
-            ModCardPileViewSpec? view,
-            ModCardPileExtraHandSpec extraHand)
+            Action<ModCardPileOpenContext>? onOpen = null,
+            Vector2 hoverTipScreenOffset = default,
+            ModCardPileHoverTipPlacement hoverTipPlacement = ModCardPileHoverTipPlacement.Auto,
+            Func<ModCardPileVisibilityContext, bool>? visibleWhen = null,
+            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver = null,
+            Func<ModCardPileFlightStartContext, Vector2?>? flightStartPositionResolver = null,
+            ModCardPileViewSpec? view = null,
+            ModCardPileExtraHandSpec? extraHand = null)
         {
             ModId = modId;
             Id = id;
@@ -191,158 +142,6 @@ namespace STS2RitsuLib.CardPiles
             FlightTargetPositionResolver = flightTargetPositionResolver;
             FlightStartPositionResolver = flightStartPositionResolver;
             ExtraHand = extraHand ?? new();
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a definition without card-flight position resolvers.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">初始化不带卡牌飞行动画位置解析器的定义。</para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen,
-            Vector2 hoverTipScreenOffset,
-            ModCardPileHoverTipPlacement hoverTipPlacement,
-            Func<ModCardPileVisibilityContext, bool>? visibleWhen)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                hoverTipScreenOffset, hoverTipPlacement, visibleWhen, null, null)
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a definition without a shuffle-flight start-position resolver.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">初始化不带洗牌飞行动画起始位置解析器的定义。</para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen,
-            Vector2 hoverTipScreenOffset,
-            ModCardPileHoverTipPlacement hoverTipPlacement,
-            Func<ModCardPileVisibilityContext, bool>? visibleWhen,
-            Func<ModCardPileFlightTargetContext, Vector2?>? flightTargetPositionResolver)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                hoverTipScreenOffset, hoverTipPlacement, visibleWhen, flightTargetPositionResolver, null)
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a definition without a per-pile visibility predicate or flight-position resolvers.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         初始化不带牌堆可见性谓词与飞行动画位置解析器的定义。
-        ///     </para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen,
-            Vector2 hoverTipScreenOffset,
-            ModCardPileHoverTipPlacement hoverTipPlacement)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                hoverTipScreenOffset, hoverTipPlacement, null, null, null)
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a definition with automatic hover-tip placement and without visibility or
-        ///         flight-position callbacks.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         使用自动悬停提示位置初始化定义，且不设置可见性或飞行动画位置回调。
-        ///     </para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen,
-            Vector2 hoverTipScreenOffset)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                hoverTipScreenOffset, ModCardPileHoverTipPlacement.Auto)
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a definition that uses the default open behavior, automatic hover-tip placement,
-        ///         and no additional hover-tip offset.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         初始化使用默认打开行为、自动悬停提示位置且不附加悬停提示偏移量的定义。
-        ///     </para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, null,
-                default, ModCardPileHoverTipPlacement.Auto)
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes a definition with a custom open callback, automatic hover-tip placement, and no
-        ///         additional hover-tip offset.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         初始化带有自定义打开回调、使用自动悬停提示位置且不附加悬停提示偏移量的定义。
-        ///     </para>
-        /// </summary>
-        public ModCardPileDefinition(
-            string modId,
-            string id,
-            PileType pileType,
-            ModCardPileScope scope,
-            ModCardPileUiStyle style,
-            ModCardPileAnchor anchor,
-            string? iconPath,
-            string[]? hotkeys,
-            bool cardShouldBeVisible,
-            Action<ModCardPileOpenContext>? onOpen)
-            : this(modId, id, pileType, scope, style, anchor, iconPath, hotkeys, cardShouldBeVisible, onOpen,
-                default, ModCardPileHoverTipPlacement.Auto)
-        {
         }
 
         /// <summary>

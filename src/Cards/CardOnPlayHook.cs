@@ -12,15 +12,6 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Cards
 {
     /// <summary>
-    ///     <para xml:lang="en">Context for the legacy hook that runs after a card's own <c>OnPlay</c> method.</para>
-    ///     <para xml:lang="zh-CN">卡牌自身的 <c>OnPlay</c> 方法执行后，旧版钩子所使用的上下文。</para>
-    /// </summary>
-    public readonly record struct CardOnPlayCompletedContext(
-        CombatStateLike CombatState,
-        PlayerChoiceContext ChoiceContext,
-        CardPlay CardPlay);
-
-    /// <summary>
     ///     <para xml:lang="en">Context for hooks that run before a card's own <c>OnPlay</c> method.</para>
     ///     <para xml:lang="zh-CN">卡牌自身的 <c>OnPlay</c> 方法执行前，钩子所使用的上下文。</para>
     /// </summary>
@@ -72,25 +63,6 @@ namespace STS2RitsuLib.Cards
         ///     </para>
         /// </summary>
         Task AfterCardOnPlay(AfterCardOnPlayContext context)
-        {
-#pragma warning disable CS0618
-            return context.OriginalOnPlayRan
-                ? AfterCardOnPlayCompleted(new(context.CombatState, context.ChoiceContext, context.CardPlay))
-                : Task.CompletedTask;
-#pragma warning restore CS0618
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Runs after the card's own <c>OnPlay</c> method completes and before enchantments, afflictions, and
-        ///         <c>Hook.AfterCardPlayed</c> are processed.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         在卡牌自身的 <c>OnPlay</c> 方法完成后，以及附魔、侵蚀和 <c>Hook.AfterCardPlayed</c> 处理之前运行。
-        ///     </para>
-        /// </summary>
-        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
-        Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
         {
             return Task.CompletedTask;
         }
@@ -157,19 +129,6 @@ namespace STS2RitsuLib.Cards
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Compatibility wrapper for RitsuLib's original card-play injection method.</para>
-        ///     <para xml:lang="zh-CN">RitsuLib 原卡牌打出注入方法的兼容包装。</para>
-        /// </summary>
-        [Obsolete("Use RunCardOnPlayHooks(CardModel, PlayerChoiceContext, CardPlay) instead.")]
-        public static Task RunOnPlayAndAfterCardOnPlayCompleted(
-            CardModel card,
-            PlayerChoiceContext choiceContext,
-            CardPlay cardPlay)
-        {
-            return RunCardOnPlayHooks(card, choiceContext, cardPlay);
-        }
-
-        /// <summary>
         ///     <para xml:lang="en">
         ///         Runs the before-play hooks and returns whether the card's own <c>OnPlay</c> method should be skipped.
         ///     </para>
@@ -223,38 +182,6 @@ namespace STS2RitsuLib.Cards
                 try
                 {
                     await entry.Listener.AfterCardOnPlay(context);
-                    entry.Model.InvokeExecutionFinished();
-                }
-                finally
-                {
-                    context.ChoiceContext.PopModel(entry.Model);
-                }
-            }
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Runs the legacy after-play hooks.</para>
-        ///     <para xml:lang="zh-CN">运行旧版打出后置钩子。</para>
-        /// </summary>
-        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
-        public static async Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
-        {
-            foreach (var entry in IterateListeners(context.CombatState))
-            {
-                if (entry.Model == null)
-                {
-#pragma warning disable CS0618
-                    await entry.Listener.AfterCardOnPlayCompleted(context);
-#pragma warning restore CS0618
-                    continue;
-                }
-
-                context.ChoiceContext.PushModel(entry.Model);
-                try
-                {
-#pragma warning disable CS0618
-                    await entry.Listener.AfterCardOnPlayCompleted(context);
-#pragma warning restore CS0618
                     entry.Model.InvokeExecutionFinished();
                 }
                 finally

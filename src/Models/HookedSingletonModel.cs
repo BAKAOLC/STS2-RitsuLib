@@ -68,42 +68,6 @@ namespace STS2RitsuLib.Models
             }
         }
 
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Creates the singleton and subscribes it to combat hooks when
-        ///         <paramref name="receiveCombatHooks" /> is <see langword="true" />; otherwise, subscribes it to
-        ///         run hooks when <paramref name="receiveRunHooks" /> is <see langword="true" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         创建单例。<paramref name="receiveCombatHooks" /> 为 <see langword="true" /> 时订阅战斗钩子；
-        ///         否则，在 <paramref name="receiveRunHooks" /> 为 <see langword="true" /> 时订阅局内钩子。
-        ///     </para>
-        /// </summary>
-        /// <param name="receiveCombatHooks">
-        ///     <para xml:lang="en">
-        ///         <see langword="true" /> to subscribe the singleton to combat hook callbacks.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         若要将单例订阅到战斗钩子回调，则为 <see langword="true" />。
-        ///     </para>
-        /// </param>
-        /// <param name="receiveRunHooks">
-        ///     <para xml:lang="en">
-        ///         <see langword="true" /> to subscribe the singleton to run hook callbacks when
-        ///         <paramref name="receiveCombatHooks" /> is <see langword="false" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         当 <paramref name="receiveCombatHooks" /> 为 <see langword="false" /> 时，若要将单例订阅到
-        ///         局内钩子回调，则为 <see langword="true" />。
-        ///     </para>
-        /// </param>
-        [Obsolete(
-            "Use the constructor receiving a HookType instead. A singleton receiving both types of hooks will receive some hooks twice.")]
-        protected HookedSingletonModel(bool receiveCombatHooks, bool receiveRunHooks)
-            : this(receiveCombatHooks ? HookType.Combat : receiveRunHooks ? HookType.Run : HookType.None)
-        {
-        }
-
         /// <inheritdoc />
         public override bool ShouldReceiveCombatHooks { get; }
 

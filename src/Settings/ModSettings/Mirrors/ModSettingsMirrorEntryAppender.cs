@@ -36,11 +36,9 @@ namespace STS2RitsuLib.Settings
                         case IModSettingsValueBinding<float> floatBinding:
                         {
                             var numeric = entry.Numeric!;
-#pragma warning disable CS0618
-                            section.AddSlider(entry.Id, entry.Label, floatBinding, (float)numeric.Min,
+                            section.AddFloatSlider(entry.Id, entry.Label, floatBinding, (float)numeric.Min,
                                 (float)numeric.Max,
                                 (float)numeric.Step, numeric.FormatFloat, entry.Description);
-#pragma warning restore CS0618
                             ApplyVisibility(section, entry);
                             return;
                         }

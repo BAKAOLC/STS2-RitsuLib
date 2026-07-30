@@ -47,20 +47,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         /// </summary>
         public static void Register<TCard>(ModCardHandOutlineSwitchRule<TCard> rule) where TCard : CardModel
         {
-#pragma warning disable CS0618 // Type or member is obsolete.
-            Register<TCard>(rule.ToUntyped());
-#pragma warning restore CS0618 // Type or member is obsolete.
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Registers an untyped rule for <typeparamref name="TCard" />.</para>
-        ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册非泛型规则。</para>
-        /// </summary>
-        [Obsolete(
-            "Use Register<TCard>(ModCardHandOutlineSwitchRule<TCard>) or Register<TCard>(ModCardHandOutlineRules<TCard>).")]
-        public static void Register<TCard>(ModCardHandOutlineSwitchRule rule) where TCard : CardModel
-        {
-            Register(typeof(TCard), rule);
+            Register(typeof(TCard), rule.ToUntyped());
         }
 
         /// <summary>
@@ -70,17 +57,6 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         public static void Register<TCard>(params ModCardHandOutlineSwitchRule<TCard>[] rules) where TCard : CardModel
         {
             Register(ModCardHandOutlineRules<TCard>.Of(rules));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Registers untyped rules for <typeparamref name="TCard" />.</para>
-        ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册多条非泛型规则。</para>
-        /// </summary>
-        [Obsolete(
-            "Use Register<TCard>(params ModCardHandOutlineSwitchRule<TCard>[]) or Register<TCard>(ModCardHandOutlineRules<TCard>).")]
-        public static void Register<TCard>(params ModCardHandOutlineSwitchRule[] rules) where TCard : CardModel
-        {
-            Register<TCard>(ModCardHandOutlineRules.Of(rules));
         }
 
         /// <summary>
@@ -125,26 +101,6 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         public static void Register(Type cardType, params ModCardHandOutlineSwitchRule[] rules)
         {
             Register(cardType, ModCardHandOutlineRules.Of(rules));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Registers a legacy rule for <typeparamref name="TCard" />.</para>
-        ///     <para xml:lang="zh-CN">为 <typeparamref name="TCard" /> 注册旧版规则。</para>
-        /// </summary>
-        [Obsolete("Use Register<TCard>(ModCardHandOutlineRules) or Register<TCard>(ModCardHandOutlineSwitchRule).")]
-        public static void Register<TCard>(ModCardHandOutlineRule rule) where TCard : CardModel
-        {
-            Register<TCard>(rule.ToSwitchRule());
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Registers a legacy rule for a <see cref="CardModel" /> subtype.</para>
-        ///     <para xml:lang="zh-CN">为 <see cref="CardModel" /> 子类型注册旧版规则。</para>
-        /// </summary>
-        [Obsolete("Use Register(Type, ModCardHandOutlineRules) or Register(Type, ModCardHandOutlineSwitchRule).")]
-        public static void Register(Type cardType, ModCardHandOutlineRule rule)
-        {
-            Register(cardType, rule.ToSwitchRule());
         }
 
         /// <summary>

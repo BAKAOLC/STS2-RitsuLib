@@ -156,19 +156,11 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     <para xml:lang="en">Registers additional starting-deck cards for a known character type.</para>
     ///     <para xml:lang="zh-CN">为已知角色类型注册额外的初始牌组卡牌。</para>
     /// </summary>
-    public sealed class CharacterStarterCardRegistrationEntry<TCharacter, TCard>(int count, int order)
+    public sealed class CharacterStarterCardRegistrationEntry<TCharacter, TCard>(int count = 1, int order = 0)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TCard : CardModel
     {
-        /// <summary>
-        ///     <para xml:lang="en">Preserves the legacy constructor with registration order <c>0</c>.</para>
-        ///     <para xml:lang="zh-CN">保留注册顺序为 <c>0</c> 的旧版构造函数。</para>
-        /// </summary>
-        public CharacterStarterCardRegistrationEntry(int count = 1) : this(count, 0)
-        {
-        }
-
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
@@ -180,19 +172,11 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     <para xml:lang="en">Registers additional starting relics for a known character type.</para>
     ///     <para xml:lang="zh-CN">为已知角色类型注册额外的初始遗物。</para>
     /// </summary>
-    public sealed class CharacterStarterRelicRegistrationEntry<TCharacter, TRelic>(int count, int order)
+    public sealed class CharacterStarterRelicRegistrationEntry<TCharacter, TRelic>(int count = 1, int order = 0)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TRelic : RelicModel
     {
-        /// <summary>
-        ///     <para xml:lang="en">Preserves the legacy constructor with registration order <c>0</c>.</para>
-        ///     <para xml:lang="zh-CN">保留注册顺序为 <c>0</c> 的旧版构造函数。</para>
-        /// </summary>
-        public CharacterStarterRelicRegistrationEntry(int count = 1) : this(count, 0)
-        {
-        }
-
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
@@ -204,19 +188,11 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///     <para xml:lang="en">Registers additional starting potions for a known character type.</para>
     ///     <para xml:lang="zh-CN">为已知角色类型注册额外的初始药水。</para>
     /// </summary>
-    public sealed class CharacterStarterPotionRegistrationEntry<TCharacter, TPotion>(int count, int order)
+    public sealed class CharacterStarterPotionRegistrationEntry<TCharacter, TPotion>(int count = 1, int order = 0)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TPotion : PotionModel
     {
-        /// <summary>
-        ///     <para xml:lang="en">Preserves the legacy constructor with registration order <c>0</c>.</para>
-        ///     <para xml:lang="zh-CN">保留注册顺序为 <c>0</c> 的旧版构造函数。</para>
-        /// </summary>
-        public CharacterStarterPotionRegistrationEntry(int count = 1) : this(count, 0)
-        {
-        }
-
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
@@ -346,37 +322,6 @@ namespace STS2RitsuLib.Scaffolding.Content
         public CardHandOutlineRegistrationEntry(ModCardHandOutlineSwitchRule<TCard> rule)
             : this(ModCardHandOutlineRules<TCard>.Of(rule))
         {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Creates an entry from legacy type-erased hand-outline rules.</para>
-        ///     <para xml:lang="zh-CN">使用旧版类型擦除手牌描边规则创建条目。</para>
-        /// </summary>
-        [Obsolete("Use CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineRules<TCard>).")]
-        public CardHandOutlineRegistrationEntry(ModCardHandOutlineRules rules)
-        {
-            _rules = rules;
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Creates an entry from one legacy type-erased switch rule.</para>
-        ///     <para xml:lang="zh-CN">使用一条旧版类型擦除切换规则创建条目。</para>
-        /// </summary>
-        [Obsolete("Use CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
-        public CardHandOutlineRegistrationEntry(ModCardHandOutlineSwitchRule rule)
-            : this(ModCardHandOutlineRules.Of(rule), true)
-        {
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Creates an entry from one legacy hand-outline rule.</para>
-        ///     <para xml:lang="zh-CN">使用一条旧版手牌描边规则创建条目。</para>
-        /// </summary>
-        [Obsolete(
-            "Use CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineRules<TCard>) or CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
-        public CardHandOutlineRegistrationEntry(ModCardHandOutlineRule rule)
-        {
-            _rules = ModCardHandOutlineRules.Of(rule.ToSwitchRule());
         }
 
         private CardHandOutlineRegistrationEntry(ModCardHandOutlineRules rules, bool _)

@@ -17,18 +17,9 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
+#if STS2_AT_LEAST_0_105_0
     internal static class CombatHookLifecycleEvents
     {
-#if !STS2_AT_LEAST_0_105_0
-        internal static void PublishLegacyCardRetained(CombatStateCompat combatState, CardModel card)
-        {
-#pragma warning disable CS0618
-            RitsuLibFramework.PublishLifecycleEvent(
-                new CardRetainedEvent(combatState, card, DateTimeOffset.UtcNow),
-                nameof(CardRetainedEvent));
-#pragma warning restore CS0618
-        }
-#else
         internal static void PublishCardsFlushed(
             CombatStateCompat combatState,
             Player player,
@@ -39,15 +30,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             RitsuLibFramework.PublishLifecycleEvent(
                 new CardsFlushedEvent(combatState, player, flushedCards, retainedCards, occurredAtUtc),
                 nameof(CardsFlushedEvent));
-#pragma warning disable CS0618
-            foreach (var card in retainedCards)
-                RitsuLibFramework.PublishLifecycleEvent(
-                    new CardRetainedEvent(combatState, card, occurredAtUtc),
-                    nameof(CardRetainedEvent));
-#pragma warning restore CS0618
         }
-#endif
     }
+#endif
 
     internal sealed class BeforeCombatStartLifecyclePatch : IPatchMethod
     {
@@ -350,26 +335,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
     }
 
-#if !STS2_AT_LEAST_0_105_0
-    internal sealed class AfterCardRetainedLifecyclePatch : IPatchMethod
-    {
-        public static string PatchId => "combat_hook_lifecycle_after_card_retained";
-        public static string Description => "Publish legacy card retained lifecycle events";
-        public static bool IsCritical => false;
-
-        public static ModPatchTarget[] GetTargets()
-        {
-            return [new(typeof(Hook), nameof(Hook.AfterCardRetained), [typeof(CombatStateCompat), typeof(CardModel)])];
-        }
-
-        [HarmonyPriority(Priority.Last)]
-        public static void Postfix(CombatStateCompat __0, CardModel __1, ref Task __result)
-        {
-            __result = LifecyclePatchTaskBridge.After(__result, () =>
-                CombatHookLifecycleEvents.PublishLegacyCardRetained(__0, __1));
-        }
-    }
-#else
+#if STS2_AT_LEAST_0_105_0
     internal sealed class AfterFlushLifecyclePatch : IPatchMethod
     {
         public static string PatchId => "combat_hook_lifecycle_after_flush";

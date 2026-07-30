@@ -33,41 +33,6 @@ namespace STS2RitsuLib.Scaffolding.Content
             IModCardAncientBannerMaterialOverride
     {
         /// <summary>
-        ///     <para xml:lang="en">
-        ///         Gets legacy string keyword IDs added to each instance when <see cref="CardModel.Keywords" /> is
-        ///         first accessed. New code should override <see cref="CardModel.CanonicalKeywords" /> and return
-        ///         <see cref="CardKeyword" /> values, converting registered mod IDs through
-        ///         <c>ModKeywordRegistry.GetCardKeyword(id)</c> or <c>id.GetModCardKeyword()</c>.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         获取旧版字符串关键词 ID；首次访问 <see cref="CardModel.Keywords" /> 时会将其加入每个卡牌实例。
-        ///         新代码应重写 <see cref="CardModel.CanonicalKeywords" /> 并返回 <see cref="CardKeyword" /> 值，
-        ///         已注册的模组 ID 可通过 <c>ModKeywordRegistry.GetCardKeyword(id)</c> 或
-        ///         <c>id.GetModCardKeyword()</c> 转换。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Use CardModel.CanonicalKeywords with CardKeyword values instead. Registered mod keyword ids can be converted with ModKeywordRegistry.GetCardKeyword(id) or id.GetModCardKeyword().")]
-        protected virtual IEnumerable<string> RegisteredKeywordIds => [];
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Gets legacy string card-tag IDs added to each instance when <see cref="CardModel.Tags" /> is first
-        ///         materialized. New code should override <see cref="CardModel.CanonicalTags" /> and return
-        ///         <see cref="CardTag" /> values, converting registered mod IDs through
-        ///         <c>ModCardTagRegistry.GetCardTag(id)</c> or <c>id.GetModCardTag()</c>.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         获取旧版字符串卡牌标签 ID；首次创建 <see cref="CardModel.Tags" /> 时会将其加入每个卡牌实例。
-        ///         新代码应重写 <see cref="CardModel.CanonicalTags" /> 并返回 <see cref="CardTag" /> 值，已注册的
-        ///         模组 ID 可通过 <c>ModCardTagRegistry.GetCardTag(id)</c> 或 <c>id.GetModCardTag()</c> 转换。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Use CardModel.CanonicalTags with CardTag values instead. Registered mod card tag ids can be converted with ModCardTagRegistry.GetCardTag(id) or id.GetModCardTag().")]
-        protected virtual IEnumerable<string> RegisteredCardTagIds => [];
-
-        /// <summary>
         ///     <para xml:lang="en">Gets additional hover tips for this card.</para>
         ///     <para xml:lang="zh-CN">获取此卡牌的额外悬浮提示。</para>
         /// </summary>
@@ -160,26 +125,5 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <inheritdoc />
         public virtual Material? CustomPortraitMaterial => AssetProfile.PortraitMaterial;
 
-        /// <summary>
-        ///     <para xml:lang="en">Exposes legacy keyword IDs to the seeding patch.</para>
-        ///     <para xml:lang="zh-CN">向旧版关键词写入补丁提供关键词 ID。</para>
-        /// </summary>
-        internal IEnumerable<string> EnumerateRegisteredKeywordIds()
-        {
-#pragma warning disable CS0618
-            return RegisteredKeywordIds;
-#pragma warning restore CS0618
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Exposes legacy card-tag IDs to the seeding patch.</para>
-        ///     <para xml:lang="zh-CN">向旧版卡牌标签写入补丁提供标签 ID。</para>
-        /// </summary>
-        internal IEnumerable<string> EnumerateRegisteredCardTagIds()
-        {
-#pragma warning disable CS0618
-            return RegisteredCardTagIds;
-#pragma warning restore CS0618
-        }
     }
 }

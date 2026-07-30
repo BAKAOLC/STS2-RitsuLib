@@ -10,21 +10,6 @@ namespace STS2RitsuLib.CardTags
     public static class ModCardTagExtensions
     {
         /// <summary>
-        ///     <para xml:lang="en">Adds the tag represented by <paramref name="tagId" /> to the card.</para>
-        ///     <para xml:lang="zh-CN">将 <paramref name="tagId" /> 所表示的标签添加到卡牌。</para>
-        /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use AddModCardTag(CardTag).")]
-        public static void AddModCardTag(this CardModel card, string tagId)
-        {
-            ArgumentNullException.ThrowIfNull(card);
-            ArgumentException.ThrowIfNullOrWhiteSpace(tagId);
-
-            var value = ModCardTagRegistry.GetCardTag(tagId);
-            card.AddModCardTag(value);
-        }
-
-        /// <summary>
         ///     <para xml:lang="en">Adds <paramref name="value" /> to the card's mutable tag set.</para>
         ///     <para xml:lang="zh-CN">将 <paramref name="value" /> 添加到卡牌的可变标签集合。</para>
         /// </summary>
@@ -40,20 +25,6 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Removes the tag represented by <paramref name="tagId" /> from the card.</para>
-        ///     <para xml:lang="zh-CN">从卡牌中移除 <paramref name="tagId" /> 所表示的标签。</para>
-        /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use RemoveModCardTag(CardTag).")]
-        public static bool RemoveModCardTag(this CardModel card, string tagId)
-        {
-            ArgumentNullException.ThrowIfNull(card);
-            ArgumentException.ThrowIfNullOrWhiteSpace(tagId);
-
-            return ModCardTagRegistry.TryGetCardTag(tagId, out var value) && card.RemoveModCardTag(value);
-        }
-
-        /// <summary>
         ///     <para xml:lang="en">Removes <paramref name="value" /> from the card's tag set.</para>
         ///     <para xml:lang="zh-CN">从卡牌标签集合中移除 <paramref name="value" />。</para>
         /// </summary>
@@ -62,24 +33,6 @@ namespace STS2RitsuLib.CardTags
             ArgumentNullException.ThrowIfNull(card);
 
             return card.Tags is HashSet<CardTag> storage && storage.Remove(value);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Determines whether the card contains the tag represented by <paramref name="tagId" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         确定卡牌是否包含 <paramref name="tagId" /> 所表示的标签。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use HasModCardTag(CardTag).")]
-        public static bool HasModCardTag(this CardModel card, string tagId)
-        {
-            ArgumentNullException.ThrowIfNull(card);
-            ArgumentException.ThrowIfNullOrWhiteSpace(tagId);
-
-            return ModCardTagRegistry.TryGetCardTag(tagId, out var value) && card.Tags.Contains(value);
         }
 
         /// <summary>

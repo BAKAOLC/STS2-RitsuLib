@@ -2466,29 +2466,6 @@ namespace STS2RitsuLib.Settings
         private Color _unsetPreviewColor = RitsuShellTheme.Current.Color.UnsetPreview;
 
         /// <summary>
-        ///     <para xml:lang="en">
-        ///         Creates a color editor with alpha enabled and HDR intensity disabled, preserving the original
-        ///         two-parameter API.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">创建启用 Alpha、禁用 HDR 强度的颜色编辑器，并保留原有双参数 API。</para>
-        /// </summary>
-        /// <param name="initialValue">
-        ///     <para xml:lang="en">
-        ///         The initial hex, Godot HTML, or BaseLib-compatible component string; null or empty leaves the
-        ///         value unset.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">初始十六进制、Godot HTML 或 BaseLib 兼容分量字符串；为 <see langword="null" /> 或空时保持未设置状态。</para>
-        /// </param>
-        /// <param name="onChanged">
-        ///     <para xml:lang="en">The callback invoked after the user commits a color or clears the value.</para>
-        ///     <para xml:lang="zh-CN">用户提交颜色或清除值后调用的回调。</para>
-        /// </param>
-        public ModSettingsColorControl(string? initialValue, Action<string?> onChanged)
-            : this(initialValue, onChanged, true, false)
-        {
-        }
-
-        /// <summary>
         ///     <para xml:lang="en">Creates a color editor with configurable alpha and HDR intensity editing.</para>
         ///     <para xml:lang="zh-CN">创建可配置 Alpha 和 HDR 强度编辑的颜色编辑器。</para>
         /// </summary>
@@ -2511,8 +2488,11 @@ namespace STS2RitsuLib.Settings
         ///     <para xml:lang="en">Whether the picker allows HDR intensity values outside the standard color range.</para>
         ///     <para xml:lang="zh-CN">颜色选择器是否允许使用超出标准颜色范围的 HDR 强度值。</para>
         /// </param>
-        public ModSettingsColorControl(string? initialValue, Action<string?> onChanged, bool editAlpha,
-            bool editIntensity)
+        public ModSettingsColorControl(
+            string? initialValue,
+            Action<string?> onChanged,
+            bool editAlpha = true,
+            bool editIntensity = false)
         {
             _onChanged = onChanged;
 

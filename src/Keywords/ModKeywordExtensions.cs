@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
@@ -11,53 +10,16 @@ namespace STS2RitsuLib.Keywords
     ///         Provides helpers for applying runtime keywords and creating their hover tips. Operations on
     ///         <see cref="CardModel" /> use deterministic <see cref="CardKeyword" /> values directly in the native
     ///         <c>CardModel.Keywords</c> set, so native add, remove, clone, and canonical-seeding paths carry mod
-    ///         keywords without parallel state. Non-card objects use an ad hoc
-    ///         <see cref="ConditionalWeakTable{TKey,TValue}" /> store that is neither cloned nor persisted.
+    ///         keywords without parallel state.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         提供应用运行时关键词和创建对应悬停提示的辅助方法。对 <see cref="CardModel" /> 的操作会使用确定性的
     ///         <see cref="CardKeyword" /> 值直接读写原版 <c>CardModel.Keywords</c> 集合，因此原版的添加、移除、
-    ///         克隆和初始关键词填充流程均可携带模组关键词，无需并行状态。非卡牌对象使用临时的
-    ///         <see cref="ConditionalWeakTable{TKey,TValue}" /> 存储，不会随对象克隆或写入存档。
+    ///         克隆和初始关键词填充流程均可携带模组关键词，无需并行状态。
     ///     </para>
     /// </summary>
     public static class ModKeywordExtensions
     {
-        private static readonly Lock SyncRoot = new();
-        private static readonly ConditionalWeakTable<object, HashSet<string>> FallbackKeywords = new();
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Adds a runtime keyword ID to <paramref name="target" />, using case-insensitive deduplication. For a
-        ///         <see cref="CardModel" />, the deterministic <see cref="CardKeyword" /> value is added to the native
-        ///         keyword set. The ID does not need to be registered, but only registered IDs provide metadata.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         向 <paramref name="target" /> 添加运行时关键词 ID，并以不区分大小写的方式去重。目标为
-        ///         <see cref="CardModel" /> 时，会将确定性生成的 <see cref="CardKeyword" /> 值加入原版关键词集合。
-        ///         ID 无需预先注册，但只有已注册 ID 才能提供元数据。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModKeywordRegistry.GetCardKeyword or string.GetModCardKeyword(), then use AddModKeyword(CardKeyword).")]
-        public static void AddModKeyword(this object target, string keywordId)
-        {
-            ArgumentNullException.ThrowIfNull(target);
-            ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
-
-            if (target is CardModel card)
-            {
-                card.AddModKeyword(ModKeywordRegistry.GetCardKeyword(keywordId));
-                return;
-            }
-
-            lock (SyncRoot)
-            {
-                FallbackKeywords.GetValue(target, static _ => new(StringComparer.OrdinalIgnoreCase))
-                    .Add(keywordId.Trim());
-            }
-        }
-
         /// <summary>
         ///     <para xml:lang="en">
         ///         Adds a pre-minted mod <see cref="CardKeyword" /> value to the native card keyword set. The set is
@@ -77,44 +39,6 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Removes a previously added runtime keyword ID. For a <see cref="CardModel" />, the corresponding
-        ///         deterministic value is removed from the native keyword set.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         移除先前添加的运行时关键词 ID。目标为 <see cref="CardModel" /> 时，会从原版关键词集合中移除
-        ///         对应的确定性枚举值。
-        ///     </para>
-        /// </summary>
-        /// <returns>
-        ///     <para xml:lang="en">
-        ///         <see langword="true" /> when the ID was present and removed; otherwise
-        ///         <see langword="false" />.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         该 ID 原本存在并已移除时返回 <see langword="true" />；否则返回
-        ///         <see langword="false" />。
-        ///     </para>
-        /// </returns>
-        [Obsolete(
-            "Resolve the id once with ModKeywordRegistry.GetCardKeyword or string.GetModCardKeyword(), then use RemoveModKeyword(CardKeyword).")]
-        public static bool RemoveModKeyword(this object target, string keywordId)
-        {
-            ArgumentNullException.ThrowIfNull(target);
-            ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
-
-            if (target is CardModel card)
-                return ModKeywordRegistry.TryGetCardKeyword(keywordId, out var value) &&
-                       card.RemoveModKeyword(value);
-
-            lock (SyncRoot)
-            {
-                return FallbackKeywords.TryGetValue(target, out var set) &&
-                       set.Remove(keywordId.Trim());
-            }
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
         ///         Removes <paramref name="value" /> from the native card keyword set.
         ///     </para>
         ///     <para xml:lang="zh-CN">
@@ -129,32 +53,6 @@ namespace STS2RitsuLib.Keywords
 
             card.RemoveKeyword(value);
             return true;
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Returns whether <paramref name="target" /> currently contains the specified runtime keyword ID.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         返回 <paramref name="target" /> 当前是否包含指定的运行时关键词 ID。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModKeywordRegistry.GetCardKeyword or string.GetModCardKeyword(), then use HasModKeyword(CardKeyword).")]
-        public static bool HasModKeyword(this object target, string keywordId)
-        {
-            ArgumentNullException.ThrowIfNull(target);
-            ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
-
-            if (target is CardModel card)
-                return ModKeywordRegistry.TryGetCardKeyword(keywordId, out var value) &&
-                       card.Keywords.Contains(value);
-
-            lock (SyncRoot)
-            {
-                return FallbackKeywords.TryGetValue(target, out var set) &&
-                       set.Contains(keywordId.Trim());
-            }
         }
 
         /// <summary>
@@ -186,23 +84,16 @@ namespace STS2RitsuLib.Keywords
         {
             ArgumentNullException.ThrowIfNull(target);
 
-            if (target is CardModel card)
-            {
-                var ids = new List<string>();
-                foreach (var keyword in card.Keywords)
-                    if (ModKeywordRegistry.TryGetByCardKeyword(keyword, out var def))
-                        ids.Add(def.Id);
+            if (target is not CardModel card)
+                return [];
 
-                ids.Sort(StringComparer.Ordinal);
-                return ids;
-            }
+            var ids = new List<string>();
+            foreach (var keyword in card.Keywords)
+                if (ModKeywordRegistry.TryGetByCardKeyword(keyword, out var def))
+                    ids.Add(def.Id);
 
-            lock (SyncRoot)
-            {
-                return FallbackKeywords.TryGetValue(target, out var set)
-                    ? [.. set.OrderBy(static x => x, StringComparer.Ordinal)]
-                    : [];
-            }
+            ids.Sort(StringComparer.Ordinal);
+            return ids;
         }
 
         /// <summary>

@@ -484,24 +484,6 @@ namespace STS2RitsuLib.Settings
     public sealed class ColorModSettingsEntryDefinition : ModSettingsEntryDefinition
     {
         /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes the binary-compatible four-parameter form, equivalent to <c>EditAlpha=true</c> and
-        ///         <c>EditIntensity=false</c>.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         初始化保持二进制兼容的四参数形式，等同于 <c>EditAlpha=true</c>、<c>EditIntensity=false</c>。
-        ///     </para>
-        /// </summary>
-        public ColorModSettingsEntryDefinition(
-            string id,
-            ModSettingsText label,
-            IModSettingsValueBinding<string> binding,
-            ModSettingsText? description)
-            : this(id, label, binding, description, true, false)
-        {
-        }
-
-        /// <summary>
         ///     <para xml:lang="en">Initializes a color entry with explicit alpha and intensity editing options.</para>
         ///     <para xml:lang="zh-CN">使用明确的透明度及强度编辑选项初始化颜色条目。</para>
         /// </summary>
@@ -510,8 +492,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsText label,
             IModSettingsValueBinding<string> binding,
             ModSettingsText? description,
-            bool editAlpha,
-            bool editIntensity)
+            bool editAlpha = true,
+            bool editIntensity = false)
             : base(id, label, description)
         {
             ArgumentNullException.ThrowIfNull(binding);

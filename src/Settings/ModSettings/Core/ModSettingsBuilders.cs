@@ -748,19 +748,7 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Adds a legacy <see cref="float" /> slider for binary compatibility. It uses a dedicated float value
-        ///         path to avoid float-to-double conversion drift and refresh feedback loops.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         添加用于二进制兼容的旧版 <see cref="float" /> 滑块；独立的 float 数值路径可避免与 double
-        ///         转换造成的偏差及刷新反馈循环。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Prefer AddSlider with IModSettingsValueBinding<double> and double range parameters. This overload exists only for compatibility with mods compiled against pre-double slider APIs.")]
-        public ModSettingsSectionBuilder AddSlider(
+        internal ModSettingsSectionBuilder AddFloatSlider(
             string id,
             ModSettingsText label,
             IModSettingsValueBinding<float> binding,

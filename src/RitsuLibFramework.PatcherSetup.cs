@@ -3,7 +3,6 @@ using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
 using STS2RitsuLib.Cards.Transforms.Patches;
-using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.AttackHits.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.Healing.Patches;
@@ -255,9 +254,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AfterCardDiscardedLifecyclePatch>();
             patcher.RegisterPatch<AfterCardExhaustedLifecyclePatch>();
             patcher.RegisterPatch<BeforeFlushLifecyclePatch>();
-#if !STS2_AT_LEAST_0_105_0
-            patcher.RegisterPatch<AfterCardRetainedLifecyclePatch>();
-#else
+#if STS2_AT_LEAST_0_105_0
             patcher.RegisterPatch<AfterFlushLifecyclePatch>();
 #endif
             patcher.RegisterPatch<BeforeDeathLifecyclePatch>();
@@ -386,8 +383,6 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardKeywordGetDescriptionModRoutePatch>();
             patcher.RegisterPatch<CardKeywordGetCardTextModRoutePatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
-            patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
-            patcher.RegisterPatch<CardModelTagsModSeedPatch>();
             patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.RunStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.CombatStateHookListenersPatch>();

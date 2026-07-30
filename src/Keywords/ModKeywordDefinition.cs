@@ -15,35 +15,6 @@ namespace STS2RitsuLib.Keywords
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Initializes a definition through the original seven-parameter constructor retained for binary
-        ///         compatibility with older RitsuLib versions.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         通过为兼容旧版 RitsuLib 二进制接口而保留的原始七参数构造函数初始化定义。
-        ///     </para>
-        /// </summary>
-        public ModKeywordDefinition(
-            string ModId,
-            string Id,
-            string TitleTable,
-            string TitleKey,
-            string DescriptionTable,
-            string DescriptionKey,
-            string? IconPath = null)
-        {
-            this.ModId = ModId;
-            this.Id = Id;
-            this.TitleTable = TitleTable;
-            this.TitleKey = TitleKey;
-            this.DescriptionTable = DescriptionTable;
-            this.DescriptionKey = DescriptionKey;
-            this.IconPath = IconPath;
-            CardDescriptionPlacement = ModKeywordCardDescriptionPlacement.None;
-            IncludeInCardHoverTip = true;
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
         ///         Initializes a definition with the legacy fields plus card-description placement and hover-tip
         ///         inclusion behavior.
         ///     </para>
@@ -58,9 +29,9 @@ namespace STS2RitsuLib.Keywords
             string TitleKey,
             string DescriptionTable,
             string DescriptionKey,
-            string? IconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
+            string? IconPath = null,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement = ModKeywordCardDescriptionPlacement.None,
+            bool includeInCardHoverTip = true)
         {
             this.ModId = ModId;
             this.Id = Id;

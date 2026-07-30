@@ -28,9 +28,9 @@ namespace STS2RitsuLib.Keywords
             string TitleKey,
             string DescriptionTable,
             string DescriptionKey,
-            string? IconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
+            string? IconPath = null,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement = ModKeywordCardDescriptionPlacement.None,
+            bool includeInCardHoverTip = true)
         {
             this.Id = Id;
             this.TitleTable = TitleTable;
@@ -40,34 +40,6 @@ namespace STS2RitsuLib.Keywords
             this.IconPath = IconPath;
             CardDescriptionPlacement = cardDescriptionPlacement;
             IncludeInCardHoverTip = includeInCardHoverTip;
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Initializes an entry through the six-parameter constructor retained for compatibility with older
-        ///         mods.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         通过为兼容旧版模组而保留的六参数构造函数初始化条目。
-        ///     </para>
-        /// </summary>
-        public KeywordRegistrationEntry(
-            string Id,
-            string TitleTable,
-            string TitleKey,
-            string DescriptionTable,
-            string DescriptionKey,
-            string? IconPath = null)
-            : this(
-                Id,
-                TitleTable,
-                TitleKey,
-                DescriptionTable,
-                DescriptionKey,
-                IconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true)
-        {
         }
 
         /// <summary>
@@ -223,52 +195,5 @@ namespace STS2RitsuLib.Keywords
                 true);
         }
 
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Creates a <c>card_keywords</c> entry from a raw global ID and localization-key stem.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         根据未经限定的全局 ID 和本地化键前缀创建 <c>card_keywords</c> 条目。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Prefer OwnedCardByLocNamespace(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
-        public static KeywordRegistrationEntry Card(
-            string id,
-            string entryStem,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            return new(
-                id,
-                "card_keywords",
-                $"{entryStem}.title",
-                "card_keywords",
-                $"{entryStem}.description",
-                iconPath,
-                cardDescriptionPlacement,
-                includeInCardHoverTip);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Creates a raw-ID <c>card_keywords</c> entry through the factory signature retained for older mods.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         通过为兼容旧版模组而保留的工厂签名，创建使用原始 ID 的 <c>card_keywords</c> 条目。
-        ///     </para>
-        /// </summary>
-        [Obsolete(
-            "Prefer OwnedCardByLocNamespace(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
-        public static KeywordRegistrationEntry Card(string id, string entryStem, string? iconPath = null)
-        {
-            return Card(
-                id,
-                entryStem,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
     }
 }
