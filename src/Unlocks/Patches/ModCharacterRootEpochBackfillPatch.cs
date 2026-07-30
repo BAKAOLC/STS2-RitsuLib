@@ -77,8 +77,10 @@ namespace STS2RitsuLib.Unlocks.Patches
                 {
                     epoch = EpochModel.Get(epochId);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Could not resolve epoch '{epochId}' while scanning root-epoch backfill candidates: {ex}");
                     continue;
                 }
 
@@ -94,8 +96,10 @@ namespace STS2RitsuLib.Unlocks.Patches
                 {
                     character = ModelDb.GetById<CharacterModel>(ModelDb.GetId(characterType));
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Could not resolve character type '{characterType.FullName}' for root-epoch backfill: {ex}");
                     continue;
                 }
 
@@ -111,8 +115,11 @@ namespace STS2RitsuLib.Unlocks.Patches
                 {
                     prerequisiteId = ModelDb.GetId(prerequisiteType);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Could not resolve prerequisite character type '{prerequisiteType.FullName}' " +
+                        $"for root-epoch backfill: {ex}");
                     continue;
                 }
 

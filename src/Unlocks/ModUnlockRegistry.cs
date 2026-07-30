@@ -758,7 +758,7 @@ namespace STS2RitsuLib.Unlocks
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[Unlocks] Post-run rule '{rule.Description}' failed: {ex.Message}");
+                        $"[Unlocks] Post-run rule '{rule.Description}' failed and was skipped: {ex}");
                     continue;
                 }
 

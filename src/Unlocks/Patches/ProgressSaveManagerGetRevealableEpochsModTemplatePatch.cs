@@ -50,8 +50,10 @@ namespace STS2RitsuLib.Unlocks.Patches
                 {
                     model = EpochModel.Get(epoch.Id);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Could not resolve obtained epoch '{epoch.Id}' while extending revealable epochs: {ex}");
                     seen.Remove(epoch.Id);
                     continue;
                 }
