@@ -128,13 +128,16 @@ namespace STS2RitsuLib.Audio
                     instance.Call(SetParameterByName, kv.Key, kv.Value);
 
                 instance.Call(Start);
-                instance.Call(Release);
                 return true;
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD mapped path one-shot: {ex.Message}");
                 return false;
+            }
+            finally
+            {
+                FmodStudioEventInstances.TryRelease(instance);
             }
         }
     }

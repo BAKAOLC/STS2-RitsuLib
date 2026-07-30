@@ -32,7 +32,11 @@ namespace STS2RitsuLib.Audio
             if (instance is null)
                 return null;
 
-            return FmodStudioEventInstances.TryStart(instance) ? instance : null;
+            if (FmodStudioEventInstances.TryStart(instance))
+                return instance;
+
+            FmodStudioEventInstances.TryRelease(instance);
+            return null;
         }
 
         /// <summary>
@@ -45,7 +49,11 @@ namespace STS2RitsuLib.Audio
             if (instance is null)
                 return null;
 
-            return FmodStudioEventInstances.TryStart(instance) ? instance : null;
+            if (FmodStudioEventInstances.TryStart(instance))
+                return instance;
+
+            FmodStudioEventInstances.TryRelease(instance);
+            return null;
         }
 
         /// <summary>
