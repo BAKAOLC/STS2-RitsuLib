@@ -3,8 +3,13 @@ using System.Collections.ObjectModel;
 namespace STS2RitsuLib.Scaffolding.Visuals.Definition
 {
     /// <summary>
-    ///     Fluent builder for <see cref="VisualCueSet" /> (single textures and frame sequences per cue).
-    ///     <see cref="VisualCueSet" /> 的流式构建器（每个 cue 对应单张纹理和帧序列）。
+    ///     <para xml:lang="en">
+    ///         Provides a fluent builder for <see cref="VisualCueSet" /> instances containing static textures or frame
+    ///         sequences for named cues.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供 <see cref="VisualCueSet" /> 的流式构建器，可为具名视觉提示配置静态纹理或帧序列。
+    ///     </para>
     /// </summary>
     public sealed class VisualCueSetBuilder
     {
@@ -22,8 +27,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Starts a new cue set definition.
-        ///     开始一个新的 cue set 定义。
+        ///     <para xml:lang="en">Starts a new cue-set definition.</para>
+        ///     <para xml:lang="zh-CN">开始定义新的视觉提示集。</para>
         /// </summary>
         public static VisualCueSetBuilder Create()
         {
@@ -31,10 +36,13 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Binds one static texture to a cue (e.g. <c>idle</c>, <c>die</c>). Removes a frame sequence for the same
-        ///     cue key if present.
-        ///     将一个静态纹理绑定到 cue（例如 <c>idle</c>、<c>die</c>）。如果同一
-        ///     cue 键存在帧序列，则移除它。
+        ///     <para xml:lang="en">
+        ///         Binds one static texture to a cue such as <c>idle</c> or <c>die</c>, replacing any frame sequence
+        ///         registered for the same key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将一张静态纹理绑定到 <c>idle</c> 或 <c>die</c> 等视觉提示，并替换同一键下已有的帧序列。
+        ///     </para>
         /// </summary>
         public VisualCueSetBuilder Single(string cueKey, string texturePath)
         {
@@ -42,8 +50,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Binds one static texture to a cue and optionally applies style overrides whenever that cue is shown.
-        ///     将一个静态贴图绑定到 cue，并在显示该 cue 时可选应用样式覆盖。
+        ///     <para xml:lang="en">
+        ///         Binds one static texture to a cue and optionally applies style overrides while that cue is shown.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将一张静态纹理绑定到视觉提示，并可在显示该提示时应用样式覆盖。</para>
         /// </summary>
         public VisualCueSetBuilder Single(string cueKey, string texturePath, VisualNodeStyle? style)
         {
@@ -60,10 +70,14 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Binds one texture to a non-looping timed cue. Completion occurs after <paramref name="durationSeconds" />,
-        ///     allowing state machines to advance to their next state.
-        ///     将一个贴图绑定到非循环的定时 cue。经过 <paramref name="durationSeconds" /> 后完成，
-        ///     使状态机可以进入下一状态。
+        ///     <para xml:lang="en">
+        ///         Binds one texture to a non-looping timed cue. The cue completes after its effective
+        ///         <paramref name="durationSeconds" />, allowing state machines to advance.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将一张纹理绑定到非循环的定时视觉提示。提示会在有效的 <paramref name="durationSeconds" />
+        ///         结束后完成，使状态机能够推进。
+        ///     </para>
         /// </summary>
         public VisualCueSetBuilder Single(string cueKey, string texturePath, float durationSeconds)
         {
@@ -71,8 +85,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Binds one texture to a non-looping timed cue with optional style overrides.
-        ///     将一个贴图绑定到非循环的定时 cue，并可选应用样式覆盖。
+        ///     <para xml:lang="en">Binds one texture to a non-looping timed cue with optional style overrides.</para>
+        ///     <para xml:lang="zh-CN">将一张纹理绑定到非循环的定时视觉提示，并可应用样式覆盖。</para>
         /// </summary>
         public VisualCueSetBuilder Single(string cueKey, string texturePath, float durationSeconds,
             VisualNodeStyle? style)
@@ -83,8 +97,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Binds a built frame sequence to a cue. Removes a single-texture entry for the same cue key if present.
-        ///     将已构建的帧序列绑定到 cue。如果同一 cue key 已有单贴图条目，则移除该条目。
+        ///     <para xml:lang="en">
+        ///         Binds a completed frame sequence to a cue, replacing any static texture registered for the same key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将已构建的帧序列绑定到视觉提示，并替换同一键下已有的静态纹理。</para>
         /// </summary>
         public VisualCueSetBuilder Sequence(string cueKey, VisualFrameSequence sequence)
         {
@@ -98,8 +114,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Binds a frame sequence configured via <paramref name="configure" />.
-        ///     绑定一个通过 <paramref name="configure" /> 配置的帧序列。
+        ///     <para xml:lang="en">Binds a frame sequence configured through <paramref name="configure" />.</para>
+        ///     <para xml:lang="zh-CN">绑定通过 <paramref name="configure" /> 配置的帧序列。</para>
         /// </summary>
         public VisualCueSetBuilder Sequence(string cueKey, Action<VisualFrameSequenceBuilder> configure)
         {
@@ -111,8 +127,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Produces an immutable cue set (empty dictionaries become <see langword="null" /> fields).
-        ///     生成不可变 cue set（空字典会变成 <see langword="null" /> 字段）。
+        ///     <para xml:lang="en">
+        ///         Builds an immutable cue set, using <see langword="null" /> for empty dictionaries.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建不可变的视觉提示集；空字典对应的字段会设为 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public VisualCueSet Build()
         {

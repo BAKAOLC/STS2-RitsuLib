@@ -7,32 +7,28 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Godot
 {
     /// <summary>
-    ///     Internal factory lookup for <see cref="RitsuGodotNodeFactories" />. Conversion runs only when you call
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
-    ///     or <c>CreateFromResource</c> — there is no global
-    ///     <c>PackedScene.Instantiate</c> postfix, so other libraries (e.g. baselib) and vanilla loads are unaffected.
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
-    ///     <see cref="RitsuGodotNodeFactories" /> 的内部工厂查找。只有在调用
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
-    ///     或 <c>CreateFromResource</c> 时才会运行转换；没有全局
-    ///     <c>PackedScene.Instantiate</c> postfix，因此其他库（如 baselib）和原版加载不受影响。
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
+    ///     <para xml:lang="en">
+    ///         Provides internal factory lookup for <see cref="RitsuGodotNodeFactories" />. Conversion runs only through
+    ///         explicit factory calls; no global <c>PackedScene.Instantiate</c> postfix is installed, so BaseLib and
+    ///         base-game scene loading are unaffected.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="RitsuGodotNodeFactories" /> 提供内部工厂查找。转换仅在显式调用工厂 API 时运行；
+    ///         此注册表不会安装全局 <c>PackedScene.Instantiate</c> 后缀，因此不会影响 BaseLib 和游戏的场景加载。
+    ///     </para>
     /// </summary>
     internal static class RitsuGodotNodeFactoryRegistry
     {
         private static readonly ConcurrentDictionary<Type, RitsuGodotNodeFactory> Factories = new();
 
         /// <summary>
-        ///     Registers a factory instance for <typeparamref name="TNode" /> (typically done once from the factory ctor).
-        ///     为 <typeparamref name="TNode" /> 注册一个工厂实例（通常从工厂构造函数中执行一次）。
+        ///     <para xml:lang="en">
+        ///         Registers a factory instance for <typeparamref name="TNode" />, normally from the factory constructor.
+        ///         Existing registrations are replaced.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TNode" /> 注册工厂实例，通常由工厂构造函数调用。已有注册会被替换。
+        ///     </para>
         /// </summary>
         public static void RegisterFactory<TNode>(RitsuGodotNodeFactory factory) where TNode : Node
         {

@@ -9,8 +9,12 @@ using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
     /// <summary>
-    ///     Converts mod <see cref="NEnergyCounter" /> scenes (or procedural layers) into game-ready energy orbs.
-    ///     将 mod <see cref="NEnergyCounter" /> 场景（或程序化图层）转换为游戏可用的能量充能球。
+    ///     <para xml:lang="en">
+    ///         Converts mod scenes or procedural node layers into game-ready <see cref="NEnergyCounter" /> visuals.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将模组场景或程序化节点图层转换为可供游戏使用的 <see cref="NEnergyCounter" /> 视觉效果。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuNEnergyCounterNodeFactory() : RitsuGodotNodeFactory<NEnergyCounter>([
         new RitsuGodotNodeSlot<NParticlesContainer>("%EnergyVfxBack"),

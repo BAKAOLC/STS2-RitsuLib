@@ -3,16 +3,24 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 {
     /// <summary>
-    ///     <see cref="IAnimationBackend" /> driver for Godot <see cref="AnimationTree" /> with an
-    ///     <see cref="AnimationNodeStateMachine" /> root.
-    ///     带有以下根节点的 Godot <see cref="AnimationTree" /> 的 <see cref="IAnimationBackend" /> 驱动：
-    ///     <see cref="AnimationNodeStateMachine" />。
+    ///     <para xml:lang="en">
+    ///         Drives a Godot <see cref="AnimationTree" /> whose root is an
+    ///         <see cref="AnimationNodeStateMachine" /> through <see cref="IAnimationBackend" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="IAnimationBackend" /> 驱动以 <see cref="AnimationNodeStateMachine" /> 为根节点的
+    ///         Godot <see cref="AnimationTree" />。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     State ids map to state-machine node names, and <see cref="Play" /> dispatches through
-    ///     <see cref="AnimationNodeStateMachinePlayback.Travel" />.
-    ///     状态 id 映射到状态机节点名，<see cref="Play" /> 通过
-    ///     <see cref="AnimationNodeStateMachinePlayback.Travel" /> 分派。
+    ///     <para xml:lang="en">
+    ///         State IDs map to state-machine node names, and <see cref="Play" /> transitions through
+    ///         <see cref="AnimationNodeStateMachinePlayback.Travel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         状态 ID 对应状态机节点名称，<see cref="Play" /> 通过
+    ///         <see cref="AnimationNodeStateMachinePlayback.Travel" /> 切换状态。
+    ///     </para>
     /// </remarks>
     public sealed class AnimationTreeStateMachineBackend : IAnimationBackend
     {
@@ -27,12 +35,16 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private bool _suppressEvents;
 
         /// <summary>
-        ///     Wraps <paramref name="tree" /> and binds to its state-machine playback.
-        ///     包装 <paramref name="tree" /> 并绑定到它的状态机 playback。
+        ///     <para xml:lang="en">Wraps <paramref name="tree" /> and binds to its state-machine playback object.</para>
+        ///     <para xml:lang="zh-CN">包装 <paramref name="tree" />，并绑定其状态机播放对象。</para>
         /// </summary>
         /// <exception cref="ArgumentException">
-        ///     Thrown when <paramref name="tree" /> is not configured as a state-machine tree.
-        ///     当 <c>tree</c> 未配置为状态机 tree 时抛出。
+        ///     <para xml:lang="en">
+        ///         Thrown when <paramref name="tree" /> is not configured with a valid state-machine root and playback object.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <paramref name="tree" /> 未配置有效的状态机根节点和播放对象时抛出。
+        ///     </para>
         /// </exception>
         public AnimationTreeStateMachineBackend(AnimationTree tree)
         {
@@ -117,8 +129,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         }
 
         /// <summary>
-        ///     Detaches the optional player signal connections. Safe to call more than once.
-        ///     断开可选的播放器信号连接。可安全多次调用。
+        ///     <para xml:lang="en">Disconnects the optional player signal handler. Repeated calls are safe.</para>
+        ///     <para xml:lang="zh-CN">断开可选的播放器信号处理程序；可安全地重复调用。</para>
         /// </summary>
         public void Dispose()
         {

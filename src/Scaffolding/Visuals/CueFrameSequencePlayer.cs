@@ -4,28 +4,33 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Visuals
 {
     /// <summary>
-    ///     Internal driver that swaps a <see cref="Sprite2D.Texture" /> through a <see cref="VisualFrameSequence" />.
+    ///     <para xml:lang="en">
+    ///         Drives a <see cref="Sprite2D.Texture" /> through the frames of a <see cref="VisualFrameSequence" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按 <see cref="VisualFrameSequence" /> 中的帧依次切换 <see cref="Sprite2D.Texture" />。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         Emits <see cref="SignalName.Finished" /> when a non-looping sequence reaches the end of its final
-    ///         frame. The signal is consumed by <c>CueAnimationBackend</c> so
-    ///         <see cref="StateMachine.ModAnimStateMachine" /> can advance
+    ///         frame. <c>CueAnimationBackend</c> consumes the signal so
+    ///         <see cref="StateMachine.ModAnimStateMachine" /> can advance to
     ///         <see cref="StateMachine.ModAnimState.NextState" />.
     ///     </para>
-    ///     <para>
-    ///         当非循环序列播放完最后一帧时，发出 <see cref="SignalName.Finished" />。该信号由
-    ///         <c>CueAnimationBackend</c> 消费，使 <see cref="StateMachine.ModAnimStateMachine" /> 可以推进
-    ///         <see cref="StateMachine.ModAnimState.NextState" />。
+    ///     <para xml:lang="zh-CN">
+    ///         当非循环序列播放完最后一帧时发出 <see cref="SignalName.Finished" />。
+    ///         <c>CueAnimationBackend</c> 使用此信号，使 <see cref="StateMachine.ModAnimStateMachine" />
+    ///         能够推进到 <see cref="StateMachine.ModAnimState.NextState" />。
     ///     </para>
     /// </remarks>
     internal partial class CueFrameSequencePlayer : Node
     {
         /// <summary>
-        ///     Raised when the sequence completes (non-loop).
-        ///     Not raised for looping sequences.
-        ///     当序列完成（非循环）时触发。
-        ///     循环序列不会触发。
+        ///     <para xml:lang="en">
+        ///         Raised when a non-looping sequence completes. Looping sequences do not raise this signal.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">当非循环序列播放完成时触发；循环序列不会触发此信号。</para>
         /// </summary>
         [Signal]
         public delegate void FinishedEventHandler();

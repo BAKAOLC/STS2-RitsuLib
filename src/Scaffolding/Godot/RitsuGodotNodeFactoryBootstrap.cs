@@ -3,10 +3,14 @@ using STS2RitsuLib.Scaffolding.Godot.NodeFactories;
 namespace STS2RitsuLib.Scaffolding.Godot
 {
     /// <summary>
-    ///     Registers built-in <see cref="RitsuGodotNodeFactory{T}" /> instances once per process (for explicit
-    ///     <see cref="RitsuGodotNodeFactories" /> calls only).
-    ///     每个进程只注册一次内置 <see cref="RitsuGodotNodeFactory{T}" /> 实例（仅用于显式
-    ///     <see cref="RitsuGodotNodeFactories" /> 调用）。
+    ///     <para xml:lang="en">
+    ///         Registers the built-in <see cref="RitsuGodotNodeFactory{T}" /> instances once per process for explicit
+    ///         <see cref="RitsuGodotNodeFactories" /> calls.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         每个进程注册一次内置 <see cref="RitsuGodotNodeFactory{T}" /> 实例，供显式调用
+    ///         <see cref="RitsuGodotNodeFactories" /> 时使用。
+    ///     </para>
     /// </summary>
     internal static class RitsuGodotNodeFactoryBootstrap
     {
@@ -14,8 +18,12 @@ namespace STS2RitsuLib.Scaffolding.Godot
         private static bool _initialized;
 
         /// <summary>
-        ///     Idempotent; invoked during framework bootstrap so factories exist before runtime asset hooks run.
-        ///     幂等；在框架 bootstrap 期间调用，确保工厂在运行时资源 hook 执行前存在。
+        ///     <para xml:lang="en">
+        ///         Ensures the factories are registered before runtime asset hooks run. Repeated calls have no effect.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确保在运行时资源钩子执行前注册所有工厂；重复调用不会产生额外效果。
+        ///     </para>
         /// </summary>
         internal static void EnsureRegistered()
         {

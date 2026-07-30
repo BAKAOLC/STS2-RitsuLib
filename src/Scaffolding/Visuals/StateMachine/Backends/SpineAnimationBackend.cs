@@ -5,19 +5,19 @@ using MegaCrit.Sts2.Core.Random;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 {
     /// <summary>
-    ///     <see cref="IAnimationBackend" /> driver for Spine via <see cref="MegaSprite" />.
-    ///     通过 <see cref="MegaSprite" /> 驱动 Spine 的 <see cref="IAnimationBackend" />。
+    ///     <para xml:lang="en">Implements <see cref="IAnimationBackend" /> for Spine through <see cref="MegaSprite" />.</para>
+    ///     <para xml:lang="zh-CN">通过 <see cref="MegaSprite" /> 为 Spine 实现 <see cref="IAnimationBackend" />。</para>
     /// </summary>
     /// <remarks>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         Connects to <c>animation_started</c>, <c>animation_completed</c>, and <c>animation_interrupted</c>
     ///         signals; behaviour mirrors <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" /> (including
     ///         looping-state random time-scale and start offset for natural idle variation).
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="zh-CN">
     ///         连接到 <c>animation_started</c>、<c>animation_completed</c> 和 <c>animation_interrupted</c>
-    ///         信号；行为对应 <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" />（包括
-    ///         循环状态的随机时间缩放和起始偏移，用于自然的 idle 变化）。
+    ///         信号；行为对应 <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" />，包括循环状态的随机
+    ///         时间缩放和起始偏移，以使待机动画更自然。
     ///     </para>
     /// </remarks>
     public sealed class SpineAnimationBackend : IAnimationBackend
@@ -30,8 +30,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private bool _paused;
 
         /// <summary>
-        ///     Wraps the given <paramref name="controller" /> and hooks its lifecycle signals.
-        ///     包装给定的 <paramref name="controller" /> 并挂接其生命周期信号。
+        ///     <para xml:lang="en">Wraps <paramref name="controller" /> and subscribes to its lifecycle signals.</para>
+        ///     <para xml:lang="zh-CN">包装 <paramref name="controller" /> 并订阅其生命周期信号。</para>
         /// </summary>
         public SpineAnimationBackend(MegaSprite controller)
         {
@@ -109,16 +109,16 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 
         /// <inheritdoc />
         /// <remarks>
-        ///     Spine exposes no clean "stop track" API through the MegaSpine bindings; this backend pauses playback
-        ///     by setting the animation state time scale to <c>0</c>. The character will freeze on its current pose
-        ///     until <see cref="Play" /> is called again (which restores the time scale). This keeps
-        ///     <see cref="Interrupted" /> / <see cref="Completed" /> silent as required by
-        ///     <see cref="IAnimationBackend.Stop" />.
-        ///     Spine 没有通过 MegaSpine 绑定暴露干净的“停止轨道”API；此后端通过将动画状态时间缩放设为
-        ///     <c>0</c> 来暂停播放。角色会冻结在当前姿势，
-        ///     直到再次调用 <see cref="Play" />（这会恢复时间缩放）。这样会按要求保持
-        ///     <see cref="Interrupted" /> / <see cref="Completed" /> 静默，即
-        ///     <see cref="IAnimationBackend.Stop" /> 的要求。
+        ///     <para xml:lang="en">
+        ///         MegaSpine provides no direct stop-track operation, so this backend pauses the animation state with a
+        ///         time scale of <c>0</c>. The pose remains frozen until <see cref="Play" /> restores the scale, without
+        ///         raising <see cref="Interrupted" /> or <see cref="Completed" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         MegaSpine 未提供直接停止轨道的操作，因此此后端将动画状态的时间缩放设为 <c>0</c> 来暂停播放。
+        ///         姿势会冻结到 <see cref="Play" /> 恢复缩放为止，且不会触发 <see cref="Interrupted" /> 或
+        ///         <see cref="Completed" />。
+        ///     </para>
         /// </remarks>
         public void Stop()
         {
@@ -131,8 +131,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         }
 
         /// <summary>
-        ///     Detaches signal connections. Safe to call more than once.
-        ///     断开信号连接。可安全多次调用。
+        ///     <para xml:lang="en">Detaches signal connections. Repeated calls are safe.</para>
+        ///     <para xml:lang="zh-CN">断开信号连接；可安全地重复调用。</para>
         /// </summary>
         public void Dispose()
         {

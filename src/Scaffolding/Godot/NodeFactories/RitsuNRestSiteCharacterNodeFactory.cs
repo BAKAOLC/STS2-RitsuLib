@@ -7,13 +7,16 @@ using MegaCrit.Sts2.Core.Nodes.RestSite;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
     /// <summary>
-    ///     Builds <see cref="NRestSiteCharacter" /> from <see cref="Texture2D" />, <see cref="Sprite2D" />-root scenes, or
-    ///     other mod Godot roots (mirrors baselib <c>NRestSiteCharacterFactory</c> for ritsulib’s explicit factory path).
-    ///     <c>NRestSiteCharacterFactory</c>）。
-    ///     从 <see cref="Texture2D" />、<see cref="Sprite2D" /> 根节点场景或
-    ///     其他 mod Godot 根节点构建 <see cref="NRestSiteCharacter" />（这与 baselib <c>NRestSiteCharacterFactory</c> 一致，用于 ritsulib
-    ///     的显式工厂路径）。
-    ///     <c>NRestSiteCharacterFactory</c>）。
+    ///     <para xml:lang="en">
+    ///         Builds <see cref="NRestSiteCharacter" /> from a <see cref="Texture2D" />, a scene rooted at
+    ///         <see cref="Sprite2D" />, or another mod-provided Godot root. This is RitsuLib's explicit-factory counterpart
+    ///         to BaseLib's <c>NRestSiteCharacterFactory</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从 <see cref="Texture2D" />、以 <see cref="Sprite2D" /> 为根节点的场景或其他模组提供的 Godot 根节点
+    ///         构建 <see cref="NRestSiteCharacter" />。这是 RitsuLib 显式工厂中与 BaseLib
+    ///         <c>NRestSiteCharacterFactory</c> 对应的实现。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuNRestSiteCharacterNodeFactory() : RitsuGodotNodeFactory<NRestSiteCharacter>([
         new RitsuGodotNodeSlot<Control>("ControlRoot", false),

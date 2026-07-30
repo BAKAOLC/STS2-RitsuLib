@@ -3,100 +3,113 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Visuals.Definition
 {
     /// <summary>
-    ///     Optional style overrides for procedural visual nodes created by RitsuLib factories and cue playback.
-    ///     Unset properties leave the target node unchanged.
-    ///     RitsuLib 工厂和 cue 播放创建的程序化视觉节点可选样式覆盖；未设置的属性不会修改目标节点。
+    ///     <para xml:lang="en">
+    ///         Defines optional style overrides for procedural visual nodes created by RitsuLib factories and cue playback.
+    ///         Unset properties leave the target node unchanged.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义 RitsuLib 工厂和视觉提示播放所创建程序化视觉节点的可选样式覆盖。
+    ///         未设置的属性不会改变目标节点。
+    ///     </para>
     /// </summary>
     public sealed record VisualNodeStyle
     {
         /// <summary>
-        ///     Empty style; applying it does not mutate the target node.
-        ///     空样式；应用后不会修改目标节点。
+        ///     <para xml:lang="en">Gets an empty style that does not change the target node when applied.</para>
+        ///     <para xml:lang="zh-CN">获取应用后不会改变目标节点的空样式。</para>
         /// </summary>
         public static VisualNodeStyle Empty { get; } = new();
 
         /// <summary>
-        ///     Absolute local position. When unset, the current node position is preserved unless a caller supplies a
-        ///     base position.
-        ///     绝对本地位置。未设置时保留节点当前位置，除非调用方提供基础位置。
+        ///     <para xml:lang="en">
+        ///         Gets the absolute local position. When unset, the current position is preserved unless the caller supplies
+        ///         a base position.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取绝对局部位置。未设置时会保留节点的当前位置，除非调用方提供了基准位置。
+        ///     </para>
         /// </summary>
         public Vector2? Position { get; init; }
 
         /// <summary>
-        ///     Local position delta applied after <see cref="Position" /> or a caller-supplied base position.
-        ///     在 <see cref="Position" /> 或调用方提供的基础位置之后应用的本地位置偏移。
+        ///     <para xml:lang="en">
+        ///         Gets the local position delta applied after <see cref="Position" /> or a caller-supplied base position.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取在 <see cref="Position" /> 或调用方提供的基准位置之后叠加的局部位置偏移。
+        ///     </para>
         /// </summary>
         public Vector2? Offset { get; init; }
 
         /// <summary>
-        ///     Local scale for <see cref="Node2D" /> and <see cref="Control" /> targets.
-        ///     应用于 <see cref="Node2D" /> 和 <see cref="Control" /> 目标的本地缩放。
+        ///     <para xml:lang="en">Gets the local scale for <see cref="Node2D" /> and <see cref="Control" /> targets.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Node2D" /> 和 <see cref="Control" /> 目标的局部缩放。</para>
         /// </summary>
         public Vector2? Scale { get; init; }
 
         /// <summary>
-        ///     Local rotation in radians, matching Godot's native rotation units.
-        ///     以弧度表示的本地旋转，匹配 Godot 原生旋转单位。
+        ///     <para xml:lang="en">Gets the local rotation in radians, matching Godot's native rotation unit.</para>
+        ///     <para xml:lang="zh-CN">获取以弧度表示的局部旋转，与 Godot 的原生旋转单位一致。</para>
         /// </summary>
         public float? RotationRadians { get; init; }
 
         /// <summary>
-        ///     Local skew for <see cref="Node2D" /> targets.
-        ///     应用于 <see cref="Node2D" /> 目标的本地倾斜。
+        ///     <para xml:lang="en">Gets the local skew for <see cref="Node2D" /> targets.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Node2D" /> 目标的局部倾斜。</para>
         /// </summary>
         public float? Skew { get; init; }
 
         /// <summary>
-        ///     Pivot offset for <see cref="Control" /> targets.
-        ///     应用于 <see cref="Control" /> 目标的枢轴偏移。
+        ///     <para xml:lang="en">Gets the pivot offset for <see cref="Control" /> targets.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Control" /> 目标的枢轴偏移。</para>
         /// </summary>
         public Vector2? PivotOffset { get; init; }
 
         /// <summary>
-        ///     Canvas-item modulate color.
-        ///     CanvasItem 的调制颜色。
+        ///     <para xml:lang="en">Gets the <see cref="CanvasItem.Modulate" /> color.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="CanvasItem.Modulate" /> 颜色。</para>
         /// </summary>
         public Color? Modulate { get; init; }
 
         /// <summary>
-        ///     Canvas-item self-modulate color.
-        ///     CanvasItem 的自身调制颜色。
+        ///     <para xml:lang="en">Gets the <see cref="CanvasItem.SelfModulate" /> color.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="CanvasItem.SelfModulate" /> 颜色。</para>
         /// </summary>
         public Color? SelfModulate { get; init; }
 
         /// <summary>
-        ///     Canvas-item z-index.
-        ///     CanvasItem 的 z-index。
+        ///     <para xml:lang="en">Gets the <see cref="CanvasItem.ZIndex" /> value.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="CanvasItem.ZIndex" /> 值。</para>
         /// </summary>
         public int? ZIndex { get; init; }
 
         /// <summary>
-        ///     Canvas-item visibility.
-        ///     CanvasItem 的可见性。
+        ///     <para xml:lang="en">Gets the <see cref="CanvasItem.Visible" /> value.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="CanvasItem.Visible" /> 值。</para>
         /// </summary>
         public bool? Visible { get; init; }
 
         /// <summary>
-        ///     Sprite centering flag for <see cref="Sprite2D" /> targets.
-        ///     应用于 <see cref="Sprite2D" /> 目标的居中标记。
+        ///     <para xml:lang="en">Gets the centering flag for <see cref="Sprite2D" /> targets.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Sprite2D" /> 目标的居中标记。</para>
         /// </summary>
         public bool? Centered { get; init; }
 
         /// <summary>
-        ///     Horizontal flip flag for <see cref="Sprite2D" /> targets.
-        ///     应用于 <see cref="Sprite2D" /> 目标的水平翻转标记。
+        ///     <para xml:lang="en">Gets the horizontal flip flag for <see cref="Sprite2D" /> targets.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Sprite2D" /> 目标的水平翻转标记。</para>
         /// </summary>
         public bool? FlipH { get; init; }
 
         /// <summary>
-        ///     Vertical flip flag for <see cref="Sprite2D" /> targets.
-        ///     应用于 <see cref="Sprite2D" /> 目标的垂直翻转标记。
+        ///     <para xml:lang="en">Gets the vertical flip flag for <see cref="Sprite2D" /> targets.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Sprite2D" /> 目标的垂直翻转标记。</para>
         /// </summary>
         public bool? FlipV { get; init; }
 
         /// <summary>
-        ///     Creates a style using degrees for rotation, which is the friendlier authoring format for mods.
-        ///     使用角度创建样式，这是对 mod 作者更友好的旋转书写格式。
+        ///     <para xml:lang="en">Creates a style using degrees as the mod-facing rotation unit.</para>
+        ///     <para xml:lang="zh-CN">使用更便于模组作者配置的角度制旋转值创建样式。</para>
         /// </summary>
         public static VisualNodeStyle Create(
             Vector2? position = null,
@@ -132,8 +145,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Creates a style using radians for rotation, matching Godot's native API.
-        ///     使用弧度创建样式，匹配 Godot 原生 API。
+        ///     <para xml:lang="en">Creates a style using radians for rotation, matching Godot's native API.</para>
+        ///     <para xml:lang="zh-CN">使用与 Godot 原生 API 一致的弧度制旋转值创建样式。</para>
         /// </summary>
         public static VisualNodeStyle CreateRadians(
             Vector2? position = null,
@@ -169,8 +182,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="Position" /> set.
-        ///     返回设置了 <see cref="Position" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Position" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="Position" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithPosition(Vector2 position)
         {
@@ -178,8 +191,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="Offset" /> set.
-        ///     返回设置了 <see cref="Offset" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Offset" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="Offset" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithOffset(Vector2 offset)
         {
@@ -187,8 +200,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="Scale" /> set.
-        ///     返回设置了 <see cref="Scale" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Scale" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="Scale" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithScale(Vector2 scale)
         {
@@ -196,8 +209,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with uniform <see cref="Scale" /> set.
-        ///     返回设置了统一 <see cref="Scale" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with a uniform <see cref="Scale" /> set on both axes.</para>
+        ///     <para xml:lang="zh-CN">返回在两个轴上设置了相同 <see cref="Scale" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithScale(float uniformScale)
         {
@@ -205,8 +218,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="RotationRadians" /> set from degrees.
-        ///     返回从角度值设置 <see cref="RotationRadians" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="RotationRadians" /> converted from degrees.</para>
+        ///     <para xml:lang="zh-CN">返回将角度制值转换并设置到 <see cref="RotationRadians" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithRotationDegrees(float degrees)
         {
@@ -214,8 +227,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="RotationRadians" /> set.
-        ///     返回设置了 <see cref="RotationRadians" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="RotationRadians" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="RotationRadians" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithRotationRadians(float radians)
         {
@@ -223,8 +236,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="Skew" /> set.
-        ///     返回设置了 <see cref="Skew" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Skew" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="Skew" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithSkew(float skew)
         {
@@ -232,8 +245,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="PivotOffset" /> set.
-        ///     返回设置了 <see cref="PivotOffset" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="PivotOffset" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="PivotOffset" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithPivotOffset(Vector2 pivotOffset)
         {
@@ -241,8 +254,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="Modulate" /> set.
-        ///     返回设置了 <see cref="Modulate" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Modulate" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="Modulate" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithModulate(Color modulate)
         {
@@ -250,8 +263,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="SelfModulate" /> set.
-        ///     返回设置了 <see cref="SelfModulate" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="SelfModulate" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="SelfModulate" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithSelfModulate(Color selfModulate)
         {
@@ -259,8 +272,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="ZIndex" /> set.
-        ///     返回设置了 <see cref="ZIndex" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="ZIndex" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="ZIndex" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithZIndex(int zIndex)
         {
@@ -268,8 +281,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="Visible" /> set.
-        ///     返回设置了 <see cref="Visible" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Visible" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="Visible" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithVisible(bool visible = true)
         {
@@ -277,8 +290,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy hidden from rendering.
-        ///     返回隐藏渲染的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Visible" /> set to <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回将 <see cref="Visible" /> 设为 <see langword="false" /> 的副本。
+        ///     </para>
         /// </summary>
         public VisualNodeStyle Hidden()
         {
@@ -286,8 +301,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="Centered" /> set.
-        ///     返回设置了 <see cref="Centered" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with <see cref="Centered" /> set.</para>
+        ///     <para xml:lang="zh-CN">返回已设置 <see cref="Centered" /> 的副本。</para>
         /// </summary>
         public VisualNodeStyle WithCentered(bool centered = true)
         {
@@ -295,8 +310,13 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Returns a copy with sprite flip flags set.
-        ///     返回设置了 sprite 翻转标记的副本。
+        ///     <para xml:lang="en">
+        ///         Returns a copy with the specified sprite flip flags set. A <see langword="null" /> argument preserves the
+        ///         corresponding current value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回已设置指定精灵翻转标记的副本；参数为 <see langword="null" /> 时保留对应的当前值。
+        ///     </para>
         /// </summary>
         public VisualNodeStyle WithFlip(bool? horizontal = null, bool? vertical = null)
         {

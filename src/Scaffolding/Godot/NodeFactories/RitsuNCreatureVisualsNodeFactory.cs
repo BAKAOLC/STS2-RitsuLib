@@ -5,14 +5,21 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
     /// <summary>
-    ///     Builds <see cref="NCreatureVisuals" /> from vanilla-style scenes or a <see cref="Texture2D" /> (Sprite2D body).
-    ///     Non-Spine combat playback remains handled by <see cref="Characters.Visuals.ModCreatureVisualPlayback" />.
-    ///     Named slots match <c>NCreatureVisualsFactory</c>; missing <c>%OrbPos</c> / <c>%TalkPos</c> are not synthesized
-    ///     (same as baselib): <see cref="NCreatureVisuals" /> falls back to <c>IntentPos</c> / <c>null</c>.
-    ///     从原版风格场景或 <see cref="Texture2D" />（Sprite2D 主体）构建 <see cref="NCreatureVisuals" />。
-    ///     非 Spine 战斗播放仍由 <see cref="Characters.Visuals.ModCreatureVisualPlayback" /> 处理。
-    ///     命名槽位与 <c>NCreatureVisualsFactory</c> 匹配；缺失的 <c>%OrbPos</c> / <c>%TalkPos</c> 不会被合成
-    ///     （与 baselib 相同）：<see cref="NCreatureVisuals" /> 会回退到 <c>IntentPos</c> / <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Builds <see cref="NCreatureVisuals" /> from base-game-style scenes or a <see cref="Texture2D" /> used as a
+    ///         <see cref="Sprite2D" /> body. Non-Spine combat playback remains handled by
+    ///         <see cref="Characters.Visuals.ModCreatureVisualPlayback" />. Named slots match <c>NCreatureVisualsFactory</c>;
+    ///         as in BaseLib, missing <c>%OrbPos</c> and <c>%TalkPos</c> slots are not synthesized, so
+    ///         <see cref="NCreatureVisuals" /> falls back to <c>IntentPos</c> and <see langword="null" />, respectively.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从游戏风格的场景或作为 <see cref="Sprite2D" /> 主体的 <see cref="Texture2D" /> 构建
+    ///         <see cref="NCreatureVisuals" />。非 Spine 战斗动画仍由
+    ///         <see cref="Characters.Visuals.ModCreatureVisualPlayback" /> 播放。命名槽位与
+    ///         <c>NCreatureVisualsFactory</c> 一致；与 BaseLib 相同，缺少的 <c>%OrbPos</c> 和 <c>%TalkPos</c>
+    ///         槽位不会被自动创建，<see cref="NCreatureVisuals" /> 会分别回退到 <c>IntentPos</c> 和
+    ///         <see langword="null" />。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuNCreatureVisualsNodeFactory() : RitsuGodotNodeFactory<NCreatureVisuals>([
         new RitsuGodotNodeSlot<Node2D>("%Visuals"),

@@ -7,24 +7,12 @@ using STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
 {
     /// <summary>
-    ///     Fluent builder for <see cref="ModAnimStateMachine" />. Declare named states, per-state loop / next-state
-    ///     / bounds metadata, per-state branches, and any-state transitions; finalise by calling one of the
-    ///     <c>Build</c> overloads with an <see cref="IAnimationBackend" /> or a visuals root.
-    ///     <see cref="ModAnimStateMachine" /> 的流式构建器。声明命名状态、每状态循环 / 下一状态
-    ///     / 边界元数据、每状态分支和任意状态转换；最后通过调用某个带
-    ///     <c>Build</c> 重载并传入 <see cref="IAnimationBackend" /> 或视觉根节点来完成。
+    ///     <para xml:lang="en">Fluently declares states and transitions, then builds and starts a <see cref="ModAnimStateMachine" />.</para>
+    ///     <para xml:lang="zh-CN">以流式方式声明状态和转换，然后构建并启动 <see cref="ModAnimStateMachine" />。</para>
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         The builder does not validate ids against backend animation availability: if a state id is unresolvable
-    ///         by the chosen backend, <see cref="ModAnimStateMachine" /> will skip playback for that state and log a
-    ///         warning on entry.
-    ///     </para>
-    ///     <para>
-    ///         构建器不会根据后端动画可用性验证 id：如果某个状态 id 无法由
-    ///         所选后端解析，<see cref="ModAnimStateMachine" /> 会跳过该状态的播放，并在进入时记录
-    ///         警告。
-    ///     </para>
+    ///     <para xml:lang="en">The builder does not validate IDs against backend availability. Entering an unavailable state logs a warning and leaves the current state unchanged.</para>
+    ///     <para xml:lang="zh-CN">构建器不会根据后端可用性验证 ID。进入不可用状态时会记录警告，并保持当前状态不变。</para>
     /// </remarks>
     public sealed class ModAnimStateMachineBuilder
     {
@@ -37,8 +25,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Creates a fresh builder.
-        ///     创建新的构建器。
+        ///     <para xml:lang="en">Creates a new builder.</para>
+        ///     <para xml:lang="zh-CN">创建新的构建器。</para>
         /// </summary>
         public static ModAnimStateMachineBuilder Create()
         {
@@ -46,14 +34,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Declares a state with backend animation id <paramref name="id" /> and loop hint
-        ///     <paramref name="loop" />. Returns a scope object so the caller can chain
-        ///     <see cref="StateScope.WithNext" />, <see cref="StateScope.WithBounds" />, and
-        ///     <see cref="StateScope.AsInitial" />.
-        ///     声明一个状态，其后端动画 id 为 <paramref name="id" />，循环提示为
-        ///     <paramref name="loop" />。返回一个作用域对象，使调用方可以链式调用
-        ///     <see cref="StateScope.WithNext" />、<see cref="StateScope.WithBounds" /> 和
-        ///     <see cref="StateScope.AsInitial" />。
+        ///     <para xml:lang="en">Declares a state with backend animation <paramref name="id" /> and loop request <paramref name="loop" />.</para>
+        ///     <para xml:lang="zh-CN">声明使用后端动画 <paramref name="id" /> 和循环请求 <paramref name="loop" /> 的状态。</para>
         /// </summary>
         public StateScope AddState(string id, bool loop = false)
         {
@@ -68,10 +50,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Adds a branch from state <paramref name="fromId" /> for trigger <paramref name="trigger" /> to state
-        ///     <paramref name="toId" />. Optional <paramref name="condition" /> guards activation.
-        ///     添加一个分支：从状态 <paramref name="fromId" /> 在触发器 <paramref name="trigger" /> 下转到状态
-        ///     <paramref name="toId" />。可选 <paramref name="condition" /> 用于保护激活。
+        ///     <para xml:lang="en">Adds a trigger branch from <paramref name="fromId" /> to <paramref name="toId" />, guarded by <paramref name="condition" /> when supplied.</para>
+        ///     <para xml:lang="zh-CN">添加从 <paramref name="fromId" /> 到 <paramref name="toId" /> 的触发器分支；提供时由 <paramref name="condition" /> 守卫。</para>
         /// </summary>
         public ModAnimStateMachineBuilder AddBranch(string fromId, string trigger, string toId,
             Func<bool>? condition = null)
@@ -87,10 +67,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Adds an any-state branch for trigger <paramref name="trigger" /> to <paramref name="toId" />
-        ///     (guarded by optional <paramref name="condition" />).
-        ///     为触发器 <paramref name="trigger" /> 添加一个转到 <paramref name="toId" /> 的任意状态分支
-        ///     （由可选 <paramref name="condition" /> 保护）。
+        ///     <para xml:lang="en">Adds an any-state branch to <paramref name="toId" />, optionally guarded by <paramref name="condition" />.</para>
+        ///     <para xml:lang="zh-CN">添加指向 <paramref name="toId" /> 的任意状态分支，可选地由 <paramref name="condition" /> 守卫。</para>
         /// </summary>
         public ModAnimStateMachineBuilder AddAnyState(string trigger, string toId, Func<bool>? condition = null)
         {
@@ -101,10 +79,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Materialises the graph against <paramref name="backend" /> and returns a started
-        ///     <see cref="ModAnimStateMachine" />.
-        ///     用 <paramref name="backend" /> 实例化状态图，并返回已启动的
-        ///     <see cref="ModAnimStateMachine" />。
+        ///     <para xml:lang="en">Materializes the graph against <paramref name="backend" /> and starts the resulting state machine.</para>
+        ///     <para xml:lang="zh-CN">针对 <paramref name="backend" /> 实例化状态图，并启动所得状态机。</para>
         /// </summary>
         public ModAnimStateMachine Build(IAnimationBackend backend)
         {
@@ -115,10 +91,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Convenience overload: wraps <paramref name="controller" /> in a <see cref="SpineAnimationBackend" />
-        ///     and builds the machine.
-        ///     便捷重载：将 <paramref name="controller" /> 包装进 <see cref="SpineAnimationBackend" />
-        ///     并构建状态机。
+        ///     <para xml:lang="en">Wraps <paramref name="controller" /> in a <see cref="SpineAnimationBackend" /> and builds the state machine.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="controller" /> 包装为 <see cref="SpineAnimationBackend" /> 并构建状态机。</para>
         /// </summary>
         public ModAnimStateMachine BuildSpine(MegaSprite controller)
         {
@@ -126,24 +100,20 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Convenience overload: composes cue / Spine / Godot animation player / animated-sprite backends
-        ///     rooted at <paramref name="visualsRoot" /> and builds the machine.
-        ///     便捷重载：组合以 <paramref name="visualsRoot" /> 为根的 cue / Spine / Godot animation player / animated-sprite 后端，
-        ///     并构建状态机。
+        ///     <para xml:lang="en">Discovers cue, Spine, Godot AnimationPlayer, and AnimatedSprite2D backends under <paramref name="visualsRoot" />, then builds the state machine.</para>
+        ///     <para xml:lang="zh-CN">在 <paramref name="visualsRoot" /> 下发现视觉提示、Spine、Godot AnimationPlayer 和 AnimatedSprite2D 后端，再构建状态机。</para>
         /// </summary>
         /// <param name="visualsRoot">
-        ///     Visuals root (typically an <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals" />).
-        ///     视觉根节点（通常是 <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals" />）。
+        ///     <para xml:lang="en">The visuals root, typically an <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals" />.</para>
+        ///     <para xml:lang="zh-CN">视觉根节点，通常为 <see cref="MegaCrit.Sts2.Core.Nodes.Combat.NCreatureVisuals" />。</para>
         /// </param>
         /// <param name="character">
-        ///     Optional character model; used when <paramref name="cueSet" /> is <see langword="null" />
-        ///     to pull cue data from <c>IModCharacterAssetOverrides</c>.
-        ///     可选角色模型；当 <paramref name="cueSet" /> 为 <see langword="null" /> 时，
-        ///     用于从 <c>IModCharacterAssetOverrides</c> 拉取 cue 数据。
+        ///     <para xml:lang="en">An optional character used to obtain cues when <paramref name="cueSet" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">可选角色；当 <paramref name="cueSet" /> 为 <see langword="null" /> 时用于获取视觉提示。</para>
         /// </param>
         /// <param name="cueSet">
-        ///     Optional explicit cue set; takes priority over the character-derived one.
-        ///     可选显式 cue set；优先于从角色派生的 cue set。
+        ///     <para xml:lang="en">An optional explicit cue set, which takes precedence over character-derived cues.</para>
+        ///     <para xml:lang="zh-CN">可选的显式视觉提示集，优先于从角色获得的视觉提示。</para>
         /// </param>
         public ModAnimStateMachine BuildForVisualsRoot(Node visualsRoot, CharacterModel? character = null,
             VisualCueSet? cueSet = null)
@@ -209,8 +179,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         private readonly record struct AnyBranchDraft(string Trigger, string ToId, Func<bool>? Condition);
 
         /// <summary>
-        ///     Fluent scope returned by <see cref="ModAnimStateMachineBuilder.AddState" /> for per-state metadata.
-        ///     由 <see cref="ModAnimStateMachineBuilder.AddState" /> 返回的流式作用域，用于逐状态元数据。
+        ///     <para xml:lang="en">Fluently configures metadata for a state declared by <see cref="ModAnimStateMachineBuilder.AddState" />.</para>
+        ///     <para xml:lang="zh-CN">以流式方式配置由 <see cref="ModAnimStateMachineBuilder.AddState" /> 声明的状态元数据。</para>
         /// </summary>
         public sealed class StateScope
         {
@@ -224,8 +194,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             }
 
             /// <summary>
-            ///     Sets <see cref="ModAnimState.NextState" /> for the current state (by target id).
-            ///     为当前状态设置 <see cref="ModAnimState.NextState" />（按目标 id）。
+            ///     <para xml:lang="en">Sets the current state's next-state ID.</para>
+            ///     <para xml:lang="zh-CN">设置当前状态的下一状态 ID。</para>
             /// </summary>
             public StateScope WithNext(string nextStateId)
             {
@@ -235,10 +205,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             }
 
             /// <summary>
-            ///     Sets <see cref="ModAnimState.BoundsContainer" /> tag emitted via
-            ///     <see cref="ModAnimStateMachine.BoundsUpdated" /> on enter.
-            ///     设置进入状态时通过 <see cref="ModAnimStateMachine.BoundsUpdated" /> 发出的
-            ///     <see cref="ModAnimState.BoundsContainer" /> 标签。
+            ///     <para xml:lang="en">Sets the bounds-container tag reported when this state is entered.</para>
+            ///     <para xml:lang="zh-CN">设置进入此状态时报告的边界容器标签。</para>
             /// </summary>
             public StateScope WithBounds(string boundsContainer)
             {
@@ -248,8 +216,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             }
 
             /// <summary>
-            ///     Marks the current state as the initial state (overrides the auto-first-state behaviour).
-            ///     将当前状态标记为初始状态（覆盖自动使用第一个状态的行为）。
+            ///     <para xml:lang="en">Marks the current state as initial, replacing the default first declared state.</para>
+            ///     <para xml:lang="zh-CN">将当前状态标记为初始状态，替代默认的第一个已声明状态。</para>
             /// </summary>
             public StateScope AsInitial()
             {
@@ -258,8 +226,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
             }
 
             /// <summary>
-            ///     Returns the owning builder so chaining can continue.
-            ///     返回所属构建器，以便继续链式调用。
+            ///     <para xml:lang="en">Returns the owning builder.</para>
+            ///     <para xml:lang="zh-CN">返回所属构建器。</para>
             /// </summary>
             public ModAnimStateMachineBuilder Done()
             {

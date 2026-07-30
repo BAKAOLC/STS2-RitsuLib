@@ -3,8 +3,14 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
     /// <summary>
-    ///     Procedural <see cref="Control" /> root from <see cref="Texture2D" /> (full <see cref="TextureRect" />).
-    ///     从 <see cref="Texture2D" /> 构建程序化 <see cref="Control" /> 根节点（完整 <see cref="TextureRect" />）。
+    ///     <para xml:lang="en">
+    ///         Creates a procedural <see cref="Control" /> root from a <see cref="Texture2D" />, represented by a
+    ///         texture-sized <see cref="TextureRect" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从 <see cref="Texture2D" /> 创建程序化 <see cref="Control" /> 根节点，并以纹理尺寸的
+    ///         <see cref="TextureRect" /> 表示。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuTextureRectControlNodeFactory() : RitsuGodotNodeFactory<Control>([])
     {

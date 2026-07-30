@@ -4,10 +4,14 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
     /// <summary>
-    ///     Builds <see cref="NMerchantCharacter" /> from <see cref="Texture2D" /> or converted mod scenes.
-    ///     Merchant <see cref="Characters.Visuals.ModCreatureVisualPlayback" /> handles non-Spine <c>PlayAnimation</c>.
-    ///     从 <see cref="Texture2D" /> 或转换后的 mod 场景构建 <see cref="NMerchantCharacter" />。
-    ///     商人 <see cref="Characters.Visuals.ModCreatureVisualPlayback" /> 会处理非 Spine <c>PlayAnimation</c>。
+    ///     <para xml:lang="en">
+    ///         Builds <see cref="NMerchantCharacter" /> from a <see cref="Texture2D" /> or a converted mod scene.
+    ///         <see cref="Characters.Visuals.ModCreatureVisualPlayback" /> handles non-Spine merchant animations.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从 <see cref="Texture2D" /> 或转换后的模组场景构建 <see cref="NMerchantCharacter" />。
+    ///         非 Spine 商人动画由 <see cref="Characters.Visuals.ModCreatureVisualPlayback" /> 播放。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuNMerchantCharacterNodeFactory() : RitsuGodotNodeFactory<NMerchantCharacter>([])
     {

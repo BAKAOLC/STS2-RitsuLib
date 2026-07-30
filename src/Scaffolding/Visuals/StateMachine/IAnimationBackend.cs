@@ -3,106 +3,124 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
 {
     /// <summary>
-    ///     Uniform driver surface required by <see cref="ModAnimStateMachine" /> so the same state graph can run on
-    ///     Spine (<c>MegaSprite</c>), Godot <c>AnimationPlayer</c>, <c>AnimatedSprite2D</c>, or cue-frame-sequence
-    ///     playback (see <see cref="STS2RitsuLib.Scaffolding.Visuals.Definition.VisualCueSet" />).
-    ///     <see cref="ModAnimStateMachine" /> 所需的统一驱动器表面，使同一状态图可以运行在
-    ///     Spine（<c>MegaSprite</c>）、Godot <c>AnimationPlayer</c>、<c>AnimatedSprite2D</c> 或 cue 帧序列
-    ///     播放上（见 <see cref="STS2RitsuLib.Scaffolding.Visuals.Definition.VisualCueSet" />）。
+    ///     <para xml:lang="en">
+    ///         Defines the uniform playback contract required by <see cref="ModAnimStateMachine" />, allowing the same state
+    ///         graph to drive Spine (<c>MegaSprite</c>), Godot <c>AnimationPlayer</c>, <c>AnimatedSprite2D</c>, or cue-frame
+    ///         playback through <see cref="STS2RitsuLib.Scaffolding.Visuals.Definition.VisualCueSet" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义 <see cref="ModAnimStateMachine" /> 所需的统一播放契约，使同一状态图可以驱动 Spine
+    ///         （<c>MegaSprite</c>）、Godot <c>AnimationPlayer</c>、<c>AnimatedSprite2D</c>，或通过
+    ///         <see cref="STS2RitsuLib.Scaffolding.Visuals.Definition.VisualCueSet" /> 定义的视觉提示帧播放。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         Implementations raise <see cref="Started" />, <see cref="Completed" />, and <see cref="Interrupted" />
-    ///         whenever the underlying system reports the corresponding events so the state machine can advance
+    ///         when the underlying system reports the corresponding events, allowing the state machine to advance to
     ///         <see cref="ModAnimState.NextState" />.
     ///     </para>
-    ///     <para>
-    ///         <see cref="Queue" /> is only meaningful for backends with true queue semantics (Spine); other backends
-    ///         may forward it to <see cref="Play" /> or defer until <see cref="Completed" /> fires.
+    ///     <para xml:lang="en">
+    ///         <see cref="Queue" /> is most meaningful for backends with native queue semantics, such as Spine.
+    ///         Other backends may forward it to <see cref="Play" /> or defer it until <see cref="Completed" /> fires.
     ///     </para>
-    ///     <para>
-    ///         当底层系统报告对应事件时，实现会触发 <see cref="Started" />、<see cref="Completed" /> 和 <see cref="Interrupted" />，
-    ///         使状态机可以推进
-    ///         <see cref="ModAnimState.NextState" />。
+    ///     <para xml:lang="zh-CN">
+    ///         当底层系统报告对应事件时，实现会触发 <see cref="Started" />、<see cref="Completed" /> 和
+    ///         <see cref="Interrupted" />，使状态机可以推进到 <see cref="ModAnimState.NextState" />。
     ///     </para>
-    ///     <para>
-    ///         <see cref="Queue" /> 仅对具备真实队列语义的后端（Spine）有意义；其他后端
-    ///         可以将其转发到 <see cref="Play" />，或延迟到 <see cref="Completed" /> 触发后处理。
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="Queue" /> 对 Spine 等原生支持队列语义的后端最有意义；其他后端可以将其转发到
+    ///         <see cref="Play" />，或延迟到 <see cref="Completed" /> 触发后处理。
     ///     </para>
     /// </remarks>
     public interface IAnimationBackend
     {
         /// <summary>
-        ///     Backend owner node (visuals root, merchant root, etc.); <see langword="null" /> when not applicable.
-        ///     后端拥有者节点（视觉根、商人根节点等）；不适用时为 <see langword="null" />。
+        ///     <para xml:lang="en">
+        ///         Gets the backend's owner node, such as a visuals or merchant root; returns
+        ///         <see langword="null" /> when not applicable.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取后端的所有者节点，例如视觉效果或商人的根节点；不适用时返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         Node? OwnerNode { get; }
 
         /// <summary>
-        ///     Fired when the backend reports playback start for animation id <c>arg</c>.
-        ///     后端报告动画 id <c>arg</c> 开始播放时触发。
+        ///     <para xml:lang="en">Occurs when the backend reports that an animation ID has started playing.</para>
+        ///     <para xml:lang="zh-CN">当后端报告某个动画 ID 开始播放时发生。</para>
         /// </summary>
         event Action<string>? Started;
 
         /// <summary>
-        ///     Fired when the backend reports playback completion (loop cycle end or one-shot end) for id <c>arg</c>.
-        ///     后端报告 id <c>arg</c> 播放完成（循环周期结束或一次性播放结束）时触发。
+        ///     <para xml:lang="en">
+        ///         Occurs when the backend reports the end of a loop cycle or one-shot animation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">当后端报告一次循环周期或单次动画结束时发生。</para>
         /// </summary>
         event Action<string>? Completed;
 
         /// <summary>
-        ///     Fired when the backend reports playback interruption for id <c>arg</c>.
-        ///     后端报告 id <c>arg</c> 播放被中断时触发。
+        ///     <para xml:lang="en">Occurs when the backend reports that an animation was interrupted.</para>
+        ///     <para xml:lang="zh-CN">当后端报告动画播放被中断时发生。</para>
         /// </summary>
         event Action<string>? Interrupted;
 
         /// <summary>
-        ///     Returns <see langword="true" /> when the backend can play <paramref name="id" />.
-        ///     当后端可以播放 <c>id</c> 时返回 <see langword="true" />。
+        ///     <para xml:lang="en">Returns whether the backend can play <paramref name="id" />.</para>
+        ///     <para xml:lang="zh-CN">返回后端是否能够播放 <paramref name="id" />。</para>
         /// </summary>
         bool HasAnimation(string id);
 
         /// <summary>
-        ///     Plays <paramref name="id" /> immediately (replaces any active animation).
-        ///     立即播放 <c>id</c>（替换任何当前动画）。
+        ///     <para xml:lang="en">Plays <paramref name="id" /> immediately, replacing any active animation.</para>
+        ///     <para xml:lang="zh-CN">立即播放 <paramref name="id" />，并替换当前活动的动画。</para>
         /// </summary>
         /// <param name="id">
-        ///     Animation id; must satisfy <see cref="HasAnimation" />.
-        ///     动画 id；必须满足 <see cref="HasAnimation" />。
+        ///     <para xml:lang="en">The animation ID, which must be accepted by <see cref="HasAnimation" />.</para>
+        ///     <para xml:lang="zh-CN">动画 ID，必须能通过 <see cref="HasAnimation" /> 检查。</para>
         /// </param>
         /// <param name="loop">
-        ///     Loop hint; backends without looping support should treat this as a best-effort flag.
-        ///     循环提示；不支持循环的后端应将其视为尽力而为的标志。
+        ///     <para xml:lang="en">
+        ///         Whether looping is requested. Backends without loop control treat this as a best-effort hint.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">是否请求循环；无法控制循环的后端会尽可能遵循此提示。</para>
         /// </param>
         void Play(string id, bool loop);
 
         /// <summary>
-        ///     Queues <paramref name="id" /> after the currently active animation. Non-queue backends may treat this
-        ///     as a deferred <see cref="Play" /> triggered on the next <see cref="Completed" />.
-        ///     在当前活动动画之后排队 <paramref name="id" />。非队列后端可以把它视为在下一次
-        ///     <see cref="Completed" /> 触发时执行的延迟 <see cref="Play" />。
+        ///     <para xml:lang="en">
+        ///         Queues <paramref name="id" /> after the active animation. Backends without native queues may defer
+        ///         <see cref="Play" /> until the next <see cref="Completed" /> event.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="id" /> 排在当前动画之后。没有原生队列的后端可以将
+        ///         <see cref="Play" /> 延迟到下一次 <see cref="Completed" /> 事件发生时执行。
+        ///     </para>
         /// </summary>
         void Queue(string id, bool loop);
 
         /// <summary>
-        ///     Stops any active playback silently (does not raise <see cref="Interrupted" /> / <see cref="Completed" />)
-        ///     and clears any pending queued animation. Intended for callers that need to relinquish the backend —
-        ///     typically <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends.CompositeAnimationBackend" />
-        ///     during cross-backend transitions, so the previously active backend does not continue visibly playing
-        ///     alongside the newly activated one.
-        ///     静默停止任何活动播放（不触发 <see cref="Interrupted" /> / <see cref="Completed" />），
-        ///     并清除任何待处理的排队动画。用于需要释放后端的调用方，
-        ///     通常是 <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends.CompositeAnimationBackend" />
-        ///     在跨后端转换期间使用，避免先前活动的后端继续与新激活的后端
-        ///     同时可见地播放。
+        ///     <para xml:lang="en">
+        ///         Silently stops active playback without raising <see cref="Interrupted" /> or <see cref="Completed" />,
+        ///         and clears queued animation. This allows callers such as
+        ///         <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends.CompositeAnimationBackend" /> to
+        ///         relinquish one backend before activating another.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         静默停止当前播放，不触发 <see cref="Interrupted" /> 或 <see cref="Completed" />，并清除排队的动画。
+        ///         这使 <see cref="STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends.CompositeAnimationBackend" />
+        ///         等调用方能够在激活另一个后端之前释放当前后端。
+        ///     </para>
         /// </summary>
         /// <remarks>
-        ///     Default implementation is a no-op; backends that drive a visible node should override to halt
-        ///     playback and suppress any lifecycle events that the underlying engine may fire as a consequence
-        ///     of the stop.
-        ///     默认实现为空操作；驱动可见节点的后端应重写它以停止
-        ///     播放，并抑制底层引擎可能因停止而触发的任何生命周期事件，
-        ///     作为停止操作的后果。
+        ///     <para xml:lang="en">
+        ///         The default implementation does nothing. Backends that drive visible nodes should override it to halt
+        ///         playback and suppress lifecycle events caused by the stop.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         默认实现不执行任何操作。驱动可见节点的后端应重写此方法，以停止播放并抑制停止操作引发的生命周期事件。
+        ///     </para>
         /// </remarks>
         void Stop()
         {

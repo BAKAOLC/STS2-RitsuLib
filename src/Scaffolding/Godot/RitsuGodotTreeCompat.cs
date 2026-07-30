@@ -4,19 +4,27 @@ using MegaCrit.Sts2.Core.Nodes;
 namespace STS2RitsuLib.Scaffolding.Godot
 {
     /// <summary>
-    ///     Tree mutations aligned with vanilla <c>GodotTreeExtensions</c> (0.104.x). Game 0.103.2 omits
-    ///     <c>MoveChildSafely</c>; referencing it from mods breaks multi-version builds. Use these helpers instead of
-    ///     calling game extension methods for merchant-booth style layout.
-    ///     与原版 <c>GodotTreeExtensions</c>（0.104.x）对齐的树变更。游戏 0.103.2 省略了
-    ///     <c>MoveChildSafely</c>；mod 引用它会破坏多版本构建。对于商人摊位式布局，请使用这些辅助方法，而不是
-    ///     调用游戏扩展方法。
+    ///     <para xml:lang="en">
+    ///         Provides tree mutations matching the base game's <c>GodotTreeExtensions</c> behavior on versions that expose
+    ///         those helpers. Game version 0.103.2 lacks <c>MoveChildSafely</c>, so this compatibility API allows the same
+    ///         layout code to compile against every supported version.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供与已公开对应方法的游戏版本中 <c>GodotTreeExtensions</c> 行为一致的节点树操作。
+    ///         游戏 0.103.2 没有 <c>MoveChildSafely</c>，因此此兼容 API 可让同一套布局代码针对所有受支持版本编译。
+    ///     </para>
     /// </summary>
     public static class RitsuGodotTreeCompat
     {
         /// <summary>
-        ///     Same branching as <c>MegaCrit.Sts2.Core.Helpers.GodotTreeExtensions.AddChildSafely</c> on current game
-        ///     branches that ship it.
-        ///     分支 that ship it。
+        ///     <para xml:lang="en">
+        ///         Adds a child immediately or defers the call using the same conditions as the base game's
+        ///         <c>MegaCrit.Sts2.Core.Helpers.GodotTreeExtensions.AddChildSafely</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按照游戏 <c>MegaCrit.Sts2.Core.Helpers.GodotTreeExtensions.AddChildSafely</c> 的相同条件，
+        ///         立即添加子节点或延迟调用。
+        ///     </para>
         /// </summary>
         public static void AddChildSafely(Node parent, Node? child)
         {
@@ -33,10 +41,15 @@ namespace STS2RitsuLib.Scaffolding.Godot
         }
 
         /// <summary>
-        ///     Same branching as <c>MegaCrit.Sts2.Core.Helpers.GodotTreeExtensions.MoveChildSafely</c> where the game
-        ///     provides it (0.104+); self-contained for 0.103.2 reference assemblies.
-        ///     当游戏提供 <c>MegaCrit.Sts2.Core.Helpers.GodotTreeExtensions.MoveChildSafely</c>（0.104+）时，分支逻辑与其相同；
-        ///     同时对 0.103.2 引用程序集保持自包含。
+        ///     <para xml:lang="en">
+        ///         Moves a child immediately or defers the call using the same conditions as the base game's
+        ///         <c>MegaCrit.Sts2.Core.Helpers.GodotTreeExtensions.MoveChildSafely</c>, while remaining compatible with
+        ///         the 0.103.2 reference assemblies.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按照游戏 <c>MegaCrit.Sts2.Core.Helpers.GodotTreeExtensions.MoveChildSafely</c> 的相同条件，
+        ///         立即移动子节点或延迟调用，同时保持与 0.103.2 引用程序集兼容。
+        ///     </para>
         /// </summary>
         public static void MoveChildSafely(Node parent, Node? child, int index)
         {

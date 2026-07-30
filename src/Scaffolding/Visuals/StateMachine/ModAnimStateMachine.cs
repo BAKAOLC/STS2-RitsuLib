@@ -1,24 +1,12 @@
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
 {
     /// <summary>
-    ///     Backend-agnostic animation state machine. Semantically aligned with
-    ///     <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" /> (<see cref="SetTrigger" /> evaluates
-    ///     any-state branches first, then current-state branches; <see cref="ModAnimState.NextState" /> is queued
-    ///     on entry and consumed on completion) but usable against any <see cref="IAnimationBackend" />.
-    ///     与后端无关的动画状态机。语义上与
-    ///     <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator" /> (<see cref="SetTrigger" /> 评估
-    ///     先评估 any-状态 分支，再评估当前状态分支； <see cref="ModAnimState.NextState" /> 会入队
-    ///     在进入时入队并在完成时消费），但可用于任何 <see cref="IAnimationBackend" />.
+    ///     <para xml:lang="en">Drives <see cref="ModAnimState" /> transitions through any <see cref="IAnimationBackend" />.</para>
+    ///     <para xml:lang="zh-CN">通过任意 <see cref="IAnimationBackend" /> 驱动 <see cref="ModAnimState" /> 转换。</para>
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Terminal states (such as <c>die</c>) are represented by leaving <see cref="ModAnimState.NextState" />
-    ///         as <see langword="null" />; on completion the machine stays on that state without advancing.
-    ///     </para>
-    ///     <para>
-    ///         终止状态（如 <c>die</c>）通过将 <see cref="ModAnimState.NextState" /> 留为
-    ///         <see langword="null" /> 表示；完成后机器会停留在该状态，不再推进。
-    ///     </para>
+    ///     <para xml:lang="en">Triggers prefer any-state branches to current-state branches. A terminal state leaves <see cref="ModAnimState.NextState" /> <see langword="null" />, so completion does not advance.</para>
+    ///     <para xml:lang="zh-CN">触发器优先匹配任意状态分支，再匹配当前状态分支。终止状态的 <see cref="ModAnimState.NextState" /> 保持为 <see langword="null" />，因此完成时不会推进。</para>
     /// </remarks>
     public sealed class ModAnimStateMachine
     {
@@ -28,8 +16,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         private ModAnimState? _queuedFromState;
 
         /// <summary>
-        ///     Wraps <paramref name="backend" />; subscribes to its event surface.
-        ///     包装 <paramref name="backend" />，并订阅它的事件接口。
+        ///     <para xml:lang="en">Wraps <paramref name="backend" /> and subscribes to its playback events.</para>
+        ///     <para xml:lang="zh-CN">包装 <paramref name="backend" /> 并订阅其播放事件。</para>
         /// </summary>
         public ModAnimStateMachine(IAnimationBackend backend)
         {
@@ -41,45 +29,44 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Currently active state, or <see langword="null" /> before <see cref="Start" /> or after <see cref="Dispose" />.
-        ///     当前激活状态；在 <see cref="Start" /> 之前或 <see cref="Dispose" /> 之后为 <see langword="null" />。
+        ///     <para xml:lang="en">Gets the active state, or <see langword="null" /> before <see cref="Start" /> and after <see cref="Dispose" />.</para>
+        ///     <para xml:lang="zh-CN">获取活动状态；在 <see cref="Start" /> 前和 <see cref="Dispose" /> 后为 <see langword="null" />。</para>
         /// </summary>
         public ModAnimState? Current { get; private set; }
 
         /// <summary>
-        ///     Underlying backend; exposed primarily for composite scenarios (e.g. merchant dual playback).
-        ///     底层后端；主要为组合场景暴露（例如商人双重播放）。
+        ///     <para xml:lang="en">Gets the backend driven by this state machine.</para>
+        ///     <para xml:lang="zh-CN">获取由此状态机驱动的后端。</para>
         /// </summary>
         public IAnimationBackend Backend { get; }
 
         /// <summary>
-        ///     Raised when <see cref="ModAnimState.BoundsContainer" /> should update (enter, completion, interruption).
-        ///     当 <see cref="ModAnimState.BoundsContainer" /> 应更新时触发（进入、完成、中断）。
+        ///     <para xml:lang="en">Occurs when the current state's bounds-container tag should be applied.</para>
+        ///     <para xml:lang="zh-CN">当应应用当前状态的边界容器标签时发生。</para>
         /// </summary>
         public event Action<string>? BoundsUpdated;
 
         /// <summary>
-        ///     Raised when the backend reports start for the current state's animation id.
-        ///     当后端报告当前状态的动画 id 开始播放时触发。
+        ///     <para xml:lang="en">Occurs when the backend reports playback started for the current state.</para>
+        ///     <para xml:lang="zh-CN">当后端报告当前状态开始播放时发生。</para>
         /// </summary>
         public event Action<ModAnimState>? AnimationStarted;
 
         /// <summary>
-        ///     Raised when the backend reports completion for the current state's animation id.
-        ///     当后端报告当前状态的动画 id 完成播放时触发。
+        ///     <para xml:lang="en">Occurs when the backend reports playback completed for the current state.</para>
+        ///     <para xml:lang="zh-CN">当后端报告当前状态播放完成时发生。</para>
         /// </summary>
         public event Action<ModAnimState>? AnimationCompleted;
 
         /// <summary>
-        ///     Raised when the backend reports interruption for the current state's animation id.
-        ///     当后端报告当前状态的动画 id 播放中断时触发。
+        ///     <para xml:lang="en">Occurs when the backend reports playback interrupted for the current state.</para>
+        ///     <para xml:lang="zh-CN">当后端报告当前状态播放中断时发生。</para>
         /// </summary>
         public event Action<ModAnimState>? AnimationInterrupted;
 
         /// <summary>
-        ///     Registers a branch on the synthetic any-state, matching
-        ///     <see cref="MegaCrit.Sts2.Core.Animation.CreatureAnimator.AddAnyState" />.
-        ///     在合成的任意状态上注册分支，对应
+        ///     <para xml:lang="en">Registers a branch on the synthetic any-state, which is evaluated before the current state.</para>
+        ///     <para xml:lang="zh-CN">在合成的任意状态上注册分支；该状态会先于当前状态求值。</para>
         /// </summary>
         public void AddAnyState(string trigger, ModAnimState state, Func<bool>? condition = null)
         {
@@ -87,8 +74,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Enters <paramref name="initial" />; triggers backend playback and fires <see cref="BoundsUpdated" />.
-        ///     进入 <paramref name="initial" />；触发后端播放并触发 <see cref="BoundsUpdated" />。
+        ///     <para xml:lang="en">Enters <paramref name="initial" /> and starts backend playback unless the machine is disposed.</para>
+        ///     <para xml:lang="zh-CN">进入 <paramref name="initial" /> 并启动后端播放，除非状态机已释放。</para>
         /// </summary>
         public void Start(ModAnimState initial)
         {
@@ -100,8 +87,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     <see langword="true" /> when any-state has a branch for <paramref name="trigger" />.
-        ///     当 any-state 拥有 <paramref name="trigger" /> 的分支时返回 <see langword="true" />。
+        ///     <para xml:lang="en">Returns whether the synthetic any-state has a branch for <paramref name="trigger" />.</para>
+        ///     <para xml:lang="zh-CN">返回合成的任意状态是否有 <paramref name="trigger" /> 的分支。</para>
         /// </summary>
         public bool HasTrigger(string trigger)
         {
@@ -109,7 +96,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Returns the total duration of the current state's animation when the backend can report it.
+        ///     <para xml:lang="en">Tries to get the current state's total duration when the backend provides timing.</para>
+        ///     <para xml:lang="zh-CN">当后端提供计时时，尝试获取当前状态的总时长。</para>
         /// </summary>
         public bool TryGetCurrentAnimationDuration(out float seconds)
         {
@@ -120,7 +108,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Returns the remaining duration of the current state's animation when the backend can report it.
+        ///     <para xml:lang="en">Tries to get the current animation's remaining duration when the backend provides timing.</para>
+        ///     <para xml:lang="zh-CN">当后端提供计时时，尝试获取当前动画的剩余时长。</para>
         /// </summary>
         public bool TryGetCurrentAnimationRemaining(out float seconds)
         {
@@ -130,10 +119,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Resolves <paramref name="trigger" /> against any-state first, then the current state; when matched,
-        ///     transitions to the resolved target.
-        ///     先用 <paramref name="trigger" /> 匹配任意状态，再匹配当前状态；匹配成功时，
-        ///     转换到解析出的目标。
+        ///     <para xml:lang="en">Evaluates <paramref name="trigger" /> against any-state, then the current state, and enters the first matching target.</para>
+        ///     <para xml:lang="zh-CN">先对任意状态、再对当前状态求值 <paramref name="trigger" />，并进入第一个匹配的目标。</para>
         /// </summary>
         public void SetTrigger(string trigger)
         {
@@ -148,8 +135,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
         }
 
         /// <summary>
-        ///     Detaches from backend events. Safe to call multiple times.
-        ///     解绑后端事件。可安全多次调用。
+        ///     <para xml:lang="en">Detaches from backend events. Repeated calls are safe.</para>
+        ///     <para xml:lang="zh-CN">断开后端事件；可安全地重复调用。</para>
         /// </summary>
         public void Dispose()
         {
