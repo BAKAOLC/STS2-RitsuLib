@@ -9,6 +9,10 @@ namespace STS2RitsuLib.Audio
     /// </summary>
     public static class FmodStudioMixerGlobals
     {
+        private static readonly StringName DspSettingsClass = new("FmodDspSettings");
+        private static readonly StringName SetDspBufferSize = new("set_dsp_buffer_size");
+        private static readonly StringName SetDspBufferCount = new("set_dsp_buffer_count");
+
         /// <summary>
         ///     Sets a global parameter by name to a numeric value.
         ///     按名称将全局参数设置为数值。
@@ -27,15 +31,12 @@ namespace STS2RitsuLib.Audio
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetGlobalParameterByName, name))
                 return 0f;
 
-            try
+            return v.VariantType switch
             {
-                return v.AsSingle();
-            }
-            catch
-            {
-                // ignored
-                return 0f;
-            }
+                Variant.Type.Float => v.AsSingle(),
+                Variant.Type.Int => v.AsInt64(),
+                _ => 0f,
+            };
         }
 
         /// <summary>
@@ -89,7 +90,32 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TrySetDspBufferSize(int bufferLength, int bufferCount)
         {
-            return FmodStudioGateway.TryCall(FmodStudioMethodNames.SetSystemDspBufferSize, bufferLength, bufferCount);
+            if (bufferLength <= 0 || bufferCount <= 0)
+                return false;
+
+            try
+            {
+                if (!ClassDB.CanInstantiate(DspSettingsClass))
+                    return false;
+
+                var value = ClassDB.Instantiate(DspSettingsClass);
+                if (value.VariantType != Variant.Type.Object)
+                    return false;
+
+                var settings = value.AsGodotObject();
+                if (settings is null || !GodotObject.IsInstanceValid(settings) ||
+                    !settings.HasMethod(SetDspBufferSize) || !settings.HasMethod(SetDspBufferCount))
+                    return false;
+
+                settings.Call(SetDspBufferSize, bufferLength);
+                settings.Call(SetDspBufferCount, bufferCount);
+                return FmodStudioGateway.TryCall(FmodStudioMethodNames.SetSystemDspBufferSize, settings);
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD DSP buffer settings: {ex}");
+                return false;
+            }
         }
 
         /// <summary>
