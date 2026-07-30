@@ -38,24 +38,13 @@ namespace STS2RitsuLib.Audio
             if (string.IsNullOrWhiteSpace(eventPath))
                 return false;
 
-            var server = FmodStudioGateway.TryGetServer();
-            if (server is null)
-                return false;
+            ArgumentNullException.ThrowIfNull(parameters);
 
             var gd = new Dictionary();
             foreach (var kv in parameters)
                 gd[kv.Key] = kv.Value;
 
-            try
-            {
-                server.Call(FmodStudioMethodNames.PlayOneShotWithParams, eventPath, gd);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD play_one_shot_with_params: {ex.Message}");
-                return false;
-            }
+            return FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShotWithParams, eventPath, gd);
         }
 
         /// <summary>
@@ -87,25 +76,13 @@ namespace STS2RitsuLib.Audio
             if (FmodStudioServer.TryCheckEventGuid(normalized) == false)
                 return false;
 
-            var server = FmodStudioGateway.TryGetServer();
-            if (server is null)
-                return false;
+            ArgumentNullException.ThrowIfNull(parameters);
 
             var gd = new Dictionary();
             foreach (var kv in parameters)
                 gd[kv.Key] = kv.Value;
 
-            try
-            {
-                server.Call(FmodStudioMethodNames.PlayOneShotUsingGuidWithParams, normalized, gd);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[Audio] FMOD play_one_shot_using_guid_with_params: {ex.Message}");
-                return false;
-            }
+            return FmodStudioGateway.TryCall(FmodStudioMethodNames.PlayOneShotUsingGuidWithParams, normalized, gd);
         }
 
         /// <summary>

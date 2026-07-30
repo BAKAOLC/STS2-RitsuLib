@@ -37,7 +37,7 @@ namespace STS2RitsuLib.Audio
         public static float TryGetVolume(string busPath)
         {
             var bus = TryGetBus(busPath);
-            if (bus is null)
+            if (bus is null || !bus.HasMethod(GetVolume))
                 return 0f;
 
             try
@@ -46,7 +46,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_volume: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_volume: {ex}");
                 return 0f;
             }
         }
@@ -58,7 +58,7 @@ namespace STS2RitsuLib.Audio
         public static bool TrySetVolume(string busPath, float linearVolume)
         {
             var bus = TryGetBus(busPath);
-            if (bus is null)
+            if (bus is null || !bus.HasMethod(SetVolume))
                 return false;
 
             try
@@ -68,7 +68,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_volume: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_volume: {ex}");
                 return false;
             }
         }
@@ -80,7 +80,7 @@ namespace STS2RitsuLib.Audio
         public static bool TrySetMute(string busPath, bool muted)
         {
             var bus = TryGetBus(busPath);
-            if (bus is null)
+            if (bus is null || !bus.HasMethod(SetMute))
                 return false;
 
             try
@@ -90,7 +90,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_mute: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_mute: {ex}");
                 return false;
             }
         }
@@ -102,7 +102,7 @@ namespace STS2RitsuLib.Audio
         public static bool TrySetPaused(string busPath, bool paused)
         {
             var bus = TryGetBus(busPath);
-            if (bus is null)
+            if (bus is null || !bus.HasMethod(SetPaused))
                 return false;
 
             try
@@ -112,7 +112,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_paused: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus set_paused: {ex}");
                 return false;
             }
         }
@@ -124,7 +124,7 @@ namespace STS2RitsuLib.Audio
         public static string? TryGetStudioGuid(string busPath)
         {
             var bus = TryGetBus(busPath);
-            if (bus is null)
+            if (bus is null || !bus.HasMethod(BusGetStudioGuid))
                 return null;
 
             try
@@ -133,7 +133,7 @@ namespace STS2RitsuLib.Audio
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_guid: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_guid: {ex}");
                 return null;
             }
         }
@@ -157,13 +157,13 @@ namespace STS2RitsuLib.Audio
                 return v.VariantType switch
                 {
                     Variant.Type.Int => v.AsInt64(),
-                    Variant.Type.Float => (long)v.AsDouble(),
-                    _ => v.AsInt64(),
+                    Variant.Type.Float => ConvertFloatingNumericId(v.AsDouble()),
+                    _ => null,
                 };
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_id: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus get_id: {ex}");
                 return null;
             }
         }
@@ -185,6 +185,8 @@ namespace STS2RitsuLib.Audio
                 var bus = item.AsGodotObject();
                 if (bus is null || !GodotObject.IsInstanceValid(bus))
                     continue;
+                if (!bus.HasMethod(BusGetStudioGuid) || !bus.HasMethod(BusGetPath))
+                    continue;
 
                 try
                 {
@@ -196,11 +198,19 @@ namespace STS2RitsuLib.Audio
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus enumerate match: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] bus enumerate match: {ex}");
                 }
             }
 
             return null;
+        }
+
+        private static long? ConvertFloatingNumericId(double value)
+        {
+            return !double.IsFinite(value) || value != Math.Truncate(value) ||
+                   value < long.MinValue || value >= 9223372036854775808d
+                ? null
+                : (long)value;
         }
     }
 }

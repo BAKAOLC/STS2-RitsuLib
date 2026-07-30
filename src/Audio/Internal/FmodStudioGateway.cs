@@ -22,7 +22,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FmodServer singleton: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FmodServer singleton: {ex}");
                 return null;
             }
         }
@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Audio.Internal
         {
             result = default;
             var server = TryGetServer();
-            if (server is null)
+            if (server is null || !server.HasMethod(method))
                 return false;
 
             try
@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD {method}: {ex}");
                 return false;
             }
         }

@@ -10,6 +10,10 @@ namespace STS2RitsuLib.Audio
     /// </summary>
     public static class FmodStudioEventInstances
     {
+        private static readonly StringName Start = new("start");
+        private static readonly StringName Stop = new("stop");
+        private static readonly StringName Release = new("release");
+
         private static bool IsUsable([NotNullWhen(true)] GodotObject? instance)
         {
             return instance is not null && GodotObject.IsInstanceValid(instance);
@@ -119,17 +123,17 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryStart(GodotObject? instance)
         {
-            if (!IsUsable(instance))
+            if (!IsUsable(instance) || !instance.HasMethod(Start))
                 return false;
 
             try
             {
-                instance.Call("start");
+                instance.Call(Start);
                 return true;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event start: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event start: {ex}");
                 return false;
             }
         }
@@ -140,17 +144,17 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryStop(GodotObject? instance, bool allowFadeOut = true)
         {
-            if (!IsUsable(instance))
+            if (!IsUsable(instance) || !instance.HasMethod(Stop))
                 return false;
 
             try
             {
-                instance.Call("stop", allowFadeOut ? 0 : 1);
+                instance.Call(Stop, allowFadeOut ? 0 : 1);
                 return true;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event stop: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event stop: {ex}");
                 return false;
             }
         }
@@ -164,13 +168,19 @@ namespace STS2RitsuLib.Audio
             if (!IsUsable(instance))
                 return;
 
+            if (!instance.HasMethod(Release))
+            {
+                RitsuLibFramework.Logger.Warn("[Audio] FMOD event release: instance does not expose release.");
+                return;
+            }
+
             try
             {
-                instance.Call("release");
+                instance.Call(Release);
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event release: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD event release: {ex}");
             }
         }
     }
