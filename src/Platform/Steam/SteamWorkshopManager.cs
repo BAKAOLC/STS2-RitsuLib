@@ -113,6 +113,10 @@ namespace STS2RitsuLib.Platform.Steam
                     PreviewDownloadGate.Release();
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(

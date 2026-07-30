@@ -148,6 +148,11 @@ namespace STS2RitsuLib.Platform.Steam
                             progressToast,
                             downloadFinished);
                     }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        progressToast?.Dismiss();
+                        throw;
+                    }
                     catch (Exception ex)
                     {
                         RitsuLibFramework.Logger.Warn($"[SteamWorkshopUpdate] Check failed: {ex.Message}");
@@ -839,6 +844,18 @@ namespace STS2RitsuLib.Platform.Steam
                             return;
 
                         RitsuToastService.Show(request);
+                    }
+                });
+            }
+
+            public void Dismiss()
+            {
+                PostToMainLoop(() =>
+                {
+                    lock (_syncRoot)
+                    {
+                        _completed = true;
+                        _handle?.Close();
                     }
                 });
             }

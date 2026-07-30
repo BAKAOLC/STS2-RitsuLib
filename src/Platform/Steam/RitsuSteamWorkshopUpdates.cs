@@ -680,6 +680,10 @@ namespace STS2RitsuLib.Platform.Steam
                                previous.Updated != remoteDetails.Updated;
                     }
                 }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn($"[SteamWorkshopUpdate] Check failed: {ex.Message}");
@@ -714,12 +718,14 @@ namespace STS2RitsuLib.Platform.Steam
                 if (items.Count == 0)
                     return false;
 
+                cancellationToken.ThrowIfCancellationRequested();
                 var startedAt = DateTimeOffset.UtcNow;
                 var idleSince = startedAt;
                 var observedDownloadActivity = false;
                 HashSet<ulong> loggedUnavailableProgressItems = [];
-                while (!cancellationToken.IsCancellationRequested)
+                while (true)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var completed = 0;
                     var bytesDownloaded = 0UL;
                     var bytesTotal = 0UL;
@@ -790,8 +796,6 @@ namespace STS2RitsuLib.Platform.Steam
                     await Task.Delay(DownloadProgressPollInterval, cancellationToken)
                         .ConfigureAwait(false);
                 }
-
-                return false;
             }
 
             private bool HasAnyLocalInstallChanged(IReadOnlyDictionary<ulong, DownloadMonitorItem> items)
@@ -1237,12 +1241,12 @@ namespace STS2RitsuLib.Platform.Steam
                     callResultSet.Invoke(callResult, [apiCall, callback]);
                     var timeoutTask = Task.Delay(QueryTimeout, cancellationToken);
                     var completed = await Task.WhenAny(completion.Task, timeoutTask).ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (completed == completion.Task)
                         return await completion.Task.ConfigureAwait(false);
 
-                    if (!cancellationToken.IsCancellationRequested)
-                        RitsuLibFramework.Logger.Warn(
-                            "[SteamWorkshopUpdate] Workshop details query timed out.");
+                    RitsuLibFramework.Logger.Warn(
+                        "[SteamWorkshopUpdate] Workshop details query timed out.");
                     return null;
                 }
                 finally
