@@ -368,6 +368,9 @@ namespace STS2RitsuLib.Audio
 
         private static bool TryApplyRouting(IAudioHandle handle, AudioPlaybackOptions options)
         {
+            if (handle is AudioHandleBase audioHandle)
+                audioHandle.AllowFadeOutOnStop = options.AllowFadeOutOnStop;
+
             var routing = options.Routing;
             if (routing is null)
                 return true;

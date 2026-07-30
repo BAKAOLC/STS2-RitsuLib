@@ -196,7 +196,7 @@ namespace STS2RitsuLib.Audio
                 return;
 
             _disposed = true;
-            TryStop();
+            TryStop(AllowFadeOutOnStop);
             TryRelease();
             AudioLifecycleRegistry.Shared.Detach(this);
             AudioChannelRegistry.Shared.Detach(this);
@@ -233,6 +233,8 @@ namespace STS2RitsuLib.Audio
                 return false;
             }
         }
+
+        internal bool AllowFadeOutOnStop { get; set; } = true;
 
         private bool TryGetInstance(out GodotObject instance)
         {
