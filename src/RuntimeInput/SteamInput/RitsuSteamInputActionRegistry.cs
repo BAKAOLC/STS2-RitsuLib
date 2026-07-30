@@ -5,8 +5,8 @@ using System.Text;
 namespace STS2RitsuLib.RuntimeInput
 {
     /// <summary>
-    ///     Optional Steam Input action registration for runtime hotkeys.
-    ///     运行时热键的可选 Steam Input 动作注册。
+    ///     <para xml:lang="en">Registers optional Steam Input actions for runtime hotkeys.</para>
+    ///     <para xml:lang="zh-CN">为运行时热键注册可选的 Steam Input 动作。</para>
     /// </summary>
     public static class RitsuSteamInputActionRegistry
     {
@@ -17,8 +17,12 @@ namespace STS2RitsuLib.RuntimeInput
         internal static event Action? ActionsChanged;
 
         /// <summary>
-        ///     Registers a Godot action name to be exposed as a Steam Input digital action when Steam is available.
-        ///     当 Steam 可用时，将一个 Godot action 名称注册为可暴露给 Steam Input 的数字动作。
+        ///     <para xml:lang="en">
+        ///         Registers a Godot input action for exposure as a Steam Input digital action when Steam is available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一个 Godot 输入动作，以便在 Steam 可用时将其公开为 Steam Input 数字动作。
+        ///     </para>
         /// </summary>
         public static IDisposable RegisterAction(
             string actionName,

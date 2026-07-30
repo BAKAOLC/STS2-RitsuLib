@@ -4,10 +4,13 @@ using MegaCrit.Sts2.Core.Nodes;
 namespace STS2RitsuLib.RuntimeInput
 {
     /// <summary>
-    ///     Provides a settings-independent runtime hotkey API that parses persisted binding strings and
-    ///     registers input callbacks against a shared router node.
-    ///     提供与设置无关的运行时热键 API，用于解析持久化绑定字符串，并
-    ///     针对共享路由器节点注册输入回调。
+    ///     <para xml:lang="en">
+    ///         Provides a settings-independent runtime hotkey API that parses persisted bindings and routes callbacks through
+    ///         a shared input node.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供独立于设置系统的运行时热键 API，用于解析持久化绑定，并通过共享输入节点路由回调。
+    ///     </para>
     /// </summary>
     public static class RuntimeHotkeyService
     {
@@ -16,8 +19,8 @@ namespace STS2RitsuLib.RuntimeInput
         private static IDisposable? _lifecycleSubscription;
 
         /// <summary>
-        ///     Ensures the shared router will be attached when the game root becomes ready.
-        ///     确保游戏根节点 ready 后会附加共享路由器。
+        ///     <para xml:lang="en">Schedules the shared router to be attached when the game root becomes ready.</para>
+        ///     <para xml:lang="zh-CN">安排在游戏根节点就绪时附加共享路由器。</para>
         /// </summary>
         public static void Initialize()
         {
@@ -31,8 +34,8 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Returns read-only snapshots for all currently registered runtime hotkeys.
-        ///     返回所有当前已注册运行时热键的只读快照。
+        ///     <para xml:lang="en">Gets compatibility snapshots for all registered runtime hotkeys.</para>
+        ///     <para xml:lang="zh-CN">获取所有已注册运行时热键的兼容快照。</para>
         /// </summary>
         public static IReadOnlyList<RuntimeHotkeyRegistrationInfo> GetRegisteredHotkeys()
         {
@@ -43,8 +46,8 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Returns detailed read-only snapshots for all currently registered runtime hotkeys, including every binding.
-        ///     返回所有当前已注册运行时热键的详细只读快照，包括每个绑定。
+        ///     <para xml:lang="en">Gets detailed snapshots for all registered runtime hotkeys and their bindings.</para>
+        ///     <para xml:lang="zh-CN">获取所有已注册运行时热键及其绑定的详细快照。</para>
         /// </summary>
         public static IReadOnlyList<RuntimeHotkeyRegistrationDetails> GetRegisteredHotkeyDetails()
         {
@@ -55,20 +58,26 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Tries to return the currently registered hotkey snapshot for a stable registration id.
-        ///     尝试返回稳定注册 id 对应的当前已注册热键快照。
+        ///     <para xml:lang="en">Tries to find a registered hotkey by its stable identifier.</para>
+        ///     <para xml:lang="zh-CN">尝试按稳定标识符查找已注册热键。</para>
         /// </summary>
         /// <param name="id">
-        ///     Stable registration id to locate.
-        ///     要定位的稳定注册 id。
+        ///     <para xml:lang="en">The stable registration identifier to find.</para>
+        ///     <para xml:lang="zh-CN">要查找的稳定注册标识符。</para>
         /// </param>
         /// <param name="registrationInfo">
-        ///     Registration snapshot when a matching id exists.
-        ///     存在匹配 id 时的注册快照。
+        ///     <para xml:lang="en">Receives the matching registration snapshot.</para>
+        ///     <para xml:lang="zh-CN">接收匹配的注册快照。</para>
         /// </param>
         /// <returns>
-        ///     <c>true</c> when a matching registration was found.
-        ///     找到匹配注册时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if a matching registration was found; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若找到匹配的注册，则返回 <see langword="true" />；否则返回
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryGetRegisteredHotkey(string id, out RuntimeHotkeyRegistrationInfo registrationInfo)
         {
@@ -87,20 +96,26 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Attempts to normalize a persisted binding string into the runtime hotkey canonical format.
-        ///     尝试将持久化绑定字符串规范化为运行时热键规范格式。
+        ///     <para xml:lang="en">Tries to parse a persisted binding into its canonical form.</para>
+        ///     <para xml:lang="zh-CN">尝试将持久化绑定解析为规范形式。</para>
         /// </summary>
         /// <param name="bindingText">
-        ///     Binding text to normalize.
-        ///     要规范化的绑定文本。
+        ///     <para xml:lang="en">The binding text to normalize.</para>
+        ///     <para xml:lang="zh-CN">要规范化的绑定文本。</para>
         /// </param>
         /// <param name="normalizedBinding">
-        ///     Canonical binding string when parsing succeeds.
-        ///     解析成功时的规范绑定字符串。
+        ///     <para xml:lang="en">Receives the canonical binding when parsing succeeds.</para>
+        ///     <para xml:lang="zh-CN">解析成功时接收规范化绑定。</para>
         /// </param>
         /// <returns>
-        ///     <c>true</c> when the binding string was parsed successfully.
-        ///     绑定字符串成功解析时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the binding was parsed; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若成功解析绑定，则返回 <see langword="true" />；否则返回
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryNormalizeBinding(string? bindingText, out string normalizedBinding)
         {
@@ -108,12 +123,12 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Returns the canonical runtime input binding string for a Godot/STS2 action.
-        ///     返回 Godot/STS2 action 的规范运行时输入绑定字符串。
+        ///     <para xml:lang="en">Creates the canonical runtime binding for a Godot input action.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 输入动作创建规范化运行时绑定。</para>
         /// </summary>
         /// <param name="actionName">
-        ///     Action name such as <c>accept</c> or <c>view_map</c>.
-        ///     action 名称，例如 <c>accept</c> 或 <c>view_map</c>。
+        ///     <para xml:lang="en">The input action name, such as <c>accept</c> or <c>view_map</c>.</para>
+        ///     <para xml:lang="zh-CN">输入动作名称，例如 <c>accept</c> 或 <c>view_map</c>。</para>
         /// </param>
         public static string ActionBinding(string actionName)
         {
@@ -121,16 +136,16 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Returns the normalized binding string, or <paramref name="fallback" /> when parsing fails.
-        ///     返回规范化绑定字符串；解析失败时返回 <paramref name="fallback" />。
+        ///     <para xml:lang="en">Normalizes a binding, returning <paramref name="fallback" /> if parsing fails.</para>
+        ///     <para xml:lang="zh-CN">规范化绑定；解析失败时返回 <paramref name="fallback" />。</para>
         /// </summary>
         /// <param name="bindingText">
-        ///     Binding text to normalize.
-        ///     要规范化的绑定文本。
+        ///     <para xml:lang="en">The binding text to normalize.</para>
+        ///     <para xml:lang="zh-CN">要规范化的绑定文本。</para>
         /// </param>
         /// <param name="fallback">
-        ///     Fallback value returned when parsing fails.
-        ///     解析失败时返回的回退值。
+        ///     <para xml:lang="en">The value returned when parsing fails.</para>
+        ///     <para xml:lang="zh-CN">解析失败时返回的值。</para>
         /// </param>
         public static string NormalizeOrDefault(string? bindingText, string fallback)
         {
@@ -138,26 +153,29 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Registers a runtime hotkey directly from a persisted binding string.
-        ///     直接从持久化绑定字符串注册运行时热键。
+        ///     <para xml:lang="en">Registers one runtime hotkey from a persisted binding.</para>
+        ///     <para xml:lang="zh-CN">从一个持久化绑定注册运行时热键。</para>
         /// </summary>
         /// <param name="bindingText">
-        ///     Persisted binding string to parse.
-        ///     要解析的持久化绑定字符串。
+        ///     <para xml:lang="en">The persisted binding to parse.</para>
+        ///     <para xml:lang="zh-CN">要解析的持久化绑定。</para>
         /// </param>
         /// <param name="callback">
-        ///     Callback invoked when the hotkey matches.
-        ///     热键匹配时调用的回调。
+        ///     <para xml:lang="en">The callback invoked when the hotkey matches.</para>
+        ///     <para xml:lang="zh-CN">热键匹配时调用的回调。</para>
         /// </param>
         /// <param name="options">
-        ///     Optional router behavior overrides.
-        ///     可选路由器行为覆盖。
+        ///     <para xml:lang="en">Optional routing and presentation settings.</para>
+        ///     <para xml:lang="zh-CN">可选的路由与显示设置。</para>
         /// </param>
         /// <returns>
-        ///     A handle that supports explicit rebind and unregister operations.
-        ///     支持显式重新绑定和注销操作的句柄。
+        ///     <para xml:lang="en">A handle for rebinding or unregistering the hotkey.</para>
+        ///     <para xml:lang="zh-CN">用于重新绑定或注销热键的句柄。</para>
         /// </returns>
-        /// <exception cref="FormatException">Thrown when <paramref name="bindingText" /> is invalid.</exception>
+        /// <exception cref="FormatException">
+        ///     <para xml:lang="en">Thrown when <paramref name="bindingText" /> is invalid.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="bindingText" /> 无效时引发。</para>
+        /// </exception>
         public static IRuntimeHotkeyHandle Register(string bindingText, Action callback,
             RuntimeHotkeyOptions? options = null)
         {
@@ -165,26 +183,29 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Registers one logical runtime hotkey against multiple persisted binding strings.
-        ///     针对多个持久化绑定字符串注册一个逻辑运行时热键。
+        ///     <para xml:lang="en">Registers one runtime hotkey with multiple persisted bindings.</para>
+        ///     <para xml:lang="zh-CN">使用多个持久化绑定注册一个运行时热键。</para>
         /// </summary>
         /// <param name="bindingTexts">
-        ///     Persisted binding strings to parse.
-        ///     要解析的持久化绑定字符串。
+        ///     <para xml:lang="en">The persisted bindings to parse.</para>
+        ///     <para xml:lang="zh-CN">要解析的持久化绑定。</para>
         /// </param>
         /// <param name="callback">
-        ///     Callback invoked when any registered binding matches.
-        ///     任意已注册绑定匹配时调用的回调。
+        ///     <para xml:lang="en">The callback invoked when any binding matches.</para>
+        ///     <para xml:lang="zh-CN">任一绑定匹配时调用的回调。</para>
         /// </param>
         /// <param name="options">
-        ///     Optional router behavior overrides.
-        ///     可选路由器行为覆盖。
+        ///     <para xml:lang="en">Optional routing and presentation settings.</para>
+        ///     <para xml:lang="zh-CN">可选的路由与显示设置。</para>
         /// </param>
         /// <returns>
-        ///     A handle that supports explicit rebind and unregister operations.
-        ///     支持显式重新绑定和注销操作的句柄。
+        ///     <para xml:lang="en">A handle for rebinding or unregistering the hotkey.</para>
+        ///     <para xml:lang="zh-CN">用于重新绑定或注销热键的句柄。</para>
         /// </returns>
-        /// <exception cref="FormatException">Thrown when any binding is invalid.</exception>
+        /// <exception cref="FormatException">
+        ///     <para xml:lang="en">Thrown when any binding is invalid or no binding is provided.</para>
+        ///     <para xml:lang="zh-CN">当任一绑定无效或未提供任何绑定时引发。</para>
+        /// </exception>
         public static IRuntimeHotkeyHandle Register(IEnumerable<string> bindingTexts, Action callback,
             RuntimeHotkeyOptions? options = null)
         {

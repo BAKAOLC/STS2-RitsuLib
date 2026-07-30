@@ -3,20 +3,20 @@ using STS2RitsuLib.Settings;
 namespace STS2RitsuLib.RuntimeInput
 {
     /// <summary>
-    ///     Deferred runtime hotkey metadata text that can be fixed or resolved dynamically at read time.
-    ///     延迟的运行时热键元数据文本，可在读取时固定或动态解析。
+    ///     <para xml:lang="en">Represents fixed or dynamically resolved runtime hotkey metadata text.</para>
+    ///     <para xml:lang="zh-CN">表示固定或动态解析的运行时热键元数据文本。</para>
     /// </summary>
     public abstract class RuntimeHotkeyText
     {
         /// <summary>
-        ///     Resolves the text for the current locale or runtime state.
-        ///     为当前区域设置或运行时状态解析文本。
+        ///     <para xml:lang="en">Resolves the text for the current locale and runtime state.</para>
+        ///     <para xml:lang="zh-CN">根据当前区域设置与运行时状态解析文本。</para>
         /// </summary>
         public abstract string Resolve();
 
         /// <summary>
-        ///     Creates fixed text that never changes.
-        ///     创建永不变化的固定文本。
+        ///     <para xml:lang="en">Creates fixed text.</para>
+        ///     <para xml:lang="zh-CN">创建固定文本。</para>
         /// </summary>
         public static RuntimeHotkeyText Literal(string text)
         {
@@ -24,8 +24,8 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Creates text resolved dynamically each time metadata is read.
-        ///     创建每次读取元数据时动态解析的文本。
+        ///     <para xml:lang="en">Creates text that is resolved each time the metadata is read.</para>
+        ///     <para xml:lang="zh-CN">创建每次读取元数据时动态解析的文本。</para>
         /// </summary>
         public static RuntimeHotkeyText Dynamic(Func<string> resolver)
         {
@@ -34,8 +34,8 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Implicitly wraps a fixed string.
-        ///     隐式包装固定字符串。
+        ///     <para xml:lang="en">Wraps a fixed string.</para>
+        ///     <para xml:lang="zh-CN">包装固定字符串。</para>
         /// </summary>
         public static implicit operator RuntimeHotkeyText(string text)
         {
@@ -43,8 +43,8 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Implicitly wraps deferred mod-settings text.
-        ///     隐式包装延迟的 mod 设置文本。
+        ///     <para xml:lang="en">Wraps deferred mod settings text.</para>
+        ///     <para xml:lang="zh-CN">包装延迟解析的模组设置文本。</para>
         /// </summary>
         public static implicit operator RuntimeHotkeyText(ModSettingsText text)
         {
@@ -53,8 +53,8 @@ namespace STS2RitsuLib.RuntimeInput
         }
 
         /// <summary>
-        ///     Implicitly wraps a deferred string resolver.
-        ///     隐式包装延迟的字符串解析器。
+        ///     <para xml:lang="en">Wraps a deferred string resolver.</para>
+        ///     <para xml:lang="zh-CN">包装延迟执行的字符串解析器。</para>
         /// </summary>
         public static implicit operator RuntimeHotkeyText(Func<string> resolver)
         {
