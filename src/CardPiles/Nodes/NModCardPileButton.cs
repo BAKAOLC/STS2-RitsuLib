@@ -490,12 +490,32 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 }
 
                 // Keep the same Control/Icon path and retain the clone's scene-authored layout.
-                var host = _icon.GetParent();
-                _icon.QueueFree();
+                var previousIcon = _icon;
+                var previousName = default(StringName);
+                var previousRenamed = false;
+                try
+                {
+                    previousName = previousIcon.Name;
+                    var host = previousIcon.GetParent();
+                    control.Name = $"__RitsuLibPendingIcon_{control.GetInstanceId()}";
+                    host.AddChild(control);
+                    host.MoveChild(control, previousIcon.GetIndex());
+                    previousIcon.Name = $"__RitsuLibPreviousIcon_{previousIcon.GetInstanceId()}";
+                    previousRenamed = true;
+                    control.Name = previousName;
+                    previousIcon.QueueFree();
+                }
+                catch
+                {
+                    control.QueueFree();
+                    if (previousRenamed && IsInstanceValid(previousIcon) && !previousIcon.IsQueuedForDeletion())
+                        previousIcon.Name = previousName;
+                    throw;
+                }
+
                 _icon = control;
-                host.AddChild(_icon);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[ModCardPileButton] Could not clone vanilla %Deck icon for action button: {ex}");
@@ -535,17 +555,39 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
                 // Retain scene-authored layout and theme overrides while applying the identity and input
                 // settings expected by this button.
-                var text = _countLabel.Text;
-                var visible = _countLabel.Visible;
-                _countLabel.QueueFree();
-                cloneLabel.Name = "Count";
-                cloneLabel.MouseFilter = MouseFilterEnum.Ignore;
-                cloneLabel.Visible = visible;
-                cloneLabel.SetTextAutoSize(string.IsNullOrEmpty(text) ? "0" : text);
+                var previousCountLabel = _countLabel;
+                var previousName = default(StringName);
+                var previousRenamed = false;
+                try
+                {
+                    var text = previousCountLabel.Text;
+                    var visible = previousCountLabel.Visible;
+                    previousName = previousCountLabel.Name;
+                    cloneLabel.Name = $"__RitsuLibPendingCount_{cloneLabel.GetInstanceId()}";
+                    cloneLabel.MouseFilter = MouseFilterEnum.Ignore;
+                    cloneLabel.Visible = visible;
+                    cloneLabel.SetTextAutoSize(string.IsNullOrEmpty(text) ? "0" : text);
+                    AddChild(cloneLabel);
+                    MoveChild(cloneLabel, previousCountLabel.GetIndex());
+                    previousCountLabel.Name =
+                        $"__RitsuLibPreviousCount_{previousCountLabel.GetInstanceId()}";
+                    previousRenamed = true;
+                    cloneLabel.Name = previousName;
+                    previousCountLabel.QueueFree();
+                }
+                catch
+                {
+                    cloneLabel.QueueFree();
+                    if (previousRenamed
+                        && IsInstanceValid(previousCountLabel)
+                        && !previousCountLabel.IsQueuedForDeletion())
+                        previousCountLabel.Name = previousName;
+                    throw;
+                }
+
                 _countLabel = cloneLabel;
-                AddChild(_countLabel);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[ModCardPileButton] Could not clone vanilla %Deck count label: {ex}");
