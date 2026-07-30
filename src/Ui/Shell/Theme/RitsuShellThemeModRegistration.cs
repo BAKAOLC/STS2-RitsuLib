@@ -3,21 +3,34 @@ using System.Text.Json;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Mod-supplied default tokens that participate in every snapshot build, plus an optional callback
-    ///     invoked after each snapshot is published.
-    ///     mod 提供的默认令牌会参与每次快照构建，另有一个可选回调
-    ///     会在每个快照发布后调用。
+    ///     <para xml:lang="en">
+    ///         Describes a mod's default token contribution and optional callback for newly published
+    ///         shell-theme snapshots.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述模组贡献的默认令牌，以及可选的外壳主题新快照发布回调。
+    ///     </para>
     /// </summary>
     /// <param name="ModId">
-    ///     Mod identifier (used to namespace <c>scopes.mod:&lt;modId&gt;</c> + extensions).
+    ///     <para xml:lang="en">
+    ///         The mod identifier used by <c>scopes.mod:&lt;modId&gt;</c> and extension data.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         <c>scopes.mod:&lt;modId&gt;</c> 及扩展数据使用的模组标识符。
+    ///     </para>
     /// </param>
     /// <param name="Defaults">
-    ///     Optional DTFM tree (object) merged before chain documents.
-    ///     可选 DTFM 树 (对象) 合并后 在链式文档之前。
+    ///     <para xml:lang="en">
+    ///         The optional Design Tokens Format Module object merged before the selected theme's inheritance
+    ///         chain.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的设计令牌格式模块对象，会在所选主题的继承链之前合并。
+    ///     </para>
     /// </param>
     /// <param name="OnApply">
-    ///     Optional callback fired after every theme rebuild with the new snapshot.
-    ///     每次主题重建后，带着新快照触发的可选回调。
+    ///     <para xml:lang="en">The optional callback invoked after a rebuilt snapshot is published.</para>
+    ///     <para xml:lang="zh-CN">重建后的快照发布后调用的可选回调。</para>
     /// </param>
     public sealed record RitsuShellThemeModRegistration(
         string ModId,

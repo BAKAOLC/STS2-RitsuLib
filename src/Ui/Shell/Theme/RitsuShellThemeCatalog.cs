@@ -3,10 +3,14 @@ using System.Text.Json;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Loads built-in (embedded) and disk-side <c>.theme.json</c> documents into a per-id cache, then
-    ///     resolves inheritance, scope overlays, and references when asked to build a snapshot.
-    ///     将内置（嵌入式）和磁盘侧 <c>.theme.json</c> 文档加载到按 id 划分的缓存，然后
-    ///     在请求构建快照时解析继承、作用域覆盖和引用。
+    ///     <para xml:lang="en">
+    ///         Loads embedded and on-disk <c>.theme.json</c> documents into a catalog, then resolves inheritance,
+    ///         scope overlays, and token references when building a snapshot.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将内嵌及磁盘上的 <c>.theme.json</c> 文档加载到主题目录，并在构建快照时解析继承关系、
+    ///         作用域覆盖及令牌引用。
+    ///     </para>
     /// </summary>
     public static class RitsuShellThemeCatalog
     {
@@ -17,8 +21,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static Dictionary<string, RitsuShellThemeDocument>? _byId;
 
         /// <summary>
-        ///     Sorted list of theme ids currently in the catalog (lowercase).
-        ///     排序列表 of theme ids 当前在目录中 (小写)。
+        ///     <para xml:lang="en">
+        ///         Gets a new ordinally sorted list of the normalized theme identifiers in the current catalog.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取当前目录中规范化主题标识符的新列表，并按序数顺序排列。
+        ///     </para>
         /// </summary>
         public static IReadOnlyList<string> RegisteredThemeIds
         {
@@ -32,8 +40,8 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Drops the in-memory cache so the next call to <see cref="EnsureLoaded" /> reloads all themes.
-        ///     丢弃内存缓存，使下一次调用 <see cref="EnsureLoaded" /> 时重新加载所有主题。
+        ///     <para xml:lang="en">Invalidates the in-memory catalog so the next access reloads all themes.</para>
+        ///     <para xml:lang="zh-CN">使内存中的主题目录失效，以便下次访问时重新加载全部主题。</para>
         /// </summary>
         public static void InvalidateCache()
         {
@@ -44,10 +52,15 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Loads themes from the assembly manifest and the on-disk themes directory; extracts missing
-        ///     embedded themes to disk so they show up next to user-authored themes.
-        ///     从程序集清单和磁盘主题目录加载主题；将缺失的
-        ///     嵌入式主题提取到磁盘，使它们显示在用户编写的主题旁边。
+        ///     <para xml:lang="en">
+        ///         Loads embedded themes and theme files from disk. Missing embedded files are extracted beside
+        ///         user-authored themes, and newer embedded revisions replace older disk copies after a
+        ///         best-effort backup.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         加载内嵌主题及磁盘主题文件。缺失的内嵌主题会提取到用户主题所在目录；若内嵌修订较新，
+        ///         则会在尽力备份后替换磁盘上的旧副本。
+        ///     </para>
         /// </summary>
         public static void EnsureLoaded()
         {
@@ -145,30 +158,52 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Builds a fully-merged, reference-resolved <see cref="RitsuShellTheme" /> snapshot for
-        ///     <paramref name="themeId" />, merging mod-registered defaults along the way.
-        ///     为 <paramref name="themeId" /> 构建完全合并、已解析引用的 <see cref="RitsuShellTheme" /> 快照，
-        ///     并在过程中合并 mod 注册的默认值。
+        ///     <para xml:lang="en">
+        ///         Tries to build a merged, reference-resolved <see cref="RitsuShellTheme" /> snapshot for
+        ///         <paramref name="themeId" />, including registered mod defaults.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试为 <paramref name="themeId" /> 构建已合并并完成引用解析的
+        ///         <see cref="RitsuShellTheme" /> 快照，其中包含已注册的模组默认令牌。
+        ///     </para>
         /// </summary>
         /// <param name="themeId">
-        ///     Target theme id (case-insensitive). Empty falls back to <c>default</c>.
-        ///     目标主题 id (不区分大小写). 为空时回退到 <c>default</c>。
+        ///     <para xml:lang="en">
+        ///         The case-insensitive theme identifier. A blank value selects <c>default</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不区分大小写的主题标识符；空白值选择 <c>default</c>。
+        ///     </para>
         /// </param>
         /// <param name="modRegistrations">
-        ///     Registered mod token contributions (default trees and extension blobs).
-        ///     已注册的 mod 令牌贡献（默认树和扩展 blob）。
+        ///     <para xml:lang="en">The registered mod token contributions to merge before theme documents.</para>
+        ///     <para xml:lang="zh-CN">在主题文档之前合并的已注册模组令牌贡献。</para>
         /// </param>
         /// <param name="resolvedId">
-        ///     Resolved id used for <see cref="RitsuShellTheme.Id" />.
-        ///     用于 <see cref="RitsuShellTheme.Id" /> 的解析后 id。
+        ///     <para xml:lang="en">
+        ///         Receives the normalized requested identifier, including when the build fails.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         接收规范化后的请求标识符，包括构建失败时。
+        ///     </para>
         /// </param>
         /// <param name="theme">
-        ///     Built snapshot when successful.
-        ///     构建出的快照 成功时。
+        ///     <para xml:lang="en">
+        ///         Receives the completed snapshot on success, or <see langword="null" /> on failure.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         成功时接收构建完成的快照；失败时为 <see langword="null" />。
+        ///     </para>
         /// </param>
         /// <returns>
-        ///     <see langword="true" /> if both target and <c>default</c> chain are loadable.
-        ///     <see langword="true" /> if 目标和 <c>default</c> 链都可加载。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the target exists, its inheritance chain is valid, and all token
+        ///         references resolve; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若目标存在、继承链有效且所有令牌引用均可解析，则为 <see langword="true" />；否则为
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryBuildSnapshot(string themeId,
             IReadOnlyList<RitsuShellThemeModRegistration> modRegistrations,
@@ -228,20 +263,38 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Overwrites one disk theme file with its embedded built-in counterpart.
-        ///     用对应的嵌入式内置主题覆盖一个磁盘主题文件。
+        ///     <para xml:lang="en">
+        ///         Tries to replace one disk theme file with its embedded counterpart.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试使用对应的内嵌主题替换一个磁盘主题文件。
+        ///     </para>
         /// </summary>
         /// <param name="themeId">
-        ///     Theme id to restore (case-insensitive, empty falls back to default).
-        ///     要恢复的主题 id (不区分大小写, empty 回退到 default)。
+        ///     <para xml:lang="en">
+        ///         The case-insensitive theme identifier to restore. A blank value selects <c>default</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         要恢复的不区分大小写主题标识符；空白值选择 <c>default</c>。
+        ///     </para>
         /// </param>
         /// <param name="restoredPath">
-        ///     Absolute path of the restored file when successful.
-        ///     成功时恢复文件的绝对路径。
+        ///     <para xml:lang="en">
+        ///         Receives the absolute path of the restored file on success, or an empty string on failure.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         成功时接收已恢复文件的绝对路径；失败时为空字符串。
+        ///     </para>
         /// </param>
         /// <returns>
-        ///     <see langword="true" /> when the embedded source exists and was written to disk.
-        ///     当嵌入式源存在并已写入磁盘时，为 <see langword="true" />。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if an embedded counterpart exists and is written successfully;
+        ///         otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若存在内嵌对应项且成功写入，则为 <see langword="true" />；否则为
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryRestoreDiskThemeFromEmbedded(string themeId, out string restoredPath)
         {
@@ -270,16 +323,29 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Resets all existing disk theme files that have embedded counterparts.
-        ///     重置 all 现有磁盘主题文件 that have 嵌入式对应项。
+        ///     <para xml:lang="en">
+        ///         Tries to replace every existing disk theme that has an embedded counterpart.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试替换所有存在内嵌对应项的现有磁盘主题。
+        ///     </para>
         /// </summary>
         /// <param name="restoredCount">
-        ///     How many disk theme files were overwritten.
-        ///     数量： 磁盘主题文件s 被覆盖。
+        ///     <para xml:lang="en">
+        ///         Receives the number of files replaced before the method completes or fails.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         接收方法完成或失败前已替换的文件数。
+        ///     </para>
         /// </param>
         /// <returns>
-        ///     <see langword="true" /> if the operation completed without fatal setup failures.
-        ///     如果操作完成且没有致命设置失败，则为 <see langword="true" />。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if enumeration and all required writes complete; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若枚举及所有必要写入均完成，则为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryRestoreAllExistingDiskThemesFromEmbedded(out int restoredCount)
         {
