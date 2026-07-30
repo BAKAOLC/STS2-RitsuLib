@@ -309,7 +309,22 @@ namespace STS2RitsuLib.Utils
         private static string GetDirectoryFromPath(string filePath)
         {
             var lastSlash = filePath.LastIndexOf('/');
-            return lastSlash > 0 ? filePath[..lastSlash] : "user://";
+            if (lastSlash < 0)
+                return "user://";
+
+            var schemeSeparator = filePath.IndexOf("://", StringComparison.Ordinal);
+            if (schemeSeparator >= 0)
+            {
+                var schemeRootLength = schemeSeparator + 3;
+                return lastSlash < schemeRootLength ? filePath[..schemeRootLength] : filePath[..lastSlash];
+            }
+
+            if (lastSlash == 0)
+                return "/";
+            if (lastSlash == 2 && filePath.Length > 2 && filePath[1] == ':')
+                return filePath[..3];
+
+            return filePath[..lastSlash];
         }
 
         /// <summary>
@@ -450,8 +465,7 @@ namespace STS2RitsuLib.Utils
                     return new() { Success = true };
                 }
 
-                var pathParts = filePath.Split('/');
-                var directory = pathParts.Length > 1 ? string.Join("/", pathParts[..^1]) : "user://";
+                var directory = GetDirectoryFromPath(filePath);
 
                 var dirAccess = DirAccess.Open(directory);
                 if (dirAccess == null)
@@ -513,45 +527,80 @@ namespace STS2RitsuLib.Utils
                 using var dirAccess = DirAccess.Open(directoryPath);
                 if (dirAccess == null)
                 {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[{context}] Failed to open directory '{directoryPath}'");
+                    var error = DirAccess.GetOpenError();
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[{context}] Failed to open directory '{directoryPath}' (Error: {error})");
                     return new()
                     {
                         Success = false,
-                        ErrorMessage = $"Failed to open directory '{directoryPath}'",
+                        ErrorCode = error,
+                        ErrorMessage = $"Failed to open directory '{directoryPath}' (Error: {error})",
                     };
                 }
 
+                WriteResult? firstChildFailure = null;
                 foreach (var file in dirAccess.GetFiles())
                 {
                     var filePath = $"{directoryPath}/{file}";
                     var result = DeleteFile(filePath, context);
-                    if (!result.Success)
-                        RitsuLibFramework.Logger.Warn(
-                            $"[{context}] Failed to delete file '{filePath}': {result.ErrorMessage}");
+                    if (result.Success)
+                        continue;
+
+                    RitsuLibFramework.Logger.Warn(
+                        $"[{context}] Failed to delete file '{filePath}': {result.ErrorMessage}");
+                    firstChildFailure ??= new()
+                    {
+                        Success = false,
+                        ErrorCode = result.ErrorCode,
+                        ErrorMessage = $"Failed to delete child file '{filePath}': {result.ErrorMessage}",
+                    };
                 }
 
                 foreach (var subDir in dirAccess.GetDirectories())
                 {
                     var subDirPath = $"{directoryPath}/{subDir}";
-                    DeleteDirectoryRecursive(subDirPath, context);
+                    var result = DeleteDirectoryRecursive(subDirPath, context);
+                    if (result.Success)
+                        continue;
+
+                    firstChildFailure ??= new()
+                    {
+                        Success = false,
+                        ErrorCode = result.ErrorCode,
+                        ErrorMessage = $"Failed to delete child directory '{subDirPath}': {result.ErrorMessage}",
+                    };
                 }
+
+                if (firstChildFailure != null)
+                    return firstChildFailure;
 
                 var parentPath = GetDirectoryFromPath(directoryPath);
                 using var parentAccess = DirAccess.Open(parentPath);
-                if (parentAccess != null)
+                if (parentAccess == null)
                 {
-                    var error = parentAccess.Remove(directoryPath);
-                    if (error != Error.Ok)
+                    var error = DirAccess.GetOpenError();
+                    RitsuLibFramework.Logger.Warn(
+                        $"[{context}] Failed to open parent directory '{parentPath}' while deleting "
+                        + $"'{directoryPath}' (Error: {error})");
+                    return new()
                     {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[{context}] Failed to remove directory '{directoryPath}' (Error: {error})");
-                        return new()
-                        {
-                            Success = false,
-                            ErrorCode = error,
-                            ErrorMessage = $"Failed to remove directory (Error: {error})",
-                        };
-                    }
+                        Success = false,
+                        ErrorCode = error,
+                        ErrorMessage = $"Failed to open parent directory '{parentPath}' (Error: {error})",
+                    };
+                }
+
+                var removeError = parentAccess.Remove(directoryPath);
+                if (removeError != Error.Ok)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[{context}] Failed to remove directory '{directoryPath}' (Error: {removeError})");
+                    return new()
+                    {
+                        Success = false,
+                        ErrorCode = removeError,
+                        ErrorMessage = $"Failed to remove directory (Error: {removeError})",
+                    };
                 }
 
                 RitsuLibFramework.Logger.Info($"[{context}] Successfully deleted directory '{directoryPath}'");
