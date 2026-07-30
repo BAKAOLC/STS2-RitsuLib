@@ -59,6 +59,7 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 EnsureLoaded();
+                var previous = Normalize(_document!);
                 var consent = GetOrCreate(applicantId);
                 consent.Consent = state;
                 consent.GrantedRequests = grantedRequests == null
@@ -66,7 +67,16 @@ namespace STS2RitsuLib.Telemetry
                     : new(grantedRequests, StringComparer.OrdinalIgnoreCase);
                 if (state != TelemetryConsentState.Granted)
                     consent.SharedContributionSources.Clear();
-                Save();
+                try
+                {
+                    Save();
+                }
+                catch
+                {
+                    _document = previous;
+                    throw;
+                }
+
                 RitsuLibFramework.Logger.Info(
                     $"[Telemetry] Applicant consent updated: {applicantId} -> {state} ({consent.GrantedRequests.Count} granted request(s)).");
             }
@@ -89,6 +99,7 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 EnsureLoaded();
+                var previous = Normalize(_document!);
                 var consent = GetOrCreate(applicantId);
                 if (!consent.SharedContributionSources.TryGetValue(contributorModId, out var ids))
                 {
@@ -104,7 +115,16 @@ namespace STS2RitsuLib.Telemetry
                 if (ids.Count == 0)
                     consent.SharedContributionSources.Remove(contributorModId);
 
-                Save();
+                try
+                {
+                    Save();
+                }
+                catch
+                {
+                    _document = previous;
+                    throw;
+                }
+
                 RitsuLibFramework.Logger.Info(
                     $"[Telemetry] Shared contribution consent updated: applicant={applicantId}, source={contributorModId}/{contributionId}, granted={granted}.");
             }
@@ -133,7 +153,14 @@ namespace STS2RitsuLib.Telemetry
 
         private static void Save()
         {
-            FileOperations.WriteJson(TelemetryPaths.ConsentPath, _document, TelemetryJson.Options, "TelemetryConsent");
+            var result = FileOperations.WriteJson(
+                TelemetryPaths.ConsentPath,
+                _document,
+                TelemetryJson.Options,
+                "TelemetryConsent");
+            if (!result.Success)
+                throw new InvalidOperationException(
+                    $"Failed to persist telemetry consent: {result.ErrorMessage}");
         }
 
         private static TelemetryConsentDocument Normalize(TelemetryConsentDocument document)
