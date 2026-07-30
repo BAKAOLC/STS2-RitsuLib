@@ -278,6 +278,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             ApplyLayout();
             ApplyLabelTheme();
+            if (_plan != null && _line != null)
+                Refresh(_plan, _line);
         }
 
         /// <summary>
@@ -289,11 +291,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             _useId = null;
             _resourceId = resourceId.Trim();
+            _definition = null;
 
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
                 Bind(definition);
             else if (IsNodeReady())
+            {
+                ApplyDefinition();
                 UpdateVisibility(false);
+            }
         }
 
         /// <summary>
@@ -311,6 +317,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             ApplyDefinition();
+            if (_boundCard != null)
+                Refresh(_boundCard);
         }
 
         /// <summary>
@@ -324,11 +332,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             _useId = useId.Trim();
             _resourceId = resourceId.Trim();
+            _definition = null;
 
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
                 BindUse(_useId, definition);
             else if (IsNodeReady())
+            {
+                ApplyDefinition();
                 UpdateVisibility(false);
+            }
         }
 
         /// <summary>
@@ -348,6 +360,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             ApplyDefinition();
+            if (_boundCard != null)
+                Refresh(_boundCard);
         }
 
         /// <summary>
@@ -467,6 +481,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <inheritdoc />
+        public override void _EnterTree()
+        {
+            UpdateStateSubscription();
+        }
+
+        /// <inheritdoc />
         public override void _Ready()
         {
             MouseFilter = MouseFilterEnum.Ignore;
@@ -527,8 +547,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private void ApplyDefinition()
         {
-            if (_definition == null || _texture == null)
+            if (_texture == null)
                 return;
+
+            if (_definition == null)
+            {
+                _texture.Texture = null;
+                return;
+            }
 
             var path = _definition.LargeIconPath ?? _definition.SmallIconPath;
             _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
