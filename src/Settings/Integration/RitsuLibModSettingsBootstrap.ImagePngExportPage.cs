@@ -58,7 +58,7 @@ namespace STS2RitsuLib.Settings
                             v => v.ToString("0.##", CultureInfo.InvariantCulture))
                         .AddString(
                             "card_png_export_id_filter",
-                            T("ritsulib.cardPngExport.filter.label", "Card id contains (optional)"),
+                            T("ritsulib.cardPngExport.filter.label", "Card ID contains (optional)"),
                             ui.CardPngExportIdFilter,
                             T("ritsulib.cardPngExport.filter.placeholder", "Empty = all cards; e.g. WINE_"),
                             256,
@@ -106,7 +106,7 @@ namespace STS2RitsuLib.Settings
                             v => v.ToString("0.##", CultureInfo.InvariantCulture))
                         .AddString(
                             "relic_detail_png_export_id_filter",
-                            T("ritsulib.relicDetailPngExport.filter.label", "Relic id contains (optional)"),
+                            T("ritsulib.relicDetailPngExport.filter.label", "Relic ID contains (optional)"),
                             ui.RelicDetailPngExportIdFilter,
                             T("ritsulib.relicDetailPngExport.filter.placeholder", "Empty = all; e.g. CIRCLET"),
                             256,
@@ -158,7 +158,7 @@ namespace STS2RitsuLib.Settings
                             v => v.ToString("0.##", CultureInfo.InvariantCulture))
                         .AddString(
                             "potion_detail_png_export_id_filter",
-                            T("ritsulib.potionDetailPngExport.filter.label", "Potion id contains (optional)"),
+                            T("ritsulib.potionDetailPngExport.filter.label", "Potion ID contains (optional)"),
                             ui.PotionDetailPngExportIdFilter,
                             T("ritsulib.potionDetailPngExport.filter.placeholder", "Empty = all; e.g. STRENGTH"),
                             256,
