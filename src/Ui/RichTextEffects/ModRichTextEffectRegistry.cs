@@ -118,7 +118,7 @@ namespace STS2RitsuLib.Ui.RichTextEffects
             {
                 if (Registrations.TryGetValue(normalizedBbcode, out var existing))
                 {
-                    if (existing.ModId == registration.ModId &&
+                    if (StringComparer.OrdinalIgnoreCase.Equals(existing.ModId, registration.ModId) &&
                         ReferenceEquals(existing.Effect, registration.Effect))
                         return existing;
 
