@@ -588,6 +588,13 @@ namespace STS2RitsuLib.RunData.Patches
             PendingNewRunPayload = null;
             return payload;
         }
+
+        internal static string? ConsumePreparedPayload()
+        {
+            var payload = PreparedNewRunPayload;
+            PreparedNewRunPayload = null;
+            return payload;
+        }
     }
 
     internal sealed class RunSavedDataLobbyBeginRunMessageSerializePatch : IPatchMethod
@@ -908,8 +915,9 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void Prefix(RunManager __instance)
         {
-            var payload = RunSavedDataLobbyBeginRunMessageState.ConsumePendingPayload() ??
-                          RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload;
+            var pendingPayload = RunSavedDataLobbyBeginRunMessageState.ConsumePendingPayload();
+            var preparedPayload = RunSavedDataLobbyBeginRunMessageState.ConsumePreparedPayload();
+            var payload = pendingPayload ?? preparedPayload;
             if (!string.IsNullOrWhiteSpace(payload) && __instance.State != null)
             {
                 RunSavedDataRegistry.ImportPayloadIntoRun(__instance.State, payload);
