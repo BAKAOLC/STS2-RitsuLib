@@ -18,43 +18,17 @@ namespace STS2RitsuLib.Utils
                 return;
             }
 
-            var source = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var registration = ct.CanBeCanceled
-                ? ct.Register(static state =>
-                    ((TaskCompletionSource)state!).TrySetCanceled(), source)
-                : default;
-
-            Callable.From(() =>
-            {
-                try
-                {
-                    if (ct.IsCancellationRequested || (owner != null && !GodotObject.IsInstanceValid(owner)))
-                    {
-                        source.TrySetCanceled(ct);
-                        return;
-                    }
-
-                    source.TrySetResult();
-                }
-                catch (Exception ex)
-                {
-                    source.TrySetException(ex);
-                }
-            }).CallDeferred();
-
-            try
-            {
-                await source.Task;
-            }
-            finally
-            {
-                await registration.DisposeAsync();
-            }
+            await AwaitProcessFrameSignalAsync(tree).WaitAsync(ct);
 
             ct.ThrowIfCancellationRequested();
             ThrowIfInvalid(owner, ct);
             if (!GodotObject.IsInstanceValid(tree))
                 throw new OperationCanceledException("Scene tree was deleted while awaiting a process frame.", ct);
+        }
+
+        private static async Task AwaitProcessFrameSignalAsync(SceneTree tree)
+        {
+            await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
         }
 
         internal static async Task AwaitProcessFramesAsync(SceneTree? tree, int count,
