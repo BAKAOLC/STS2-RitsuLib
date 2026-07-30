@@ -94,7 +94,6 @@ namespace STS2RitsuLib.Audio
 
             var result = source switch
             {
-                StudioEventSource eventSource when options.UseVanillaRouting => PlayVanillaMusic(eventSource, options),
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options, true),
                 StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options, true),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options, true),
@@ -143,12 +142,6 @@ namespace STS2RitsuLib.Audio
             else
                 GameFmod.Studio.PlayOneShot(source.Path, options.GetParameters(), options.Volume);
 
-            return AudioPlayResult.Started();
-        }
-
-        private static AudioPlayResult PlayVanillaMusic(StudioEventSource source, AudioPlaybackOptions options)
-        {
-            GameFmod.Studio.PlayMusic(source.Path);
             return AudioPlayResult.Started();
         }
 
