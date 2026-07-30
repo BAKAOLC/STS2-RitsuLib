@@ -421,6 +421,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private SecondaryResourceCounterStyle _style = SecondaryResourceCounterStyle.Default;
         private bool _suppressNextGainFeedback = true;
 
+        internal SecondaryResourceDefinition Definition =>
+            _definition ?? throw new InvalidOperationException("The secondary-resource counter is not configured.");
+
         /// <summary>
         ///     Whether this counter refreshes when the bound player's secondary-resource state changes.
         ///     该计数器是否在已绑定玩家的次级资源状态变化时刷新。
@@ -457,25 +460,38 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public void Configure(SecondaryResourceDefinition definition, SecondaryResourceCounterStyle? style = null)
         {
             ArgumentNullException.ThrowIfNull(definition);
+            var definitionChanged = !ReferenceEquals(_definition, definition);
             _definition = definition;
             _style = style ?? SecondaryResourceCounterStyle.Default;
+            var resetIconBrightness = _iconBrightnessTween != null;
             _iconBrightnessTween?.Kill();
             _iconBrightnessTween = null;
-            _amount = 0;
-            _displayedAmount = 0;
-            _smoothDisplayedAmount = 0f;
-            _amountDisplayVelocity = 0f;
-            _hasDisplayedAmount = false;
-            _lastAmountText = null;
-            _hasLastAmountColor = false;
-            _maxAmount = null;
             ClearEnergyCounterLikeVfxNodes();
-            _suppressNextGainFeedback = true;
+            if (definitionChanged)
+            {
+                _amount = 0;
+                _displayedAmount = 0;
+                _smoothDisplayedAmount = 0f;
+                _amountDisplayVelocity = 0f;
+                _hasDisplayedAmount = false;
+                _hasBeenMaterial = false;
+                _lastAmountText = null;
+                _hasLastAmountColor = false;
+                _maxAmount = null;
+                _suppressNextGainFeedback = true;
+            }
+
             CustomMinimumSize = _style.CounterSize;
             Size = _style.CounterSize;
 
             if (IsNodeReady())
+            {
+                if (resetIconBrightness)
+                    _icon.SetShaderBrightness(1f);
+                ApplyStyle();
                 ApplyDefinition();
+                Refresh(_boundPlayer);
+            }
         }
 
         /// <summary>
@@ -555,6 +571,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 PlayGainFeedback();
 
             _suppressNextGainFeedback = false;
+        }
+
+        /// <inheritdoc />
+        public override void _EnterTree()
+        {
+            UpdateStateSubscription();
         }
 
         /// <summary>
@@ -660,6 +682,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public override void _ExitTree()
         {
             SetBoundState(null);
+            if (_iconBrightnessTween != null && _icon != null)
+                _icon.SetShaderBrightness(1f);
             _iconBrightnessTween?.Kill();
             _iconBrightnessTween = null;
             ClearEnergyCounterLikeVfxNodes();
@@ -816,6 +840,29 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             _icon.Configure(_definition, ResolveIconStyle());
             _icon.SetAmount(_amount, _maxAmount);
+        }
+
+        private void ApplyStyle()
+        {
+            CustomMinimumSize = _style.CounterSize;
+            Size = _style.CounterSize;
+            if (_icon != null)
+            {
+                _icon.Position = GetIconPosition();
+                if (_definition != null)
+                    _icon.Configure(_definition, ResolveIconStyle());
+            }
+
+            if (_amountLabel == null)
+                return;
+
+            _amountLabel.Position = GetIconPosition() + _style.AmountLabelOffset;
+            _amountLabel.CustomMinimumSize = _style.IconSize;
+            _amountLabel.Size = _style.IconSize;
+            _amountLabel.MinFontSize = Math.Max(8, _style.FontSize - 10);
+            _amountLabel.MaxFontSize = _style.FontSize;
+            ApplyAmountLabelTheme();
+            UpdateAmountLabel(_displayedAmount);
         }
 
         private void ApplyAmountLabelTheme()
