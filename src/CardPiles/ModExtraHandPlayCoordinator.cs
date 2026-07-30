@@ -63,9 +63,20 @@ namespace STS2RitsuLib.CardPiles
                 cardPlay.Start();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
-                RollBackTargeting(origin);
+                try
+                {
+                    RollBackTargeting(origin, restoreInterruptedTransfer: true);
+                }
+                catch (Exception rollbackException)
+                {
+                    throw new AggregateException(
+                        "Extra-hand targeting initialization and its rollback both failed.",
+                        ex,
+                        rollbackException);
+                }
+
                 throw;
             }
         }
@@ -134,13 +145,13 @@ namespace STS2RitsuLib.CardPiles
             RollBackTargeting(origin);
         }
 
-        private static void RollBackTargeting(PlayOrigin origin)
+        private static void RollBackTargeting(PlayOrigin origin, bool restoreInterruptedTransfer = false)
         {
             if (origin.Closed)
                 return;
             if (ReferenceEquals(_active, origin))
                 _active = null;
-            RestoreToSourcePile(origin);
+            RestoreToSourcePile(origin, restoreInterruptedTransfer);
 
             ClearOrigin(origin);
             origin.Container.RestoreCancelledPlay(origin.Card, origin.Holder);
@@ -153,12 +164,16 @@ namespace STS2RitsuLib.CardPiles
             ClearOrigin(origin);
         }
 
-        private static void RestoreToSourcePile(PlayOrigin origin)
+        private static void RestoreToSourcePile(PlayOrigin origin, bool restoreInterruptedTransfer = false)
         {
-            if (!ReferenceEquals(origin.Card.Pile, origin.HandPile))
+            if (origin.HandPile.Cards.Contains(origin.Card))
+                origin.HandPile.RemoveInternal(origin.Card, true);
+            else if (!restoreInterruptedTransfer)
                 return;
 
-            origin.HandPile.RemoveInternal(origin.Card, true);
+            if (origin.SourcePile.Cards.Contains(origin.Card))
+                return;
+
             var index = Math.Clamp(origin.SourceIndex, 0, origin.SourcePile.Cards.Count);
             origin.SourcePile.AddInternal(origin.Card, index, true);
         }
