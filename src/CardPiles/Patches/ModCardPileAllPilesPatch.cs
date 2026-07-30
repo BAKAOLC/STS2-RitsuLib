@@ -6,33 +6,27 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Appends <see cref="ModCardPileScope.CombatOnly" /> piles to
-    ///     <see cref="PlayerCombatState.AllPiles" /> so that vanilla code paths that iterate combat piles
-    ///     (enumeration, <c>AfterCombatEnd</c>, broadcast helpers) transparently include mod piles.
-    ///     将 <see cref="ModCardPileScope.CombatOnly" /> 牌堆追加到
-    ///     <see cref="PlayerCombatState.AllPiles" />，使枚举 combat pile 的原版代码路径
-    ///     （enumeration、<c>AfterCombatEnd</c>、broadcast helper）透明包含 mod 牌堆。
+    ///     <para xml:lang="en">
+    ///         Adds <see cref="ModCardPileScope.CombatOnly" /> mod piles to
+    ///         <see cref="PlayerCombatState.AllPiles" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="ModCardPileScope.CombatOnly" /> 模组牌堆加入
+    ///         <see cref="PlayerCombatState.AllPiles" />。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         A Postfix is used instead of a Transpiler (unlike baselib's <c>SpecialPileInCombat</c>) so both
-    ///         libraries can coexist without IL conflicts. Whatever vanilla or baselib produced is treated as
-    ///         the base, and ritsulib's piles are concatenated on top.
+    ///     <para xml:lang="en">
+    ///         The postfix preserves the existing result and appends missing RitsuLib piles.
     ///     </para>
-    ///     <para>
-    ///         The underlying <c>_piles</c> field is updated when present (publicized STS2) so subsequent
-    ///         getter calls see the combined array without reallocating per access; otherwise the postfix
-    ///         still works by replacing <c>__result</c>.
+    ///     <para xml:lang="en">
+    ///         The combined array is also stored in <c>_piles</c> so later getter calls reuse it.
     ///     </para>
-    ///     <para>
-    ///         这里使用 Postfix 而不是 Transpiler（不同于 baselib 的 <c>SpecialPileInCombat</c>），
-    ///         让两个库可以共存而不发生 IL 冲突。原版或 baselib 生成的结果会作为基础，
-    ///         ritsulib 的牌堆再拼接到其后。
+    ///     <para xml:lang="zh-CN">
+    ///         后置补丁会保留现有结果，并在其后追加缺失的 RitsuLib 牌堆。
     ///     </para>
-    ///     <para>
-    ///         当底层 <c>_piles</c> 字段存在时（publicized STS2），会同步更新该字段，使后续
-    ///         getter 调用能看到合并后的数组，而不必每次访问都重新分配；否则 postfix
-    ///         仍通过替换 <c>__result</c> 工作。
+    ///     <para xml:lang="zh-CN">
+    ///         合并后的数组也会写入 <c>_piles</c>，供后续属性访问复用。
     ///     </para>
     /// </remarks>
     internal sealed class ModCardPileAllPilesPatch : IPatchMethod

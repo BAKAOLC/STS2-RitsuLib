@@ -11,12 +11,20 @@ using STS2RitsuLib.Compat;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Bridges playable extra-hand cards through the vanilla hand-only manual-play pipeline. The card is
-    ///     moved silently into the backend hand while targeting is active, preserving the original pile so a
-    ///     canceled target selection or canceled queued action can restore both model and visual ownership.
-    ///     将可打出的额外手牌卡牌接入原版仅支持手牌的手动打牌流程。目标选择期间，卡牌会静默移入后端手牌，
-    ///     同时保留原牌堆，以便目标选择取消或队列动作取消时恢复模型与视觉归属。
+    ///     <para xml:lang="en">
+    ///         Coordinates playable extra-hand cards with the vanilla hand-based manual-play flow.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">协调可打出的额外手牌卡牌与原版基于手牌的手动打牌流程。</para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         A card is temporarily moved to the player's hand while targeting is active. Canceling targeting
+    ///         or the queued action restores the card to its original pile and position.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         目标选择期间会将卡牌暂时移入玩家手牌。取消目标选择或已排队动作时，会将卡牌恢复到原牌堆及原位置。
+    ///     </para>
+    /// </remarks>
     internal static class ModExtraHandPlayCoordinator
     {
         private static readonly Dictionary<CardModel, PlayOrigin> PendingOrigins = [];

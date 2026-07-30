@@ -7,10 +7,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Overrides the source/start position for shuffle fly visuals when the source pile is a mod pile and
-    ///     that pile registered a <see cref="ModCardPileSpec.FlightStartPositionResolver" />.
-    ///     当源牌堆是 mod 牌堆，且该牌堆注册了
-    ///     <see cref="ModCardPileSpec.FlightStartPositionResolver" /> 时，覆盖 shuffle 飞行动画的源/起点位置。
+    ///     <para xml:lang="en">
+    ///         Applies the registered shuffle-flight start position when a shuffle originates from a mod pile.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         洗牌飞行动画从模组牌堆开始时，应用已注册的飞行起始位置。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileShuffleVfxStartPositionPatch : IPatchMethod
     {

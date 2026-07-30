@@ -9,25 +9,19 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Extends <see cref="NCard.FindOnTable" /> so cards resident in a visible mod pile (currently only the
-    ///     <see cref="ModCardPileUiStyle.ExtraHand" /> style) resolve to the live <c>NCard</c> instance managed
-    ///     by <c>NModExtraHand</c>. Non-visible mod piles intentionally return <c>null</c> (matching vanilla's
-    ///     Draw / Discard / Exhaust behaviour).
-    ///     扩展 <see cref="NCard.FindOnTable" />，使位于可见 mod pile 中的 card（目前只有
-    ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 样式）解析到由 <c>NModExtraHand</c> 管理的 live
-    ///     <c>NCard</c> 实例。不可见 mod pile 会有意返回 <c>null</c>（匹配原版 Draw / Discard / Exhaust 行为）。
+    ///     <para xml:lang="en">
+    ///         Resolves the visible card node for cards stored in registered mod piles.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">解析存放在已注册模组牌堆中的卡牌所对应的可见节点。</para>
     /// </summary>
     /// <remarks>
-    ///     Implemented as a Prefix because vanilla's switch hits
-    ///     <c>
-    ///         _ =&gt; throw new
-    ///         ArgumentOutOfRangeException()
-    ///     </c>
-    ///     for any pile type it doesn't know, which would otherwise abort
-    ///     every runtime card lookup while a mod pile hosts the card.
-    ///     它实现为 Prefix，因为原版 switch 对任何未知 pile type 会命中
-    ///     <c>_ =&gt; throw new ArgumentOutOfRangeException()</c>；否则当 mod pile 持有 card 时，
-    ///     每次运行时 card lookup 都会被中止。
+    ///     <para xml:lang="en">
+    ///         The prefix bypasses the vanilla switch for dynamic pile types. Invisible mod piles return
+    ///         <see langword="null" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         前置补丁会为动态牌堆类型绕过原版分支。不可见的模组牌堆返回 <see langword="null" />。
+    ///     </para>
     /// </remarks>
     internal sealed class ModCardPileFindOnTablePatch : IPatchMethod
     {

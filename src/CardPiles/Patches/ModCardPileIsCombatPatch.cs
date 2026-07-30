@@ -4,12 +4,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Extends <see cref="PileTypeExtensions.IsCombatPile" /> to return <c>true</c> for
-    ///     <see cref="ModCardPileScope.CombatOnly" /> mod piles. Uses a Postfix so that baselib's own Prefix (if
-    ///     present) runs first; ritsulib only upgrades the result when everyone else said "no".
-    ///     扩展 <see cref="PileTypeExtensions.IsCombatPile" />，使
-    ///     <see cref="ModCardPileScope.CombatOnly" /> mod pile 返回 <c>true</c>。使用 Postfix 让 baselib
-    ///     自己的 Prefix（如果存在）先运行；ritsulib 只在其它所有逻辑都说“no”时提升结果。
+    ///     <para xml:lang="en">
+    ///         Makes <see cref="PileTypeExtensions.IsCombatPile" /> recognize registered
+    ///         <see cref="ModCardPileScope.CombatOnly" /> piles.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使 <see cref="PileTypeExtensions.IsCombatPile" /> 识别已注册的
+    ///         <see cref="ModCardPileScope.CombatOnly" /> 牌堆。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileIsCombatPatch : IPatchMethod
     {

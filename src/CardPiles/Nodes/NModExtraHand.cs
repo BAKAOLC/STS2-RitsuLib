@@ -13,12 +13,13 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.CardPiles.Nodes
 {
     /// <summary>
-    ///     Interactive extra-hand container for <see cref="ModCardPileUiStyle.ExtraHand" /> piles. Cards are
-    ///     hosted by vanilla <see cref="NHandCardHolder" /> nodes so focus, hover tips, controller navigation,
-    ///     playable glow, and card-play targeting behave consistently with the player hand.
-    ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆使用的交互式额外手牌容器。卡牌由原版
-    ///     <see cref="NHandCardHolder" /> 承载，使焦点、悬停提示、手柄导航、可打出发光与打牌目标选择
-    ///     与玩家手牌保持一致。
+    ///     <para xml:lang="en">
+    ///         Displays a <see cref="ModCardPileUiStyle.ExtraHand" /> pile with interactive vanilla hand-card
+    ///         holders.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用可交互的原版手牌容器显示 <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆。
+    ///     </para>
     /// </summary>
     public sealed partial class NModExtraHand : Control
     {
@@ -33,14 +34,16 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private double _visualRefreshElapsed;
 
         /// <summary>
-        ///     Back-reference to the registry entry.
-        ///     指向 registry entry 的反向引用。
+        ///     <para xml:lang="en">Gets the registered definition represented by this container.</para>
+        ///     <para xml:lang="zh-CN">获取此容器所表示的已注册定义。</para>
         /// </summary>
         public ModCardPileDefinition Definition { get; private set; } = null!;
 
         /// <summary>
-        ///     Builds a new extra-hand container for <paramref name="definition" />.
-        ///     为 <paramref name="definition" /> 构建新的额外手牌容器。
+        ///     <para xml:lang="en">
+        ///         Creates an extra-hand container for <paramref name="definition" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="definition" /> 创建额外手牌容器。</para>
         /// </summary>
         public static NModExtraHand Create(ModCardPileDefinition definition)
         {
@@ -58,8 +61,12 @@ namespace STS2RitsuLib.CardPiles.Nodes
         }
 
         /// <summary>
-        ///     Binds the container to <paramref name="player" /> and begins mirroring the underlying pile.
-        ///     将容器绑定到 <paramref name="player" />，并开始镜像底层牌堆。
+        ///     <para xml:lang="en">
+        ///         Binds the container to <paramref name="player" /> and starts mirroring its runtime pile.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将容器绑定到 <paramref name="player" />，并开始同步其运行时牌堆。
+        ///     </para>
         /// </summary>
         public void Initialize(Player player)
         {
@@ -69,8 +76,13 @@ namespace STS2RitsuLib.CardPiles.Nodes
         }
 
         /// <summary>
-        ///     Returns the displayed card node, or null when the card is not currently mounted.
-        ///     返回已显示的卡牌节点；卡牌当前未挂载时返回 null。
+        ///     <para xml:lang="en">
+        ///         Gets the displayed node for <paramref name="card" />, or <see langword="null" /> when it is
+        ///         not mounted.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="card" /> 的显示节点；该卡牌未挂载时返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public NCard? GetCard(CardModel card)
         {
@@ -78,8 +90,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
         }
 
         /// <summary>
-        ///     Returns the interactive holder for a displayed card.
-        ///     返回已显示卡牌的交互式 holder。
+        ///     <para xml:lang="en">
+        ///         Gets the interactive holder for <paramref name="card" />, or <see langword="null" /> when it
+        ///         is not mounted.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="card" /> 的交互式卡牌容器；该卡牌未挂载时返回
+        ///         <see langword="null" />。
+        ///     </para>
         /// </summary>
         public NHandCardHolder? GetHolder(CardModel card)
         {

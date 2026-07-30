@@ -7,10 +7,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Injects <see cref="ModCardPileUiStyle.ExtraHand" /> containers (<see cref="Nodes.NModExtraHand" />)
-    ///     into <see cref="NCombatUi" /> on ready so they live alongside the vanilla player hand.
-    ///     在 ready 时将 <see cref="ModCardPileUiStyle.ExtraHand" /> 容器（<see cref="Nodes.NModExtraHand" />）
-    ///     注入 <see cref="NCombatUi" />，使它们与原版玩家 hand 并存。
+    ///     <para xml:lang="en">
+    ///         Injects <see cref="ModCardPileUiStyle.ExtraHand" /> containers after
+    ///         <see cref="NCombatUi" /> becomes ready.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="NCombatUi" /> 就绪后注入 <see cref="ModCardPileUiStyle.ExtraHand" /> 容器。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileCombatUiReadyPatch : IPatchMethod
     {
@@ -30,14 +33,12 @@ namespace STS2RitsuLib.CardPiles.Patches
     }
 
     /// <summary>
-    ///     Activates ExtraHand containers with the current combat state so they bind to the local player
-    ///     and begin listening to <c>CardPile.CardAdded</c> / <c>CardPile.CardRemoved</c>.
-    ///     <c>CardPile.CardAdded</c> / <c>CardPile.CardRemoved</c>。
-    ///     使用当前战斗状态激活 ExtraHand 容器，使它们绑定到本地玩家，并开始监听
-    ///     <c>CardPile.CardAdded</c>
-    ///     <c>CardPile.CardRemoved</c>。
-    ///     <c>CardPile.CardAdded</c>
-    ///     <c>CardPile.CardRemoved</c>。
+    ///     <para xml:lang="en">
+    ///         Binds injected extra-hand containers to the local player when the combat UI is activated.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         战斗界面激活时，将已注入的额外手牌容器绑定到本地玩家。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileCombatUiActivatePatch : IPatchMethod
     {

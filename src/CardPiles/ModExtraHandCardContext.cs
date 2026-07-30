@@ -6,8 +6,10 @@ using STS2RitsuLib.CardPiles.Nodes;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Live card presentation context supplied to extra-hand layout and lifecycle callbacks.
-    ///     传给额外手牌布局与视觉生命周期回调的实时卡牌展示上下文。
+    ///     <para xml:lang="en">
+    ///         Provides card and presentation state to extra-hand layout and lifecycle callbacks.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">向额外手牌的布局与生命周期回调提供卡牌及展示状态。</para>
     /// </summary>
     public sealed class ModExtraHandCardContext
     {
@@ -32,56 +34,58 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Registered pile definition.
-        ///     已注册的牌堆定义。
+        ///     <para xml:lang="en">Gets the registered definition of the extra-hand pile.</para>
+        ///     <para xml:lang="zh-CN">获取额外手牌牌堆的注册定义。</para>
         /// </summary>
         public ModCardPileDefinition Definition { get; }
 
         /// <summary>
-        ///     Live extra-hand container.
-        ///     实时额外手牌容器。
+        ///     <para xml:lang="en">Gets the extra-hand container.</para>
+        ///     <para xml:lang="zh-CN">获取额外手牌容器。</para>
         /// </summary>
         public NModExtraHand Container { get; }
 
         /// <summary>
-        ///     Card model represented by this visual.
-        ///     此视觉所代表的卡牌模型。
+        ///     <para xml:lang="en">Gets the card represented by the holder.</para>
+        ///     <para xml:lang="zh-CN">获取该卡牌容器所表示的卡牌。</para>
         /// </summary>
         public CardModel Card { get; }
 
         /// <summary>
-        ///     Interactive vanilla-compatible card holder.
-        ///     可交互且兼容原版的卡牌 holder。
+        ///     <para xml:lang="en">Gets the interactive card holder.</para>
+        ///     <para xml:lang="zh-CN">获取可交互的卡牌容器。</para>
         /// </summary>
         public NHandCardHolder Holder { get; }
 
         /// <summary>
-        ///     Card node owned by <see cref="Holder" />.
-        ///     由 <see cref="Holder" /> 持有的卡牌节点。
+        ///     <para xml:lang="en">Gets the card node owned by <see cref="Holder" />.</para>
+        ///     <para xml:lang="zh-CN">获取由 <see cref="Holder" /> 持有的卡牌节点。</para>
         /// </summary>
         public NCard CardNode => Holder.CardNode!;
 
         /// <summary>
-        ///     Zero-based pile-order index.
-        ///     从零开始的牌堆顺序索引。
+        ///     <para xml:lang="en">Gets the card's zero-based index in the visible pile order.</para>
+        ///     <para xml:lang="zh-CN">获取该卡牌在可见牌堆顺序中的从零开始索引。</para>
         /// </summary>
         public int Index { get; }
 
         /// <summary>
-        ///     Number of visible cards in the container.
-        ///     容器内可见卡牌总数。
+        ///     <para xml:lang="en">Gets the number of visible cards in the container.</para>
+        ///     <para xml:lang="zh-CN">获取容器中的可见卡牌数量。</para>
         /// </summary>
         public int Count { get; }
 
         /// <summary>
-        ///     Whether this holder currently owns hover/controller focus.
-        ///     此 holder 当前是否拥有悬停或手柄焦点。
+        ///     <para xml:lang="en">Gets whether this holder currently has pointer or controller focus.</para>
+        ///     <para xml:lang="zh-CN">获取该卡牌容器当前是否具有指针或手柄焦点。</para>
         /// </summary>
         public bool IsFocused { get; }
 
         /// <summary>
-        ///     Transform produced by the built-in layout before a custom resolver runs.
-        ///     自定义 resolver 运行前由内置布局产生的变换。
+        ///     <para xml:lang="en">
+        ///         Gets the transform produced by the built-in layout before the custom resolver runs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取自定义解析器运行前由内置布局生成的变换。</para>
         /// </summary>
         public ModExtraHandCardTransform DefaultTransform { get; }
     }

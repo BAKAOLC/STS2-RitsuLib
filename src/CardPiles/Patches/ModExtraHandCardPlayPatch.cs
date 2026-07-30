@@ -6,9 +6,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Makes an active extra-hand holder discoverable by <c>NCardPlayQueue</c> immediately before vanilla
-    ///     enqueues a manual play.
-    ///     在原版加入手动打牌动作前，使活动的额外手牌 holder 可被 <c>NCardPlayQueue</c> 找到。
+    ///     <para xml:lang="en">
+    ///         Moves the active extra-hand holder into the vanilla hand container before manual-play enqueue.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         手动打牌动作入队前，将当前额外手牌卡牌容器移入原版手牌容器。
+    ///     </para>
     /// </summary>
     internal sealed class ModExtraHandCardPlayPreparePatch : IPatchMethod
     {
@@ -28,8 +31,10 @@ namespace STS2RitsuLib.CardPiles.Patches
     }
 
     /// <summary>
-    ///     Restores a queued extra-hand card to its source pile when the vanilla action is canceled.
-    ///     原版动作取消时，将已排队的额外手牌卡牌恢复到来源牌堆。
+    ///     <para xml:lang="en">
+    ///         Restores a queued extra-hand card to its source pile when the vanilla action is canceled.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">原版动作取消时，将已排队的额外手牌卡牌恢复到来源牌堆。</para>
     /// </summary>
     internal sealed class ModExtraHandCardPlayCancelPatch : IPatchMethod
     {

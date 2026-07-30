@@ -6,10 +6,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Appends resolved run-persistent mod piles to <see cref="Player.Piles" /> so
-    ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel.Pile" /> can find cards stored in them.
-    ///     将已解析的 run-persistent mod pile 追加到 <see cref="Player.Piles" />，使
-    ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel.Pile" /> 能找到存放在其中的卡牌。
+    ///     <para xml:lang="en">
+    ///         Adds existing run-persistent mod piles to <see cref="Player.Piles" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将已有的局内持久模组牌堆加入 <see cref="Player.Piles" />。</para>
     /// </summary>
     internal sealed class ModCardPilePlayerPilesPatch : IPatchMethod
     {

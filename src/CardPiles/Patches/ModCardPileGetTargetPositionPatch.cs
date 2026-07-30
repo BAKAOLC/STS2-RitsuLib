@@ -6,15 +6,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Intercepts <see cref="PileTypeExtensions.GetTargetPosition" /> for mod piles, returning the
-    ///     coordinate of the pile's registered UI host (button or extra-hand container). Must run as a Prefix
-    ///     because vanilla's switch would otherwise throw <see cref="ArgumentOutOfRangeException" /> for minted
-    ///     values.
-    ///     <see cref="ArgumentOutOfRangeException" />。
-    ///     为 mod pile 拦截 <see cref="PileTypeExtensions.GetTargetPosition" />，返回 pile 已注册 UI host
-    ///     （button 或 extra-hand container）的坐标。它必须作为 Prefix 运行，因为原版 switch 对 minted
-    ///     值会抛出 <see cref="ArgumentOutOfRangeException" />。
-    ///     <see cref="ArgumentOutOfRangeException" />。
+    ///     <para xml:lang="en">
+    ///         Resolves <see cref="PileTypeExtensions.GetTargetPosition" /> for registered mod card piles.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为已注册模组卡牌牌堆解析 <see cref="PileTypeExtensions.GetTargetPosition" />。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileGetTargetPositionPatch : IPatchMethod
     {

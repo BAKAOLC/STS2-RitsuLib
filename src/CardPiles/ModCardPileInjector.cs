@@ -10,39 +10,25 @@ using STS2RitsuLib.TopBar;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Creates and attaches UI nodes for registered mod card piles, using the explicit
-    ///     <see cref="ModCardPileAnchor" /> when provided and falling back to auto-stacking same-style piles
-    ///     along the anchor's axis. Called from lifecycle patches that fire after the corresponding vanilla
-    ///     <c>_Ready</c> runs.
-    ///     为已注册的 mod 卡牌牌堆创建并附加 UI 节点：优先使用显式 <see cref="ModCardPileAnchor" />，
-    ///     否则沿 anchor 轴自动堆叠同样式牌堆。由对应原版 <c>_Ready</c> 运行后的 lifecycle patch 调用。
+    ///     <para xml:lang="en">Creates and attaches UI nodes for registered mod card piles.</para>
+    ///     <para xml:lang="zh-CN">为已注册的模组卡牌牌堆创建并挂载界面节点。</para>
     /// </summary>
     /// <remarks>
-    ///     For <see cref="ModCardPileAnchorKind.Custom" />, <see cref="ModCardPileAnchor.CustomAuthoringPivot" />
-    ///     (normalized chrome fractions — see <see cref="ModCardPileAnchor" />) maps
-    ///     <see cref="ModCardPileAnchor.CustomPosition" /> to nominal chrome landmarks before injecting
-    ///     <see cref="Godot.Control.Position" /> (upper-left corner). Coordinate space matches each mount parent:
-    ///     <see cref="NCombatPilesContainer" /> for bottom-row piles,
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.CommonUi.NTopBar" /> for arbitrary top-bar placements, combat UI
-    ///     for <see cref="ModCardPileUiStyle.ExtraHand" /> — consistent with fly-in fallback resolution in
-    ///     <see cref="ModCardPileLayout" />.
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.CommonUi.NTopBar" />，<see cref="ModCardPileUiStyle.ExtraHand" />
-    ///     对于 <see cref="ModCardPileAnchorKind.Custom" />，<see cref="ModCardPileAnchor.CustomAuthoringPivot" />
-    ///     （normalized chrome fractions，见 <see cref="ModCardPileAnchor" />）会先将
-    ///     <see cref="ModCardPileAnchor.CustomPosition" /> 映射到名义 chrome landmark，再注入
-    ///     <see cref="Godot.Control.Position" />（左上角）。坐标空间与每个 mount parent 匹配：
-    ///     底部 row 牌堆使用 <see cref="NCombatPilesContainer" />，任意 top-bar placement 使用
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.CommonUi.NTopBar" />，<see cref="ModCardPileUiStyle.ExtraHand" /> 使用 combat
-    ///     UI；这与
-    ///     <see cref="ModCardPileLayout" /> 中的 fly-in fallback 解析一致。
+    ///     <para xml:lang="en">
+    ///         Custom positions use the coordinate space of the relevant host: the combat-piles container,
+    ///         top bar, or combat UI. Their authored pivot is converted to the node's top-left position by
+    ///         <see cref="ModCardPileCustomMountGeometry" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         自定义位置使用相应宿主的坐标空间：战斗牌堆容器、顶部栏或战斗界面。其设计基准点由
+    ///         <see cref="ModCardPileCustomMountGeometry" /> 换算为节点左上角位置。
+    ///     </para>
     /// </remarks>
     internal static class ModCardPileInjector
     {
         /// <summary>
-        ///     Mounts all <see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" />
-        ///     buttons onto the combat piles container.
-        ///     将所有 <see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" />
-        ///     按钮挂载到战斗牌堆容器。
+        ///     <para xml:lang="en">Mounts all bottom-row mod pile buttons in the combat-piles container.</para>
+        ///     <para xml:lang="zh-CN">将所有底部区域的模组牌堆按钮挂载到战斗牌堆容器。</para>
         /// </summary>
         public static void InjectCombatButtons(NCombatPilesContainer container)
         {
@@ -58,12 +44,12 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Mounts all <see cref="ModCardPileUiStyle.TopBarDeck" /> buttons onto the top bar to the
-        ///     <b>left</b> of the vanilla deck button, using the shared
-        ///     <see cref="ModTopBarLayout" /> helper so pile-mode and action-mode buttons share one
-        ///     row.
-        ///     将所有 <see cref="ModCardPileUiStyle.TopBarDeck" /> 按钮挂载到顶部栏，并位于原版 deck 按钮
-        ///     <b>左侧</b>；使用共享 <see cref="ModTopBarLayout" /> helper，使 pile-mode 与 action-mode 按钮共享同一行。
+        ///     <para xml:lang="en">
+        ///         Mounts all <see cref="ModCardPileUiStyle.TopBarDeck" /> pile buttons on the top bar.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将所有 <see cref="ModCardPileUiStyle.TopBarDeck" /> 牌堆按钮挂载到顶部栏。
+        ///     </para>
         /// </summary>
         public static void InjectTopBarButtons(NTopBar topBar)
         {
@@ -98,8 +84,12 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Mounts all <see cref="ModCardPileUiStyle.ExtraHand" /> containers onto the combat UI.
-        ///     将所有 <see cref="ModCardPileUiStyle.ExtraHand" /> 容器挂载到 combat UI。
+        ///     <para xml:lang="en">
+        ///         Mounts all <see cref="ModCardPileUiStyle.ExtraHand" /> containers on the combat UI.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将所有 <see cref="ModCardPileUiStyle.ExtraHand" /> 容器挂载到战斗界面。
+        ///     </para>
         /// </summary>
         public static void InjectExtraHandContainers(NCombatUi combatUi)
         {
@@ -116,10 +106,12 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Initializes already-mounted buttons with the local <paramref name="player" /> so they resolve
-        ///     their backing <see cref="ModCardPile" /> and start tracking card additions / removals.
-        ///     使用本地 <paramref name="player" /> 初始化已经挂载的按钮，使它们解析 backing
-        ///     <see cref="ModCardPile" /> 并开始追踪卡牌添加/移除。
+        ///     <para xml:lang="en">
+        ///         Binds mounted pile controls to <paramref name="player" /> and their runtime piles.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将已挂载的牌堆控件绑定到 <paramref name="player" /> 及其运行时牌堆。
+        ///     </para>
         /// </summary>
         public static void InitializeForPlayer(NCombatUi combatUi, Player player)
         {

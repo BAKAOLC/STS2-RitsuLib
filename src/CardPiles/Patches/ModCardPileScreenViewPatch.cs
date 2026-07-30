@@ -18,8 +18,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Adds opt-in deck-view affordances to the vanilla pile screen for registered RitsuLib piles.
-    ///     为已注册的 RitsuLib 牌堆给原版牌堆 screen 增加可选的牌组查看能力。
+    ///     <para xml:lang="en">
+    ///         Adds the capabilities selected by <see cref="ModCardPileViewSpec" /> to the vanilla pile screen.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="ModCardPileViewSpec" /> 选择的能力添加到原版牌堆界面。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileScreenViewPatch : IPatchMethod
     {

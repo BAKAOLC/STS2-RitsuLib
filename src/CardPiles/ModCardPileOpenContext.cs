@@ -7,39 +7,23 @@ using STS2RitsuLib.Screens;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Context passed to <see cref="ModCardPileSpec.OnOpen" /> when a mod pile's UI button is released.
-    ///     Exposes the backing pile plus convenience helpers so handlers can swap in a custom
-    ///     <see cref="ICapstoneScreen" /> (or invoke the default <see cref="NCardPileScreen" />) without
-    ///     hand-wiring <see cref="NCapstoneContainer" />.
-    ///     mod 牌堆的 UI 按钮释放时传给 <see cref="ModCardPileSpec.OnOpen" /> 的上下文。它暴露 backing 牌堆
-    ///     与便捷 helper，使 handler 可以切换到自定义 <see cref="ICapstoneScreen" />（或调用默认
-    ///     <see cref="NCardPileScreen" />），无需手动连接 <see cref="NCapstoneContainer" />。
+    ///     <para xml:lang="en">
+    ///         Provides the pile, player, and UI state passed to <see cref="ModCardPileSpec.OnOpen" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供传给 <see cref="ModCardPileSpec.OnOpen" /> 的牌堆、玩家与界面状态。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Handlers may:
-    ///     <list type="bullet">
-    ///         <item>Call <see cref="ShowDefaultPileScreen" /> to reuse the vanilla <see cref="NCardPileScreen" />.</item>
-    ///         <item>
-    ///             Call <see cref="OpenCapstoneScreen(ICapstoneScreen)" /> to mount a custom
-    ///             <see cref="ICapstoneScreen" /> (for example a Godot scene script).
-    ///         </item>
-    ///         <item>Do nothing — the button returns to its idle state after the tween.</item>
-    ///     </list>
-    ///     Handlers are invoked from the button's release handler after the click tween starts and after
-    ///     ritsulib already ensured the pile is non-empty (empty piles trigger
-    ///     <see cref="ModCardPileDefinition.EmptyPileMessage" /> via a thought bubble and skip the callback).
-    ///     Handler 可以：
-    ///     <list type="bullet">
-    ///         <item>调用 <see cref="ShowDefaultPileScreen" /> 复用原版 <see cref="NCardPileScreen" />。</item>
-    ///         <item>
-    ///             调用 <see cref="OpenCapstoneScreen(ICapstoneScreen)" /> 挂载自定义
-    ///             <see cref="ICapstoneScreen" />（例如 Godot scene script）。
-    ///         </item>
-    ///         <item>什么都不做；按钮会在 tween 后回到 idle 状态。</item>
-    ///     </list>
-    ///     Handler 会在按钮 release handler 中、click tween 开始后调用，并且
-    ///     ritsulib 已确保牌堆非空（空牌堆会通过 thought bubble 触发
-    ///     <see cref="ModCardPileDefinition.EmptyPileMessage" /> 并跳过回调）。
+    ///     <para xml:lang="en">
+    ///         The UI invokes the callback only for a non-empty pile. A callback can call
+    ///         <see cref="ShowDefaultPileScreen" />, open a custom capstone screen with
+    ///         <see cref="OpenCapstoneScreen(ICapstoneScreen)" />, or leave the click unhandled.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         界面仅会为非空牌堆调用回调。回调可以调用 <see cref="ShowDefaultPileScreen" />，通过
+    ///         <see cref="OpenCapstoneScreen(ICapstoneScreen)" /> 打开自定义顶层界面，也可以不处理此次点击。
+    ///     </para>
     /// </remarks>
     public sealed class ModCardPileOpenContext
     {
@@ -56,40 +40,42 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Definition of the pile whose button was pressed.
-        ///     被按下按钮对应牌堆的定义。
+        ///     <para xml:lang="en">Gets the registered definition of the opened pile.</para>
+        ///     <para xml:lang="zh-CN">获取所打开牌堆的注册定义。</para>
         /// </summary>
         public ModCardPileDefinition Definition { get; }
 
         /// <summary>
-        ///     Live <see cref="ModCardPile" /> resolved for <see cref="Player" />.
-        ///     为 <see cref="Player" /> 解析出的 live <see cref="ModCardPile" />。
+        ///     <para xml:lang="en">Gets the current pile instance resolved for <see cref="Player" />.</para>
+        ///     <para xml:lang="zh-CN">获取为 <see cref="Player" /> 解析出的当前牌堆实例。</para>
         /// </summary>
         public ModCardPile Pile { get; }
 
         /// <summary>
-        ///     The local player this button is bound to.
-        ///     此按钮绑定到的本地玩家。
+        ///     <para xml:lang="en">Gets the local player associated with the open request.</para>
+        ///     <para xml:lang="zh-CN">获取与此次打开请求关联的本地玩家。</para>
         /// </summary>
         public Player Player { get; }
 
         /// <summary>
-        ///     The clicked button, when the open was triggered from a
-        ///     <see cref="ModCardPileUiStyle.TopBarDeck" /> / <see cref="ModCardPileUiStyle.BottomLeft" /> /
-        ///     <see cref="ModCardPileUiStyle.BottomRight" /> UI node. Null for programmatic invocations.
-        ///     触发打开操作的点击按钮；当 open 来自 <see cref="ModCardPileUiStyle.TopBarDeck" /> /
-        ///     <see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" /> UI 节点时存在。
-        ///     程序化调用时为 null。
+        ///     <para xml:lang="en">
+        ///         Gets the button that initiated the request, or <see langword="null" /> for programmatic
+        ///         requests.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取发起此次请求的按钮；以编程方式发起请求时为 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public NModCardPileButton? Button { get; }
 
         /// <summary>
-        ///     Launches the vanilla <see cref="NCardPileScreen" /> for the current pile, re-using
-        ///     <see cref="ModCardPileDefinition.Hotkeys" /> when set. This is exactly what the default open
-        ///     handler does when <see cref="ModCardPileSpec.OnOpen" /> is null.
-        ///     为当前牌堆启动原版 <see cref="NCardPileScreen" />，并在设置时复用
-        ///     <see cref="ModCardPileDefinition.Hotkeys" />。当 <see cref="ModCardPileSpec.OnOpen" /> 为 null 时，
-        ///     默认 open handler 做的正是这件事。
+        ///     <para xml:lang="en">
+        ///         Opens the current pile in the vanilla <see cref="NCardPileScreen" />, using the registered
+        ///         hotkeys when present.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用原版 <see cref="NCardPileScreen" /> 打开当前牌堆，并在已注册快捷键时使用这些快捷键。
+        ///     </para>
         /// </summary>
         public void ShowDefaultPileScreen()
         {
@@ -97,21 +83,22 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Opens <paramref name="screen" /> through <see cref="ModScreenService.Open" />. If a capstone
-        ///     is already showing, it is closed first so the new screen can take the stage.
-        ///     通过 <see cref="ModScreenService.Open" /> 打开 <paramref name="screen" />。如果已有 capstone 显示，
-        ///     会先关闭它，让新 screen 接管显示。
+        ///     <para xml:lang="en">
+        ///         Opens <paramref name="screen" /> through <see cref="ModScreenService.Open" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过 <see cref="ModScreenService.Open" /> 打开 <paramref name="screen" />。
+        ///     </para>
         /// </summary>
         /// <remarks>
-        ///     Thin convenience forwarder — the actual capstone plumbing lives in
-        ///     <see cref="ModScreenService" /> so any mod code can open custom screens without pulling in
-        ///     the card-pile subsystem.
-        ///     轻量便捷转发器；实际 capstone plumbing 位于 <see cref="ModScreenService" />，因此任何 mod 代码都可以
-        ///     打开自定义 screen，而不必引入 card-pile 子系统。
+        ///     <para xml:lang="en">
+        ///         Any currently open capstone screen is closed before the requested screen is shown.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">显示指定界面前会先关闭当前打开的顶层界面。</para>
         /// </remarks>
         /// <param name="screen">
-        ///     Custom screen implementing <see cref="ICapstoneScreen" />.
-        ///     实现 <see cref="ICapstoneScreen" /> 的自定义 screen。
+        ///     <para xml:lang="en">The custom capstone screen to open.</para>
+        ///     <para xml:lang="zh-CN">要打开的自定义顶层界面。</para>
         /// </param>
         public void OpenCapstoneScreen(ICapstoneScreen screen)
         {
