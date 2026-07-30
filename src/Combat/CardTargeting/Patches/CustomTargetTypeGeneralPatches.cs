@@ -478,9 +478,16 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 return false;
             }
 
+            bool played;
             __instance._isTryingToPlayCard = true;
-            var played = card.TryManualPlay(target);
-            __instance._isTryingToPlayCard = false;
+            try
+            {
+                played = card.TryManualPlay(target);
+            }
+            finally
+            {
+                __instance._isTryingToPlayCard = false;
+            }
 
             if (played)
             {
