@@ -280,6 +280,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                     writeIndex,
                     slot.TextMode,
                     applyHostStyle);
+                ClearSlotColorOverrides(live, slot.TextMode);
                 applyHostStyle(live);
                 ApplySlotColorOverrides(live, in slot);
 
@@ -366,6 +367,18 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                         ? ThemeConstants.RichTextLabel.FontOutlineColor
                         : ThemeConstants.Label.FontOutlineColor,
                     outlineColor);
+        }
+
+        private static void ClearSlotColorOverrides(Control label, ExtraIconAmountLabelTextMode textMode)
+        {
+            label.RemoveThemeColorOverride(
+                textMode == ExtraIconAmountLabelTextMode.RichText
+                    ? ThemeConstants.RichTextLabel.DefaultColor
+                    : ThemeConstants.Label.FontColor);
+            label.RemoveThemeColorOverride(
+                textMode == ExtraIconAmountLabelTextMode.RichText
+                    ? ThemeConstants.RichTextLabel.FontOutlineColor
+                    : ThemeConstants.Label.FontOutlineColor);
         }
 
         private static void SetSlotText(Control label, in ExtraIconAmountLabelSpec slot)
