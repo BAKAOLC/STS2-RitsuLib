@@ -135,10 +135,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             foreach (var source in creature.Powers.OfType<IHealthBarVisualGraftSource>())
                 try
                 {
-                    var m = source.GetHealthBarVisualGraft(context);
-                    sumHp += Math.Max(0, m.GraftHp);
-                    color ??= m.GraftSelfModulate;
-                    material ??= m.GraftMaterial;
+                    Merge(source.GetHealthBarVisualGraft(context));
                 }
                 catch (Exception ex)
                 {
@@ -155,10 +152,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             foreach (var entry in snapshot)
                 try
                 {
-                    var m = entry.Source.GetHealthBarVisualGraft(context);
-                    sumHp += Math.Max(0, m.GraftHp);
-                    color ??= m.GraftSelfModulate;
-                    material ??= m.GraftMaterial;
+                    Merge(entry.Source.GetHealthBarVisualGraft(context));
                 }
                 catch (Exception ex)
                 {
@@ -167,6 +161,13 @@ namespace STS2RitsuLib.Combat.HealthBars
                 }
 
             return new(sumHp, color, material);
+
+            void Merge(HealthBarVisualGraftMetrics metrics)
+            {
+                sumHp = (int)Math.Min(int.MaxValue, (long)sumHp + Math.Max(0, metrics.GraftHp));
+                color ??= metrics.GraftSelfModulate;
+                material ??= metrics.GraftMaterial;
+            }
         }
 
         private readonly record struct ProviderEntry(

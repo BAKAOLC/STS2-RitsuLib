@@ -58,7 +58,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             EnsureOverlayOrder(healthBar, state);
 
             var graftAgg = HealthBarVisualGraftRegistry.Aggregate(creature);
-            var visualDenom = Math.Max(creature.MaxHp, creature.CurrentHp + Math.Max(0, graftAgg.GraftHp));
+            var graftHp = Math.Max(0, graftAgg.GraftHp);
+            var visualDenom = Math.Max(creature.MaxHp, SaturatingAddNonNegative(creature.CurrentHp, graftHp));
 
             var maxWidth = GetMaxFgWidth(healthBar);
             var hpForeground = healthBar._hpForeground;
@@ -73,7 +74,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 .ThenBy(segment => segment.SequenceOrder)
                 .ToArray();
 
-            var remainingHp = baseHp + Math.Max(0, graftAgg.GraftHp);
+            var remainingHp = SaturatingAddNonNegative(baseHp, graftHp);
             var rightForecastEdgeOffsetRight = hpForeground.OffsetRight;
             Color? lethalRightColor = null;
             var rightIndex = 0;
@@ -309,7 +310,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     break;
 
                 var segmentStart = leftAccumulated;
-                leftAccumulated = Math.Min(remainingHp, leftAccumulated + segment.Amount);
+                leftAccumulated = Math.Min(remainingHp, SaturatingAddNonNegative(leftAccumulated, segment.Amount));
                 if (leftAccumulated <= segmentStart)
                     continue;
 
@@ -408,7 +409,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     segment.Color,
                     segment.Direction,
                     segment.Order,
-                    BaseLibImportedSequenceOrderOffset + segment.SequenceOrder,
+                    OffsetBaseLibSequenceOrder(segment.SequenceOrder),
                     segment.OverlayMaterial,
                     segment.OverlaySelfModulate,
                     segment.LeftOriginLayout,
@@ -692,12 +693,24 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             var accumulated = 0;
             foreach (var candidate in ordered)
             {
-                accumulated = Math.Min(remainingHp, accumulated + candidate.Amount);
+                accumulated = Math.Min(remainingHp, SaturatingAddNonNegative(accumulated, candidate.Amount));
                 if (accumulated >= remainingHp)
                     return candidate.Color;
             }
 
             return null;
+        }
+
+        private static int SaturatingAddNonNegative(int left, int right)
+        {
+            return (int)Math.Min(int.MaxValue, (long)Math.Max(0, left) + Math.Max(0, right));
+        }
+
+        private static long OffsetBaseLibSequenceOrder(long sequenceOrder)
+        {
+            return sequenceOrder > long.MaxValue - BaseLibImportedSequenceOrderOffset
+                ? long.MaxValue
+                : sequenceOrder + BaseLibImportedSequenceOrderOffset;
         }
 
         private readonly record struct LethalCandidate(

@@ -274,7 +274,10 @@ namespace STS2RitsuLib.Combat.HealthBars
                 var last = _segments[^1];
                 if (CanMerge(last, segment))
                 {
-                    _segments[^1] = last with { Amount = last.Amount + segment.Amount };
+                    _segments[^1] = last with
+                    {
+                        Amount = (int)Math.Min(int.MaxValue, (long)last.Amount + segment.Amount),
+                    };
                     return this;
                 }
             }

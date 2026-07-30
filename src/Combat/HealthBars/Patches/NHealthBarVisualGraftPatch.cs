@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 return;
             }
 
-            var visualDenom = Math.Max(creature.MaxHp, creature.CurrentHp + graftHp);
+            var visualDenom = Math.Max(creature.MaxHp, SaturatingAddNonNegative(creature.CurrentHp, graftHp));
             var scale = visualDenom / (float)creature.MaxHp;
             if (scale <= 1.0001f)
             {
@@ -68,7 +68,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             if (graftHp <= 0 || creature.MaxHp <= 0)
                 return;
 
-            var visualDenom = Math.Max(creature.MaxHp, creature.CurrentHp + graftHp);
+            var visualDenom = Math.Max(creature.MaxHp, SaturatingAddNonNegative(creature.CurrentHp, graftHp));
             var scale = visualDenom / (float)creature.MaxHp;
             if (scale <= 1.0001f)
                 return;
@@ -278,6 +278,11 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             var creature = healthBar._creature;
             var width = (float)amount / visualDenom * GetMaxFgWidth(healthBar);
             return Math.Max(width, creature.CurrentHp > 0 ? 12f : 0f);
+        }
+
+        private static int SaturatingAddNonNegative(int left, int right)
+        {
+            return (int)Math.Min(int.MaxValue, (long)Math.Max(0, left) + Math.Max(0, right));
         }
 
         private static bool EnsureGraftStrip(NHealthBar healthBar, out GraftUiState state)
