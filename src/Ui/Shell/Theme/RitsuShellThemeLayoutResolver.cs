@@ -37,14 +37,20 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         internal static int ResolveInt(string path, int fallback)
         {
-            return RitsuShellTheme.Current.TryGetNumber(path, out var value)
-                ? (int)Math.Round(value)
-                : fallback;
+            if (RitsuShellTheme.Current.TryGetNumber(path, out var value))
+            {
+                var rounded = Math.Round(value);
+                if (rounded is >= int.MinValue and <= int.MaxValue)
+                    return (int)rounded;
+            }
+
+            return fallback;
         }
 
         internal static float ResolveFloat(string path, float fallback)
         {
-            return RitsuShellTheme.Current.TryGetNumber(path, out var value)
+            return RitsuShellTheme.Current.TryGetNumber(path, out var value) &&
+                   value is >= -float.MaxValue and <= float.MaxValue
                 ? (float)value
                 : fallback;
         }
