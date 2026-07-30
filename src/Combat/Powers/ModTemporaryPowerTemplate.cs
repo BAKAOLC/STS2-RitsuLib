@@ -241,14 +241,20 @@ namespace STS2RitsuLib.Combat.Powers
 
         private IEnumerable<DynamicVar> BuildCanonicalVars()
         {
-            if (AdditionalCanonicalVars.Any(dynVar => dynVar.Name == ExtraTurnCyclesVarName))
+            var additionalVars = AdditionalCanonicalVars?.ToArray()
+                                 ?? throw new InvalidOperationException(
+                                     $"{nameof(AdditionalCanonicalVars)} cannot be null.");
+            if (additionalVars.Any(static dynVar => dynVar == null))
+                throw new InvalidOperationException(
+                    $"{nameof(AdditionalCanonicalVars)} cannot contain null entries.");
+            if (additionalVars.Any(dynVar => dynVar.Name == ExtraTurnCyclesVarName))
                 throw new ArgumentException(
                     $"'{ExtraTurnCyclesVarName}' is reserved by {nameof(ModTemporaryPowerTemplate)}. " +
                     $"Add a differently-named var via {nameof(AdditionalCanonicalVars)}."
                 );
 
             yield return new IntVar(ExtraTurnCyclesVarName, 0);
-            foreach (var dynVar in AdditionalCanonicalVars)
+            foreach (var dynVar in additionalVars)
                 yield return dynVar;
         }
 
