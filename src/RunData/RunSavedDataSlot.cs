@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Utils.Persistence.Migration;
 
 namespace STS2RitsuLib.RunData
 {
@@ -171,8 +172,7 @@ namespace STS2RitsuLib.RunData
         protected bool TryReadData(JsonObject entry, out T value)
         {
             value = null!;
-            var schema = entry[SchemaPropertyName]?.GetValue<int>() ?? 1;
-            if (!TryMigrate(entry, schema, out var migrated))
+            if (!TryPrepareEntry(entry, out var migrated))
                 return false;
 
             var dataNode = migrated[DataPropertyName];
@@ -217,28 +217,50 @@ namespace STS2RitsuLib.RunData
             return netId.ToString();
         }
 
-        private bool TryMigrate(JsonObject entry, int schema, out JsonObject migrated)
+        protected bool TryReadPlayers(JsonObject entry, out JsonObject players)
+        {
+            if (TryPrepareEntry(entry, out var migrated) &&
+                migrated[PlayersPropertyName] is JsonObject playerObject)
+            {
+                players = playerObject;
+                return true;
+            }
+
+            players = null!;
+            return false;
+        }
+
+        private bool TryPrepareEntry(JsonObject entry, out JsonObject migrated)
         {
             migrated = entry;
+            var schema = entry[SchemaPropertyName]?.GetValue<int>() ?? 1;
             if (schema == Options.SchemaVersion)
                 return true;
 
-            if (schema > Options.SchemaVersion)
+            if (schema < 0 || schema > Options.SchemaVersion)
                 return false;
 
             if (Options.Migrations == null || Options.Migrations.Count == 0)
                 return false;
 
             migrated = entry.DeepClone().AsObject();
-            var current = schema;
-            while (current != Options.SchemaVersion)
+            var migrations = Options.Migrations
+                .OrderBy(static migration => migration.FromVersion)
+                .ThenBy(static migration => migration.ToVersion)
+                .ToList();
+            if (!MigrationManager.TryBuildShortestMigrationPath(
+                    schema,
+                    Options.SchemaVersion,
+                    migrations,
+                    out var plan))
+                return false;
+
+            foreach (var migration in plan)
             {
-                var migration = Options.Migrations.FirstOrDefault(m => m.FromVersion == current);
-                if (migration == null || !migration.Migrate(migrated))
+                if (!migration.Migrate(migrated))
                     return false;
 
-                current = migration.ToVersion;
-                migrated[SchemaPropertyName] = current;
+                migrated[SchemaPropertyName] = migration.ToVersion;
             }
 
             return true;
@@ -418,7 +440,7 @@ namespace STS2RitsuLib.RunData
 
         protected override void ImportCore(RunState runState, JsonObject entry)
         {
-            if (entry["players"] is not JsonObject players)
+            if (!TryReadPlayers(entry, out var players))
                 return;
 
             var values = new Dictionary<ulong, T>();
@@ -451,7 +473,7 @@ namespace STS2RitsuLib.RunData
             bool isHostNetId,
             JsonObject entry)
         {
-            if (entry["players"] is not JsonObject players ||
+            if (!TryReadPlayers(entry, out var players) ||
                 !players.TryGetPropertyValue(PlayerKey(netId), out var node) ||
                 !TryReadPlayerValue(node, out var value))
                 return;
