@@ -44,12 +44,10 @@ namespace STS2RitsuLib.Timeline
         public static void RegisterTimelineSlot(Type epochType, EpochEra era, int eraPosition, string modId)
         {
             ArgumentNullException.ThrowIfNull(epochType);
+            ArgumentOutOfRangeException.ThrowIfNegative(eraPosition);
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
 
-            if (!typeof(ModEpochTemplate).IsAssignableFrom(epochType))
-                throw new ArgumentException(
-                    $"Type '{epochType.Name}' must inherit {nameof(ModEpochTemplate)} to use the layout registry.",
-                    nameof(epochType));
+            ThrowIfNotModEpochTemplate(epochType);
 
             lock (Sync)
             {
@@ -252,13 +250,13 @@ namespace STS2RitsuLib.Timeline
         private static void RegisterAutoTimelineSlotBeforeEraColumnLocked(Type epochType, EpochEra anchorEra,
             string modId)
         {
-            var anchor = (int)anchorEra;
+            var anchor = (long)(int)anchorEra;
             for (var ei = anchor - 1; ei >= MinEraIntScan; ei--)
-                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)ei, true))
+                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)(int)ei, true))
                     return;
 
             for (var ei = anchor - 1; ei >= MinEraIntScan; ei--)
-                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)ei, false))
+                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)(int)ei, false))
                     return;
 
             throw new InvalidOperationException(
@@ -268,13 +266,13 @@ namespace STS2RitsuLib.Timeline
         private static void RegisterAutoTimelineSlotAfterEraColumnLocked(Type epochType, EpochEra anchorEra,
             string modId)
         {
-            var anchor = (int)anchorEra;
+            var anchor = (long)(int)anchorEra;
             for (var ei = anchor + 1; ei <= MaxEraIntScan; ei++)
-                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)ei, true))
+                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)(int)ei, true))
                     return;
 
             for (var ei = anchor + 1; ei <= MaxEraIntScan; ei++)
-                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)ei, false))
+                if (TryClaimFirstFreeInColumnLocked(epochType, (EpochEra)(int)ei, false))
                     return;
 
             throw new InvalidOperationException(
@@ -283,9 +281,10 @@ namespace STS2RitsuLib.Timeline
 
         private static void ThrowIfNotModEpochTemplate(Type epochType)
         {
-            if (!typeof(ModEpochTemplate).IsAssignableFrom(epochType))
+            if (epochType.IsAbstract || epochType.IsInterface ||
+                !typeof(ModEpochTemplate).IsAssignableFrom(epochType))
                 throw new ArgumentException(
-                    $"Type '{epochType.Name}' must inherit {nameof(ModEpochTemplate)} to use the layout registry.",
+                    $"Type '{epochType.Name}' must be a concrete {nameof(ModEpochTemplate)} subtype to use the layout registry.",
                     nameof(epochType));
         }
 
@@ -345,15 +344,10 @@ namespace STS2RitsuLib.Timeline
                 if (type is not { IsClass: true } || type.IsAbstract || !typeof(EpochModel).IsAssignableFrom(type))
                     continue;
 
-                try
-                {
-                    var inst = (EpochModel)Activator.CreateInstance(type)!;
-                    Occupied.Add(ToOccupancyKey(inst.Era, inst.EraPosition));
-                }
-                catch
-                {
-                    // Source-generated or unusual epoch types may not be default-constructible; skip.
-                }
+                var instance = (EpochModel)(Activator.CreateInstance(type)
+                                           ?? throw new InvalidOperationException(
+                                               $"Could not construct built-in Epoch type '{type.FullName}'."));
+                Occupied.Add(ToOccupancyKey(instance.Era, instance.EraPosition));
             }
 
             _vanillaSeeded = true;

@@ -26,9 +26,12 @@ namespace STS2RitsuLib.Timeline
         /// </summary>
         public static void Configure(long eraValue, bool? enabled = null, string? texturePath = null)
         {
+            ValidateEraValue(eraValue);
+
             lock (Sync)
             {
-                RulesByEra[eraValue] = new(enabled, texturePath);
+                RulesByEra[eraValue] = new(enabled,
+                    string.IsNullOrWhiteSpace(texturePath) ? null : texturePath.Trim());
             }
         }
 
@@ -47,10 +50,20 @@ namespace STS2RitsuLib.Timeline
         /// </summary>
         public static void Clear(long eraValue)
         {
+            ValidateEraValue(eraValue);
+
             lock (Sync)
             {
                 RulesByEra.Remove(eraValue);
             }
+        }
+
+        private static void ValidateEraValue(long eraValue)
+        {
+            if (eraValue is < int.MinValue or > int.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(eraValue),
+                    eraValue,
+                    $"{nameof(EpochEra)} uses 32-bit integer values.");
         }
 
         internal static bool TryResolve(EpochEra era, out bool? enabled, out string? texturePath)
