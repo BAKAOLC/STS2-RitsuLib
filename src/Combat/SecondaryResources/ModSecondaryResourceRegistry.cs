@@ -23,6 +23,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             CombatUiVisibilityPredicates =
                 new(StringComparer.OrdinalIgnoreCase);
 
+        private static long _nextVisibilityPredicateSequence;
         private readonly string _modId;
 
         private ModSecondaryResourceRegistry(string modId)
@@ -189,8 +190,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     CombatUiVisibilityPredicates[resourceId] = registrations;
                 }
 
-                registrations.Add(new(order, predicate));
-                registrations.Sort(static (left, right) => left.Order.CompareTo(right.Order));
+                registrations.Add(new(order, _nextVisibilityPredicateSequence++, predicate));
+                registrations.Sort(static (left, right) =>
+                {
+                    var orderComparison = left.Order.CompareTo(right.Order);
+                    return orderComparison != 0
+                        ? orderComparison
+                        : left.Sequence.CompareTo(right.Sequence);
+                });
             }
         }
 
@@ -255,6 +262,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private sealed record CombatUiVisibilityPredicateRegistration(
             int Order,
+            long Sequence,
             SecondaryResourceCombatUiVisibilityPredicate Predicate);
     }
 }
