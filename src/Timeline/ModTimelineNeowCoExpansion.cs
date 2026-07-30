@@ -15,6 +15,10 @@ namespace STS2RitsuLib.Timeline
 
         private static int _pendingNeowAnimatedSlotMerge;
 
+        private static readonly Lock ExpansionInspectionWarningLock = new();
+
+        private static readonly HashSet<string> WarnedExpansionInspectionFailures = [];
+
         private static bool IsInsideNeowQueueUnlocks => Volatile.Read(ref _neowQueueUnlocksDepth) > 0;
 
         internal static void EnterNeowQueueUnlocks()
@@ -338,7 +342,9 @@ namespace STS2RitsuLib.Timeline
                     continue;
                 }
 
-                if (parent.GetTimelineExpansion().Any(child => child.Id == id))
+                if (!TryHasExpansionChild(parent, id, out var hasChild))
+                    return false;
+                if (hasChild)
                     return false;
             }
 
@@ -369,11 +375,36 @@ namespace STS2RitsuLib.Timeline
                     continue;
                 }
 
-                if (parent.GetTimelineExpansion().Any(child => child.Id == id))
+                if (TryHasExpansionChild(parent, id, out var hasChild) && hasChild)
                     return true;
             }
 
             return false;
+        }
+
+        private static bool TryHasExpansionChild(EpochModel parent, string childId, out bool hasChild)
+        {
+            try
+            {
+                hasChild = parent.GetTimelineExpansion().Any(child => child.Id == childId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                lock (ExpansionInspectionWarningLock)
+                {
+                    if (!WarnedExpansionInspectionFailures.Add(parent.Id))
+                    {
+                        hasChild = false;
+                        return false;
+                    }
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[Timeline] Failed to inspect expansion children for Epoch '{parent.Id}': {ex.Message}");
+                hasChild = false;
+                return false;
+            }
         }
 
         private static EpochSlotState ResolveMergedModSlotState(string id, ProgressState? progress)
