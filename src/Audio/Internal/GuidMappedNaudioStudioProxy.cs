@@ -53,6 +53,7 @@ namespace STS2RitsuLib.Audio.Internal
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped PlayLoop start/release: {ex.Message}");
+                FmodStudioEventInstances.TryRelease(inst);
                 return false;
             }
 
@@ -150,11 +151,13 @@ namespace STS2RitsuLib.Audio.Internal
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped PlayMusic start: {ex.Message}");
+                FmodStudioEventInstances.TryRelease(inst);
                 return false;
             }
 
             lock (Gate)
             {
+                ReleaseMappedInstance(ref _musicInstance, "ReplaceMusic");
                 _musicInstance = inst;
             }
 
@@ -264,11 +267,13 @@ namespace STS2RitsuLib.Audio.Internal
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation} start: {ex.Message}");
+                FmodStudioEventInstances.TryRelease(inst);
                 return false;
             }
 
             lock (Gate)
             {
+                ReleaseMappedInstance(ref slot, $"Replace{operation}");
                 slot = inst;
                 slotPath = path;
             }
@@ -303,19 +308,11 @@ namespace STS2RitsuLib.Audio.Internal
             if (instance is null)
                 return;
 
-            try
-            {
-                instance.Call("stop", 0);
-                instance.Call("release");
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation}: {ex.Message}");
-            }
-            finally
-            {
-                instance = null;
-            }
+            if (!FmodStudioEventInstances.TryStop(instance))
+                RitsuLibFramework.Logger.Warn($"[Audio] mapped {operation}: stop failed.");
+
+            FmodStudioEventInstances.TryRelease(instance);
+            instance = null;
         }
 
         private sealed record LoopSlot(GodotObject Instance, bool UsesLoopParam);
