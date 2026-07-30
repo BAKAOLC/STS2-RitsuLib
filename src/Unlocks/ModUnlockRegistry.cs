@@ -126,8 +126,7 @@ namespace STS2RitsuLib.Unlocks
             return
             [
                 .. requirements
-                    .Where(entry => progress.IsEpochObtained(entry.Value) ||
-                                    IsEpochRequirementIgnoredForModelId(entry.Key))
+                    .Where(entry => progress.IsEpochObtained(entry.Value))
                     .Select(static entry => entry.Value)
                     .Distinct(StringComparer.Ordinal),
             ];
@@ -150,12 +149,6 @@ namespace STS2RitsuLib.Unlocks
             return changed
                 ? new(unlockedEpochs, serializable.EncountersSeen, serializable.NumberOfRuns)
                 : unlockState;
-        }
-
-        private static bool IsEpochRequirementIgnoredForModelId(ModelId modelId)
-        {
-            var model = ModelDb.GetByIdOrNull<AbstractModel>(modelId);
-            return model != null && IsEpochRequirementIgnoredForModelType(model.GetType());
         }
 
         /// <summary>
@@ -241,7 +234,8 @@ namespace STS2RitsuLib.Unlocks
                 PostRunEpochUnlockRule.Create(
                     ModTimelineRegistry.GetEpochId(epochType),
                     $"Unlock {epochType.Name} after finishing a run as {characterType.Name}",
-                    context => context.CharacterId == ModelDb.GetId(characterType)));
+                    context => !context.IsAbandoned &&
+                               context.CharacterId == ModelDb.GetId(characterType)));
         }
 
         /// <summary>
@@ -293,6 +287,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterAscensionWin(Type characterType, Type epochType, int ascensionLevel)
         {
+            ArgumentOutOfRangeException.ThrowIfNegative(ascensionLevel);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
                     ModTimelineRegistry.GetEpochId(epochType),
@@ -311,11 +306,14 @@ namespace STS2RitsuLib.Unlocks
         public void UnlockEpochAfterRunCount<TEpoch>(int requiredRuns, bool requireVictory = false)
             where TEpoch : EpochModel, new()
         {
+            ArgumentOutOfRangeException.ThrowIfLessThan(requiredRuns, 1);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
-                    new TEpoch().Id,
+                    ModTimelineRegistry.GetEpochId(typeof(TEpoch)),
                     $"Unlock {typeof(TEpoch).Name} after {requiredRuns} run(s)",
-                    context => context.TotalRuns >= requiredRuns && (!requireVictory || context.IsVictory)));
+                    context => !context.IsAbandoned &&
+                               context.TotalRuns >= requiredRuns &&
+                               (!requireVictory || context.IsVictory)));
         }
 
         /// <summary>
@@ -324,8 +322,10 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void RegisterPostRunRule(PostRunEpochUnlockRule rule)
         {
-            EnsureMutable($"register post-run epoch rule '{rule.Description}'");
             ArgumentNullException.ThrowIfNull(rule);
+            EnsureMutable($"register post-run epoch rule '{rule.Description}'");
+            ValidateRule(rule.EpochId, rule.Description);
+            ArgumentNullException.ThrowIfNull(rule.ShouldUnlock);
 
             lock (SyncRoot)
             {
@@ -368,8 +368,10 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void RegisterEliteEpochRule(EliteEpochUnlockRule rule)
         {
-            EnsureMutable($"register elite epoch rule '{rule.Description}'");
             ArgumentNullException.ThrowIfNull(rule);
+            EnsureMutable($"register elite epoch rule '{rule.Description}'");
+            ValidateRule(rule.EpochId, rule.Description);
+            ArgumentOutOfRangeException.ThrowIfLessThan(rule.RequiredEliteWins, 1);
 
             lock (SyncRoot)
             {
@@ -412,8 +414,10 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void RegisterBossEpochRule(CountedEpochUnlockRule rule)
         {
-            EnsureMutable($"register boss epoch rule '{rule.Description}'");
             ArgumentNullException.ThrowIfNull(rule);
+            EnsureMutable($"register boss epoch rule '{rule.Description}'");
+            ValidateRule(rule.EpochId, rule.Description);
+            ArgumentOutOfRangeException.ThrowIfLessThan(rule.RequiredWins, 1);
 
             lock (SyncRoot)
             {
@@ -728,7 +732,8 @@ namespace STS2RitsuLib.Unlocks
             if (rules.Length == 0)
                 return;
 
-            if (localPlayer.CharacterId == null) return;
+            if (localPlayer.CharacterId == null)
+                return;
             var context = new PostRunUnlockContext(
                 serializableRun,
                 localPlayer,
@@ -745,8 +750,17 @@ namespace STS2RitsuLib.Unlocks
                 if (SaveManager.Instance.Progress.IsEpochObtained(rule.EpochId))
                     continue;
 
-                if (!rule.ShouldUnlock(context))
+                try
+                {
+                    if (!rule.ShouldUnlock(context))
+                        continue;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Post-run rule '{rule.Description}' failed: {ex.Message}");
                     continue;
+                }
 
                 if (!EpochRuntimeCompatibility.CanUseEpochId(
                         rule.EpochId,
@@ -779,6 +793,12 @@ namespace STS2RitsuLib.Unlocks
             throw new InvalidOperationException(
                 $"Cannot {operation} after unlock registration has been frozen ({_freezeReason ?? "unknown"}). " +
                 "Register unlock rules from your mod initializer before model initialization.");
+        }
+
+        private static void ValidateRule(string epochId, string description)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(description);
         }
     }
 
