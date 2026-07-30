@@ -163,6 +163,12 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
 
             var targetManager = NTargetManager.Instance;
+            var room = NCombatRoom.Instance;
+            if (room == null)
+            {
+                instance.CancelPlayCard();
+                return;
+            }
 
             var list = card.CombatState!.PlayerCreatures
                 .Where(c => c is { IsAlive: true, IsPlayer: true })
@@ -175,7 +181,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
 
             var nodes = list
-                .Select(c => NCombatRoom.Instance!.GetCreatureNode(c))
+                .Select(room.GetCreatureNode)
                 .OfType<NCreature>()
                 .ToList();
 
@@ -198,8 +204,11 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                           || !Sts2InputCompat.IsUsingDirectionalNavigation,
                     null);
 
-                NCombatRoom.Instance!.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));
-                nodes.First().Hitbox.TryGrabFocus();
+                room.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));
+                var initialNode = nodes.First();
+                if (room.LastTargetedCreature != null)
+                    initialNode = nodes.FirstOrDefault(node => node.Entity == room.LastTargetedCreature) ?? initialNode;
+                initialNode.Hitbox.TryGrabFocus();
 
                 var selected = (NCreature?)await targetManager.SelectionFinished();
 
@@ -213,6 +222,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
             finally
             {
+                room.EnableControllerNavigation();
+
                 if (targetManager.IsConnected(NTargetManager.SignalName.CreatureHovered, hoverCallable))
                     targetManager.Disconnect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
 

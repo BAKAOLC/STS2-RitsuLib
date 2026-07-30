@@ -412,7 +412,10 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                     null);
 
                 room.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));
-                nodes.First().Hitbox.TryGrabFocus();
+                var initialNode = nodes.First();
+                if (room.LastTargetedCreature != null)
+                    initialNode = nodes.FirstOrDefault(node => node.Entity == room.LastTargetedCreature) ?? initialNode;
+                initialNode.Hitbox.TryGrabFocus();
 
                 var selected = (NCreature?)await targetManager.SelectionFinished();
 
@@ -426,6 +429,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
             finally
             {
+                room.EnableControllerNavigation();
+
                 if (targetManager.IsConnected(NTargetManager.SignalName.CreatureHovered, hoverCallable))
                     targetManager.Disconnect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
 
