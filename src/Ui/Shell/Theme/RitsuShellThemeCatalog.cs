@@ -65,20 +65,28 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     if (!manifestName.EndsWith(".theme.json", StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    using var stream = asm.GetManifestResourceStream(manifestName);
-                    if (stream == null)
-                        continue;
+                    try
+                    {
+                        using var stream = asm.GetManifestResourceStream(manifestName);
+                        if (stream == null)
+                            continue;
 
-                    using var ms = new MemoryStream();
-                    stream.CopyTo(ms);
-                    var bytes = ms.ToArray();
-                    var doc = RitsuShellThemeDocument.Deserialize(new MemoryStream(bytes));
-                    if (doc == null || string.IsNullOrWhiteSpace(doc.Id))
-                        continue;
+                        using var ms = new MemoryStream();
+                        stream.CopyTo(ms);
+                        var bytes = ms.ToArray();
+                        var doc = RitsuShellThemeDocument.Deserialize(new MemoryStream(bytes));
+                        if (doc == null || string.IsNullOrWhiteSpace(doc.Id))
+                            continue;
 
-                    var id = doc.Id.Trim().ToLowerInvariant();
-                    map[id] = doc;
-                    extractedPairs.Add((id, bytes, NormalizeThemeVersion(doc)));
+                        var id = doc.Id.Trim().ToLowerInvariant();
+                        map[id] = doc;
+                        extractedPairs.Add((id, bytes, NormalizeThemeVersion(doc)));
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[ShellTheme] Could not load embedded theme resource '{manifestName}': {ex}");
+                    }
                 }
 
                 if (RitsuShellThemePaths.TryEnsureShellThemesDirectory(out var themesAbs))
@@ -99,9 +107,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                             TryBackupThemeFile(targetFile);
                             File.WriteAllBytes(targetFile, bytes);
                         }
-                        catch
+                        catch (Exception ex)
                         {
-                            // Best-effort: missing extraction does not invalidate the embedded copy.
+                            RitsuLibFramework.Logger.Warn(
+                                $"[ShellTheme] Could not extract embedded theme '{id}' to '{themesAbs}': {ex}");
                         }
 
                     try
@@ -118,14 +127,16 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                                 var did = diskDoc.Id.Trim().ToLowerInvariant();
                                 map[did] = diskDoc;
                             }
-                            catch
+                            catch (Exception ex)
                             {
-                                // Skip invalid or partially written theme files.
+                                RitsuLibFramework.Logger.Warn(
+                                    $"[ShellTheme] Could not load disk theme '{path}': {ex}");
                             }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // Directory enumeration may fail on some hosts; embedded themes remain available.
+                        RitsuLibFramework.Logger.Warn(
+                            $"[ShellTheme] Could not enumerate disk themes in '{themesAbs}': {ex}");
                     }
                 }
 
@@ -249,8 +260,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 InvalidateCache();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ShellTheme] Could not restore embedded theme '{requestedId}': {ex}");
                 restoredPath = "";
                 return false;
             }
@@ -289,8 +302,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 InvalidateCache();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ShellTheme] Could not restore existing disk themes in '{themesAbs}': {ex}");
                 return false;
             }
         }
@@ -408,9 +423,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     bytes = candidateBytes;
                     return true;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Ignore malformed embedded resources and continue probing.
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ShellTheme] Could not inspect embedded theme resource '{manifestName}': {ex}");
                 }
             }
 
@@ -437,8 +453,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     bytes = ms.ToArray();
                     doc = RitsuShellThemeDocument.Deserialize(new MemoryStream(bytes));
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ShellTheme] Could not enumerate embedded theme resource '{manifestName}': {ex}");
                     continue;
                 }
 
@@ -467,9 +485,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 var diskVersion = NormalizeThemeVersion(diskDoc);
                 return embeddedVersion > diskVersion;
             }
-            catch
+            catch (Exception ex)
             {
-                // Invalid disk content should be replaced by a valid embedded release copy.
+                RitsuLibFramework.Logger.Warn(
+                    $"[ShellTheme] Could not read disk theme version from '{path}'; the embedded copy will replace it: {ex}");
                 return true;
             }
         }
@@ -484,9 +503,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 var backupPath = BuildTimestampedBackupPath(path);
                 File.Copy(path, backupPath, false);
             }
-            catch
+            catch (Exception ex)
             {
-                // Best-effort backup: do not block theme recovery if backup fails.
+                RitsuLibFramework.Logger.Warn(
+                    $"[ShellTheme] Could not back up disk theme '{path}' before replacement: {ex}");
             }
         }
 
