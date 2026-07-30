@@ -23,9 +23,11 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static GodotObject? TryGetBus(string busPath)
         {
-            return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetBus, busPath)
-                ? null
-                : v.AsGodotObject();
+            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetBus, busPath))
+                return null;
+
+            var bus = v.AsGodotObject();
+            return bus is not null && GodotObject.IsInstanceValid(bus) ? bus : null;
         }
 
         /// <summary>
@@ -154,7 +156,7 @@ namespace STS2RitsuLib.Audio
                 var v = bus.Call(BusGetNumericId);
                 return v.VariantType switch
                 {
-                    Variant.Type.Int => v.AsInt32(),
+                    Variant.Type.Int => v.AsInt64(),
                     Variant.Type.Float => (long)v.AsDouble(),
                     _ => v.AsInt64(),
                 };
