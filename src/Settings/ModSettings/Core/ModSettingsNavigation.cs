@@ -176,7 +176,7 @@ namespace STS2RitsuLib.Settings
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Warn($"[Settings] Deferred navigation failed: {ex.Message}");
+                RitsuLibFramework.Logger.Warn($"[Settings] Deferred navigation failed: {ex}");
             }
         }
 
@@ -218,6 +218,15 @@ namespace STS2RitsuLib.Settings
 
         internal static ModSettingsOpenResult ResolveLocation(ModSettingsLocation requested)
         {
+            if (string.IsNullOrWhiteSpace(requested.ModId))
+                return ModSettingsOpenResult.Error("invalid-location", "A mod id is required.", requested);
+            if (string.IsNullOrWhiteSpace(requested.PageId) &&
+                (!string.IsNullOrWhiteSpace(requested.SectionId) || !string.IsNullOrWhiteSpace(requested.EntryId)))
+                return ModSettingsOpenResult.Error(
+                    "invalid-location",
+                    "A page id is required when opening a section or entry.",
+                    requested);
+
             try
             {
                 RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
@@ -227,17 +236,12 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[Settings] Failed to refresh page registry before navigation: {ex.Message}");
-            }
-
-            if (string.IsNullOrWhiteSpace(requested.ModId))
-                return ModSettingsOpenResult.Error("invalid-location", "A mod id is required.", requested);
-            if (string.IsNullOrWhiteSpace(requested.PageId) &&
-                (!string.IsNullOrWhiteSpace(requested.SectionId) || !string.IsNullOrWhiteSpace(requested.EntryId)))
+                    $"[Settings] Failed to refresh page registry before navigation: {ex}");
                 return ModSettingsOpenResult.Error(
-                    "invalid-location",
-                    "A page id is required when opening a section or entry.",
+                    "registry-refresh-failed",
+                    "Settings pages could not be refreshed.",
                     requested);
+            }
 
             var pages = ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, requested.ModId, StringComparison.OrdinalIgnoreCase))
