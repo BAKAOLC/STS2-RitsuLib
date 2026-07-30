@@ -6,8 +6,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Relics.Patches
 {
     /// <summary>
-    ///     Extends <see cref="ArchaicTooth.TranscendenceCards" /> so Dusty Tome and similar logic see mod ancient targets.
-    ///     扩展 <see cref="ArchaicTooth.TranscendenceCards" />，让 Dusty Tome 和类似逻辑能看到 mod 古代目标。
+    ///     <para xml:lang="en">
+    ///         Adds mod-provided Ancient card targets to <see cref="ArchaicTooth.TranscendenceCards" /> for Dusty Tome and other
+    ///         consumers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将模组提供的先古卡牌目标加入 <see cref="ArchaicTooth.TranscendenceCards" />，供尘封之书等逻辑使用。
+    ///     </para>
     /// </summary>
     internal sealed class ArchaicToothTranscendenceCardsPatch : IPatchMethod
     {

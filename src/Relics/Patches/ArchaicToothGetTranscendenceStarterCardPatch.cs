@@ -6,8 +6,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Relics.Patches
 {
     /// <summary>
-    ///     When vanilla finds no transcendence starter, include deck cards that match mod-registered starter ids.
-    ///     当原版找不到超越初始牌时，包含与 mod 注册的初始牌 id 匹配的牌组卡牌。
+    ///     <para xml:lang="en">
+    ///         Searches the deck for a mod-registered transcendence starter when the base game finds none.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">游戏本体未找到超越起始卡牌时，在牌组中查找模组注册的起始卡牌。</para>
     /// </summary>
     internal sealed class ArchaicToothGetTranscendenceStarterCardPatch : IPatchMethod
     {

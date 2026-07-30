@@ -7,18 +7,27 @@ using STS2RitsuLib.Diagnostics;
 namespace STS2RitsuLib.Relics
 {
     /// <summary>
-    ///     Holds mod-supplied mappings for <see cref="ArchaicTooth" /> transcendence and
-    ///     <see cref="TouchOfOrobas" /> refinement, applied via framework Harmony patches.
-    ///     保存 mod 提供的 <see cref="ArchaicTooth" /> 超越和
-    ///     <see cref="TouchOfOrobas" /> 精炼映射，并通过框架 Harmony patch 应用。
+    ///     <para xml:lang="en">
+    ///         Stores mod-provided mappings for <see cref="ArchaicTooth" /> transcendence and
+    ///         <see cref="TouchOfOrobas" /> refinement.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         保存模组为 <see cref="ArchaicTooth" /> 超越和 <see cref="TouchOfOrobas" /> 精炼提供的映射。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Target models are stored as CLR <see cref="Type" /> and resolved through <see cref="ModelDb.GetByIdOrNull{T}" />
-    ///     at patch time so registration can run during mod <c>Apply()</c> before <see cref="ModelDb" /> has injected mod
-    ///     content into <c>_contentById</c>. Starter keys use <see cref="ModelDb.GetId{T}" /> (metadata only).
-    ///     目标模型以 CLR <see cref="Type" /> 存储，并在 patch 时通过 <see cref="ModelDb.GetByIdOrNull{T}" /> 解析，
-    ///     这样注册就能在 mod <c>Apply()</c> 期间、<see cref="ModelDb" /> 将 mod 内容注入
-    ///     <c>_contentById</c> 之前运行。初始牌 key 使用 <see cref="ModelDb.GetId{T}" />（仅元数据）。
+    ///     <para xml:lang="en">
+    ///         Target models are stored as CLR <see cref="Type" /> values and resolved through
+    ///         <see cref="ModelDb.GetByIdOrNull{T}" /> when a patch runs. Registration can therefore occur during a mod's
+    ///         <c>Apply()</c> method, before <see cref="ModelDb" /> has added mod content to <c>_contentById</c>. Starter keys
+    ///         use the metadata-only <see cref="ModelDb.GetId{T}" /> method.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         目标模型以 CLR <see cref="Type" /> 值保存，并在补丁运行时通过 <see cref="ModelDb.GetByIdOrNull{T}" />
+    ///         解析。因此，模组可在 <c>Apply()</c> 方法中、<see cref="ModelDb" /> 尚未将模组内容加入
+    ///         <c>_contentById</c> 前完成注册。起始卡牌或遗物的键则通过仅使用元数据的
+    ///         <see cref="ModelDb.GetId{T}" /> 方法取得。
+    ///     </para>
     /// </remarks>
     internal static class OrobasAncientUpgradeRegistry
     {
@@ -83,8 +92,13 @@ namespace STS2RitsuLib.Relics
         }
 
         /// <summary>
-        ///     Distinct ancient card templates registered by mods (for <see cref="ArchaicTooth.TranscendenceCards" />).
-        ///     mod 注册的不同古代卡牌模板（用于 <see cref="ArchaicTooth.TranscendenceCards" />）。
+        ///     <para xml:lang="en">
+        ///         Returns the distinct Ancient card templates registered by mods for
+        ///         <see cref="ArchaicTooth.TranscendenceCards" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回模组为 <see cref="ArchaicTooth.TranscendenceCards" /> 注册的、不重复的先古卡牌模板。
+        ///     </para>
         /// </summary>
         internal static IReadOnlyList<CardModel> GetRegisteredTranscendenceAncientTemplates()
         {
