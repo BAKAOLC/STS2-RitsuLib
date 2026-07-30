@@ -241,6 +241,7 @@ namespace STS2RitsuLib.Settings
         public static void RegisterBindingActionAppender<TValue>(
             Action<IModSettingsUiActionHost, IModSettingsValueBinding<TValue>, List<ModSettingsMenuAction>> append)
         {
+            ArgumentNullException.ThrowIfNull(append);
             BindingAppenders.GetOrAdd(typeof(TValue), _ => new()).Add(append);
         }
 
@@ -252,6 +253,7 @@ namespace STS2RitsuLib.Settings
         public static void RegisterListItemActionAppender<TItem>(
             Action<IModSettingsUiActionHost, ModSettingsListItemContext<TItem>, List<ModSettingsMenuAction>> append)
         {
+            ArgumentNullException.ThrowIfNull(append);
             ListItemAppenders.GetOrAdd(typeof(TItem), _ => new()).Add(append);
         }
 
@@ -312,17 +314,27 @@ namespace STS2RitsuLib.Settings
         private sealed class BindingAppenderBag
         {
             private readonly List<Delegate> _delegates = [];
+            private readonly Lock _lock = new();
 
             public void Add<TValue>(
                 Action<IModSettingsUiActionHost, IModSettingsValueBinding<TValue>, List<ModSettingsMenuAction>> d)
             {
-                _delegates.Add(d);
+                lock (_lock)
+                {
+                    _delegates.Add(d);
+                }
             }
 
             public void Invoke<TValue>(IModSettingsUiActionHost host, IModSettingsValueBinding<TValue> binding,
                 List<ModSettingsMenuAction> sink)
             {
-                foreach (var d in _delegates)
+                Delegate[] snapshot;
+                lock (_lock)
+                {
+                    snapshot = [.. _delegates];
+                }
+
+                foreach (var d in snapshot)
                     ((Action<IModSettingsUiActionHost, IModSettingsValueBinding<TValue>, List<ModSettingsMenuAction>>)d)
                         (host, binding, sink);
             }
@@ -331,17 +343,27 @@ namespace STS2RitsuLib.Settings
         private sealed class ListItemAppenderBag
         {
             private readonly List<Delegate> _delegates = [];
+            private readonly Lock _lock = new();
 
             public void Add<TItem>(
                 Action<IModSettingsUiActionHost, ModSettingsListItemContext<TItem>, List<ModSettingsMenuAction>> d)
             {
-                _delegates.Add(d);
+                lock (_lock)
+                {
+                    _delegates.Add(d);
+                }
             }
 
             public void Invoke<TItem>(IModSettingsUiActionHost host, ModSettingsListItemContext<TItem> itemContext,
                 List<ModSettingsMenuAction> sink)
             {
-                foreach (var d in _delegates)
+                Delegate[] snapshot;
+                lock (_lock)
+                {
+                    snapshot = [.. _delegates];
+                }
+
+                foreach (var d in snapshot)
                     ((Action<IModSettingsUiActionHost, ModSettingsListItemContext<TItem>, List<ModSettingsMenuAction>>)
                             d)
                         (host, itemContext, sink);
@@ -353,16 +375,26 @@ namespace STS2RitsuLib.Settings
             private readonly
                 List<Action<IModSettingsUiActionHost, ModSettingsPageUiContext, List<ModSettingsMenuAction>>>
                 _delegates = [];
+            private readonly Lock _lock = new();
 
             public void Add(Action<IModSettingsUiActionHost, ModSettingsPageUiContext, List<ModSettingsMenuAction>> d)
             {
-                _delegates.Add(d);
+                lock (_lock)
+                {
+                    _delegates.Add(d);
+                }
             }
 
             public void Invoke(IModSettingsUiActionHost host, ModSettingsPageUiContext pageContext,
                 List<ModSettingsMenuAction> sink)
             {
-                foreach (var d in _delegates)
+                Action<IModSettingsUiActionHost, ModSettingsPageUiContext, List<ModSettingsMenuAction>>[] snapshot;
+                lock (_lock)
+                {
+                    snapshot = [.. _delegates];
+                }
+
+                foreach (var d in snapshot)
                     d(host, pageContext, sink);
             }
         }
@@ -372,17 +404,28 @@ namespace STS2RitsuLib.Settings
             private readonly List<Action<IModSettingsUiActionHost, ModSettingsSectionUiContext,
                     List<ModSettingsMenuAction>>>
                 _delegates = [];
+            private readonly Lock _lock = new();
 
             public void Add(
                 Action<IModSettingsUiActionHost, ModSettingsSectionUiContext, List<ModSettingsMenuAction>> d)
             {
-                _delegates.Add(d);
+                lock (_lock)
+                {
+                    _delegates.Add(d);
+                }
             }
 
             public void Invoke(IModSettingsUiActionHost host, ModSettingsSectionUiContext sectionContext,
                 List<ModSettingsMenuAction> sink)
             {
-                foreach (var d in _delegates)
+                Action<IModSettingsUiActionHost, ModSettingsSectionUiContext,
+                    List<ModSettingsMenuAction>>[] snapshot;
+                lock (_lock)
+                {
+                    snapshot = [.. _delegates];
+                }
+
+                foreach (var d in snapshot)
                     d(host, sectionContext, sink);
             }
         }
