@@ -145,11 +145,11 @@ namespace STS2RitsuLib.Updates
                     return;
                 }
 
-                if (!check.IsEnabled())
-                    continue;
-
                 try
                 {
+                    if (!check.IsEnabled())
+                        continue;
+
                     RitsuLibFramework.Logger.Debug(
                         $"[UpdateCheck] Running automatic check: {check.DisplayName}.");
                     await check.CheckAsync(CancellationToken.None).ConfigureAwait(false);
