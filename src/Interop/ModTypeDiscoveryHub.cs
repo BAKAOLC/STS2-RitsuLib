@@ -53,6 +53,7 @@ namespace STS2RitsuLib.Interop
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentNullException.ThrowIfNull(assembly);
+            modId = modId.Trim();
 
             lock (Gate)
             {
@@ -166,6 +167,7 @@ namespace STS2RitsuLib.Interop
         internal static IReadOnlyList<Assembly> GetKnownAssembliesForMod(string modId, Assembly? legacyFallback)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            modId = modId.Trim();
 
             var result = new List<Assembly>();
             AddRange(Sts2ModManagerCompat.GetLoadedModAssemblies(modId));

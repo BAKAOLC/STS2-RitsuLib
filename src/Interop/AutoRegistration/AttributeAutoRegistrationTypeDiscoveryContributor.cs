@@ -1657,7 +1657,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             string? explicitModifierId)
         {
             if (!string.IsNullOrWhiteSpace(explicitModifierId))
-                return explicitModifierId;
+                return explicitModifierId.Trim();
 
             var stem = $"{targetModelType.Name}_{capabilityType.Name}";
             return ModContentRegistry.GetQualifiedModelCapabilityId(ownerModId, stem);

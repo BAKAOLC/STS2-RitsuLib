@@ -21,13 +21,15 @@ namespace STS2RitsuLib.Interop
         ///     Target mod manifest id required for this interop surface.
         ///     此 interop surface 所需的目标 mod manifest id。
         /// </summary>
-        public string ModId { get; } = modId;
+        public string ModId { get; } = string.IsNullOrWhiteSpace(modId)
+            ? throw new ArgumentException("Mod ID must not be null or whitespace.", nameof(modId))
+            : modId.Trim();
 
         /// <summary>
         ///     Default remote CLR type name for members without <see cref="InteropTargetAttribute" />.
         ///     没有 <see cref="InteropTargetAttribute" /> 的成员所使用的默认远端 CLR 类型名。
         /// </summary>
-        public string? Type { get; } = type;
+        public string? Type { get; } = string.IsNullOrWhiteSpace(type) ? null : type.Trim();
     }
 
     /// <summary>
@@ -47,7 +49,7 @@ namespace STS2RitsuLib.Interop
         ///     Default assembly-qualified CLR type name for members without <see cref="InteropTargetAttribute" />.
         ///     没有 <see cref="InteropTargetAttribute" /> 的成员所使用的默认 assembly-qualified CLR 类型名。
         /// </summary>
-        public string? Type { get; } = type;
+        public string? Type { get; } = string.IsNullOrWhiteSpace(type) ? null : type.Trim();
     }
 
     /// <summary>
@@ -68,7 +70,7 @@ namespace STS2RitsuLib.Interop
     ///     配合 <see cref="AssemblyInteropAttribute" /> 时，type 必须是 assembly-qualified CLR type name。
     /// </summary>
     [AttributeUsage(
-        AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Method,
+        AttributeTargets.Property | AttributeTargets.Class | AttributeTargets.Method,
         Inherited = false)]
     public sealed class InteropTargetAttribute : Attribute
     {
@@ -86,10 +88,12 @@ namespace STS2RitsuLib.Interop
         ///     Remote member name when different from the stub.
         ///     与 stub 不同时使用的远端成员名。
         /// </param>
-        public InteropTargetAttribute(string type, string? name = null)
+        public InteropTargetAttribute(string type, string? name)
         {
-            Type = type;
-            Name = name;
+            Type = string.IsNullOrWhiteSpace(type)
+                ? throw new ArgumentException("Target type must not be null or whitespace.", nameof(type))
+                : type.Trim();
+            Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
         }
 
         /// <summary>
@@ -102,7 +106,7 @@ namespace STS2RitsuLib.Interop
         /// </param>
         public InteropTargetAttribute(string? name = null)
         {
-            Name = name;
+            Name = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
         }
 
         /// <summary>
