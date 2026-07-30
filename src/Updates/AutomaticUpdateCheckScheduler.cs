@@ -2,6 +2,10 @@ using STS2RitsuLib.Data;
 
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">Schedules registered automatic update checks and defers their execution while the player is in combat.</para>
+    ///     <para xml:lang="zh-CN">调度已注册的自动更新检查，并在玩家处于战斗中时延后执行。</para>
+    /// </summary>
     internal static class AutomaticUpdateCheckScheduler
     {
         private static readonly Lock SyncRoot = new();

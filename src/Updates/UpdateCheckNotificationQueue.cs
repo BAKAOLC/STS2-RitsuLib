@@ -2,6 +2,10 @@ using Godot;
 
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">Defers keyed update-notification actions until a main-menu scene is active.</para>
+    ///     <para xml:lang="zh-CN">将带键的更新通知操作延后到主菜单场景处于活动状态时执行。</para>
+    /// </summary>
     internal static class UpdateCheckNotificationQueue
     {
         private static readonly Lock SyncRoot = new();

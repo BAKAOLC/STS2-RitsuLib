@@ -1,5 +1,9 @@
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">Tracks update versions already logged or notified during the current process session.</para>
+    ///     <para xml:lang="zh-CN">跟踪当前进程会话中已记录日志或已通知的更新版本。</para>
+    /// </summary>
     internal static class UpdateCheckSessionHistory
     {
         private static readonly Lock SyncRoot = new();

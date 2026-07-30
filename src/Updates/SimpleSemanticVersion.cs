@@ -1,5 +1,9 @@
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">Represents and compares a permissive semantic version with numeric and prerelease identifiers.</para>
+    ///     <para xml:lang="zh-CN">表示并比较包含数字及预发布标识符的宽松语义版本。</para>
+    /// </summary>
     internal readonly record struct SimpleSemanticVersion(
         IReadOnlyList<long> Numbers,
         IReadOnlyList<string> Prerelease

@@ -4,8 +4,8 @@ using System.Text.Json.Serialization;
 namespace STS2RitsuLib.Updates
 {
     /// <summary>
-    ///     Options for a non-blocking mod update check.
-    ///     非阻塞 Mod 更新检查的选项。
+    ///     <para xml:lang="en">Configures a non-blocking mod update check.</para>
+    ///     <para xml:lang="zh-CN">配置非阻塞的模组更新检查。</para>
     /// </summary>
     public sealed record ModUpdateCheckOptions
     {
@@ -141,8 +141,8 @@ namespace STS2RitsuLib.Updates
     }
 
     /// <summary>
-    ///     JSON shape served by a mod update manifest endpoint.
-    ///     Mod 更新 manifest 端点提供的 JSON 形状。
+    ///     <para xml:lang="en">Describes the JSON payload served by a mod update-manifest endpoint.</para>
+    ///     <para xml:lang="zh-CN">描述模组更新清单端点提供的 JSON 负载。</para>
     /// </summary>
     public sealed record ModUpdateCheckManifest
     {
@@ -199,8 +199,8 @@ namespace STS2RitsuLib.Updates
     }
 
     /// <summary>
-    ///     Localized update-check toast text.
-    ///     更新检查 toast 的本地化文本。
+    ///     <para xml:lang="en">Provides localized update-notification title and message text.</para>
+    ///     <para xml:lang="zh-CN">提供本地化的更新通知标题和消息文本。</para>
     /// </summary>
     public sealed record ModUpdateCheckLocalizedText
     {
@@ -220,8 +220,8 @@ namespace STS2RitsuLib.Updates
     }
 
     /// <summary>
-    ///     Result category for a completed update check.
-    ///     已完成更新检查的结果类别。
+    ///     <para xml:lang="en">Identifies the outcome category of a completed update check.</para>
+    ///     <para xml:lang="zh-CN">标识已完成更新检查的结果类别。</para>
     /// </summary>
     public enum ModUpdateCheckStatus
     {
@@ -257,8 +257,8 @@ namespace STS2RitsuLib.Updates
     }
 
     /// <summary>
-    ///     Completed update check result.
-    ///     已完成的更新检查结果。
+    ///     <para xml:lang="en">Contains the outcome and optional release details of a completed update check.</para>
+    ///     <para xml:lang="zh-CN">包含已完成更新检查的结果及可选发布详情。</para>
     /// </summary>
     public sealed record ModUpdateCheckResult(
         ModUpdateCheckStatus Status,
