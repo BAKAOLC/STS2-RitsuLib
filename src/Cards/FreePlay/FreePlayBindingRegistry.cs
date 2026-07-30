@@ -340,7 +340,7 @@ namespace STS2RitsuLib.Cards.FreePlay
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[FreePlay] Detector '{bindingId}' failed for card '{play.Card.Id}': {ex.Message}");
+                        $"[FreePlay] Detector '{bindingId}' failed for card '{play.Card.Id}': {ex}");
                     throw;
                 }
             }

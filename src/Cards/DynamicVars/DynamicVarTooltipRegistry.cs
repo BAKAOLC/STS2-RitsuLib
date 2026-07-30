@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[DynamicVarTooltipRegistry] Tooltip factory failed for '{dynamicVar.Name}': {ex.Message}");
+                    $"[DynamicVarTooltipRegistry] Tooltip factory failed for '{dynamicVar.Name}': {ex}");
                 return null;
             }
         }

@@ -147,7 +147,7 @@ namespace STS2RitsuLib.Cards
             else
                 RitsuLibFramework.Logger.Warn(
                     $"[CardTypeText] Modifier source '{source.GetType().FullName}' failed for {card.Id}: " +
-                    exception.Message);
+                    exception);
         }
 
         private readonly record struct ModifierEntry(LocString Modifier, object Source);
