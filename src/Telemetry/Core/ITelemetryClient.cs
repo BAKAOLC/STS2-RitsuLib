@@ -3,26 +3,35 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Applicant-scoped telemetry client. Calls no-op when the matching request is not authorized.
-    ///     申请方作用域的 telemetry client。当对应申请未授权时调用为空操作。
+    ///     <para xml:lang="en">
+    ///         Provides an applicant-scoped telemetry client. Capture calls do nothing when the matching request is not
+    ///         authorized.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供以申请方为作用域的遥测客户端。对应申请项未获授权时，采集调用不会执行任何操作。
+    ///     </para>
     /// </summary>
     public interface ITelemetryClient
     {
         /// <summary>
-        ///     Applicant id this client sends on behalf of.
-        ///     此 client 代表的申请方 ID。
+        ///     <para xml:lang="en">Gets the ID of the applicant represented by this client.</para>
+        ///     <para xml:lang="zh-CN">获取此客户端所代表的申请方 ID。</para>
         /// </summary>
         string ApplicantId { get; }
 
         /// <summary>
-        ///     Returns whether <paramref name="requestId" /> is currently authorized.
-        ///     返回 <paramref name="requestId" /> 当前是否已授权。
+        ///     <para xml:lang="en">
+        ///         Returns whether <paramref name="requestId" /> is currently authorized.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="requestId" /> 当前是否已获授权。
+        ///     </para>
         /// </summary>
         bool IsEnabled(string requestId);
 
         /// <summary>
-        ///     Captures a property-only event for an authorized request.
-        ///     为已授权申请采集仅包含属性的事件。
+        ///     <para xml:lang="en">Captures a properties-only event for an authorized request.</para>
+        ///     <para xml:lang="zh-CN">为已获授权的申请项采集仅包含属性的事件。</para>
         /// </summary>
         void Capture(
             string eventName,
@@ -30,8 +39,12 @@ namespace STS2RitsuLib.Telemetry
             IReadOnlyDictionary<string, object?>? properties = null);
 
         /// <summary>
-        ///     Captures an event with structured applicant payload for an authorized request.
-        ///     为已授权申请采集带结构化申请方数据的事件。
+        ///     <para xml:lang="en">
+        ///         Captures an event with a structured applicant payload for an authorized request.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为已获授权的申请项采集带有结构化申请方负载的事件。
+        ///     </para>
         /// </summary>
         void CapturePayload(
             string eventName,
@@ -40,8 +53,8 @@ namespace STS2RitsuLib.Telemetry
             IReadOnlyDictionary<string, object?>? properties = null);
 
         /// <summary>
-        ///     Captures an exception under the diagnostics request.
-        ///     在 diagnostics 申请下采集异常。
+        ///     <para xml:lang="en">Captures an exception under the <c>diagnostics</c> request.</para>
+        ///     <para xml:lang="zh-CN">在 <c>diagnostics</c> 申请项下采集异常。</para>
         /// </summary>
         void CaptureException(
             Exception exception,

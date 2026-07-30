@@ -4,8 +4,8 @@ using System.Text.Json;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     PostHog batch API telemetry adapter.
-    ///     PostHog batch API telemetry adapter。
+    ///     <para xml:lang="en">Sends telemetry through the PostHog batch API.</para>
+    ///     <para xml:lang="zh-CN">通过 PostHog 批量 API 发送遥测数据。</para>
     /// </summary>
     public sealed class PostHogTelemetryAdapter : ITelemetryAdapter
     {
@@ -15,8 +15,8 @@ namespace STS2RitsuLib.Telemetry
         };
 
         /// <summary>
-        ///     Creates a PostHog adapter for a fixed host and project API key.
-        ///     使用固定 host 和项目 API key 创建 PostHog adapter。
+        ///     <para xml:lang="en">Creates a PostHog adapter for a fixed host and project API key.</para>
+        ///     <para xml:lang="zh-CN">使用固定主机地址和项目 API 密钥创建 PostHog 适配器。</para>
         /// </summary>
         public PostHogTelemetryAdapter(string host, string projectApiKey)
         {
@@ -30,14 +30,18 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     PostHog host root, for example <c>https://us.i.posthog.com</c>.
-        ///     PostHog host 根地址，例如 <c>https://us.i.posthog.com</c>。
+        ///     <para xml:lang="en">
+        ///         Gets the PostHog host root, such as <c>https://us.i.posthog.com</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 PostHog 主机根地址，例如 <c>https://us.i.posthog.com</c>。
+        ///     </para>
         /// </summary>
         public Uri Host { get; }
 
         /// <summary>
-        ///     PostHog project API key.
-        ///     PostHog 项目 API key。
+        ///     <para xml:lang="en">Gets the PostHog project API key.</para>
+        ///     <para xml:lang="zh-CN">获取 PostHog 项目 API 密钥。</para>
         /// </summary>
         public string ProjectApiKey { get; }
 

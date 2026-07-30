@@ -4,8 +4,12 @@ using System.Text.Json;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Generic JSON-over-HTTP telemetry adapter for self-hosted mod endpoints.
-    ///     面向自托管 mod endpoint 的通用 JSON-over-HTTP telemetry adapter。
+    ///     <para xml:lang="en">
+    ///         Sends telemetry batches as JSON over HTTP to a self-hosted mod endpoint.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 HTTP 将遥测批次以 JSON 格式发送到模组自行托管的端点。
+    ///     </para>
     /// </summary>
     public sealed class HttpJsonTelemetryAdapter : ITelemetryAdapter
     {
@@ -17,8 +21,12 @@ namespace STS2RitsuLib.Telemetry
         private readonly IReadOnlyDictionary<string, string> _headers;
 
         /// <summary>
-        ///     Creates an adapter that POSTs batches to <paramref name="endpoint" />.
-        ///     创建向 <paramref name="endpoint" /> POST 批量事件的 adapter。
+        ///     <para xml:lang="en">
+        ///         Creates an adapter that sends batches to <paramref name="endpoint" /> with HTTP POST requests.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建通过 HTTP POST 请求向 <paramref name="endpoint" /> 发送批次的适配器。
+        ///     </para>
         /// </summary>
         public HttpJsonTelemetryAdapter(string endpoint, IReadOnlyDictionary<string, string>? headers = null)
         {
@@ -33,8 +41,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Absolute endpoint URI that receives telemetry batches.
-        ///     接收 telemetry 批量事件的绝对 endpoint URI。
+        ///     <para xml:lang="en">Gets the absolute endpoint URI that receives telemetry batches.</para>
+        ///     <para xml:lang="zh-CN">获取接收遥测批次的绝对端点 URI。</para>
         /// </summary>
         public Uri Endpoint { get; }
 

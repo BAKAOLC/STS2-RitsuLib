@@ -4,8 +4,12 @@ using STS2RitsuLib.Telemetry.RunHistory;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Captures process-level telemetry facts once, then replays them to applicants after explicit consent.
-    ///     只采集一次进程级 telemetry 事实，并在用户明确授权后回放给各申请方。
+    ///     <para xml:lang="en">
+    ///         Captures process-level telemetry facts once and replays them to applicants after explicit consent.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         采集一次进程级遥测信息，并在用户明确授权后将其回放给各申请方。
+    ///     </para>
     /// </summary>
     internal static class TelemetryRuntime
     {
@@ -15,8 +19,12 @@ namespace STS2RitsuLib.Telemetry
         private static StartupTelemetrySnapshot? _startupSnapshot;
 
         /// <summary>
-        ///     Captures the startup snapshot once and publishes a replayable lifecycle event for other tasks.
-        ///     采集一次启动快照，并发布可重放生命周期事件供其他任务复用。
+        ///     <para xml:lang="en">
+        ///         Captures the startup snapshot once and publishes a replayable lifecycle event for other tasks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         采集一次启动快照，并发布可重放的生命周期事件供其他任务使用。
+        ///     </para>
         /// </summary>
         internal static void CaptureStartupSnapshot()
         {
@@ -37,8 +45,12 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Replays cached startup events to every currently authorized applicant.
-        ///     将已缓存的启动事件回放给当前已授权的所有申请方。
+        ///     <para xml:lang="en">
+        ///         Replays cached startup events to every currently authorized applicant.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将缓存的启动事件回放给当前已获授权的所有申请方。
+        ///     </para>
         /// </summary>
         internal static void ReplayStartupSnapshotToAuthorizedApplicants()
         {
@@ -47,8 +59,12 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Refreshes the cached mod inventory after the host has finished mod initialization.
-        ///     在宿主完成 mod 初始化后刷新缓存的 mod 清单。
+        ///     <para xml:lang="en">
+        ///         Refreshes the cached mod inventory after the host finishes mod initialization.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在宿主完成模组初始化后刷新缓存的模组清单。
+        ///     </para>
         /// </summary>
         internal static void RefreshStartupModInventorySnapshot(string reason)
         {
@@ -67,8 +83,12 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Replays cached startup events to a single applicant, if the user authorized matching requests.
-        ///     如果用户授权了对应申请，则将已缓存的启动事件回放给单个申请方。
+        ///     <para xml:lang="en">
+        ///         Replays cached startup events to one applicant when the user has authorized the matching requests.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         用户已授权对应申请项时，将缓存的启动事件回放给一个申请方。
+        ///     </para>
         /// </summary>
         internal static void ReplayStartupSnapshotToApplicant(string applicantId)
         {
@@ -100,8 +120,12 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Clears startup delivery markers for queued events that were discarded before being sent.
-        ///     清除尚未发送就被丢弃的启动事件投递标记。
+        ///     <para xml:lang="en">
+        ///         Clears delivery markers for queued startup events discarded before transmission.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         清除排队后在发送前被丢弃的启动事件投递标记。
+        ///     </para>
         /// </summary>
         internal static void ResetStartupDeliveryForDiscardedEvents(IEnumerable<TelemetryEnvelope> events)
         {
@@ -121,8 +145,12 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Marks startup events as successfully handed to the applicant backend.
-        ///     将启动事件标记为已成功交给申请方后端。
+        ///     <para xml:lang="en">
+        ///         Marks startup events as successfully delivered to the applicant's backend.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将启动事件标记为已成功送达申请方后端。
+        ///     </para>
         /// </summary>
         internal static void MarkStartupDeliveryConfirmed(IEnumerable<TelemetryEnvelope> events)
         {
@@ -193,8 +221,13 @@ namespace STS2RitsuLib.Telemetry
         private sealed record StartupTelemetrySnapshot(DateTimeOffset CapturedAtUtc, JsonArray Mods)
         {
             /// <summary>
-            ///     Builds the lightweight session-start payload. Common envelope properties carry version/platform ids.
-            ///     构建轻量 session-start 载荷。版本、平台等通用字段由 envelope properties 携带。
+            ///     <para xml:lang="en">
+            ///         Builds the lightweight session-start payload. Common envelope properties carry version,
+            ///         platform, and identity fields.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         构建轻量的会话启动负载。版本、平台和身份字段由信封的通用属性携带。
+            ///     </para>
             /// </summary>
             public JsonObject BuildSessionStartPayload()
             {
@@ -205,8 +238,12 @@ namespace STS2RitsuLib.Telemetry
             }
 
             /// <summary>
-            ///     Builds query-friendly session-start metadata from the captured startup snapshot.
-            ///     从启动快照构建便于查询的 session-start 元数据。
+            ///     <para xml:lang="en">
+            ///         Builds query-friendly session-start metadata from the captured startup snapshot.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         根据采集的启动快照构建便于查询的会话启动元数据。
+            ///     </para>
             /// </summary>
             public Dictionary<string, object?> BuildSessionStartProperties()
             {
@@ -220,8 +257,12 @@ namespace STS2RitsuLib.Telemetry
             }
 
             /// <summary>
-            ///     Builds the mod-inventory trigger payload with the captured mod inventory.
-            ///     使用已采集的 mod 清单构建 mod-inventory 触发载荷。
+            ///     <para xml:lang="en">
+            ///         Builds the mod-inventory event payload from the captured mod inventory.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         根据采集的模组清单构建模组清单事件负载。
+            ///     </para>
             /// </summary>
             public JsonObject BuildModInventoryPayload()
             {
@@ -239,8 +280,8 @@ namespace STS2RitsuLib.Telemetry
             }
 
             /// <summary>
-            ///     Builds query-friendly mod inventory metadata.
-            ///     构建便于查询的 mod 清单元数据。
+            ///     <para xml:lang="en">Builds query-friendly mod-inventory metadata.</para>
+            ///     <para xml:lang="zh-CN">构建便于查询的模组清单元数据。</para>
             /// </summary>
             public Dictionary<string, object?> BuildModInventoryProperties()
             {

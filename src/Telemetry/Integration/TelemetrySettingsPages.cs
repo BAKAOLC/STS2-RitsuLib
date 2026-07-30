@@ -4,8 +4,8 @@ using STS2RitsuLib.Settings;
 namespace STS2RitsuLib.Telemetry.Integration
 {
     /// <summary>
-    ///     Registers the single-page telemetry permission manager.
-    ///     注册单页 telemetry 授权管理界面。
+    ///     <para xml:lang="en">Registers the single-page telemetry permission manager.</para>
+    ///     <para xml:lang="zh-CN">注册单页遥测权限管理界面。</para>
     /// </summary>
     internal static class TelemetrySettingsPages
     {
@@ -14,8 +14,8 @@ namespace STS2RitsuLib.Telemetry.Integration
         private static bool _rootRegistered;
 
         /// <summary>
-        ///     Ensures the telemetry settings page exists.
-        ///     确保 telemetry 设置页已存在。
+        ///     <para xml:lang="en">Ensures that the telemetry settings page is registered.</para>
+        ///     <para xml:lang="zh-CN">确保遥测设置页面已注册。</para>
         /// </summary>
         internal static void EnsureRootPage()
         {
@@ -34,8 +34,12 @@ namespace STS2RitsuLib.Telemetry.Integration
         }
 
         /// <summary>
-        ///     Refreshes the single telemetry page after an applicant is registered.
-        ///     在申请方注册后刷新单页 telemetry 界面。
+        ///     <para xml:lang="en">
+        ///         Re-registers the telemetry settings page after an applicant is registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册申请方后重新注册遥测设置页面。
+        ///     </para>
         /// </summary>
         internal static void RegisterApplicantPage(TelemetryApplicant applicant)
         {

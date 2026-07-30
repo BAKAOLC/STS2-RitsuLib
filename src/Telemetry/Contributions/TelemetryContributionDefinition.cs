@@ -1,38 +1,42 @@
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Metadata for a telemetry contribution advertised to users and subscribers.
-    ///     向用户和订阅方展示的 telemetry contribution 元数据。
+    ///     <para xml:lang="en">
+    ///         Describes a telemetry contribution presented to users and subscribing applicants.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述向用户和订阅申请方展示的遥测数据贡献。
+    ///     </para>
     /// </summary>
     public sealed class TelemetryContributionDefinition
     {
         /// <summary>
-        ///     Mod id that owns this contribution.
-        ///     拥有此 contribution 的 mod id。
+        ///     <para xml:lang="en">Gets the ID of the mod that owns this contribution.</para>
+        ///     <para xml:lang="zh-CN">获取拥有此数据贡献的模组 ID。</para>
         /// </summary>
         public required string ContributorModId { get; init; }
 
         /// <summary>
-        ///     Stable contribution id within the contributor mod.
-        ///     contributor mod 内稳定的 contribution ID。
+        ///     <para xml:lang="en">Gets the contribution's stable ID within the contributing mod.</para>
+        ///     <para xml:lang="zh-CN">获取此数据贡献在提供方模组内的稳定 ID。</para>
         /// </summary>
         public required string ContributionId { get; init; }
 
         /// <summary>
-        ///     Data category where this contribution can be used.
-        ///     此 contribution 可用于的数据类别。
+        ///     <para xml:lang="en">Gets the data category in which this contribution can be used.</para>
+        ///     <para xml:lang="zh-CN">获取可使用此数据贡献的数据类别。</para>
         /// </summary>
         public required TelemetryDataCategory Category { get; init; }
 
         /// <summary>
-        ///     Visibility and routing policy.
-        ///     可见性和路由策略。
+        ///     <para xml:lang="en">Gets the contribution's visibility and routing policy.</para>
+        ///     <para xml:lang="zh-CN">获取此数据贡献的可见性和路由策略。</para>
         /// </summary>
         public required TelemetryContributionVisibility Visibility { get; init; }
 
         /// <summary>
-        ///     Human-readable explanation of the contribution.
-        ///     contribution 的可读说明。
+        ///     <para xml:lang="en">Gets a human-readable explanation of the contribution.</para>
+        ///     <para xml:lang="zh-CN">获取此数据贡献的可读说明。</para>
         /// </summary>
         public required string Description { get; init; }
     }

@@ -4,8 +4,12 @@ using STS2RitsuLib.Telemetry.Integration;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Process-wide registry for telemetry applicants and contribution providers.
-    ///     进程级 telemetry 申请方和 contribution provider 注册表。
+    ///     <para xml:lang="en">
+    ///         Stores telemetry applicants and contribution providers for the current process.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         存储当前进程中的遥测申请方和数据贡献提供程序。
+    ///     </para>
     /// </summary>
     public static class TelemetryRegistry
     {
@@ -18,8 +22,8 @@ namespace STS2RitsuLib.Telemetry
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Registers or replaces a telemetry applicant.
-        ///     注册或替换一个 telemetry 申请方。
+        ///     <para xml:lang="en">Registers or replaces a telemetry applicant.</para>
+        ///     <para xml:lang="zh-CN">注册或替换一个遥测申请方。</para>
         /// </summary>
         public static void RegisterApplicant(TelemetryApplicant applicant)
         {
@@ -48,8 +52,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Registers or replaces a telemetry contribution provider.
-        ///     注册或替换一个 telemetry contribution provider。
+        ///     <para xml:lang="en">Registers or replaces a telemetry contribution provider.</para>
+        ///     <para xml:lang="zh-CN">注册或替换一个遥测数据贡献提供程序。</para>
         /// </summary>
         public static void RegisterContributionProvider(ITelemetryContributionProvider provider)
         {
@@ -73,8 +77,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Returns a snapshot of registered telemetry applicants.
-        ///     返回已注册 telemetry 申请方快照。
+        ///     <para xml:lang="en">Returns a snapshot of the registered telemetry applicants.</para>
+        ///     <para xml:lang="zh-CN">返回已注册遥测申请方的快照。</para>
         /// </summary>
         public static IReadOnlyList<TelemetryApplicant> GetApplicants()
         {
@@ -90,8 +94,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Returns a snapshot of registered contribution providers.
-        ///     返回已注册 contribution provider 快照。
+        ///     <para xml:lang="en">Returns a snapshot of the registered contribution providers.</para>
+        ///     <para xml:lang="zh-CN">返回已注册数据贡献提供程序的快照。</para>
         /// </summary>
         public static IReadOnlyList<ITelemetryContributionProvider> GetContributionProviders()
         {

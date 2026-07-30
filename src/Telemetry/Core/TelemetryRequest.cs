@@ -3,47 +3,56 @@ using STS2RitsuLib.Settings;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     One user-visible telemetry request made by an applicant.
-    ///     申请方向用户展示的一项 telemetry 数据申请。
+    ///     <para xml:lang="en">Describes one user-visible telemetry request made by an applicant.</para>
+    ///     <para xml:lang="zh-CN">描述申请方向用户展示的一个遥测数据申请项。</para>
     /// </summary>
     public sealed class TelemetryRequest
     {
         /// <summary>
-        ///     Stable request id within the applicant.
-        ///     申请方内部稳定的申请 ID。
+        ///     <para xml:lang="en">Gets the request's stable ID within the applicant.</para>
+        ///     <para xml:lang="zh-CN">获取此申请项在申请方内部的稳定 ID。</para>
         /// </summary>
         public required string RequestId { get; init; }
 
         /// <summary>
-        ///     Data category covered by this request.
-        ///     此申请覆盖的数据类别。
+        ///     <para xml:lang="en">Gets the data category covered by this request.</para>
+        ///     <para xml:lang="zh-CN">获取此申请项涵盖的数据类别。</para>
         /// </summary>
         public required TelemetryDataCategory Category { get; init; }
 
         /// <summary>
-        ///     Human-readable explanation shown to users before consent.
-        ///     授权前向用户展示的可读说明。
+        ///     <para xml:lang="en">Gets the human-readable explanation shown before consent.</para>
+        ///     <para xml:lang="zh-CN">获取授权前向用户显示的可读说明。</para>
         /// </summary>
         public required string Description { get; init; }
 
         /// <summary>
-        ///     Optional localized explanation shown to users before consent.
-        ///     可选本地化说明，用于授权前展示给用户。
+        ///     <para xml:lang="en">Gets an optional localized explanation shown before consent.</para>
+        ///     <para xml:lang="zh-CN">获取授权前向用户显示的可选本地化说明。</para>
         /// </summary>
         public ModSettingsText? DescriptionText { get; init; }
 
         /// <summary>
-        ///     Contribution ids this request wants to attach. Private contributions only attach to their owning
-        ///     applicant; shared contributions additionally require explicit source consent and should use
-        ///     "contributorModId/contributionId" subscriptions.
-        ///     此申请希望附加的 contribution ID。私有 contribution 仅附加到拥有者自己的申请；
-        ///     共享 contribution 还需要额外的来源授权，并应使用 "contributorModId/contributionId" 订阅。
+        ///     <para xml:lang="en">
+        ///         Gets the contribution IDs this request subscribes to. Private contributions are attached only to
+        ///         their owning applicant. Shared contributions additionally require explicit source consent and
+        ///         should use <c>contributorModId/contributionId</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取此申请项订阅的数据贡献 ID。私有数据贡献只会附加到其所属申请方；共享数据贡献还需要针对
+        ///         来源的明确授权，并应使用 <c>contributorModId/contributionId</c>。
+        ///     </para>
         /// </summary>
         public IReadOnlyList<string> ContributionSubscriptions { get; init; } = [];
 
         /// <summary>
-        ///     Obsolete alias for <see cref="ContributionSubscriptions" /> kept for source compatibility.
-        ///     为源码兼容保留的 <see cref="ContributionSubscriptions" /> 旧别名。
+        ///     <para xml:lang="en">
+        ///         Gets the obsolete alias of <see cref="ContributionSubscriptions" /> retained for source
+        ///         compatibility.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取为源代码兼容性保留的 <see cref="ContributionSubscriptions" /> 旧别名。
+        ///     </para>
         /// </summary>
         [Obsolete("Use ContributionSubscriptions.")]
         public IReadOnlyList<string> SharedContributionSubscriptions
@@ -53,14 +62,19 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Optional predicate for automatic run-history capture; when unset, every ended run is eligible.
-        ///     自动采集 run-history 时使用的可选谓词；未设置时，每个已结束跑局都符合条件。
+        ///     <para xml:lang="en">
+        ///         Gets an optional predicate for automatic run-history capture. When unset, every completed run is
+        ///         eligible.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取自动采集游戏历史记录时使用的可选谓词。未设置时，每局已结束的游戏都符合条件。
+        ///     </para>
         /// </summary>
         public Func<RunEndedEvent, bool>? RunHistoryCaptureFilter { get; init; }
 
         /// <summary>
-        ///     Creates the built-in basic-usage request.
-        ///     创建内置基础使用信息申请。
+        ///     <para xml:lang="en">Creates the built-in basic-usage request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的基础使用信息申请项。</para>
         /// </summary>
         public static TelemetryRequest BasicUsage(string description)
         {
@@ -74,8 +88,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates the built-in basic-usage request.
-        ///     创建内置基础使用信息申请。
+        ///     <para xml:lang="en">Creates the built-in basic-usage request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的基础使用信息申请项。</para>
         /// </summary>
         public static TelemetryRequest BasicUsage(ModSettingsText description)
         {
@@ -90,8 +104,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates the built-in loaded-mod inventory request.
-        ///     创建内置已加载 mod 清单申请。
+        ///     <para xml:lang="en">Creates the built-in loaded-mod inventory request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的已加载模组清单申请项。</para>
         /// </summary>
         public static TelemetryRequest ModInventory(string description)
         {
@@ -105,8 +119,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates the built-in loaded-mod inventory request.
-        ///     创建内置已加载 mod 清单申请。
+        ///     <para xml:lang="en">Creates the built-in loaded-mod inventory request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的已加载模组清单申请项。</para>
         /// </summary>
         public static TelemetryRequest ModInventory(ModSettingsText description)
         {
@@ -121,8 +135,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates the built-in run-history request.
-        ///     创建内置 run-history 申请。
+        ///     <para xml:lang="en">Creates the built-in run-history request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的游戏历史记录申请项。</para>
         /// </summary>
         public static TelemetryRequest RunHistory(
             string description,
@@ -141,8 +155,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates the built-in run-history request.
-        ///     创建内置 run-history 申请。
+        ///     <para xml:lang="en">Creates the built-in run-history request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的游戏历史记录申请项。</para>
         /// </summary>
         public static TelemetryRequest RunHistory(
             ModSettingsText description,
@@ -162,8 +176,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates the built-in diagnostics request.
-        ///     创建内置诊断信息申请。
+        ///     <para xml:lang="en">Creates the built-in diagnostics request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的诊断信息申请项。</para>
         /// </summary>
         public static TelemetryRequest Diagnostics(
             string description,
@@ -180,8 +194,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates the built-in diagnostics request.
-        ///     创建内置诊断信息申请。
+        ///     <para xml:lang="en">Creates the built-in diagnostics request.</para>
+        ///     <para xml:lang="zh-CN">创建内置的诊断信息申请项。</para>
         /// </summary>
         public static TelemetryRequest Diagnostics(
             ModSettingsText description,
@@ -199,8 +213,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates an applicant-defined custom request.
-        ///     创建申请方定义的自定义申请。
+        ///     <para xml:lang="en">Creates an applicant-defined custom request.</para>
+        ///     <para xml:lang="zh-CN">创建由申请方定义的自定义申请项。</para>
         /// </summary>
         public static TelemetryRequest Custom(string requestId, string description)
         {
@@ -215,8 +229,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates an applicant-defined custom request.
-        ///     创建申请方定义的自定义申请。
+        ///     <para xml:lang="en">Creates an applicant-defined custom request.</para>
+        ///     <para xml:lang="zh-CN">创建由申请方定义的自定义申请项。</para>
         /// </summary>
         public static TelemetryRequest Custom(string requestId, ModSettingsText description)
         {
