@@ -37,7 +37,10 @@ namespace STS2RitsuLib.Audio
         ///     True when the underlying instance is still available.
         ///     底层实例仍可用时为 true。
         /// </summary>
-        public bool IsValid => !IsReleased && RawInstance is not null;
+        public bool IsValid =>
+            !IsReleased &&
+            RawInstance is not null &&
+            GodotObject.IsInstanceValid(RawInstance);
 
         /// <summary>
         ///     True after native resources have been released.
@@ -57,19 +60,19 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public virtual bool TryPlay()
         {
-            if (RawInstance is null)
+            if (!TryGetInstance(out var instance))
                 return false;
 
             try
             {
-                RawInstance.Call("play");
+                instance.Call("play");
                 return true;
             }
             catch
             {
                 try
                 {
-                    RawInstance.Call("start");
+                    instance.Call("start");
                     return true;
                 }
                 catch (Exception ex)
@@ -86,19 +89,19 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public virtual bool TryStop(bool allowFadeOut = true)
         {
-            if (RawInstance is null)
+            if (!TryGetInstance(out var instance))
                 return false;
 
             try
             {
-                RawInstance.Call("stop", allowFadeOut ? 0 : 1);
+                instance.Call("stop", allowFadeOut ? 0 : 1);
                 return true;
             }
             catch
             {
                 try
                 {
-                    RawInstance.Call("stop");
+                    instance.Call("stop");
                     return true;
                 }
                 catch (Exception ex)
@@ -163,9 +166,9 @@ namespace STS2RitsuLib.Audio
             if (IsReleased)
                 return true;
 
-            if (RawInstance is null)
+            if (RawInstance is null || !GodotObject.IsInstanceValid(RawInstance))
             {
-                IsReleased = true;
+                CompleteRelease();
                 return true;
             }
 
@@ -179,8 +182,7 @@ namespace STS2RitsuLib.Audio
                 return false;
             }
 
-            IsReleased = true;
-            RawInstance = null;
+            CompleteRelease();
             return true;
         }
 
@@ -217,12 +219,12 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         protected bool TryCall(string method, params Variant[] args)
         {
-            if (RawInstance is null)
+            if (!TryGetInstance(out var instance))
                 return false;
 
             try
             {
-                RawInstance.Call(method, args);
+                instance.Call(method, args);
                 return true;
             }
             catch (Exception ex)
@@ -230,6 +232,20 @@ namespace STS2RitsuLib.Audio
                 RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] handle {method}: {ex.Message}");
                 return false;
             }
+        }
+
+        private bool TryGetInstance(out GodotObject instance)
+        {
+            instance = RawInstance!;
+            return IsValid;
+        }
+
+        private void CompleteRelease()
+        {
+            IsReleased = true;
+            RawInstance = null;
+            AudioLifecycleRegistry.Shared.Detach(this);
+            AudioChannelRegistry.Shared.Detach(this);
         }
     }
 }
