@@ -3,8 +3,8 @@ using Godot;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Default implementation behind <see cref="GameFmod.Playback" />.
-    ///     <see cref="GameFmod.Playback" /> 背后的默认实现。
+    ///     <para xml:lang="en">Implements <see cref="GameFmod.Playback" /> with typed handles, playback options, routing, and lifecycle ownership.</para>
+    ///     <para xml:lang="zh-CN">使用类型化句柄、播放选项、路由和生命周期归属实现 <see cref="GameFmod.Playback" />。</para>
     /// </summary>
     public sealed class GameAudioService : IGameAudio
     {
@@ -13,8 +13,8 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Shared singleton instance.
-        ///     共享的单例实例。
+        ///     <para xml:lang="en">Gets the shared playback service.</para>
+        ///     <para xml:lang="zh-CN">获取共享播放服务。</para>
         /// </summary>
         public static GameAudioService Shared { get; } = new();
 

@@ -3,8 +3,8 @@ using MegaCrit.Sts2.Core.Nodes.Audio;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Forwards to <see cref="NAudioManager" /> (same FMOD routing, buses, and test-mode behavior as vanilla).
-    ///     转发到 <see cref="NAudioManager" />（与原版相同的 FMOD 路由、bus 和 test-mode 行为）。
+    ///     <para xml:lang="en">Forwards the native-style audio surface to <see cref="NAudioManager" />, preserving the game's routing and runtime-mode checks.</para>
+    ///     <para xml:lang="zh-CN">将原生风格的音频接口转发到 <see cref="NAudioManager" />，保留游戏的路由与运行模式检查。</para>
     /// </summary>
     public sealed class GameFmodAudioService : IGameFmodAudio
     {
@@ -13,8 +13,8 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Shared singleton used by <see cref="GameFmod.Studio" />.
-        ///     <see cref="GameFmod.Studio" /> 使用的共享单例。
+        ///     <para xml:lang="en">Gets the shared service provided by <see cref="GameFmod.Studio" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="GameFmod.Studio" /> 提供的共享服务。</para>
         /// </summary>
         public static GameFmodAudioService Shared { get; } = new();
 
