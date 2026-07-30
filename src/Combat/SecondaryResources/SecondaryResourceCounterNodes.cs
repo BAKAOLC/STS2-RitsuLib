@@ -236,6 +236,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             float brightnessTo = 1f,
             double durationSeconds = 0.2)
         {
+            ArgumentOutOfRangeException.ThrowIfNegative(durationSeconds);
             return new(brightnessFrom, brightnessTo, durationSeconds);
         }
 
@@ -247,6 +248,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             Color? color = null,
             double durationSeconds = 1.0)
         {
+            ArgumentOutOfRangeException.ThrowIfNegative(durationSeconds);
             return new(color ?? new Color(0.77f, 0.93f, 1f),
                 durationSeconds);
         }
@@ -721,7 +723,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 Callable.From<float>(_icon.SetShaderBrightness),
                 effect.BrightnessFrom,
                 effect.BrightnessTo,
-                effect.DurationSeconds);
+                Math.Max(0.0, effect.DurationSeconds));
         }
 
         private void PlayStarCounterLikeBurst(SecondaryResourceCounterStarCounterLikeBurstEffect effect)
@@ -1073,7 +1075,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             _texture = texture;
             _renderedIconSize = renderedIconSize;
             _color = color;
-            _durationSeconds = durationSeconds;
+            _durationSeconds = Math.Max(0.0, durationSeconds);
         }
 
         public NSecondaryResourceStarCounterLikeBurstVfx()
