@@ -39,12 +39,8 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </remarks>
         public IModelCapability Add(IModelCapability capability)
         {
-            ArgumentNullException.ThrowIfNull(capability);
-            if (capability is ModelCapability &&
-                ModelCapabilityRegistry.GetCapabilityId(capability.GetType()) == null)
-                throw new InvalidOperationException(
-                    $"Model-backed capability type is not registered: {capability.GetType().FullName}. " +
-                    "Register it with RegisterModelCapability and add it by type instead of passing a constructed instance.");
+            ValidateCapability(capability);
+            EnsureInstanceNotPresent(capability);
 
             _capabilities.Add(capability);
             return capability;
@@ -175,8 +171,17 @@ namespace STS2RitsuLib.Models.Capabilities
         public void AddRange(IEnumerable<IModelCapability> capabilities)
         {
             ArgumentNullException.ThrowIfNull(capabilities);
-            foreach (var capability in capabilities)
-                Add(capability);
+            var additions = capabilities.ToArray();
+            HashSet<IModelCapability> instances = new(_capabilities, ReferenceEqualityComparer.Instance);
+            foreach (var capability in additions)
+            {
+                ValidateCapability(capability);
+                if (!instances.Add(capability))
+                    throw new InvalidOperationException(
+                        $"The same capability instance cannot appear more than once: {capability.CapabilityId}");
+            }
+
+            _capabilities.AddRange(additions);
         }
 
         /// <summary>
@@ -185,7 +190,8 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         public IModelCapability Insert(int index, IModelCapability capability)
         {
-            ArgumentNullException.ThrowIfNull(capability);
+            ValidateCapability(capability);
+            EnsureInstanceNotPresent(capability);
             if (index < 0 || index > _capabilities.Count)
                 throw new ArgumentOutOfRangeException(nameof(index), index, "Index is outside the list bounds.");
 
@@ -284,11 +290,15 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         public bool Replace<TCapability>(IModelCapability replacement) where TCapability : class, IModelCapability
         {
-            ArgumentNullException.ThrowIfNull(replacement);
+            ValidateCapability(replacement);
 
             var index = _capabilities.FindIndex(static capability => capability is TCapability);
             if (index < 0)
                 return false;
+            if (_capabilities.Where((_, candidateIndex) => candidateIndex != index)
+                .Any(candidate => ReferenceEquals(candidate, replacement)))
+                throw new InvalidOperationException(
+                    $"The same capability instance cannot appear more than once: {replacement.CapabilityId}");
 
             _capabilities[index] = replacement;
             return true;
@@ -350,6 +360,32 @@ namespace STS2RitsuLib.Models.Capabilities
         internal IModelCapability[] ToArray()
         {
             return [.. _capabilities];
+        }
+
+        internal void Restore(IReadOnlyList<IModelCapability> capabilities)
+        {
+            _capabilities.Clear();
+            _capabilities.AddRange(capabilities);
+        }
+
+        private void EnsureInstanceNotPresent(IModelCapability capability)
+        {
+            if (_capabilities.Any(existing => ReferenceEquals(existing, capability)))
+                throw new InvalidOperationException(
+                    $"The same capability instance cannot appear more than once: {capability.CapabilityId}");
+        }
+
+        private static void ValidateCapability(IModelCapability capability)
+        {
+            ArgumentNullException.ThrowIfNull(capability);
+            if (capability.Owner != null)
+                throw new InvalidOperationException(
+                    $"Capability '{capability.CapabilityId}' is already attached to model '{capability.Owner.Id}'.");
+            if (capability is ModelCapability &&
+                ModelCapabilityRegistry.GetCapabilityId(capability.GetType()) == null)
+                throw new InvalidOperationException(
+                    $"Model-backed capability type is not registered: {capability.GetType().FullName}. " +
+                    "Register it with RegisterModelCapability and add it by type instead of passing a constructed instance.");
         }
     }
 
@@ -431,10 +467,10 @@ namespace STS2RitsuLib.Models.Capabilities
 
             var capabilities = new ModelCapabilityList();
             if (owner is IModelCapabilitySource provider)
-                TryRunProvider(owner, provider, capabilities);
+                RunProvider(provider, capabilities);
 
             foreach (var modifier in GetModifiers(owner))
-                TryRunModifier(owner, modifier, capabilities);
+                RunModifier(owner, modifier, capabilities);
 
             return capabilities.ToArray();
         }
@@ -472,35 +508,36 @@ namespace STS2RitsuLib.Models.Capabilities
             }
         }
 
-        private static void TryRunProvider(
-            AbstractModel owner,
+        private static void RunProvider(
             IModelCapabilitySource provider,
             ModelCapabilityList capabilities)
         {
+            var snapshot = capabilities.ToArray();
             try
             {
                 provider.BuildDefaultCapabilities(capabilities);
             }
-            catch (Exception ex)
+            catch
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[ModelCapabilities] Default capability provider failed for {owner.Id}: {ex.Message}");
+                capabilities.Restore(snapshot);
+                throw;
             }
         }
 
-        private static void TryRunModifier(
+        private static void RunModifier(
             AbstractModel owner,
             ModelDefaultCapabilityModifierEntry modifier,
             ModelCapabilityList capabilities)
         {
+            var snapshot = capabilities.ToArray();
             try
             {
                 modifier.Modify(owner, capabilities);
             }
-            catch (Exception ex)
+            catch
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[ModelCapabilities] Default capability modifier '{modifier.ModId}/{modifier.ModifierId}' failed for {owner.Id}: {ex.Message}");
+                capabilities.Restore(snapshot);
+                throw;
             }
         }
 

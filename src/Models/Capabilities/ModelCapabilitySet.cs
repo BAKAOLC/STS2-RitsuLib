@@ -89,6 +89,9 @@ namespace STS2RitsuLib.Models.Capabilities
                         return existing;
                     }
 
+                    if (merged != null)
+                        EnsureCanAttach(merged);
+
                     var wasDefault = _defaultCapabilities.Remove(existing);
                     var defaultCapabilityId = wasDefault ? existing.CapabilityId : null;
                     existing.Detach();
@@ -115,6 +118,7 @@ namespace STS2RitsuLib.Models.Capabilities
             if (options.UseSubtractiveMerge)
                 return null;
 
+            EnsureCanAttach(incoming);
             _capabilities.Add(incoming);
             InvalidateAttachedSnapshot();
             incoming.Attach(Owner);
@@ -142,8 +146,15 @@ namespace STS2RitsuLib.Models.Capabilities
             ApplyModelCapabilityOptions options = new())
         {
             ArgumentNullException.ThrowIfNull(capabilities);
+            var incoming = capabilities.ToArray();
+            if (incoming.Any(static capability => capability == null))
+                throw new ArgumentException("Capability collection cannot contain null entries.", nameof(capabilities));
+            if (incoming.Distinct(ReferenceEqualityComparer.Instance).Count() != incoming.Length)
+                throw new ArgumentException(
+                    "Capability collection cannot contain the same instance more than once.",
+                    nameof(capabilities));
 
-            return [.. capabilities.Select(capability => Apply(capability, options))];
+            return [.. incoming.Select(capability => Apply(capability, options))];
         }
 
         /// <summary>
@@ -153,6 +164,7 @@ namespace STS2RitsuLib.Models.Capabilities
         public IModelCapability Insert(int index, IModelCapability capability)
         {
             ArgumentNullException.ThrowIfNull(capability);
+            EnsureCanAttach(capability);
             if (index < 0 || index > _capabilities.Count)
                 throw new ArgumentOutOfRangeException(nameof(index), index, "Index is outside the set bounds.");
 
@@ -429,6 +441,15 @@ namespace STS2RitsuLib.Models.Capabilities
             UnknownModelCapabilityPolicy unknownPolicy = UnknownModelCapabilityPolicy.Preserve)
         {
             ArgumentNullException.ThrowIfNull(capabilities);
+            var replacements = capabilities.ToArray();
+            if (replacements.Any(static capability => capability == null))
+                throw new ArgumentException("Capability collection cannot contain null entries.", nameof(capabilities));
+            if (replacements.Distinct(ReferenceEqualityComparer.Instance).Count() != replacements.Length)
+                throw new ArgumentException(
+                    "Capability collection cannot contain the same instance more than once.",
+                    nameof(capabilities));
+            foreach (var capability in replacements)
+                EnsureCanAttach(capability, true);
 
             foreach (var capability in _capabilities)
                 capability.Detach();
@@ -439,7 +460,7 @@ namespace STS2RitsuLib.Models.Capabilities
             if (unknownPolicy == UnknownModelCapabilityPolicy.Remove)
                 _unknownEntries.Clear();
 
-            foreach (var capability in capabilities)
+            foreach (var capability in replacements)
             {
                 _capabilities.Add(capability);
                 InvalidateAttachedSnapshot();
@@ -650,6 +671,8 @@ namespace STS2RitsuLib.Models.Capabilities
                 capability.Attach(Owner, true);
                 NotifyCapabilityLoadedFromSave(capability);
             }
+
+            AddMissingDefaultCapabilities(defaultItems);
         }
 
         internal ModelCapabilitySaveDocument? Save()
@@ -826,6 +849,19 @@ namespace STS2RitsuLib.Models.Capabilities
                 Schema = entry.Schema,
                 Data = entry.Data?.DeepClone(),
             };
+        }
+
+        private void EnsureCanAttach(IModelCapability capability, bool allowCurrentAttachment = false)
+        {
+            if (capability.Owner == null)
+                return;
+            if (allowCurrentAttachment &&
+                ReferenceEquals(capability.Owner, Owner) &&
+                _capabilities.Any(existing => ReferenceEquals(existing, capability)))
+                return;
+
+            throw new InvalidOperationException(
+                $"Capability '{capability.CapabilityId}' is already attached to model '{capability.Owner.Id}'.");
         }
 
         private sealed class DefaultCapabilityLoadState

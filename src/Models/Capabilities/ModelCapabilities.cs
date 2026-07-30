@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Models.Capabilities
     public static class ModelCapabilities
     {
         private const string SavedDataKey = "model_capabilities";
+        private static readonly Lock InitializationLock = new();
         private static readonly ModelSavedDataSlotKey SavedDataSlotKey = new(Const.ModId, SavedDataKey);
         private static readonly ConditionalWeakTable<AbstractModel, ModelCapabilitySet> Collections = [];
 
@@ -21,20 +22,23 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         public static void EnsureInitialized()
         {
-            if (IsInitialized)
-                return;
+            lock (InitializationLock)
+            {
+                if (IsInitialized)
+                    return;
 
-            IsInitialized = true;
-            ModelSavedDataStore.For(Const.ModId).RegisterComputed<AbstractModel, ModelCapabilitySaveDocument>(
-                SavedDataKey,
-                Export,
-                Import,
-                () => new(),
-                new()
-                {
-                    ClonePolicy = ModelSavedDataClonePolicy.Copy,
-                    WritePolicy = ModelSavedDataWritePolicy.AlwaysWhenPresent,
-                });
+                ModelSavedDataStore.For(Const.ModId).RegisterComputed<AbstractModel, ModelCapabilitySaveDocument>(
+                    SavedDataKey,
+                    Export,
+                    Import,
+                    () => new(),
+                    new()
+                    {
+                        ClonePolicy = ModelSavedDataClonePolicy.Copy,
+                        WritePolicy = ModelSavedDataWritePolicy.AlwaysWhenPresent,
+                    });
+                IsInitialized = true;
+            }
         }
 
         /// <summary>

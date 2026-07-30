@@ -354,8 +354,14 @@ namespace STS2RitsuLib.Models.Capabilities
         /// <inheritdoc />
         protected sealed override async Task OnOwnerCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
         {
-            await OnOwnerCardPlayedOnce(choiceContext, cardPlay);
-            RemoveFromOwner();
+            try
+            {
+                await OnOwnerCardPlayedOnce(choiceContext, cardPlay);
+            }
+            finally
+            {
+                RemoveFromOwner();
+            }
         }
 
         /// <summary>
@@ -375,8 +381,14 @@ namespace STS2RitsuLib.Models.Capabilities
         /// <inheritdoc />
         public override async Task AfterCombatEnd(CombatRoom room)
         {
-            await OnCombatEnded(room);
-            RemoveFromOwner();
+            try
+            {
+                await OnCombatEnded(room);
+            }
+            finally
+            {
+                RemoveFromOwner();
+            }
         }
 
         /// <summary>
@@ -461,12 +473,22 @@ namespace STS2RitsuLib.Models.Capabilities
             RemainingTurns--;
             MarkDirty();
 
-            await OnTurnLimitTicked(choiceContext, side, RemainingTurns);
-            if (RemainingTurns > 0)
-                return;
-
-            await OnTurnLimitExpired(choiceContext, side);
-            RemoveFromOwner();
+            try
+            {
+                await OnTurnLimitTicked(choiceContext, side, RemainingTurns);
+            }
+            finally
+            {
+                if (RemainingTurns <= 0)
+                    try
+                    {
+                        await OnTurnLimitExpired(choiceContext, side);
+                    }
+                    finally
+                    {
+                        RemoveFromOwner();
+                    }
+            }
         }
 
         /// <summary>

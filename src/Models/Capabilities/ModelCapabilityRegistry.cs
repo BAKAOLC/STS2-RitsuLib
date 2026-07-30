@@ -75,17 +75,31 @@ namespace STS2RitsuLib.Models.Capabilities
         /// </summary>
         public static bool TryCreate(string capabilityId, out IModelCapability capability)
         {
+            Type capabilityType;
+            Func<IModelCapability> factory;
             lock (SyncRoot)
             {
-                if (!Factories.TryGetValue(capabilityId, out var factory))
+                if (!Factories.TryGetValue(capabilityId, out factory!) ||
+                    !TypesById.TryGetValue(capabilityId, out capabilityType!))
                 {
                     capability = null!;
                     return false;
                 }
-
-                capability = factory();
-                return true;
             }
+
+            capability = factory()
+                         ?? throw new InvalidOperationException(
+                             $"Model capability factory returned null: {capabilityId}");
+            if (!capabilityType.IsInstanceOfType(capability))
+                throw new InvalidOperationException(
+                    $"Model capability factory for '{capabilityId}' returned '{capability.GetType().FullName}', " +
+                    $"which is not assignable to '{capabilityType.FullName}'.");
+            if (!string.Equals(capability.CapabilityId, capabilityId, StringComparison.Ordinal))
+                throw new InvalidOperationException(
+                    $"Model capability factory for '{capabilityId}' returned a capability with id " +
+                    $"'{capability.CapabilityId}'.");
+
+            return true;
         }
 
         /// <summary>

@@ -53,8 +53,14 @@ namespace STS2RitsuLib.Models.Capabilities
         public void Modify(Action<ModelCapability> modifier)
         {
             ArgumentNullException.ThrowIfNull(modifier);
-            modifier(this);
-            MarkDirty();
+            try
+            {
+                modifier(this);
+            }
+            finally
+            {
+                MarkDirty();
+            }
         }
 
         /// <summary>
@@ -439,8 +445,14 @@ namespace STS2RitsuLib.Models.Capabilities
         protected void MutateState(Action<TState> mutate)
         {
             ArgumentNullException.ThrowIfNull(mutate);
-            mutate(State);
-            MarkDirty();
+            try
+            {
+                mutate(State);
+            }
+            finally
+            {
+                MarkDirty();
+            }
         }
 
         /// <summary>
@@ -497,8 +509,14 @@ namespace STS2RitsuLib.Models.Capabilities
         protected void MutateState(Action<TState> mutate)
         {
             ArgumentNullException.ThrowIfNull(mutate);
-            mutate(State);
-            MarkDirty();
+            try
+            {
+                mutate(State);
+            }
+            finally
+            {
+                MarkDirty();
+            }
         }
 
         /// <summary>
