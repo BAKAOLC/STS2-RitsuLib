@@ -1,18 +1,25 @@
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Declares which bindings receive a direct <c>Save()</c> call when this binding's <see cref="IModSettingsBinding" />
-    ///     persistence runs. Used to deduplicate deferred flush work across decorator stacks.
-    ///     声明当此绑定的 <see cref="IModSettingsBinding" /> 持久化运行时，哪些绑定会收到直接的
-    ///     <c>Save()</c> 调用。用于在装饰器 stack 之间去重延迟 flush 工作。
+    ///     <para xml:lang="en">
+    ///         Describes the bindings saved directly by another binding, allowing deferred persistence to avoid
+    ///         duplicate work across decorator chains.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述一个绑定在保存时会直接保存的其他绑定，以便延迟持久化在装饰器链中避免重复工作。
+    ///     </para>
     /// </summary>
     internal interface IModSettingsBindingSaveDispatch
     {
         /// <summary>
-        ///     Non-recursive targets: bindings invoked immediately by this instance's <c>Save()</c> (typically one inner or
-        ///     parent).
-        ///     非递归目标：由此实例的 <c>Save()</c> 立即调用的绑定（通常是一个内部绑定或
-        ///     父绑定）。
+        ///     <para xml:lang="en">
+        ///         Gets the non-recursive set of bindings whose <see cref="IModSettingsBinding.Save" /> method this
+        ///         instance calls directly, typically an inner or parent binding.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取此实例会直接调用 <see cref="IModSettingsBinding.Save" /> 的非递归绑定集合，
+        ///         通常为内部绑定或父绑定。
+        ///     </para>
         /// </summary>
         IReadOnlyList<IModSettingsBinding> ImmediateSaveTargets { get; }
     }
