@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private static readonly Dictionary<ulong, Action<RitsuLibSidecarDispatchContext>> Handlers = [];
         private static readonly List<PendingWaiter> Waiters = [];
+        private static readonly TimeSpan MaximumSupportedWaitTimeout = TimeSpan.FromMilliseconds(uint.MaxValue - 1);
 
         /// <summary>
         ///     Registers or replaces a handler for an opcode. Unregister when leaving multiplayer to avoid leaks.
@@ -104,6 +105,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             bool consumeOnMatch = true,
             CancellationToken cancellationToken = default)
         {
+            ValidateTimeout(timeout);
+
             var tcs = new TaskCompletionSource<RitsuLibSidecarDispatchContext>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             var waiter = new PendingWaiter
@@ -189,33 +192,52 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         internal static void Dispatch(in RitsuLibSidecarDispatchContext context)
         {
+            var dispatchContext = context;
             Action<RitsuLibSidecarDispatchContext>? handler;
+            PendingWaiter[] candidates;
             PendingWaiter? matchedWaiter = null;
             var consumeByWaiter = false;
             lock (Gate)
             {
-                Handlers.TryGetValue(context.Opcode, out handler);
-                for (var i = 0; i < Waiters.Count; i++)
+                Handlers.TryGetValue(dispatchContext.Opcode, out handler);
+                candidates = [..Waiters.Where(w => w.Opcode == dispatchContext.Opcode)];
+            }
+
+            foreach (var candidate in candidates)
+            {
+                if (candidate.Predicate != null && !candidate.Predicate(dispatchContext))
+                    continue;
+
+                lock (Gate)
                 {
-                    var w = Waiters[i];
-                    if (w.Opcode != context.Opcode)
+                    if (!Waiters.Remove(candidate))
                         continue;
 
-                    if (w.Predicate != null && !w.Predicate(context))
-                        continue;
-
-                    Waiters.RemoveAt(i);
-                    matchedWaiter = w;
-                    consumeByWaiter = w.ConsumeOnMatch;
+                    matchedWaiter = candidate;
+                    consumeByWaiter = candidate.ConsumeOnMatch;
                     break;
                 }
             }
 
-            matchedWaiter?.Tcs.TrySetResult(context);
+            matchedWaiter?.Tcs.TrySetResult(dispatchContext);
             if (consumeByWaiter)
                 return;
 
-            handler?.Invoke(context);
+            handler?.Invoke(dispatchContext);
+        }
+
+        private static void ValidateTimeout(TimeSpan timeout)
+        {
+            if (timeout == Timeout.InfiniteTimeSpan || timeout >= TimeSpan.Zero)
+            {
+                if (timeout <= MaximumSupportedWaitTimeout)
+                    return;
+            }
+
+            throw new ArgumentOutOfRangeException(
+                nameof(timeout),
+                timeout,
+                $"Timeout must be {Timeout.InfiniteTimeSpan} or between {TimeSpan.Zero} and {MaximumSupportedWaitTimeout}.");
         }
 
         private sealed class PendingWaiter
