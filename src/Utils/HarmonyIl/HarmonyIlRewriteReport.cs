@@ -1,8 +1,8 @@
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     Result metadata for an IL rewrite operation.
-    ///     IL 改写操作的结果元数据。
+    ///     <para xml:lang="en">Result metadata for an IL rewrite operation.</para>
+    ///     <para xml:lang="zh-CN">IL 改写操作的结果元数据。</para>
     /// </summary>
     public readonly record struct HarmonyIlRewriteReport(
         string Operation,
@@ -15,20 +15,20 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         IReadOnlyList<int>? AppliedIndexes = null)
     {
         /// <summary>
-        ///     True when this operation emitted a changed instruction list.
-        ///     当此操作实际改写了指令列表时为 true。
+        ///     <para xml:lang="en">True when this operation emitted a changed instruction list.</para>
+        ///     <para xml:lang="zh-CN">当此操作实际改写了指令列表时为 true。</para>
         /// </summary>
         public bool Changed => Applied > 0;
 
         /// <summary>
-        ///     True when this operation either changed IL or detected that the requested IL is already present.
-        ///     当此操作实际改写了 IL，或检测到目标 IL 已存在时为 true。
+        ///     <para xml:lang="en">True when this operation either changed IL or detected that the requested IL is already present.</para>
+        ///     <para xml:lang="zh-CN">当此操作实际改写了 IL，或检测到目标 IL 已存在时为 true。</para>
         /// </summary>
         public bool Succeeded => Changed || AlreadySatisfied;
 
         /// <summary>
-        ///     Throws when the operation did not change IL and did not detect equivalent existing IL.
-        ///     当操作既未改写 IL，也未检测到等价已有 IL 时抛出异常。
+        ///     <para xml:lang="en">Throws when the operation did not change IL and did not detect equivalent existing IL.</para>
+        ///     <para xml:lang="zh-CN">当操作既未改写 IL，也未检测到等价已有 IL 时抛出异常。</para>
         /// </summary>
         public void RequireSucceeded()
         {
@@ -41,8 +41,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Throws when the number of applied rewrites is outside the expected range.
-        ///     当实际改写次数不在预期范围内时抛出异常。
+        ///     <para xml:lang="en">Throws when the number of applied rewrites is outside the expected range.</para>
+        ///     <para xml:lang="zh-CN">当实际改写次数不在预期范围内时抛出异常。</para>
         /// </summary>
         public void RequireApplied(int min = 1, int? max = null)
         {
@@ -57,8 +57,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Throws when the number of applied rewrites is not exactly <paramref name="count" />.
-        ///     当实际改写次数不等于 <paramref name="count" /> 时抛出异常。
+        ///     <para xml:lang="en">Throws when the number of applied rewrites is not exactly <paramref name="count" />.</para>
+        ///     <para xml:lang="zh-CN">当实际改写次数不等于 <paramref name="count" /> 时抛出异常。</para>
         /// </summary>
         public void RequireExactly(int count)
         {
@@ -66,8 +66,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Requires an exact target-site and rewrite count, or accepts an equivalent rewrite that was already present.
-        ///     要求精确的目标点与改写次数，或接受已经存在的等价改写。
+        ///     <para xml:lang="en">Requires an exact target-site and rewrite count, or accepts an equivalent rewrite that was already present.</para>
+        ///     <para xml:lang="zh-CN">要求精确的目标点与改写次数，或接受已经存在的等价改写。</para>
         /// </summary>
         public void RequireExactSitesOrAlreadySatisfied(int count = 1)
         {
@@ -82,8 +82,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns a compact diagnostic string.
-        ///     返回紧凑诊断字符串。
+        ///     <para xml:lang="en">Returns a compact diagnostic string.</para>
+        ///     <para xml:lang="zh-CN">返回紧凑诊断字符串。</para>
         /// </summary>
         public string Describe()
         {

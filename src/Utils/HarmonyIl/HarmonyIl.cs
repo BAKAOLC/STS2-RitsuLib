@@ -5,20 +5,20 @@ using HarmonyLib;
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     A local variable reference decoded from Harmony IL.
-    ///     从 Harmony IL 解码出的本地变量引用。
+    ///     <para xml:lang="en">A local variable reference decoded from Harmony IL.</para>
+    ///     <para xml:lang="zh-CN">从 Harmony IL 解码出的本地变量引用。</para>
     /// </summary>
     public readonly record struct HarmonyIlLocalRef(int Index, LocalBuilder? Builder = null, Type? LocalType = null)
     {
         /// <summary>
-        ///     True when the local variable type is known.
-        ///     已知本地变量类型时为 true。
+        ///     <para xml:lang="en">True when the local variable type is known.</para>
+        ///     <para xml:lang="zh-CN">已知本地变量类型时为 true。</para>
         /// </summary>
         public bool HasKnownType => LocalType != null;
 
         /// <summary>
-        ///     Creates a load instruction for this local.
-        ///     为此本地变量创建读取指令。
+        ///     <para xml:lang="en">Creates a load instruction for this local.</para>
+        ///     <para xml:lang="zh-CN">为此本地变量创建读取指令。</para>
         /// </summary>
         public CodeInstruction Load()
         {
@@ -26,8 +26,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a store instruction for this local.
-        ///     为此本地变量创建存储指令。
+        ///     <para xml:lang="en">Creates a store instruction for this local.</para>
+        ///     <para xml:lang="zh-CN">为此本地变量创建存储指令。</para>
         /// </summary>
         public CodeInstruction Store()
         {
@@ -35,8 +35,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when both references point at the same local index.
-        ///     当两个引用指向同一本地变量索引时返回 true。
+        ///     <para xml:lang="en">Returns true when both references point at the same local index.</para>
+        ///     <para xml:lang="zh-CN">当两个引用指向同一本地变量索引时返回 true。</para>
         /// </summary>
         public bool IsSameLocal(HarmonyIlLocalRef other)
         {
@@ -45,14 +45,14 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     Small instruction factories and predicates for RitsuLib Harmony transpilers.
-    ///     RitsuLib Harmony transpiler 使用的小型指令工厂与谓词。
+    ///     <para xml:lang="en">Small instruction factories and predicates for RitsuLib Harmony transpilers.</para>
+    ///     <para xml:lang="zh-CN">供 RitsuLib Harmony 转译器使用的小型指令工厂与谓词。</para>
     /// </summary>
     public static class HarmonyIl
     {
         /// <summary>
-        ///     Returns a required reflected method or throws a consistent IL rewrite error.
-        ///     返回必需的反射方法，或抛出统一的 IL 改写错误。
+        ///     <para xml:lang="en">Returns a required reflected method or throws a consistent IL rewrite error.</para>
+        ///     <para xml:lang="zh-CN">返回必需的反射方法，或抛出统一的 IL 改写错误。</para>
         /// </summary>
         public static MethodInfo RequireMethod(MethodInfo? method, string operation)
         {
@@ -61,8 +61,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a local-load instruction using the short opcode where possible.
-        ///     创建本地变量加载指令；可用时使用短 opcode。
+        ///     <para xml:lang="en">Creates a local-load instruction using the short opcode where possible.</para>
+        ///     <para xml:lang="zh-CN">创建本地变量加载指令；可用时使用短操作码。</para>
         /// </summary>
         public static CodeInstruction Ldloc(int index)
         {
@@ -78,8 +78,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a local-store instruction using the short opcode where possible.
-        ///     创建本地变量存储指令；可用时使用短 opcode。
+        ///     <para xml:lang="en">Creates a local-store instruction using the short opcode where possible.</para>
+        ///     <para xml:lang="zh-CN">创建本地变量存储指令；可用时使用短操作码。</para>
         /// </summary>
         public static CodeInstruction Stloc(int index)
         {
@@ -95,8 +95,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates an argument-load instruction using the short opcode where possible.
-        ///     创建参数加载指令；可用时使用短 opcode。
+        ///     <para xml:lang="en">Creates an argument-load instruction using the short opcode where possible.</para>
+        ///     <para xml:lang="zh-CN">创建参数加载指令；可用时使用短操作码。</para>
         /// </summary>
         public static CodeInstruction Ldarg(int index)
         {
@@ -112,8 +112,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates an int32 constant-load instruction using the shortest opcode.
-        ///     创建 32 位整数常量加载指令；使用最短 opcode。
+        ///     <para xml:lang="en">Creates an int32 constant-load instruction using the shortest opcode.</para>
+        ///     <para xml:lang="zh-CN">创建 32 位整数常量加载指令；使用最短操作码。</para>
         /// </summary>
         public static CodeInstruction LdcI4(int value)
         {
@@ -135,8 +135,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a string-load instruction.
-        ///     创建字符串加载指令。
+        ///     <para xml:lang="en">Creates a string-load instruction.</para>
+        ///     <para xml:lang="zh-CN">创建字符串加载指令。</para>
         /// </summary>
         public static CodeInstruction Ldstr(string value)
         {
@@ -145,8 +145,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a field-load instruction.
-        ///     创建字段加载指令。
+        ///     <para xml:lang="en">Creates a field-load instruction.</para>
+        ///     <para xml:lang="zh-CN">创建字段加载指令。</para>
         /// </summary>
         public static CodeInstruction Ldfld(FieldInfo field)
         {
@@ -155,8 +155,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a field-address load instruction.
-        ///     创建字段地址加载指令。
+        ///     <para xml:lang="en">Creates a field-address load instruction.</para>
+        ///     <para xml:lang="zh-CN">创建字段地址加载指令。</para>
         /// </summary>
         public static CodeInstruction Ldflda(FieldInfo field)
         {
@@ -165,8 +165,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a static-field-load instruction.
-        ///     创建静态字段加载指令。
+        ///     <para xml:lang="en">Creates a static-field-load instruction.</para>
+        ///     <para xml:lang="zh-CN">创建静态字段加载指令。</para>
         /// </summary>
         public static CodeInstruction Ldsfld(FieldInfo field)
         {
@@ -175,8 +175,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a field-store instruction.
-        ///     创建字段存储指令。
+        ///     <para xml:lang="en">Creates a field-store instruction.</para>
+        ///     <para xml:lang="zh-CN">创建字段存储指令。</para>
         /// </summary>
         public static CodeInstruction Stfld(FieldInfo field)
         {
@@ -185,8 +185,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a static-field-store instruction.
-        ///     创建静态字段存储指令。
+        ///     <para xml:lang="en">Creates a static-field-store instruction.</para>
+        ///     <para xml:lang="zh-CN">创建静态字段存储指令。</para>
         /// </summary>
         public static CodeInstruction Stsfld(FieldInfo field)
         {
@@ -195,8 +195,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a call instruction.
-        ///     创建 call 指令。
+        ///     <para xml:lang="en">Creates a call instruction.</para>
+        ///     <para xml:lang="zh-CN">创建 call 指令。</para>
         /// </summary>
         public static CodeInstruction Call(MethodInfo method)
         {
@@ -205,8 +205,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a callvirt instruction.
-        ///     创建 callvirt 指令。
+        ///     <para xml:lang="en">Creates a callvirt instruction.</para>
+        ///     <para xml:lang="zh-CN">创建 callvirt 指令。</para>
         /// </summary>
         public static CodeInstruction Callvirt(MethodInfo method)
         {
@@ -215,8 +215,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates an object-construction instruction.
-        ///     创建对象构造指令。
+        ///     <para xml:lang="en">Creates an object-construction instruction.</para>
+        ///     <para xml:lang="zh-CN">创建对象构造指令。</para>
         /// </summary>
         public static CodeInstruction Newobj(ConstructorInfo constructor)
         {
@@ -225,8 +225,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a null-load instruction.
-        ///     创建 null 加载指令。
+        ///     <para xml:lang="en">Creates a null-load instruction.</para>
+        ///     <para xml:lang="zh-CN">创建 null 加载指令。</para>
         /// </summary>
         public static CodeInstruction Ldnull()
         {
@@ -234,8 +234,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a duplicate-stack-value instruction.
-        ///     创建复制栈顶值指令。
+        ///     <para xml:lang="en">Creates a duplicate-stack-value instruction.</para>
+        ///     <para xml:lang="zh-CN">创建复制栈顶值指令。</para>
         /// </summary>
         public static CodeInstruction Dup()
         {
@@ -243,8 +243,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a pop instruction.
-        ///     创建 pop 指令。
+        ///     <para xml:lang="en">Creates a pop instruction.</para>
+        ///     <para xml:lang="zh-CN">创建 pop 指令。</para>
         /// </summary>
         public static CodeInstruction Pop()
         {
@@ -252,8 +252,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a ret instruction.
-        ///     创建 ret 指令。
+        ///     <para xml:lang="en">Creates a ret instruction.</para>
+        ///     <para xml:lang="zh-CN">创建 ret 指令。</para>
         /// </summary>
         public static CodeInstruction Ret()
         {
@@ -261,8 +261,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Converts a local-store instruction to the corresponding local-load instruction.
-        ///     将本地变量存储指令转换为对应的本地变量读取指令。
+        ///     <para xml:lang="en">Converts a local-store instruction to the corresponding local-load instruction.</para>
+        ///     <para xml:lang="zh-CN">将本地变量存储指令转换为对应的本地变量读取指令。</para>
         /// </summary>
         public static CodeInstruction LoadLocalFromStore(CodeInstruction store)
         {
@@ -280,8 +280,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Converts a local-load instruction to the corresponding local-store instruction.
-        ///     将本地变量读取指令转换为对应的本地变量存储指令。
+        ///     <para xml:lang="en">Converts a local-load instruction to the corresponding local-store instruction.</para>
+        ///     <para xml:lang="zh-CN">将本地变量读取指令转换为对应的本地变量存储指令。</para>
         /// </summary>
         public static CodeInstruction StoreLocalFromLoad(CodeInstruction load)
         {
@@ -299,8 +299,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a local-load instruction from a decoded local reference.
-        ///     根据已解码的本地变量引用创建读取指令。
+        ///     <para xml:lang="en">Creates a local-load instruction from a decoded local reference.</para>
+        ///     <para xml:lang="zh-CN">根据已解码的本地变量引用创建读取指令。</para>
         /// </summary>
         public static CodeInstruction LoadLocal(HarmonyIlLocalRef local)
         {
@@ -308,8 +308,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Creates a local-store instruction from a decoded local reference.
-        ///     根据已解码的本地变量引用创建存储指令。
+        ///     <para xml:lang="en">Creates a local-store instruction from a decoded local reference.</para>
+        ///     <para xml:lang="zh-CN">根据已解码的本地变量引用创建存储指令。</para>
         /// </summary>
         public static CodeInstruction StoreLocal(HarmonyIlLocalRef local)
         {
@@ -317,8 +317,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when both instructions reference the same local variable.
-        ///     当两条指令引用同一本地变量时返回 true。
+        ///     <para xml:lang="en">Returns true when both instructions reference the same local variable.</para>
+        ///     <para xml:lang="zh-CN">当两条指令引用同一本地变量时返回 true。</para>
         /// </summary>
         public static bool SameLocal(CodeInstruction left, CodeInstruction right)
         {
@@ -328,8 +328,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches any instruction.
-        ///     匹配任意指令。
+        ///     <para xml:lang="en">Matches any instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配任意指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> Any()
         {
@@ -337,8 +337,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Negates another instruction predicate.
-        ///     对另一个指令谓词取反。
+        ///     <para xml:lang="en">Negates another instruction predicate.</para>
+        ///     <para xml:lang="zh-CN">对另一个指令谓词取反。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> Not(Func<CodeInstruction, bool> predicate)
         {
@@ -347,8 +347,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches when any supplied instruction predicate matches.
-        ///     任一给定指令谓词匹配时即匹配。
+        ///     <para xml:lang="en">Matches when any supplied instruction predicate matches.</para>
+        ///     <para xml:lang="zh-CN">任一给定指令谓词匹配时即匹配。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> OneOf(params Func<CodeInstruction, bool>[] predicates)
         {
@@ -357,8 +357,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches an opcode and optional operand.
-        ///     匹配 opcode 和可选 operand。
+        ///     <para xml:lang="en">Matches an opcode and optional operand.</para>
+        ///     <para xml:lang="zh-CN">匹配操作码和可选操作数。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> Is(OpCode opcode, object? operand = null)
         {
@@ -367,8 +367,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches an opcode and exact operand, including a null operand.
-        ///     匹配 opcode 和精确 operand，包括 null operand。
+        ///     <para xml:lang="en">Matches an opcode and exact operand, including a null operand.</para>
+        ///     <para xml:lang="zh-CN">匹配操作码和精确操作数，包括 null 操作数。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsExact(OpCode opcode, object? operand)
         {
@@ -376,8 +376,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches an argument-load instruction.
-        ///     匹配参数读取指令。
+        ///     <para xml:lang="en">Matches an argument-load instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配参数读取指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdarg(int? index = null)
         {
@@ -386,8 +386,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-load instruction.
-        ///     匹配本地变量读取指令。
+        ///     <para xml:lang="en">Matches a local-load instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配本地变量读取指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdloc(int? index = null)
         {
@@ -396,8 +396,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-store instruction.
-        ///     匹配本地变量存储指令。
+        ///     <para xml:lang="en">Matches a local-store instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配本地变量存储指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsStloc(int? index = null)
         {
@@ -406,8 +406,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-load instruction for the supplied local reference.
-        ///     匹配指定本地变量引用的读取指令。
+        ///     <para xml:lang="en">Matches a local-load instruction for the supplied local reference.</para>
+        ///     <para xml:lang="zh-CN">匹配指定本地变量引用的读取指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdloc(HarmonyIlLocalRef local)
         {
@@ -415,8 +415,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-store instruction for the supplied local reference.
-        ///     匹配指定本地变量引用的存储指令。
+        ///     <para xml:lang="en">Matches a local-store instruction for the supplied local reference.</para>
+        ///     <para xml:lang="zh-CN">匹配指定本地变量引用的存储指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsStloc(HarmonyIlLocalRef local)
         {
@@ -424,8 +424,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-load instruction whose operand exposes the supplied local type.
-        ///     匹配 operand 暴露出指定本地变量类型的读取指令。
+        ///     <para xml:lang="en">Matches a local-load instruction whose operand exposes the supplied local type.</para>
+        ///     <para xml:lang="zh-CN">匹配其操作数公开指定本地变量类型的读取指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdlocOfType(Type localType)
         {
@@ -434,8 +434,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-load instruction whose operand exposes the supplied local type.
-        ///     匹配 operand 暴露出指定本地变量类型的读取指令。
+        ///     <para xml:lang="en">Matches a local-load instruction whose operand exposes the supplied local type.</para>
+        ///     <para xml:lang="zh-CN">匹配其操作数公开指定本地变量类型的读取指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdlocOfType<T>()
         {
@@ -443,8 +443,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-store instruction whose operand exposes the supplied local type.
-        ///     匹配 operand 暴露出指定本地变量类型的存储指令。
+        ///     <para xml:lang="en">Matches a local-store instruction whose operand exposes the supplied local type.</para>
+        ///     <para xml:lang="zh-CN">匹配其操作数公开指定本地变量类型的存储指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsStlocOfType(Type localType)
         {
@@ -453,8 +453,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a local-store instruction whose operand exposes the supplied local type.
-        ///     匹配 operand 暴露出指定本地变量类型的存储指令。
+        ///     <para xml:lang="en">Matches a local-store instruction whose operand exposes the supplied local type.</para>
+        ///     <para xml:lang="zh-CN">匹配其操作数公开指定本地变量类型的存储指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsStlocOfType<T>()
         {
@@ -462,8 +462,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a string-load instruction.
-        ///     匹配字符串加载指令。
+        ///     <para xml:lang="en">Matches a string-load instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配字符串加载指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdstr(string? value = null)
         {
@@ -473,8 +473,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches an int32 constant-load instruction.
-        ///     匹配 32 位整数常量加载指令。
+        ///     <para xml:lang="en">Matches an int32 constant-load instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配 32 位整数常量加载指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdcI4(int? value = null)
         {
@@ -483,8 +483,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a call/callvirt to the given method.
-        ///     匹配对指定方法的 call/callvirt。
+        ///     <para xml:lang="en">Matches a call/callvirt to the given method.</para>
+        ///     <para xml:lang="zh-CN">匹配对指定方法的 call/callvirt。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsCall(MethodInfo? method)
         {
@@ -492,8 +492,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a call/callvirt instruction using a method predicate.
-        ///     使用方法谓词匹配 call/callvirt 指令。
+        ///     <para xml:lang="en">Matches a call/callvirt instruction using a method predicate.</para>
+        ///     <para xml:lang="zh-CN">使用方法谓词匹配 call/callvirt 指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsCall(Func<MethodInfo, bool> predicate)
         {
@@ -504,8 +504,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a call/callvirt to a method declared on the supplied type with the supplied name.
-        ///     匹配对指定类型上指定名称方法的 call/callvirt。
+        ///     <para xml:lang="en">Matches a call/callvirt to a method declared on the supplied type with the supplied name.</para>
+        ///     <para xml:lang="zh-CN">匹配对指定类型上指定名称方法的 call/callvirt。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsCallTo(Type declaringType, string methodName)
         {
@@ -516,8 +516,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a call/callvirt to a method with the supplied name.
-        ///     匹配对指定名称方法的 call/callvirt。
+        ///     <para xml:lang="en">Matches a call/callvirt to a method with the supplied name.</para>
+        ///     <para xml:lang="zh-CN">匹配对指定名称方法的 call/callvirt。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsCallTo(string methodName)
         {
@@ -526,8 +526,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a call/callvirt whose return type is the supplied type.
-        ///     匹配返回类型为指定类型的 call/callvirt。
+        ///     <para xml:lang="en">Matches a call/callvirt whose return type is the supplied type.</para>
+        ///     <para xml:lang="zh-CN">匹配返回类型为指定类型的 call/callvirt。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsCallReturning(Type returnType)
         {
@@ -536,8 +536,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a call/callvirt whose parameter types match the supplied sequence.
-        ///     匹配参数类型序列等于指定序列的 call/callvirt。
+        ///     <para xml:lang="en">Matches a call/callvirt whose parameter types match the supplied sequence.</para>
+        ///     <para xml:lang="zh-CN">匹配参数类型序列等于指定序列的 call/callvirt。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsCallWithParameters(params Type[] parameterTypes)
         {
@@ -547,8 +547,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches any call/callvirt instruction.
-        ///     匹配任意 call/callvirt 指令。
+        ///     <para xml:lang="en">Matches any call/callvirt instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配任意 call/callvirt 指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsAnyCall()
         {
@@ -556,8 +556,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a newobj instruction for the supplied constructor.
-        ///     匹配指定构造函数的 newobj 指令。
+        ///     <para xml:lang="en">Matches a newobj instruction for the supplied constructor.</para>
+        ///     <para xml:lang="zh-CN">匹配指定构造函数的 newobj 指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsNewobj(ConstructorInfo? constructor = null)
         {
@@ -566,8 +566,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a field instruction.
-        ///     匹配字段指令。
+        ///     <para xml:lang="en">Matches a field instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配字段指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsField(OpCode opcode, FieldInfo? field = null)
         {
@@ -576,8 +576,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches an instance-field load instruction.
-        ///     匹配实例字段读取指令。
+        ///     <para xml:lang="en">Matches an instance-field load instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配实例字段读取指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdfld(FieldInfo? field = null)
         {
@@ -585,8 +585,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches an instance-field store instruction.
-        ///     匹配实例字段存储指令。
+        ///     <para xml:lang="en">Matches an instance-field store instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配实例字段存储指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsStfld(FieldInfo? field = null)
         {
@@ -594,8 +594,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a static-field load instruction.
-        ///     匹配静态字段读取指令。
+        ///     <para xml:lang="en">Matches a static-field load instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配静态字段读取指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsLdsfld(FieldInfo? field = null)
         {
@@ -603,8 +603,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches any field access instruction for the supplied field.
-        ///     匹配对指定字段的任意字段访问指令。
+        ///     <para xml:lang="en">Matches any field access instruction for the supplied field.</para>
+        ///     <para xml:lang="zh-CN">匹配对指定字段的任意字段访问指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsFieldAccess(FieldInfo? field = null)
         {
@@ -613,8 +613,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches any field access instruction using a field predicate.
-        ///     使用字段谓词匹配任意字段访问指令。
+        ///     <para xml:lang="en">Matches any field access instruction using a field predicate.</para>
+        ///     <para xml:lang="zh-CN">使用字段谓词匹配任意字段访问指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsFieldAccess(Func<FieldInfo, bool> predicate)
         {
@@ -625,8 +625,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches any field access instruction whose field type is the supplied type.
-        ///     匹配字段类型为指定类型的任意字段访问指令。
+        ///     <para xml:lang="en">Matches any field access instruction whose field type is the supplied type.</para>
+        ///     <para xml:lang="zh-CN">匹配字段类型为指定类型的任意字段访问指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsFieldOfType(Type fieldType)
         {
@@ -635,8 +635,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches any field access instruction for a named field on the supplied declaring type.
-        ///     匹配指定类型上指定名称字段的任意字段访问指令。
+        ///     <para xml:lang="en">Matches any field access instruction for a named field on the supplied declaring type.</para>
+        ///     <para xml:lang="zh-CN">匹配指定类型上指定名称字段的任意字段访问指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsFieldNamed(Type declaringType, string fieldName)
         {
@@ -647,8 +647,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a branch instruction.
-        ///     匹配分支指令。
+        ///     <para xml:lang="en">Matches a branch instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配分支指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsBranch()
         {
@@ -656,8 +656,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches a ret instruction.
-        ///     匹配 ret 指令。
+        ///     <para xml:lang="en">Matches a ret instruction.</para>
+        ///     <para xml:lang="zh-CN">匹配 ret 指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> IsRet()
         {
@@ -665,8 +665,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction calls the supplied method via call or callvirt.
-        ///     当指令通过 call 或 callvirt 调用指定方法时返回 true。
+        ///     <para xml:lang="en">Returns true when the instruction calls the supplied method via call or callvirt.</para>
+        ///     <para xml:lang="zh-CN">当指令通过 call 或 callvirt 调用指定方法时返回 true。</para>
         /// </summary>
         public static bool IsCallTo(CodeInstruction instruction, MethodInfo? method)
         {
@@ -677,8 +677,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Tries to read the target method from a call/callvirt instruction.
-        ///     尝试从 call/callvirt 指令读取目标方法。
+        ///     <para xml:lang="en">Tries to read the target method from a call/callvirt instruction.</para>
+        ///     <para xml:lang="zh-CN">尝试从 call/callvirt 指令读取目标方法。</para>
         /// </summary>
         public static bool TryGetCalledMethod(CodeInstruction instruction, out MethodInfo method)
         {
@@ -695,8 +695,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction calls the supplied generic method definition.
-        ///     当指令调用指定泛型方法定义时返回 true。
+        ///     <para xml:lang="en">Returns true when the instruction calls the supplied generic method definition.</para>
+        ///     <para xml:lang="zh-CN">当指令调用指定泛型方法定义时返回 true。</para>
         /// </summary>
         public static bool IsCallToGenericDefinition(CodeInstruction instruction, MethodInfo? genericDefinition)
         {
@@ -708,9 +708,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction calls a method declared on <paramref name="declaringType" /> with
-        ///     <paramref name="methodName" />.
-        ///     当指令调用 <paramref name="declaringType" /> 上名为 <paramref name="methodName" /> 的方法时返回 true。
+        ///     <para xml:lang="en">Returns true when the instruction calls a method declared on <paramref name="declaringType" /> with <paramref name="methodName" />.</para>
+        ///     <para xml:lang="zh-CN">当指令调用 <paramref name="declaringType" /> 上名为 <paramref name="methodName" /> 的方法时返回 true。</para>
         /// </summary>
         public static bool IsCallNamed(CodeInstruction instruction, Type declaringType, string methodName)
         {
@@ -724,8 +723,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction loads the supplied 32-bit integer constant.
-        ///     当指令加载指定 32 位整数常量时返回 true。
+        ///     <para xml:lang="en">Returns true when the instruction loads the supplied 32-bit integer constant.</para>
+        ///     <para xml:lang="zh-CN">当指令加载指定 32 位整数常量时返回 true。</para>
         /// </summary>
         public static bool LoadsInt32(CodeInstruction instruction, int value)
         {
@@ -733,8 +732,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads a typed operand from an instruction.
-        ///     从指令读取指定类型的 operand。
+        ///     <para xml:lang="en">Reads a typed operand from an instruction.</para>
+        ///     <para xml:lang="zh-CN">从指令读取指定类型的操作数。</para>
         /// </summary>
         public static bool TryGetOperand<T>(CodeInstruction instruction, out T operand)
         {
@@ -750,8 +749,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction operand equals the supplied operand.
-        ///     当指令 operand 等于指定 operand 时返回 true。
+        ///     <para xml:lang="en">Returns true when the instruction operand equals the supplied operand.</para>
+        ///     <para xml:lang="zh-CN">当指令操作数等于指定操作数时返回 true。</para>
         /// </summary>
         public static bool OperandEquals(CodeInstruction instruction, object? operand)
         {
@@ -760,8 +759,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when a typed operand satisfies the supplied predicate.
-        ///     当指定类型的 operand 满足谓词时返回 true。
+        ///     <para xml:lang="en">Returns true when a typed operand satisfies the supplied predicate.</para>
+        ///     <para xml:lang="zh-CN">当指定类型的操作数满足谓词时返回 true。</para>
         /// </summary>
         public static bool OperandMatches<T>(CodeInstruction instruction, Func<T, bool> predicate)
         {
@@ -770,8 +769,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Matches instructions whose typed operand satisfies the supplied predicate.
-        ///     匹配指定类型 operand 满足谓词的指令。
+        ///     <para xml:lang="en">Matches instructions whose typed operand satisfies the supplied predicate.</para>
+        ///     <para xml:lang="zh-CN">匹配指定类型的操作数满足谓词的指令。</para>
         /// </summary>
         public static Func<CodeInstruction, bool> HasOperand<T>(Func<T, bool>? predicate = null)
         {
@@ -780,8 +779,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads a local reference from a local-load instruction.
-        ///     从本地变量读取指令读取本地变量引用。
+        ///     <para xml:lang="en">Reads a local reference from a local-load instruction.</para>
+        ///     <para xml:lang="zh-CN">从本地变量读取指令读取本地变量引用。</para>
         /// </summary>
         public static bool TryGetLocalLoad(CodeInstruction instruction, out HarmonyIlLocalRef local)
         {
@@ -796,8 +795,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads a local reference from a local-store instruction.
-        ///     从本地变量存储指令读取本地变量引用。
+        ///     <para xml:lang="en">Reads a local reference from a local-store instruction.</para>
+        ///     <para xml:lang="zh-CN">从本地变量存储指令读取本地变量引用。</para>
         /// </summary>
         public static bool TryGetLocalStore(CodeInstruction instruction, out HarmonyIlLocalRef local)
         {
@@ -812,8 +811,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads a local reference from a local load or store instruction.
-        ///     从本地变量读取或存储指令读取本地变量引用。
+        ///     <para xml:lang="en">Reads a local reference from a local load or store instruction.</para>
+        ///     <para xml:lang="zh-CN">从本地变量读取或存储指令读取本地变量引用。</para>
         /// </summary>
         public static bool TryGetLocal(CodeInstruction instruction, out HarmonyIlLocalRef local)
         {
@@ -821,8 +820,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads the argument index from an argument-load instruction.
-        ///     从参数读取指令中读取参数索引。
+        ///     <para xml:lang="en">Reads the argument index from an argument-load instruction.</para>
+        ///     <para xml:lang="zh-CN">从参数读取指令中读取参数索引。</para>
         /// </summary>
         public static bool TryGetArgumentIndex(CodeInstruction instruction, out int index)
         {
@@ -861,8 +860,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads the local index from a local-load instruction.
-        ///     从本地变量读取指令中读取本地变量索引。
+        ///     <para xml:lang="en">Reads the local index from a local-load instruction.</para>
+        ///     <para xml:lang="zh-CN">从本地变量读取指令中读取本地变量索引。</para>
         /// </summary>
         public static bool TryGetLocalLoadIndex(CodeInstruction instruction, out int index)
         {
@@ -901,8 +900,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads the local index from a local-store instruction.
-        ///     从本地变量存储指令中读取本地变量索引。
+        ///     <para xml:lang="en">Reads the local index from a local-store instruction.</para>
+        ///     <para xml:lang="zh-CN">从本地变量存储指令中读取本地变量索引。</para>
         /// </summary>
         public static bool TryGetLocalStoreIndex(CodeInstruction instruction, out int index)
         {
@@ -941,8 +940,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Reads the int32 constant from an integer-load instruction.
-        ///     从整数加载指令中读取 32 位整数常量。
+        ///     <para xml:lang="en">Reads the int32 constant from an integer-load instruction.</para>
+        ///     <para xml:lang="zh-CN">从整数加载指令中读取 32 位整数常量。</para>
         /// </summary>
         public static bool TryGetInt32(CodeInstruction instruction, out int value)
         {
@@ -1023,8 +1022,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction has Harmony labels or exception blocks.
-        ///     当指令带有 Harmony labels 或 exception blocks 时返回 true。
+        ///     <para xml:lang="en">Returns true when the instruction has Harmony labels or exception blocks.</para>
+        ///     <para xml:lang="zh-CN">当指令带有 Harmony 标签或异常块时返回 true。</para>
         /// </summary>
         public static bool HasMetadata(CodeInstruction instruction)
         {
@@ -1033,8 +1032,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Moves labels and exception blocks from <paramref name="source" /> to the first replacement instruction.
-        ///     将 <paramref name="source" /> 的 labels 和 exception blocks 转移到第一条替换指令上。
+        ///     <para xml:lang="en">Moves labels and exception blocks from <paramref name="source" /> to the first replacement instruction.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="source" /> 的标签和异常块转移到第一条替换指令上。</para>
         /// </summary>
         public static IReadOnlyList<CodeInstruction> MoveMetadataToFirst(
             CodeInstruction source,
@@ -1055,8 +1054,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Clones every instruction in order.
-        ///     按顺序克隆每条指令。
+        ///     <para xml:lang="en">Clones every instruction in order.</para>
+        ///     <para xml:lang="zh-CN">按顺序克隆每条指令。</para>
         /// </summary>
         public static CodeInstruction[] CloneAll(IEnumerable<CodeInstruction> instructions)
         {

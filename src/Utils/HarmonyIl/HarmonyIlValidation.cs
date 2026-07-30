@@ -5,14 +5,14 @@ using HarmonyLib;
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     One structural IL validation issue.
-    ///     一个结构性 IL 验证问题。
+    ///     <para xml:lang="en">One structural IL validation issue.</para>
+    ///     <para xml:lang="zh-CN">一个结构性 IL 验证问题。</para>
     /// </summary>
     public readonly record struct HarmonyIlValidationIssue(int Index, string Message);
 
     /// <summary>
-    ///     Structural validation report for a Harmony instruction list.
-    ///     Harmony 指令列表的结构性验证报告。
+    ///     <para xml:lang="en">Structural validation report for a Harmony instruction list.</para>
+    ///     <para xml:lang="zh-CN">Harmony 指令列表的结构性验证报告。</para>
     /// </summary>
     public sealed class HarmonyIlValidationReport
     {
@@ -23,26 +23,26 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Operation name supplied by the caller.
-        ///     调用方提供的操作名称。
+        ///     <para xml:lang="en">Operation name supplied by the caller.</para>
+        ///     <para xml:lang="zh-CN">调用方提供的操作名称。</para>
         /// </summary>
         public string Operation { get; }
 
         /// <summary>
-        ///     Validation issues found in the instruction list.
-        ///     在指令列表中发现的验证问题。
+        ///     <para xml:lang="en">Validation issues found in the instruction list.</para>
+        ///     <para xml:lang="zh-CN">在指令列表中发现的验证问题。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlValidationIssue> Issues { get; }
 
         /// <summary>
-        ///     True when no structural issues were found.
-        ///     未发现结构性问题时为 true。
+        ///     <para xml:lang="en">True when no structural issues were found.</para>
+        ///     <para xml:lang="zh-CN">未发现结构性问题时为 true。</para>
         /// </summary>
         public bool IsValid => Issues.Count == 0;
 
         /// <summary>
-        ///     Throws when the report contains structural issues.
-        ///     当报告包含结构性问题时抛出异常。
+        ///     <para xml:lang="en">Throws when the report contains structural issues.</para>
+        ///     <para xml:lang="zh-CN">当报告包含结构性问题时抛出异常。</para>
         /// </summary>
         public void ThrowIfInvalid()
         {
@@ -55,14 +55,14 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     Structural checks for Harmony instruction lists produced by wrapper-based transpilers.
-    ///     面向包装式 transpiler 输出的 Harmony 指令列表结构检查。
+    ///     <para xml:lang="en">Structural checks for Harmony instruction lists produced by wrapper-based transpilers.</para>
+    ///     <para xml:lang="zh-CN">面向包装式转译器输出的 Harmony 指令列表结构检查。</para>
     /// </summary>
     public static class HarmonyIlValidation
     {
         /// <summary>
-        ///     Validates branch labels and common reflection operands.
-        ///     验证分支 label 与常见反射 operand。
+        ///     <para xml:lang="en">Validates branch labels and common reflection operands.</para>
+        ///     <para xml:lang="zh-CN">验证分支标签与常见反射操作数。</para>
         /// </summary>
         public static HarmonyIlValidationReport Validate(
             IReadOnlyList<CodeInstruction> code,
@@ -97,9 +97,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when a matched span can be replaced without moving labels or exception blocks from the
-        ///     interior of the span.
-        ///     当匹配区间可在不移动区间内部 labels 或 exception blocks 的情况下安全替换时返回 true。
+        ///     <para xml:lang="en">Returns true when a matched span can be replaced without moving labels or exception blocks from the interior of the span.</para>
+        ///     <para xml:lang="zh-CN">当匹配区间可在不移动其内部标签或异常块的情况下安全替换时返回 true。</para>
         /// </summary>
         public static bool CanReplaceSpan(
             IReadOnlyList<CodeInstruction> code,

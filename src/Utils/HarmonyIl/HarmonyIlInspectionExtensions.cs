@@ -4,8 +4,8 @@ using HarmonyLib;
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     A snapshot of the original IL body selected for a logical method.
-    ///     为逻辑方法选定的原始 IL 方法体快照。
+    ///     <para xml:lang="en">A snapshot of the original IL body selected for a logical method.</para>
+    ///     <para xml:lang="zh-CN">为逻辑方法选定的原始 IL 方法体快照。</para>
     /// </summary>
     public sealed class HarmonyIlMethodBody
     {
@@ -28,39 +28,38 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Logical method requested by the caller.
-        ///     调用方请求检查的逻辑方法。
+        ///     <para xml:lang="en">Logical method requested by the caller.</para>
+        ///     <para xml:lang="zh-CN">调用方请求检查的逻辑方法。</para>
         /// </summary>
         public MethodBase SourceMethod { get; }
 
         /// <summary>
-        ///     Method that owns <see cref="Instructions" />. For a resolved async method this is its generated
-        ///     <c>MoveNext</c> method.
-        ///     拥有 <see cref="Instructions" /> 的方法。解析 async 方法时，这是编译器生成的 <c>MoveNext</c> 方法。
+        ///     <para xml:lang="en">Method that owns <see cref="Instructions" />. For a resolved async method this is its generated <c>MoveNext</c> method.</para>
+        ///     <para xml:lang="zh-CN">拥有 <see cref="Instructions" /> 的方法。解析异步方法时，这是编译器生成的 <c>MoveNext</c> 方法。</para>
         /// </summary>
         public MethodBase BodyMethod { get; }
 
         /// <summary>
-        ///     True when the logical method was resolved to an async state-machine body.
-        ///     逻辑方法已解析为 async 状态机方法体时为 true。
+        ///     <para xml:lang="en">True when the logical method was resolved to an async state-machine body.</para>
+        ///     <para xml:lang="zh-CN">逻辑方法已解析为异步状态机方法体时为 true。</para>
         /// </summary>
         public bool IsAsyncStateMachineBody => SourceMethod != BodyMethod;
 
         /// <summary>
-        ///     Original Harmony instructions for <see cref="BodyMethod" />.
-        ///     <see cref="BodyMethod" /> 的 Harmony 原始指令。
+        ///     <para xml:lang="en">Original Harmony instructions for <see cref="BodyMethod" />.</para>
+        ///     <para xml:lang="zh-CN"><see cref="BodyMethod" /> 的 Harmony 原始指令。</para>
         /// </summary>
         public IReadOnlyList<CodeInstruction> Instructions { get; }
 
         /// <summary>
-        ///     Call/callvirt targets in instruction order. Repeated call sites are preserved.
-        ///     按指令顺序排列的 call/callvirt 目标；重复调用点会被保留。
+        ///     <para xml:lang="en">Call/callvirt targets in instruction order. Repeated call sites are preserved.</para>
+        ///     <para xml:lang="zh-CN">按指令顺序排列的 call/callvirt 目标；重复调用点会被保留。</para>
         /// </summary>
         public IReadOnlyList<MethodInfo> CalledMethods { get; }
 
         /// <summary>
-        ///     Creates an isolated mutable rewriter over cloned instructions.
-        ///     基于克隆指令创建独立的可变 rewriter。
+        ///     <para xml:lang="en">Creates an isolated mutable rewriter over cloned instructions.</para>
+        ///     <para xml:lang="zh-CN">基于克隆指令创建独立的可变改写器。</para>
         /// </summary>
         public HarmonyIlRewriter CreateRewriter()
         {
@@ -68,8 +67,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when any call/callvirt target satisfies <paramref name="predicate" />.
-        ///     任一 call/callvirt 目标满足 <paramref name="predicate" /> 时返回 true。
+        ///     <para xml:lang="en">Returns true when any call/callvirt target satisfies <paramref name="predicate" />.</para>
+        ///     <para xml:lang="zh-CN">任一 call/callvirt 目标满足 <paramref name="predicate" /> 时返回 true。</para>
         /// </summary>
         public bool HasCall(Func<MethodInfo, bool> predicate)
         {
@@ -79,8 +78,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     A shortest call path found by <see cref="HarmonyIlInspectionExtensions.FindOriginalIlCallPath" />.
-    ///     <see cref="HarmonyIlInspectionExtensions.FindOriginalIlCallPath" /> 找到的最短调用路径。
+    ///     <para xml:lang="en">A shortest call path found by <see cref="HarmonyIlInspectionExtensions.FindOriginalIlCallPath" />.</para>
+    ///     <para xml:lang="zh-CN"><see cref="HarmonyIlInspectionExtensions.FindOriginalIlCallPath" /> 找到的最短调用路径。</para>
     /// </summary>
     public sealed class HarmonyIlCallPath
     {
@@ -90,26 +89,26 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Logical methods from the root through the matched call target.
-        ///     从根方法到匹配调用目标的逻辑方法序列。
+        ///     <para xml:lang="en">Logical methods from the root through the matched call target.</para>
+        ///     <para xml:lang="zh-CN">从根方法到匹配调用目标的逻辑方法序列。</para>
         /// </summary>
         public IReadOnlyList<MethodBase> Methods { get; }
 
         /// <summary>
-        ///     Root logical method.
-        ///     根逻辑方法。
+        ///     <para xml:lang="en">Root logical method.</para>
+        ///     <para xml:lang="zh-CN">根逻辑方法。</para>
         /// </summary>
         public MethodBase Root => Methods[0];
 
         /// <summary>
-        ///     Matched call target.
-        ///     匹配到的调用目标。
+        ///     <para xml:lang="en">Matched call target.</para>
+        ///     <para xml:lang="zh-CN">匹配到的调用目标。</para>
         /// </summary>
         public MethodInfo Target => (MethodInfo)Methods[^1];
 
         /// <summary>
-        ///     Number of traversed intermediate methods. A direct call has depth zero.
-        ///     已下钻的中间方法数量；直接调用的深度为零。
+        ///     <para xml:lang="en">Number of traversed intermediate methods. A direct call has depth zero.</para>
+        ///     <para xml:lang="zh-CN">已下钻的中间方法数量；直接调用的深度为零。</para>
         /// </summary>
         public int TraversalDepth => Math.Max(0, Methods.Count - 2);
 
@@ -126,23 +125,22 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     Convenience extensions for inspecting original Harmony IL and following explicitly selected calls.
-    ///     用于检查 Harmony 原始 IL 并沿显式选定调用下钻的快捷扩展。
+    ///     <para xml:lang="en">Convenience extensions for inspecting original Harmony IL and following explicitly selected calls.</para>
+    ///     <para xml:lang="zh-CN">用于检查 Harmony 原始 IL 并沿显式选定调用下钻的快捷扩展。</para>
     /// </summary>
     public static class HarmonyIlInspectionExtensions
     {
         /// <summary>
-        ///     Reads the original IL for a logical method. Async methods resolve to their generated
-        ///     <c>MoveNext</c> body by default.
-        ///     读取逻辑方法的原始 IL。默认将 async 方法解析到编译器生成的 <c>MoveNext</c> 方法体。
+        ///     <para xml:lang="en">Reads the original IL for a logical method. Async methods resolve to their generated <c>MoveNext</c> body by default.</para>
+        ///     <para xml:lang="zh-CN">读取逻辑方法的原始 IL。默认将异步方法解析到编译器生成的 <c>MoveNext</c> 方法体。</para>
         /// </summary>
         /// <param name="method">
-        ///     Logical method to inspect.
-        ///     要检查的逻辑方法。
+        ///     <para xml:lang="en">Logical method to inspect.</para>
+        ///     <para xml:lang="zh-CN">要检查的逻辑方法。</para>
         /// </param>
         /// <param name="resolveAsync">
-        ///     Resolve an async method to its generated state-machine body.
-        ///     将 async 方法解析到生成的状态机方法体。
+        ///     <para xml:lang="en">Resolve an async method to its generated state-machine body.</para>
+        ///     <para xml:lang="zh-CN">将异步方法解析到生成的状态机方法体。</para>
         /// </param>
         public static HarmonyIlMethodBody GetOriginalIl(this MethodBase method, bool resolveAsync = true)
         {
@@ -163,28 +161,28 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the selected original IL call graph contains a matching call target.
-        ///     选定的原始 IL 调用图包含匹配调用目标时返回 true。
+        ///     <para xml:lang="en">Returns true when the selected original IL call graph contains a matching call target.</para>
+        ///     <para xml:lang="zh-CN">选定的原始 IL 调用图包含匹配调用目标时返回 true。</para>
         /// </summary>
         /// <param name="method">
-        ///     Root logical method.
-        ///     根逻辑方法。
+        ///     <para xml:lang="en">Root logical method.</para>
+        ///     <para xml:lang="zh-CN">根逻辑方法。</para>
         /// </param>
         /// <param name="isTarget">
-        ///     Identifies a target call. This predicate runs before traversal filtering.
-        ///     识别目标调用；此谓词先于下钻过滤执行。
+        ///     <para xml:lang="en">Identifies a target call. This predicate runs before traversal filtering.</para>
+        ///     <para xml:lang="zh-CN">识别目标调用；此谓词先于下钻过滤执行。</para>
         /// </param>
         /// <param name="shouldTraverse">
-        ///     Selects helper methods whose bodies may be inspected. Null performs a direct-call-only query.
-        ///     选择允许继续检查方法体的辅助方法；为 null 时仅查询直接调用。
+        ///     <para xml:lang="en">Selects helper methods whose bodies may be inspected. Null performs a direct-call-only query.</para>
+        ///     <para xml:lang="zh-CN">选择允许继续检查方法体的辅助方法；为 null 时仅查询直接调用。</para>
         /// </param>
         /// <param name="maxDepth">
-        ///     Maximum number of intermediate helper methods. A direct call has depth zero.
-        ///     最大中间辅助方法数量；直接调用的深度为零。
+        ///     <para xml:lang="en">Maximum number of intermediate helper methods. A direct call has depth zero.</para>
+        ///     <para xml:lang="zh-CN">最大中间辅助方法数量；直接调用的深度为零。</para>
         /// </param>
         /// <param name="resolveAsync">
-        ///     Resolve each inspected async method to its generated state-machine body.
-        ///     将每个被检查的 async 方法解析到生成的状态机方法体。
+        ///     <para xml:lang="en">Resolves each inspected async method to its generated state-machine body.</para>
+        ///     <para xml:lang="zh-CN">将每个被检查的异步方法解析到生成的状态机方法体。</para>
         /// </param>
         public static bool HasOriginalIlCall(
             this MethodBase method,
@@ -197,38 +195,36 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Finds the shortest path to a matching call target in the selected original IL call graph.
-        ///     在选定的原始 IL 调用图中查找到匹配调用目标的最短路径。
+        ///     <para xml:lang="en">Finds the shortest path to a matching call target in the selected original IL call graph.</para>
+        ///     <para xml:lang="zh-CN">在选定的原始 IL 调用图中查找到匹配调用目标的最短路径。</para>
         /// </summary>
         /// <remarks>
-        ///     Traversal is opt-in. The helper does not infer virtual dispatch, delegate targets, reflection calls,
-        ///     or methods that are not accepted by <paramref name="shouldTraverse" />.
-        ///     下钻是显式选择的。本工具不会推断虚调用分派、委托目标、反射调用，也不会检查未被
-        ///     <paramref name="shouldTraverse" /> 接受的方法。
+        ///     <para xml:lang="en">Traversal is opt-in. The helper does not infer virtual dispatch, delegate targets, reflection calls, or methods not accepted by <paramref name="shouldTraverse" />.</para>
+        ///     <para xml:lang="zh-CN">下钻需显式启用。本工具不会推断虚调用分派、委托目标或反射调用，也不会检查未被 <paramref name="shouldTraverse" /> 接受的方法。</para>
         /// </remarks>
         /// <param name="method">
-        ///     Root logical method.
-        ///     根逻辑方法。
+        ///     <para xml:lang="en">Root logical method.</para>
+        ///     <para xml:lang="zh-CN">根逻辑方法。</para>
         /// </param>
         /// <param name="isTarget">
-        ///     Identifies a target call. This predicate runs before traversal filtering.
-        ///     识别目标调用；此谓词先于下钻过滤执行。
+        ///     <para xml:lang="en">Identifies a target call. This predicate runs before traversal filtering.</para>
+        ///     <para xml:lang="zh-CN">识别目标调用；此谓词先于下钻过滤执行。</para>
         /// </param>
         /// <param name="shouldTraverse">
-        ///     Selects helper methods whose bodies may be inspected. Null performs a direct-call-only query.
-        ///     选择允许继续检查方法体的辅助方法；为 null 时仅查询直接调用。
+        ///     <para xml:lang="en">Selects helper methods whose bodies may be inspected. Null performs a direct-call-only query.</para>
+        ///     <para xml:lang="zh-CN">选择允许继续检查方法体的辅助方法；为 null 时仅查询直接调用。</para>
         /// </param>
         /// <param name="maxDepth">
-        ///     Maximum number of intermediate helper methods. A direct call has depth zero.
-        ///     最大中间辅助方法数量；直接调用的深度为零。
+        ///     <para xml:lang="en">Maximum number of intermediate helper methods. A direct call has depth zero.</para>
+        ///     <para xml:lang="zh-CN">最大中间辅助方法数量；直接调用的深度为零。</para>
         /// </param>
         /// <param name="resolveAsync">
-        ///     Resolve each inspected async method to its generated state-machine body.
-        ///     将每个被检查的 async 方法解析到生成的状态机方法体。
+        ///     <para xml:lang="en">Resolve each inspected async method to its generated state-machine body.</para>
+        ///     <para xml:lang="zh-CN">将每个被检查的异步方法解析到生成的状态机方法体。</para>
         /// </param>
         /// <returns>
-        ///     The shortest matching path, or null when no selected path reaches a target.
-        ///     最短匹配路径；没有选定路径到达目标时为 null。
+        ///     <para xml:lang="en">The shortest matching path, or null when no selected path reaches a target.</para>
+        ///     <para xml:lang="zh-CN">最短匹配路径；没有选定路径到达目标时为 null。</para>
         /// </returns>
         public static HarmonyIlCallPath? FindOriginalIlCallPath(
             this MethodBase method,
