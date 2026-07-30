@@ -1061,16 +1061,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             if (ActionDefinition is { } actionDef)
             {
-                try
-                {
-                    actionDef.OnClick(new(actionDef, _player, this));
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.ErrorNoTrace(
-                        $"[TopBar] OnClick handler for '{actionDef.Id}' threw: {ex}");
-                }
-
+                actionDef.OnClick(new(actionDef, _player, this));
                 return;
             }
 
