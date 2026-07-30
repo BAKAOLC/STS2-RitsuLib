@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Models.Capabilities
@@ -9,12 +10,13 @@ namespace STS2RitsuLib.Models.Capabilities
     public sealed class ModelCapabilityList
     {
         private readonly List<IModelCapability> _capabilities = [];
+        private ReadOnlyCollection<IModelCapability>? _readOnlyCapabilities;
 
         /// <summary>
         ///     All capabilities in default execution order.
         ///     默认执行顺序中的所有能力。
         /// </summary>
-        public IReadOnlyList<IModelCapability> All => _capabilities;
+        public IReadOnlyList<IModelCapability> All => _readOnlyCapabilities ??= _capabilities.AsReadOnly();
 
         /// <summary>
         ///     Number of capabilities in the list.

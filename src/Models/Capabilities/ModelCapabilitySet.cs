@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Models.Capabilities
@@ -11,6 +12,7 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string LoadSurface = "model-capability-load";
         private readonly List<IModelCapability> _capabilities = [];
         private readonly HashSet<IModelCapability> _defaultCapabilities = new(ReferenceEqualityComparer.Instance);
+        private readonly ReadOnlyCollection<IModelCapability> _readOnlyCapabilities;
         private readonly List<ModelCapabilitySaveEntry> _unknownEntries = [];
         private IModelCapability[]? _attachedSnapshot;
         private IModelCapability[]? _ownerHookCandidateSnapshot;
@@ -18,6 +20,7 @@ namespace STS2RitsuLib.Models.Capabilities
         internal ModelCapabilitySet(AbstractModel owner)
         {
             Owner = owner;
+            _readOnlyCapabilities = _capabilities.AsReadOnly();
         }
 
         /// <summary>
@@ -30,13 +33,13 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     All attached capabilities in execution order.
         ///     按执行顺序排列的所有已附加能力。
         /// </summary>
-        public IReadOnlyList<IModelCapability> All => _capabilities;
+        public IReadOnlyList<IModelCapability> All => _readOnlyCapabilities;
 
         /// <summary>
         ///     All attached capabilities in execution order.
         ///     按执行顺序排列的所有已附加能力。
         /// </summary>
-        public IReadOnlyList<IModelCapability> Attached => _capabilities;
+        public IReadOnlyList<IModelCapability> Attached => _readOnlyCapabilities;
 
         internal bool IsDirty { get; private set; }
 
