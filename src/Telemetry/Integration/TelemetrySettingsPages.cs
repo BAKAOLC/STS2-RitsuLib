@@ -243,10 +243,7 @@ namespace STS2RitsuLib.Telemetry.Integration
 
         private static string BuildSafeId(string value)
         {
-            var safe = new string(value
-                .Select(ch => char.IsLetterOrDigit(ch) ? ch : '_')
-                .ToArray());
-            return string.IsNullOrWhiteSpace(safe) ? "unknown" : safe;
+            return TelemetryPaths.BuildUniqueSegment(value);
         }
 
         private static string FormatLine(string key, string fallbackLabel, string value)

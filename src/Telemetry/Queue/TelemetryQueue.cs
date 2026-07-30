@@ -192,12 +192,38 @@ namespace STS2RitsuLib.Telemetry
 
         private static TelemetryQueueDocument ReadQueue(string applicantId)
         {
+            var path = TelemetryPaths.QueuePath(applicantId);
             var result = FileOperations.ReadJson<TelemetryQueueDocument>(
-                TelemetryPaths.QueuePath(applicantId),
+                path,
                 TelemetryJson.Options,
                 "TelemetryQueue");
+            var migrated = false;
+            if (result is not { Success: true, Data: not null })
+            {
+                var legacyPath = TelemetryPaths.LegacyQueuePath(applicantId);
+                if (!string.Equals(path, legacyPath, StringComparison.Ordinal))
+                {
+                    result = FileOperations.ReadJson<TelemetryQueueDocument>(
+                        legacyPath,
+                        TelemetryJson.Options,
+                        "TelemetryQueueLegacy");
+                    migrated = result is { Success: true, Data: not null };
+                }
+            }
+
             var document = result is { Success: true, Data: not null } ? result.Data : new();
             document.Events ??= [];
+            if (migrated)
+            {
+                document.Events =
+                [
+                    .. document.Events.Where(evt =>
+                        evt != null &&
+                        string.Equals(evt.ApplicantId, applicantId, StringComparison.OrdinalIgnoreCase)),
+                ];
+                WriteQueue(applicantId, document);
+            }
+
             return document;
         }
 
@@ -209,12 +235,30 @@ namespace STS2RitsuLib.Telemetry
 
         private static TelemetryQueueState ReadState(string applicantId)
         {
+            var path = TelemetryPaths.StatePath(applicantId);
             var result = FileOperations.ReadJson<TelemetryQueueState>(
-                TelemetryPaths.StatePath(applicantId),
+                path,
                 TelemetryJson.Options,
                 "TelemetryQueueState");
+            var migrated = false;
+            if (result is not { Success: true, Data: not null })
+            {
+                var legacyPath = TelemetryPaths.LegacyStatePath(applicantId);
+                if (!string.Equals(path, legacyPath, StringComparison.Ordinal))
+                {
+                    result = FileOperations.ReadJson<TelemetryQueueState>(
+                        legacyPath,
+                        TelemetryJson.Options,
+                        "TelemetryQueueStateLegacy");
+                    migrated = result is { Success: true, Data: not null };
+                }
+            }
+
             var state = result is { Success: true, Data: not null } ? result.Data : new();
             state.FailureCount = Math.Max(0, state.FailureCount);
+            if (migrated)
+                WriteState(applicantId, state);
+
             return state;
         }
 
