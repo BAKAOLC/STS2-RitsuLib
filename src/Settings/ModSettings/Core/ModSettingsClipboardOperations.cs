@@ -72,13 +72,15 @@ namespace STS2RitsuLib.Settings
         ///     Binding whose value is being copied.
         ///     其值正在被复制的绑定。
         /// </summary>
-        public IModSettingsBinding Binding { get; } = binding;
+        public IModSettingsBinding Binding { get; } =
+            binding ?? throw new ArgumentNullException(nameof(binding));
 
         /// <summary>
         ///     CLR type of the value being copied.
         ///     正在复制的值的 CLR 类型。
         /// </summary>
-        public Type ValueType { get; } = valueType;
+        public Type ValueType { get; } =
+            valueType ?? throw new ArgumentNullException(nameof(valueType));
 
         /// <summary>
         ///     Current value snapshot passed to serializers.
@@ -296,6 +298,9 @@ namespace STS2RitsuLib.Settings
             IStructuredModSettingsValueAdapter<TValue> adapter,
             TValue value)
         {
+            ArgumentNullException.ThrowIfNull(binding);
+            ArgumentNullException.ThrowIfNull(adapter);
+
             var args = new ModSettingsCopyActionEventArgs(binding, typeof(TValue), value, scope);
             if (BindingValueCopyRequested is { } handlers)
                 foreach (var @delegate in handlers.GetInvocationList())
@@ -327,6 +332,9 @@ namespace STS2RitsuLib.Settings
         public static bool CanPasteBindingValue<TValue>(IModSettingsValueBinding<TValue> binding,
             IStructuredModSettingsValueAdapter<TValue> adapter)
         {
+            ArgumentNullException.ThrowIfNull(binding);
+            ArgumentNullException.ThrowIfNull(adapter);
+
             if (!ModSettingsClipboardAccess.TryGetText(out var clipboard))
                 return false;
 
@@ -356,6 +364,9 @@ namespace STS2RitsuLib.Settings
             IStructuredModSettingsValueAdapter<TValue> adapter, out TValue value,
             out ModSettingsPasteFailureReason failureReason)
         {
+            ArgumentNullException.ThrowIfNull(binding);
+            ArgumentNullException.ThrowIfNull(adapter);
+
             failureReason = ModSettingsPasteFailureReason.None;
             value = default!;
 
