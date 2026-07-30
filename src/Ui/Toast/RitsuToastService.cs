@@ -213,6 +213,7 @@ namespace STS2RitsuLib.Ui.Toast
         public static bool UpdateBody(RitsuToastHandle handle, string body, bool resetDuration = true)
         {
             ArgumentNullException.ThrowIfNull(handle);
+            ArgumentNullException.ThrowIfNull(body);
             lock (SyncRoot)
             {
                 var pending = FindPending(handle.Id);
@@ -234,6 +235,7 @@ namespace STS2RitsuLib.Ui.Toast
             bool resetDuration = true)
         {
             ArgumentNullException.ThrowIfNull(handle);
+            ArgumentNullException.ThrowIfNull(body);
             lock (SyncRoot)
             {
                 var pending = FindPending(handle.Id);
