@@ -23,28 +23,28 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Immutable snapshot of registries and ids used while applying a content pack.
-    ///     应用内容包时使用的注册表和 id 的不可变快照。
+    ///     <para xml:lang="en">Provides an immutable snapshot of the registries used to apply a content pack.</para>
+    ///     <para xml:lang="zh-CN">提供应用内容包时所用注册表的不可变快照。</para>
     /// </summary>
     /// <param name="ModId">
-    ///     Owning mod identifier string.
-    ///     所属 Mod 标识符字符串。
+    ///     <para xml:lang="en">The owning mod ID.</para>
+    ///     <para xml:lang="zh-CN">所属模组的 ID。</para>
     /// </param>
     /// <param name="Content">
-    ///     Content registry for models and pools.
-    ///     模型和池使用的内容注册表。
+    ///     <para xml:lang="en">The content registry for models and pools.</para>
+    ///     <para xml:lang="zh-CN">模型和内容池的内容注册表。</para>
     /// </param>
     /// <param name="Keywords">
-    ///     Keyword registration surface.
-    ///     关键词注册入口。
+    ///     <para xml:lang="en">The keyword registry.</para>
+    ///     <para xml:lang="zh-CN">关键词注册表。</para>
     /// </param>
     /// <param name="Timeline">
-    ///     Epoch/story timeline registry.
-    ///     纪元/故事时间线注册表。
+    ///     <para xml:lang="en">The epoch and story timeline registry.</para>
+    ///     <para xml:lang="zh-CN">时代和故事时间线注册表。</para>
     /// </param>
     /// <param name="Unlocks">
-    ///     Unlock rule registry.
-    ///     解锁规则注册表。
+    ///     <para xml:lang="en">The unlock-rule registry.</para>
+    ///     <para xml:lang="zh-CN">解锁规则注册表。</para>
     /// </param>
     public readonly record struct ModContentPackContext(
         string ModId,
@@ -54,19 +54,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         ModUnlockRegistry Unlocks)
     {
         /// <summary>
-        ///     Same as the 5-parameter <see cref="ModContentPackContext" /> primary constructor. The
-        ///     <paramref name="cardTagRegistry" /> argument is accepted so call sites can mirror
-        ///     <see cref="RitsuLibFramework.GetContentRegistry" /> / <see cref="RitsuLibFramework.GetKeywordRegistry" />
-        ///     / … style: pass <c>ModCardTagRegistry.For(<paramref name="modId" />)</c> or
-        ///     <see cref="RitsuLibFramework.GetCardTagRegistry" />. The value is not read; <see cref="CardTags" /> is
-        ///     always the per-mod singleton from <c>ModCardTagRegistry.For</c>.
-        ///     <see cref="RitsuLibFramework.GetContentRegistry" /> / <see cref="RitsuLibFramework.GetKeywordRegistry" />
-        ///     与 5 参数 <see cref="ModContentPackContext" /> 主构造函数相同。接受 <paramref name="cardTagRegistry" /> 参数是为了让调用点可以镜像
-        ///     <see cref="RitsuLibFramework.GetContentRegistry" /> / <see cref="RitsuLibFramework.GetKeywordRegistry" /> / ...
-        ///     风格：传入 <c>ModCardTagRegistry.For(<paramref name="modId" />)</c> 或
-        ///     <see cref="RitsuLibFramework.GetCardTagRegistry" />。该值不会被读取；<see cref="CardTags" /> 始终是来自
-        ///     <c>ModCardTagRegistry.For</c> 的每 mod singleton。
-        ///     <see cref="RitsuLibFramework.GetContentRegistry" /> / <see cref="RitsuLibFramework.GetKeywordRegistry" />
+        ///     <para xml:lang="en">
+        ///         Creates a context while accepting a card-tag registry for call-site symmetry. The supplied registry
+        ///         is not stored; <see cref="CardTags" /> always resolves the per-mod singleton.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建上下文，并为保持调用形式一致而接受卡牌标签注册表。传入的注册表不会被保存；
+        ///         <see cref="CardTags" /> 始终解析为该模组的单例。
+        ///     </para>
         /// </summary>
         public ModContentPackContext(
             string modId,
@@ -80,12 +75,15 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Same as the 6-parameter compatibility constructor, accepting a card-pile registry so call sites can
-        ///     mirror <see cref="RitsuLibFramework.GetCardPileRegistry" /> style alongside content / keywords /
-        ///     card tags. The value is not read; <see cref="CardPiles" /> is always the per-mod singleton.
-        ///     与 6 参数兼容构造函数相同，接受牌堆注册表，使调用点可以在 content / keywords / card tags 旁边
-        ///     镜像 <see cref="RitsuLibFramework.GetCardPileRegistry" /> 风格。该值不会被读取；
-        ///     <see cref="CardPiles" /> 始终是每 mod 单例。
+        ///     <para xml:lang="en">
+        ///         Creates a context while accepting card-tag and card-pile registries for call-site symmetry.
+        ///         The supplied card-pile registry is not stored; <see cref="CardPiles" /> always resolves the
+        ///         per-mod singleton.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建上下文，并为保持调用形式一致而接受卡牌标签和牌堆注册表。传入的牌堆注册表不会被保存；
+        ///         <see cref="CardPiles" /> 始终解析为该模组的单例。
+        ///     </para>
         /// </summary>
         public ModContentPackContext(
             string modId,
@@ -101,41 +99,32 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Custom <see cref="CardTag" /> surface for <see cref="ModId" />; same singleton as
-        ///     <c>ModCardTagRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetCardTagRegistry</c>.
-        ///     <see cref="CardTag" /> 的自定义 <see cref="ModId" /> 入口；与
-        ///     <c>ModCardTagRegistry.For(ModId)</c> 和 <c>RitsuLibFramework.GetCardTagRegistry</c> 是同一个单例。
+        ///     <para xml:lang="en">Gets the custom <see cref="CardTag" /> registry for <see cref="ModId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="ModId" /> 的自定义 <see cref="CardTag" /> 注册表。</para>
         /// </summary>
         public ModCardTagRegistry CardTags => ModCardTagRegistry.For(ModId);
 
         /// <summary>
-        ///     Custom <see cref="CardPile" /> surface for <see cref="ModId" />; same singleton as
-        ///     <c>ModCardPileRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetCardPileRegistry</c>.
-        ///     <see cref="CardPile" /> 的自定义 <see cref="ModId" /> 入口；与
-        ///     <c>ModCardPileRegistry.For(ModId)</c> 和 <c>RitsuLibFramework.GetCardPileRegistry</c> 是同一个单例。
+        ///     <para xml:lang="en">Gets the custom <see cref="CardPile" /> registry for <see cref="ModId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="ModId" /> 的自定义 <see cref="CardPile" /> 注册表。</para>
         /// </summary>
         public ModCardPileRegistry CardPiles => ModCardPileRegistry.For(ModId);
 
         /// <summary>
-        ///     SmartFormat extension surface for <see cref="ModId" />; same singleton as
-        ///     <c>ModSmartFormatExtensionRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetSmartFormatRegistry</c>.
-        ///     <see cref="ModId" /> 的 SmartFormat 扩展入口；与
-        ///     <c>ModSmartFormatExtensionRegistry.For(ModId)</c> 和 <c>RitsuLibFramework.GetSmartFormatRegistry</c>
-        ///     是同一个单例。
+        ///     <para xml:lang="en">Gets the SmartFormat extension registry for <see cref="ModId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="ModId" /> 的 SmartFormat 扩展注册表。</para>
         /// </summary>
         public ModSmartFormatExtensionRegistry SmartFormat => ModSmartFormatExtensionRegistry.For(ModId);
 
         /// <summary>
-        ///     Top-bar button surface for <see cref="ModId" />; same singleton as
-        ///     <c>ModTopBarButtonRegistry.For(ModId)</c> and <c>RitsuLibFramework.GetTopBarButtonRegistry</c>.
-        ///     <see cref="ModId" /> 的顶部栏按钮入口；与 <c>ModTopBarButtonRegistry.For(ModId)</c> 和
-        ///     <c>RitsuLibFramework.GetTopBarButtonRegistry</c> 是同一个单例。
+        ///     <para xml:lang="en">Gets the top-bar button registry for <see cref="ModId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="ModId" /> 的顶部栏按钮注册表。</para>
         /// </summary>
         public ModTopBarButtonRegistry TopBarButtons => ModTopBarButtonRegistry.For(ModId);
 
         /// <summary>
-        ///     Generic dynamic enum value surface for <see cref="ModId" />.
-        ///     <see cref="ModId" /> 的通用动态枚举值入口。
+        ///     <para xml:lang="en">Gets the dynamic-enum-value registry for <see cref="ModId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="ModId" /> 的动态枚举值注册表。</para>
         /// </summary>
         public ModDynamicEnumValueRegistry<TEnum> DynamicEnumValues<TEnum>() where TEnum : struct, Enum
         {
@@ -144,8 +133,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Fluent registration helper that batches common mod-author setup into a single readable flow.
-    ///     流式注册辅助类，将常见 Mod 作者设置批处理为一个可读流程。
+    ///     <para xml:lang="en">Provides a fluent API for collecting and applying common mod registrations.</para>
+    ///     <para xml:lang="zh-CN">提供流式 API，用于收集和应用常见的模组注册操作。</para>
     /// </summary>
     public sealed class ModContentPackBuilder
     {
@@ -158,8 +147,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Starts a builder for the given <paramref name="modId" />.
-        ///     为给定 <paramref name="modId" /> 启动构建器。
+        ///     <para xml:lang="en">Creates a builder for <paramref name="modId" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="modId" /> 创建构建器。</para>
         /// </summary>
         public static ModContentPackBuilder For(string modId)
         {
@@ -168,8 +157,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacter{TCharacter}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCharacter{TCharacter}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterCharacter{TCharacter}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterCharacter{TCharacter}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Character<TCharacter>() where TCharacter : CharacterModel
         {
@@ -177,8 +166,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterBadge{TBadge}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterBadge{TBadge}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterBadge{TBadge}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterBadge{TBadge}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Badge<TBadge>() where TBadge : ModBadgeTemplate
         {
@@ -186,8 +175,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues character registration plus additive starter content configuration in one place.
-        ///     在一个位置将角色注册和追加初始内容配置加入队列。
+        ///     <para xml:lang="en">Queues character registration and additive starter-content configuration.</para>
+        ///     <para xml:lang="zh-CN">将角色注册和追加式初始内容配置一并加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Character<TCharacter>(Action<CharacterRegistrationEntry<TCharacter>> configure)
             where TCharacter : CharacterModel
@@ -200,8 +189,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int)" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int)" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder CharacterStarterCard<TCharacter, TCard>(int count = 1)
             where TCharacter : CharacterModel
@@ -211,8 +204,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int,int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int,int)" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int,int)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterCharacterStarterCard{TCharacter,TCard}(int,int)" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder CharacterStarterCard<TCharacter, TCard>(int count, int order)
             where TCharacter : CharacterModel
@@ -222,8 +219,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int)" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int)" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder CharacterStarterRelic<TCharacter, TRelic>(int count = 1)
             where TCharacter : CharacterModel
@@ -233,8 +234,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int,int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int,int)" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int,int)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterCharacterStarterRelic{TCharacter,TRelic}(int,int)" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder CharacterStarterRelic<TCharacter, TRelic>(int count, int order)
             where TCharacter : CharacterModel
@@ -244,8 +249,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int)" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int)" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder CharacterStarterPotion<TCharacter, TPotion>(int count = 1)
             where TCharacter : CharacterModel
@@ -255,8 +264,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int,int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int,int)" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int,int)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterCharacterStarterPotion{TCharacter,TPotion}(int,int)" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder CharacterStarterPotion<TCharacter, TPotion>(int count, int order)
             where TCharacter : CharacterModel
@@ -266,8 +279,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues direct character asset replacement registration by character id.
-        ///     按角色 id 将直接角色资源替换注册加入队列。
+        ///     <para xml:lang="en">Queues a direct character-asset replacement by character ID.</para>
+        ///     <para xml:lang="zh-CN">按角色 ID 将直接角色资源替换注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CharacterAssetReplacement(string characterEntry,
             CharacterAssetProfile assetProfile)
@@ -278,8 +291,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterAct{TAct}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterAct{TAct}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterAct{TAct}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterAct{TAct}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Act<TAct>() where TAct : ActModel
         {
@@ -287,8 +300,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEnterForce{TAct}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterActEnterForce{TAct}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterActEnterForce{TAct}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterActEnterForce{TAct}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ActEnterForce<TAct>(int slotIndex, int priority,
             Func<ActEnterResolveContext, bool> eligibility)
@@ -298,8 +311,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEnterUniformPool" />.
-        ///     将 <see cref="ModContentRegistry.RegisterActEnterUniformPool" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterActEnterUniformPool" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterActEnterUniformPool" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ActEnterUniformPool(int slotIndex)
         {
@@ -307,9 +320,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEnterUniformPoolCandidate{TAct}" />.
-        ///     Queues <c>ModContentRegistry.RegisterActEnterUniformPoolCandidate{TAct}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterActEnterUniformPoolCandidate{TAct}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterActEnterUniformPoolCandidate{TAct}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterActEnterUniformPoolCandidate{TAct}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder ActEnterUniformPoolCandidate<TAct>(int slotIndex,
             Func<ActEnterResolveContext, bool> eligibility)
@@ -319,9 +335,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEnterWeightedPool" />.
-        ///     Queues <c>ModContentRegistry.RegisterActEnterWeightedPool</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterActEnterWeightedPool" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterActEnterWeightedPool" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterActEnterWeightedPool" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ActEnterWeightedPool(int slotIndex)
         {
@@ -329,9 +344,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEnterWeightedPoolCandidate{TAct}" />.
-        ///     Queues <c>ModContentRegistry.RegisterActEnterWeightedPoolCandidate{TAct}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterActEnterWeightedPoolCandidate{TAct}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterActEnterWeightedPoolCandidate{TAct}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterActEnterWeightedPoolCandidate{TAct}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder ActEnterWeightedPoolCandidate<TAct>(int slotIndex,
             Func<ActEnterResolveContext, bool> eligibility, Func<ActEnterResolveContext, double> weight)
@@ -342,9 +360,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" />.
-        ///     Queues <c>ModContentRegistry.RegisterActEnterWeightedPoolBaseline</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder ActEnterWeightedPoolBaseline(int slotIndex,
             Func<ActEnterResolveContext, double> weight)
@@ -353,8 +374,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEncounter{TAct,TEncounter}" /> (encounter only in that act).
-        ///     将 <see cref="ModContentRegistry.RegisterActEncounter{TAct,TEncounter}" /> 加入队列（遭遇只出现在该章节中）。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterActEncounter{TAct,TEncounter}" /> so the encounter
+        ///         appears only in that act.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterActEncounter{TAct,TEncounter}" /> 加入队列，
+        ///         使该遭遇仅出现在指定章节。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder ActEncounter<TAct, TEncounter>()
             where TAct : ActModel
@@ -364,10 +391,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterGlobalEncounter{TEncounter}" /> (encounter merged into every act’s
-        ///     encounter pool).
-        ///     将 <see cref="ModContentRegistry.RegisterGlobalEncounter{TEncounter}" /> 加入队列（遭遇会合并到每个章节的
-        ///     遭遇池）。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterGlobalEncounter{TEncounter}" /> so the encounter is
+        ///         merged into every act's encounter pool.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterGlobalEncounter{TEncounter}" /> 加入队列，
+        ///         使该遭遇合并到每个章节的遭遇池。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder GlobalEncounter<TEncounter>() where TEncounter : EncounterModel
         {
@@ -375,10 +406,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterMonster{TMonster}" /> (standalone monster type + patched
-        ///     <c>ModelDb.Monsters</c> merge).
-        ///     将 <see cref="ModContentRegistry.RegisterMonster{TMonster}" /> 加入队列（独立怪物类型 + 已修补的
-        ///     <c>ModelDb.Monsters</c> 合并）。
+        ///     <para xml:lang="en">Queues registration of a standalone monster type.</para>
+        ///     <para xml:lang="zh-CN">将独立怪物类型的注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Monster<TMonster>() where TMonster : MonsterModel
         {
@@ -386,8 +415,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>RegisterCard&lt;TPool, TCard&gt;()</c> on the content registry with default public entry options.
-        ///     将 <c>RegisterCard&lt;TPool, TCard&gt;()</c> 加入队列，在内容注册表上使用默认公共条目选项。
+        ///     <para xml:lang="en">Queues card registration with the default public-entry options.</para>
+        ///     <para xml:lang="zh-CN">使用默认公开条目选项将卡牌注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Card<TPool, TCard>()
             where TPool : CardPoolModel
@@ -397,8 +426,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>RegisterCard&lt;TPool, TCard&gt;(ModelPublicEntryOptions)</c> on the content registry.
-        ///     将内容注册表上的 <c>RegisterCard&lt;TPool, TCard&gt;(ModelPublicEntryOptions)</c> 加入队列。
+        ///     <para xml:lang="en">Queues card registration with the specified public-entry options.</para>
+        ///     <para xml:lang="zh-CN">使用指定的公开条目选项将卡牌注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Card<TPool, TCard>(ModelPublicEntryOptions publicEntry)
             where TPool : CardPoolModel
@@ -408,8 +437,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCardHandGlow{TCard}" /> for hand gold/red highlight rules.
-        ///     将 <see cref="ModContentRegistry.RegisterCardHandGlow{TCard}" /> 加入队列，用于手牌金色/红色高亮规则。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterCardHandGlow{TCard}" /> for gold and red hand-glow rules.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterCardHandGlow{TCard}" /> 加入队列，用于手牌的金色和红色发光规则。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder CardHandGlow<TCard>(ModCardHandGlowRules rules) where TCard : CardModel
         {
@@ -417,8 +450,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>ModContentRegistry.RegisterCardHandOutline&lt;TCard&gt;(...)</c> for custom hand-highlight colors.
-        ///     将 <c>ModContentRegistry.RegisterCardHandOutline&lt;TCard&gt;(...)</c> 加入队列，用于自定义手牌高亮颜色。
+        ///     <para xml:lang="en">Queues typed custom hand-outline rules.</para>
+        ///     <para xml:lang="zh-CN">将类型化的自定义手牌描边规则加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineRules<TCard> rules)
             where TCard : CardModel
@@ -427,8 +460,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues one custom hand-outline rule.
-        ///     将一条自定义手牌描边规则加入队列。
+        ///     <para xml:lang="en">Queues one typed custom hand-outline rule.</para>
+        ///     <para xml:lang="zh-CN">将一条类型化的自定义手牌描边规则加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard> rule)
             where TCard : CardModel
@@ -437,8 +470,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues several custom hand-outline rules.
-        ///     将多条自定义手牌描边规则加入队列。
+        ///     <para xml:lang="en">Queues multiple typed custom hand-outline rules.</para>
+        ///     <para xml:lang="zh-CN">将多条类型化的自定义手牌描边规则加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardHandOutline<TCard>(params ModCardHandOutlineSwitchRule<TCard>[] rules)
             where TCard : CardModel
@@ -447,8 +480,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues type-erased custom hand-outline rules.
-        ///     将类型擦除的自定义手牌描边规则加入队列。
+        ///     <para xml:lang="en">Queues obsolete type-erased custom hand-outline rules.</para>
+        ///     <para xml:lang="zh-CN">将已过时的类型擦除自定义手牌描边规则加入队列。</para>
         /// </summary>
         [Obsolete("Use CardHandOutline<TCard>(ModCardHandOutlineRules<TCard>).")]
         public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineRules rules) where TCard : CardModel
@@ -457,8 +490,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues one type-erased custom hand-outline rule.
-        ///     将一条类型擦除的自定义手牌描边规则加入队列。
+        ///     <para xml:lang="en">Queues one obsolete type-erased custom hand-outline rule.</para>
+        ///     <para xml:lang="zh-CN">将一条已过时的类型擦除自定义手牌描边规则加入队列。</para>
         /// </summary>
         [Obsolete("Use CardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
         public ModContentPackBuilder CardHandOutline<TCard>(ModCardHandOutlineSwitchRule rule) where TCard : CardModel
@@ -467,8 +500,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues several type-erased custom hand-outline rules.
-        ///     将多条类型擦除的自定义手牌描边规则加入队列。
+        ///     <para xml:lang="en">Queues multiple obsolete type-erased custom hand-outline rules.</para>
+        ///     <para xml:lang="zh-CN">将多条已过时的类型擦除自定义手牌描边规则加入队列。</para>
         /// </summary>
         [Obsolete("Use CardHandOutline<TCard>(params ModCardHandOutlineSwitchRule<TCard>[]).")]
         public ModContentPackBuilder CardHandOutline<TCard>(params ModCardHandOutlineSwitchRule[] rules)
@@ -478,8 +511,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues a switch-style custom hand-outline resolver.
-        ///     将 switch 风格的自定义手牌描边解析器加入队列。
+        ///     <para xml:lang="en">Queues a delegate-based custom hand-outline rule.</para>
+        ///     <para xml:lang="zh-CN">将基于委托的自定义手牌描边规则加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardHandOutline<TCard>(
             Func<TCard, Color?> colorWhen,
@@ -496,8 +529,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues a legacy custom hand-outline rule.
-        ///     将旧版自定义手牌描边规则加入队列。
+        ///     <para xml:lang="en">Queues an obsolete custom hand-outline rule.</para>
+        ///     <para xml:lang="zh-CN">将已过时的自定义手牌描边规则加入队列。</para>
         /// </summary>
         [Obsolete(
             "Use CardHandOutline<TCard>(ModCardHandOutlineRules<TCard>), CardHandOutline<TCard>(ModCardHandOutlineSwitchRule<TCard>), or CardHandOutline<TCard>(Func<TCard, Color?>).")]
@@ -507,8 +540,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers a generated placeholder card (no custom CLR type). Prefer this for quick WIP flow.
-        ///     注册生成的占位卡牌（无自定义 CLR 类型）。适合快速 WIP 流程。
+        ///     <para xml:lang="en">Queues a generated placeholder card that has no custom CLR type.</para>
+        ///     <para xml:lang="zh-CN">将没有自定义 CLR 类型的生成式占位卡牌加入队列。</para>
         /// </summary>
         public ModContentPackBuilder PlaceholderCard<TPool>(string stableEntryStem,
             PlaceholderCardDescriptor descriptor = default)
@@ -518,8 +551,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers a card with a stable public entry stem when you already have a concrete card type.
-        ///     已有具体卡牌类型时，用稳定公共 entry stem 注册卡牌。
+        ///     <para xml:lang="en">Queues a concrete card type with a stable public-entry stem.</para>
+        ///     <para xml:lang="zh-CN">使用稳定的公开条目词干将具体卡牌类型加入队列。</para>
         /// </summary>
         public ModContentPackBuilder PlaceholderCard<TPool, TCard>(string stableEntryStem)
             where TPool : CardPoolModel
@@ -529,8 +562,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>RegisterRelic&lt;TPool, TRelic&gt;()</c> with default public entry options.
-        ///     将 <c>RegisterRelic&lt;TPool, TRelic&gt;()</c> 加入队列，并使用默认公共条目选项。
+        ///     <para xml:lang="en">Queues relic registration with the default public-entry options.</para>
+        ///     <para xml:lang="zh-CN">使用默认公开条目选项将遗物注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Relic<TPool, TRelic>()
             where TPool : RelicPoolModel
@@ -540,8 +573,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>RegisterRelic&lt;TPool, TRelic&gt;(ModelPublicEntryOptions)</c>.
-        ///     将 <c>RegisterRelic&lt;TPool, TRelic&gt;(ModelPublicEntryOptions)</c> 加入队列。
+        ///     <para xml:lang="en">Queues relic registration with the specified public-entry options.</para>
+        ///     <para xml:lang="zh-CN">使用指定的公开条目选项将遗物注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Relic<TPool, TRelic>(ModelPublicEntryOptions publicEntry)
             where TPool : RelicPoolModel
@@ -551,8 +584,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues placeholder relic emission via <c>RegisterPlaceholderRelic&lt;TPool&gt;(...)</c>.
-        ///     通过 <c>RegisterPlaceholderRelic&lt;TPool&gt;(...)</c> 将占位遗物生成加入队列。
+        ///     <para xml:lang="en">Queues a generated placeholder relic that has no custom CLR type.</para>
+        ///     <para xml:lang="zh-CN">将没有自定义 CLR 类型的生成式占位遗物加入队列。</para>
         /// </summary>
         public ModContentPackBuilder PlaceholderRelic<TPool>(string stableEntryStem,
             PlaceholderRelicDescriptor descriptor = default)
@@ -562,8 +595,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers a relic type using a stable entry stem mapped through <see cref="ModelPublicEntryOptions.FromStem" />.
-        ///     使用通过 <see cref="ModelPublicEntryOptions.FromStem" /> 映射的稳定 entry stem 注册遗物类型。
+        ///     <para xml:lang="en">Queues a concrete relic type with a stable public-entry stem.</para>
+        ///     <para xml:lang="zh-CN">使用稳定的公开条目词干将具体遗物类型加入队列。</para>
         /// </summary>
         public ModContentPackBuilder PlaceholderRelic<TPool, TRelic>(string stableEntryStem)
             where TPool : RelicPoolModel
@@ -573,8 +606,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>RegisterPotion&lt;TPool, TPotion&gt;()</c> with default public entry options.
-        ///     将 <c>RegisterPotion&lt;TPool, TPotion&gt;()</c> 加入队列，并使用默认公共条目选项。
+        ///     <para xml:lang="en">Queues potion registration with the default public-entry options.</para>
+        ///     <para xml:lang="zh-CN">使用默认公开条目选项将药水注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Potion<TPool, TPotion>()
             where TPool : PotionPoolModel
@@ -584,8 +617,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>RegisterPotion&lt;TPool, TPotion&gt;(ModelPublicEntryOptions)</c>.
-        ///     将 <c>RegisterPotion&lt;TPool, TPotion&gt;(ModelPublicEntryOptions)</c> 加入队列。
+        ///     <para xml:lang="en">Queues potion registration with the specified public-entry options.</para>
+        ///     <para xml:lang="zh-CN">使用指定的公开条目选项将药水注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Potion<TPool, TPotion>(ModelPublicEntryOptions publicEntry)
             where TPool : PotionPoolModel
@@ -595,8 +628,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues placeholder potion emission via <c>RegisterPlaceholderPotion&lt;TPool&gt;(...)</c>.
-        ///     通过 <c>RegisterPlaceholderPotion&lt;TPool&gt;(...)</c> 将占位药水生成加入队列。
+        ///     <para xml:lang="en">Queues a generated placeholder potion that has no custom CLR type.</para>
+        ///     <para xml:lang="zh-CN">将没有自定义 CLR 类型的生成式占位药水加入队列。</para>
         /// </summary>
         public ModContentPackBuilder PlaceholderPotion<TPool>(string stableEntryStem,
             PlaceholderPotionDescriptor descriptor = default)
@@ -606,8 +639,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers a potion type using a stable entry stem mapped through <see cref="ModelPublicEntryOptions.FromStem" />.
-        ///     使用通过 <see cref="ModelPublicEntryOptions.FromStem" /> 映射的稳定 entry stem 注册药水类型。
+        ///     <para xml:lang="en">Queues a concrete potion type with a stable public-entry stem.</para>
+        ///     <para xml:lang="zh-CN">使用稳定的公开条目词干将具体药水类型加入队列。</para>
         /// </summary>
         public ModContentPackBuilder PlaceholderPotion<TPool, TPotion>(string stableEntryStem)
             where TPool : PotionPoolModel
@@ -617,8 +650,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterPower{TPower}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterPower{TPower}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterPower{TPower}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterPower{TPower}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Power<TPower>() where TPower : PowerModel
         {
@@ -626,8 +659,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="RitsuLibFramework.RegisterHealthBarForecast{TSource}" /> for a non-power forecast source.
-        ///     将 <see cref="RitsuLibFramework.RegisterHealthBarForecast{TSource}" /> 加入队列，用于非能力的预测来源。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="RitsuLibFramework.RegisterHealthBarForecast{TSource}" /> for a forecast source
+        ///         that is not a power.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="RitsuLibFramework.RegisterHealthBarForecast{TSource}" /> 加入队列，
+        ///         用于不属于能力的生命条预测来源。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder HealthBarForecast<TSource>(string? sourceId = null)
             where TSource : IHealthBarForecastSource, new()
@@ -636,8 +675,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterOrb{TOrb}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterOrb{TOrb}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterOrb{TOrb}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterOrb{TOrb}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Orb<TOrb>() where TOrb : OrbModel
         {
@@ -645,9 +684,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterEnchantment{TEnchantment}" />.
-        ///     Queues <c>ModContentRegistry.RegisterEnchantment{TEnchantment}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterEnchantment{TEnchantment}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterEnchantment{TEnchantment}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterEnchantment{TEnchantment}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Enchantment<TEnchantment>() where TEnchantment : EnchantmentModel
         {
@@ -655,9 +693,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterAffliction{TAffliction}" />.
-        ///     Queues <c>ModContentRegistry.RegisterAffliction{TAffliction}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterAffliction{TAffliction}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterAffliction{TAffliction}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterAffliction{TAffliction}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Affliction<TAffliction>() where TAffliction : AfflictionModel
         {
@@ -665,9 +702,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterAchievement{TAchievement}" />.
-        ///     Queues <c>ModContentRegistry.RegisterAchievement{TAchievement}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterAchievement{TAchievement}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterAchievement{TAchievement}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterAchievement{TAchievement}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Achievement<TAchievement>() where TAchievement : AchievementModel
         {
@@ -675,9 +711,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterSingleton{TSingleton}" />.
-        ///     Queues <c>ModContentRegistry.RegisterSingleton{TSingleton}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterSingleton{TSingleton}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterSingleton{TSingleton}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterSingleton{TSingleton}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Singleton<TSingleton>() where TSingleton : SingletonModel
         {
@@ -685,8 +720,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues good-modifier registration with default list placement.
-        ///     将默认列表位置的正面修饰符注册加入队列。
+        ///     <para xml:lang="en">Queues a beneficial modifier with the default list placement.</para>
+        ///     <para xml:lang="zh-CN">使用默认列表位置将正面修饰符注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder GoodModifier<TModifier>() where TModifier : ModifierModel
         {
@@ -694,8 +729,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterGoodModifier(Type, int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterGoodModifier(Type, int)" /> 加入队列。
+        ///     <para xml:lang="en">Queues a beneficial modifier with an explicit list sort order.</para>
+        ///     <para xml:lang="zh-CN">使用明确的列表排序顺序将正面修饰符注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder GoodModifier<TModifier>(int modifierListSortOrder) where TModifier : ModifierModel
         {
@@ -703,8 +738,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues bad-modifier registration with default list placement.
-        ///     将默认列表位置的负面修饰符注册加入队列。
+        ///     <para xml:lang="en">Queues a detrimental modifier with the default list placement.</para>
+        ///     <para xml:lang="zh-CN">使用默认列表位置将负面修饰符注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder BadModifier<TModifier>() where TModifier : ModifierModel
         {
@@ -712,8 +747,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterBadModifier(Type, int)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterBadModifier(Type, int)" /> 加入队列。
+        ///     <para xml:lang="en">Queues a detrimental modifier with an explicit list sort order.</para>
+        ///     <para xml:lang="zh-CN">使用明确的列表排序顺序将负面修饰符注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder BadModifier<TModifier>(int modifierListSortOrder) where TModifier : ModifierModel
         {
@@ -721,8 +756,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterMutuallyExclusiveModifierGroup(Type[])" />.
-        ///     将 <see cref="ModContentRegistry.RegisterMutuallyExclusiveModifierGroup(Type[])" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterMutuallyExclusiveModifierGroup(Type[])" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterMutuallyExclusiveModifierGroup(Type[])" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder MutuallyExclusiveModifierGroup(params Type[] modifierTypes)
         {
@@ -730,9 +769,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterSharedCardPool{TPool}" />.
-        ///     Queues <c>ModContentRegistry.RegisterSharedCardPool{TPool}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterSharedCardPool{TPool}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterSharedCardPool{TPool}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterSharedCardPool{TPool}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SharedCardPool<TPool>() where TPool : CardPoolModel
         {
@@ -740,8 +778,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterCardLibraryCompendiumSharedPoolFilter{TPool}(string,string)" />.
-        ///     将 <see cref="ModContentRegistry.RegisterCardLibraryCompendiumSharedPoolFilter{TPool}(string,string)" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues a shared-pool filter for the card library compendium.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将卡牌总览的共享卡池筛选项加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardLibraryCompendiumSharedPoolFilter<TPool>(string stableId,
             string iconTexturePath)
@@ -752,9 +792,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues the <c>RegisterCardLibraryCompendiumSharedPoolFilter&lt;TPool&gt;</c> overload that accepts
-        ///     placement rules.
-        ///     将带 placementRules 的 <c>RegisterCardLibraryCompendiumSharedPoolFilter&lt;TPool&gt;</c> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues a shared-pool filter with placement rules for the card library compendium.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将带有位置规则的卡牌总览共享卡池筛选项加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardLibraryCompendiumSharedPoolFilter<TPool>(
             string stableId,
@@ -768,8 +809,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterSharedRelicPool{TPool}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterSharedRelicPool{TPool}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterSharedRelicPool{TPool}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterSharedRelicPool{TPool}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SharedRelicPool<TPool>() where TPool : RelicPoolModel
         {
@@ -777,9 +818,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterSharedPotionPool{TPool}" />.
-        ///     Queues <c>ModContentRegistry.RegisterSharedPotionPool{TPool}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterSharedPotionPool{TPool}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterSharedPotionPool{TPool}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterSharedPotionPool{TPool}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SharedPotionPool<TPool>() where TPool : PotionPoolModel
         {
@@ -787,8 +827,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterSharedEvent{TEvent}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterSharedEvent{TEvent}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterSharedEvent{TEvent}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterSharedEvent{TEvent}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SharedEvent<TEvent>() where TEvent : EventModel
         {
@@ -796,8 +836,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActEvent{TAct,TEvent}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterActEvent{TAct,TEvent}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterActEvent{TAct,TEvent}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterActEvent{TAct,TEvent}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ActEvent<TAct, TEvent>()
             where TAct : ActModel
@@ -807,9 +847,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterSharedAncient{TAncient}" />.
-        ///     Queues <c>ModContentRegistry.RegisterSharedAncient{TAncient}</c>.
-        ///     将 <see cref="ModContentRegistry.RegisterSharedAncient{TAncient}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterSharedAncient{TAncient}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterSharedAncient{TAncient}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SharedAncient<TAncient>() where TAncient : AncientEventModel
         {
@@ -817,8 +856,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterActAncient{TAct,TAncient}" />.
-        ///     将 <see cref="ModContentRegistry.RegisterActAncient{TAct,TAncient}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterActAncient{TAct,TAncient}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterActAncient{TAct,TAncient}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ActAncient<TAct, TAncient>()
             where TAct : ActModel
@@ -828,8 +867,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterAncientOption{TAncient}" /> for injecting extra initial options.
-        ///     将 <see cref="ModContentRegistry.RegisterAncientOption{TAncient}" /> 加入队列，用于注入额外初始选项。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModContentRegistry.RegisterAncientOption{TAncient}" /> to add an initial option.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModContentRegistry.RegisterAncientOption{TAncient}" /> 加入队列，以添加初始选项。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder AncientOption<TAncient>(ModAncientOptionRule rule)
             where TAncient : AncientEventModel
@@ -838,8 +881,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterTrashHeapCard{TCard}" /> for the Trash Heap Grab pool.
-        ///     将 <see cref="ModContentRegistry.RegisterTrashHeapCard{TCard}" /> 加入垃圾堆“拿取”卡牌池的注册队列。
+        ///     <para xml:lang="en">Queues a card for the Trash Heap's Grab pool.</para>
+        ///     <para xml:lang="zh-CN">将卡牌加入垃圾堆的“拿取”卡牌池注册队列。</para>
         /// </summary>
         public ModContentPackBuilder TrashHeapCard<TCard>()
             where TCard : CardModel
@@ -848,8 +891,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModContentRegistry.RegisterTrashHeapRelic{TRelic}" /> for the Trash Heap Dive In pool.
-        ///     将 <see cref="ModContentRegistry.RegisterTrashHeapRelic{TRelic}" /> 加入垃圾堆“深入翻找”遗物池的注册队列。
+        ///     <para xml:lang="en">Queues a relic for the Trash Heap's Dive In pool.</para>
+        ///     <para xml:lang="zh-CN">将遗物加入垃圾堆的“深入翻找”遗物池注册队列。</para>
         /// </summary>
         public ModContentPackBuilder TrashHeapRelic<TRelic>()
             where TRelic : RelicModel
@@ -858,8 +901,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModSmartFormatExtensionRegistry.Register{TFormatter}" />.
-        ///     将 <see cref="ModSmartFormatExtensionRegistry.Register{TFormatter}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModSmartFormatExtensionRegistry.Register{TFormatter}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModSmartFormatExtensionRegistry.Register{TFormatter}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SmartFormatter<TFormatter>(int order = 0)
             where TFormatter : IFormatter, new()
@@ -868,8 +911,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModSmartFormatExtensionRegistry.RegisterFormatterType" />.
-        ///     将 <see cref="ModSmartFormatExtensionRegistry.RegisterFormatterType" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModSmartFormatExtensionRegistry.RegisterFormatterType" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModSmartFormatExtensionRegistry.RegisterFormatterType" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SmartFormatter(Type formatterType, int order = 0)
         {
@@ -877,8 +920,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModSmartFormatExtensionRegistry.RegisterSource{TSource}" />.
-        ///     将 <see cref="ModSmartFormatExtensionRegistry.RegisterSource{TSource}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModSmartFormatExtensionRegistry.RegisterSource{TSource}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModSmartFormatExtensionRegistry.RegisterSource{TSource}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SmartFormatSource<TSource>(int order = 0)
             where TSource : ISource, new()
@@ -887,8 +930,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModSmartFormatExtensionRegistry.RegisterSourceType" />.
-        ///     将 <see cref="ModSmartFormatExtensionRegistry.RegisterSourceType" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModSmartFormatExtensionRegistry.RegisterSourceType" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModSmartFormatExtensionRegistry.RegisterSourceType" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder SmartFormatSource(Type sourceType, int order = 0)
         {
@@ -896,10 +939,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> (qualified id for both
-        ///     keyword id and <c>card_keywords</c> <c>{id}.title</c> / <c>.description</c> keys).
-        ///     将 <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> 加入队列（用于关键字 id 和
-        ///     <c>card_keywords</c> 的 <c>{id}.title</c> / <c>.description</c> 键的限定 id）。
+        ///     <para xml:lang="en">
+        ///         Queues a card keyword whose qualified ID also identifies its localization entries.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将限定 ID 同时用作本地化条目标识的卡牌关键词注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
             string localKeywordStem,
@@ -913,8 +956,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> with legacy hover defaults.
-        ///     将 <c>ModKeywordRegistry.RegisterCardKeywordOwnedByLocNamespace</c> 加入队列，并使用旧版悬停默认值。
+        ///     <para xml:lang="en">
+        ///         Queues a mod-qualified card keyword with the legacy hover-tip defaults.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用旧版悬停提示默认值将模组限定的卡牌关键词注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardKeywordOwnedByLocNamespace(
             string localKeywordStem,
@@ -928,8 +973,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues extended <see cref="ModKeywordRegistry" /> card-keyword registration (placement + hover-tip flags).
-        ///     将扩展的 <see cref="ModKeywordRegistry" /> 卡牌关键字注册加入队列（位置 + 悬停提示标志）。
+        ///     <para xml:lang="en">
+        ///         Queues obsolete flat-ID card-keyword registration with placement and hover-tip options.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将已过时的扁平 ID 卡牌关键词注册及其位置和悬停提示选项加入队列。</para>
         /// </summary>
         [Obsolete(
             "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
@@ -960,8 +1007,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Legacy <c>CardKeyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
-        ///     保留旧版 <c>CardKeyword</c> 签名以兼容旧 mod；按先前的悬停提示行为转发。
+        ///     <para xml:lang="en">
+        ///         Provides the obsolete flat-ID <c>CardKeyword</c> signature with its legacy hover-tip behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         提供已过时的扁平 ID <c>CardKeyword</c> 签名，并保留其旧版悬停提示行为。
+        ///     </para>
         /// </summary>
         [Obsolete(
             "Prefer CardKeywordOwnedByLocNamespace(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
@@ -976,8 +1027,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterOwned</c> (mod-local stem → qualified id).
-        ///     将 <c>ModKeywordRegistry.RegisterOwned</c> (mod-local stem → qualified id) 加入队列。
+        ///     <para xml:lang="en">Queues a mod-owned keyword using a local stem.</para>
+        ///     <para xml:lang="zh-CN">使用本地词干将模组所属关键词注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder KeywordOwned(
             string localKeywordStem,
@@ -995,8 +1046,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <c>ModKeywordRegistry.RegisterOwned</c> with legacy hover defaults.
-        ///     将 <c>ModKeywordRegistry.RegisterOwned</c> 加入队列，并使用旧版悬停默认值。
+        ///     <para xml:lang="en">Queues a mod-owned keyword with the legacy hover-tip defaults.</para>
+        ///     <para xml:lang="zh-CN">使用旧版悬停提示默认值将模组所属关键词注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder KeywordOwned(
             string localKeywordStem,
@@ -1018,8 +1069,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues extended <see cref="ModKeywordRegistry" /> keyword registration (placement + hover-tip flags).
-        ///     将 extended <see cref="ModKeywordRegistry" /> keyword registration (placement + hover-tip flags) 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues obsolete flat-ID keyword registration with placement and hover-tip options.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将已过时的扁平 ID 关键词注册及其位置和悬停提示选项加入队列。</para>
         /// </summary>
         [Obsolete(
             "Prefer KeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
@@ -1039,8 +1092,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Legacy <c>Keyword</c> signature preserved for older mods; forwards with prior hover-tip behavior.
-        ///     保留旧版 <c>Keyword</c> 签名以兼容旧 mod；按先前的悬停提示行为转发。
+        ///     <para xml:lang="en">
+        ///         Provides the obsolete flat-ID <c>Keyword</c> signature with its legacy hover-tip behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         提供已过时的扁平 ID <c>Keyword</c> 签名，并保留其旧版悬停提示行为。
+        ///     </para>
         /// </summary>
         [Obsolete(
             "Prefer KeywordOwned(localKeywordStem, ...) so the keyword id is mod-qualified; flat ids collide globally.")]
@@ -1064,8 +1121,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineRegistry.RegisterEpoch{TEpoch}" />.
-        ///     将 <see cref="ModTimelineRegistry.RegisterEpoch{TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModTimelineRegistry.RegisterEpoch{TEpoch}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModTimelineRegistry.RegisterEpoch{TEpoch}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Epoch<TEpoch>() where TEpoch : EpochModel, new()
         {
@@ -1073,8 +1130,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory, TEpoch}" /> (epoch + story column order).
-        ///     将 <see cref="ModTimelineRegistry.RegisterStoryEpoch{TStory, TEpoch}" /> (epoch + story column order) 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues an epoch registration and its position in a story column.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将时代注册及其在故事列中的顺序加入队列。</para>
         /// </summary>
         public ModContentPackBuilder StoryEpoch<TStory, TEpoch>()
             where TStory : StoryModel, new()
@@ -1084,10 +1143,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterTimelineSlot" /> for a <see cref="ModEpochTemplate" />
-        ///     when not using <see cref="TimelineColumnPackEntry{TStory}" />.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterTimelineSlot" /> 加入队列，用于不使用
-        ///     <see cref="TimelineColumnPackEntry{TStory}" /> 的 <see cref="ModEpochTemplate" />。
+        ///     <para xml:lang="en">Queues an explicit timeline slot for a <see cref="ModEpochTemplate" />.</para>
+        ///     <para xml:lang="zh-CN">为 <see cref="ModEpochTemplate" /> 将明确的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochTimelineSlot<TEpoch>(EpochEra era, int eraPosition)
             where TEpoch : ModEpochTemplate
@@ -1097,8 +1154,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlot" /> for a <see cref="ModEpochTemplate" />.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlot" /> 加入队列，用于 <see cref="ModEpochTemplate" />。
+        ///     <para xml:lang="en">Queues an automatically positioned timeline slot in the specified era.</para>
+        ///     <para xml:lang="zh-CN">将指定时代中自动定位的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochAutoTimelineSlot<TEpoch>(EpochEra era)
             where TEpoch : ModEpochTemplate
@@ -1107,9 +1164,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEraColumn" />.
-        ///     Queues <c>ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEraColumn</c>.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEraColumn" /> 加入队列。
+        ///     <para xml:lang="en">Queues an automatic timeline slot before an era column.</para>
+        ///     <para xml:lang="zh-CN">将自动定位在时代列之前的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochAutoTimelineSlotBeforeColumn<TEpoch>(EpochEra anchorEra)
             where TEpoch : ModEpochTemplate
@@ -1120,8 +1176,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEraColumn" />.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEraColumn" /> 加入队列。
+        ///     <para xml:lang="en">Queues an automatic timeline slot after an era column.</para>
+        ///     <para xml:lang="zh-CN">将自动定位在时代列之后的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochAutoTimelineSlotAfterColumn<TEpoch>(EpochEra anchorEra)
             where TEpoch : ModEpochTemplate
@@ -1131,9 +1187,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn" />.
-        ///     Queues <c>ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn</c>.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEraColumn" /> 加入队列。
+        ///     <para xml:lang="en">Queues an automatic timeline slot within an era column.</para>
+        ///     <para xml:lang="zh-CN">将自动定位在时代列内的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochAutoTimelineSlotInColumn<TEpoch>(EpochEra anchorEra)
             where TEpoch : ModEpochTemplate
@@ -1143,8 +1198,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEpochColumn" />.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotBeforeEpochColumn" /> 加入队列。
+        ///     <para xml:lang="en">Queues an automatic timeline slot before a reference epoch's column.</para>
+        ///     <para xml:lang="zh-CN">将自动定位在参考时代所在列之前的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochAutoTimelineSlotBeforeEpochColumn<TEpoch, TReferenceEpoch>()
             where TEpoch : ModEpochTemplate
@@ -1156,8 +1211,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEpochColumn" />.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotAfterEpochColumn" /> 加入队列。
+        ///     <para xml:lang="en">Queues an automatic timeline slot after a reference epoch's column.</para>
+        ///     <para xml:lang="zh-CN">将自动定位在参考时代所在列之后的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochAutoTimelineSlotAfterEpochColumn<TEpoch, TReferenceEpoch>()
             where TEpoch : ModEpochTemplate
@@ -1169,9 +1224,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn" />.
-        ///     Queues <c>ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn</c>.
-        ///     将 <see cref="ModTimelineLayoutRegistry.RegisterAutoTimelineSlotInEpochColumn" /> 加入队列。
+        ///     <para xml:lang="en">Queues an automatic timeline slot in a reference epoch's column.</para>
+        ///     <para xml:lang="zh-CN">将自动定位在参考时代所在列内的时间线槽位加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ModEpochAutoTimelineSlotInEpochColumn<TEpoch, TReferenceEpoch>()
             where TEpoch : ModEpochTemplate
@@ -1183,10 +1237,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="TimelineColumnPackEntry{TStory}" /> — one fluent block for column order + per-epoch unlock
-        ///     bindings (recommended over many separate pack entry types).
-        ///     将 <see cref="TimelineColumnPackEntry{TStory}" /> 加入队列：用一个流式块处理列顺序 + 逐纪元解锁
-        ///     绑定（推荐替代多个单独的包条目类型）。
+        ///     <para xml:lang="en">
+        ///         Queues a <see cref="TimelineColumnPackEntry{TStory}" /> that defines column order and per-epoch
+        ///         unlock bindings in one fluent block.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="TimelineColumnPackEntry{TStory}" /> 加入队列，以一个流式配置块定义列顺序和各时代的解锁绑定。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder TimelineColumn<TStory>(Action<TimelineColumnBuilder<TStory>> configure)
             where TStory : StoryModel, new()
@@ -1196,8 +1253,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTimelineRegistry.RegisterStory{TStory}" />.
-        ///     将 <see cref="ModTimelineRegistry.RegisterStory{TStory}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModTimelineRegistry.RegisterStory{TStory}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModTimelineRegistry.RegisterStory{TStory}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Story<TStory>() where TStory : StoryModel, new()
         {
@@ -1205,8 +1262,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.RequireEpoch{TModel,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.RequireEpoch{TModel,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModUnlockRegistry.RequireEpoch{TModel,TEpoch}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModUnlockRegistry.RequireEpoch{TModel,TEpoch}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder RequireEpoch<TModel, TEpoch>()
             where TModel : AbstractModel
@@ -1216,9 +1273,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="BindCardUnlockEpochPackEntry{TEpoch}" /> — each card listed on
-        ///     <typeparamref name="TEpoch" /> requires that epoch before appearing in pools.
-        ///     将 <see cref="BindCardUnlockEpochPackEntry{TEpoch}" /> 加入队列 - <typeparamref name="TEpoch" /> 上列出的每张卡牌出现在牌池前都需要该纪元。
+        ///     <para xml:lang="en">
+        ///         Queues a binding that requires <typeparamref name="TEpoch" /> for each card declared by that epoch.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将绑定加入队列，使该时代声明的每张卡牌均需先解锁 <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder BindCardUnlockEpoch<TEpoch>()
             where TEpoch : CardUnlockEpochTemplate, new()
@@ -1227,9 +1287,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="BindRelicUnlockEpochPackEntry{TEpoch}" /> — each relic listed on
-        ///     <typeparamref name="TEpoch" /> requires that epoch before appearing in pools.
-        ///     将 <see cref="BindRelicUnlockEpochPackEntry{TEpoch}" /> 加入队列 - <typeparamref name="TEpoch" /> 上列出的每个遗物出现在池中前都需要该纪元。
+        ///     <para xml:lang="en">
+        ///         Queues a binding that requires <typeparamref name="TEpoch" /> for each relic declared by that epoch.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将绑定加入队列，使该时代声明的每件遗物均需先解锁 <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder BindRelicUnlockEpoch<TEpoch>()
             where TEpoch : RelicUnlockEpochTemplate, new()
@@ -1238,8 +1301,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues explicit card unlock content for <typeparamref name="TEpoch" /> and gates those cards behind it.
-        ///     为 <typeparamref name="TEpoch" /> 加入显式卡牌解锁内容，并将这些卡牌 gate 在该纪元之后。
+        ///     <para xml:lang="en">Queues explicit card unlock content for <typeparamref name="TEpoch" />.</para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TEpoch" /> 将明确的卡牌解锁内容加入队列。</para>
         /// </summary>
         public ModContentPackBuilder EpochCards<TEpoch>(IReadOnlyList<Type> cardTypes)
             where TEpoch : EpochModel
@@ -1250,8 +1313,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues explicit card unlock content for <typeparamref name="TEpoch" /> and gates those cards behind it.
-        ///     为 <typeparamref name="TEpoch" /> 加入显式卡牌解锁内容，并将这些卡牌 gate 在该纪元之后。
+        ///     <para xml:lang="en">Queues explicit card unlock content for <typeparamref name="TEpoch" />.</para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TEpoch" /> 将明确的卡牌解锁内容加入队列。</para>
         /// </summary>
         public ModContentPackBuilder EpochCards<TEpoch>(params Type[] cardTypes)
             where TEpoch : EpochModel
@@ -1260,8 +1323,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues all cards registered in <typeparamref name="TPool" /> as unlock content for <typeparamref name="TEpoch" />.
-        ///     将 <typeparamref name="TPool" /> 中已注册的所有卡牌作为 <typeparamref name="TEpoch" /> 的解锁内容加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues all cards registered in <typeparamref name="TPool" /> as unlock content for
+        ///         <typeparamref name="TEpoch" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <typeparamref name="TPool" /> 中注册的所有卡牌作为 <typeparamref name="TEpoch" /> 的解锁内容加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder EpochCardsFromPool<TEpoch, TPool>()
             where TEpoch : EpochModel
@@ -1272,8 +1340,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues explicit relic unlock content for <typeparamref name="TEpoch" /> and gates those relics behind it.
-        ///     为 <typeparamref name="TEpoch" /> 加入显式遗物解锁内容，并将这些遗物 gate 在该纪元之后。
+        ///     <para xml:lang="en">Queues explicit relic unlock content for <typeparamref name="TEpoch" />.</para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TEpoch" /> 将明确的遗物解锁内容加入队列。</para>
         /// </summary>
         public ModContentPackBuilder EpochRelics<TEpoch>(IReadOnlyList<Type> relicTypes)
             where TEpoch : EpochModel
@@ -1284,8 +1352,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues explicit relic unlock content for <typeparamref name="TEpoch" /> and gates those relics behind it.
-        ///     为 <typeparamref name="TEpoch" /> 加入显式遗物解锁内容，并将这些遗物 gate 在该纪元之后。
+        ///     <para xml:lang="en">Queues explicit relic unlock content for <typeparamref name="TEpoch" />.</para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TEpoch" /> 将明确的遗物解锁内容加入队列。</para>
         /// </summary>
         public ModContentPackBuilder EpochRelics<TEpoch>(params Type[] relicTypes)
             where TEpoch : EpochModel
@@ -1294,8 +1362,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues explicit potion gates for <typeparamref name="TEpoch" />.
-        ///     为 <typeparamref name="TEpoch" /> 加入显式药水 gate。
+        ///     <para xml:lang="en">Queues explicit potion requirements for <typeparamref name="TEpoch" />.</para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TEpoch" /> 将明确的药水解锁要求加入队列。</para>
         /// </summary>
         public ModContentPackBuilder EpochPotions<TEpoch>(IReadOnlyList<Type> potionTypes)
             where TEpoch : EpochModel
@@ -1306,8 +1374,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues explicit potion gates for <typeparamref name="TEpoch" />.
-        ///     为 <typeparamref name="TEpoch" /> 加入显式药水 gate。
+        ///     <para xml:lang="en">Queues explicit potion requirements for <typeparamref name="TEpoch" />.</para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TEpoch" /> 将明确的药水解锁要求加入队列。</para>
         /// </summary>
         public ModContentPackBuilder EpochPotions<TEpoch>(params Type[] potionTypes)
             where TEpoch : EpochModel
@@ -1316,8 +1384,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues gating for every registered card in <typeparamref name="TPool" /> behind <typeparamref name="TEpoch" />.
-        ///     将 <typeparamref name="TPool" /> 中已注册的所有卡牌 gate 在 <typeparamref name="TEpoch" /> 之后。
+        ///     <para xml:lang="en">
+        ///         Queues an epoch requirement, when not already set, for every registered card in
+        ///         <typeparamref name="TPool" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TPool" /> 中每张尚未设置要求的已注册卡牌，将时代解锁要求加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder RequireAllCardsInPool<TEpoch, TPool>()
             where TEpoch : EpochModel
@@ -1328,8 +1401,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues gating for every registered relic in <typeparamref name="TPool" /> behind <typeparamref name="TEpoch" />.
-        ///     将 <typeparamref name="TPool" /> 中已注册的所有遗物 gate 在 <typeparamref name="TEpoch" /> 之后。
+        ///     <para xml:lang="en">
+        ///         Queues an epoch requirement, when not already set, for every registered relic in
+        ///         <typeparamref name="TPool" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TPool" /> 中每件尚未设置要求的已注册遗物，将时代解锁要求加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder RequireAllRelicsInPool<TEpoch, TPool>()
             where TEpoch : EpochModel
@@ -1340,8 +1418,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues gating for every registered potion in <typeparamref name="TPool" /> behind <typeparamref name="TEpoch" />.
-        ///     将 <typeparamref name="TPool" /> 中已注册的所有药水 gate 在 <typeparamref name="TEpoch" /> 之后。
+        ///     <para xml:lang="en">
+        ///         Queues an epoch requirement, when not already set, for every registered potion in
+        ///         <typeparamref name="TPool" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TPool" /> 中每瓶尚未设置要求的已注册药水，将时代解锁要求加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder RequireAllPotionsInPool<TEpoch, TPool>()
             where TEpoch : EpochModel
@@ -1352,9 +1435,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues every relic registered in <typeparamref name="TPool" /> as unlock content for <typeparamref name="TEpoch" />
-        ///     .
-        ///     将 <typeparamref name="TPool" /> 中已注册的所有遗物作为 <typeparamref name="TEpoch" /> 的解锁内容加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues every relic registered in <typeparamref name="TPool" /> as unlock content for
+        ///         <typeparamref name="TEpoch" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <typeparamref name="TPool" /> 中注册的所有遗物作为 <typeparamref name="TEpoch" /> 的解锁内容加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder EpochRelicsFromPool<TEpoch, TPool>()
             where TEpoch : EpochModel
@@ -1365,8 +1452,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder UnlockEpochAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -1376,8 +1467,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder UnlockEpochAfterWinAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -1387,8 +1482,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(int ascensionLevel)
             where TCharacter : CharacterModel
@@ -1398,8 +1497,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">Queues <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" />.</para>
+        ///     <para xml:lang="zh-CN">将 <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" /> 加入队列。</para>
         /// </summary>
         public ModContentPackBuilder UnlockEpochAfterRunCount<TEpoch>(int requiredRuns, bool requireVictory = false)
             where TEpoch : EpochModel, new()
@@ -1408,8 +1507,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder UnlockEpochAfterEliteVictories<TCharacter, TEpoch>(int requiredEliteWins = 15)
             where TCharacter : CharacterModel
@@ -1419,8 +1522,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder UnlockEpochAfterBossVictories<TCharacter, TEpoch>(int requiredBossWins = 15)
             where TCharacter : CharacterModel
@@ -1430,8 +1537,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder UnlockEpochAfterAscensionOneWin<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -1441,8 +1552,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder RevealAscensionAfterEpoch<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -1452,8 +1567,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter,TEpoch}" />.
-        ///     将 <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter,TEpoch}" /> 加入队列。
+        ///     <para xml:lang="en">
+        ///         Queues <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter,TEpoch}" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter,TEpoch}" /> 加入队列。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder UnlockCharacterAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -1463,8 +1582,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends a manifest <see cref="IContentRegistrationEntry" /> step.
-        ///     追加 manifest <see cref="IContentRegistrationEntry" /> 步骤。
+        ///     <para xml:lang="en">Appends an <see cref="IContentRegistrationEntry" /> step.</para>
+        ///     <para xml:lang="zh-CN">追加一个 <see cref="IContentRegistrationEntry" /> 步骤。</para>
         /// </summary>
         public ModContentPackBuilder Entry(IContentRegistrationEntry entry)
         {
@@ -1473,8 +1592,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends each content registration entry in order.
-        ///     按顺序追加每个内容注册条目。
+        ///     <para xml:lang="en">Appends the content registration entries in enumeration order.</para>
+        ///     <para xml:lang="zh-CN">按枚举顺序追加各内容注册条目。</para>
         /// </summary>
         public ModContentPackBuilder Entries(IEnumerable<IContentRegistrationEntry> entries)
         {
@@ -1487,8 +1606,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends a typed <see cref="KeywordRegistrationEntry" /> registration step.
-        ///     追加类型化 <see cref="KeywordRegistrationEntry" /> 注册步骤。
+        ///     <para xml:lang="en">Appends a <see cref="KeywordRegistrationEntry" /> step.</para>
+        ///     <para xml:lang="zh-CN">追加一个 <see cref="KeywordRegistrationEntry" /> 步骤。</para>
         /// </summary>
         public ModContentPackBuilder Keyword(KeywordRegistrationEntry entry)
         {
@@ -1497,8 +1616,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends each keyword registration entry in order.
-        ///     按顺序追加每个关键词注册条目。
+        ///     <para xml:lang="en">Appends the keyword registration entries in enumeration order.</para>
+        ///     <para xml:lang="zh-CN">按枚举顺序追加各关键词注册条目。</para>
         /// </summary>
         public ModContentPackBuilder Keywords(IEnumerable<KeywordRegistrationEntry> entries)
         {
@@ -1511,8 +1630,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModCardTagRegistry.RegisterOwned" /> for a local stem under this pack’s mod id.
-        ///     将 <see cref="ModCardTagRegistry.RegisterOwned" /> 加入队列，用于此包 mod id 下的本地 stem。
+        ///     <para xml:lang="en">Queues a mod-owned card tag using a local stem.</para>
+        ///     <para xml:lang="zh-CN">使用本地词干将模组所属卡牌标签注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardTagOwned(string localTagStem)
         {
@@ -1520,8 +1639,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends a <see cref="CardTagRegistrationEntry" /> registration step.
-        ///     追加 <see cref="CardTagRegistrationEntry" /> 注册步骤。
+        ///     <para xml:lang="en">Appends a <see cref="CardTagRegistrationEntry" /> step.</para>
+        ///     <para xml:lang="zh-CN">追加一个 <see cref="CardTagRegistrationEntry" /> 步骤。</para>
         /// </summary>
         public ModContentPackBuilder CardTag(CardTagRegistrationEntry entry)
         {
@@ -1530,8 +1649,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends each card-tag registration entry in order.
-        ///     按顺序追加每个卡牌标签注册条目。
+        ///     <para xml:lang="en">Appends the card-tag registration entries in enumeration order.</para>
+        ///     <para xml:lang="zh-CN">按枚举顺序追加各卡牌标签注册条目。</para>
         /// </summary>
         public ModContentPackBuilder CardTags(IEnumerable<CardTagRegistrationEntry> entries)
         {
@@ -1544,8 +1663,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues a generic dynamic enum value registration for a local stem under this pack's mod id.
-        ///     将通用动态枚举值注册加入队列，用于此包 mod id 下的本地 stem。
+        ///     <para xml:lang="en">Queues a mod-owned dynamic enum value using a local stem.</para>
+        ///     <para xml:lang="zh-CN">使用本地词干将模组所属动态枚举值注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder DynamicEnumValue<TEnum>(string localStem) where TEnum : struct, Enum
         {
@@ -1553,8 +1672,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModCardPileRegistry.RegisterOwned" /> for a local stem under this pack’s mod id.
-        ///     将 <see cref="ModCardPileRegistry.RegisterOwned" /> 加入队列，用于此包 mod id 下的本地 stem。
+        ///     <para xml:lang="en">Queues a mod-owned card pile using a local stem.</para>
+        ///     <para xml:lang="zh-CN">使用本地词干将模组所属牌堆注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardPileOwned(string localPileStem, ModCardPileSpec? spec = null)
         {
@@ -1562,8 +1681,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends a <see cref="CardPileRegistrationEntry" /> registration step.
-        ///     追加 <see cref="CardPileRegistrationEntry" /> 注册步骤。
+        ///     <para xml:lang="en">Appends a <see cref="CardPileRegistrationEntry" /> step.</para>
+        ///     <para xml:lang="zh-CN">追加一个 <see cref="CardPileRegistrationEntry" /> 步骤。</para>
         /// </summary>
         public ModContentPackBuilder CardPile(CardPileRegistrationEntry entry)
         {
@@ -1572,8 +1691,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModCardPileRegistry.Register" /> for a raw global id.
-        ///     将 <see cref="ModCardPileRegistry.Register" /> 加入队列，用于原始全局 id。
+        ///     <para xml:lang="en">Queues a card-pile registration using a raw global ID.</para>
+        ///     <para xml:lang="zh-CN">使用原始全局 ID 将牌堆注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardPile(string id, ModCardPileSpec spec)
         {
@@ -1581,8 +1700,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends each card-pile registration entry in order.
-        ///     按顺序追加每个卡牌牌堆注册条目。
+        ///     <para xml:lang="en">Appends the card-pile registration entries in enumeration order.</para>
+        ///     <para xml:lang="zh-CN">按枚举顺序追加各牌堆注册条目。</para>
         /// </summary>
         public ModContentPackBuilder CardPiles(IEnumerable<CardPileRegistrationEntry> entries)
         {
@@ -1595,8 +1714,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTopBarButtonRegistry.RegisterOwned" /> for a local stem under this pack’s mod id.
-        ///     将 <see cref="ModTopBarButtonRegistry.RegisterOwned" /> 加入队列，用于此包 mod id 下的本地 stem。
+        ///     <para xml:lang="en">Queues a mod-owned top-bar button using a local stem.</para>
+        ///     <para xml:lang="zh-CN">使用本地词干将模组所属顶部栏按钮注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder TopBarButtonOwned(string localButtonStem, ModTopBarButtonSpec spec)
         {
@@ -1604,8 +1723,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends a <see cref="TopBarButtonRegistrationEntry" /> registration step.
-        ///     追加 <see cref="TopBarButtonRegistrationEntry" /> 注册步骤。
+        ///     <para xml:lang="en">Appends a <see cref="TopBarButtonRegistrationEntry" /> step.</para>
+        ///     <para xml:lang="zh-CN">追加一个 <see cref="TopBarButtonRegistrationEntry" /> 步骤。</para>
         /// </summary>
         public ModContentPackBuilder TopBarButton(TopBarButtonRegistrationEntry entry)
         {
@@ -1614,8 +1733,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="ModTopBarButtonRegistry.Register" /> for a raw global id.
-        ///     将 <see cref="ModTopBarButtonRegistry.Register" /> 加入队列，用于原始全局 id。
+        ///     <para xml:lang="en">Queues a top-bar button registration using a raw global ID.</para>
+        ///     <para xml:lang="zh-CN">使用原始全局 ID 将顶部栏按钮注册加入队列。</para>
         /// </summary>
         public ModContentPackBuilder TopBarButton(string id, ModTopBarButtonSpec spec)
         {
@@ -1623,8 +1742,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends each top-bar-button registration entry in order.
-        ///     按顺序追加每个顶部栏按钮注册条目。
+        ///     <para xml:lang="en">Appends the top-bar button registration entries in enumeration order.</para>
+        ///     <para xml:lang="zh-CN">按枚举顺序追加各顶部栏按钮注册条目。</para>
         /// </summary>
         public ModContentPackBuilder TopBarButtons(IEnumerable<TopBarButtonRegistrationEntry> entries)
         {
@@ -1637,8 +1756,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers <see cref="ModContentRegistry" /> entries (character, cards, relics, powers, …).
-        ///     注册 <see cref="ModContentRegistry" /> 条目（角色、卡牌、遗物、能力等）。
+        ///     <para xml:lang="en">Queues the supplied <see cref="ModContentRegistry" /> entries.</para>
+        ///     <para xml:lang="zh-CN">将提供的 <see cref="ModContentRegistry" /> 条目加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ContentManifest(IEnumerable<IContentRegistrationEntry>? entries)
         {
@@ -1646,8 +1765,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers <see cref="ModKeywordRegistry" /> entries (separate from ModelDb content).
-        ///     注册 <see cref="ModKeywordRegistry" /> 条目（与 ModelDb 内容分开）。
+        ///     <para xml:lang="en">Queues the supplied <see cref="ModKeywordRegistry" /> entries.</para>
+        ///     <para xml:lang="zh-CN">将提供的 <see cref="ModKeywordRegistry" /> 条目加入队列。</para>
         /// </summary>
         public ModContentPackBuilder KeywordManifest(IEnumerable<KeywordRegistrationEntry>? entries)
         {
@@ -1655,8 +1774,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers <see cref="ModCardTagRegistry" /> entries (custom <c>CardTag</c> ids separate from ModelDb).
-        ///     注册 <see cref="ModCardTagRegistry" /> 条目（与 ModelDb 分开的自定义 <c>CardTag</c> id）。
+        ///     <para xml:lang="en">Queues the supplied <see cref="ModCardTagRegistry" /> entries.</para>
+        ///     <para xml:lang="zh-CN">将提供的 <see cref="ModCardTagRegistry" /> 条目加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardTagManifest(IEnumerable<CardTagRegistrationEntry>? entries)
         {
@@ -1664,8 +1783,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers <see cref="ModCardPileRegistry" /> entries (custom <c>CardPile</c> ids separate from ModelDb).
-        ///     注册 <see cref="ModCardPileRegistry" /> 条目（与 ModelDb 分开的自定义 <c>CardPile</c> id）。
+        ///     <para xml:lang="en">Queues the supplied <see cref="ModCardPileRegistry" /> entries.</para>
+        ///     <para xml:lang="zh-CN">将提供的 <see cref="ModCardPileRegistry" /> 条目加入队列。</para>
         /// </summary>
         public ModContentPackBuilder CardPileManifest(IEnumerable<CardPileRegistrationEntry>? entries)
         {
@@ -1673,8 +1792,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers <see cref="ModTopBarButtonRegistry" /> entries.
-        ///     注册 <see cref="ModTopBarButtonRegistry" /> 条目。
+        ///     <para xml:lang="en">Queues the supplied <see cref="ModTopBarButtonRegistry" /> entries.</para>
+        ///     <para xml:lang="zh-CN">将提供的 <see cref="ModTopBarButtonRegistry" /> 条目加入队列。</para>
         /// </summary>
         public ModContentPackBuilder TopBarButtonManifest(IEnumerable<TopBarButtonRegistrationEntry>? entries)
         {
@@ -1682,11 +1801,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers <see cref="ModTimelineRegistry" /> / <see cref="ModUnlockRegistry" /> via
-        ///     <see cref="IModContentPackEntry" /> (story–epoch bindings, unlock rules). Usually applied after content so
-        ///     <c>RequireEpoch</c> can resolve character ids.
-        ///     通过 <see cref="IModContentPackEntry" /> 注册 <see cref="ModTimelineRegistry" /> / <see cref="ModUnlockRegistry" />
-        ///     （story-纪元绑定、解锁规则）。通常在内容之后应用，使 <c>RequireEpoch</c> 可以解析角色 id。
+        ///     <para xml:lang="en">
+        ///         Queues timeline and unlock entries. These entries normally follow content registration so
+        ///         <c>RequireEpoch</c> can resolve character IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将时间线和解锁条目加入队列。这些条目通常在内容注册之后应用，以便 <c>RequireEpoch</c> 解析角色 ID。
+        ///     </para>
         /// </summary>
         public ModContentPackBuilder PackManifest(IEnumerable<IModContentPackEntry>? entries)
         {
@@ -1694,21 +1815,25 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Convenience batch for optional content and keyword manifest enumerables.
-        ///     用于可选内容和关键词 manifest 可枚举项的便捷批处理。
+        ///     <para xml:lang="en">Queues optional content and keyword manifests.</para>
+        ///     <para xml:lang="zh-CN">将可选的内容和关键词清单加入队列。</para>
         /// </summary>
         /// <remarks>
-        ///     <see cref="IContentRegistrationEntry" /> may include
-        ///     <see cref="ArchaicToothTranscendenceRegistrationEntry{TStarterCard,TAncientCard}" />,
-        ///     <see cref="TouchOfOrobasRefinementRegistrationEntry{TStarterRelic,TUpgradedRelic}" />, and related Orobas
-        ///     entries alongside cards/relics/etc. Keywords use a different registry; prefer
-        ///     <see cref="ContentManifest" /> / <see cref="KeywordManifest" /> / <see cref="PackManifest" /> when you want
-        ///     that split to be explicit.
-        ///     <see cref="IContentRegistrationEntry" /> 可以包含
-        ///     <see cref="ArchaicToothTranscendenceRegistrationEntry{TStarterCard,TAncientCard}" />、
-        ///     <see cref="TouchOfOrobasRefinementRegistrationEntry{TStarterRelic,TUpgradedRelic}" />，以及与卡牌 / 遗物等并列的相关 Orobas
-        ///     条目。关键词使用不同的注册表；当你希望这种拆分显式可见时，优先使用 <see cref="ContentManifest" /> / <see cref="KeywordManifest" /> /
-        ///     <see cref="PackManifest" />。
+        ///     <para xml:lang="en">
+        ///         <see cref="IContentRegistrationEntry" /> may include
+        ///         <see cref="ArchaicToothTranscendenceRegistrationEntry{TStarterCard,TAncientCard}" />,
+        ///         <see cref="TouchOfOrobasRefinementRegistrationEntry{TStarterRelic,TUpgradedRelic}" />, and related Orobas
+        ///         entries alongside cards/relics/etc. Keywords use a different registry; prefer
+        ///         <see cref="ContentManifest" /> / <see cref="KeywordManifest" /> / <see cref="PackManifest" /> when you want
+        ///         that split to be explicit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <see cref="IContentRegistrationEntry" /> 可以包含
+        ///         <see cref="ArchaicToothTranscendenceRegistrationEntry{TStarterCard,TAncientCard}" />、
+        ///         <see cref="TouchOfOrobasRefinementRegistrationEntry{TStarterRelic,TUpgradedRelic}" />，以及与卡牌 / 遗物等并列的相关 Orobas
+        ///         条目。关键词使用不同的注册表；当你希望这种拆分显式可见时，优先使用 <see cref="ContentManifest" /> / <see cref="KeywordManifest" /> /
+        ///         <see cref="PackManifest" />。
+        ///     </para>
         /// </remarks>
         public ModContentPackBuilder Manifest(
             IEnumerable<IContentRegistrationEntry>? contentEntries = null,
@@ -1724,8 +1849,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Convenience batch including optional <see cref="IModContentPackEntry" /> steps (timeline bindings, unlocks).
-        ///     包含可选 <see cref="IModContentPackEntry" /> 步骤（时间线绑定、解锁）的便捷批处理。
+        ///     <para xml:lang="en">Queues optional content, keyword, and content-pack manifests.</para>
+        ///     <para xml:lang="zh-CN">将可选的内容、关键词和内容包清单加入队列。</para>
         /// </summary>
         public ModContentPackBuilder Manifest(
             IEnumerable<IContentRegistrationEntry>? contentEntries,
@@ -1740,8 +1865,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends a <see cref="IModContentPackEntry" /> (timeline / unlock / other pack surface).
-        ///     追加 <see cref="IModContentPackEntry" />（时间线 / 解锁 / 其它包表面）。
+        ///     <para xml:lang="en">Appends an <see cref="IModContentPackEntry" />.</para>
+        ///     <para xml:lang="zh-CN">追加一个 <see cref="IModContentPackEntry" />。</para>
         /// </summary>
         public ModContentPackBuilder PackEntry(IModContentPackEntry entry)
         {
@@ -1750,8 +1875,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends each <see cref="IModContentPackEntry" /> in order.
-        ///     按顺序追加每个 <see cref="IModContentPackEntry" />。
+        ///     <para xml:lang="en">Appends the content-pack entries in enumeration order.</para>
+        ///     <para xml:lang="zh-CN">按枚举顺序追加各内容包条目。</para>
         /// </summary>
         public ModContentPackBuilder PackEntries(IEnumerable<IModContentPackEntry>? entries)
         {
@@ -1765,10 +1890,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="RitsuLibFramework.RegisterArchaicToothTranscendenceMapping{TStarterCard,TAncientCard}" />
-        ///     using this pack’s <see cref="ModContentPackContext.ModId" />.
-        ///     将 <see cref="RitsuLibFramework.RegisterArchaicToothTranscendenceMapping{TStarterCard,TAncientCard}" /> 加入队列，使用此包的
-        ///     <see cref="ModContentPackContext.ModId" />。
+        ///     <para xml:lang="en">Queues an Archaic Tooth transcendence mapping for this mod.</para>
+        ///     <para xml:lang="zh-CN">将此模组的“古旧尖牙”超越映射加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ArchaicToothTranscendence<TStarterCard, TAncientCard>()
             where TStarterCard : CardModel
@@ -1779,9 +1902,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues ArchaicTooth transcendence registration by starter card id and ancient card type, using this pack’s
-        ///     mod id.
-        ///     按初始卡牌 id 和远古卡牌类型将 ArchaicTooth 超越注册加入队列，使用此包的 mod id。
+        ///     <para xml:lang="en">
+        ///         Queues an Archaic Tooth transcendence mapping by starter-card ID and Ancient-card type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">按初始卡牌 ID 和先古卡牌类型将“古旧尖牙”超越映射加入队列。</para>
         /// </summary>
         public ModContentPackBuilder ArchaicToothTranscendence(ModelId starterCardId, Type ancientCardType)
         {
@@ -1794,10 +1918,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="RitsuLibFramework.RegisterDustyTomeCard{TCharacter,TAncientCard}" /> using this pack’s
-        ///     mod id.
-        ///     将 <see cref="RitsuLibFramework.RegisterDustyTomeCard{TCharacter,TAncientCard}" /> 加入队列，使用此包的
-        ///     mod id。
+        ///     <para xml:lang="en">Queues a Dusty Tome card mapping for this mod.</para>
+        ///     <para xml:lang="zh-CN">将此模组的“尘封典籍”卡牌映射加入队列。</para>
         /// </summary>
         public ModContentPackBuilder DustyTomeCard<TCharacter, TAncientCard>()
             where TCharacter : CharacterModel
@@ -1808,8 +1930,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues Dusty Tome card registration by character id and ancient card type, using this pack’s mod id.
-        ///     按角色 id 和 ancient 卡牌类型将 Dusty Tome 卡牌注册加入队列，使用此包的 mod id。
+        ///     <para xml:lang="en">Queues a Dusty Tome mapping by character ID and Ancient-card type.</para>
+        ///     <para xml:lang="zh-CN">按角色 ID 和先古卡牌类型将“尘封典籍”映射加入队列。</para>
         /// </summary>
         public ModContentPackBuilder DustyTomeCard(ModelId characterId, Type ancientCardType)
         {
@@ -1819,10 +1941,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues <see cref="RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping{TStarterRelic,TUpgradedRelic}" />
-        ///     using this pack’s mod id.
-        ///     将 <see cref="RitsuLibFramework.RegisterTouchOfOrobasRefinementMapping{TStarterRelic,TUpgradedRelic}" /> 加入队列，使用此包的
-        ///     mod id。
+        ///     <para xml:lang="en">Queues a Touch of Orobas refinement mapping for this mod.</para>
+        ///     <para xml:lang="zh-CN">将此模组的“衔尾蛇之触”精炼映射加入队列。</para>
         /// </summary>
         public ModContentPackBuilder TouchOfOrobasRefinement<TStarterRelic, TUpgradedRelic>()
             where TStarterRelic : RelicModel
@@ -1833,9 +1953,10 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Queues TouchOfOrobas refinement registration by starter relic id and upgraded relic type, using this pack’s
-        ///     mod id.
-        ///     按初始遗物 id 和升级遗物类型将 TouchOfOrobas 精炼注册加入队列，使用此包的 mod id。
+        ///     <para xml:lang="en">
+        ///         Queues a Touch of Orobas refinement mapping by starter-relic ID and upgraded-relic type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">按初始遗物 ID 和升级遗物类型将“衔尾蛇之触”精炼映射加入队列。</para>
         /// </summary>
         public ModContentPackBuilder TouchOfOrobasRefinement(ModelId starterRelicId, Type upgradedRelicType)
         {
@@ -1848,8 +1969,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends an arbitrary delegate executed during <see cref="Apply" />.
-        ///     追加一个在 <see cref="Apply" /> 期间执行的任意 delegate。
+        ///     <para xml:lang="en">Appends a custom delegate to execute during <see cref="Apply" />.</para>
+        ///     <para xml:lang="zh-CN">追加一个在 <see cref="Apply" /> 期间执行的自定义委托。</para>
         /// </summary>
         public ModContentPackBuilder Custom(Action<ModContentPackContext> step)
         {
@@ -1857,8 +1978,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Materializes registries for the builder’s mod id without running queued steps.
-        ///     为构建器的 mod id 实例化注册表，但不运行已排队步骤。
+        ///     <para xml:lang="en">Creates the registry context without running queued steps.</para>
+        ///     <para xml:lang="zh-CN">创建注册表上下文，但不执行队列中的步骤。</para>
         /// </summary>
         public ModContentPackContext BuildContext()
         {
@@ -1873,9 +1994,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Schedules all queued registration steps to apply during the framework discovery window and returns the
-        ///     materialized context for this mod id.
-        ///     安排所有已排队注册步骤在框架发现窗口期间应用，并返回此 mod id 的实体化上下文。
+        ///     <para xml:lang="en">
+        ///         Schedules all queued registration steps for the framework discovery window and returns the
+        ///         materialized context.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         安排所有队列中的注册步骤在框架发现窗口执行，并返回已创建的上下文。
+        ///     </para>
         /// </summary>
         public ModContentPackContext Apply()
         {

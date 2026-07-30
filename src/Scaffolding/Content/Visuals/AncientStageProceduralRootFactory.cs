@@ -7,20 +7,28 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Content.Visuals
 {
     /// <summary>
-    ///     Builds the runtime <see cref="Control" /> tree for an <see cref="AncientEventStageProceduralVisualSet" />:
-    ///     an optional looping <see cref="VideoStreamPlayer" /> background and cue-driven <see cref="Sprite2D" /> layers.
-    ///     为 <see cref="AncientEventStageProceduralVisualSet" /> 构建运行时 <see cref="Control" /> 树：
-    ///     可选的循环 <see cref="VideoStreamPlayer" /> 背景，以及由 cue 驱动的 <see cref="Sprite2D" /> 图层。
+    ///     <para xml:lang="en">
+    ///         Builds the runtime <see cref="Control" /> tree for an <see cref="AncientEventStageProceduralVisualSet" />,
+    ///         including an optional looping <see cref="VideoStreamPlayer" /> background and cue-driven
+    ///         <see cref="Sprite2D" /> layers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="AncientEventStageProceduralVisualSet" /> 构建运行时 <see cref="Control" /> 节点树，
+    ///         其中可包含循环播放的 <see cref="VideoStreamPlayer" /> 背景和由视觉提示驱动的 <see cref="Sprite2D" /> 图层。
+    ///     </para>
     /// </summary>
     public static class AncientStageProceduralRootFactory
     {
         private static PackedScene? _placeholderBackgroundPackedScene;
 
         /// <summary>
-        ///     Empty scene used as a placeholder so <c>EventModel.CreateBackgroundScene</c> can complete before the
-        ///     layout patch mounts the procedural layers.
-        ///     空场景占位符，使 <c>EventModel.CreateBackgroundScene</c> 可以在
-        ///     布局补丁挂载程序化图层之前完成。
+        ///     <para xml:lang="en">
+        ///         Gets the empty placeholder scene that allows <c>EventModel.CreateBackgroundScene</c> to complete before
+        ///         the layout patch mounts the procedural layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取空白占位场景，使 <c>EventModel.CreateBackgroundScene</c> 能在布局补丁挂载程序化图层之前完成。
+        ///     </para>
         /// </summary>
         public static PackedScene PlaceholderBackgroundPackedScene
         {
@@ -47,8 +55,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
         }
 
         /// <summary>
-        ///     Creates the procedural layer root, attaches it to <paramref name="host" />, and starts configured playback.
-        ///     创建程序化图层根节点，将其附加到 <paramref name="host" />，并启动已配置的播放。
+        ///     <para xml:lang="en">
+        ///         Creates the procedural layer root, attaches it to <paramref name="host" />, and starts configured playback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建程序化图层的根节点，将其附加到 <paramref name="host" />，并按配置开始播放。
+        ///     </para>
         /// </summary>
         public static Control BuildAndMount(NAncientBgContainer host, AncientEventStageProceduralVisualSet stage)
         {

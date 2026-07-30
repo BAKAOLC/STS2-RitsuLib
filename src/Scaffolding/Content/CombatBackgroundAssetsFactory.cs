@@ -5,20 +5,25 @@ using MegaCrit.Sts2.Core.Rooms;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Builds <see cref="BackgroundAssets" /> without using the vanilla constructor that reads a fixed
-    ///     <c>res://scenes/backgrounds/&lt;id&gt;/layers</c> tree. Use with
-    ///     <see cref="ModEncounterTemplate.UseProgrammaticCombatBackground" /> /
-    ///     <see cref="ModEncounterTemplate.BuildProgrammaticCombatBackground" />.
-    ///     构建 <see cref="BackgroundAssets" />，不使用会读取固定 <c>res://scenes/backgrounds/&lt;id&gt;/layers</c> 树的原版构造函数。与
-    ///     <see cref="ModEncounterTemplate.UseProgrammaticCombatBackground" /> /
-    ///     <see cref="ModEncounterTemplate.BuildProgrammaticCombatBackground" /> 配合使用。
+    ///     <para xml:lang="en">
+    ///         Creates <see cref="BackgroundAssets" /> from explicit paths without invoking the base constructor that
+    ///         scans a fixed <c>res://scenes/backgrounds/&lt;id&gt;/layers</c> directory.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用显式路径创建 <see cref="BackgroundAssets" />，而不调用会扫描固定
+    ///         <c>res://scenes/backgrounds/&lt;id&gt;/layers</c> 目录的游戏本体构造函数。
+    ///     </para>
     /// </summary>
     public static class CombatBackgroundAssetsFactory
     {
         /// <summary>
-        ///     Creates combat background assets from explicit scene and layer paths (same semantics as vanilla
-        ///     <see cref="BackgroundAssets" />: main scene, parallax <c>_bg_</c> layers, optional <c>_fg_</c>).
-        ///     从显式场景和图层路径创建战斗背景资源（语义与原版 <see cref="BackgroundAssets" /> 相同：主场景、视差 <c>_bg_</c> 图层、可选 <c>_fg_</c>）。
+        ///     <para xml:lang="en">
+        ///         Creates combat background assets from a main scene path, an ordered list of parallax background
+        ///         layers, and an optional foreground layer.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用主场景路径、有序的视差背景图层列表和可选前景图层创建战斗背景资源。
+        ///     </para>
         /// </summary>
         public static BackgroundAssets Create(string backgroundScenePath, IReadOnlyList<string> bgLayers,
             string? fgLayer = null)

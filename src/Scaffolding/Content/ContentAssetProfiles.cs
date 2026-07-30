@@ -8,8 +8,8 @@ using MegaCrit.Sts2.Core.Nodes.Screens;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Runtime context passed to optional card-pool deck-view style providers.
-    ///     传给可选卡池牌组查看界面样式 provider 的运行时上下文。
+    ///     <para xml:lang="en">Provides runtime context to card-pool deck-view style callbacks.</para>
+    ///     <para xml:lang="zh-CN">为牌池的牌组查看界面样式回调提供运行时上下文。</para>
     /// </summary>
     public sealed record CardPoolDeckViewStyleContext(
         Player Player,
@@ -18,110 +18,142 @@ namespace STS2RitsuLib.Scaffolding.Content
         NDeckViewScreen Screen);
 
     /// <summary>
-    ///     Optional visual overrides for the vanilla deck-view screen when it displays a deck from this card pool.
-    ///     当原版牌组查看界面显示此卡池的牌组时使用的可选视觉覆盖。
+    ///     <para xml:lang="en">
+    ///         Defines optional visual overrides for the base deck-view screen when it displays a deck associated
+    ///         with this card pool.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义游戏本体的牌组查看界面显示此牌池所属牌组时使用的可选外观替换。
+    ///     </para>
     /// </summary>
     public sealed record CardPoolDeckViewStyle
     {
         /// <summary>
-        ///     Optional texture path for the deck-view sorting toolbar background. Null keeps the scene default.
-        ///     牌组查看排序工具栏背景的可选贴图路径。null 保留场景默认值。
+        ///     <para xml:lang="en">
+        ///         Gets the optional sorting-toolbar background texture path. <see langword="null" /> preserves the
+        ///         scene default.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取可选的排序工具栏背景纹理路径；<see langword="null" /> 表示保留场景默认值。
+        ///     </para>
         /// </summary>
         public string? ToolbarBackgroundTexturePath { get; init; }
 
         /// <summary>
-        ///     Optional material applied to the deck-view sorting toolbar background.
-        ///     应用到牌组查看排序工具栏背景上的可选材质。
+        ///     <para xml:lang="en">Gets the optional material applied to the sorting-toolbar background.</para>
+        ///     <para xml:lang="zh-CN">获取应用到排序工具栏背景的可选材质。</para>
         /// </summary>
         public Material? ToolbarBackgroundMaterial { get; init; }
 
         /// <summary>
-        ///     Optional runtime material provider for the deck-view sorting toolbar background. When non-null,
-        ///     it takes precedence over <see cref="ToolbarBackgroundMaterial" />.
-        ///     牌组查看排序工具栏背景的可选运行时材质 provider。非 null 时优先于
-        ///     <see cref="ToolbarBackgroundMaterial" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional runtime material callback for the sorting-toolbar background. A non-null result
+        ///         takes precedence over <see cref="ToolbarBackgroundMaterial" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取排序工具栏背景的可选运行时材质回调。回调返回非空值时优先于
+        ///         <see cref="ToolbarBackgroundMaterial" />。
+        ///     </para>
         /// </summary>
         public Func<CardPoolDeckViewStyleContext, Material?>? ToolbarBackgroundMaterialProvider { get; init; }
 
         /// <summary>
-        ///     Optional HSV shader material used to hue deck-view sort buttons.
-        ///     用于给牌组查看排序按钮染色的可选 HSV shader 材质。
+        ///     <para xml:lang="en">Gets the optional HSV shader material used to tint sort buttons.</para>
+        ///     <para xml:lang="zh-CN">获取用于为排序按钮着色的可选 HSV 着色器材质。</para>
         /// </summary>
         public ShaderMaterial? SortButtonHueMaterial { get; init; }
 
         /// <summary>
-        ///     Optional runtime provider for the deck-view sort-button hue material. When non-null, it takes
-        ///     precedence over <see cref="SortButtonHueMaterial" />.
-        ///     牌组查看排序按钮 hue 材质的可选运行时 provider。非 null 时优先于
-        ///     <see cref="SortButtonHueMaterial" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional runtime callback for the sort-button tint material. A non-null result takes
+        ///         precedence over <see cref="SortButtonHueMaterial" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取排序按钮着色材质的可选运行时回调。回调返回非空值时优先于
+        ///         <see cref="SortButtonHueMaterial" />。
+        ///     </para>
         /// </summary>
         public Func<CardPoolDeckViewStyleContext, ShaderMaterial?>? SortButtonHueMaterialProvider { get; init; }
 
         /// <summary>
-        ///     When true, RitsuLib will not call <c>NCardViewSortButton.SetHue</c> while applying this style.
-        ///     为 true 时，RitsuLib 应用此样式时不会调用 <c>NCardViewSortButton.SetHue</c>。
+        ///     <para xml:lang="en">
+        ///         Gets whether RitsuLib should skip <c>NCardViewSortButton.SetHue</c> while applying this style.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 RitsuLib 应用此样式时是否跳过 <c>NCardViewSortButton.SetHue</c>。
+        ///     </para>
         /// </summary>
         public bool? DisableSortButtonHue { get; init; }
 
         /// <summary>
-        ///     Optional texture path applied to each deck-view sort button's background image.
-        ///     应用到每个牌组查看排序按钮背景图的可选贴图路径。
+        ///     <para xml:lang="en">Gets the optional background texture path applied to each sort button.</para>
+        ///     <para xml:lang="zh-CN">获取应用到每个排序按钮的可选背景纹理路径。</para>
         /// </summary>
         public string? SortButtonBackgroundTexturePath { get; init; }
 
         /// <summary>
-        ///     Optional material applied to each deck-view sort button's background image.
-        ///     应用到每个牌组查看排序按钮背景图的可选材质。
+        ///     <para xml:lang="en">Gets the optional background material applied to each sort button.</para>
+        ///     <para xml:lang="zh-CN">获取应用到每个排序按钮的可选背景材质。</para>
         /// </summary>
         public Material? SortButtonBackgroundMaterial { get; init; }
 
         /// <summary>
-        ///     Optional runtime material provider for each deck-view sort button's background image. When non-null,
-        ///     it takes precedence over <see cref="SortButtonBackgroundMaterial" />.
-        ///     每个牌组查看排序按钮背景图的可选运行时材质 provider。非 null 时优先于
-        ///     <see cref="SortButtonBackgroundMaterial" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional runtime callback for each sort button's background material. A non-null result
+        ///         takes precedence over <see cref="SortButtonBackgroundMaterial" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取每个排序按钮背景材质的可选运行时回调。回调返回非空值时优先于
+        ///         <see cref="SortButtonBackgroundMaterial" />。
+        ///     </para>
         /// </summary>
         public Func<CardPoolDeckViewStyleContext, Material?>? SortButtonBackgroundMaterialProvider { get; init; }
 
         /// <summary>
-        ///     Optional text color for the deck-view upgrade-preview toggle label.
-        ///     牌组查看升级预览开关标签的可选文字颜色。
+        ///     <para xml:lang="en">Gets the optional text color for the upgrade-preview toggle label.</para>
+        ///     <para xml:lang="zh-CN">获取升级预览开关标签的可选文字颜色。</para>
         /// </summary>
         public Color? UpgradePreviewLabelColor { get; init; }
 
         /// <summary>
-        ///     Optional outline color for the deck-view upgrade-preview toggle label.
-        ///     牌组查看升级预览开关标签的可选描边颜色。
+        ///     <para xml:lang="en">Gets the optional outline color for the upgrade-preview toggle label.</para>
+        ///     <para xml:lang="zh-CN">获取升级预览开关标签的可选描边颜色。</para>
         /// </summary>
         public Color? UpgradePreviewLabelOutlineColor { get; init; }
     }
 
     /// <summary>
-    ///     Optional asset profile for card-pool-level presentation.
-    ///     卡池级表现资源的可选 asset profile。
+    ///     <para xml:lang="en">Defines optional card-pool presentation assets.</para>
+    ///     <para xml:lang="zh-CN">定义可选的牌池表现资源。</para>
     /// </summary>
     /// <param name="DeckViewStyle">
-    ///     Optional style overrides for the vanilla deck-view screen.
-    ///     原版牌组查看界面的可选样式覆盖。
+    ///     <para xml:lang="en">The optional deck-view screen style.</para>
+    ///     <para xml:lang="zh-CN">可选的牌组查看界面样式。</para>
     /// </param>
     public sealed record CardPoolAssetProfile(CardPoolDeckViewStyle? DeckViewStyle = null)
     {
         /// <summary>
-        ///     Default empty profile (no card-pool-level presentation overrides).
-        ///     默认空 profile（无卡池级表现覆盖）。
+        ///     <para xml:lang="en">Gets an empty profile with no card-pool presentation overrides.</para>
+        ///     <para xml:lang="zh-CN">获取不包含牌池表现替换的空配置。</para>
         /// </summary>
         public static CardPoolAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Merge helpers for <see cref="CardPoolAssetProfile" />.
-    ///     <see cref="CardPoolAssetProfile" /> 的合并辅助工具。
+    ///     <para xml:lang="en">Provides merge operations for <see cref="CardPoolAssetProfile" />.</para>
+    ///     <para xml:lang="zh-CN">提供 <see cref="CardPoolAssetProfile" /> 的合并操作。</para>
     /// </summary>
     public static class CardPoolAssetProfiles
     {
         /// <summary>
-        ///     Per-field prefer-<paramref name="profile" /> / fallback-<paramref name="fallback" /> merge.
-        ///     逐字段合并：优先 <paramref name="profile" />，回退为 <paramref name="fallback" />。
+        ///     <para xml:lang="en">
+        ///         Merges profiles field by field, preferring non-null values from <paramref name="profile" /> and
+        ///         falling back to <paramref name="fallback" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         逐字段合并配置，优先使用 <paramref name="profile" /> 中的非空值，否则回退到
+        ///         <paramref name="fallback" />。
+        ///     </para>
         /// </summary>
         public static CardPoolAssetProfile Merge(CardPoolAssetProfile? fallback, CardPoolAssetProfile? profile)
         {
@@ -166,144 +198,160 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Visual layout family used by <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" />.
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" /> 使用的视觉布局族。
+    ///     <para xml:lang="en">Specifies the card layout used by <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" />.</para>
+    ///     <para xml:lang="zh-CN">指定 <see cref="MegaCrit.Sts2.Core.Nodes.Cards.NCard" /> 使用的卡牌布局。</para>
     /// </summary>
     public enum CardVisualStyle
     {
         /// <summary>
-        ///     Use the base game's rarity check: <see cref="CardRarity.Ancient" /> cards use ancient visuals.
-        ///     使用原版稀有度判定：<see cref="CardRarity.Ancient" /> 卡牌使用 ancient 视觉。
+        ///     <para xml:lang="en">
+        ///         Uses the base rarity check, under which <see cref="CardRarity.Ancient" /> cards use the Ancient
+        ///         layout.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用游戏本体的稀有度判定，其中 <see cref="CardRarity.Ancient" /> 卡牌使用先古卡牌布局。
+        ///     </para>
         /// </summary>
         Default,
 
         /// <summary>
-        ///     Force the standard card layout even when the card's rarity is <see cref="CardRarity.Ancient" />.
-        ///     即使卡牌稀有度为 <see cref="CardRarity.Ancient" />，也强制使用普通卡牌布局。
+        ///     <para xml:lang="en">
+        ///         Uses the standard card layout regardless of whether the rarity is
+        ///         <see cref="CardRarity.Ancient" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         无论稀有度是否为 <see cref="CardRarity.Ancient" />，都使用普通卡牌布局。
+        ///     </para>
         /// </summary>
         Standard,
 
         /// <summary>
-        ///     Force the ancient card layout without changing the card's gameplay rarity.
-        ///     不改变卡牌玩法稀有度，强制使用 ancient 卡牌布局。
+        ///     <para xml:lang="en">Uses the Ancient card layout without changing the card's gameplay rarity.</para>
+        ///     <para xml:lang="zh-CN">使用先古卡牌布局，但不改变卡牌在游戏逻辑中的稀有度。</para>
         /// </summary>
         Ancient,
     }
 
     /// <summary>
-    ///     Bundle of optional resource paths and materials for mod card portraits, frames, energy icon, overlay scene,
-    ///     and banner.
-    ///     Mod 卡牌肖像、边框、能量图标、覆盖场景和横幅的可选ResourcePath和材质集合。
+    ///     <para xml:lang="en">
+    ///         Defines optional paths and materials for a mod card's portrait, frame, energy icon, overlay, banner,
+    ///         and Ancient-layout elements.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义模组卡牌的肖像、边框、能量图标、覆盖层、横幅和先古卡牌布局元素所使用的可选路径与材质。
+    ///     </para>
     /// </summary>
     /// <param name="PortraitPath">
-    ///     Main card portrait image path.
-    ///     主卡牌肖像图片路径。
+    ///     <para xml:lang="en">The main card portrait texture path.</para>
+    ///     <para xml:lang="zh-CN">卡牌主肖像纹理路径。</para>
     /// </param>
     /// <param name="BetaPortraitPath">
-    ///     Alternate “beta” portrait path, if any.
-    ///     可选的替代 “beta” 肖像路径。
+    ///     <para xml:lang="en">The optional beta-art portrait texture path.</para>
+    ///     <para xml:lang="zh-CN">可选的测试版卡图肖像纹理路径。</para>
     /// </param>
     /// <param name="FramePath">
-    ///     Card frame texture path.
-    ///     卡牌边框贴图路径。
+    ///     <para xml:lang="en">The card-frame texture path.</para>
+    ///     <para xml:lang="zh-CN">卡牌边框纹理路径。</para>
     /// </param>
     /// <param name="PortraitBorderPath">
-    ///     Portrait border / frame accent texture.
-    ///     肖像边框 / 边框强调贴图。
+    ///     <para xml:lang="en">The portrait-border texture path.</para>
+    ///     <para xml:lang="zh-CN">肖像边框纹理路径。</para>
     /// </param>
     /// <param name="EnergyIconPath">
-    ///     Small energy icon texture for this card.
-    ///     此卡牌的小型能量图标贴图。
+    ///     <para xml:lang="en">The card's energy-icon texture path.</para>
+    ///     <para xml:lang="zh-CN">卡牌的能量图标纹理路径。</para>
     /// </param>
     /// <param name="FrameMaterialPath">
-    ///     Material resource path for the card frame.
-    ///     卡牌边框的材质ResourcePath。
+    ///     <para xml:lang="en">The card-frame material resource path.</para>
+    ///     <para xml:lang="zh-CN">卡牌边框材质资源路径。</para>
     /// </param>
     /// <param name="OverlayScenePath">
-    ///     Packed scene path for built-in card overlay UI.
-    ///     内置卡牌覆盖 UI 的 PackedScene 路径。
+    ///     <para xml:lang="en">The packed-scene path for the card overlay.</para>
+    ///     <para xml:lang="zh-CN">卡牌覆盖层的打包场景路径。</para>
     /// </param>
     /// <param name="BannerTexturePath">
-    ///     Texture used on run-summary or banner UI.
-    ///     运行总结或横幅 UI 使用的贴图。
+    ///     <para xml:lang="en">The card-banner texture path.</para>
+    ///     <para xml:lang="zh-CN">卡牌横幅纹理路径。</para>
     /// </param>
     /// <param name="BannerMaterialPath">
-    ///     Material path for banner rendering.
-    ///     横幅渲染使用的材质路径。
+    ///     <para xml:lang="en">The card-banner material resource path.</para>
+    ///     <para xml:lang="zh-CN">卡牌横幅材质资源路径。</para>
     /// </param>
     /// <param name="FrameMaterial">
-    ///     Direct card frame material override.
-    ///     直接覆盖卡牌边框材质。
+    ///     <para xml:lang="en">The direct card-frame material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的卡牌边框材质。</para>
     /// </param>
     /// <param name="BannerMaterial">
-    ///     Direct banner material override.
-    ///     直接覆盖横幅材质。
+    ///     <para xml:lang="en">The direct card-banner material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的卡牌横幅材质。</para>
     /// </param>
     /// <param name="PortraitMaterialPath">
-    ///     Material path for portrait rendering.
-    ///     卡图渲染使用的材质路径。
+    ///     <para xml:lang="en">The portrait material resource path.</para>
+    ///     <para xml:lang="zh-CN">肖像材质资源路径。</para>
     /// </param>
     /// <param name="PortraitMaterial">
-    ///     Direct portrait material override.
-    ///     直接覆盖卡图材质。
+    ///     <para xml:lang="en">The direct portrait material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的肖像材质。</para>
     /// </param>
     /// <param name="AncientBorderPath">
-    ///     Ancient card border texture path.
-    ///     Ancient 卡牌边框贴图路径。
+    ///     <para xml:lang="en">The Ancient card-border texture path.</para>
+    ///     <para xml:lang="zh-CN">先古卡牌边框纹理路径。</para>
     /// </param>
     /// <param name="AncientTextBgPath">
-    ///     Ancient card text background texture path.
-    ///     Ancient 卡牌文本背景贴图路径。
+    ///     <para xml:lang="en">The Ancient card text-background texture path.</para>
+    ///     <para xml:lang="zh-CN">先古卡牌文本背景纹理路径。</para>
     /// </param>
     /// <param name="PortraitBorderMaterialPath">
-    ///     Material path for portrait border rendering.
-    ///     肖像边框渲染使用的材质路径。
+    ///     <para xml:lang="en">The portrait-border material resource path.</para>
+    ///     <para xml:lang="zh-CN">肖像边框材质资源路径。</para>
     /// </param>
     /// <param name="PortraitBorderMaterial">
-    ///     Direct portrait border material override.
-    ///     直接覆盖肖像边框材质。
+    ///     <para xml:lang="en">The direct portrait-border material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的肖像边框材质。</para>
     /// </param>
     /// <param name="EnergyIconMaterialPath">
-    ///     Material path for energy icon rendering.
-    ///     能量图标渲染使用的材质路径。
+    ///     <para xml:lang="en">The energy-icon material resource path.</para>
+    ///     <para xml:lang="zh-CN">能量图标材质资源路径。</para>
     /// </param>
     /// <param name="EnergyIconMaterial">
-    ///     Direct energy icon material override.
-    ///     直接覆盖能量图标材质。
+    ///     <para xml:lang="en">The direct energy-icon material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的能量图标材质。</para>
     /// </param>
     /// <param name="AncientBorderMaterialPath">
-    ///     Material path for ancient card border rendering.
-    ///     Ancient 卡牌边框渲染使用的材质路径。
+    ///     <para xml:lang="en">The Ancient card-border material resource path.</para>
+    ///     <para xml:lang="zh-CN">先古卡牌边框材质资源路径。</para>
     /// </param>
     /// <param name="AncientBorderMaterial">
-    ///     Direct ancient card border material override.
-    ///     直接覆盖 Ancient 卡牌边框材质。
+    ///     <para xml:lang="en">The direct Ancient card-border material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的先古卡牌边框材质。</para>
     /// </param>
     /// <param name="AncientTextBgMaterialPath">
-    ///     Material path for ancient card text background rendering.
-    ///     Ancient 卡牌文本背景渲染使用的材质路径。
+    ///     <para xml:lang="en">The Ancient card text-background material resource path.</para>
+    ///     <para xml:lang="zh-CN">先古卡牌文本背景材质资源路径。</para>
     /// </param>
     /// <param name="AncientTextBgMaterial">
-    ///     Direct ancient card text background material override.
-    ///     直接覆盖 Ancient 卡牌文本背景材质。
+    ///     <para xml:lang="en">The direct Ancient card text-background material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的先古卡牌文本背景材质。</para>
     /// </param>
     /// <param name="AncientBannerPath">
-    ///     Ancient card title banner texture path.
-    ///     Ancient 卡牌卡名横幅贴图路径。
+    ///     <para xml:lang="en">The Ancient card title-banner texture path.</para>
+    ///     <para xml:lang="zh-CN">先古卡牌标题横幅纹理路径。</para>
     /// </param>
     /// <param name="AncientBannerMaterialPath">
-    ///     Material path for ancient card title banner rendering.
-    ///     Ancient 卡牌卡名横幅渲染使用的材质路径。
+    ///     <para xml:lang="en">The Ancient card title-banner material resource path.</para>
+    ///     <para xml:lang="zh-CN">先古卡牌标题横幅材质资源路径。</para>
     /// </param>
     /// <param name="AncientBannerMaterial">
-    ///     Direct ancient card title banner material override.
-    ///     直接覆盖 Ancient 卡牌卡名横幅材质。
+    ///     <para xml:lang="en">The direct Ancient card title-banner material override.</para>
+    ///     <para xml:lang="zh-CN">直接指定的先古卡牌标题横幅材质。</para>
     /// </param>
     /// <param name="VisualStyle">
-    ///     Optional visual layout override. <see cref="CardVisualStyle.Default" /> keeps the base-game
-    ///     <see cref="CardRarity.Ancient" /> check.
-    ///     可选视觉布局覆盖。<see cref="CardVisualStyle.Default" /> 保持原版
-    ///     <see cref="CardRarity.Ancient" /> 判定。
+    ///     <para xml:lang="en">
+    ///         The card-layout override. <see cref="CardVisualStyle.Default" /> preserves the base rarity check.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         卡牌布局替换。<see cref="CardVisualStyle.Default" /> 保留游戏本体的稀有度判定。
+    ///     </para>
     /// </param>
     public sealed record CardAssetProfile(
         string? PortraitPath = null,
@@ -335,8 +383,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         CardVisualStyle VisualStyle = CardVisualStyle.Default)
     {
         /// <summary>
-        ///     Backward-compatible constructor preserving the original parameter list.
-        ///     保留原始参数列表的向后兼容构造函数。
+        ///     <para xml:lang="en">Preserves the original constructor signature for binary compatibility.</para>
+        ///     <para xml:lang="zh-CN">保留原始构造函数签名以维持二进制兼容性。</para>
         /// </summary>
         public CardAssetProfile(
             string? PortraitPath,
@@ -363,8 +411,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Backward-compatible constructor preserving the direct material parameter list.
-        ///     保留直接材质参数列表的向后兼容构造函数。
+        ///     <para xml:lang="en">
+        ///         Preserves the constructor signature that introduced direct frame and banner materials.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         保留引入直接边框与横幅材质时的构造函数签名。
+        ///     </para>
         /// </summary>
         public CardAssetProfile(
             string? PortraitPath,
@@ -395,8 +447,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Backward-compatible constructor preserving the portrait material parameter list.
-        ///     保留卡图材质参数列表的向后兼容构造函数。
+        ///     <para xml:lang="en">
+        ///         Preserves the constructor signature that introduced portrait materials.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         保留引入肖像材质时的构造函数签名。
+        ///     </para>
         /// </summary>
         public CardAssetProfile(
             string? PortraitPath,
@@ -431,8 +487,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Backward-compatible constructor preserving the ancient texture/material parameter list.
-        ///     保留 ancient 贴图/材质参数列表的向后兼容构造函数。
+        ///     <para xml:lang="en">
+        ///         Preserves the constructor signature that introduced Ancient-layout textures and materials.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         保留引入先古卡牌布局纹理与材质时的构造函数签名。
+        ///     </para>
         /// </summary>
         public CardAssetProfile(
             string? PortraitPath,
@@ -487,8 +547,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Backward-compatible constructor preserving the ancient banner parameter list.
-        ///     保留 ancient 卡名横幅参数列表的向后兼容构造函数。
+        ///     <para xml:lang="en">
+        ///         Preserves the constructor signature that introduced the Ancient title banner.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         保留引入先古卡牌标题横幅时的构造函数签名。
+        ///     </para>
         /// </summary>
         public CardAssetProfile(
             string? PortraitPath,
@@ -549,27 +613,27 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Default empty profile (no custom paths or materials).
-        ///     默认空 profile（无自定义路径或材质）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths or materials.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径或材质的空配置。</para>
         /// </summary>
         public static CardAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional relic icon paths (atlas entries and large shop/detail image).
-    ///     可选遗物图标路径（atlas 条目和商店/详情大图）。
+    ///     <para xml:lang="en">Defines optional relic icon paths.</para>
+    ///     <para xml:lang="zh-CN">定义可选的遗物图标路径。</para>
     /// </summary>
     /// <param name="IconPath">
-    ///     Primary relic icon texture path.
-    ///     主要遗物图标贴图路径。
+    ///     <para xml:lang="en">The primary relic icon texture path.</para>
+    ///     <para xml:lang="zh-CN">遗物主图标纹理路径。</para>
     /// </param>
     /// <param name="IconOutlinePath">
-    ///     Outline / silhouette icon path.
-    ///     轮廓 / 剪影图标路径。
+    ///     <para xml:lang="en">The relic outline texture path.</para>
+    ///     <para xml:lang="zh-CN">遗物轮廓纹理路径。</para>
     /// </param>
     /// <param name="BigIconPath">
-    ///     Large relic art path.
-    ///     遗物大图路径。
+    ///     <para xml:lang="en">The large relic illustration path.</para>
+    ///     <para xml:lang="zh-CN">遗物大型插图路径。</para>
     /// </param>
     public sealed record RelicAssetProfile(
         string? IconPath = null,
@@ -577,169 +641,176 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? BigIconPath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static RelicAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional power icon paths (atlas and large illustration).
-    ///     可选能力图标路径（atlas 和大图）。
+    ///     <para xml:lang="en">Defines optional power icon paths.</para>
+    ///     <para xml:lang="zh-CN">定义可选的能力图标路径。</para>
     /// </summary>
     /// <param name="IconPath">
-    ///     Power icon texture path.
-    ///     能力图标贴图路径。
+    ///     <para xml:lang="en">The power icon texture path.</para>
+    ///     <para xml:lang="zh-CN">能力图标纹理路径。</para>
     /// </param>
     /// <param name="BigIconPath">
-    ///     Large power art path.
-    ///     能力大图路径。
+    ///     <para xml:lang="en">The large power illustration path.</para>
+    ///     <para xml:lang="zh-CN">能力大型插图路径。</para>
     /// </param>
     public sealed record PowerAssetProfile(
         string? IconPath = null,
         string? BigIconPath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static PowerAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional orb HUD icon and combat visuals scene paths.
-    ///     可选充能球 HUD 图标和战斗视觉场景路径。
+    ///     <para xml:lang="en">Defines optional orb icon and combat-visuals paths.</para>
+    ///     <para xml:lang="zh-CN">定义可选的充能球图标和战斗形象路径。</para>
     /// </summary>
     /// <param name="IconPath">
-    ///     Orb icon texture path.
-    ///     充能球图标贴图路径。
+    ///     <para xml:lang="en">The orb icon texture path.</para>
+    ///     <para xml:lang="zh-CN">充能球图标纹理路径。</para>
     /// </param>
     /// <param name="VisualsScenePath">
-    ///     Scene path for orb combat presentation.
-    ///     充能球战斗表现的场景路径。
+    ///     <para xml:lang="en">The orb combat-visuals scene path.</para>
+    ///     <para xml:lang="zh-CN">充能球战斗形象场景路径。</para>
     /// </param>
     public sealed record OrbAssetProfile(
         string? IconPath = null,
         string? VisualsScenePath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static OrbAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional potion bottle image and outline atlas paths.
-    ///     可选药水瓶图片和轮廓 atlas 路径。
+    ///     <para xml:lang="en">Defines optional potion image and outline paths.</para>
+    ///     <para xml:lang="zh-CN">定义可选的药水图像和轮廓路径。</para>
     /// </summary>
     /// <param name="ImagePath">
-    ///     Main potion image texture path.
-    ///     主要药水图片贴图路径。
+    ///     <para xml:lang="en">The potion image texture path.</para>
+    ///     <para xml:lang="zh-CN">药水图像纹理路径。</para>
     /// </param>
     /// <param name="OutlinePath">
-    ///     Outline texture path.
-    ///     轮廓贴图路径。
+    ///     <para xml:lang="en">The potion outline texture path.</para>
+    ///     <para xml:lang="zh-CN">药水轮廓纹理路径。</para>
     /// </param>
     public sealed record PotionAssetProfile(
         string? ImagePath = null,
         string? OutlinePath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static PotionAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional affliction card overlay scene path.
-    ///     可选苦痛卡牌覆盖场景路径。
+    ///     <para xml:lang="en">Defines an optional affliction card-overlay scene path.</para>
+    ///     <para xml:lang="zh-CN">定义可选的侵蚀卡牌覆盖层场景路径。</para>
     /// </summary>
     /// <param name="OverlayScenePath">
-    ///     Packed scene path for the affliction overlay.
-    ///     苦痛覆盖层的 PackedScene 路径。
+    ///     <para xml:lang="en">The affliction overlay packed-scene path.</para>
+    ///     <para xml:lang="zh-CN">侵蚀覆盖层的打包场景路径。</para>
     /// </param>
     public sealed record AfflictionAssetProfile(
         string? OverlayScenePath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static AfflictionAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional enchantment icon texture path.
-    ///     可选附魔图标贴图路径。
+    ///     <para xml:lang="en">Defines an optional enchantment icon path.</para>
+    ///     <para xml:lang="zh-CN">定义可选的附魔图标路径。</para>
     /// </summary>
     /// <param name="IconPath">
-    ///     Enchantment icon image path.
-    ///     附魔图标图片路径。
+    ///     <para xml:lang="en">The enchantment icon texture path.</para>
+    ///     <para xml:lang="zh-CN">附魔图标纹理路径。</para>
     /// </param>
     public sealed record EnchantmentAssetProfile(
         string? IconPath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static EnchantmentAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional run modifier icon texture path.
-    ///     可选运行修饰符图标贴图路径。
+    ///     <para xml:lang="en">Defines an optional run-modifier icon path.</para>
+    ///     <para xml:lang="zh-CN">定义可选的一局游戏修正项图标路径。</para>
     /// </summary>
     /// <param name="IconPath">
-    ///     Modifier icon image path.
-    ///     修饰符图标图片路径。
+    ///     <para xml:lang="en">The modifier icon texture path.</para>
+    ///     <para xml:lang="zh-CN">修正项图标纹理路径。</para>
     /// </param>
     public sealed record ModifierAssetProfile(
         string? IconPath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static ModifierAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional act-level background, map layer, rest site, and treasure chest Spine resource paths.
-    ///     可选章节级背景、地图图层、休息点和宝箱 Spine 资源路径。
+    ///     <para xml:lang="en">
+    ///         Defines optional act background, map, rest-site, and treasure-chest assets.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义可选的章节背景、地图、休息处和宝箱资源。
+    ///     </para>
     /// </summary>
     /// <param name="BackgroundScenePath">
-    ///     Main act background scene.
-    ///     act 主背景场景。
+    ///     <para xml:lang="en">The main act-background scene path.</para>
+    ///     <para xml:lang="zh-CN">章节主背景场景路径。</para>
     /// </param>
     /// <param name="RestSiteBackgroundPath">
-    ///     Rest site background scene.
-    ///     休息点背景场景。
+    ///     <para xml:lang="en">The rest-site background scene path.</para>
+    ///     <para xml:lang="zh-CN">休息处背景场景路径。</para>
     /// </param>
     /// <param name="MapTopBgPath">
-    ///     Top layer of the act map background image.
-    ///     act 地图背景图片的顶层。
+    ///     <para xml:lang="en">The top act-map background texture path.</para>
+    ///     <para xml:lang="zh-CN">章节地图顶层背景纹理路径。</para>
     /// </param>
     /// <param name="MapMidBgPath">
-    ///     Middle layer of the act map background image.
-    ///     act 地图背景图片的中层。
+    ///     <para xml:lang="en">The middle act-map background texture path.</para>
+    ///     <para xml:lang="zh-CN">章节地图中层背景纹理路径。</para>
     /// </param>
     /// <param name="MapBotBgPath">
-    ///     Bottom layer of the act map background image.
-    ///     act 地图背景图片的底层。
+    ///     <para xml:lang="en">The bottom act-map background texture path.</para>
+    ///     <para xml:lang="zh-CN">章节地图底层背景纹理路径。</para>
     /// </param>
     /// <param name="ChestSpineResourcePath">
-    ///     Treasure room chest Spine data resource path.
-    ///     宝藏房宝箱 Spine 数据ResourcePath。
+    ///     <para xml:lang="en">The treasure-room chest Spine resource path.</para>
+    ///     <para xml:lang="zh-CN">宝藏房宝箱的 Spine 资源路径。</para>
     /// </param>
     /// <param name="BackgroundLayersDirectoryPath">
-    ///     Optional <c>res://</c> directory scanned like vanilla <c>scenes/backgrounds/&lt;act&gt;/layers</c> (files must
-    ///     contain
-    ///     <c>_bg_</c> or <c>_fg_</c> in the name).
-    ///     可选 <c>res://</c> 目录，扫描方式与原版 <c>scenes/backgrounds/&lt;act&gt;/layers</c> 相同（文件名必须包含
-    ///     <c>_bg_</c> 或 <c>_fg_</c>）。
+    ///     <para xml:lang="en">
+    ///         The optional <c>res://</c> directory scanned using the base game's
+    ///         <c>scenes/backgrounds/&lt;act&gt;/layers</c> naming rules.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的 <c>res://</c> 目录，按照游戏本体 <c>scenes/backgrounds/&lt;act&gt;/layers</c>
+    ///         的命名规则扫描。
+    ///     </para>
     /// </param>
     public sealed record ActAssetProfile(
         string? BackgroundScenePath = null,
@@ -751,71 +822,73 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? BackgroundLayersDirectoryPath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static ActAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional creature visuals scene path for <see cref="MegaCrit.Sts2.Core.Models.MonsterModel" /> (<c>VisualsPath</c>
-    ///     ).
-    ///     <see cref="MegaCrit.Sts2.Core.Models.MonsterModel" /> 的可选生物视觉场景路径（<c>VisualsPath</c>）。
+    ///     <para xml:lang="en">
+    ///         Defines an optional creature-visuals scene path for
+    ///         <see cref="MegaCrit.Sts2.Core.Models.MonsterModel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义 <see cref="MegaCrit.Sts2.Core.Models.MonsterModel" /> 的可选生物形象场景路径。
+    ///     </para>
     /// </summary>
     /// <param name="VisualsScenePath">
-    ///     Packed scene root under <c>creature_visuals/</c> convention.
-    ///     遵循 <c>creature_visuals/</c> 约定的 PackedScene 根路径。
+    ///     <para xml:lang="en">The creature-visuals packed-scene path.</para>
+    ///     <para xml:lang="zh-CN">生物形象打包场景路径。</para>
     /// </param>
     public sealed record MonsterAssetProfile(string? VisualsScenePath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static MonsterAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional encounter combat scene, background (main scene + parallax layers dir), boss map node spine, and extra
-    ///     preload paths (vanilla <c>EncounterModel</c> pipeline).
-    ///     可选遭遇战斗场景、背景（主场景 + 视差图层目录）、Boss 地图节点 Spine，以及额外预加载路径
-    ///     （原版 <c>EncounterModel</c> 管线）。
+    ///     <para xml:lang="en">
+    ///         Defines optional encounter-scene, combat-background, boss-map-node, preload, and run-history assets.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义可选的遭遇场景、战斗背景、首领地图节点、预加载和游戏历史资源。
+    ///     </para>
     /// </summary>
     /// <param name="EncounterScenePath">
-    ///     Packed scene for <c>EncounterModel.CreateScene</c> when
-    ///     <see cref="EncounterModel.HasScene" /> is used.
-    ///     使用 <see cref="EncounterModel.HasScene" /> 时供 <c>EncounterModel.CreateScene</c> 使用的 PackedScene。
+    ///     <para xml:lang="en">The packed scene returned by <c>EncounterModel.CreateScene</c>.</para>
+    ///     <para xml:lang="zh-CN"><c>EncounterModel.CreateScene</c> 返回的打包场景路径。</para>
     /// </param>
     /// <param name="BackgroundScenePath">
-    ///     Main combat background scene when using encounter-specific backgrounds.
-    ///     使用遭遇专属背景时的主战斗背景场景。
+    ///     <para xml:lang="en">The encounter-specific combat-background scene path.</para>
+    ///     <para xml:lang="zh-CN">遭遇专属战斗背景场景路径。</para>
     /// </param>
     /// <param name="BackgroundLayersDirectoryPath">
-    ///     <c>res://</c> layers directory (<c>_bg_</c> / <c>_fg_</c> file names).
-    ///     <c>res://</c> 图层目录（文件名包含 <c>_bg_</c> / <c>_fg_</c>）。
+    ///     <para xml:lang="en">The <c>res://</c> directory containing <c>_bg_</c> and <c>_fg_</c> layers.</para>
+    ///     <para xml:lang="zh-CN">包含 <c>_bg_</c> 和 <c>_fg_</c> 图层的 <c>res://</c> 目录。</para>
     /// </param>
     /// <param name="BossNodeSpinePath">
-    ///     Spine skeleton resource for boss/elite map node (see <c>EncounterModel.BossNodePath</c>
-    ///     ).
-    ///     Boss / 精英地图节点的 Spine skeleton 资源（见 <c>EncounterModel.BossNodePath</c>）。
+    ///     <para xml:lang="en">The Spine resource path for the boss or elite map node.</para>
+    ///     <para xml:lang="zh-CN">首领或精英地图节点的 Spine 资源路径。</para>
     /// </param>
     /// <param name="ExtraAssetPaths">
-    ///     Additional paths merged into <c>GetAssetPaths</c> preload.
-    ///     合并进 <c>GetAssetPaths</c> 预加载的额外路径。
+    ///     <para xml:lang="en">Additional paths included in <c>GetAssetPaths</c>.</para>
+    ///     <para xml:lang="zh-CN">额外加入 <c>GetAssetPaths</c> 的路径。</para>
     /// </param>
     /// <param name="MapNodeAssetPaths">
-    ///     When non-empty, replaces <c>MapNodeAssetPaths</c> enumeration for this encounter.
-    ///     非空时，替换此遭遇的 <c>MapNodeAssetPaths</c> 枚举结果。
+    ///     <para xml:lang="en">The optional replacement for this encounter's <c>MapNodeAssetPaths</c>.</para>
+    ///     <para xml:lang="zh-CN">此遭遇的可选 <c>MapNodeAssetPaths</c> 替换值。</para>
     /// </param>
     /// <param name="RunHistoryIconPath">
-    ///     Full <c>res://images/…</c> path for run-history / top-bar main icon (see
-    ///     <see cref="ImageHelper.GetImagePath" />).
-    ///     运行历史 / 顶栏主图标的完整 <c>res://images/…</c> 路径（见 <see cref="ImageHelper.GetImagePath" />）。
+    ///     <para xml:lang="en">The game-history and top-bar main icon texture path.</para>
+    ///     <para xml:lang="zh-CN">游戏历史和顶部栏主图标纹理路径。</para>
     /// </param>
     /// <param name="RunHistoryIconOutlinePath">
-    ///     Outline texture path, same conventions as
-    ///     <paramref name="RunHistoryIconPath" />.
-    ///     轮廓贴图路径，约定与 <paramref name="RunHistoryIconPath" /> 相同。
+    ///     <para xml:lang="en">The game-history icon outline texture path.</para>
+    ///     <para xml:lang="zh-CN">游戏历史图标轮廓纹理路径。</para>
     /// </param>
     public sealed record EncounterAssetProfile(
         string? EncounterScenePath = null,
@@ -828,31 +901,31 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? RunHistoryIconOutlinePath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static EncounterAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional event layout scene, portrait, background scene, and VFX scene paths (vanilla <c>EventModel</c> pipeline).
-    ///     可选事件布局场景、肖像、背景场景和 VFX 场景路径（原版 <c>EventModel</c> 管线）。
+    ///     <para xml:lang="en">Defines optional event layout, portrait, background, and VFX scene paths.</para>
+    ///     <para xml:lang="zh-CN">定义可选的事件布局、肖像、背景和特效场景路径。</para>
     /// </summary>
     /// <param name="LayoutScenePath">
-    ///     Packed scene for the event layout root (<c>CreateScene</c>).
-    ///     事件布局根节点的 PackedScene（<c>CreateScene</c>）。
+    ///     <para xml:lang="en">The packed-scene path for the event layout root.</para>
+    ///     <para xml:lang="zh-CN">事件布局根节点的打包场景路径。</para>
     /// </param>
     /// <param name="InitialPortraitPath">
-    ///     Texture path for the initial portrait (<c>CreateInitialPortrait</c>).
-    ///     初始肖像的贴图路径（<c>CreateInitialPortrait</c>）。
+    ///     <para xml:lang="en">The initial portrait texture path.</para>
+    ///     <para xml:lang="zh-CN">初始肖像纹理路径。</para>
     /// </param>
     /// <param name="BackgroundScenePath">
-    ///     Packed scene path for the background (<c>CreateBackgroundScene</c>).
-    ///     背景的 PackedScene 路径（<c>CreateBackgroundScene</c>）。
+    ///     <para xml:lang="en">The background packed-scene path.</para>
+    ///     <para xml:lang="zh-CN">背景打包场景路径。</para>
     /// </param>
     /// <param name="VfxScenePath">
-    ///     Packed scene path for optional event VFX (<c>CreateVfx</c>).
-    ///     可选事件 VFX 的 PackedScene 路径（<c>CreateVfx</c>）。
+    ///     <para xml:lang="en">The optional event-VFX packed-scene path.</para>
+    ///     <para xml:lang="zh-CN">可选的事件特效打包场景路径。</para>
     /// </param>
     public sealed record EventAssetProfile(
         string? LayoutScenePath = null,
@@ -861,39 +934,43 @@ namespace STS2RitsuLib.Scaffolding.Content
         string? VfxScenePath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static EventAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional ancient map node and run-history icon paths (vanilla <c>AncientEventModel</c> presentation), plus
-    ///     optional procedural stage layers (background / foreground cues) for the ancient event backdrop.
-    ///     可选远古事件地图节点和运行历史图标路径（原版 <c>AncientEventModel</c> 表现），以及用于远古事件背景的
-    ///     可选程序化舞台图层（背景 / 前景 cue）。
+    ///     <para xml:lang="en">
+    ///         Defines optional map, game-history, and procedural stage assets for an Ancient event.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义先古之民事件可选的地图、游戏历史和程序化舞台资源。
+    ///     </para>
     /// </summary>
     /// <param name="MapIconPath">
-    ///     Compressed texture for map node icon.
-    ///     地图节点图标的压缩贴图。
+    ///     <para xml:lang="en">The map-node icon texture path.</para>
+    ///     <para xml:lang="zh-CN">地图节点图标纹理路径。</para>
     /// </param>
     /// <param name="MapIconOutlinePath">
-    ///     Compressed texture for map node outline.
-    ///     地图节点轮廓的压缩贴图。
+    ///     <para xml:lang="en">The map-node outline texture path.</para>
+    ///     <para xml:lang="zh-CN">地图节点轮廓纹理路径。</para>
     /// </param>
     /// <param name="RunHistoryIconPath">
-    ///     Run history main icon texture.
-    ///     运行历史主图标贴图。
+    ///     <para xml:lang="en">The game-history main icon texture path.</para>
+    ///     <para xml:lang="zh-CN">游戏历史主图标纹理路径。</para>
     /// </param>
     /// <param name="RunHistoryIconOutlinePath">
-    ///     Run history outline texture.
-    ///     运行历史轮廓贴图。
+    ///     <para xml:lang="en">The game-history icon outline texture path.</para>
+    ///     <para xml:lang="zh-CN">游戏历史图标轮廓纹理路径。</para>
     /// </param>
     /// <param name="StageProcedural">
-    ///     When set, replaces the packed background scene in <c>NAncientEventLayout</c> with in-memory layered sprites and
-    ///     cue playback (see <see cref="AncientEventStageProceduralVisualSet" />).
-    ///     设置后，用内存中的分层 sprite 和 cue 播放替换 <c>NAncientEventLayout</c> 中的 packed 背景场景
-    ///     （见 <see cref="AncientEventStageProceduralVisualSet" />）。
+    ///     <para xml:lang="en">
+    ///         The optional procedural stage that replaces the packed background in <c>NAncientEventLayout</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         用于替换 <c>NAncientEventLayout</c> 中打包背景的可选程序化舞台。
+    ///     </para>
     /// </param>
     public sealed record AncientEventPresentationAssetProfile(
         string? MapIconPath = null,
@@ -903,69 +980,75 @@ namespace STS2RitsuLib.Scaffolding.Content
         AncientEventStageProceduralVisualSet? StageProcedural = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths or procedural stage.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径或程序化舞台的空配置。</para>
         /// </summary>
         public static AncientEventPresentationAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional rest site option icon path for mod-added campfire buttons.
-    ///     Mod 添加的营火按钮可选休息点选项图标路径。
+    ///     <para xml:lang="en">Defines an optional icon path for a mod rest-site option.</para>
+    ///     <para xml:lang="zh-CN">定义模组休息处选项的可选图标路径。</para>
     /// </summary>
     /// <param name="IconPath">
-    ///     Custom icon texture path (<c>res://</c> or PCK-relative).
-    ///     自定义图标贴图路径（<c>res://</c> 或相对 PCK）。
+    ///     <para xml:lang="en">The custom icon texture path.</para>
+    ///     <para xml:lang="zh-CN">自定义图标纹理路径。</para>
     /// </param>
     public sealed record RestSiteOptionAssetProfile(
         string? IconPath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static RestSiteOptionAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Optional timeline epoch portrait paths.
-    ///     可选时间线纪元肖像路径。
+    ///     <para xml:lang="en">Defines optional timeline epoch portrait paths.</para>
+    ///     <para xml:lang="zh-CN">定义可选的时间线纪元肖像路径。</para>
     /// </summary>
     /// <param name="PackedPortraitPath">
-    ///     Atlas sprite resource path for the small timeline portrait.
-    ///     小型时间线肖像的 atlas sprite 资源路径。
+    ///     <para xml:lang="en">The atlas-sprite resource path for the small timeline portrait.</para>
+    ///     <para xml:lang="zh-CN">时间线小型肖像的图集精灵资源路径。</para>
     /// </param>
     /// <param name="BigPortraitPath">
-    ///     Large epoch portrait texture path.
-    ///     大型纪元肖像贴图路径。
+    ///     <para xml:lang="en">The large epoch portrait texture path.</para>
+    ///     <para xml:lang="zh-CN">纪元大型肖像纹理路径。</para>
     /// </param>
     public sealed record EpochAssetProfile(
         string? PackedPortraitPath = null,
         string? BigPortraitPath = null)
     {
         /// <summary>
-        ///     Default empty profile (no custom paths).
-        ///     默认空 profile（无自定义路径）。
+        ///     <para xml:lang="en">Gets an empty profile with no custom paths.</para>
+        ///     <para xml:lang="zh-CN">获取不包含自定义路径的空配置。</para>
         /// </summary>
         public static EpochAssetProfile Empty { get; } = new();
     }
 
     /// <summary>
-    ///     Factory methods that build <strong>base-game</strong> (<c>res://</c>) asset paths from vanilla folder and atlas
-    ///     entry names. They do not infer paths from mod model ids — mod-only art uses explicit profile fields or your PCK
-    ///     layout. Act borrowing mirrors <see cref="Characters.CharacterAssetProfiles.FromCharacterId" /> (vanilla id in,
-    ///     vanilla paths out).
-    ///     根据原版文件夹名和 atlas 条目名构建 <strong>基础游戏</strong>（<c>res://</c>）资源路径的工厂方法。
-    ///     它们不会从 mod 模型 id 推断路径；mod 专属美术应使用显式 profile 字段或你的 PCK 布局。
-    ///     借用章节美术的行为与 <see cref="Characters.CharacterAssetProfiles.FromCharacterId" /> 一致
-    ///     （输入原版 id，输出原版路径）。
+    ///     <para xml:lang="en">
+    ///         Provides factories that build base-game <c>res://</c> asset paths from base-game folder and atlas-entry
+    ///         names. These methods do not infer mod asset paths from model IDs; mod-owned assets should be supplied
+    ///         explicitly through profiles.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供根据游戏本体的文件夹名称和图集条目名称创建 <c>res://</c> 资源路径的工厂。这些方法不会根据
+    ///         模型 ID 推断模组资源路径；模组自有资源应通过配置显式提供。
+    ///     </para>
     /// </summary>
     public static class ContentAssetProfiles
     {
         /// <summary>
-        ///     Builds default portrait and overlay paths for a card in <paramref name="poolEntry" /> /
-        ///     <paramref name="cardEntry" />.
-        ///     为 <paramref name="poolEntry" /> / <paramref name="cardEntry" /> 中的卡牌构建默认肖像和覆盖层路径。
+        ///     <para xml:lang="en">
+        ///         Builds base-game-style portrait, beta-art, and overlay paths for
+        ///         <paramref name="cardEntry" /> in <paramref name="poolEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="poolEntry" /> 中的 <paramref name="cardEntry" /> 创建游戏本体风格的肖像、
+        ///         测试版卡图和覆盖层路径。
+        ///     </para>
         /// </summary>
         public static CardAssetProfile Card(string poolEntry, string cardEntry)
         {
@@ -981,9 +1064,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default portrait, overlay, ancient border, ancient title banner, and ancient text background paths
-        ///     for an ancient card.
-        ///     为 ancient 卡牌构建默认肖像、覆盖层、ancient 边框、ancient 卡名横幅和 ancient 文本背景路径。
+        ///     <para xml:lang="en">
+        ///         Builds base-game-style portrait, overlay, border, title-banner, and text-background paths for an
+        ///         Ancient card.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为先古卡牌创建游戏本体风格的肖像、覆盖层、边框、标题横幅和文本背景路径。
+        ///     </para>
         /// </summary>
         public static CardAssetProfile AncientCard(string poolEntry, string cardEntry, CardType cardType)
         {
@@ -1006,8 +1093,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default relic icon paths for <paramref name="relicEntry" />.
-        ///     为 <paramref name="relicEntry" /> 构建默认遗物图标路径。
+        ///     <para xml:lang="en">Builds base-game-style relic icon paths for <paramref name="relicEntry" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="relicEntry" /> 创建游戏本体风格的遗物图标路径。</para>
         /// </summary>
         public static RelicAssetProfile Relic(string relicEntry)
         {
@@ -1021,8 +1108,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default power icon paths for <paramref name="powerEntry" />.
-        ///     为 <paramref name="powerEntry" /> 构建默认能力图标路径。
+        ///     <para xml:lang="en">Builds base-game-style power icon paths for <paramref name="powerEntry" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="powerEntry" /> 创建游戏本体风格的能力图标路径。</para>
         /// </summary>
         public static PowerAssetProfile Power(string powerEntry)
         {
@@ -1035,8 +1122,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default orb icon and visuals scene paths for <paramref name="orbEntry" />.
-        ///     为 <paramref name="orbEntry" /> 构建默认充能球图标和视觉场景路径。
+        ///     <para xml:lang="en">
+        ///         Builds base-game-style orb icon and combat-visuals paths for <paramref name="orbEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="orbEntry" /> 创建游戏本体风格的充能球图标和战斗形象路径。
+        ///     </para>
         /// </summary>
         public static OrbAssetProfile Orb(string orbEntry)
         {
@@ -1049,8 +1140,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default potion image paths for <paramref name="potionEntry" />.
-        ///     为 <paramref name="potionEntry" /> 构建默认药水图片路径。
+        ///     <para xml:lang="en">Builds base-game-style potion image paths for <paramref name="potionEntry" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="potionEntry" /> 创建游戏本体风格的药水图像路径。</para>
         /// </summary>
         public static PotionAssetProfile Potion(string potionEntry)
         {
@@ -1063,8 +1154,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default affliction overlay scene path for <paramref name="afflictionEntry" />.
-        ///     为 <paramref name="afflictionEntry" /> 构建默认苦痛覆盖场景路径。
+        ///     <para xml:lang="en">
+        ///         Builds a base-game-style affliction overlay path for <paramref name="afflictionEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="afflictionEntry" /> 创建原版游戏风格的侵蚀覆盖层路径。
+        ///     </para>
         /// </summary>
         public static AfflictionAssetProfile Affliction(string afflictionEntry)
         {
@@ -1076,8 +1171,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default enchantment icon path for <paramref name="enchantmentEntry" />.
-        ///     为 <paramref name="enchantmentEntry" /> 构建默认附魔图标路径。
+        ///     <para xml:lang="en">
+        ///         Builds a base-game-style enchantment icon path for <paramref name="enchantmentEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="enchantmentEntry" /> 创建游戏本体风格的附魔图标路径。
+        ///     </para>
         /// </summary>
         public static EnchantmentAssetProfile Enchantment(string enchantmentEntry)
         {
@@ -1089,8 +1188,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default modifier icon path for <paramref name="modifierEntry" />.
-        ///     为 <paramref name="modifierEntry" /> 构建默认修饰符图标路径。
+        ///     <para xml:lang="en">
+        ///         Builds a base-game-style run-modifier icon path for <paramref name="modifierEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="modifierEntry" /> 创建游戏本体风格的一局游戏修正项图标路径。
+        ///     </para>
         /// </summary>
         public static ModifierAssetProfile Modifier(string modifierEntry)
         {
@@ -1102,12 +1205,15 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds a full <see cref="ActAssetProfile" /> for a <strong>vanilla</strong> act folder name (e.g. <c>hive</c>,
-        ///     <c>ship</c>): main background scene, <c>scenes/backgrounds/&lt;id&gt;/layers</c>, map parallax images, rest
-        ///     site, chest Spine. Pass the base-game directory name, not a mod <see cref="ActModel" /> <c>Id.Entry</c>.
-        ///     为 <strong>原版</strong>章节文件夹名（例如 <c>hive</c>、
-        ///     <c>ship</c>）构建完整的 <see cref="ActAssetProfile" />：主背景场景、<c>scenes/backgrounds/&lt;id&gt;/layers</c>、地图视差图片、
-        ///     休息点和宝箱 Spine。请传入基础游戏目录名，而不是 mod <see cref="ActModel" /> 的 <c>Id.Entry</c>。
+        ///     <para xml:lang="en">
+        ///         Builds a complete <see cref="ActAssetProfile" /> for a base-game act folder, including the main
+        ///         background, layer directory, map textures, rest site, and chest Spine resource. The argument is a
+        ///         base-game folder name such as <c>hive</c>, not a mod model ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为游戏本体的章节文件夹创建完整 <see cref="ActAssetProfile" />，包括主背景、图层目录、地图纹理、
+        ///         休息处和宝箱 Spine 资源。参数应为 <c>hive</c> 等游戏本体文件夹名称，而不是模组模型 ID。
+        ///     </para>
         /// </summary>
         public static ActAssetProfile FromVanillaActId(string vanillaActId)
         {
@@ -1125,8 +1231,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Short alias for <see cref="FromVanillaActId" />.
-        ///     <see cref="FromVanillaActId" /> 的短别名。
+        ///     <para xml:lang="en">Calls <see cref="FromVanillaActId" />.</para>
+        ///     <para xml:lang="zh-CN">调用 <see cref="FromVanillaActId" />。</para>
         /// </summary>
         public static ActAssetProfile Act(string actEntry)
         {
@@ -1134,12 +1240,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Base-game combat background layers directory for <paramref name="vanillaActFolderName" />
-        ///     (<c>res://scenes/backgrounds/&lt;act&gt;/layers</c>).
+        ///     <para xml:lang="en">
+        ///         Builds the base-game combat-background layer directory for
+        ///         <paramref name="vanillaActFolderName" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="vanillaActFolderName" /> 创建游戏本体的战斗背景图层目录。
+        ///     </para>
         /// </summary>
         /// <param name="vanillaActFolderName">
-        ///     Vanilla act directory name (e.g. <c>hive</c>), not a mod act model id.
-        ///     原版章节目录名（例如 <c>hive</c>），不是 mod 章节模型 id。
+        ///     <para xml:lang="en">The base-game act folder name, such as <c>hive</c>.</para>
+        ///     <para xml:lang="zh-CN">游戏本体的章节文件夹名称，例如 <c>hive</c>。</para>
         /// </param>
         public static string ActVanillaBackgroundLayersDirectory(string vanillaActFolderName)
         {
@@ -1148,24 +1259,37 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default encounter asset paths for <paramref name="encounterEntry" /> (vanilla <c>EncounterModel</c> layout),
-        ///     including concrete run-history texture paths under <c>ui/run_history/</c> (same files vanilla uses for that slug).
-        ///     为 <paramref name="encounterEntry" /> 构建默认遭遇ResourcePath（原版 <c>EncounterModel</c> 布局），包括
-        ///     <c>ui/run_history/</c> 下的具体运行历史贴图路径（与原版该 slug 使用的文件相同）。
+        ///     <para xml:lang="en">
+        ///         Builds base-game-style scene, background, boss-node, and game-history paths for
+        ///         <paramref name="encounterEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="encounterEntry" /> 创建游戏本体风格的场景、背景、首领节点和游戏历史路径。
+        ///     </para>
         /// </summary>
         /// <param name="encounterEntry">
-        ///     Vanilla encounter folder / animation slug (normalized to lowercase).
-        ///     原版遭遇文件夹 / 动画 slug（会规范化为小写）。
+        ///     <para xml:lang="en">The base-game encounter folder and animation slug.</para>
+        ///     <para xml:lang="zh-CN">游戏本体的遭遇文件夹和动画短名称。</para>
         /// </param>
         /// <param name="runHistoryIconPath">
-        ///     When non-null, overrides the main run-history icon path; otherwise
-        ///     <see cref="ImageHelper.GetImagePath" /><c>($\"ui/run_history/{normalized}.png\")</c>.
-        ///     非 null 时覆盖运行历史主图标路径；否则使用
+        ///     <para xml:lang="en">
+        ///         An optional main game-history icon path. When <see langword="null" />, the path is derived from
+        ///         <paramref name="encounterEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的游戏历史主图标路径。值为 <see langword="null" /> 时，根据
+        ///         <paramref name="encounterEntry" /> 推导路径。
+        ///     </para>
         /// </param>
         /// <param name="runHistoryIconOutlinePath">
-        ///     When non-null, overrides the outline path; otherwise
-        ///     <see cref="ImageHelper.GetImagePath" /><c>($\"ui/run_history/{normalized}_outline.png\")</c>.
-        ///     非 null 时覆盖轮廓路径；否则使用
+        ///     <para xml:lang="en">
+        ///         An optional game-history outline path. When <see langword="null" />, the path is derived from
+        ///         <paramref name="encounterEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的游戏历史轮廓路径。值为 <see langword="null" /> 时，根据
+        ///         <paramref name="encounterEntry" /> 推导路径。
+        ///     </para>
         /// </param>
         public static EncounterAssetProfile Encounter(string encounterEntry,
             string? runHistoryIconPath = null,
@@ -1187,8 +1311,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Vanilla per-encounter combat layers directory (<c>res://scenes/backgrounds/&lt;encounter&gt;/layers</c>).
-        ///     原版逐遭遇战斗图层目录（<c>res://scenes/backgrounds/&lt;encounter&gt;/layers</c>）。
+        ///     <para xml:lang="en">
+        ///         Builds the base-game combat-background layer directory for an encounter.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建游戏本体的遭遇战斗背景图层目录。
+        ///     </para>
         /// </summary>
         public static string EncounterVanillaBackgroundLayersDirectory(string encounterEntry)
         {
@@ -1197,8 +1325,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default creature visuals scene path for <paramref name="monsterEntry" />.
-        ///     为 <paramref name="monsterEntry" /> 构建默认生物视觉场景路径。
+        ///     <para xml:lang="en">
+        ///         Builds a base-game-style creature-visuals path for <paramref name="monsterEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="monsterEntry" /> 创建游戏本体风格的生物形象路径。
+        ///     </para>
         /// </summary>
         public static MonsterAssetProfile Monster(string monsterEntry)
         {
@@ -1207,8 +1339,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default event asset paths for <paramref name="eventEntry" /> (default / combat style events).
-        ///     为 <paramref name="eventEntry" /> 构建默认事件ResourcePath（默认 / 战斗风格事件）。
+        ///     <para xml:lang="en">
+        ///         Builds base-game-style portrait, background, and VFX paths for a default-layout or combat-style
+        ///         event.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为使用默认布局或战斗风格的事件创建游戏本体风格的肖像、背景和特效路径。
+        ///     </para>
         /// </summary>
         public static EventAssetProfile Event(string eventEntry)
         {
@@ -1222,8 +1359,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds the vanilla custom-layout scene path for <paramref name="eventEntry" /> (custom event layout type).
-        ///     为 <paramref name="eventEntry" /> 构建原版自定义布局场景路径（自定义事件布局类型）。
+        ///     <para xml:lang="en">
+        ///         Builds the base-game custom-layout scene path for <paramref name="eventEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="eventEntry" /> 创建游戏本体的自定义布局场景路径。
+        ///     </para>
         /// </summary>
         public static string EventCustomLayoutScenePath(string eventEntry)
         {
@@ -1232,8 +1373,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default ancient presentation paths for <paramref name="ancientEntry" />.
-        ///     为 <paramref name="ancientEntry" /> 构建默认 ancient 表现路径。
+        ///     <para xml:lang="en">
+        ///         Builds base-game-style map and game-history paths for <paramref name="ancientEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="ancientEntry" /> 创建游戏本体风格的先古之民地图和游戏历史路径。
+        ///     </para>
         /// </summary>
         public static AncientEventPresentationAssetProfile AncientPresentation(string ancientEntry)
         {
@@ -1248,8 +1393,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds default epoch portrait paths for <paramref name="epochId" /> (matches <c>EpochModel</c> conventions).
-        ///     为 <paramref name="epochId" /> 构建默认纪元肖像路径（匹配 <c>EpochModel</c> 约定）。
+        ///     <para xml:lang="en">
+        ///         Builds base-game-style timeline portrait paths for <paramref name="epochId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="epochId" /> 创建游戏本体风格的时间线纪元肖像路径。
+        ///     </para>
         /// </summary>
         public static EpochAssetProfile Epoch(string epochId)
         {

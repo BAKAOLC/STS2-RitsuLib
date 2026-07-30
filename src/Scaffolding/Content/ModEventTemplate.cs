@@ -7,24 +7,25 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Base <see cref="EventModel" /> for mods: localization helpers, relic options,
-    ///     <see cref="IModEventAssetOverrides" />
-    ///     paths, and optional runtime hooks <see cref="TryCreateLayoutPackedScene" />,
-    ///     <see cref="TryCreateBackgroundPackedScene" />, <see cref="TryCreateEventVfx" />.
-    ///     <see cref="TryCreateLayoutPackedScene" />、<see cref="TryCreateBackgroundPackedScene" />、
-    ///     <see cref="TryCreateEventVfx" />。
-    ///     Mod 事件的基础 <see cref="EventModel" />：本地化 helper、遗物选项、<see cref="IModEventAssetOverrides" /> 路径，以及可选运行时钩子
-    ///     <see cref="TryCreateLayoutPackedScene" />、<see cref="TryCreateBackgroundPackedScene" />、
-    ///     <see cref="TryCreateEventVfx" />。
-    ///     <see cref="TryCreateLayoutPackedScene" />、<see cref="TryCreateBackgroundPackedScene" />、
-    ///     <see cref="TryCreateEventVfx" />。
+    ///     <para xml:lang="en">
+    ///         Provides a base <see cref="EventModel" /> for mods with localization helpers, relic options, asset
+    ///         overrides, and optional runtime factories for the layout, background, and VFX.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组提供基础 <see cref="EventModel" />，支持本地化便捷方法、遗物选项、资源替换，以及布局、
+    ///         背景和特效的可选运行时工厂。
+    ///     </para>
     /// </summary>
     public abstract class ModEventTemplate : EventModel, IModEventAssetOverrides, IModEventLayoutPackedSceneFactory,
         IModEventBackgroundPackedSceneFactory, IModEventVfxFactory
     {
         /// <summary>
-        ///     <c>true</c> enables <see cref="TryCreateEventVfx" /> instead of the default VFX path.
-        ///     <c>true</c> 时启用 <see cref="TryCreateEventVfx" />，而不是默认 VFX 路径。
+        ///     <para xml:lang="en">
+        ///         Gets whether <see cref="TryCreateEventVfx" /> should be consulted before loading the VFX path.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取是否应在加载特效路径前调用 <see cref="TryCreateEventVfx" />。
+        ///     </para>
         /// </summary>
         protected virtual bool SuppliesCustomEventVfx => false;
 
@@ -61,8 +62,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Non-null layout scene; otherwise <see cref="CustomLayoutScenePath" /> resolution runs.
-        ///     返回非 null 布局场景时直接使用；否则解析 <see cref="CustomLayoutScenePath" />。
+        ///     <para xml:lang="en">
+        ///         Returns a runtime-provided layout scene, or <see langword="null" /> to resolve
+        ///         <see cref="CustomLayoutScenePath" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回运行时提供的布局场景；返回 <see langword="null" /> 时解析
+        ///         <see cref="CustomLayoutScenePath" />。
+        ///     </para>
         /// </summary>
         protected virtual PackedScene? TryCreateLayoutPackedScene()
         {
@@ -70,8 +77,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Non-null background scene; otherwise <see cref="CustomBackgroundScenePath" /> resolution runs.
-        ///     返回非 null 背景场景时直接使用；否则解析 <see cref="CustomBackgroundScenePath" />。
+        ///     <para xml:lang="en">
+        ///         Returns a runtime-provided background scene, or <see langword="null" /> to resolve
+        ///         <see cref="CustomBackgroundScenePath" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回运行时提供的背景场景；返回 <see langword="null" /> 时解析
+        ///         <see cref="CustomBackgroundScenePath" />。
+        ///     </para>
         /// </summary>
         protected virtual PackedScene? TryCreateBackgroundPackedScene()
         {
@@ -79,8 +92,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     VFX root when <see cref="SuppliesCustomEventVfx" /> is <c>true</c>; <c>null</c> falls through to path loading.
-        ///     当 <see cref="SuppliesCustomEventVfx" /> 为 <c>true</c> 时使用的 VFX 根节点；<c>null</c> 会继续走路径加载。
+        ///     <para xml:lang="en">
+        ///         Returns a runtime-provided VFX root when <see cref="SuppliesCustomEventVfx" /> is enabled, or
+        ///         <see langword="null" /> to continue with path loading.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         启用 <see cref="SuppliesCustomEventVfx" /> 时返回运行时提供的特效根节点；返回
+        ///         <see langword="null" /> 时继续从路径加载。
+        ///     </para>
         /// </summary>
         protected virtual Node2D? TryCreateEventVfx()
         {
@@ -88,9 +107,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Builds a namespaced option key for <paramref name="pageName" /> / <paramref name="optionName" /> under this event
-        ///     id.
-        ///     在此事件 id 下为 <paramref name="pageName" /> / <paramref name="optionName" /> 构建带命名空间的选项键。
+        ///     <para xml:lang="en">
+        ///         Builds an option-localization key from this event's ID, <paramref name="pageName" />, and
+        ///         <paramref name="optionName" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用此事件的 ID、<paramref name="pageName" /> 和 <paramref name="optionName" />
+        ///         创建选项本地化键。
+        ///     </para>
         /// </summary>
         protected string ModOptionKey(string pageName, string optionName)
         {
@@ -100,8 +124,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Shortcut for <see cref="ModOptionKey" /> with the <c>INITIAL</c> page.
-        ///     使用 <see cref="ModOptionKey" /> 页面调用 <c>INITIAL</c> 的快捷方法。
+        ///     <para xml:lang="en">Builds an option-localization key for the <c>INITIAL</c> page.</para>
+        ///     <para xml:lang="zh-CN">创建 <c>INITIAL</c> 页面的选项本地化键。</para>
         /// </summary>
         protected new string InitialOptionKey(string optionName)
         {
@@ -109,8 +133,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Gets the localized description for a page.
-        ///     获取某个页面的本地化描述。
+        ///     <para xml:lang="en">Returns the localized description for <paramref name="pageName" />.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="pageName" /> 对应的本地化描述。</para>
         /// </summary>
         protected LocString PageDescription(string pageName)
         {
@@ -118,8 +142,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Creates a relic-grant option for a mutable relic resolved from <typeparamref name="T" />.
-        ///     为从 <c>T</c> 解析出的可变遗物创建一个授予遗物的选项。
+        ///     <para xml:lang="en">
+        ///         Creates a relic option from a mutable copy of <typeparamref name="T" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <typeparamref name="T" /> 的可变副本创建遗物选项。
+        ///     </para>
         /// </summary>
         protected EventOption CreateModRelicOption<T>(Func<Task>? onChosen, string pageName = "INITIAL")
             where T : RelicModel
@@ -128,8 +156,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Creates a relic-grant option with a custom <paramref name="onChosen" /> callback and localization key.
-        ///     创建一个带自定义 <paramref name="onChosen" /> 回调和本地化键的授予遗物选项。
+        ///     <para xml:lang="en">
+        ///         Creates a relic option with a custom <paramref name="onChosen" /> callback and a localization key
+        ///         derived from the page and relic ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建带自定义 <paramref name="onChosen" /> 回调的遗物选项，其本地化键由页面和遗物 ID 生成。
+        ///     </para>
         /// </summary>
         protected EventOption CreateModRelicOption(RelicModel relic, Func<Task>? onChosen, string pageName = "INITIAL")
         {

@@ -9,12 +9,16 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Base implementation for generated placeholder cards (see
-    ///     <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />). Mods
-    ///     normally do not subclass this; only subclass if you need a hand-written type with the same no-op behavior.
-    ///     生成式占位卡牌的基础实现（见
-    ///     <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />）。
-    ///     Mod 通常不需要继承此类型；仅当你需要一个手写类型并保持相同空操作行为时才继承。
+    ///     <para xml:lang="en">
+    ///         Provides the no-op base implementation used by generated placeholder cards. Mods normally register
+    ///         placeholders through <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />
+    ///         instead of subclassing this type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供生成式占位卡牌使用的无操作基础实现。模组通常应通过
+    ///         <see cref="ModContentRegistry.RegisterPlaceholderCard{TPool}(string, PlaceholderCardDescriptor)" />
+    ///         注册占位卡牌，而不是继承此类型。
+    ///     </para>
     /// </summary>
     public abstract class ModPlaceholderCardTemplate(
         int baseCost,
@@ -25,8 +29,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         : ModCardTemplate(baseCost, type, rarity, target, showInCardLibrary)
     {
         /// <summary>
-        ///     No-op play handler for placeholder cards.
-        ///     占位卡牌的空操作打出处理器。
+        ///     <para xml:lang="en">Completes immediately without applying a card effect.</para>
+        ///     <para xml:lang="zh-CN">立即完成，不产生卡牌效果。</para>
         /// </summary>
         protected override Task OnPlay(PlayerChoiceContext choiceContext, CardPlay cardPlay)
         {
@@ -35,12 +39,14 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Base for emitted placeholder relics; prefer
-    ///     <see cref="ModContentRegistry.RegisterPlaceholderRelic{TPool}(string, PlaceholderRelicDescriptor)" /> instead of
-    ///     subclassing.
-    ///     生成式占位遗物的基类；优先使用
-    ///     <see cref="ModContentRegistry.RegisterPlaceholderRelic{TPool}(string, PlaceholderRelicDescriptor)" />，
-    ///     而不是手动继承。
+    ///     <para xml:lang="en">
+    ///         Provides the configurable base implementation used by generated placeholder relics. Prefer
+    ///         <see cref="ModContentRegistry.RegisterPlaceholderRelic{TPool}(string, PlaceholderRelicDescriptor)" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供生成式占位遗物使用的可配置基础实现。请优先使用
+    ///         <see cref="ModContentRegistry.RegisterPlaceholderRelic{TPool}(string, PlaceholderRelicDescriptor)" />。
+    ///     </para>
     /// </summary>
     public abstract class ModPlaceholderRelicTemplate(
         RelicRarity rarity,
@@ -102,12 +108,14 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Base for emitted placeholder potions; prefer
-    ///     <see cref="ModContentRegistry.RegisterPlaceholderPotion{TPool}(string, PlaceholderPotionDescriptor)" /> instead of
-    ///     subclassing.
-    ///     生成式占位药水的基类；优先使用
-    ///     <see cref="ModContentRegistry.RegisterPlaceholderPotion{TPool}(string, PlaceholderPotionDescriptor)" />，
-    ///     而不是手动继承。
+    ///     <para xml:lang="en">
+    ///         Provides the configurable no-op base implementation used by generated placeholder potions. Prefer
+    ///         <see cref="ModContentRegistry.RegisterPlaceholderPotion{TPool}(string, PlaceholderPotionDescriptor)" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供生成式占位药水使用的可配置无操作基础实现。请优先使用
+    ///         <see cref="ModContentRegistry.RegisterPlaceholderPotion{TPool}(string, PlaceholderPotionDescriptor)" />。
+    ///     </para>
     /// </summary>
     public abstract class ModPlaceholderPotionTemplate(
         PotionRarity rarity,
@@ -133,8 +141,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         public override bool PassesCustomUsabilityCheck => passesCustomUsabilityCheck;
 
         /// <summary>
-        ///     No-op use handler for placeholder potions.
-        ///     占位药水的空操作使用处理器。
+        ///     <para xml:lang="en">Completes immediately without applying a potion effect.</para>
+        ///     <para xml:lang="zh-CN">立即完成，不产生药水效果。</para>
         /// </summary>
         protected override Task OnUse(PlayerChoiceContext choiceContext, Creature? target)
         {

@@ -6,29 +6,35 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Base <see cref="AfflictionModel" /> for mods: keyword hover tips and <see cref="IModAfflictionAssetOverrides" />
-    ///     overlay path.
-    ///     Mod 苦痛的基础 <see cref="AfflictionModel" />：提供关键词悬浮提示和
-    ///     <see cref="IModAfflictionAssetOverrides" /> 覆盖层路径。
+    ///     <para xml:lang="en">
+    ///         Provides a base <see cref="AfflictionModel" /> for mods with keyword hover tips and an
+    ///         <see cref="IModAfflictionAssetOverrides" /> overlay-scene replacement.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组提供基础 <see cref="AfflictionModel" />，支持关键词悬浮提示和
+    ///         <see cref="IModAfflictionAssetOverrides" /> 覆盖层场景替换。
+    ///     </para>
     /// </summary>
     public abstract class ModAfflictionTemplate : AfflictionModel, IModAfflictionAssetOverrides
     {
         /// <summary>
-        ///     Keyword ids surfaced on this affliction's hover tips. <b>Display-only</b>: unlike
-        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" />, this does <b>not</b> participate in any
-        ///     gameplay keyword set (vanilla <see cref="AfflictionModel" /> has no <c>Keywords</c>/
-        ///     <c>CardKeyword</c> storage) — each id is looked up in <see cref="ModKeywordRegistry" /> purely to
-        ///     render a hover tip via <c>ToHoverTips()</c>. Use it for visual documentation; gameplay behaviour
-        ///     must be implemented explicitly in the affliction's own logic.
-        ///     要显示在此苦痛悬停提示上的关键词 id。<b>仅用于显示</b>：不同于 <see cref="ModCardTemplate.RegisteredKeywordIds" />，它<b>不会</b>参与任何游戏逻辑关键词集合（原版
-        ///     <see cref="AfflictionModel" /> 没有 <c>Keywords</c>/<c>CardKeyword</c> 存储）- 每个 id 只会通过
-        ///     <see cref="ModKeywordRegistry" /> 查找，用来通过 <c>ToHoverTips()</c> 渲染悬停提示。请将它用于视觉说明；游戏行为必须在苦痛自身逻辑中显式实现。
+        ///     <para xml:lang="en">
+        ///         Gets the keyword IDs shown as hover tips for this affliction. These IDs are display-only:
+        ///         <see cref="AfflictionModel" /> has no gameplay keyword collection, so each ID is resolved through
+        ///         <see cref="ModKeywordRegistry" /> only to create a hover tip. Any gameplay behavior must be
+        ///         implemented by the affliction itself.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取显示为此侵蚀悬浮提示的关键词 ID。这些 ID 仅用于显示：<see cref="AfflictionModel" />
+        ///         没有参与游戏逻辑的关键词集合，因此每个 ID 只会通过 <see cref="ModKeywordRegistry" /> 解析为
+        ///         悬浮提示。任何游戏行为都必须由侵蚀自身实现。
+        ///     </para>
         /// </summary>
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
         /// <summary>
-        ///     Additional hover tips merged after keyword expansion.
-        ///     合并在关键词展开之后的额外悬浮提示。
+        ///     <para xml:lang="en">Gets additional hover tips included with the keyword-derived tips.</para>
+        ///     <para xml:lang="zh-CN">获取与关键词生成的提示一同显示的额外悬浮提示。</para>
         /// </summary>
         protected virtual IEnumerable<IHoverTip> AdditionalHoverTips => [];
 

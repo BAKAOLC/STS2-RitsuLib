@@ -5,71 +5,73 @@ using MegaCrit.Sts2.Core.Localization;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Optional icon path for mod rest site options consumed by asset override patches on
-    ///     <see cref="RestSiteOption" />.
-    ///     Mod 休息点选项的可选图标路径，供 <see cref="RestSiteOption" /> 上的资源覆盖补丁读取。
+    ///     <para xml:lang="en">Provides an optional icon replacement for a mod rest-site option.</para>
+    ///     <para xml:lang="zh-CN">提供模组休息处选项的可选图标替换。</para>
     /// </summary>
     public interface IModRestSiteOptionAssetOverrides
     {
         /// <summary>
-        ///     Structured path bundle; <c>Custom*</c> properties typically mirror these fields.
-        ///     结构化路径集合；<c>Custom*</c> 属性通常镜像这些字段。
+        ///     <para xml:lang="en">Gets the structured rest-site option asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取结构化休息处选项资源配置。</para>
         /// </summary>
         RestSiteOptionAssetProfile AssetProfile { get; }
 
         /// <summary>
-        ///     Override path for the rest site option icon texture.
-        ///     休息点选项图标贴图的覆盖路径。
+        ///     <para xml:lang="en">Gets the rest-site option icon replacement path.</para>
+        ///     <para xml:lang="zh-CN">获取休息处选项图标替换路径。</para>
         /// </summary>
         string? CustomIconPath { get; }
     }
 
     /// <summary>
-    ///     Marker interface for rest site options whose <see cref="RestSiteOption.Title" /> should be replaced by
-    ///     <see cref="CustomTitle" /> (patched at runtime because the base property is non-virtual).
-    ///     标记接口：用于声明某个休息点选项的 <see cref="RestSiteOption.Title" /> 应由 <see cref="CustomTitle" /> 替换
-    ///     （由于基类属性非 virtual，因此会在运行时打补丁）。
+    ///     <para xml:lang="en">
+    ///         Marks a rest-site option whose non-virtual <see cref="RestSiteOption.Title" /> getter should return
+    ///         <see cref="CustomTitle" /> when one is supplied.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         标记在提供 <see cref="CustomTitle" /> 时，应由非虚
+    ///         <see cref="RestSiteOption.Title" /> 属性返回该标题的休息处选项。
+    ///     </para>
     /// </summary>
     public interface IModRestSiteOptionCustomTitle
     {
         /// <summary>
-        ///     When non-null, replaces the vanilla <see cref="RestSiteOption.Title" /> returned to callers (button label,
-        ///     description panel, etc.).
-        ///     非 null 时，替换返回给调用方的原版 <see cref="RestSiteOption.Title" />（按钮标签、描述面板等）。
+        ///     <para xml:lang="en">Gets the optional title returned in place of <see cref="RestSiteOption.Title" />.</para>
+        ///     <para xml:lang="zh-CN">获取用于替代 <see cref="RestSiteOption.Title" /> 的可选标题。</para>
         /// </summary>
         LocString? CustomTitle { get; }
     }
 
     /// <summary>
-    ///     Base <see cref="RestSiteOption" /> for mods: custom icon via <see cref="IModRestSiteOptionAssetOverrides" />,
-    ///     custom title via <see cref="IModRestSiteOptionCustomTitle" />, and overrideable description. Register the
-    ///     option by adding it inside an <see cref="MegaCrit.Sts2.Core.Models.AbstractModel.TryModifyRestSiteOptions" />
-    ///     override on a relic, card, or modifier.
-    ///     Mod 休息点选项的基础 <see cref="RestSiteOption" />：通过 <see cref="IModRestSiteOptionAssetOverrides" />
-    ///     提供自定义图标，通过 <see cref="IModRestSiteOptionCustomTitle" /> 提供自定义标题，并允许重写描述。
-    ///     请在遗物、卡牌或 modifier 的 <see cref="MegaCrit.Sts2.Core.Models.AbstractModel.TryModifyRestSiteOptions" />
-    ///     重写中添加该选项来完成注册。
+    ///     <para xml:lang="en">
+    ///         Provides a base <see cref="RestSiteOption" /> for mods with optional icon and title replacements.
+    ///         Add the option from an <see cref="MegaCrit.Sts2.Core.Models.AbstractModel.TryModifyRestSiteOptions" />
+    ///         override.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组提供基础 <see cref="RestSiteOption" />，支持可选的图标和标题替换。请从
+    ///         <see cref="MegaCrit.Sts2.Core.Models.AbstractModel.TryModifyRestSiteOptions" /> 重写中添加此选项。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         <see cref="RestSiteOption.IsEnabled" /> defaults to <c>true</c>. Set it in the subclass constructor when
     ///         the option should be conditionally grayed out, following the same pattern as vanilla
     ///         <c>SmithRestSiteOption</c> / <c>CookRestSiteOption</c>.
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         Because <see cref="RestSiteOption.Title" /> and <see cref="RestSiteOption.Icon" /> are non-virtual,
     ///         RitsuLib patches their getters at runtime to respect <see cref="IModRestSiteOptionCustomTitle" /> and
     ///         <see cref="IModRestSiteOptionAssetOverrides" />.
-    ///         <see cref="IModRestSiteOptionAssetOverrides" />。
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="zh-CN">
     ///         <see cref="RestSiteOption.IsEnabled" /> 默认为 <c>true</c>。当选项需要按条件置灰时，请在子类构造函数中设置它，模式与原版
     ///         <c>SmithRestSiteOption</c> / <c>CookRestSiteOption</c> 相同。
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="zh-CN">
     ///         由于 <see cref="RestSiteOption.Title" /> 和 <see cref="RestSiteOption.Icon" /> 非 virtual，RitsuLib 会在运行时补丁它们的
-    ///         getter，以支持 <see cref="IModRestSiteOptionCustomTitle" /> 和 <see cref="IModRestSiteOptionAssetOverrides" />。
-    ///         <see cref="IModRestSiteOptionAssetOverrides" />。
+    ///         属性，因此 RitsuLib 会在运行时补丁处理其 getter，以支持
+    ///         <see cref="IModRestSiteOptionCustomTitle" /> 和 <see cref="IModRestSiteOptionAssetOverrides" />。
     ///     </para>
     /// </remarks>
     public abstract class ModRestSiteOptionTemplate(Player owner)
@@ -92,13 +94,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         public virtual string? CustomIconPath => AssetProfile.IconPath;
 
         /// <summary>
-        ///     When non-null, replaces the vanilla <see cref="RestSiteOption.Title" /> (which derives from
-        ///     <c>LocString("rest_site_ui", "OPTION_{OptionId}.name")</c>). Override to supply a mod-specific
-        ///     <see cref="LocString" /> from a custom localization table.
-        ///     <see cref="LocString" />。
-        ///     非 null 时，替换原版 <see cref="RestSiteOption.Title" />（它来自 <c>LocString("rest_site_ui", "OPTION_{OptionId}.name")</c>
-        ///     ）。重写它可从自定义本地化表提供 mod 专属 <see cref="LocString" />。
-        ///     <see cref="LocString" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional title returned instead of the base
+        ///         <c>LocString("rest_site_ui", "OPTION_{OptionId}.name")</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取用于替代游戏本体 <c>LocString("rest_site_ui", "OPTION_{OptionId}.name")</c> 的可选标题。
+        ///     </para>
         /// </summary>
         public virtual LocString? CustomTitle => null;
     }

@@ -161,8 +161,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an <see cref="EpochModel" /> type into vanilla epoch discovery.
-    ///     将一个 <see cref="EpochModel" /> 类型注册到原版 epoch 发现流程。
+    ///     <para xml:lang="en">Registers an <see cref="EpochModel" /> type with the base game's epoch discovery.</para>
+    ///     <para xml:lang="zh-CN">将 <see cref="EpochModel" /> 类型注册到原版游戏的时代发现流程。</para>
     /// </summary>
     public sealed class EpochPackEntry<TEpoch> : IModContentPackEntry
         where TEpoch : EpochModel, new()
@@ -175,8 +175,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a <see cref="StoryModel" /> type into vanilla story discovery.
-    ///     将一个 <see cref="StoryModel" /> 类型注册到原版 story 发现流程。
+    ///     <para xml:lang="en">Registers a <see cref="StoryModel" /> type with the base game's story discovery.</para>
+    ///     <para xml:lang="zh-CN">将 <see cref="StoryModel" /> 类型注册到原版游戏的故事发现流程。</para>
     /// </summary>
     public sealed class StoryPackEntry<TStory> : IModContentPackEntry
         where TStory : StoryModel, new()
@@ -189,8 +189,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an epoch and appends it to a story column.
-    ///     注册一个 epoch，并将它追加到 story 列中。
+    ///     <para xml:lang="en">Registers an epoch and appends it to a story column.</para>
+    ///     <para xml:lang="zh-CN">注册一个时代，并将其追加到故事列。</para>
     /// </summary>
     public sealed class StoryEpochPackEntry<TStory, TEpoch> : IModContentPackEntry
         where TStory : StoryModel, new()
@@ -204,8 +204,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.RequireEpoch{TModel, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.RequireEpoch{TModel, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for <see cref="ModUnlockRegistry.RequireEpoch{TModel, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.RequireEpoch{TModel, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class RequireEpochPackEntry<TModel, TEpoch> : IModContentPackEntry
         where TModel : AbstractModel
@@ -219,17 +223,17 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     For each CLR type in <typeparamref name="TEpoch" />’s
-    ///     <see cref="CardUnlockEpochTemplate.EnumerateUnlockCardTypes" />,
-    ///     registers <see cref="ModUnlockRegistry.RequireEpoch(Type,string)" />. Prefer
-    ///     <see cref="TimelineColumnPackEntry{TStory}" /> (e.g. <c>.Epoch&lt;TEpoch&gt;(e =&gt; e.Cards(...))</c>) with
-    ///     <see cref="PackDeclaredCardUnlockEpochTemplate" /> when you want card lists on the pack manifest only.
-    ///     <see cref="PackDeclaredCardUnlockEpochTemplate" />。
-    ///     对 <typeparamref name="TEpoch" /> 的 <see cref="CardUnlockEpochTemplate.EnumerateUnlockCardTypes" /> 中每个 CLR 类型注册
-    ///     <see cref="ModUnlockRegistry.RequireEpoch(Type,string)" />。如果你只想把卡牌列表放在 pack manifest 上，优先使用
-    ///     <see cref="TimelineColumnPackEntry{TStory}" />（例如 <c>.Epoch&lt;TEpoch&gt;(e =&gt; e.Cards(...))</c>）与
-    ///     <see cref="PackDeclaredCardUnlockEpochTemplate" />。
-    ///     <see cref="PackDeclaredCardUnlockEpochTemplate" />。
+    ///     <para xml:lang="en">
+    ///         Requires this epoch for every card type returned by
+    ///         <see cref="CardUnlockEpochTemplate.EnumerateUnlockCardTypes" />. To declare card lists only in the
+    ///         content pack, prefer <see cref="TimelineColumnPackEntry{TStory}" /> with
+    ///         <see cref="PackDeclaredCardUnlockEpochTemplate" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         要求 <see cref="CardUnlockEpochTemplate.EnumerateUnlockCardTypes" /> 返回的每种卡牌类型均需解锁此时代。
+    ///         若只想在内容包中声明卡牌列表，请优先将 <see cref="TimelineColumnPackEntry{TStory}" /> 与
+    ///         <see cref="PackDeclaredCardUnlockEpochTemplate" /> 配合使用。
+    ///     </para>
     /// </summary>
     public sealed class BindCardUnlockEpochPackEntry<TEpoch> : IModContentPackEntry
         where TEpoch : CardUnlockEpochTemplate, new()
@@ -245,17 +249,17 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     For each relic type in <typeparamref name="TEpoch" />’s
-    ///     <see cref="RelicUnlockEpochTemplate.EnumerateUnlockRelicTypes" />,
-    ///     registers <see cref="ModUnlockRegistry.RequireEpoch(Type,string)" />. Prefer
-    ///     <see cref="TimelineColumnPackEntry{TStory}" /> (e.g. <c>.Epoch&lt;TEpoch&gt;(e =&gt; e.Relics(...))</c>) with
-    ///     <see cref="PackDeclaredRelicUnlockEpochTemplate" /> when you want relic lists on the pack manifest only.
-    ///     <see cref="PackDeclaredRelicUnlockEpochTemplate" />。
-    ///     对 <typeparamref name="TEpoch" /> 的 <see cref="RelicUnlockEpochTemplate.EnumerateUnlockRelicTypes" /> 中每个遗物类型注册
-    ///     <see cref="ModUnlockRegistry.RequireEpoch(Type,string)" />。如果你只想把遗物列表放在 pack manifest 上，优先使用
-    ///     <see cref="TimelineColumnPackEntry{TStory}" />（例如 <c>.Epoch&lt;TEpoch&gt;(e =&gt; e.Relics(...))</c>）与
-    ///     <see cref="PackDeclaredRelicUnlockEpochTemplate" />。
-    ///     <see cref="PackDeclaredRelicUnlockEpochTemplate" />。
+    ///     <para xml:lang="en">
+    ///         Requires this epoch for every relic type returned by
+    ///         <see cref="RelicUnlockEpochTemplate.EnumerateUnlockRelicTypes" />. To declare relic lists only in the
+    ///         content pack, prefer <see cref="TimelineColumnPackEntry{TStory}" /> with
+    ///         <see cref="PackDeclaredRelicUnlockEpochTemplate" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         要求 <see cref="RelicUnlockEpochTemplate.EnumerateUnlockRelicTypes" /> 返回的每种遗物类型均需解锁此时代。
+    ///         若只想在内容包中声明遗物列表，请优先将 <see cref="TimelineColumnPackEntry{TStory}" /> 与
+    ///         <see cref="PackDeclaredRelicUnlockEpochTemplate" /> 配合使用。
+    ///     </para>
     /// </summary>
     public sealed class BindRelicUnlockEpochPackEntry<TEpoch> : IModContentPackEntry
         where TEpoch : RelicUnlockEpochTemplate, new()
@@ -271,8 +275,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockEpochAfterRunAs{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockEpochAfterRunAsPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
@@ -286,8 +295,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockEpochAfterWinAs{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockEpochAfterWinAsPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
@@ -301,8 +315,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionWin{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockEpochAfterAscensionWinPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
@@ -311,9 +330,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         private readonly int _ascensionLevel;
 
         /// <summary>
-        ///     Creates a rule with the given minimum ascension level.
-        ///     创建一条使用给定最低进阶等级的规则。
+        ///     <para xml:lang="en">Creates a rule with the specified minimum Ascension level.</para>
+        ///     <para xml:lang="zh-CN">创建一条采用指定最低进阶等级的规则。</para>
         /// </summary>
+        /// <param name="ascensionLevel">
+        ///     <para xml:lang="en">The minimum Ascension level.</para>
+        ///     <para xml:lang="zh-CN">最低进阶等级。</para>
+        /// </param>
         public UnlockEpochAfterAscensionWinPackEntry(int ascensionLevel)
         {
             _ascensionLevel = ascensionLevel;
@@ -327,8 +350,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockEpochAfterRunCount{TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockEpochAfterRunCountPackEntry<TEpoch> : IModContentPackEntry
         where TEpoch : EpochModel, new()
@@ -337,9 +364,17 @@ namespace STS2RitsuLib.Scaffolding.Content
         private readonly bool _requireVictory;
 
         /// <summary>
-        ///     Creates a rule with the given run threshold.
-        ///     创建一条使用给定 run 次数阈值的规则。
+        ///     <para xml:lang="en">Creates a rule with the specified run-count threshold.</para>
+        ///     <para xml:lang="zh-CN">创建一条采用指定游戏局数阈值的规则。</para>
         /// </summary>
+        /// <param name="requiredRuns">
+        ///     <para xml:lang="en">The required number of completed runs.</para>
+        ///     <para xml:lang="zh-CN">要求完成的游戏局数。</para>
+        /// </param>
+        /// <param name="requireVictory">
+        ///     <para xml:lang="en">Whether only victorious runs count toward the threshold.</para>
+        ///     <para xml:lang="zh-CN">是否仅将获胜的一局游戏计入阈值。</para>
+        /// </param>
         public UnlockEpochAfterRunCountPackEntry(int requiredRuns, bool requireVictory = false)
         {
             _requiredRuns = requiredRuns;
@@ -354,8 +389,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockEpochAfterEliteVictories{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockEpochAfterEliteVictoriesPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
@@ -364,9 +404,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         private readonly int _requiredEliteWins;
 
         /// <summary>
-        ///     Creates a rule with the given elite-win threshold (default 15).
-        ///     创建一条使用给定精英胜利阈值的规则（默认 15）。
+        ///     <para xml:lang="en">Creates a rule with the specified elite-victory threshold.</para>
+        ///     <para xml:lang="zh-CN">创建一条采用指定精英战胜次数阈值的规则。</para>
         /// </summary>
+        /// <param name="requiredEliteWins">
+        ///     <para xml:lang="en">The required number of elite victories. The default is 15.</para>
+        ///     <para xml:lang="zh-CN">要求战胜精英的次数，默认为 15。</para>
+        /// </param>
         public UnlockEpochAfterEliteVictoriesPackEntry(int requiredEliteWins = 15)
         {
             _requiredEliteWins = requiredEliteWins;
@@ -380,8 +424,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockEpochAfterBossVictories{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockEpochAfterBossVictoriesPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
@@ -390,9 +439,13 @@ namespace STS2RitsuLib.Scaffolding.Content
         private readonly int _requiredBossWins;
 
         /// <summary>
-        ///     Creates a rule with the given boss-win threshold (default 15).
-        ///     创建一条使用给定 Boss 胜利阈值的规则（默认 15）。
+        ///     <para xml:lang="en">Creates a rule with the specified boss-victory threshold.</para>
+        ///     <para xml:lang="zh-CN">创建一条采用指定首领战胜次数阈值的规则。</para>
         /// </summary>
+        /// <param name="requiredBossWins">
+        ///     <para xml:lang="en">The required number of boss victories. The default is 15.</para>
+        ///     <para xml:lang="zh-CN">要求战胜首领的次数，默认为 15。</para>
+        /// </param>
         public UnlockEpochAfterBossVictoriesPackEntry(int requiredBossWins = 15)
         {
             _requiredBossWins = requiredBossWins;
@@ -406,8 +459,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockEpochAfterAscensionOneWin{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockEpochAfterAscensionOneWinPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
@@ -421,8 +479,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.RevealAscensionAfterEpoch{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class RevealAscensionAfterEpochPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
@@ -436,8 +499,13 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter, TEpoch}" />.
-    ///     <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter, TEpoch}" /> 的 pack entry。
+    ///     <para xml:lang="en">
+    ///         Adds a content-pack entry for
+    ///         <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter, TEpoch}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="ModUnlockRegistry.UnlockCharacterAfterRunAs{TCharacter, TEpoch}" /> 添加内容包条目。
+    ///     </para>
     /// </summary>
     public sealed class UnlockCharacterAfterRunAsPackEntry<TCharacter, TEpoch> : IModContentPackEntry
         where TCharacter : CharacterModel
