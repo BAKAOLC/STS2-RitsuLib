@@ -36,6 +36,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public static class SecondaryResourceVisibility
     {
+        private static readonly Lock PredicateFailureSync = new();
+        private static readonly HashSet<SecondaryResourceCombatUiVisibilityPredicate> LoggedPredicateFailures = [];
+
         private static readonly AttachedState<PlayerCombatState, HashSet<string>> CombatUiSeenMaterialResources =
             new(() => new(StringComparer.OrdinalIgnoreCase));
 
@@ -85,9 +88,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 SecondaryResourceCmd.Get(player, definition.Id),
                 SecondaryResourceCmd.GetMax(player, definition.Id));
 
-            if (ModSecondaryResourceRegistry.GetCombatUiVisibilityPredicates(definition.Id)
-                .Any(predicate => predicate(context)))
-                return true;
+            foreach (var predicate in ModSecondaryResourceRegistry.GetCombatUiVisibilityPredicates(definition.Id))
+                try
+                {
+                    if (predicate(context))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    LogPredicateFailureOnce(definition.Id, predicate, ex);
+                }
 
             // ReSharper disable once InvertIf
             if (context.Amount > definition.DefaultAmount)
@@ -102,6 +112,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             return retainMaterialVisibility &&
                    player.PlayerCombatState != null &&
                    CombatUiSeenMaterialResources.GetOrCreate(player.PlayerCombatState).Contains(definition.Id);
+        }
+
+        private static void LogPredicateFailureOnce(
+            string resourceId,
+            SecondaryResourceCombatUiVisibilityPredicate predicate,
+            Exception exception)
+        {
+            lock (PredicateFailureSync)
+            {
+                if (!LoggedPredicateFailures.Add(predicate))
+                    return;
+            }
+
+            RitsuLibFramework.Logger.Warn(
+                $"[SecondaryResource] Combat UI visibility predicate for '{resourceId}' failed: {exception}");
         }
 
         /// <summary>
