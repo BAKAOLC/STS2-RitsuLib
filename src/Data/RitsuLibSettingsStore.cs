@@ -28,38 +28,38 @@ namespace STS2RitsuLib.Data
 
                 _initializing = true;
 
-                using (RitsuLibFramework.BeginModDataRegistration(Const.ModId, false))
-                {
-                    Store.Register<RitsuLibSettings>(
-                        Const.SettingsKey,
-                        Const.SettingsFileName,
-                        SaveScope.Global,
-                        () => new(),
-                        true,
-                        new()
-                        {
-                            CurrentDataVersion = RitsuLibSettings.CurrentSchemaVersion,
-                            MinimumSupportedDataVersion = 0,
-                        },
-                        [
-                            new RitsuLibSettingsV0Or1ToV2Migration(),
-                            new RitsuLibSettingsV2ToV4Migration(),
-                            new RitsuLibSettingsV4ToV5Migration(),
-                            new RitsuLibSettingsV5ToV6Migration(),
-                            new RitsuLibSettingsV6ToV7Migration(),
-                            new RitsuLibSettingsV7ToV8Migration(),
-                            new RitsuLibSettingsV8ToV9Migration(),
-                            new RitsuLibSettingsV9ToV10Migration(),
-                            new RitsuLibSettingsV10ToV11Migration(),
-                            new RitsuLibSettingsV11ToV12Migration(),
-                            new RitsuLibSettingsV12ToV13Migration(),
-                            new RitsuLibSettingsV13ToV14Migration(),
-                            new RitsuLibSettingsV14ToV15Migration(),
-                        ]);
-                }
-
                 try
                 {
+                    using (RitsuLibFramework.BeginModDataRegistration(Const.ModId, false))
+                    {
+                        Store.Register<RitsuLibSettings>(
+                            Const.SettingsKey,
+                            Const.SettingsFileName,
+                            SaveScope.Global,
+                            () => new(),
+                            true,
+                            new()
+                            {
+                                CurrentDataVersion = RitsuLibSettings.CurrentSchemaVersion,
+                                MinimumSupportedDataVersion = 0,
+                            },
+                            [
+                                new RitsuLibSettingsV0Or1ToV2Migration(),
+                                new RitsuLibSettingsV2ToV4Migration(),
+                                new RitsuLibSettingsV4ToV5Migration(),
+                                new RitsuLibSettingsV5ToV6Migration(),
+                                new RitsuLibSettingsV6ToV7Migration(),
+                                new RitsuLibSettingsV7ToV8Migration(),
+                                new RitsuLibSettingsV8ToV9Migration(),
+                                new RitsuLibSettingsV9ToV10Migration(),
+                                new RitsuLibSettingsV10ToV11Migration(),
+                                new RitsuLibSettingsV11ToV12Migration(),
+                                new RitsuLibSettingsV12ToV13Migration(),
+                                new RitsuLibSettingsV13ToV14Migration(),
+                                new RitsuLibSettingsV14ToV15Migration(),
+                            ]);
+                    }
+
                     _initialized = true;
                     RitsuShellThemeRuntime.ApplyThemeId(GetSettings().UiShellThemeId);
                     LogConfigSnapshot();
