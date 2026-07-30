@@ -1390,33 +1390,25 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 IconPath = attr.IconPath,
                 Order = attr.ButtonOrder,
                 Offset = new(attr.OffsetX, attr.OffsetY),
-                OnClick = handler is null ? null : handler.OnClick,
-                VisibleWhen = handler is null ? null : handler.IsVisible,
-                IsOpenWhen = handler is null ? null : handler.IsOpen,
+                OnClick = handler.OnClick,
+                VisibleWhen = handler.IsVisible,
+                IsOpenWhen = handler.IsOpen,
                 // IModTopBarButtonHandler.GetCount returns -1 by default, which NModCardPileButton
                 // interprets as "hide the badge". Handlers that want a count simply override GetCount
                 // and return a non-negative value.
-                CountProvider = handler is null ? null : handler.GetCount,
+                CountProvider = handler.GetCount,
             };
         }
 
-        private static IModTopBarButtonHandler? ResolveTopBarButtonHandler(Type declaringType)
+        private static IModTopBarButtonHandler ResolveTopBarButtonHandler(Type declaringType)
         {
             if (!typeof(IModTopBarButtonHandler).IsAssignableFrom(declaringType))
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[AutoRegister] RegisterOwnedTopBarButton: type '{declaringType.FullName}' must implement "
-                    + $"{nameof(IModTopBarButtonHandler)}; button will be registered without OnClick/VisibleWhen.");
-                return null;
-            }
+                throw new InvalidOperationException(
+                    $"Type '{declaringType.FullName}' must implement {nameof(IModTopBarButtonHandler)}.");
 
             if (declaringType.GetConstructor(Type.EmptyTypes) == null)
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[AutoRegister] RegisterOwnedTopBarButton: type '{declaringType.FullName}' has no parameterless "
-                    + "constructor — OnClick / VisibleWhen will not be wired.");
-                return null;
-            }
+                throw new InvalidOperationException(
+                    $"Type '{declaringType.FullName}' must provide a public parameterless constructor.");
 
             try
             {
@@ -1424,9 +1416,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[AutoRegister] RegisterOwnedTopBarButton: failed to instantiate handler '{declaringType.FullName}': {ex.Message}");
-                return null;
+                throw new InvalidOperationException(
+                    $"Failed to instantiate top-bar button handler '{declaringType.FullName}'.", ex);
             }
         }
 
