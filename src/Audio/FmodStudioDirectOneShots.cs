@@ -17,7 +17,8 @@ namespace STS2RitsuLib.Audio
         private static readonly StringName SetVolume = new("set_volume");
         private static readonly StringName SetParameterByName = new("set_parameter_by_name");
         private static readonly StringName Start = new("start");
-        private static readonly StringName Release = new("release");
+        private static readonly StringName GetParameters = new("get_parameters");
+        private static readonly StringName GetName = new("get_name");
 
         /// <summary>
         ///     Plays a one-shot by event path via the Godot FMOD addon.
@@ -94,27 +95,86 @@ namespace STS2RitsuLib.Audio
         public static bool TryFireOneShotForMappedEventPath(string eventPath, float linearVolume,
             IReadOnlyDictionary<string, float> parameters)
         {
+            ArgumentNullException.ThrowIfNull(parameters);
+
+            if (!TryGetMappedEventParameterNames(eventPath, out var validParameters))
+                return false;
+
             var instance = FmodStudioEventInstances.TryCreate(eventPath);
             if (instance is null)
                 return false;
 
             try
             {
-                instance.Call(SetVolume, linearVolume);
-                foreach (var kv in parameters)
-                    instance.Call(SetParameterByName, kv.Key, kv.Value);
+                if (!instance.HasMethod(SetVolume) || !instance.HasMethod(Start))
+                    return false;
 
+                foreach (var kv in parameters)
+                {
+                    if (validParameters is null || validParameters.Contains(kv.Key))
+                    {
+                        if (!instance.HasMethod(SetParameterByName))
+                            return false;
+
+                        instance.Call(SetParameterByName, kv.Key, kv.Value);
+                    }
+                    else
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] FMOD parameter '{kv.Key}' was not found on mapped event '{eventPath}'.");
+                    }
+                }
+
+                instance.Call(SetVolume, linearVolume);
                 instance.Call(Start);
                 return true;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD mapped path one-shot: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD mapped path one-shot: {ex}");
                 return false;
             }
             finally
             {
                 FmodStudioEventInstances.TryRelease(instance);
+            }
+        }
+
+        private static bool TryGetMappedEventParameterNames(string eventPath, out HashSet<string>? names)
+        {
+            names = null;
+            if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(eventPath, out var eventGuid))
+                return true;
+
+            names = new(StringComparer.Ordinal);
+            var description = FmodStudioServer.TryGetEventDescriptionFromGuid(eventGuid);
+            if (description is null)
+                return true;
+
+            if (!description.HasMethod(GetParameters))
+                return false;
+
+            try
+            {
+                var value = description.Call(GetParameters);
+                if (value.VariantType != Variant.Type.Array)
+                    return false;
+
+                foreach (var item in value.AsGodotArray())
+                {
+                    var parameter = item.AsGodotObject();
+                    if (parameter is null || !GodotObject.IsInstanceValid(parameter) || !parameter.HasMethod(GetName))
+                        continue;
+
+                    names.Add(parameter.Call(GetName).AsString());
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD mapped event parameter inspection: {ex}");
+                return false;
             }
         }
     }
