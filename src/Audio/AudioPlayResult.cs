@@ -52,6 +52,9 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static AudioPlayResult Fail(AudioPlayStatus status, string? message = null)
         {
+            if (status == AudioPlayStatus.Started)
+                throw new ArgumentOutOfRangeException(nameof(status), status, "A failed result cannot use Started.");
+
             return new(status, null, message);
         }
     }
