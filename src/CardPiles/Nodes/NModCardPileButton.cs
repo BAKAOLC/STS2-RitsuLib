@@ -252,6 +252,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return;
             }
 
+            RefreshCombatScopedTopBarPile();
             if (Definition?.VisibleWhen != null)
                 RefreshPileButtonVisibility();
         }
@@ -853,6 +854,29 @@ namespace STS2RitsuLib.CardPiles.Nodes
             _pile.CardAddFinished -= OnCardAddFinished;
             _pile.CardRemoveFinished -= OnCardRemoveFinished;
             _pile = null;
+        }
+
+        private void RefreshCombatScopedTopBarPile()
+        {
+            if (Definition is not
+                {
+                    Scope: ModCardPileScope.CombatOnly,
+                    Style: ModCardPileUiStyle.TopBarDeck,
+                } definition
+                || _player == null)
+                return;
+
+            var pile = ModCardPileStorage.Resolve(definition.PileType, _player);
+            if (ReferenceEquals(_pile, pile))
+                return;
+
+            AttachPile(pile);
+            if (pile != null)
+                return;
+
+            _currentCount = 0;
+            _countLabel.SetTextAutoSize("0");
+            _countLabel.PivotOffset = _countLabel.Size * 0.5f;
         }
 
         private void OnPileContentsChanged()
