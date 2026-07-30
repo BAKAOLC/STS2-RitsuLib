@@ -8,6 +8,13 @@ namespace STS2RitsuLib.Diagnostics.Logging
 {
     internal sealed class RitsuDebugLogViewerServer : IDisposable
     {
+        private const int MaxConcurrentRequests = 64;
+        private const int MaxHeaderBytes = 32 * 1024;
+        private const int MaxHeaderCount = 100;
+        private const int MaxHeaderLineBytes = 8 * 1024;
+        private const int MaxRequestLineBytes = 8 * 1024;
+        private static readonly TimeSpan RequestHeaderTimeout = TimeSpan.FromSeconds(10);
+
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
         {
             WriteIndented = false,
@@ -19,6 +26,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
         private readonly CancellationTokenSource _cts = new();
         private readonly CancellationToken _shutdownToken;
         private readonly Func<int, RitsuDebugLogRecord[]> _historyProvider;
+        private readonly SemaphoreSlim _requestSlots = new(MaxConcurrentRequests, MaxConcurrentRequests);
         private readonly Func<object> _statusProvider;
         private readonly string _token;
         private Task? _acceptTask;
@@ -113,7 +121,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 {
                     client = await _listener!.AcceptTcpClientAsync(_shutdownToken).ConfigureAwait(false);
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (_shutdownToken.IsCancellationRequested)
                 {
                     return;
                 }
@@ -121,13 +129,31 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 {
                     return;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     RitsuDebugLogPipeline.ReportInternalWarning($"Accept loop failed: {ex.Message}");
                     continue;
                 }
 
-                _ = Task.Run(() => HandleClientAsync(client));
+                if (!_requestSlots.Wait(0))
+                {
+                    client.Dispose();
+                    continue;
+                }
+
+                _ = HandleAdmittedClientAsync(client);
+            }
+        }
+
+        private async Task HandleAdmittedClientAsync(TcpClient client)
+        {
+            try
+            {
+                await HandleClientAsync(client).ConfigureAwait(false);
+            }
+            finally
+            {
+                _requestSlots.Release();
             }
         }
 
@@ -139,24 +165,36 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 {
                     client.NoDelay = true;
                     await using var stream = client.GetStream();
-                    using var reader = new StreamReader(stream, Encoding.ASCII, false, 2048, true);
-                    var requestLine = await reader.ReadLineAsync(_shutdownToken).ConfigureAwait(false);
-                    if (string.IsNullOrWhiteSpace(requestLine))
-                        return;
+                    var requestHead = await ReadRequestHeadAsync(stream).ConfigureAwait(false);
+                    switch (requestHead.Status)
+                    {
+                        case RequestHeadStatus.ConnectionClosed:
+                            return;
+                        case RequestHeadStatus.RequestTimeout:
+                            await WriteTextResponseAsync(stream, 408, "Request Timeout", "Request headers timed out.")
+                                .ConfigureAwait(false);
+                            return;
+                        case RequestHeadStatus.RequestLineTooLong:
+                            await WriteTextResponseAsync(stream, 414, "URI Too Long", "Request line is too long.")
+                                .ConfigureAwait(false);
+                            return;
+                        case RequestHeadStatus.HeadersTooLarge:
+                            await WriteTextResponseAsync(
+                                    stream,
+                                    431,
+                                    "Request Header Fields Too Large",
+                                    "Request headers are too large.")
+                                .ConfigureAwait(false);
+                            return;
+                    }
 
+                    var requestLine = requestHead.RequestLine!;
                     var parts = requestLine.Split(' ');
                     if (parts.Length < 2 || !string.Equals(parts[0], "GET", StringComparison.OrdinalIgnoreCase))
                     {
                         await WriteTextResponseAsync(stream, 405, "Method Not Allowed", "Only GET is supported.")
                             .ConfigureAwait(false);
                         return;
-                    }
-
-                    while (true)
-                    {
-                        var header = await reader.ReadLineAsync(_shutdownToken).ConfigureAwait(false);
-                        if (string.IsNullOrEmpty(header))
-                            break;
                     }
 
                     var target = parts[1];
@@ -212,16 +250,102 @@ namespace STS2RitsuLib.Diagnostics.Logging
                             return;
                     }
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (_shutdownToken.IsCancellationRequested)
                 {
                 }
-                catch (Exception ex) when (IsClientDisconnect(ex))
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex) && IsClientDisconnect(ex))
                 {
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     RitsuDebugLogPipeline.ReportInternalWarning($"Client request failed: {ex.Message}");
                 }
+            }
+        }
+
+        private async Task<RequestHeadReadResult> ReadRequestHeadAsync(NetworkStream stream)
+        {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownToken);
+            timeoutCts.CancelAfter(RequestHeaderTimeout);
+
+            try
+            {
+                var buffer = new byte[2048];
+                var requestLineBytes = new byte[MaxRequestLineBytes];
+                string? requestLine = null;
+                var requestLineLength = 0;
+                var headerBytes = 0;
+                var headerCount = 0;
+                var headerLineBytes = 0;
+                var headerLineEndsWithCarriageReturn = false;
+                var readingRequestLine = true;
+
+                while (true)
+                {
+                    var bytesRead = await stream.ReadAsync(buffer, timeoutCts.Token).ConfigureAwait(false);
+                    if (bytesRead == 0)
+                        return new(RequestHeadStatus.ConnectionClosed);
+
+                    for (var i = 0; i < bytesRead; i++)
+                    {
+                        var current = buffer[i];
+                        if (readingRequestLine)
+                        {
+                            if (current == (byte)'\n')
+                            {
+                                if (requestLineLength > 0 &&
+                                    requestLineBytes[requestLineLength - 1] == (byte)'\r')
+                                    requestLineLength--;
+
+                                requestLine = Encoding.ASCII.GetString(requestLineBytes, 0, requestLineLength);
+                                if (string.IsNullOrWhiteSpace(requestLine))
+                                    return new(RequestHeadStatus.ConnectionClosed);
+
+                                readingRequestLine = false;
+                                continue;
+                            }
+
+                            if (requestLineLength >= MaxRequestLineBytes)
+                                return new(RequestHeadStatus.RequestLineTooLong);
+
+                            requestLineBytes[requestLineLength++] = current;
+                            continue;
+                        }
+
+                        headerBytes++;
+                        if (headerBytes > MaxHeaderBytes)
+                            return new(RequestHeadStatus.HeadersTooLarge);
+
+                        if (current != (byte)'\n')
+                        {
+                            headerLineBytes++;
+                            if (headerLineBytes > MaxHeaderLineBytes)
+                                return new(RequestHeadStatus.HeadersTooLarge);
+
+                            headerLineEndsWithCarriageReturn = current == (byte)'\r';
+                            continue;
+                        }
+
+                        var contentBytes = headerLineBytes;
+                        if (headerLineEndsWithCarriageReturn)
+                            contentBytes--;
+
+                        if (contentBytes == 0)
+                            return new(RequestHeadStatus.Success, requestLine);
+
+                        headerCount++;
+                        if (headerCount > MaxHeaderCount)
+                            return new(RequestHeadStatus.HeadersTooLarge);
+
+                        headerLineBytes = 0;
+                        headerLineEndsWithCarriageReturn = false;
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (
+                !_shutdownToken.IsCancellationRequested && timeoutCts.IsCancellationRequested)
+            {
+                return new(RequestHeadStatus.RequestTimeout);
             }
         }
 
@@ -454,6 +578,17 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 _ when ex.InnerException != null => IsClientDisconnect(ex.InnerException),
                 _ => false,
             };
+        }
+
+        private readonly record struct RequestHeadReadResult(RequestHeadStatus Status, string? RequestLine = null);
+
+        private enum RequestHeadStatus
+        {
+            Success,
+            ConnectionClosed,
+            RequestTimeout,
+            RequestLineTooLong,
+            HeadersTooLarge,
         }
     }
 }
