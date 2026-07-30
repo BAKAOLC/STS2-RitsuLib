@@ -265,6 +265,9 @@ namespace STS2RitsuLib.Data
             IEnumerable<IMigration>? migrations = null)
             where T : class, new()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+
             if (_entries.ContainsKey(key))
                 throw new InvalidOperationException($"Data key '{key}' is already registered.");
 
@@ -382,6 +385,8 @@ namespace STS2RitsuLib.Data
             IEnumerable<IMigration>? migrations = null)
             where T : class, new()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
             ArgumentNullException.ThrowIfNull(contextProvider);
 
             if (_entries.ContainsKey(key))
