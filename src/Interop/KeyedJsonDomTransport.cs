@@ -60,7 +60,7 @@ namespace STS2RitsuLib.Interop
             JsonSerializerOptions? jsonOptions = null)
         {
             ArgumentNullException.ThrowIfNull(channel);
-            documentRoot ??= new JsonObject();
+            documentRoot = documentRoot?.DeepClone() ?? new JsonObject();
 
             var opts = jsonOptions ?? DefaultJsonSerializerOptions;
             var json = channel.Json;
@@ -85,18 +85,27 @@ namespace STS2RitsuLib.Interop
 
             if (json.GetNode != null && pathRouting?.PullPaths is { Length: > 0 } paths)
             {
-                if (documentRoot is not JsonObject docObj)
-                    docObj = new();
-
                 foreach (var rawPath in paths)
                 {
                     var ptr = JsonPointer.Normalize(rawPath);
                     var n = json.GetNode(key, ptr);
-                    if (n != null)
-                        JsonPointer.Set(docObj, ptr, n);
+                    if (n == null)
+                        continue;
+
+                    if (JsonPointer.IsRoot(ptr))
+                    {
+                        documentRoot = n.DeepClone();
+                        continue;
+                    }
+
+                    if (documentRoot is not JsonObject docObj)
+                        throw new InvalidOperationException(
+                            "JSON Pointer subtree pulls require an object document root for non-root paths.");
+
+                    JsonPointer.Set(docObj, ptr, n);
                 }
 
-                return docObj;
+                return documentRoot;
             }
 
             if (json.GetJson != null) return JsonNode.Parse(json.GetJson(key) ?? "{}") ?? new JsonObject();
@@ -149,7 +158,9 @@ namespace STS2RitsuLib.Interop
 
             if (json.SetRootObject != null)
             {
-                var clone = documentRoot.DeepClone() as JsonObject ?? new JsonObject();
+                var clone = documentRoot.DeepClone() as JsonObject
+                            ?? throw new InvalidOperationException(
+                                "The configured root JSON setter only accepts a JsonObject document root.");
                 json.SetRootObject(key, clone);
                 return;
             }
@@ -212,7 +223,7 @@ namespace STS2RitsuLib.Interop
                 return;
             }
 
-            channel.SetObject(key, documentRoot);
+            channel.SetObject(key, documentRoot.DeepClone());
         }
     }
 }
