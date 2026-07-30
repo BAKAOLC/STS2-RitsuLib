@@ -78,6 +78,8 @@ namespace STS2RitsuLib.Settings
         internal ModSettingsStringLineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged, Func<string, bool>? validationVisual, Func<string, bool>? commitValidation)
         {
+            ArgumentNullException.ThrowIfNull(onChanged);
+
             _onChanged = onChanged;
             _maxLength = maxLength;
             _commitValidation = commitValidation;
@@ -152,9 +154,15 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _suppressCallbacks = true;
-            Editor.Text = v;
-            _lastCommitted = v;
-            _suppressCallbacks = false;
+            try
+            {
+                Editor.Text = v;
+                _lastCommitted = v;
+            }
+            finally
+            {
+                _suppressCallbacks = false;
+            }
             ApplyValidationChrome(v);
         }
 
@@ -185,8 +193,8 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            _lastCommitted = t;
             _onChanged?.Invoke(t);
+            _lastCommitted = t;
             ApplyValidationChrome(t);
         }
 
@@ -199,8 +207,10 @@ namespace STS2RitsuLib.Settings
             {
                 return _commitValidation(text);
             }
-            catch
+            catch (Exception ex)
             {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] A string commit validator failed: {ex}");
                 return false;
             }
         }
@@ -216,8 +226,10 @@ namespace STS2RitsuLib.Settings
             {
                 ok = validator(text);
             }
-            catch
+            catch (Exception ex)
             {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] A string validation visual failed: {ex}");
                 ok = false;
             }
 
@@ -306,6 +318,8 @@ namespace STS2RitsuLib.Settings
         public ModSettingsStringMultilineControl(string? initialValue, string? placeholder, int? maxLength,
             Action<string> onChanged)
         {
+            ArgumentNullException.ThrowIfNull(onChanged);
+
             _onChanged = onChanged;
             _maxLength = maxLength;
             _lastCommitted = ModSettingsStringEditorShared.ClampToMaxLength(initialValue ?? string.Empty, maxLength);
@@ -372,9 +386,15 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _suppressCallbacks = true;
-            Editor.Text = v;
-            _lastCommitted = v;
-            _suppressCallbacks = false;
+            try
+            {
+                Editor.Text = v;
+                _lastCommitted = v;
+            }
+            finally
+            {
+                _suppressCallbacks = false;
+            }
         }
 
         private void Commit(string? text)
@@ -387,15 +407,21 @@ namespace STS2RitsuLib.Settings
             if (t != raw)
             {
                 _suppressCallbacks = true;
-                Editor.Text = t;
-                _suppressCallbacks = false;
+                try
+                {
+                    Editor.Text = t;
+                }
+                finally
+                {
+                    _suppressCallbacks = false;
+                }
             }
 
             if (t == _lastCommitted)
                 return;
 
-            _lastCommitted = t;
             _onChanged?.Invoke(t);
+            _lastCommitted = t;
         }
     }
 }
