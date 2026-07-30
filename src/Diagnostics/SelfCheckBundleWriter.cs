@@ -90,9 +90,10 @@ namespace STS2RitsuLib.Diagnostics
                     {
                         Directory.Delete(bundleDir, true);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // ignored
+                        RitsuLibFramework.Logger.Warn(
+                            $"[SelfCheck] Failed to remove temporary bundle directory '{SanitizeForReport(bundleDir)}': {ex.Message}");
                     }
             }
         }
