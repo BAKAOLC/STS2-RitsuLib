@@ -60,6 +60,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
         private const int PayloadVersion = 5;
+        private static readonly Lock RegistrationLock = new();
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -71,14 +72,21 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         public static void EnsureRegistered()
         {
-            if (Interlocked.Exchange(ref _registered, 1) == 1)
+            if (Volatile.Read(ref _registered) != 0)
                 return;
 
-            RitsuNetMessageTailExtensions.RegisterBytes<InitialGameInfoMessage>(
-                ExtensionId,
-                PayloadVersion,
-                SerializePayload,
-                ReadPayload);
+            lock (RegistrationLock)
+            {
+                if (_registered != 0)
+                    return;
+
+                RitsuNetMessageTailExtensions.RegisterBytes<InitialGameInfoMessage>(
+                    ExtensionId,
+                    PayloadVersion,
+                    SerializePayload,
+                    ReadPayload);
+                Volatile.Write(ref _registered, 1);
+            }
         }
 
         public static void Write(PacketWriter writer, InitialGameInfoMessage message)

@@ -73,6 +73,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private const int PayloadVersion = 6;
         private const int MaxRecentLogRecords = 5000;
         private const int MaxCompressedPayloadBytes = 64 * 1024;
+        private static readonly Lock RegistrationLock = new();
         private static int _registered;
         private static readonly Lock PreparedOutgoingLock = new();
 
@@ -88,14 +89,21 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         public static void EnsureRegistered()
         {
-            if (Interlocked.Exchange(ref _registered, 1) == 1)
+            if (Volatile.Read(ref _registered) != 0)
                 return;
 
-            RitsuNetMessageTailExtensions.RegisterBytes<StateDivergenceMessage>(
-                ExtensionId,
-                PayloadVersion,
-                SerializePayload,
-                ReadPayload);
+            lock (RegistrationLock)
+            {
+                if (_registered != 0)
+                    return;
+
+                RitsuNetMessageTailExtensions.RegisterBytes<StateDivergenceMessage>(
+                    ExtensionId,
+                    PayloadVersion,
+                    SerializePayload,
+                    ReadPayload);
+                Volatile.Write(ref _registered, 1);
+            }
         }
 
         public static void Write(PacketWriter writer, StateDivergenceMessage message)
