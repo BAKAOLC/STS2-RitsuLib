@@ -223,5 +223,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             return (int)Math.Clamp(decimal.Floor(value), min, max);
         }
+
+        public static int CeilingAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Ceiling(value), min, max);
+        }
+
+        public static int MultiplyNonNegativeSaturating(int left, int right)
+        {
+            return (int)Math.Min(int.MaxValue, (long)Math.Max(0, left) * Math.Max(0, right));
+        }
     }
 }

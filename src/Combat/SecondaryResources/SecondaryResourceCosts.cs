@@ -1045,7 +1045,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
             var baseCost = Math.Max(0, use.BaseCost.Amount);
             var upgradePreviewBaseCost = SecondaryResourceUpgradePreviewCosts.GetBaseCost(card, use);
-            var fixedCost = Math.Max(0, (int)Math.Ceiling(localCost));
+            var fixedCost = SecondaryResourceAmountMath.CeilingAndClamp(localCost, 0, int.MaxValue);
             var displayCost = isFree ? 0 : fixedCost;
             var insufficientPayment = use.InsufficientPayment ?? definition.DefaultInsufficientPayment;
             var hasRuntimeCostModifier = use.Duration != SecondaryResourceCostDuration.Permanent ||
@@ -1097,7 +1097,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var modifiedCost = SecondaryResourceHook.ModifyCost(
                 new(combatState, player, card, definition, localCost),
                 localCost);
-            var fixedCost = Math.Max(0, (int)Math.Ceiling(modifiedCost));
+            var fixedCost = SecondaryResourceAmountMath.CeilingAndClamp(modifiedCost, 0, int.MaxValue);
             var displayCost = isFree ? 0 : fixedCost;
             var hasRuntimeCostModifier = use.Duration != SecondaryResourceCostDuration.Permanent ||
                                          localCost != cost.Amount ||
@@ -1219,9 +1219,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var xValue = SecondaryResourceHook.ModifyXValue(
                 new(combatState, player, card, definition, xBase),
                 nativeXValue);
-            xValue = Math.Max(0, xValue) * cost.XMultiplier;
+            if (cost.XMultiplier <= 0)
+                throw new InvalidOperationException(
+                    $"Secondary-resource X cost '{use.Id}' on {card.Id.Entry} must have a positive multiplier.");
+
+            xValue = SecondaryResourceAmountMath.MultiplyNonNegativeSaturating(xValue, cost.XMultiplier);
             var xActivated = isRequired || isFree || available > 0;
-            var amountToSpendForX = isFree || !xActivated ? 0 : available;
+            var amountToSpendForX = isFree || !xActivated ? 0 : xBase;
             var xSpendAllowed = CanSpend(combatState, player, card, definition, amountToSpendForX, source);
             // ReSharper disable once InvertIf
             if (!isRequired && !xSpendAllowed)

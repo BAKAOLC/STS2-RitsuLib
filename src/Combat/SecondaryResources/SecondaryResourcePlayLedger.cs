@@ -355,22 +355,24 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         var lines = group.ToArray();
                         return new SecondaryResourcePlayLedgerLine(
                             group.Key,
-                            lines.Sum(static line => line.AmountSpent),
-                            lines.Sum(static line => line.Value),
+                            SumSaturating(lines, static line => line.AmountSpent),
+                            SumSaturating(lines, static line => line.Value),
                             lines.Any(static line => line.CostsX),
                             lines.All(static line => line.IsFree))
                         {
                             UseId = group.Key,
                             Kind = lines.Any(static line => line.Kind == SecondaryResourceUseKind.RequiredCost)
                                 ? SecondaryResourceUseKind.RequiredCost
-                                : SecondaryResourceUseKind.OptionalSpend,
+                                : lines.Any(static line => line.Kind == SecondaryResourceUseKind.OptionalSpend)
+                                    ? SecondaryResourceUseKind.OptionalSpend
+                                    : SecondaryResourceUseKind.ExtraSpend,
                             Activated = lines.Any(static line => line.Activated),
-                            OriginalShortfall = lines.Sum(static line => line.OriginalShortfall),
-                            CoveredShortfall = lines.Sum(static line => line.CoveredShortfall),
-                            Shortfall = lines.Sum(static line => line.Shortfall),
-                            BaseAmountSpent = lines.Sum(static line => line.BaseAmountSpent),
-                            ExtraAmountSpent = lines.Sum(static line => line.ExtraAmountSpent),
-                            ExtraStacks = lines.Sum(static line => line.ExtraStacks),
+                            OriginalShortfall = SumSaturating(lines, static line => line.OriginalShortfall),
+                            CoveredShortfall = SumSaturating(lines, static line => line.CoveredShortfall),
+                            Shortfall = SumSaturating(lines, static line => line.Shortfall),
+                            BaseAmountSpent = SumSaturating(lines, static line => line.BaseAmountSpent),
+                            ExtraAmountSpent = SumSaturating(lines, static line => line.ExtraAmountSpent),
+                            ExtraStacks = SumSaturating(lines, static line => line.ExtraStacks),
                         };
                     },
                     StringComparer.OrdinalIgnoreCase);
@@ -380,6 +382,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             {
                 UseLines = useLines,
             };
+        }
+
+        private static int SumSaturating(
+            IEnumerable<SecondaryResourcePlayLedgerLine> lines,
+            Func<SecondaryResourcePlayLedgerLine, int> selector)
+        {
+            return lines.Aggregate(
+                0,
+                (sum, line) => SecondaryResourceAmountMath.AddSaturating(sum, selector(line)));
         }
     }
 
