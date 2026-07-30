@@ -10,6 +10,7 @@ namespace STS2RitsuLib.Diagnostics
         private static readonly Lock SyncRoot = new();
         private static bool _initialized;
         private static bool _logged;
+        private static bool _logging;
 
         internal static void Initialize()
         {
@@ -55,13 +56,11 @@ namespace STS2RitsuLib.Diagnostics
         {
             lock (SyncRoot)
             {
-                if (_logged)
+                if (_logged || _logging)
                     return;
 
-                _logged = true;
+                _logging = true;
             }
-
-            ModManager.OnModDetected -= OnModDetected;
 
             try
             {
@@ -88,28 +87,40 @@ namespace STS2RitsuLib.Diagnostics
                 if (loadedMods.Count == 0)
                 {
                     text.AppendLine("  <none>");
-                    RitsuLibFramework.Logger.Info(text.ToString());
-                    return;
                 }
-
-                foreach (var mod in loadedMods)
-                    text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)})");
-
-                var commonIncompatibleMods = registeredMods
-                    .Where(static mod => mod.IsCommonIncompatibleMod)
-                    .ToArray();
-                if (commonIncompatibleMods.Length > 0)
+                else
                 {
-                    text.AppendLine("Common Incompatible Mods:");
-                    foreach (var mod in commonIncompatibleMods)
-                        text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)}) " +
-                                        $"state={mod.State} source={mod.Source}");
+                    foreach (var mod in loadedMods)
+                        text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)})");
+
+                    var commonIncompatibleMods = registeredMods
+                        .Where(static mod => mod.IsCommonIncompatibleMod)
+                        .ToArray();
+                    if (commonIncompatibleMods.Length > 0)
+                    {
+                        text.AppendLine("Common Incompatible Mods:");
+                        foreach (var mod in commonIncompatibleMods)
+                            text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)}) " +
+                                            $"state={mod.State} source={mod.Source}");
+                    }
                 }
 
                 RitsuLibFramework.Logger.Info(text.ToString());
+                lock (SyncRoot)
+                {
+                    _logged = true;
+                    _logging = false;
+                }
+
+                ModManager.OnModDetected -= OnModDetected;
             }
             catch (Exception ex)
             {
+                lock (SyncRoot)
+                {
+                    _logging = false;
+                }
+
                 RitsuLibFramework.Logger.Warn($"{Prefix} Failed to print startup mod list: {ex.Message}");
             }
         }
