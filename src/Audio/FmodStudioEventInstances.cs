@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Godot;
 using STS2RitsuLib.Audio.Internal;
 
@@ -9,6 +10,11 @@ namespace STS2RitsuLib.Audio
     /// </summary>
     public static class FmodStudioEventInstances
     {
+        private static bool IsUsable([NotNullWhen(true)] GodotObject? instance)
+        {
+            return instance is not null && GodotObject.IsInstanceValid(instance);
+        }
+
         /// <summary>
         ///     Creates a typed event handle for a Studio event source.
         ///     为 Studio 事件源创建类型化事件句柄。
@@ -88,9 +94,11 @@ namespace STS2RitsuLib.Audio
             if (FmodStudioServer.TryCheckEventGuid(normalized) == false)
                 return null;
 
-            return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstanceWithGuid, normalized)
-                ? null
-                : v.AsGodotObject();
+            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstanceWithGuid, normalized))
+                return null;
+
+            var instance = v.AsGodotObject();
+            return IsUsable(instance) ? instance : null;
         }
 
         private static GodotObject? TryCreateByPathOnly(string eventOrSnapshotPath)
@@ -98,9 +106,11 @@ namespace STS2RitsuLib.Audio
             if (string.IsNullOrWhiteSpace(eventOrSnapshotPath))
                 return null;
 
-            return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstance, eventOrSnapshotPath)
-                ? null
-                : v.AsGodotObject();
+            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.CreateEventInstance, eventOrSnapshotPath))
+                return null;
+
+            var instance = v.AsGodotObject();
+            return IsUsable(instance) ? instance : null;
         }
 
         /// <summary>
@@ -109,7 +119,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryStart(GodotObject? instance)
         {
-            if (instance is null)
+            if (!IsUsable(instance))
                 return false;
 
             try
@@ -130,7 +140,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static bool TryStop(GodotObject? instance, bool allowFadeOut = true)
         {
-            if (instance is null)
+            if (!IsUsable(instance))
                 return false;
 
             try
@@ -151,7 +161,7 @@ namespace STS2RitsuLib.Audio
         /// </summary>
         public static void TryRelease(GodotObject? instance)
         {
-            if (instance is null)
+            if (!IsUsable(instance))
                 return;
 
             try

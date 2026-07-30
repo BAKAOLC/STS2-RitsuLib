@@ -288,9 +288,11 @@ namespace STS2RitsuLib.Audio
             if (!FmodStudioGuidInterop.TryNormalizeForAddon(eventGuid, out var normalized))
                 return null;
 
-            return !FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetEventFromGuid, normalized)
-                ? null
-                : v.AsGodotObject();
+            if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetEventFromGuid, normalized))
+                return null;
+
+            var description = v.AsGodotObject();
+            return description is not null && GodotObject.IsInstanceValid(description) ? description : null;
         }
 
         /// <summary>

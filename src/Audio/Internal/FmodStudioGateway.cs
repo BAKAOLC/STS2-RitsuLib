@@ -14,7 +14,11 @@ namespace STS2RitsuLib.Audio.Internal
         {
             try
             {
-                return !Engine.HasSingleton(ServerName) ? null : Engine.GetSingleton(ServerName);
+                if (!Engine.HasSingleton(ServerName))
+                    return null;
+
+                var server = Engine.GetSingleton(ServerName);
+                return server is not null && GodotObject.IsInstanceValid(server) ? server : null;
             }
             catch (Exception ex)
             {
