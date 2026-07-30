@@ -15,6 +15,8 @@ namespace STS2RitsuLib.Cards.DynamicVars
     /// </summary>
     public sealed class ComputedDynamicVarContext
     {
+        private static readonly AsyncLocal<HashSet<DynamicVar>?> EvaluationStack = new();
+
         internal ComputedDynamicVarContext(
             DynamicVar variable,
             AbstractModel? modelOwner,
@@ -331,13 +333,29 @@ namespace STS2RitsuLib.Cards.DynamicVars
             if (ReferenceEquals(dynamicVar, Variable))
                 return BaseValue;
 
-            if (PreviewMode is not { } previewMode || Card == null)
-                return dynamicVar is IComputedDynamicVar computed
-                    ? computed.Calculate(Target)
-                    : dynamicVar.BaseValue;
-            dynamicVar.UpdateCardPreview(Card, previewMode, Target, RunGlobalHooks);
-            return dynamicVar.PreviewValue;
+            var previousStack = EvaluationStack.Value;
+            if (previousStack?.Contains(dynamicVar) == true)
+                return dynamicVar.BaseValue;
 
+            var currentStack = previousStack is null
+                ? new HashSet<DynamicVar>(ReferenceEqualityComparer.Instance)
+                : new HashSet<DynamicVar>(previousStack, ReferenceEqualityComparer.Instance);
+            currentStack.Add(dynamicVar);
+            EvaluationStack.Value = currentStack;
+
+            try
+            {
+                if (PreviewMode is not { } previewMode || Card == null)
+                    return dynamicVar is IComputedDynamicVar computed
+                        ? computed.Calculate(Target)
+                        : dynamicVar.BaseValue;
+                dynamicVar.UpdateCardPreview(Card, previewMode, Target, RunGlobalHooks);
+                return dynamicVar.PreviewValue;
+            }
+            finally
+            {
+                EvaluationStack.Value = previousStack;
+            }
         }
     }
 
