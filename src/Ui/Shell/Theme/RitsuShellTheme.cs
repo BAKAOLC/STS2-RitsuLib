@@ -143,7 +143,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </returns>
         public float GetDimension(string path)
         {
-            return (float)GetDimensionDouble(path);
+            var value = GetDimensionDouble(path);
+            return value is >= -float.MaxValue and <= float.MaxValue
+                ? (float)value
+                : 0f;
         }
 
         /// <summary>
@@ -190,7 +193,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </returns>
         public int GetDimensionInt(string path)
         {
-            return (int)Math.Round(GetDimensionDouble(path), MidpointRounding.AwayFromZero);
+            var rounded = Math.Round(GetDimensionDouble(path), MidpointRounding.AwayFromZero);
+            return rounded is >= int.MinValue and <= int.MaxValue
+                ? (int)rounded
+                : 0;
         }
 
         /// <summary>
