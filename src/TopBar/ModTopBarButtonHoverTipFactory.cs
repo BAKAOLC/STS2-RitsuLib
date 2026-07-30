@@ -4,22 +4,20 @@ using MegaCrit.Sts2.Core.HoverTips;
 namespace STS2RitsuLib.TopBar
 {
     /// <summary>
-    ///     Produces a vanilla <see cref="HoverTip" /> for a <see cref="ModTopBarButtonDefinition" /> from
-    ///     its icon path + localized title / description. Mirrors <c>ModCardPileHoverTipFactory</c>.
-    ///     基于图标路径 + 本地化标题/描述，为 <see cref="ModTopBarButtonDefinition" /> 生成原版 <see cref="HoverTip" />。
-    ///     与 <c>ModCardPileHoverTipFactory</c> 保持一致。
+    ///     <para xml:lang="en">Creates hover tips for registered mod top-bar buttons.</para>
+    ///     <para xml:lang="zh-CN">为已注册的模组顶部栏按钮创建悬停提示。</para>
     /// </summary>
     public static class ModTopBarButtonHoverTipFactory
     {
         /// <summary>
-        ///     Builds a <see cref="HoverTip" /> combining the <see cref="ModTopBarButtonDefinition.Title" />
-        ///     / <see cref="ModTopBarButtonDefinition.Description" /> loc strings with the icon texture at
-        ///     <see cref="ModTopBarButtonDefinition.IconPath" />. Falls back to a text-only hover tip when
-        ///     the icon path is empty or points at a missing resource.
-        ///     构建一个 <see cref="HoverTip" />，将 <see cref="ModTopBarButtonDefinition.Title" />
-        ///     / <see cref="ModTopBarButtonDefinition.Description" /> 本地化字符串与
-        ///     <see cref="ModTopBarButtonDefinition.IconPath" /> 处的图标纹理组合起来。图标路径为空或指向缺失资源时，
-        ///     回退为纯文本悬停提示。
+        ///     <para xml:lang="en">
+        ///         Creates a <see cref="HoverTip" /> from the definition's localized title, description, and
+        ///         optional icon. An empty or unavailable icon path produces a text-only tip.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用定义中的本地化标题、描述和可选图标创建 <see cref="HoverTip" />。
+        ///         图标路径为空或资源不可用时创建纯文本提示。
+        ///     </para>
         /// </summary>
         public static HoverTip Create(ModTopBarButtonDefinition definition)
         {

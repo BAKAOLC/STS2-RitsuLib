@@ -9,23 +9,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.TopBar.Patches
 {
     /// <summary>
-    ///     Mounts every registered <see cref="ModTopBarButtonDefinition" /> onto <see cref="NTopBar" /> after
-    ///     its vanilla <c>_Ready</c> has populated <c>%Deck</c>. Buttons are <see cref="NModCardPileButton" />
-    ///     instances in "action mode" — that is, they look and animate exactly like <b>pile-backed</b>
-    ///     <see cref="STS2RitsuLib.CardPiles.ModCardPileRegistry" /> top-bar buttons, but dispatch clicks
-    ///     through <see cref="ModTopBarButtonSpec.OnClick" /> and draw their count label from
-    ///     <see cref="ModTopBarButtonSpec.CountProvider" />. The two registries share one placement
-    ///     algorithm (see <see cref="ModTopBarLayout" />) so the player-side cluster next to <c>%Deck</c>
-    ///     never splits into "pile row" vs "action row".
-    ///     在原版 <c>_Ready</c> 填充 <c>%Deck</c> 后，将每个已注册的 <see cref="ModTopBarButtonDefinition" /> 挂载到 <see cref="NTopBar" />。
-    ///     按钮是“动作模式”的 <see cref="NModCardPileButton" />
-    ///     实例；也就是说，它们外观和动画与<b>牌堆支持</b>的
-    ///     <see cref="STS2RitsuLib.CardPiles.ModCardPileRegistry" /> 顶部栏按钮完全相同，但点击会通过
-    ///     <see cref="ModTopBarButtonSpec.OnClick" /> 分发，并从
-    ///     <see cref="ModTopBarButtonSpec.CountProvider" /> 绘制计数标签。两个注册表共享一个放置
-    ///     算法（见 <see cref="ModTopBarLayout" />），因此 <c>%Deck</c> 旁的玩家侧集群
-    ///     永远不会拆成“牌堆行”和“动作行”。
-    ///     永远不会拆成“牌堆行”和“动作行”。
+    ///     <para xml:lang="en">
+    ///         Creates registered action buttons after the vanilla deck slot becomes available in
+    ///         <see cref="NTopBar._Ready" />, then places them in their defined sort order.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         原版牌组槽位在 <see cref="NTopBar._Ready" /> 中可用后，创建已注册的操作按钮，并按规定的排序值放置。
+    ///     </para>
     /// </summary>
     internal sealed class ModTopBarActionButtonReadyPatch : IPatchMethod
     {
@@ -44,9 +34,6 @@ namespace STS2RitsuLib.TopBar.Patches
             if (definitions.Length == 0)
                 return;
 
-            // The right-side cluster (%Deck / %Map / %Pause / Options …) lives inside the
-            // `RightAlignedStuff` container, not directly on NTopBar. `ModTopBarLayout.Place` handles
-            // that re-parenting for us so buttons end up as siblings of %Deck.
             for (var i = definitions.Length - 1; i >= 0; i--)
             {
                 var definition = definitions[i];
@@ -58,12 +45,14 @@ namespace STS2RitsuLib.TopBar.Patches
     }
 
     /// <summary>
-    ///     Binds every injected action-mode <see cref="NModCardPileButton" /> to the local
-    ///     <see cref="Player" /> on <see cref="NTopBar.Initialize" />, mirroring
-    ///     <c>ModCardPileTopBarInitializePatch</c>.
-    ///     将每个注入的动作模式 <see cref="NModCardPileButton" /> 绑定到本地
-    ///     <see cref="Player" />，发生在 <see cref="NTopBar.Initialize" /> 时，对应
-    ///     <c>ModCardPileTopBarInitializePatch</c>。
+    ///     <para xml:lang="en">
+    ///         Binds injected action buttons to the local <see cref="Player" /> after
+    ///         <see cref="NTopBar.Initialize" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="NTopBar.Initialize" /> 后，将已注入的操作按钮绑定到本地
+    ///         <see cref="Player" />。
+    ///     </para>
     /// </summary>
     internal sealed class ModTopBarActionButtonInitializePatch : IPatchMethod
     {
@@ -87,7 +76,6 @@ namespace STS2RitsuLib.TopBar.Patches
             var player = LocalContext.GetMe(runState);
             if (player == null)
                 return;
-            // Action buttons live inside `RightAlignedStuff` (Deck's parent), not on NTopBar directly.
             var container = ModTopBarLayout.GetRightAlignedContainer(__instance);
             if (container == null)
                 return;

@@ -4,39 +4,28 @@ using Logger = MegaCrit.Sts2.Core.Logging.Logger;
 namespace STS2RitsuLib.TopBar
 {
     /// <summary>
-    ///     Per-mod registration surface for extra top-bar buttons. Mirrors the ergonomics of
-    ///     <c>ModCardPileRegistry</c> (fluent <c>For(modId).RegisterOwned(localStem, spec)</c>), but is
-    ///     fully decoupled from the card-pile subsystem — the button only knows how to show an icon,
-    ///     expose a hover-tip and run a click callback.
-    ///     每个 mod 的额外顶部栏按钮注册入口。对应
-    ///     <c>ModCardPileRegistry</c> 的易用性（流式 <c>For(modId).RegisterOwned(localStem, spec)</c>），但
-    ///     与牌堆子系统完全解耦；按钮只负责显示图标、
-    ///     暴露悬停提示并运行点击回调。
+    ///     <para xml:lang="en">Registers mod-owned action buttons in the vanilla top bar.</para>
+    ///     <para xml:lang="zh-CN">在原版顶部栏中注册归属于模组的操作按钮。</para>
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Ids follow the ritsulib <c>MODID_CATEGORY_TYPENAME</c> public-entry convention via
-    ///         <see cref="ModContentRegistry.GetQualifiedTopBarButtonId" /> (middle segment fixed to
-    ///         <c>TOPBARBUTTON</c>). The registered id is also the stem for <c>static_hover_tips</c>
-    ///         title / description keys (<c>{id}.title</c> / <c>{id}.description</c>).
+    ///     <para xml:lang="en">
+    ///         <see cref="RegisterOwned" /> derives IDs through
+    ///         <see cref="ModContentRegistry.GetQualifiedTopBarButtonId" />. The resulting ID is also used
+    ///         for <c>static_hover_tips</c> keys <c>{id}.title</c> and <c>{id}.description</c>.
     ///     </para>
-    ///     <para>
-    ///         Registrations do not need to be frozen alongside <c>ModelDb</c>: top-bar buttons are mounted
-    ///         when the top bar node is ready, which happens after model init. The registry therefore
-    ///         simply de-duplicates by id (same mod re-registering the same stem returns the existing
-    ///         definition).
+    ///     <para xml:lang="en">
+    ///         Register buttons before <see cref="MegaCrit.Sts2.Core.Nodes.CommonUi.NTopBar._Ready" /> creates
+    ///         the current top bar. Repeating an ID for the same mod returns its existing definition; a
+    ///         different mod cannot claim that ID.
     ///     </para>
-    ///     <para>
-    ///         Id 通过 <see cref="ModContentRegistry.GetQualifiedTopBarButtonId" /> 遵循 ritsulib <c>MODID_CATEGORY_TYPENAME</c>
-    ///         公开条目约定
-    ///         （中间段固定为 <c>TOPBARBUTTON</c>）。注册的 id 也是 <c>static_hover_tips</c>
-    ///         标题/描述键（<c>{id}.title</c> / <c>{id}.description</c>）的 stem。
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="RegisterOwned" /> 通过
+    ///         <see cref="ModContentRegistry.GetQualifiedTopBarButtonId" /> 派生 ID。所得 ID 同时用于
+    ///         <c>static_hover_tips</c> 中的 <c>{id}.title</c> 和 <c>{id}.description</c> 键。
     ///     </para>
-    ///     <para>
-    ///         注册无需与 <c>ModelDb</c> 一起冻结：顶部栏按钮会在顶部栏节点 ready 时挂载，
-    ///         这发生在模型初始化之后。因此注册表
-    ///         只按 id 去重（同一 mod 以同一 stem 重新注册会返回现有
-    ///         定义）。
+    ///     <para xml:lang="zh-CN">
+    ///         请在 <see cref="MegaCrit.Sts2.Core.Nodes.CommonUi.NTopBar._Ready" /> 创建当前顶部栏前完成注册。
+    ///         同一模组重复注册同一 ID 时返回已有定义；其他模组不能占用该 ID。
     ///     </para>
     /// </remarks>
     public sealed class ModTopBarButtonRegistry
@@ -59,8 +48,12 @@ namespace STS2RitsuLib.TopBar
         }
 
         /// <summary>
-        ///     Returns the singleton registry for <paramref name="modId" />, creating it on first use.
-        ///     返回 <paramref name="modId" /> 的单例注册表，首次使用时创建。
+        ///     <para xml:lang="en">
+        ///         Gets the registry for <paramref name="modId" />, creating it on first use.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="modId" /> 的注册表；首次使用时创建该注册表。
+        ///     </para>
         /// </summary>
         public static ModTopBarButtonRegistry For(string modId)
         {
@@ -79,12 +72,13 @@ namespace STS2RitsuLib.TopBar
         }
 
         /// <summary>
-        ///     Registers a top-bar button owned by this registry's mod. The id is produced by
-        ///     <see cref="ModContentRegistry.GetQualifiedTopBarButtonId" /> — passing the same
-        ///     <paramref name="localStem" /> twice returns the existing definition.
-        ///     注册一个由此注册表的 mod 拥有的顶部栏按钮。id 由
-        ///     <see cref="ModContentRegistry.GetQualifiedTopBarButtonId" /> 生成；传入相同的
-        ///     <paramref name="localStem" /> 两次会返回现有定义。
+        ///     <para xml:lang="en">
+        ///         Registers a button whose global ID is derived from this registry's mod ID and
+        ///         <paramref name="localStem" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一个全局 ID 由当前注册表的模组 ID 和 <paramref name="localStem" /> 派生的按钮。
+        ///     </para>
         /// </summary>
         public ModTopBarButtonDefinition RegisterOwned(string localStem, ModTopBarButtonSpec spec)
         {
@@ -96,10 +90,13 @@ namespace STS2RitsuLib.TopBar
         }
 
         /// <summary>
-        ///     Registers a top-bar button using a raw global id. Prefer <see cref="RegisterOwned" /> to
-        ///     keep ids mod-scoped.
-        ///     注册 a 顶部栏按钮 使用原始全局 id. 优先使用 <see cref="RegisterOwned" /> to
-        ///     保持 id 受 mod 作用域约束。
+        ///     <para xml:lang="en">
+        ///         Registers a top-bar button with a global ID. Prefer <see cref="RegisterOwned" /> to derive
+        ///         a mod-qualified ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用全局 ID 注册顶部栏按钮。建议使用 <see cref="RegisterOwned" /> 派生带模组限定的 ID。
+        ///     </para>
         /// </summary>
         public ModTopBarButtonDefinition Register(string id, ModTopBarButtonSpec spec)
         {
@@ -110,8 +107,8 @@ namespace STS2RitsuLib.TopBar
         }
 
         /// <summary>
-        ///     Looks up a definition by id; returns false when the id is unknown.
-        ///     按 id 查找定义；id 未知时返回 false。
+        ///     <para xml:lang="en">Looks up a definition by ID.</para>
+        ///     <para xml:lang="zh-CN">按 ID 查找定义。</para>
         /// </summary>
         public static bool TryGet(string id, out ModTopBarButtonDefinition definition)
         {
@@ -124,10 +121,13 @@ namespace STS2RitsuLib.TopBar
         }
 
         /// <summary>
-        ///     Snapshot of every registered button, ordered by <see cref="ModTopBarButtonDefinition.Order" />
-        ///     then id for stability.
-        ///     每个已注册按钮的快照, 按排序 <see cref="ModTopBarButtonDefinition.Order" />
-        ///     然后按 id 保持稳定。
+        ///     <para xml:lang="en">
+        ///         Returns a snapshot of all registered buttons, ordered by
+        ///         <see cref="ModTopBarButtonDefinition.Order" /> and then ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回所有已注册按钮的快照，依次按 <see cref="ModTopBarButtonDefinition.Order" /> 和 ID 排序。
+        ///     </para>
         /// </summary>
         public static ModTopBarButtonDefinition[] GetDefinitionsSnapshot()
         {
