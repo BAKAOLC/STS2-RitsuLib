@@ -178,6 +178,8 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
             devConsole.historyIndex = Math.Max(state.Cursor, 0);
             var text = state.Cursor >= 0 ? history[state.Cursor] : state.Draft;
+            if (DevConsoleHistoryNavigationState.GetTabCompletion(consoleNode) is { } tabCompletion)
+                tabCompletion.ProgrammaticTextChange = true;
             inputBuffer.Text = text;
             consoleNode.MoveInputCursorToEndOfLine();
             return true;
