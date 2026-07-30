@@ -3,38 +3,42 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 namespace STS2RitsuLib.Interactions.RightClick
 {
     /// <summary>
-    ///     Input metadata carried by a model right-click request.
-    ///     模型右键请求携带的输入元数据。
+    ///     <para xml:lang="en">Carries input metadata for a model right-click request.</para>
+    ///     <para xml:lang="zh-CN">携带模型右键请求的输入元数据。</para>
     /// </summary>
     /// <param name="IsController">
-    ///     True when the request came from controller cancel on a focused control.
-    ///     当请求来自聚焦控件上的手柄 cancel 输入时为 true。
+    ///     <para xml:lang="en">
+    ///         Whether the request came from the controller's cancel input while a control had focus.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">请求是否来自控件获得焦点时的手柄取消输入。</para>
     /// </param>
     /// <param name="Metadata">
-    ///     Optional mod-defined metadata for custom handlers.
-    ///     可选的 mod 自定义元数据，供自定义 handler 使用。
+    ///     <para xml:lang="en">Optional mod-defined metadata for custom handlers.</para>
+    ///     <para xml:lang="zh-CN">供自定义处理器使用的可选模组元数据。</para>
     /// </param>
     public readonly record struct ModRightClickTrigger(bool IsController = false, string? Metadata = null)
     {
         /// <summary>
-        ///     Creates a source-aware trigger.
-        ///     创建带 UI 来源的 trigger。
+        ///     <para xml:lang="en">Creates a trigger that records its source UI.</para>
+        ///     <para xml:lang="zh-CN">创建记录来源界面的触发信息。</para>
         /// </summary>
         /// <param name="isController">
-        ///     True when the request came from controller cancel on a focused control.
-        ///     当请求来自聚焦控件上的手柄 cancel 输入时为 true。
+        ///     <para xml:lang="en">
+        ///         Whether the request came from the controller's cancel input while a control had focus.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">请求是否来自控件获得焦点时的手柄取消输入。</para>
         /// </param>
         /// <param name="metadata">
-        ///     Optional mod-defined metadata for custom handlers.
-        ///     可选的 mod 自定义元数据，供自定义 handler 使用。
+        ///     <para xml:lang="en">Optional mod-defined metadata for custom handlers.</para>
+        ///     <para xml:lang="zh-CN">供自定义处理器使用的可选模组元数据。</para>
         /// </param>
         /// <param name="source">
-        ///     UI surface that initiated the request.
-        ///     发起请求的 UI 表面。
+        ///     <para xml:lang="en">The UI from which the request originated.</para>
+        ///     <para xml:lang="zh-CN">请求的来源界面。</para>
         /// </param>
         /// <param name="expectedCardPile">
-        ///     Card pile captured by a combat pile screen request.
-        ///     战斗牌堆界面请求捕获的卡牌堆。
+        ///     <para xml:lang="en">The card pile captured from a combat-pile screen request.</para>
+        ///     <para xml:lang="zh-CN">从战斗牌堆界面请求中记录的牌堆。</para>
         /// </param>
         public ModRightClickTrigger(
             bool isController,
@@ -48,14 +52,14 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         /// <summary>
-        ///     UI surface that initiated the request.
-        ///     发起请求的 UI 表面。
+        ///     <para xml:lang="en">Gets the UI from which the request originated.</para>
+        ///     <para xml:lang="zh-CN">获取请求的来源界面。</para>
         /// </summary>
         public ModRightClickSource Source { get; init; }
 
         /// <summary>
-        ///     Card pile captured by a combat pile screen request.
-        ///     战斗牌堆界面请求捕获的卡牌堆。
+        ///     <para xml:lang="en">Gets the card pile captured from a combat-pile screen request.</para>
+        ///     <para xml:lang="zh-CN">获取从战斗牌堆界面请求中记录的牌堆。</para>
         /// </summary>
         public PileType? ExpectedCardPile { get; init; }
     }

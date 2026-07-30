@@ -7,8 +7,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interactions.RightClick.Patches
 {
     /// <summary>
-    ///     Connects right-click dispatch to power nodes.
-    ///     将右键分发接入能力节点。
+    ///     <para xml:lang="en">Connects right-click dispatch to combat power nodes.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入战斗中的能力节点。</para>
     /// </summary>
     internal sealed class ModRightClickPowerPatch : IPatchMethod
     {

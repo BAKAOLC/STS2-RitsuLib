@@ -4,20 +4,20 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Interactions.RightClick
 {
     /// <summary>
-    ///     Local right-click dispatch context.
-    ///     本地右键分发上下文。
+    ///     <para xml:lang="en">Describes a locally dispatched right-click request.</para>
+    ///     <para xml:lang="zh-CN">描述一个在本地分发的右键请求。</para>
     /// </summary>
     /// <param name="Player">
-    ///     Local player that initiated the request.
-    ///     发起请求的本地玩家。
+    ///     <para xml:lang="en">The local player who initiated the request.</para>
+    ///     <para xml:lang="zh-CN">发起请求的本地玩家。</para>
     /// </param>
     /// <param name="Model">
-    ///     Clicked model.
-    ///     被点击的模型。
+    ///     <para xml:lang="en">The model that was clicked.</para>
+    ///     <para xml:lang="zh-CN">被点击的模型。</para>
     /// </param>
     /// <param name="Trigger">
-    ///     Input metadata.
-    ///     输入元数据。
+    ///     <para xml:lang="en">Metadata about the input that triggered the request.</para>
+    ///     <para xml:lang="zh-CN">触发该请求的输入元数据。</para>
     /// </param>
     public readonly record struct ModRightClickContext(
         Player Player,

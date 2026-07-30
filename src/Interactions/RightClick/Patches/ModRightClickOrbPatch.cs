@@ -9,8 +9,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interactions.RightClick.Patches
 {
     /// <summary>
-    ///     Connects right-click dispatch to active local-player orb nodes.
-    ///     将右键分发接入本地玩家的活动充能球节点。
+    ///     <para xml:lang="en">Connects right-click dispatch to the local player's active orb nodes.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入本地玩家当前的充能球节点。</para>
     /// </summary>
     internal sealed class ModRightClickOrbPatch : IPatchMethod
     {

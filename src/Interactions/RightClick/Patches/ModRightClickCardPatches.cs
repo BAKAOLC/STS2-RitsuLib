@@ -11,8 +11,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interactions.RightClick.Patches
 {
     /// <summary>
-    ///     Connects right-click dispatch to hand-card holders.
-    ///     将右键分发接入手牌 holder。
+    ///     <para xml:lang="en">Connects right-click dispatch to card holders in the local player's hand.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入本地玩家手牌中的卡牌容器。</para>
     /// </summary>
     internal sealed class ModRightClickCardHolderPatch : IPatchMethod
     {
@@ -82,8 +82,8 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
     }
 
     /// <summary>
-    ///     Connects right-click dispatch to cards shown in combat pile screens.
-    ///     将右键分发接入战斗牌堆 screen 中显示的卡牌。
+    ///     <para xml:lang="en">Connects right-click dispatch to cards displayed on combat-pile screens.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入战斗牌堆界面中显示的卡牌。</para>
     /// </summary>
     internal sealed class ModRightClickCardPilePatch : IPatchMethod
     {

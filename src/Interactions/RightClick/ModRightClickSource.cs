@@ -3,50 +3,50 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 namespace STS2RitsuLib.Interactions.RightClick
 {
     /// <summary>
-    ///     UI surface that initiated a model right-click request.
-    ///     发起模型右键请求的 UI 表面。
+    ///     <para xml:lang="en">Identifies the UI from which a model right-click request originated.</para>
+    ///     <para xml:lang="zh-CN">标识模型右键请求的来源界面。</para>
     /// </summary>
     public enum ModRightClickSource
     {
         /// <summary>
-        ///     Unspecified or legacy caller.
-        ///     未指定或旧版调用方。
+        ///     <para xml:lang="en">An unspecified or legacy caller.</para>
+        ///     <para xml:lang="zh-CN">未指定或旧版调用方。</para>
         /// </summary>
         Unknown = 0,
 
         /// <summary>
-        ///     Card holder in the local player's hand.
-        ///     本地玩家手牌中的卡牌 holder。
+        ///     <para xml:lang="en">A card holder in the local player's hand.</para>
+        ///     <para xml:lang="zh-CN">本地玩家手牌中的卡牌容器。</para>
         /// </summary>
         HandCard = 1,
 
         /// <summary>
-        ///     Card holder in a combat pile screen.
-        ///     战斗牌堆界面中的卡牌 holder。
+        ///     <para xml:lang="en">A card holder in a combat pile screen.</para>
+        ///     <para xml:lang="zh-CN">战斗牌堆界面中的卡牌容器。</para>
         /// </summary>
         CombatPileCard = 2,
 
         /// <summary>
-        ///     Relic inventory holder.
-        ///     遗物栏 holder。
+        ///     <para xml:lang="en">A relic-inventory holder.</para>
+        ///     <para xml:lang="zh-CN">遗物栏中的遗物容器。</para>
         /// </summary>
         Relic = 3,
 
         /// <summary>
-        ///     Combat power node.
-        ///     战斗能力节点。
+        ///     <para xml:lang="en">A combat power node.</para>
+        ///     <para xml:lang="zh-CN">战斗中的能力节点。</para>
         /// </summary>
         Power = 4,
 
         /// <summary>
-        ///     Potion holder.
-        ///     药水 holder。
+        ///     <para xml:lang="en">A potion holder.</para>
+        ///     <para xml:lang="zh-CN">药水容器。</para>
         /// </summary>
         Potion = 5,
 
         /// <summary>
-        ///     Combat orb node.
-        ///     战斗充能球节点。
+        ///     <para xml:lang="en">A combat orb node.</para>
+        ///     <para xml:lang="zh-CN">战斗中的充能球节点。</para>
         /// </summary>
         Orb = 6,
     }

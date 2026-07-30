@@ -9,8 +9,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interactions.RightClick.Patches
 {
     /// <summary>
-    ///     Connects right-click dispatch to relic nodes.
-    ///     将右键分发接入遗物节点。
+    ///     <para xml:lang="en">Connects right-click dispatch to relic-inventory holders.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入遗物栏中的遗物容器。</para>
     /// </summary>
     internal sealed class ModRightClickRelicPatch : IPatchMethod
     {
