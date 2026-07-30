@@ -19,7 +19,7 @@ namespace STS2RitsuLib.Updates
         private static readonly HttpClient Client = new();
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
         private static readonly Lock SessionLock = new();
-        private static readonly HashSet<string> ScheduledSessionChecks = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> ScheduledSessionChecks = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         ///     Registers a periodic automatic update check. Checks start before essential game initialization and update

@@ -3,8 +3,8 @@ namespace STS2RitsuLib.Updates
     internal static class UpdateCheckSessionHistory
     {
         private static readonly Lock SyncRoot = new();
-        private static readonly HashSet<string> LoggedVersions = new(StringComparer.Ordinal);
-        private static readonly HashSet<string> NotifiedVersions = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> LoggedVersions = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> NotifiedVersions = new(StringComparer.OrdinalIgnoreCase);
 
         internal static bool TryRecordLoggedVersion(string modId, string? version)
         {
@@ -23,7 +23,7 @@ namespace STS2RitsuLib.Updates
             if (normalizedModId.Length == 0 || string.IsNullOrEmpty(normalizedVersion))
                 return false;
 
-            var key = $"{normalizedModId}\n{normalizedVersion.ToUpperInvariant()}";
+            var key = $"{normalizedModId}\n{normalizedVersion}";
             lock (SyncRoot)
             {
                 return versions.Add(key);
