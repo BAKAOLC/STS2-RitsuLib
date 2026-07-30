@@ -22,24 +22,14 @@ namespace STS2RitsuLib.Audio
         public AudioPlayResult Play(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
-
-            if (options.CooldownMs <= 0)
-                return source switch
-                {
-                    StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
-                    StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
-                    SoundFileSource fileSource => PlaySoundFile(fileSource, options),
-                    ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
-                    StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
-                    StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
-                        options),
-                    SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
-                    _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
-                };
-            var cooldownKey = options.DebugName ?? source.ToString() ?? source.GetType().Name;
-            if (!FmodPlaybackThrottle.TryEnter(cooldownKey, options.CooldownMs))
+            if (!TryEnterCooldown(source, options))
                 return AudioPlayResult.Fail(AudioPlayStatus.SkippedCooldown);
 
+            return PlayCore(source, options);
+        }
+
+        private static AudioPlayResult PlayCore(AudioSource source, AudioPlaybackOptions options)
+        {
             return source switch
             {
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
@@ -58,6 +48,8 @@ namespace STS2RitsuLib.Audio
         public AudioPlayResult PlayOneShot(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (!TryEnterCooldown(source, options))
+                return AudioPlayResult.Fail(AudioPlayStatus.SkippedCooldown);
 
             return source switch
             {
@@ -67,7 +59,7 @@ namespace STS2RitsuLib.Audio
                 StudioGuidSource guidSource => PlayStudioGuid(guidSource, options),
                 SoundFileSource fileSource => PlaySoundFile(fileSource, options),
                 ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
-                _ => Play(source, options),
+                _ => PlayCore(source, options),
             };
         }
 
@@ -75,6 +67,9 @@ namespace STS2RitsuLib.Audio
         public AudioLoopHandle? PlayLoop(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (!TryEnterCooldown(source, options))
+                return null;
+
             var result = source switch
             {
                 StudioEventSource eventSource => PlayStudioLoop(eventSource, options),
@@ -94,6 +89,9 @@ namespace STS2RitsuLib.Audio
         public AudioMusicHandle? PlayMusic(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (!TryEnterCooldown(source, options))
+                return null;
+
             var result = source switch
             {
                 StudioEventSource eventSource when options.UseVanillaRouting => PlayVanillaMusic(eventSource, options),
@@ -392,6 +390,15 @@ namespace STS2RitsuLib.Audio
         private static AudioLifecycleScope ResolveScope(AudioPlaybackOptions options)
         {
             return options.ScopeToken?.Scope ?? options.Scope;
+        }
+
+        private static bool TryEnterCooldown(AudioSource source, AudioPlaybackOptions options)
+        {
+            if (options.CooldownMs <= 0 || source is null)
+                return true;
+
+            var cooldownKey = options.DebugName ?? source.ToString() ?? source.GetType().Name;
+            return FmodPlaybackThrottle.TryEnter(cooldownKey, options.CooldownMs);
         }
     }
 }
