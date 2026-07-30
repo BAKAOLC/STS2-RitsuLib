@@ -15,7 +15,7 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         public static bool IsCritical => false;
 
         public static string Description =>
-            "Render extra IPowerExtraIconAmountLabelsProvider badges on NPower (independent anchors per slot)";
+            "Render extra power badges on NPower with independent per-entry anchors";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Combat.Ui.Patches
     {
         public static string PatchId => "npower_extra_corner_amount_labels_exit_tree";
         public static bool IsCritical => false;
-        public static string Description => "Dispose Ritsu extra amount dock when NPower exits tree";
+        public static string Description => "Release extra power badges when NPower exits the scene tree";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -59,7 +59,7 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         public static bool IsCritical => false;
 
         public static string Description =>
-            "Render extra IRelicExtraIconAmountLabelsProvider badges on NRelicInventoryHolder (per-slot anchors)";
+            "Render extra relic badges on NRelicInventoryHolder with independent per-entry anchors";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -80,7 +80,7 @@ namespace STS2RitsuLib.Combat.Ui.Patches
     {
         public static string PatchId => "nrelic_inventory_holder_extra_corner_amount_labels_exit_tree";
         public static bool IsCritical => false;
-        public static string Description => "Dispose Ritsu extra amount dock when relic holder exits tree";
+        public static string Description => "Release extra relic badges when the holder exits the scene tree";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Combat.Ui.Patches
         public static bool IsCritical => false;
 
         public static string Description =>
-            "Render extra IIntentExtraCornerAmountLabelsProvider badges on NIntent (per-slot anchors)";
+            "Render extra intent badges on NIntent with independent per-entry anchors";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -124,7 +124,7 @@ namespace STS2RitsuLib.Combat.Ui.Patches
     {
         public static string PatchId => "nintent_extra_corner_amount_labels_exit_tree";
         public static bool IsCritical => false;
-        public static string Description => "Dispose Ritsu extra intent dock when NIntent exits tree";
+        public static string Description => "Release extra intent badges when NIntent exits the scene tree";
 
         public static ModPatchTarget[] GetTargets()
         {
