@@ -16,7 +16,12 @@ namespace STS2RitsuLib.Telemetry
                 var doc = ReadQueue(envelope.ApplicantId);
                 doc.Events.Add(envelope);
                 if (doc.Events.Count > MaxEventsPerApplicant)
-                    doc.Events.RemoveRange(0, doc.Events.Count - MaxEventsPerApplicant);
+                {
+                    var overflow = doc.Events.Count - MaxEventsPerApplicant;
+                    var discarded = doc.Events.Take(overflow).ToArray();
+                    doc.Events.RemoveRange(0, overflow);
+                    TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(discarded);
+                }
                 WriteQueue(envelope.ApplicantId, doc);
                 RitsuLibFramework.Logger.Debug(
                     $"[Telemetry] Queued event '{envelope.EventName}' for applicant '{envelope.ApplicantId}'. Queue size: {doc.Events.Count}.");
@@ -61,6 +66,10 @@ namespace STS2RitsuLib.Telemetry
                     {
                         result = await applicant.Adapter.SendAsync(applicant, batch, cancellationToken);
                     }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
                     catch (Exception ex)
                     {
                         result = TelemetrySendResult.Fail(ex.Message);
@@ -68,10 +77,14 @@ namespace STS2RitsuLib.Telemetry
 
                     var shouldContinue = await RitsuMainThread.InvokeAsync(
                         () => CommitBatchResult(applicantId, batch, result),
-                        cancellationToken);
+                        CancellationToken.None);
                     if (!shouldContinue)
                         return;
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -183,7 +196,9 @@ namespace STS2RitsuLib.Telemetry
                 TelemetryPaths.QueuePath(applicantId),
                 TelemetryJson.Options,
                 "TelemetryQueue");
-            return result is { Success: true, Data: not null } ? result.Data : new();
+            var document = result is { Success: true, Data: not null } ? result.Data : new();
+            document.Events ??= [];
+            return document;
         }
 
         private static void WriteQueue(string applicantId, TelemetryQueueDocument doc)
@@ -198,7 +213,9 @@ namespace STS2RitsuLib.Telemetry
                 TelemetryPaths.StatePath(applicantId),
                 TelemetryJson.Options,
                 "TelemetryQueueState");
-            return result is { Success: true, Data: not null } ? result.Data : new();
+            var state = result is { Success: true, Data: not null } ? result.Data : new();
+            state.FailureCount = Math.Max(0, state.FailureCount);
+            return state;
         }
 
         private static void WriteState(string applicantId, TelemetryQueueState state)
@@ -238,11 +255,18 @@ namespace STS2RitsuLib.Telemetry
             for (var i = queue.Events.Count - 1; i >= 0; i--)
             {
                 var evt = queue.Events[i];
-                if (TelemetryRegistry.TryGetRequest(applicant, evt.RequestId, out var request) &&
+                if (evt != null &&
+                    string.Equals(evt.Schema, TelemetrySchemas.EventV1, StringComparison.Ordinal) &&
+                    string.Equals(evt.ApplicantId, applicant.ApplicantId, StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(evt.EventName) &&
+                    evt.Properties != null &&
+                    TelemetryRegistry.TryGetRequest(applicant, evt.RequestId, out var request) &&
+                    request.Category == evt.Category &&
                     TelemetryConsentStore.IsRequestGranted(applicant, request))
                     continue;
 
-                dropped.Add(evt);
+                if (evt != null)
+                    dropped.Add(evt);
                 queue.Events.RemoveAt(i);
             }
 
