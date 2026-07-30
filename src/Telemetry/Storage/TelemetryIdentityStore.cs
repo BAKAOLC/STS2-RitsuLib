@@ -29,8 +29,12 @@ namespace STS2RitsuLib.Telemetry
                 TelemetryJson.Options,
                 "TelemetryIdentity");
             _document = result is { Success: true, Data: not null } &&
-                        !string.IsNullOrWhiteSpace(result.Data.AnonymousInstallId)
-                ? result.Data
+                        Guid.TryParseExact(result.Data.AnonymousInstallId, "N", out var installId)
+                ? new()
+                {
+                    SchemaVersion = 1,
+                    AnonymousInstallId = installId.ToString("N"),
+                }
                 : new();
 
             FileOperations.WriteJson(TelemetryPaths.IdentityPath, _document, TelemetryJson.Options,
