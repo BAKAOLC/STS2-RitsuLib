@@ -8,11 +8,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.Rewards.Patches
 {
     /// <summary>
-    ///     Replaces <see cref="CardReward.ToSerializable" /> when vanilla cannot serialize Flags,
-    ///     CustomCardPool, or CardPoolFilter.
-    ///     <c>CardReward.ToSerializable</c>。
-    ///     当原版无法序列化 Flags、CustomCardPool 或 CardPoolFilter 时，替换 <see cref="CardReward.ToSerializable" />。
-    ///     <c>CardReward.ToSerializable</c>。
+    ///     <para xml:lang="en">
+    ///         Serializes <see cref="CardReward" /> configurations that the base game cannot preserve, including
+    ///         creation flags, filtered pools, and rewards with explicitly supplied cards.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         序列化原版无法保留的 <see cref="CardReward" /> 配置，包括卡牌创建标志、经过筛选的卡池，
+    ///         以及显式指定卡牌的奖励。
+    ///     </para>
     /// </summary>
     internal sealed class CardRewardToSerializablePatch : IPatchMethod
     {

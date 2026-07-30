@@ -10,10 +10,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.Rewards.Patches
 {
     /// <summary>
-    ///     Extends <see cref="Reward.FromSerializable" /> to reconstruct registered custom reward types
-    ///     and card reward serialization-fix sideband data.
-    ///     扩展 <see cref="Reward.FromSerializable" />，用于重建已注册的自定义 reward 类型
-    ///     以及卡牌 reward 序列化修正的 sideband 数据。
+    ///     <para xml:lang="en">
+    ///         Extends <see cref="Reward.FromSerializable" /> to rebuild registered custom rewards and card rewards
+    ///         that use supplemental serialization data, while recovering from unavailable custom card content.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         扩展 <see cref="Reward.FromSerializable" />，用于重建已注册的自定义奖励和使用补充序列化数据的
+    ///         卡牌奖励，并在自定义卡牌内容不可用时进行恢复。
+    ///     </para>
     /// </summary>
     internal sealed class RewardFromSerializableExtPatch : IPatchMethod
     {
