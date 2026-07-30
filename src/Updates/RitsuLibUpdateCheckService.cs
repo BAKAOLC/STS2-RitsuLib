@@ -26,12 +26,12 @@ namespace STS2RitsuLib.Updates
                 if (_initialized)
                     return;
 
-                _initialized = true;
                 AutomaticUpdateCheckScheduler.Register(
                     "ritsulib",
                     "RitsuLib",
                     RitsuLibSettingsStore.IsUpdateCheckEnabled,
                     CheckAutoAsync);
+                _initialized = true;
             }
         }
 

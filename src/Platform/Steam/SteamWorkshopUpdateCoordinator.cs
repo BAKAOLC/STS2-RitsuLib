@@ -40,7 +40,6 @@ namespace STS2RitsuLib.Platform.Steam
                 if (_initialized)
                     return;
 
-                _initialized = true;
                 RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Coordinator initialized.");
                 AutomaticUpdateCheckScheduler.Register(
                     "steam-workshop",
@@ -51,6 +50,7 @@ namespace STS2RitsuLib.Platform.Steam
                         RitsuLibFramework.Logger.Info("[SteamWorkshopUpdate] Auto check requested.");
                         return CheckAsync(CheckSource.Auto, true, cancellationToken: cancellationToken);
                     });
+                _initialized = true;
             }
         }
 
