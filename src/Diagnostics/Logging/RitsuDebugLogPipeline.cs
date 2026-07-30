@@ -44,8 +44,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     _ring = new(Math.Clamp(options.RingBufferCapacity, 512, 100000));
                     _cts = new();
                     _worker = Task.Run(WorkerLoopAsync);
-                    _godotLogListener = new();
-                    OS.AddLogger(_godotLogListener);
+                    ConfigureGodotLogListener(options.MirrorGameLogs);
 
                     if (options.Enabled)
                         StartServer(options);
@@ -58,8 +57,12 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 }
                 catch (Exception ex)
                 {
-                    CleanupAfterFailedStart();
-                    RitsuLibFramework.Logger.Warn($"[DebugLogViewer] Failed to initialize log capture: {ex.Message}");
+                    var cleanupException = CleanupAfterFailedStart();
+                    var cleanupMessage = cleanupException == null
+                        ? ""
+                        : $" Failed to detach the Godot log listener during cleanup: {cleanupException.Message}";
+                    RitsuLibFramework.Logger.Warn(
+                        $"[DebugLogViewer] Failed to initialize log capture: {ex.Message}{cleanupMessage}");
                 }
             }
         }
@@ -530,19 +533,23 @@ namespace STS2RitsuLib.Diagnostics.Logging
 
                 _cts?.Cancel();
                 _server?.Dispose();
-                _godotLogListener = null;
+                var cleanupException = TryDetachGodotLogListener();
                 _cts?.Dispose();
                 _server = null;
                 _cts = null;
                 _initialized = false;
+
+                if (cleanupException != null)
+                    Console.Error.WriteLine(
+                        $"[RitsuLib] Failed to detach the Godot log listener during shutdown: {cleanupException}");
             }
         }
 
-        private static void CleanupAfterFailedStart()
+        private static Exception? CleanupAfterFailedStart()
         {
             _cts?.Cancel();
             _server?.Dispose();
-            _godotLogListener = null;
+            var cleanupException = TryDetachGodotLogListener();
             _cts?.Dispose();
             _server = null;
             _cts = null;
@@ -554,6 +561,44 @@ namespace STS2RitsuLib.Diagnostics.Logging
             }
 
             Volatile.Write(ref _queued, 0);
+            return cleanupException;
+        }
+
+        private static void ConfigureGodotLogListener(bool enabled)
+        {
+            if (!enabled)
+            {
+                var cleanupException = TryDetachGodotLogListener();
+                if (cleanupException != null)
+                    throw new InvalidOperationException("Could not disable Godot log mirroring.", cleanupException);
+
+                return;
+            }
+
+            if (_godotLogListener != null)
+                return;
+
+            var listener = new RitsuDebugGodotLogListener();
+            OS.AddLogger(listener);
+            _godotLogListener = listener;
+        }
+
+        private static Exception? TryDetachGodotLogListener()
+        {
+            var listener = _godotLogListener;
+            if (listener == null)
+                return null;
+
+            try
+            {
+                OS.RemoveLogger(listener);
+                _godotLogListener = null;
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return ex;
+            }
         }
     }
 }
