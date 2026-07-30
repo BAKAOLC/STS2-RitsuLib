@@ -215,7 +215,8 @@ namespace STS2RitsuLib.Compat
             try
             {
                 AssociateAssemblyWithModMethod.Invoke(null, [modId, assembly]);
-                return true;
+                return TryGetKnownModIdForAssembly(assembly, out var associatedModId) &&
+                       string.Equals(associatedModId, modId, StringComparison.Ordinal);
             }
             catch (Exception ex)
             {
@@ -223,6 +224,27 @@ namespace STS2RitsuLib.Compat
                     $"[Compat] Failed to associate assembly '{assembly.FullName}' with mod '{modId}': {ex.Message}");
                 return false;
             }
+        }
+
+        private static bool TryGetKnownModIdForAssembly(Assembly assembly, out string modId)
+        {
+            foreach (var mod in EnumerateModsForManifestLookup())
+                try
+                {
+                    if (!ReadAssemblies(mod).Contains(assembly))
+                        continue;
+
+                    var manifest = ReadManifest(mod);
+                    modId = manifest == null ? string.Empty : ReadManifestId(manifest) ?? string.Empty;
+                    return !string.IsNullOrWhiteSpace(modId);
+                }
+                catch
+                {
+                    // Skip entries whose version-specific accessors are unavailable.
+                }
+
+            modId = string.Empty;
+            return false;
         }
 
         /// <summary>
