@@ -10,7 +10,10 @@ namespace STS2RitsuLib.Networking.Sidecar
     /// </summary>
     public static class RitsuLibSidecarProtocol
     {
+        private static readonly Lock Gate = new();
+
         private static int _registered;
+        private static int _registering;
 
         /// <summary>
         ///     Registers built-in handlers for control opcodes and chunked reassembly once per process. Safe to call
@@ -20,21 +23,36 @@ namespace STS2RitsuLib.Networking.Sidecar
         /// </summary>
         public static void EnsureDefaultHandlers()
         {
-            if (Interlocked.CompareExchange(ref _registered, 1, 0) != 0)
+            if (Volatile.Read(ref _registered) != 0 || Volatile.Read(ref _registering) != 0)
                 return;
 
-            RitsuLibSidecarSessionManager.EnsureProvidersBootstrapped();
-            RitsuLibSidecarBuiltInHandlers.Register();
-            RitsuLibSidecarSyncMessages.RegisterBuiltInHandler();
-            ModRightClickRegistry.RegisterBuiltInSyncDescriptors();
-            RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();
-            RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
-                "ritsulib:sidecar_core_supported",
-                RitsuLibSidecarSessionManager.CanSendToPeer);
-            RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
-                "ritsulib:managed_net_actions",
-                peerNetId => RitsuLibSidecarSessionManager.TryGetPeerFeatures(peerNetId, out var features) &&
-                             (features & RitsuLibSidecarPeerFeatures.ManagedNetActions) != 0);
+            lock (Gate)
+            {
+                if (_registered != 0 || _registering != 0)
+                    return;
+
+                Volatile.Write(ref _registering, 1);
+                try
+                {
+                    RitsuLibSidecarSessionManager.EnsureProvidersBootstrapped();
+                    RitsuLibSidecarBuiltInHandlers.Register();
+                    RitsuLibSidecarSyncMessages.RegisterBuiltInHandler();
+                    ModRightClickRegistry.RegisterBuiltInSyncDescriptors();
+                    RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();
+                    RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
+                        "ritsulib:sidecar_core_supported",
+                        RitsuLibSidecarSessionManager.CanSendToPeer);
+                    RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
+                        "ritsulib:managed_net_actions",
+                        peerNetId => RitsuLibSidecarSessionManager.TryGetPeerFeatures(peerNetId, out var features) &&
+                                     (features & RitsuLibSidecarPeerFeatures.ManagedNetActions) != 0);
+                    Volatile.Write(ref _registered, 1);
+                }
+                finally
+                {
+                    Volatile.Write(ref _registering, 0);
+                }
+            }
         }
     }
 }
