@@ -951,6 +951,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             builder.AppendLine();
             AppendPeerSnapshot(builder, T("column.host", "Host"), _report.Host);
             AppendPeerSnapshot(builder, T("column.local", "Local"), _report.Local);
+            AppendPeerGameplayMods(builder, T("column.host", "Host"), _report.Host);
+            AppendPeerGameplayMods(builder, T("column.local", "Local"), _report.Local);
             AppendPeerContentMods(builder, T("column.host", "Host"), _report.Host);
             AppendPeerContentMods(builder, T("column.local", "Local"), _report.Local);
 
