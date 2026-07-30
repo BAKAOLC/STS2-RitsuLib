@@ -2,6 +2,16 @@ using System.Runtime.InteropServices;
 
 namespace STS2RitsuLib.Platform
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Preloads Linux unwind libraries with <c>RTLD_GLOBAL</c> so Harmony's native runtime can resolve their
+    ///         symbols. Loading is attempted once and only on Linux.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用 <c>RTLD_GLOBAL</c> 预加载 Linux 的栈展开库，使 Harmony 的原生运行时能够解析其符号。
+    ///         仅在 Linux 上尝试加载一次。
+    ///     </para>
+    /// </summary>
     internal static class LinuxHarmonyNativePreloader
     {
         // ReSharper disable IdentifierTypo, StringLiteralTypo
@@ -22,6 +32,15 @@ namespace STS2RitsuLib.Platform
             "libunwind.so",
         ];
 
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Attempts the one-time preload and reports loaded libraries or failures through the supplied
+        ///         callbacks. It does nothing on non-Linux hosts.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试执行一次预加载，并通过提供的回调报告已加载的库或失败信息。在非 Linux 宿主上不执行任何操作。
+        ///     </para>
+        /// </summary>
         public static void EnsureLoaded(Action<string> info, Action<string> warn)
         {
             ArgumentNullException.ThrowIfNull(info);

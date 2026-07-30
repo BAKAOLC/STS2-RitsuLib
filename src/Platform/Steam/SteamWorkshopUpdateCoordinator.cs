@@ -7,6 +7,15 @@ using STS2RitsuLib.Updates;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Coordinates manual, automatic, and subscription-triggered Steam Workshop update checks, download
+    ///         monitoring, and user notifications. At most one check runs at a time.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         协调手动、自动和订阅触发的 Steam 创意工坊更新检查、下载监控及用户通知。任一时刻最多运行一次检查。
+    ///     </para>
+    /// </summary>
     internal static class SteamWorkshopUpdateCoordinator
     {
         private const double ToastDurationSeconds = 7.0d;

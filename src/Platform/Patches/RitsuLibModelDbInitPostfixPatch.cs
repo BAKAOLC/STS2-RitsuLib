@@ -8,10 +8,15 @@ using STS2RitsuLib.Unlocks.Patches;
 namespace STS2RitsuLib.Platform.Patches
 {
     /// <summary>
-    ///     After <see cref="ModelDb.Init" />, applies Harmony patches that must not resolve target methods during the
-    ///     first mod-load pass because target resolution can trigger static initialization that depends on ModelDb.
-    ///     在 <see cref="ModelDb.Init" /> 之后应用不应在第一次 mod 加载阶段解析目标方法的 Harmony patch，
-    ///     因为目标解析可能触发依赖 ModelDb 的静态初始化。
+    ///     <para xml:lang="en">
+    ///         Applies deferred Harmony patches after <see cref="ModelDb.Init" />. These patches cannot resolve their
+    ///         targets during the first mod-load pass because resolution can trigger static initialization that
+    ///         depends on <see cref="ModelDb" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="ModelDb.Init" /> 后应用延迟的 Harmony 补丁。这些补丁不能在首次加载模组时解析目标，
+    ///         因为解析可能触发依赖 <see cref="ModelDb" /> 的静态初始化。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuLibModelDbInitPostfixPatch : IPatchMethod
     {

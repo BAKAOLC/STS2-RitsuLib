@@ -7,6 +7,15 @@ using HttpClient = System.Net.Http.HttpClient;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Provides the Steam Workshop UI-facing facade for listing, searching, subscribing, and opening items,
+    ///         and caches successfully decoded preview textures.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供面向 Steam 创意工坊界面的外观，用于列出、搜索、订阅和打开物品，并缓存成功解码的预览纹理。
+    ///     </para>
+    /// </summary>
     internal sealed class SteamWorkshopManager
     {
         private static readonly HttpClient PreviewHttpClient = new()

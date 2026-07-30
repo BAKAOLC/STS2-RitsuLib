@@ -2,6 +2,10 @@ using System.Reflection;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">Identifies Steam Workshop item IDs from assembly or file paths beneath Steam's Workshop content directory.</para>
+    ///     <para xml:lang="zh-CN">从 Steam 创意工坊内容目录下的程序集或文件路径识别创意工坊物品 ID。</para>
+    /// </summary>
     internal static class SteamWorkshopInstallSource
     {
         internal static bool IsAssemblyLoadedFromSteamWorkshop(Assembly assembly)

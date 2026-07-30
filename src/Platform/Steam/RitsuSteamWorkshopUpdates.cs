@@ -6,6 +6,17 @@ using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Provides reflection-based Steam Workshop queries, subscription actions, update triggering, and
+    ///         download monitoring. When compatible Steamworks bindings are unavailable, its query methods return
+    ///         empty or unavailable results rather than calling native Steam APIs directly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供基于反射的 Steam 创意工坊查询、订阅操作、更新触发和下载监控。当不具备兼容的 Steamworks 绑定时，
+    ///         其查询方法返回空结果或不可用结果，而不会直接调用原生 Steam API。
+    ///     </para>
+    /// </summary>
     internal static class RitsuSteamWorkshopUpdates
     {
         private const int QueryBatchSize = 20;
