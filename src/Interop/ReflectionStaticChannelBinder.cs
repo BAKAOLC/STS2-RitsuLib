@@ -334,7 +334,7 @@ namespace STS2RitsuLib.Interop
         private static JsonObject CoerceRootJsonNode(JsonNode? node)
         {
             if (node == null)
-                return new();
+                return [];
 
             return node as JsonObject
                    ?? throw new InvalidOperationException(

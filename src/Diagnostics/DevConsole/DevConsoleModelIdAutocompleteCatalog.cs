@@ -33,10 +33,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         /// </summary>
         public static string? TryGetLocalizedTitle(string entryId)
         {
-            if (string.IsNullOrWhiteSpace(entryId))
-                return null;
-
-            return GetTitlesSnapshot().GetValueOrDefault(entryId.Trim());
+            return string.IsNullOrWhiteSpace(entryId)
+                ? null
+                : GetTitlesSnapshot().GetValueOrDefault(entryId.Trim());
         }
 
         /// <summary>
@@ -68,13 +67,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             var language = I18N.ResolveCurrentLanguageCode();
             lock (Sync)
             {
-                if (_titlesByEntry == null ||
-                    !string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
-                {
-                    _titlesByEntry = BuildTitles();
-                    _builtForLanguage = language;
-                }
+                if (_titlesByEntry != null &&
+                    string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
+                    return _titlesByEntry;
 
+                _titlesByEntry = BuildTitles();
+                _builtForLanguage = language;
                 return _titlesByEntry;
             }
         }

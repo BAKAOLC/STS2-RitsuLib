@@ -118,9 +118,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (model == null)
                 return;
 
-            var passiveLabel = PassiveLabelField?.GetValue(node) as MegaLabel;
-            var evokeLabel = EvokeLabelField?.GetValue(node) as MegaLabel;
-            if (passiveLabel == null || evokeLabel == null)
+            var passiveLabelValue = PassiveLabelField?.GetValue(node);
+            var evokeLabelValue = EvokeLabelField?.GetValue(node);
+            if (passiveLabelValue is not MegaLabel passiveLabel || evokeLabelValue is not MegaLabel evokeLabel)
                 return;
 
             var defaultPassiveText = model.PassiveVal.ToString("0", CultureInfo.InvariantCulture);

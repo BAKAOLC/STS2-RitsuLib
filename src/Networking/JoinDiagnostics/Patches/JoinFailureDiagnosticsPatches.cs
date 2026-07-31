@@ -99,7 +99,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics.Patches
 
     internal static class JoinFailureDiagnosticsPopupReports
     {
-        public static readonly ConditionalWeakTable<NErrorPopup, JoinFailureDiagnosticReport> Reports = new();
+        public static readonly ConditionalWeakTable<NErrorPopup, JoinFailureDiagnosticReport> Reports = [];
     }
 
     internal sealed class JoinFailureDiagnosticsPopupCreatePatch : IPatchMethod

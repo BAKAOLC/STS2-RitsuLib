@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// </summary>
         public IEnumerable<Type> EnumerateUnlockCardTypes()
         {
-            return CardTypes.ToArray();
+            return [.. CardTypes];
         }
 
         /// <inheritdoc />

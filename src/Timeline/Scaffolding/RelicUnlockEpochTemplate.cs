@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// </summary>
         public IEnumerable<Type> EnumerateUnlockRelicTypes()
         {
-            return RelicTypes.ToArray();
+            return [.. RelicTypes];
         }
 
         /// <inheritdoc />

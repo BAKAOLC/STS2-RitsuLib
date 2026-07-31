@@ -29,7 +29,7 @@ namespace STS2RitsuLib.RunRngs
                 () => new(),
                 new() { WritePolicy = RunSavedDataWritePolicy.WhenNonDefault });
 
-        private static readonly ConditionalWeakTable<RunState, RuntimeState> Runtimes = new();
+        private static readonly ConditionalWeakTable<RunState, RuntimeState> Runtimes = [];
 
         /// <summary>
         ///     <para xml:lang="en">Gets a persistent independent RNG stream for the specified run, mod ID, and stream ID.</para>

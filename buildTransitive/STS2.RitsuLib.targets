@@ -13,17 +13,22 @@
         Name="CopyRitsuLibPackageModFiles"
         AfterTargets="Build"
         Condition="'$(DesignTimeBuild)' != 'true' and '$(RitsuLibAutoCopy)' == 'true' and '$(RitsuLibDeployDir)' != '' and Exists('$(RitsuLibPackageAssemblyPath)') and Exists('$(RitsuLibPackageManifestPath)')">
-        <MakeDir Directories="$(RitsuLibDeployDir)"/>
-        <Copy SourceFiles="$(RitsuLibPackageAssemblyPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true"/>
-        <Copy SourceFiles="$(RitsuLibPackagePdbPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackagePdbPath)')"/>
-        <Copy SourceFiles="$(RitsuLibPackageXmlPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackageXmlPath)')"/>
-        <Copy SourceFiles="$(RitsuLibPackageManifestPath)" DestinationFolder="$(RitsuLibDeployDir)" SkipUnchangedFiles="true"/>
+        <MakeDir Directories="$(RitsuLibDeployDir)" />
+        <Copy SourceFiles="$(RitsuLibPackageAssemblyPath)" DestinationFolder="$(RitsuLibDeployDir)"
+              SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(RitsuLibPackagePdbPath)" DestinationFolder="$(RitsuLibDeployDir)"
+              SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackagePdbPath)')" />
+        <Copy SourceFiles="$(RitsuLibPackageXmlPath)" DestinationFolder="$(RitsuLibDeployDir)"
+              SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackageXmlPath)')" />
+        <Copy SourceFiles="$(RitsuLibPackageManifestPath)" DestinationFolder="$(RitsuLibDeployDir)"
+              SkipUnchangedFiles="true" />
         <ItemGroup>
-            <RitsuLibPackageViewerFiles Include="$(RitsuLibPackageViewerRoot)\**\*" Condition="Exists('$(RitsuLibPackageViewerRoot)\index.html')"/>
+            <RitsuLibPackageViewerFiles Include="$(RitsuLibPackageViewerRoot)\**\*"
+                                        Condition="Exists('$(RitsuLibPackageViewerRoot)\index.html')" />
         </ItemGroup>
         <Copy SourceFiles="@(RitsuLibPackageViewerFiles)"
               DestinationFiles="@(RitsuLibPackageViewerFiles->'$(RitsuLibDeployDir)\viewer\%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true"
-              Condition="'@(RitsuLibPackageViewerFiles)' != ''"/>
+              Condition="'@(RitsuLibPackageViewerFiles)' != ''" />
     </Target>
 </Project>

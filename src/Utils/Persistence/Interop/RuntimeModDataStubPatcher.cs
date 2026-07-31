@@ -227,7 +227,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 upperNext = false;
             }
 
-            return chars.Count == 0 ? "Data" : new(chars.ToArray());
+            return chars.Count == 0 ? "Data" : new([.. chars]);
         }
 
         private static void WarnInvalid(Type providerType, string methodName, string detail)

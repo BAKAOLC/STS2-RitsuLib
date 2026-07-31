@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         ///         进入可回收状态。
         ///     </para>
         /// </summary>
-        private static readonly ConditionalWeakTable<RitsuShellTheme, ThemeBoxMemo> BoxMemos = new();
+        private static readonly ConditionalWeakTable<RitsuShellTheme, ThemeBoxMemo> BoxMemos = [];
 
         private static ThemeBoxMemo MemoFor(RitsuShellTheme theme)
         {

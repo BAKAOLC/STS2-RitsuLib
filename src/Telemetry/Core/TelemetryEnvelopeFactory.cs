@@ -190,7 +190,7 @@ namespace STS2RitsuLib.Telemetry
                     ["mods"] = RunHistoryTelemetryCollector.BuildModInventoryList(),
                     ["loaded_mods"] = RunHistoryTelemetryCollector.BuildLoadedModList(),
                 },
-                _ => new(),
+                _ => [],
             };
         }
 
@@ -228,7 +228,7 @@ namespace STS2RitsuLib.Telemetry
 
                 if (root[provider.ContributorModId] is not JsonObject byMod)
                 {
-                    byMod = new();
+                    byMod = [];
                     root[provider.ContributorModId] = byMod;
                 }
 

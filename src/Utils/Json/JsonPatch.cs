@@ -298,10 +298,12 @@ namespace STS2RitsuLib.Utils.Json
                 throw new JsonPatchException(
                     $"Member '{memberName}' must be an RFC 6901 JSON Pointer.");
 
-            return pointer[1..]
-                .Split('/')
-                .Select(segment => DecodePointerSegment(segment, memberName))
-                .ToArray();
+            return
+            [
+                .. pointer[1..]
+                    .Split('/')
+                    .Select(segment => DecodePointerSegment(segment, memberName)),
+            ];
         }
 
         private static string DecodePointerSegment(string segment, string memberName)

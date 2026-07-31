@@ -214,9 +214,9 @@ namespace STS2RitsuLib.Diagnostics.Logging
                 if (token.IsCancellationRequested || _server == null || _server.ClientCount > 0)
                     return;
 
-                var result = TryOpenViewerInBrowser();
-                if (!result.Success)
-                    ReportInternalWarning(result.Message);
+                var (success, message) = TryOpenViewerInBrowser();
+                if (!success)
+                    ReportInternalWarning(message);
             }
             catch (OperationCanceledException)
             {

@@ -46,15 +46,17 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
                 ["has_registered_mod_settings"] = snapshot.HasRegisteredModSettings,
                 ["lifecycle_observer_count"] = snapshot.LifecycleObserverCount,
                 ["registered_script_assembly_count"] = snapshot.RegisteredScriptAssemblyCount,
-                ["patcher_areas"] = new JsonArray(snapshot.PatcherAreas.Select(area => new JsonObject
-                {
-                    ["area_name"] = area.AreaName,
-                    ["is_registered"] = area.IsRegistered,
-                    ["is_applied"] = area.IsApplied,
-                    ["registered_patch_count"] = area.RegisteredPatchCount,
-                    ["registered_dynamic_patch_count"] = area.RegisteredDynamicPatchCount,
-                    ["applied_patch_count"] = area.AppliedPatchCount,
-                }).ToArray<JsonNode?>()),
+                ["patcher_areas"] = new JsonArray([
+                    .. snapshot.PatcherAreas.Select(area => new JsonObject
+                    {
+                        ["area_name"] = area.AreaName,
+                        ["is_registered"] = area.IsRegistered,
+                        ["is_applied"] = area.IsApplied,
+                        ["registered_patch_count"] = area.RegisteredPatchCount,
+                        ["registered_dynamic_patch_count"] = area.RegisteredDynamicPatchCount,
+                        ["applied_patch_count"] = area.AppliedPatchCount,
+                    }),
+                ]),
             };
         }
 

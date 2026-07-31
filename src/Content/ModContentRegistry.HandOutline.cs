@@ -60,6 +60,5 @@ namespace STS2RitsuLib.Content
                 visibleWhenUnplayable,
                 refreshEveryFrame));
         }
-
     }
 }

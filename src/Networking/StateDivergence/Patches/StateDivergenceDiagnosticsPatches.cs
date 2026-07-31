@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
 {
     internal static class StateDivergenceDiagnosticsReports
     {
-        public static readonly ConditionalWeakTable<NErrorPopup, StateDivergenceDiagnosticReport> PopupReports = new();
+        public static readonly ConditionalWeakTable<NErrorPopup, StateDivergenceDiagnosticReport> PopupReports = [];
         private static StateDivergenceDiagnosticReport? _latestReport;
         private static StateDivergenceDiagnosticReport? _latestLogReport;
         private static string? _latestBundlePath;

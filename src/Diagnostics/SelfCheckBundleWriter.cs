@@ -156,8 +156,8 @@ namespace STS2RitsuLib.Diagnostics
                 {
                     sb.AppendLine(
                         $"- order={layer.WriteOrder} scope={layer.Scope} target={layer.CharacterEntry} mod={layer.ModId}");
-                    foreach (var field in EnumerateCharacterAssetProfilePathFields(layer.Profile))
-                        sb.AppendLine($"  - {field.PropertyPath} = {field.Value}");
+                    foreach (var (propertyPath, value) in EnumerateCharacterAssetProfilePathFields(layer.Profile))
+                        sb.AppendLine($"  - {propertyPath} = {value}");
                 }
 
             sb.AppendLine();

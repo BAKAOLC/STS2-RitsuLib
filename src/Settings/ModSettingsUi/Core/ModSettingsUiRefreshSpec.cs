@@ -68,7 +68,7 @@ namespace STS2RitsuLib.Settings
             new(ModSettingsRefreshRegistrationKind.AnyBindingDirtyThisFlush, default);
 
         public static ModSettingsUiRefreshSpec StaticDisplay { get; } =
-            new(ModSettingsRefreshRegistrationKind.SpecificBindings, ImmutableArray<IModSettingsBinding>.Empty);
+            new(ModSettingsRefreshRegistrationKind.SpecificBindings, []);
 
         internal bool IsStaticDisplay =>
             Kind == ModSettingsRefreshRegistrationKind.SpecificBindings && Bindings.IsDefaultOrEmpty;

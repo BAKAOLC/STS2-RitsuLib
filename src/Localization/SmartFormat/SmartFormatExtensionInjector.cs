@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
     public static class SmartFormatExtensionInjector
     {
         private static readonly ConditionalWeakTable<SmartFormatter, InjectedFormatterNames>
-            InjectedFormatterNamesByFormatter = new();
+            InjectedFormatterNamesByFormatter = [];
 
         /// <summary>
         ///     <para xml:lang="en">

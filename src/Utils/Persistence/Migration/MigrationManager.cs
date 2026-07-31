@@ -9,8 +9,8 @@ namespace STS2RitsuLib.Utils.Persistence.Migration
     /// </summary>
     public class MigrationManager
     {
-        private readonly Dictionary<Type, MigrationConfig> _configs = new();
-        private readonly Dictionary<Type, List<IMigration>> _migrations = new();
+        private readonly Dictionary<Type, MigrationConfig> _configs = [];
+        private readonly Dictionary<Type, List<IMigration>> _migrations = [];
 
         /// <summary>
         ///     <para xml:lang="en">Registers migration configuration for a data type.</para>

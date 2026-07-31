@@ -22,8 +22,8 @@ namespace STS2RitsuLib.Utils.Json
                 return IsJsonNull(patch) ? null : patch?.DeepClone();
 
             var output = TryGetObject(target, out var targetObj)
-                ? targetObj.DeepClone() as JsonObject ?? new JsonObject()
-                : new();
+                ? targetObj.DeepClone() as JsonObject ?? []
+                : [];
             ApplyInPlace(output, patchObj);
             return output;
         }
@@ -55,7 +55,7 @@ namespace STS2RitsuLib.Utils.Json
                     }
                     else
                     {
-                        targetChild = new();
+                        targetChild = [];
                         target[kv.Key] = targetChild;
                     }
 

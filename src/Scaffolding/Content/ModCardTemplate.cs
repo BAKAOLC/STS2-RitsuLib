@@ -124,6 +124,5 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <inheritdoc />
         public virtual Material? CustomPortraitMaterial => AssetProfile.PortraitMaterial;
-
     }
 }

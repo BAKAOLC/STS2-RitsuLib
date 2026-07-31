@@ -21,7 +21,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         ///     <para xml:lang="zh-CN">按命令实例保存自定义目标集合。</para>
         /// </summary>
         internal static readonly ConditionalWeakTable<AttackCommand, StrongBox<IReadOnlyList<Creature>>>
-            CustomTargets = new();
+            CustomTargets = [];
 
         public static string PatchId => "card_target_custom_attack_command_get_possible_targets";
 

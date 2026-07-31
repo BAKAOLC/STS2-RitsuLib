@@ -5,7 +5,7 @@ namespace STS2RitsuLib.Compat
 {
     internal static class CommonIncompatibleModRegistry
     {
-        private static readonly ConditionalWeakTable<Assembly, InspectionResult> InspectionCache = new();
+        private static readonly ConditionalWeakTable<Assembly, InspectionResult> InspectionCache = [];
 
         private static readonly IReadOnlyList<Definition> Definitions =
         [

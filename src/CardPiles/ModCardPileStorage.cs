@@ -31,10 +31,10 @@ namespace STS2RitsuLib.CardPiles
     internal static class ModCardPileStorage
     {
         private static readonly ConditionalWeakTable<PlayerCombatState, Dictionary<PileType, ModCardPile>>
-            CombatPiles = new();
+            CombatPiles = [];
 
         private static readonly ConditionalWeakTable<Player, Dictionary<PileType, ModCardPile>>
-            RunPiles = new();
+            RunPiles = [];
 
         /// <summary>
         ///     <para xml:lang="en">

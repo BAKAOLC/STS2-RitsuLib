@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
 {
     internal static class DevConsoleHistoryNavigationState
     {
-        internal static readonly ConditionalWeakTable<NDevConsole, HistoryState> States = new();
+        internal static readonly ConditionalWeakTable<NDevConsole, HistoryState> States = [];
 
         internal static readonly AccessTools.FieldRef<NDevConsole, GameDevConsole> DevConsoleField =
             AccessTools.FieldRefAccess<NDevConsole, GameDevConsole>("_devConsole");

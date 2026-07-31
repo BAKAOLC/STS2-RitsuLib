@@ -194,6 +194,5 @@ namespace STS2RitsuLib.Keywords
                 ModKeywordCardDescriptionPlacement.None,
                 true);
         }
-
     }
 }

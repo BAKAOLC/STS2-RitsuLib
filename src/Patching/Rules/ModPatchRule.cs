@@ -118,8 +118,10 @@ namespace STS2RitsuLib.Patching.Rules
                 return "NoArgs";
 
             return string.Join("_", parameterTypes.Select(static type =>
-                new string(GetStableTypeName(type).Select(static ch =>
-                    char.IsLetterOrDigit(ch) ? ch : '_').ToArray()).Trim('_')));
+                new string([
+                    .. GetStableTypeName(type).Select(static ch =>
+                        char.IsLetterOrDigit(ch) ? ch : '_'),
+                ]).Trim('_')));
         }
 
         private static string GetStableTypeName(Type type)

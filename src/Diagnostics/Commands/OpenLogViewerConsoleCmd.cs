@@ -33,8 +33,8 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length > 0)
                 return new(false, "Usage: openlogviewer");
 
-            var result = RitsuDebugLogPipeline.TryOpenViewerInBrowser();
-            return new(result.Success, result.Message);
+            var (success, message) = RitsuDebugLogPipeline.TryOpenViewerInBrowser();
+            return new(success, message);
         }
     }
 }

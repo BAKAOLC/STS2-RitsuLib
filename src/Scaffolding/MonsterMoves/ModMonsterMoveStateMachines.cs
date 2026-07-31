@@ -22,7 +22,7 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
         {
             ArgumentNullException.ThrowIfNull(move);
             move.FollowUpState = move;
-            return new(new List<MonsterState> { move }, move);
+            return new([move], move);
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace STS2RitsuLib.Scaffolding.MonsterMoves
             ArgumentNullException.ThrowIfNull(tail);
             head.FollowUpState = tail;
             tail.FollowUpState = tail;
-            return new(new List<MonsterState> { head, tail }, head);
+            return new([head, tail], head);
         }
 
         /// <summary>

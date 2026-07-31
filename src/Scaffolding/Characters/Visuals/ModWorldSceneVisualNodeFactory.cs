@@ -41,11 +41,15 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             if (character is not IModCharacterAssetOverrides { WorldProceduralVisuals.Merchant: not null })
                 return null;
 
-            var root = new NMerchantCharacter();
-            root.Name = "RitsuProceduralMerchant";
+            var root = new NMerchantCharacter
+            {
+                Name = "RitsuProceduralMerchant",
+            };
 
-            var sprite = new Sprite2D();
-            sprite.Name = "Visuals";
+            var sprite = new Sprite2D
+            {
+                Name = "Visuals",
+            };
             root.AddChild(sprite);
             sprite.Owner = root;
 
@@ -71,17 +75,21 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             if (player.Character is not IModCharacterAssetOverrides { WorldProceduralVisuals.RestSite: not null })
                 return null;
 
-            var root = new NRestSiteCharacter();
-            root.Name = "RitsuProceduralRestSiteCharacter";
-            root.Player = player;
+            var root = new NRestSiteCharacter
+            {
+                Name = "RitsuProceduralRestSiteCharacter",
+                Player = player,
+            };
             RestSiteCharacterIndexRef(root) = characterIndex;
 
             var controlRoot = new Control { Name = "ControlRoot" };
             root.AddChild(controlRoot);
             controlRoot.Owner = root;
 
-            var hitbox = new Control { Name = "Hitbox" };
-            hitbox.UniqueNameInOwner = true;
+            var hitbox = new Control
+            {
+                Name = "Hitbox", UniqueNameInOwner = true,
+            };
             hitbox.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
             hitbox.OffsetLeft = -155f;
             hitbox.OffsetTop = -351f;
@@ -106,16 +114,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
             controlRoot.AddChild(reticle);
             reticle.Owner = root;
 
-            var thoughtLeft = new Control { Name = "ThoughtBubbleLeft" };
-            thoughtLeft.UniqueNameInOwner = true;
+            var thoughtLeft = new Control
+            {
+                Name = "ThoughtBubbleLeft", UniqueNameInOwner = true,
+            };
             thoughtLeft.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
             thoughtLeft.OffsetLeft = -73.6836f;
             thoughtLeft.OffsetTop = -324.997f;
             controlRoot.AddChild(thoughtLeft);
             thoughtLeft.Owner = root;
 
-            var thoughtRight = new Control { Name = "ThoughtBubbleRight" };
-            thoughtRight.UniqueNameInOwner = true;
+            var thoughtRight = new Control
+            {
+                Name = "ThoughtBubbleRight", UniqueNameInOwner = true,
+            };
             thoughtRight.SetAnchorsPreset(Control.LayoutPreset.TopLeft);
             thoughtRight.OffsetLeft = 209.209f;
             thoughtRight.OffsetTop = -317.103f;

@@ -5689,8 +5689,10 @@ namespace STS2RitsuLib.Settings
 
             var actionsButton = new ModSettingsActionsButton(
                 ModSettingsUiFactory.BuildListItemMenuActions(owner.UiContext, itemContext),
-                itemContext.RequestRefresh);
-            actionsButton.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+                itemContext.RequestRefresh)
+            {
+                SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            };
             actions.AddChild(actionsButton);
             ModSettingsUiFactory.AttachContextMenuTargets(this, outer, actionsButton);
 

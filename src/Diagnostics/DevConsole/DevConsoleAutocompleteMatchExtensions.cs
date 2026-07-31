@@ -33,10 +33,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                     return true;
 
                 var entryId = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
-                if (!titles.TryGetValue(entryId, out var title))
-                    return false;
-
-                return title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
+                return titles.TryGetValue(entryId, out var title) &&
+                       title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
             };
         }
 
@@ -91,10 +89,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                     return true;
 
                 var token = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
-                if (!titles.TryGetValue(token, out var title))
-                    return false;
-
-                return title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
+                return titles.TryGetValue(token, out var title) &&
+                       title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
             };
         }
 

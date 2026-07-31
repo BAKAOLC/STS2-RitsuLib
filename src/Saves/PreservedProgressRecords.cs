@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Saves
     /// </summary>
     public sealed class PreservedProgressRecords
     {
-        private static readonly ConditionalWeakTable<ProgressState, PreservedProgressRecords> RecordsByProgress = new();
+        private static readonly ConditionalWeakTable<ProgressState, PreservedProgressRecords> RecordsByProgress = [];
         private static readonly HashSet<string> KnownAchievementNames = BuildKnownAchievementNames();
 
         private static readonly FieldInfo? ValidationErrorsField =

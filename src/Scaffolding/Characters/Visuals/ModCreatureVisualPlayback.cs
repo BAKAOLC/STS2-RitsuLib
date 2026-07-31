@@ -38,20 +38,20 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
     /// </summary>
     public static class ModCreatureVisualPlayback
     {
-        private static readonly ConditionalWeakTable<Node, Func<string[], bool>> GodotAnimHandlers = new();
+        private static readonly ConditionalWeakTable<Node, Func<string[], bool>> GodotAnimHandlers = [];
 
         private static readonly ConditionalWeakTable<Node, RitsuCreatureVisualRegistration>
-            RitsuCreatureVisuals = new();
+            RitsuCreatureVisuals = [];
 
         private static readonly AccessTools.FieldRef<NMerchantRoom, List<Player>> MerchantRoomPlayersRef =
             AccessTools.FieldRefAccess<NMerchantRoom, List<Player>>("_players");
 
         private static readonly ConditionalWeakTable<NFakeMerchant, FakeMerchantPlayerVisualSlot>
             FakeMerchantVisualSlots =
-                new();
+                [];
 
         private static readonly ConditionalWeakTable<NMerchantCharacter, CharacterModel> FakeMerchantBoothCharacter =
-            new();
+            [];
 
         private static readonly string[] DieCueNames = ["die", "death", "dead", "Dead"];
 

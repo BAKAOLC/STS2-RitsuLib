@@ -46,7 +46,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     [HarmonyBefore(Const.BaseLibHarmonyId)]
     internal class ModCreatureCombatAnimationPlaybackPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByVisuals = new();
+        private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByVisuals = [];
         public static string PatchId => "mod_creature_combat_animation_playback";
 
         public static string Description =>

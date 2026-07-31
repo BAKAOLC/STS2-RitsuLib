@@ -10,7 +10,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
     {
         private const float MaxDelaySeconds = 30f;
         private const string NodeName = "RitsuNonSpineDeathAnimationDelayer";
-        private static readonly ConditionalWeakTable<NCreature, DelaySlot> Delays = new();
+        private static readonly ConditionalWeakTable<NCreature, DelaySlot> Delays = [];
         private readonly Task _delayTask;
 
         private RitsuNonSpineDeathAnimationDelayer(float seconds)

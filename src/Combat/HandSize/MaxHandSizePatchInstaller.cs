@@ -385,6 +385,7 @@ namespace STS2RitsuLib.Combat.HandSize
         private static int CountBaseLibDelegatedSites(IReadOnlyList<CodeInstruction> code)
         {
             var count = 0;
+            // ReSharper disable once LoopCanBeConvertedToQuery
             for (var i = 0; i < code.Count; i++)
             {
                 if (IsBaseLibBaseAmountToken(code, i))
@@ -405,6 +406,7 @@ namespace STS2RitsuLib.Combat.HandSize
             if (coveredByRitsuLib || coveredByBaseLib)
             {
                 _rewriteSuccessCount++;
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
                 if (coveredByRitsuLib && coveredByBaseLib)
                     _mixedRewriteTargetCount++;
                 else if (coveredByRitsuLib)

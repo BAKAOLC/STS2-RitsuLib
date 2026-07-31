@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Ui.Shell
     internal static class RitsuShellStyleCache
     {
         private static readonly ConditionalWeakTable<RitsuShellTheme, ConcurrentDictionary<string, StyleBoxFlat>>
-            Cache = new();
+            Cache = [];
 
         /// <summary>
         ///     <para xml:lang="en">

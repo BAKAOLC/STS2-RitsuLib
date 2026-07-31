@@ -549,9 +549,8 @@ namespace STS2RitsuLib.Settings
                             ? null
                             : ModSettingsText.Literal(placeholderRaw);
 
-                        var validatorDel = t.GetProperty("Validator")?.GetValue(entry) as Delegate;
                         Func<string, bool>? validationVisual = null;
-                        if (validatorDel != null)
+                        if (t.GetProperty("Validator")?.GetValue(entry) is Delegate validatorDel)
                             validationVisual = text =>
                             {
                                 try

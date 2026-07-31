@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Settings.Patches
     [HarmonyPriority(Priority.Last)]
     internal class ModSettingsSubmenuPatch : IPatchMethod
     {
-        internal static readonly ConditionalWeakTable<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = new();
+        internal static readonly ConditionalWeakTable<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = [];
         public static string PatchId => "ritsulib_mod_settings_submenu";
         public static string Description => "Inject RitsuLib mod settings submenu into the main menu stack";
         public static bool IsCritical => false;

@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                          StringComparer.Ordinal))
             {
                 var id = stats.Id;
-                if ((object?)id == null || id == ModelId.none || visibleCharacterIds.Contains(id))
+                if (id is null || id == ModelId.none || visibleCharacterIds.Contains(id))
                     continue;
 
                 if (ModelDb.GetByIdOrNull<CharacterModel>(id) is not { IsPlayable: true })
@@ -78,7 +78,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 var stats = CharacterStatsRef(characterStatsNode);
 
                 var id = stats?.Id;
-                if ((object?)id != null && id != ModelId.none)
+                if (id is not null && id != ModelId.none)
                     result.Add(id);
             }
 
