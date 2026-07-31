@@ -1,3 +1,4 @@
+#if !STS2_AT_LEAST_0_109_0
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.DevConsole;
@@ -77,3 +78,4 @@ namespace STS2RitsuLib.Diagnostics.Patches
         }
     }
 }
+#endif

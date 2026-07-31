@@ -26,13 +26,17 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             Func<string, string, bool>? inner = null)
         {
             var baseMatch = inner ?? DefaultPrefixMatch;
+            var titles = DevConsoleModelIdAutocompleteCatalog.GetTitlesSnapshot();
             return (candidate, partial) =>
             {
                 if (baseMatch(candidate, partial))
                     return true;
 
                 var entryId = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
-                return DevConsoleModelIdAutocompleteCatalog.MatchesLocalizedTitle(entryId, partial);
+                if (!titles.TryGetValue(entryId, out var title))
+                    return false;
+
+                return title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
             };
         }
 
@@ -52,6 +56,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (result.Candidates.Count == 0)
                 return;
 
+            var titles = DevConsoleModelIdAutocompleteCatalog.GetTitlesSnapshot();
             var entryIds = result.Candidates
                 .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
                 .ToList();
@@ -59,7 +64,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             result.Candidates =
             [
                 .. entryIds
-                    .Select(DevConsoleAutocompleteDisplay.FormatCandidate),
+                    .Select(entryId => DevConsoleAutocompleteDisplay.FormatCandidate(
+                        entryId,
+                        titles.GetValueOrDefault(entryId))),
             ];
 
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(entryIds, result.CommandPrefix);
@@ -77,13 +84,17 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             Func<string, string, bool>? inner = null)
         {
             var baseMatch = inner ?? DefaultPrefixMatch;
+            var titles = DevConsolePileNameAutocompleteCatalog.GetTitlesSnapshot();
             return (candidate, partial) =>
             {
                 if (baseMatch(candidate, partial))
                     return true;
 
                 var token = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
-                return DevConsolePileNameAutocompleteCatalog.MatchesLocalizedTitle(token, partial);
+                if (!titles.TryGetValue(token, out var title))
+                    return false;
+
+                return title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
             };
         }
 
@@ -176,6 +187,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (result.Candidates.Count == 0)
                 return;
 
+            var titles = DevConsolePileNameAutocompleteCatalog.GetTitlesSnapshot();
             var tokens = result.Candidates
                 .Select(DevConsoleAutocompleteDisplay.StripLocalizedSuffix)
                 .ToList();
@@ -183,7 +195,9 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             result.Candidates =
             [
                 .. tokens
-                    .Select(DevConsoleAutocompleteDisplay.FormatPileCandidate),
+                    .Select(token => DevConsoleAutocompleteDisplay.FormatCandidate(
+                        token,
+                        titles.GetValueOrDefault(token))),
             ];
 
             result.CommonPrefix = DevConsoleAutocompleteDisplay.ComputeCommonPrefix(tokens, result.CommandPrefix);

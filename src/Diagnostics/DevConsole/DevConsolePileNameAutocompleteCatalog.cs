@@ -18,7 +18,6 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static readonly Lock Sync = new();
         private static Dictionary<string, string>? _titlesByToken;
         private static string? _builtForLanguage;
-        private static string? _builtForDefinitions;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -34,8 +33,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (string.IsNullOrWhiteSpace(token))
                 return null;
 
-            EnsureBuilt();
-            return _titlesByToken!.GetValueOrDefault(token.Trim());
+            return GetTitlesSnapshot().GetValueOrDefault(token.Trim());
         }
 
         /// <summary>
@@ -52,7 +50,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (string.IsNullOrWhiteSpace(partial))
                 return true;
 
-            var title = TryGetLocalizedTitle(token);
+            var title = GetTitlesSnapshot().GetValueOrDefault(token.Trim());
             return !string.IsNullOrWhiteSpace(title) &&
                    title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
         }
@@ -78,30 +76,25 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             }
         }
 
-        private static void EnsureBuilt()
+        private static Dictionary<string, string> EnsureBuilt()
         {
             var language = I18N.ResolveCurrentLanguageCode();
-            var definitionKey = BuildDefinitionKey();
             lock (Sync)
             {
-                if (_titlesByToken != null &&
-                    string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(_builtForDefinitions, definitionKey, StringComparison.Ordinal))
-                    return;
+                if (_titlesByToken == null ||
+                    !string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
+                {
+                    _titlesByToken = BuildTitles();
+                    _builtForLanguage = language;
+                }
 
-                _titlesByToken = BuildTitles();
-                _builtForLanguage = language;
-                _builtForDefinitions = definitionKey;
+                return _titlesByToken;
             }
         }
 
-        private static string BuildDefinitionKey()
+        internal static IReadOnlyDictionary<string, string> GetTitlesSnapshot()
         {
-            return string.Join(
-                "\n",
-                ModCardPileRegistry.GetDefinitionsSnapshot()
-                    .OrderBy(definition => definition.Id, StringComparer.OrdinalIgnoreCase)
-                    .Select(definition => $"{definition.Id}\t{definition.PileType}"));
+            return EnsureBuilt();
         }
 
         private static Dictionary<string, string> BuildTitles()

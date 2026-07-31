@@ -17,6 +17,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static Dictionary<string, string>? _titlesByEntry;
         private static string? _builtForLanguage;
 
+        static DevConsoleModelIdAutocompleteCatalog()
+        {
+            RitsuLibFramework.SubscribeLifecycle<ModelRegistryInitializedEvent>(_ => Invalidate(), false);
+        }
+
         /// <summary>
         ///     <para xml:lang="en">
         ///         Returns the localized title for <paramref name="entryId" />, or <see langword="null" /> when it is
@@ -31,8 +36,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (string.IsNullOrWhiteSpace(entryId))
                 return null;
 
-            EnsureBuilt();
-            return _titlesByEntry?.GetValueOrDefault(entryId.Trim());
+            return GetTitlesSnapshot().GetValueOrDefault(entryId.Trim());
         }
 
         /// <summary>
@@ -49,30 +53,38 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             if (string.IsNullOrWhiteSpace(partial))
                 return true;
 
-            var title = TryGetLocalizedTitle(entryId);
+            var title = GetTitlesSnapshot().GetValueOrDefault(entryId.Trim());
             return !string.IsNullOrWhiteSpace(title) &&
                    title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void EnsureBuilt()
+        internal static IReadOnlyDictionary<string, string> GetTitlesSnapshot()
+        {
+            return EnsureBuilt();
+        }
+
+        private static Dictionary<string, string> EnsureBuilt()
         {
             var language = I18N.ResolveCurrentLanguageCode();
             lock (Sync)
             {
-                if (_titlesByEntry != null &&
-                    string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
-                    return;
-
-                var titles = BuildTitles();
-                if (titles.Count == 0)
+                if (_titlesByEntry == null ||
+                    !string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
                 {
-                    _titlesByEntry = null;
-                    _builtForLanguage = null;
-                    return;
+                    _titlesByEntry = BuildTitles();
+                    _builtForLanguage = language;
                 }
 
-                _titlesByEntry = titles;
-                _builtForLanguage = language;
+                return _titlesByEntry;
+            }
+        }
+
+        private static void Invalidate()
+        {
+            lock (Sync)
+            {
+                _titlesByEntry = null;
+                _builtForLanguage = null;
             }
         }
 
