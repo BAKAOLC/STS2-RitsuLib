@@ -1,5 +1,6 @@
 using Godot;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Models;
@@ -39,6 +40,9 @@ namespace STS2RitsuLib.CardPiles
 
         private static readonly AccessTools.FieldRef<NPlayerHand, NCardPlay?> CurrentCardPlayRef =
             PrivateAccess.FieldRef<NPlayerHand, NCardPlay?>("_currentCardPlay");
+
+        private static readonly AccessTools.FieldRef<NPlayerHand, StringName[]> SelectCardShortcutsRef =
+            PrivateAccess.FieldRef<NPlayerHand, StringName[]>("_selectCardShortcuts");
 
         private static readonly AccessTools.FieldRef<NMouseCardPlay, float> MouseDragStartYRef =
             PrivateAccess.FieldRef<NMouseCardPlay, float>("_dragStartYPosition");
@@ -88,7 +92,7 @@ namespace STS2RitsuLib.CardPiles
                 handPile.CardRemoved += origin.HandCardRemoved;
 
                 holder.Reparent(hand.CardHolderContainer);
-                StartVanillaCardPlay(hand, holder, false);
+                StartVanillaCardPlayWithExtraHandShortcut(hand, holder);
                 var cardPlay = CurrentCardPlayRef(hand);
                 if (cardPlay == null
                     || !GodotObject.IsInstanceValid(cardPlay)
@@ -220,6 +224,30 @@ namespace STS2RitsuLib.CardPiles
             ref var dragStartY = ref MouseDragStartYRef(cardPlay);
             if (dragStartY <= playZoneY)
                 dragStartY = playZoneY + MousePlayZoneStartOffset;
+        }
+
+        private static void StartVanillaCardPlayWithExtraHandShortcut(
+            NPlayerHand hand,
+            NHandCardHolder holder)
+        {
+            var holderIndex = holder.GetIndex();
+            if (holderIndex < 0)
+                throw new InvalidOperationException("Extra-hand holder is not mounted in the vanilla hand container.");
+
+            ref var shortcuts = ref SelectCardShortcutsRef(hand);
+            var originalShortcuts = shortcuts;
+            var temporaryShortcuts = new StringName[Math.Max(originalShortcuts.Length, holderIndex + 1)];
+            originalShortcuts.CopyTo(temporaryShortcuts, 0);
+            temporaryShortcuts[holderIndex] = MegaInput.cancel;
+            shortcuts = temporaryShortcuts;
+            try
+            {
+                StartVanillaCardPlay(hand, holder, false);
+            }
+            finally
+            {
+                shortcuts = originalShortcuts;
+            }
         }
 
         private static void RollBackTargeting(PlayOrigin origin, bool restoreInterruptedTransfer = false)
