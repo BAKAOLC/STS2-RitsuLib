@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Patching.Models;
 
@@ -27,6 +28,30 @@ namespace STS2RitsuLib.CardPiles.Patches
         public static void Prefix(NCardPlay __instance)
         {
             ModExtraHandPlayCoordinator.PrepareForEnqueue(__instance);
+        }
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Prevents the vanilla hand from starting another card play while an extra-hand card is being
+    ///         targeted.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">额外手牌卡牌正在选择目标时，阻止原版手牌开始另一次出牌。</para>
+    /// </summary>
+    internal sealed class ModExtraHandVanillaCardPlayGuardPatch : IPatchMethod
+    {
+        public static string PatchId => "ritsulib_extra_hand_vanilla_card_play_guard";
+        public static string Description => "Prevent concurrent vanilla and extra-hand card targeting";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NPlayerHand), "StartCardPlay", [typeof(NHandCardHolder), typeof(bool)])];
+        }
+
+        public static bool Prefix()
+        {
+            return !ModExtraHandPlayCoordinator.IsPlaying;
         }
     }
 

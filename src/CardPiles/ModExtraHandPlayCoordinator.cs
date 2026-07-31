@@ -60,6 +60,7 @@ namespace STS2RitsuLib.CardPiles
                 origin.HandCardRemoved = removed => OnHandCardRemoved(origin, removed);
                 handPile.CardRemoved += origin.HandCardRemoved;
 
+                holder.Reparent(hand);
                 holder.BeginDrag();
                 NCardPlay cardPlay = Sts2InputCompat.IsUsingDirectionalNavigation
                     ? NControllerCardPlay.Create(holder)
