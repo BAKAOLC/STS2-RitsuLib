@@ -899,8 +899,10 @@ namespace STS2RitsuLib.Settings
             var control = new ModSettingsTextButton(
                 ModSettingsUiContext.Resolve(entry.ButtonText, ModSettingsLocalization.Get("button.open", "Open")),
                 ModSettingsButtonTone.Accent,
-                () => context.NavigateToPage(entry.TargetPageId));
-            control.CustomMinimumSize = new(EntryControlWidth, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
+                () => context.NavigateToPage(entry.TargetPageId))
+            {
+                CustomMinimumSize = new(EntryControlWidth, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+            };
             control.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                 "components.subpageButton.layout.minSize",
                 control.CustomMinimumSize);

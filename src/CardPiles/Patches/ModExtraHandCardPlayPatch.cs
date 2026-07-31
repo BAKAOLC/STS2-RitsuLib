@@ -1,5 +1,5 @@
-using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Patching.Models;
 
@@ -7,26 +7,25 @@ namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Moves the active extra-hand holder into the vanilla hand container before manual-play enqueue.
+    ///         Cancels active extra-hand targeting before the vanilla hand starts another card play.
     ///     </para>
-    ///     <para xml:lang="zh-CN">
-    ///         手动打牌动作入队前，将当前额外手牌卡牌容器移入原版手牌容器。
-    ///     </para>
+    ///     <para xml:lang="zh-CN">原版手牌开始另一次出牌前，取消生效中的额外手牌目标选择。</para>
     /// </summary>
-    internal sealed class ModExtraHandCardPlayPreparePatch : IPatchMethod
+    internal sealed class ModExtraHandVanillaCardPlaySwitchPatch : IPatchMethod
     {
-        public static string PatchId => "ritsulib_extra_hand_card_play_prepare";
-        public static string Description => "Prepare playable extra-hand holders for vanilla card-play enqueue";
+        public static string PatchId => "ritsulib_extra_hand_vanilla_card_play_switch";
+        public static string Description => "Switch from extra-hand targeting to a newly selected vanilla hand card";
         public static bool IsCritical => false;
 
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(NCardPlay), "TryPlayCard", [typeof(Creature)])];
+            return [new(typeof(NPlayerHand), "StartCardPlay", [typeof(NHandCardHolder), typeof(bool)])];
         }
 
-        public static void Prefix(NCardPlay __instance)
+        public static void Prefix(NHandCardHolder holder)
         {
-            ModExtraHandPlayCoordinator.PrepareForEnqueue(__instance);
+            if (!ModExtraHandPlayCoordinator.IsActiveHolder(holder))
+                ModExtraHandPlayCoordinator.CancelActiveTargeting();
         }
     }
 

@@ -45,7 +45,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                         continue;
 
                     var key = RewardSerializationExt.MakeKey(netId, i);
-                    __result.EncounterState ??= new();
+                    __result.EncounterState ??= [];
                     __result.EncounterState[key] = RewardSerializationExt.ToJson(ext);
                 }
         }

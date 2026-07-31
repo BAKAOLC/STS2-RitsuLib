@@ -50,8 +50,10 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static string NormalizeSegment(string value)
         {
-            return new(value.Select(static character =>
-                char.IsAsciiLetterOrDigit(character) || character == '_' ? character : '_').ToArray());
+            return new([
+                .. value.Select(static character =>
+                    char.IsAsciiLetterOrDigit(character) || character == '_' ? character : '_'),
+            ]);
         }
     }
 

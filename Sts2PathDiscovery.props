@@ -22,7 +22,10 @@
     <PropertyGroup Condition="'$(IsWindows)' == 'true'">
         <RegistrySts2Path>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 2868840', 'InstallLocation', '', RegistryView.Registry64, RegistryView.Registry32))</RegistrySts2Path>
         <AutoSteamPath>$(registry:HKEY_CURRENT_USER\Software\Valve\Steam@SteamPath)\steamapps</AutoSteamPath>
-        <SteamLibraryPath Condition="'$(SteamLibraryPath)' == '' and Exists('$(AutoSteamPath)/common/Slay the Spire 2')">$(AutoSteamPath)</SteamLibraryPath>
+        <SteamLibraryPath
+            Condition="'$(SteamLibraryPath)' == '' and Exists('$(AutoSteamPath)/common/Slay the Spire 2')">
+            $(AutoSteamPath)
+        </SteamLibraryPath>
         <SteamLibraryPath Condition="'$(SteamLibraryPath)' == ''">C:/Program Files (x86)/Steam/steamapps</SteamLibraryPath>
 
         <Sts2Dir Condition="'$(Sts2Dir)' == '' and Exists('$(SteamLibraryPath)/common/Slay the Spire 2')">$(SteamLibraryPath)/common/Slay the Spire 2</Sts2Dir>
@@ -44,8 +47,14 @@
         <SteamLibraryPath Condition="'$(SteamLibraryPath)' == ''">$(HOME)/Library/Application Support/Steam/steamapps</SteamLibraryPath>
         <Sts2Dir Condition="'$(Sts2Dir)' == ''">$(SteamLibraryPath)/common/Slay the Spire 2</Sts2Dir>
 
-        <Sts2DataDir Condition="'$(Sts2DataDir)' == '' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64</Sts2DataDir>
-        <Sts2DataDir Condition="'$(Sts2DataDir)' == '' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64</Sts2DataDir>
+        <Sts2DataDir
+            Condition="'$(Sts2DataDir)' == '' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">
+            $(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64
+        </Sts2DataDir>
+        <Sts2DataDir
+            Condition="'$(Sts2DataDir)' == '' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64')">
+            $(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64
+        </Sts2DataDir>
         <Sts2DataDir Condition="'$(Sts2DataDir)' == ''">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64</Sts2DataDir>
     </PropertyGroup>
 </Project>

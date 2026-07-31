@@ -25,7 +25,7 @@ namespace STS2RitsuLib.Interop.Internal
         // Retains installed transpiler handles for the lifetime of the process.
         // ReSharper disable once CollectionNeverQueried.Local
         private static readonly List<HarmonyIlPayloadTranspilerHandle> PayloadTranspilerHandles = [];
-        private static readonly Dictionary<(string, string), Type> TypeResolutionCache = new();
+        private static readonly Dictionary<(string, string), Type> TypeResolutionCache = [];
 
         internal static void TryProcessType(
             Harmony harmony,
@@ -128,6 +128,7 @@ namespace STS2RitsuLib.Interop.Internal
                     if (match is null)
                         throw new InvalidOperationException(
                             $"No matching constructor in {targetType.FullName} for {FormatConstructor(ctor)}");
+
                     return (ctor, match, paramTypes);
                 }).ToList();
 

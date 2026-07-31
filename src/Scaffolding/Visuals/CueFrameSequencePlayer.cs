@@ -213,8 +213,10 @@ namespace STS2RitsuLib.Scaffolding.Visuals
             if (parent.GetNodeOrNull(NodeName) is CueFrameSequencePlayer existing)
                 return existing;
 
-            var player = new CueFrameSequencePlayer();
-            player.Name = NodeName;
+            var player = new CueFrameSequencePlayer
+            {
+                Name = NodeName,
+            };
             parent.AddChild(player);
             return player;
         }

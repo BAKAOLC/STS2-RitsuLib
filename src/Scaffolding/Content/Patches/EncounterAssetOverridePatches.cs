@@ -383,7 +383,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             var customScene = externalSceneOk ? externalScenePath : overrides?.CustomEncounterScenePath;
             var customSceneOk = !string.IsNullOrWhiteSpace(customScene) && ResourceLoader.Exists(customScene);
             var factoryOnly =
-                (__instance as IModEncounterCombatSceneFactory)?.SuppliesEncounterCombatSceneFromFactory == true;
+                __instance is IModEncounterCombatSceneFactory { SuppliesEncounterCombatSceneFromFactory: true };
             if ((customSceneOk && !ResPathEquals(syntheticEncounterScene, customScene!)) || factoryOnly)
                 __result = [.. __result.Where(p => !ResPathEquals(p, syntheticEncounterScene))];
 

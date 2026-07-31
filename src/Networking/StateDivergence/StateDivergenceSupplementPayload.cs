@@ -78,7 +78,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static readonly Lock PreparedOutgoingLock = new();
 
         private static readonly Dictionary<(uint Id, uint Checksum), Queue<StateDivergenceSupplementPayload>>
-            PreparedOutgoingPayloads = new();
+            PreparedOutgoingPayloads = [];
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -462,7 +462,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private static readonly Lock SyncRoot = new();
 
         private static readonly Dictionary<(uint Id, uint Checksum), Queue<StateDivergenceSupplementPayload>> Payloads =
-            new();
+            [];
 
         public static void Store(StateDivergenceSupplementPayload payload)
         {

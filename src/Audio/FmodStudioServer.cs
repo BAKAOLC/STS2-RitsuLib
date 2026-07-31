@@ -462,9 +462,9 @@ namespace STS2RitsuLib.Audio
         public static Array TryGetAllBuses()
         {
             if (!FmodStudioGateway.TryCall(out var v, FmodStudioMethodNames.GetAllBuses))
-                return new();
+                return [];
 
-            return v.VariantType == Variant.Type.Array ? v.AsGodotArray() : new();
+            return v.VariantType == Variant.Type.Array ? v.AsGodotArray() : [];
         }
 
         /// <summary>

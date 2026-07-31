@@ -90,11 +90,11 @@ namespace STS2RitsuLib.Diagnostics
             foreach (var patchedMethod in allPatchedMethods)
             {
                 methodCount++;
-                var counts = LogPatchedMethodInfo(patchedMethod, streamWriter);
-                totalPrefixes += counts.prefixes;
-                totalPostfixes += counts.postfixes;
-                totalTranspilers += counts.transpilers;
-                totalFinalizers += counts.finalizers;
+                var (prefixes, postfixes, transpilers, finalizers) = LogPatchedMethodInfo(patchedMethod, streamWriter);
+                totalPrefixes += prefixes;
+                totalPostfixes += postfixes;
+                totalTranspilers += transpilers;
+                totalFinalizers += finalizers;
                 streamWriter.WriteLine();
             }
 

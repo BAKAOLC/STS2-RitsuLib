@@ -771,11 +771,11 @@ namespace STS2RitsuLib.Settings
                 }
 
                 var layout = GetLayout();
-                var visible = GetVisibleYRange();
+                var (start, end) = GetVisibleYRange();
                 for (var i = 0; i < _items.Count; i++)
                 {
                     var rect = GetCardRect(i, layout);
-                    if (rect.Position.Y > visible.end || rect.End.Y < visible.start)
+                    if (rect.Position.Y > end || rect.End.Y < start)
                         continue;
 
                     DrawCard(_items[i], rect);
@@ -893,12 +893,12 @@ namespace STS2RitsuLib.Settings
                 }
 
                 var layout = GetLayout();
-                var visible = GetVisibleYRange();
+                var (start, end) = GetVisibleYRange();
                 var bindingIndex = 0;
                 for (var i = 0; i < _items.Count; i++)
                 {
                     var rect = GetCardRect(i, layout);
-                    if (rect.Position.Y > visible.end || rect.End.Y < visible.start)
+                    if (rect.Position.Y > end || rect.End.Y < start)
                         continue;
 
                     var (openRect, actionRect) = GetButtonRects(rect);

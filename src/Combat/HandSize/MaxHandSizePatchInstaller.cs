@@ -32,6 +32,9 @@ namespace STS2RitsuLib.Combat.HandSize
         private static bool _patched;
         private static int _rewriteTargetCount;
         private static int _rewriteSuccessCount;
+        private static int _ritsuLibRewriteTargetCount;
+        private static int _baseLibDelegatedTargetCount;
+        private static int _mixedRewriteTargetCount;
 
         private static readonly MethodInfo GetMaxHandSizeMethod =
             AccessTools.Method(typeof(MaxHandSizeCalculator), nameof(MaxHandSizeCalculator.Calculate))
@@ -59,6 +62,9 @@ namespace STS2RitsuLib.Combat.HandSize
                 RewriteFailures.Clear();
                 _rewriteTargetCount = 0;
                 _rewriteSuccessCount = 0;
+                _ritsuLibRewriteTargetCount = 0;
+                _baseLibDelegatedTargetCount = 0;
+                _mixedRewriteTargetCount = 0;
 
                 var builder = new DynamicPatchBuilder("max_hand_size");
                 var transpilerPlayerArg0 =
@@ -74,15 +80,17 @@ namespace STS2RitsuLib.Combat.HandSize
                     nameof(CardPileCmd.CheckIfDrawIsPossibleAndShowThoughtBubbleIfNot),
                     [typeof(Player)], transpilerPlayerArg0);
 #if STS2_AT_LEAST_0_110_0
-                TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CombatManager),
-                        nameof(CombatManager.SetupPlayerTurn),
-                        [typeof(CombatTurnState), typeof(Player), typeof(HookPlayerChoiceContext)]),
+                var setupPlayerTurnMethod = AccessTools.Method(typeof(CombatManager),
+                    nameof(CombatManager.SetupPlayerTurn),
+                    [typeof(CombatTurnState), typeof(Player), typeof(HookPlayerChoiceContext)]);
+#else
+                var setupPlayerTurnMethod = AccessTools.Method(typeof(CombatManager),
+                    nameof(CombatManager.SetupPlayerTurn),
+                    [typeof(Player), typeof(HookPlayerChoiceContext)]);
+#endif
+                TryAddAsyncMoveNextPatch(builder, setupPlayerTurnMethod,
                     transpilerStateMachine,
                     "Patch CombatManager.SetupPlayerTurn state machine max-hand-size constants");
-#else
-                TryAddMethodPatch(builder, typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
-                    [typeof(Player), typeof(HookPlayerChoiceContext)], transpilerPlayerArg1);
-#endif
                 TryAddMethodPatch(builder, typeof(CardConsoleCmd), nameof(CardConsoleCmd.Process),
                     [typeof(Player), typeof(string[])], transpilerPlayerArg1);
 
@@ -142,8 +150,17 @@ namespace STS2RitsuLib.Combat.HandSize
                 }
 
                 _patched = true;
+                var coverageSources = new List<string>();
+                if (_ritsuLibRewriteTargetCount > 0)
+                    coverageSources.Add($"{_ritsuLibRewriteTargetCount} directly by RitsuLib");
+                if (_baseLibDelegatedTargetCount > 0)
+                    coverageSources.Add($"{_baseLibDelegatedTargetCount} delegated to BaseLib");
+                if (_mixedRewriteTargetCount > 0)
+                    coverageSources.Add($"{_mixedRewriteTargetCount} with mixed RitsuLib/BaseLib coverage");
+
                 var rewriteSummary =
-                    $"{_rewriteSuccessCount}/{_rewriteTargetCount} IL rewrite target(s) satisfied";
+                    $"{_rewriteSuccessCount}/{_rewriteTargetCount} max-hand-size IL target(s) covered" +
+                    (coverageSources.Count > 0 ? $": {string.Join(", ", coverageSources)}" : string.Empty);
                 if (RewriteFailures.Count > 0)
                     RitsuLibFramework.Logger.Warn(
                         $"[MaxHandSize] Harmony patches installed with partial IL coverage: {rewriteSummary}. " +
@@ -280,13 +297,14 @@ namespace STS2RitsuLib.Combat.HandSize
             MethodBase? originalMethod)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
+            var baseLibDelegatedSites = CountBaseLibDelegatedSites(rewriter.Code);
             var report = rewriter.ReplaceEach(
                 operation,
                 IsRitsuMaxHandSizeReplacementSite,
                 buildReplacement,
                 code => ContainsCall(code, alreadyInstalledCall));
             WarnIfRewriteUnsatisfied(report);
-            RecordRewriteResult(originalMethod, report);
+            RecordRewriteResult(originalMethod, report, baseLibDelegatedSites);
             return rewriter.InstructionsChecked(operation);
         }
 
@@ -317,6 +335,7 @@ namespace STS2RitsuLib.Combat.HandSize
             MethodBase __originalMethod)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
+            var baseLibDelegatedSites = CountBaseLibDelegatedSites(rewriter.Code);
             var loadPlayer = FindStateMachinePlayerLoad(rewriter);
             if (loadPlayer == null)
             {
@@ -333,7 +352,7 @@ namespace STS2RitsuLib.Combat.HandSize
                 (_, _) => [.. HarmonyIl.CloneAll(loadPlayer), HarmonyIl.Call(GetMaxHandSizeMethod)],
                 code => ContainsCall(code, GetMaxHandSizeMethod));
             WarnIfRewriteUnsatisfied(report);
-            RecordRewriteResult(__originalMethod, report);
+            RecordRewriteResult(__originalMethod, report, baseLibDelegatedSites);
             return rewriter.InstructionsChecked("[MaxHandSize] State-machine max-hand-size replacement");
         }
 
@@ -342,6 +361,7 @@ namespace STS2RitsuLib.Combat.HandSize
             MethodBase __originalMethod)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
+            var baseLibDelegatedSites = CountBaseLibDelegatedSites(rewriter.Code);
             var loadCard = FindStateMachineCardLoad(rewriter);
             if (loadCard == null)
             {
@@ -358,23 +378,52 @@ namespace STS2RitsuLib.Combat.HandSize
                 (_, _) => [.. HarmonyIl.CloneAll(loadCard), HarmonyIl.Call(GetMaxHandSizeFromCardMethod)],
                 code => ContainsCall(code, GetMaxHandSizeFromCardMethod));
             WarnIfRewriteUnsatisfied(report);
-            RecordRewriteResult(__originalMethod, report);
+            RecordRewriteResult(__originalMethod, report, baseLibDelegatedSites);
             return rewriter.InstructionsChecked("[MaxHandSize] Card OnPlay max-hand-size replacement");
         }
 
-        private static void RecordRewriteResult(MethodBase? originalMethod, HarmonyIlRewriteReport report)
+        private static int CountBaseLibDelegatedSites(IReadOnlyList<CodeInstruction> code)
+        {
+            var count = 0;
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            for (var i = 0; i < code.Count; i++)
+            {
+                if (IsBaseLibBaseAmountToken(code, i))
+                    count++;
+            }
+
+            return count;
+        }
+
+        private static void RecordRewriteResult(
+            MethodBase? originalMethod,
+            HarmonyIlRewriteReport report,
+            int baseLibDelegatedSites)
         {
             _rewriteTargetCount++;
-            if (report.Succeeded)
+            var coveredByRitsuLib = report.Succeeded;
+            var coveredByBaseLib = baseLibDelegatedSites > 0;
+            if (coveredByRitsuLib || coveredByBaseLib)
             {
                 _rewriteSuccessCount++;
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (coveredByRitsuLib && coveredByBaseLib)
+                    _mixedRewriteTargetCount++;
+                else if (coveredByRitsuLib)
+                    _ritsuLibRewriteTargetCount++;
+                else
+                    _baseLibDelegatedTargetCount++;
+
                 RitsuLibFramework.Logger.Debug(
                     $"[MaxHandSize] {FormatMethod(originalMethod)}: {report.Applied} replacement(s), " +
-                    $"alreadySatisfied={report.AlreadySatisfied}.");
+                    $"alreadySatisfied={report.AlreadySatisfied}, " +
+                    $"baseLibDelegatedSites={baseLibDelegatedSites}.");
                 return;
             }
 
-            RewriteFailures.Add($"{FormatMethod(originalMethod)} ({report.Matches} match(es))");
+            RewriteFailures.Add(
+                $"{FormatMethod(originalMethod)} ({report.Matches} RitsuLib match(es), " +
+                $"{baseLibDelegatedSites} BaseLib-delegated site(s))");
         }
 
         private static void RecordRewriteFailure(MethodBase? originalMethod, string reason)

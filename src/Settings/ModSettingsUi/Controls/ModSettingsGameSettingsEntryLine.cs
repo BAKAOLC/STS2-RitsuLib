@@ -143,12 +143,12 @@ namespace STS2RitsuLib.Settings
                 buttonText, openAction)
             {
                 Name = buttonName,
+                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                    "components.gameSettingsEntry.layout.buttonMinSize",
+                    new(320f, 64f)),
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+                SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
             };
-            button.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                "components.gameSettingsEntry.layout.buttonMinSize",
-                new(320f, 64f));
-            button.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-            button.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
             row.AddChild(button);
 
             AttachSettingsHoverTip(line, hoverTip);

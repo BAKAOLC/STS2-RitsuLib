@@ -14,7 +14,7 @@ namespace STS2RitsuLib.Settings
         private const ulong IdleReleaseMsec = 20_000;
 
         private readonly Dictionary<ModSettingsReusableEntryKind, Queue<ModSettingsUiFactory.ReusableSettingLine>>
-            _buckets = new();
+            _buckets = [];
 
         internal ModSettingsUiFactory.ReusableSettingLine Rent(ModSettingsReusableEntryKind kind)
         {

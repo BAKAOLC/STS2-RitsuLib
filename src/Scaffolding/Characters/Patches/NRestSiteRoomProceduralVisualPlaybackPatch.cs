@@ -24,7 +24,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     internal class NRestSiteRoomProceduralVisualPlaybackPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<NRestSiteCharacter, StateMachineSlot> StateMachinesByRoot = new();
+        private static readonly ConditionalWeakTable<NRestSiteCharacter, StateMachineSlot> StateMachinesByRoot = [];
 
         public static string PatchId => "n_rest_site_room_procedural_visual_playback";
 

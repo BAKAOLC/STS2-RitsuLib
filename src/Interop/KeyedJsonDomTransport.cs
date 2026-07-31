@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Interop
 
             if (json.GetRootObject != null)
             {
-                var incoming = json.GetRootObject(key) ?? new JsonObject();
+                var incoming = json.GetRootObject(key) ?? [];
                 return incoming.DeepClone();
             }
 
@@ -221,7 +221,7 @@ namespace STS2RitsuLib.Interop
             if (json.SetNode != null && pathRouting?.PushPaths is { Length: > 0 } pushPaths)
             {
                 if (documentRoot is not JsonObject docObj)
-                    docObj = new();
+                    docObj = [];
 
                 foreach (var rawPath in pushPaths)
                 {
@@ -236,13 +236,13 @@ namespace STS2RitsuLib.Interop
             if (json.MergeObjectAt != null && pathRouting?.MergePushPaths is { Length: > 0 } mergePaths)
             {
                 if (documentRoot is not JsonObject docObj)
-                    docObj = new();
+                    docObj = [];
 
                 foreach (var rawPath in mergePaths)
                 {
                     var ptr = JsonPointer.Normalize(rawPath);
                     if (JsonPointer.Get(docObj, ptr) is JsonObject sub)
-                        json.MergeObjectAt(key, ptr, sub.DeepClone() as JsonObject ?? new JsonObject());
+                        json.MergeObjectAt(key, ptr, sub.DeepClone() as JsonObject ?? []);
                 }
 
                 return;

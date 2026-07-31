@@ -406,7 +406,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private const string DefaultLabelFontPath = "res://themes/kreon_bold_shared.tres";
 
         private readonly Dictionary<SecondaryResourceCounterEnergyCounterLikeParticlesEffect, EnergyCounterLikeVfxNodes>
-            _energyCounterLikeVfxNodes = new();
+            _energyCounterLikeVfxNodes = [];
 
         private int _amount;
         private float _amountDisplayVelocity;

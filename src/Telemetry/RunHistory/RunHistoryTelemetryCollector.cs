@@ -104,8 +104,7 @@ namespace STS2RitsuLib.Telemetry.RunHistory
             {
                 null => null,
                 JsonNode node => node.DeepClone(),
-                IEnumerable<string> strings => new JsonArray(strings.Select(static s => JsonValue.Create(s))
-                    .ToArray<JsonNode?>()),
+                IEnumerable<string> strings => new JsonArray([.. strings.Select(static s => JsonValue.Create(s))]),
                 _ => value switch
                 {
                     string s => JsonValue.Create(s),

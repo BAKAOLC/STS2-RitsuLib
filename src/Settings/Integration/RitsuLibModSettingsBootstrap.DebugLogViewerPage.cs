@@ -50,9 +50,9 @@ namespace STS2RitsuLib.Settings
 
         private static void OpenDebugLogViewerFromSettings()
         {
-            var result = RitsuDebugLogPipeline.TryOpenViewerInBrowser();
-            if (!result.Success)
-                RitsuLibFramework.Logger.Warn($"[DebugLogViewer] {result.Message}");
+            var (success, message) = RitsuDebugLogPipeline.TryOpenViewerInBrowser();
+            if (!success)
+                RitsuLibFramework.Logger.Warn($"[DebugLogViewer] {message}");
         }
     }
 }

@@ -27,11 +27,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     [HarmonyBefore(Const.BaseLibHarmonyId)]
     internal class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByRoot = new();
+        private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByRoot = [];
 
         private static readonly ConditionalWeakTable<NMerchantCharacter, RegisteredMerchantVisual>
             RitsuMerchantVisuals =
-                new();
+                [];
 
         public static string PatchId => "mod_merchant_character_visual_playback";
 

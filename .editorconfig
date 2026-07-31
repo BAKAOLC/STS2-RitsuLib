@@ -30,7 +30,7 @@ dotnet_prefer_system_hash_code = true
 dotnet_style_coalesce_expression = true
 dotnet_style_collection_initializer = true
 dotnet_style_explicit_tuple_names = true
-dotnet_style_namespace_match_folder = true
+dotnet_style_namespace_match_folder = false
 dotnet_style_null_propagation = true
 dotnet_style_object_initializer = true
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
@@ -62,6 +62,7 @@ dotnet_diagnostic.CA2208.severity = none
 dotnet_diagnostic.IDE0051.severity = none
 dotnet_diagnostic.IDE0052.severity = none
 dotnet_diagnostic.IDE0060.severity = none
+dotnet_diagnostic.IDE0270.severity = none
 csharp_style_var_elsewhere = true:suggestion
 csharp_style_var_for_built_in_types = true:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
@@ -90,7 +91,7 @@ csharp_prefer_simple_using_statement = true
 csharp_prefer_system_threading_lock = true
 csharp_style_namespace_declarations = block_scoped:suggestion
 csharp_style_prefer_method_group_conversion = true
-csharp_style_prefer_primary_constructors = true
+csharp_style_prefer_primary_constructors = false
 csharp_style_prefer_top_level_statements = true
 csharp_prefer_simple_default_expression = true
 csharp_style_deconstructed_variable_declaration = true
@@ -254,6 +255,14 @@ resharper_switch_statement_missing_some_enum_cases_no_default_highlighting = non
 
 # Harmony patch parameters are name-bound by convention.
 resharper_csharp_naming_rule.parameters = aaBb, __+aaBb, ___+aaBb, ____+aaBb
+
+[src/Networking/Sidecar/**/*.cs]
+# Protocol slices intentionally name both layout constants, even when an offset is currently zero.
+dotnet_diagnostic.IDE0057.severity = none
+
+[src/Scaffolding/Content/Patches/ModModelRuntimeGodotFactoryPatches.cs]
+# Explicit out-variable types preserve the intended non-null Godot factory result contract.
+dotnet_diagnostic.IDE0007.severity = none
 
 [*.{appxmanifest,axml,blockshader,build,c,c++,c++m,cc,ccm,cginc,compute,config,cp,cpp,cppm,cshtml,csproj,cu,cuh,cxx,cxxm,dbml,discomap,dtd,fx,fxh,h,h++,hh,hlsl,hlsli,hlslinc,hp,hpp,htm,html,hxx,icc,inc,inl,ino,ipp,ixx,jsproj,lsproj,mpp,mq4,mq5,mqh,mxx,njsproj,nuspec,proj,props,proto,razor,resw,resx,shaderFoundry,StyleCop,targets,tasks,tcc,tpp,urtshader,usf,ush,vbproj,xml,xsd}]
 indent_style = space

@@ -163,11 +163,11 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 request.Potions ? BuildPotionExportList(idFilter) : Array.Empty<PotionModel>();
             if (request.Potions && potionList.Count == 0)
             {
-                var d = GetPotionModelDbDiagnostics();
+                var (allPotions, deprecated, poolEntries) = GetPotionModelDbDiagnostics();
                 log?.Invoke(
                     "Potion export: no entries after filter (empty ModelDb or filter matched nothing). " +
-                    $"AllPotions enumerations: {d.allPotions} (including deprecated {d.deprecated}), " +
-                    $"same source as the in-game potion lab; pool slot iterations: {d.poolEntries}.");
+                    $"AllPotions enumerations: {allPotions} (including deprecated {deprecated}), " +
+                    $"same source as the in-game potion lab; pool slot iterations: {poolEntries}.");
             }
 
             if (request.Relics)
@@ -362,9 +362,11 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             };
             popup.Position = new(-RelicPopupHorizontalTrimEachSide, 0f);
             popupSlot.AddChild(popup);
-            var scaleRoot = new Control { Name = "CompendiumRelicScaleRoot" };
-            scaleRoot.Position = new(ExportViewportFramePad, ExportViewportFramePad);
-            scaleRoot.Scale = Vector2.One * scale;
+            var scaleRoot = new Control
+            {
+                Name = "CompendiumRelicScaleRoot", Position = new(ExportViewportFramePad, ExportViewportFramePad),
+                Scale = Vector2.One * scale,
+            };
             if (includeHoverTips)
             {
                 var refCol = new VBoxContainer { Name = "RefHoverCol" };
@@ -431,9 +433,11 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             row.AddChild(textCol);
             CompendiumDetailPngExportLayout.PopulateHoverRow(textCol, refCol, potion.HoverTips, refCards);
 
-            var scaleRoot = new Control { Name = "CompendiumPotionScaleRoot" };
-            scaleRoot.Position = new(ExportViewportFramePad, ExportViewportFramePad);
-            scaleRoot.Scale = Vector2.One * scale;
+            var scaleRoot = new Control
+            {
+                Name = "CompendiumPotionScaleRoot", Position = new(ExportViewportFramePad, ExportViewportFramePad),
+                Scale = Vector2.One * scale,
+            };
             scaleRoot.AddChild(row);
             var contentRoot = new Control { Name = "ContentRoot" };
             contentRoot.AddChild(scaleRoot);

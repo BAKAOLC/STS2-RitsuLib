@@ -1049,6 +1049,7 @@ namespace STS2RitsuLib.Settings
                 if (scoped == null)
                     throw new InvalidOperationException(
                         BuildI18NMissingMessage(source, fieldName, index, providerMethod));
+
                 return scoped;
             }
 

@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Patching;
 
 namespace STS2RitsuLib.CardPiles.Nodes
 {
@@ -27,7 +28,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
         internal const float DefaultChromeHeight = 280f;
         internal static readonly Vector2 DefaultChromeSize = new(DefaultChromeWidth, DefaultChromeHeight);
         private static readonly ModCardPileExtraHandSpec DefaultLayout = new();
+        private static readonly Action<NHandCardHolder, NCard> SetHolderCard =
+            PrivateAccess.DeclaredMethodDelegate<NHandCardHolder, Action<NHandCardHolder, NCard>>(
+                "SetCard", typeof(NCard));
 
+        private readonly HashSet<CardModel> _arrivingCards = [];
         private readonly Dictionary<CardModel, NHandCardHolder> _holders = [];
         private NHandCardHolder? _focusedHolder;
         private bool _invalidBuiltInLayoutWarningLogged;
@@ -129,6 +134,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         public override void _Process(double delta)
         {
             base._Process(delta);
+            NotifyArrivedCards();
             _visualRefreshElapsed += delta;
             if (_visualRefreshElapsed < 0.1)
                 return;
@@ -140,8 +146,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         internal void ReleaseHolderForQueuedPlay(CardModel card)
         {
-            _holders.Remove(card);
-            if (_focusedHolder?.CardModel == card)
+            _holders.Remove(card, out var holder);
+            if (ReferenceEquals(_focusedHolder, holder))
                 _focusedHolder = null;
             ArrangeCards();
         }
@@ -158,6 +164,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (holder.GetParent() != this)
                 holder.Reparent(this);
             holder.CancelDrag();
+            holder.SetIndexLabel(0);
             holder.Hitbox.MouseFilter = MouseFilterEnum.Stop;
             _holders[card] = holder;
             ArrangeCards();
@@ -174,6 +181,34 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var holder = GetHolder(card);
             if (holder != null)
                 Definition.ExtraHand.OnCardArrived?.Invoke(BuildContext(card, holder));
+        }
+
+        internal bool TryBeginHandEntryAnimation(NCard sourceCard)
+        {
+            if (!Definition.CardShouldBeVisible
+                || sourceCard.Model is not { } card
+                || card.Pile?.Type != Definition.PileType
+                || GetHolder(card) is not { } holder)
+                return false;
+
+            var sourcePosition = sourceCard.GlobalPosition;
+            if (holder.CardNode == null)
+            {
+                SetHolderCard(holder, sourceCard);
+            }
+            else if (!ReferenceEquals(holder.CardNode, sourceCard))
+            {
+                sourceCard.QueueFree();
+            }
+
+            holder.GlobalPosition = sourcePosition;
+            holder.SetAngleInstantly(0f);
+            holder.SetScaleInstantly(Vector2.One);
+            if (holder.CardNode != null)
+                holder.CardNode.Position = Vector2.Zero;
+            _arrivingCards.Add(card);
+            ArrangeCards();
+            return true;
         }
 
         private void AttachPile(ModCardPile? pile)
@@ -205,6 +240,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             foreach (var holder in _holders.Values.Where(IsInstanceValid))
                 holder.QueueFree();
             _holders.Clear();
+            _arrivingCards.Clear();
             _focusedHolder = null;
         }
 
@@ -216,6 +252,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void OnCardRemoved(CardModel card)
         {
+            _arrivingCards.Remove(card);
             if (!_holders.Remove(card, out var holder))
                 return;
 
@@ -228,6 +265,25 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (IsInstanceValid(holder))
                 holder.QueueFree();
             ArrangeCards();
+        }
+
+        private void NotifyArrivedCards()
+        {
+            foreach (var card in _arrivingCards.ToArray())
+            {
+                var holder = GetHolder(card);
+                if (holder == null)
+                {
+                    _arrivingCards.Remove(card);
+                    continue;
+                }
+
+                if (holder.Position.DistanceSquaredTo(holder.TargetPosition) >= 1f)
+                    continue;
+
+                _arrivingCards.Remove(card);
+                NotifyCardArrived(card);
+            }
         }
 
         private void AddVisualFor(CardModel card, NCard? existingCard, bool invokeCreated)
@@ -243,6 +299,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var holder = NHandCardHolder.Create(ncard, hand);
             _holders[card] = holder;
             AddChild(holder);
+            holder.SetIndexLabel(0);
             holder.SetClickable(Definition.ExtraHand.AllowCardPlay);
             holder.Connect(NCardHolder.SignalName.Pressed,
                 Callable.From<NCardHolder>(OnHolderPressed));
@@ -352,6 +409,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             for (var i = 0; i < ordered.Length; i++)
             {
                 var (card, holder) = ordered[i];
+                holder.SetIndexLabel(0);
                 var focused = ReferenceEquals(holder, _focusedHolder);
                 var defaultTransform = extra.Direction == ModExtraHandLayoutDirection.VanillaHand
                     ? ResolveVanillaTransform(holder, i, ordered.Length, focusedIndex, center)

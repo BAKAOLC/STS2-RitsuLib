@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using Godot;
-using GArray = Godot.Collections.Array;
 using FileAccess = Godot.FileAccess;
+using GArray = Godot.Collections.Array;
 
 namespace STS2RitsuLib.Audio.Internal
 {

@@ -252,8 +252,10 @@ namespace STS2RitsuLib.Settings
             confirmBtn.FocusNeighborTop = confirmPath;
             confirmBtn.FocusNeighborBottom = confirmPath;
 
-            var escShortcut = new Shortcut();
-            escShortcut.Events = [new InputEventKey { Keycode = Key.Escape, Pressed = true }];
+            var escShortcut = new Shortcut
+            {
+                Events = [new InputEventKey { Keycode = Key.Escape, Pressed = true }],
+            };
             switch (escapeTriggersCancel)
             {
                 case true when cancelBtn != null:

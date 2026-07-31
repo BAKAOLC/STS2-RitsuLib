@@ -286,7 +286,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!TryCreateDynamicVarState(dynamicVar, defaultVar, out var value))
                     continue;
 
-                state ??= new();
+                state ??= [];
                 state[dynamicVar.Name] = value;
             }
 

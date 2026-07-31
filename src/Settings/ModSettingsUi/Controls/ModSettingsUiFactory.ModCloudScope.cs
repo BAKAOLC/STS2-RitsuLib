@@ -145,8 +145,10 @@ namespace STS2RitsuLib.Settings
             };
             btnRow.AddChild(cancelBtn);
 
-            var escShortcut = new Shortcut();
-            escShortcut.Events = [new InputEventKey { Keycode = Key.Escape, Pressed = true }];
+            var escShortcut = new Shortcut
+            {
+                Events = [new InputEventKey { Keycode = Key.Escape, Pressed = true }],
+            };
             cancelBtn.Shortcut = escShortcut;
             cancelBtn.ShortcutInTooltip = false;
 

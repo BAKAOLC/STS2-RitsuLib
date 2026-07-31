@@ -62,7 +62,7 @@ namespace STS2RitsuLib.Settings
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
         private static readonly ModSettingsReusableEntryNodePool SharedReusableEntryNodePool = new();
-        private static readonly ConditionalWeakTable<Control, PulseHighlightState> PulseHighlightStates = new();
+        private static readonly ConditionalWeakTable<Control, PulseHighlightState> PulseHighlightStates = [];
 
         private readonly Action<IModSettingsBinding> _bindingWriteListener;
 
@@ -1069,8 +1069,7 @@ namespace STS2RitsuLib.Settings
                     _updatePaneHotkeyIconsCallable);
             }
 
-            if (NInputManager.Instance != null)
-                NInputManager.Instance.Connect(NInputManager.SignalName.InputRebound, _updatePaneHotkeyIconsCallable);
+            NInputManager.Instance?.Connect(NInputManager.SignalName.InputRebound, _updatePaneHotkeyIconsCallable);
 
             _paneHotkeySignalsConnected = true;
         }
@@ -1088,9 +1087,8 @@ namespace STS2RitsuLib.Settings
                     _updatePaneHotkeyIconsCallable);
             }
 
-            if (NInputManager.Instance != null)
-                NInputManager.Instance.Disconnect(NInputManager.SignalName.InputRebound,
-                    _updatePaneHotkeyIconsCallable);
+            NInputManager.Instance?.Disconnect(NInputManager.SignalName.InputRebound,
+                _updatePaneHotkeyIconsCallable);
 
             _paneHotkeySignalsConnected = false;
         }

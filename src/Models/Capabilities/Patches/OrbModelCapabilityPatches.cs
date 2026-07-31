@@ -234,7 +234,7 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static void Prefix(ref IEnumerable<Creature> targets)
             {
-                targets = targets.ToArray();
+                targets = [.. targets];
             }
 
             public static void Postfix(

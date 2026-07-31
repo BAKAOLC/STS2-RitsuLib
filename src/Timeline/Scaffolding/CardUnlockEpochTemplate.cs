@@ -20,9 +20,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     <para xml:lang="zh-CN">获取从 <see cref="CardTypes" /> 解析出的 <see cref="CardModel" /> 实例。</para>
         /// </summary>
         public IReadOnlyList<CardModel> Cards => RequireUnlockPresentationItems(
-            CardTypes
-                .Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))
-                .ToArray(),
+            [.. CardTypes.Select(type => ModelDb.GetById<CardModel>(ModelDb.GetId(type)))],
             nameof(CardTypes));
 
         /// <inheritdoc />
@@ -52,7 +50,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// </summary>
         public IEnumerable<Type> EnumerateUnlockCardTypes()
         {
-            return CardTypes.ToArray();
+            return [.. CardTypes];
         }
 
         /// <inheritdoc />

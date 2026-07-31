@@ -36,7 +36,7 @@ namespace STS2RitsuLib.Telemetry
                 throw new ArgumentException("The telemetry endpoint must use HTTP or HTTPS.", nameof(endpoint));
 
             _headers = headers == null
-                ? new Dictionary<string, string>()
+                ? []
                 : new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
         }
 

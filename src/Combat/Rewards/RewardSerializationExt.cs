@@ -22,7 +22,7 @@ namespace STS2RitsuLib.Combat.Rewards
     {
         internal const string KeyPrefix = "__mod_reward_ext_";
 
-        private static readonly ConditionalWeakTable<SerializableReward, RewardExtData> ExtTable = new();
+        private static readonly ConditionalWeakTable<SerializableReward, RewardExtData> ExtTable = [];
 
         internal static void SetExtData(SerializableReward reward, RewardExtData data)
         {

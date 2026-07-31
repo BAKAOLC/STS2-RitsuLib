@@ -230,6 +230,7 @@ namespace STS2RitsuLib.Utils
                     var getter = property.GetGetMethod(true);
                     if (getter == null)
                         throw new ArgumentException($"Property '{property}' has no getter.", nameof(member));
+
                     // ReSharper disable once ConvertIfStatementToReturnStatement
                     if (getter.IsStatic)
                         throw new ArgumentException($"Property '{property}' is static.", nameof(member));

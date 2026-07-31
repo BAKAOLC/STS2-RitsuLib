@@ -36,9 +36,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     <para xml:lang="zh-CN">获取从 <see cref="PotionTypes" /> 解析出的 <see cref="PotionModel" /> 实例。</para>
         /// </summary>
         public IReadOnlyList<PotionModel> Potions => RequireUnlockPresentationItems(
-            PotionTypes
-                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
-                .ToArray(),
+            [.. PotionTypes.Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))],
             nameof(PotionTypes));
 
         /// <inheritdoc />

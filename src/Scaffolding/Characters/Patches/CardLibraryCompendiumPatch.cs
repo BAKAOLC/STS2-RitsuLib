@@ -238,10 +238,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 Position = new(imagePos, imagePos),
                 Scale = new(0.9f, 0.9f),
                 PivotOffset = new(28f, 28f),
+                Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1),
+                Texture = ResolveFilterIconTexture(character, iconTexturePath, fallbackIcon),
             };
-
-            image.Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1);
-            image.Texture = ResolveFilterIconTexture(character, iconTexturePath, fallbackIcon);
 
             filter.AddChild(image);
             image.Owner = filter;
@@ -298,10 +297,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 Position = new(imagePos, imagePos),
                 Scale = new(0.9f, 0.9f),
                 PivotOffset = new(28f, 28f),
+                Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1),
+                Texture = ResolveSharedPoolFilterIcon(registration, fallbackIcon),
             };
-
-            image.Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1);
-            image.Texture = ResolveSharedPoolFilterIcon(registration, fallbackIcon);
 
             filter.AddChild(image);
             image.Owner = filter;

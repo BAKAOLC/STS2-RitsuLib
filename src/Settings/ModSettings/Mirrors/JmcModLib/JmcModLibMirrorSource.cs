@@ -363,8 +363,7 @@ namespace STS2RitsuLib.Settings
                     return;
 
                 await task;
-                var value = task.GetType().GetProperty("Result")?.GetValue(task) as string;
-                if (value == null)
+                if (task.GetType().GetProperty("Result")?.GetValue(task) is not string value)
                     return;
 
                 var args = new object?[] { value, null };

@@ -785,7 +785,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
             try
             {
-                values = raw.ToArray();
+                values = [.. raw];
                 return true;
             }
             catch (Exception ex)

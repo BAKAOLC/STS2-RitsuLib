@@ -28,7 +28,7 @@ namespace STS2RitsuLib.CardPiles.Patches
     internal sealed class ModCardPileScreenViewPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<NCardPileScreen, ModCardPileScreenViewController> Controllers =
-            new();
+            [];
 
         private static readonly AccessTools.FieldRef<NCardPileScreen, NCardGrid> GridRef =
             AccessTools.FieldRefAccess<NCardPileScreen, NCardGrid>("_grid");
