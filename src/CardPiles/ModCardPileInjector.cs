@@ -102,6 +102,7 @@ namespace STS2RitsuLib.CardPiles
                 var hand = NModExtraHand.Create(definition);
                 hand.Position = ResolveExtraHandPosition(combatUi, definition);
                 combatUi.AddChildSafely(hand);
+                combatUi.MoveChild(hand, combatUi.CardPreviewContainer.GetIndex());
             }
         }
 
