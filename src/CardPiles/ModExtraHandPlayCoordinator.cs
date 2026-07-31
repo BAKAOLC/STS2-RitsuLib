@@ -200,6 +200,8 @@ namespace STS2RitsuLib.CardPiles
 
         private static void ClearOrigin(PlayOrigin origin)
         {
+            if (ReferenceEquals(_active, origin))
+                _active = null;
             if (origin.Closed)
                 return;
             origin.Closed = true;
