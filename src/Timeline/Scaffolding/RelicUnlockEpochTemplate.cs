@@ -20,9 +20,7 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         ///     <para xml:lang="zh-CN">获取从 <see cref="RelicTypes" /> 解析出的 <see cref="RelicModel" /> 实例。</para>
         /// </summary>
         public IReadOnlyList<RelicModel> Relics => RequireUnlockPresentationItems(
-            RelicTypes
-                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
-                .ToArray(),
+            [.. RelicTypes.Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))],
             nameof(RelicTypes));
 
         /// <inheritdoc />
