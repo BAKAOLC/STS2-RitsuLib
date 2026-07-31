@@ -1,4 +1,5 @@
 using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Models;
@@ -6,7 +7,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.CardPiles.Nodes;
-using STS2RitsuLib.Compat;
+using STS2RitsuLib.Patching;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -27,6 +28,21 @@ namespace STS2RitsuLib.CardPiles
     /// </remarks>
     internal static class ModExtraHandPlayCoordinator
     {
+        private const float MousePlayZoneScreenProportion = 0.75f;
+        private const float MousePlayZoneStartOffset = 100f;
+
+        private static readonly Action<NPlayerHand, NHandCardHolder, bool> StartVanillaCardPlay =
+            PrivateAccess.DeclaredMethodDelegate<NPlayerHand, Action<NPlayerHand, NHandCardHolder, bool>>(
+                "StartCardPlay",
+                typeof(NHandCardHolder),
+                typeof(bool));
+
+        private static readonly AccessTools.FieldRef<NPlayerHand, NCardPlay?> CurrentCardPlayRef =
+            PrivateAccess.FieldRef<NPlayerHand, NCardPlay?>("_currentCardPlay");
+
+        private static readonly AccessTools.FieldRef<NMouseCardPlay, float> MouseDragStartYRef =
+            PrivateAccess.FieldRef<NMouseCardPlay, float>("_dragStartYPosition");
+
         private static readonly Dictionary<CardModel, PlayOrigin> PendingOrigins = [];
         private static PlayOrigin? _active;
 
@@ -71,34 +87,77 @@ namespace STS2RitsuLib.CardPiles
                 origin.HandCardRemoved = removed => OnHandCardRemoved(origin, removed);
                 handPile.CardRemoved += origin.HandCardRemoved;
 
-                holder.Reparent(hand);
-                holder.BeginDrag();
-                NCardPlay cardPlay = Sts2InputCompat.IsUsingDirectionalNavigation
-                    ? NControllerCardPlay.Create(holder)
-                    : NMouseCardPlay.Create(holder, Sts2InputCompat.CancelCardPlayAction, false);
+                holder.Reparent(hand.CardHolderContainer);
+                StartVanillaCardPlay(hand, holder, false);
+                var cardPlay = CurrentCardPlayRef(hand);
+                if (cardPlay == null
+                    || !GodotObject.IsInstanceValid(cardPlay)
+                    || !ReferenceEquals(cardPlay.Holder, holder))
+                {
+                    throw new InvalidOperationException(
+                        "Vanilla hand did not create a card-play node for the extra-hand holder.");
+                }
+
                 origin.CardPlay = cardPlay;
-                container.AddChild(cardPlay);
+                if (cardPlay is NMouseCardPlay mouseCardPlay)
+                    NormalizeMouseDragStart(mouseCardPlay);
+                holder.SetIndexLabel(0);
                 cardPlay.Connect(NCardPlay.SignalName.Finished,
                     Callable.From<bool>(success => OnTargetingFinished(origin, success)));
-                cardPlay.Start();
                 return true;
             }
             catch (Exception ex)
             {
+                Exception? cancellationException = null;
+                try
+                {
+                    CancelVanillaCardPlayIfOwned(hand, origin);
+                }
+                catch (Exception cleanupException)
+                {
+                    cancellationException = cleanupException;
+                }
+
                 try
                 {
                     RollBackTargeting(origin, true);
                 }
                 catch (Exception rollbackException)
                 {
+                    Exception[] failures = cancellationException == null
+                        ? [ex, rollbackException]
+                        : [ex, cancellationException, rollbackException];
                     throw new AggregateException(
                         "Extra-hand targeting initialization and its rollback both failed.",
+                        failures);
+                }
+
+                if (cancellationException != null)
+                {
+                    throw new AggregateException(
+                        "Extra-hand targeting initialization and vanilla cancellation both failed.",
                         ex,
-                        rollbackException);
+                        cancellationException);
                 }
 
                 throw;
             }
+        }
+
+        private static void CancelVanillaCardPlayIfOwned(NPlayerHand hand, PlayOrigin origin)
+        {
+            var cardPlay = origin.CardPlay ?? CurrentCardPlayRef(hand);
+            if (cardPlay == null
+                || !GodotObject.IsInstanceValid(cardPlay)
+                || !ReferenceEquals(cardPlay.Holder, origin.Holder))
+            {
+                return;
+            }
+
+            origin.CardPlay = cardPlay;
+            if (NTargetManager.Instance.IsInSelection)
+                NTargetManager.Instance.CancelTargeting();
+            cardPlay.CancelPlayCard();
         }
 
         internal static void DetachContainer(NModExtraHand container)
@@ -107,25 +166,16 @@ namespace STS2RitsuLib.CardPiles
                          .Where(candidate => ReferenceEquals(candidate.Container, container))
                          .ToArray())
             {
-                RestoreToSourcePile(origin);
-
                 if (ReferenceEquals(_active, origin))
-                    _active = null;
+                {
+                    CancelActiveTargeting();
+                    if (origin.Closed)
+                        continue;
+                }
+
+                RestoreToSourcePile(origin);
                 ClearOrigin(origin);
             }
-        }
-
-        internal static void PrepareForEnqueue(NCardPlay cardPlay)
-        {
-            var origin = _active;
-            if (origin == null || !ReferenceEquals(origin.CardPlay, cardPlay))
-                return;
-            if (!GodotObject.IsInstanceValid(origin.Holder))
-                return;
-
-            var handContainer = NPlayerHand.Instance?.CardHolderContainer;
-            if (handContainer != null && origin.Holder.GetParent() != handContainer)
-                origin.Holder.Reparent(handContainer);
         }
 
         internal static void RestoreCancelledAction(PlayCardAction action)
@@ -151,18 +201,25 @@ namespace STS2RitsuLib.CardPiles
 
         private static void OnTargetingFinished(PlayOrigin origin, bool success)
         {
+            if (success)
+                origin.Container.ReleaseHolderForQueuedPlay(origin.Card);
             if (origin.Closed)
                 return;
             if (ReferenceEquals(_active, origin))
                 _active = null;
 
             if (success)
-            {
-                origin.Container.ReleaseHolderForQueuedPlay(origin.Card);
                 return;
-            }
 
             RollBackTargeting(origin);
+        }
+
+        private static void NormalizeMouseDragStart(NMouseCardPlay cardPlay)
+        {
+            var playZoneY = cardPlay.GetViewport().GetVisibleRect().Size.Y * MousePlayZoneScreenProportion;
+            ref var dragStartY = ref MouseDragStartYRef(cardPlay);
+            if (dragStartY <= playZoneY)
+                dragStartY = playZoneY + MousePlayZoneStartOffset;
         }
 
         private static void RollBackTargeting(PlayOrigin origin, bool restoreInterruptedTransfer = false)
@@ -175,6 +232,7 @@ namespace STS2RitsuLib.CardPiles
 
             ClearOrigin(origin);
             origin.Container.RestoreCancelledPlay(origin.Card, origin.Holder);
+            NPlayerHand.Instance?.ForceRefreshCardIndices();
         }
 
         private static void OnHandCardRemoved(PlayOrigin origin, CardModel removed)

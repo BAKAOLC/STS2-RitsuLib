@@ -480,7 +480,6 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModCardPileTopBarInitializePatch>();
             patcher.RegisterPatch<ModCardPileCombatUiReadyPatch>();
             patcher.RegisterPatch<ModCardPileCombatUiActivatePatch>();
-            patcher.RegisterPatch<ModExtraHandCardPlayPreparePatch>();
             patcher.RegisterPatch<ModExtraHandVanillaCardPlaySwitchPatch>();
             patcher.RegisterPatch<ModExtraHandCardPlayCancelPatch>();
             patcher.RegisterPatch<ModExtraHandCardFlyArrivedPatch>();

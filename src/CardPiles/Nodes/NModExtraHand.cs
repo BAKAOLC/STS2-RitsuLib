@@ -140,8 +140,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         internal void ReleaseHolderForQueuedPlay(CardModel card)
         {
-            _holders.Remove(card);
-            if (_focusedHolder?.CardModel == card)
+            _holders.Remove(card, out var holder);
+            if (ReferenceEquals(_focusedHolder, holder))
                 _focusedHolder = null;
             ArrangeCards();
         }
@@ -158,6 +158,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (holder.GetParent() != this)
                 holder.Reparent(this);
             holder.CancelDrag();
+            holder.SetIndexLabel(0);
             holder.Hitbox.MouseFilter = MouseFilterEnum.Stop;
             _holders[card] = holder;
             ArrangeCards();
@@ -243,6 +244,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var holder = NHandCardHolder.Create(ncard, hand);
             _holders[card] = holder;
             AddChild(holder);
+            holder.SetIndexLabel(0);
             holder.SetClickable(Definition.ExtraHand.AllowCardPlay);
             holder.Connect(NCardHolder.SignalName.Pressed,
                 Callable.From<NCardHolder>(OnHolderPressed));
