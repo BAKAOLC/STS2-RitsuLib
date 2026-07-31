@@ -105,13 +105,13 @@ namespace STS2RitsuLib.CardPiles
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets the optional callback invoked when the matching base-game card-flight visual finishes
-        ///         adding a card. Adds that skip individual visuals or use an aggregate shuffle visual do not
-        ///         invoke it. Exceptions propagate from the flight-visual callback.
+        ///         Gets the optional callback invoked after the matching card's hand-entry motion settles into
+        ///         the current layout. Adds that skip individual visuals or use an aggregate shuffle visual do
+        ///         not invoke it. Exceptions propagate from the arrival callback.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取对应的游戏原有卡牌飞行动画完成加牌时调用的可选回调。跳过逐卡动画或使用聚合洗牌动画的
-        ///         加牌操作不会调用该回调；回调异常会从飞行动画回调中传播。
+        ///         获取对应卡牌的手牌入场动画稳定到当前布局后调用的可选回调。跳过逐卡动画或使用聚合洗牌
+        ///         动画的加牌操作不会调用该回调；回调异常会从到达回调中传播。
         ///     </para>
         /// </summary>
         public Action<ModExtraHandCardContext>? OnCardArrived { get; init; }
