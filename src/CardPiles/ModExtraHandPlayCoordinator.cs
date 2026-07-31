@@ -37,6 +37,17 @@ namespace STS2RitsuLib.CardPiles
             return holder != null && ReferenceEquals(_active?.Holder, holder);
         }
 
+        internal static void CancelActiveTargeting()
+        {
+            var cardPlay = _active?.CardPlay;
+            if (cardPlay == null || !GodotObject.IsInstanceValid(cardPlay))
+                return;
+
+            if (NTargetManager.Instance.IsInSelection)
+                NTargetManager.Instance.CancelTargeting();
+            cardPlay.CancelPlayCard();
+        }
+
         internal static bool TryBegin(NModExtraHand container, NHandCardHolder holder)
         {
             if (_active != null || holder.CardModel is not { } card)
