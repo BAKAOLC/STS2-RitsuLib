@@ -74,15 +74,17 @@ namespace STS2RitsuLib.Combat.HandSize
                     nameof(CardPileCmd.CheckIfDrawIsPossibleAndShowThoughtBubbleIfNot),
                     [typeof(Player)], transpilerPlayerArg0);
 #if STS2_AT_LEAST_0_110_0
-                TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CombatManager),
-                        nameof(CombatManager.SetupPlayerTurn),
-                        [typeof(CombatTurnState), typeof(Player), typeof(HookPlayerChoiceContext)]),
+                var setupPlayerTurnMethod = AccessTools.Method(typeof(CombatManager),
+                    nameof(CombatManager.SetupPlayerTurn),
+                    [typeof(CombatTurnState), typeof(Player), typeof(HookPlayerChoiceContext)]);
+#else
+                var setupPlayerTurnMethod = AccessTools.Method(typeof(CombatManager),
+                    nameof(CombatManager.SetupPlayerTurn),
+                    [typeof(Player), typeof(HookPlayerChoiceContext)]);
+#endif
+                TryAddAsyncMoveNextPatch(builder, setupPlayerTurnMethod,
                     transpilerStateMachine,
                     "Patch CombatManager.SetupPlayerTurn state machine max-hand-size constants");
-#else
-                TryAddMethodPatch(builder, typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
-                    [typeof(Player), typeof(HookPlayerChoiceContext)], transpilerPlayerArg1);
-#endif
                 TryAddMethodPatch(builder, typeof(CardConsoleCmd), nameof(CardConsoleCmd.Process),
                     [typeof(Player), typeof(string[])], transpilerPlayerArg1);
 
