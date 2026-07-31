@@ -39,7 +39,11 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         public static bool Prefix(CardModel card, PileType? overridePile, ref NCard? __result)
         {
+#if STS2_AT_LEAST_0_110_0
+            var pileType = overridePile ?? card.Pile?.Type;
+#else
             var pileType = card.Pile?.Type ?? overridePile;
+#endif
             if (pileType == null)
                 return true;
             if (!ModCardPileRegistry.TryGetByPileType(pileType.Value, out var definition))

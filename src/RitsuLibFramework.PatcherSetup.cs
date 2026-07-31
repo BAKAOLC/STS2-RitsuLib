@@ -150,7 +150,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuSteamInputBackendProcessPatch>();
             patcher.RegisterPatch<SteamWorkshopRuntimeInstallCallbackPatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteApplyCandidatePatch>();
+#if !STS2_AT_LEAST_0_109_0
             patcher.RegisterPatch<DevConsoleAutocompleteGhostTextPatch>();
+#endif
             patcher.RegisterPatch<DevConsoleHistoryNavigationInputPatch>();
             patcher.RegisterPatch<DevConsoleHistoryNavigationProcessCommandPatch>();
             patcher.RegisterPatch<DevConsoleHistoryNavigationHideConsolePatch>();
