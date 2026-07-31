@@ -1,40 +1,44 @@
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Lifetime scope of a custom card pile.
-    ///     自定义卡牌牌堆的生命周期作用域。
+    ///     <para xml:lang="en">Specifies the lifetime and storage owner of a mod card pile.</para>
+    ///     <para xml:lang="zh-CN">指定模组卡牌牌堆的生命周期与存储主体。</para>
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         <see cref="CombatOnly" /> piles live on <c>PlayerCombatState</c> and are automatically disposed with
-    ///         the combat; they participate in <c>PlayerCombatState.AllPiles</c> and <c>IsCombatPile</c>.
+    ///     <para xml:lang="en">
+    ///         <see cref="CombatOnly" /> piles are attached to <c>PlayerCombatState</c>, participate in
+    ///         <c>PlayerCombatState.AllPiles</c> and <c>IsCombatPile</c>, and are discarded with that combat.
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         <see cref="RunPersistent" /> piles live on <c>Player</c> and persist across combats (much like
     ///         <c>Player.Deck</c>). They participate in <c>Player.Piles</c> after they have been resolved and
     ///         are serialized through RitsuLib run-saved data.
     ///     </para>
-    ///     <para>
-    ///         <see cref="CombatOnly" /> 牌堆存在于 <c>PlayerCombatState</c> 上，并随
-    ///         战斗自动释放；它们参与 <c>PlayerCombatState.AllPiles</c> 和 <c>IsCombatPile</c>。
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="CombatOnly" /> 牌堆附加到 <c>PlayerCombatState</c>，参与
+    ///         <c>PlayerCombatState.AllPiles</c> 与 <c>IsCombatPile</c>，并随该场战斗一同丢弃。
     ///     </para>
-    ///     <para>
-    ///         <see cref="RunPersistent" /> 牌堆存在于 <c>Player</c> 上，并跨战斗保留（很像
-    ///         <c>Player.Deck</c>）。解析后它们会参与 <c>Player.Piles</c>，并通过 RitsuLib
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="RunPersistent" /> 牌堆附加到 <c>Player</c>，并像 <c>Player.Deck</c> 一样
+    ///         跨战斗保留。解析后它们会参与 <c>Player.Piles</c>，并通过 RitsuLib
     ///         跑局保存数据序列化。
     ///     </para>
     /// </remarks>
     public enum ModCardPileScope
     {
         /// <summary>
-        ///     Created lazily per <c>PlayerCombatState</c> and discarded when combat ends.
-        ///     按 <c>PlayerCombatState</c> 懒创建，并在战斗结束时丢弃。
+        ///     <para xml:lang="en">
+        ///         Creates the pile lazily for each <c>PlayerCombatState</c> and discards it when combat ends.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为每个 <c>PlayerCombatState</c> 延迟创建牌堆，并在战斗结束时丢弃。
+        ///     </para>
         /// </summary>
         CombatOnly = 0,
 
         /// <summary>
-        ///     Attached to a <c>Player</c> for the duration of a run and saved with run data.
-        ///     在一次跑局期间附加到 <c>Player</c>，并随跑局数据保存。
+        ///     <para xml:lang="en">Attaches the pile to a <c>Player</c> and saves it with the run.</para>
+        ///     <para xml:lang="zh-CN">将牌堆附加到 <c>Player</c>，并随跑局保存。</para>
         /// </summary>
         RunPersistent = 1,
     }

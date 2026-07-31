@@ -3,10 +3,10 @@ using Godot;
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     Runtime-unified extra badge spec. Prefer creating it from <see cref="ExtraIconAmountLabelSlot" /> or
-    ///     <see cref="ExtraIconRichTextLabelSlot" />.
-    ///     运行时统一的额外徽标 spec。推荐由 <see cref="ExtraIconAmountLabelSlot" /> 或
-    ///     <see cref="ExtraIconRichTextLabelSlot" /> 创建。
+    ///     <para xml:lang="en">
+    ///         Describes a plain-text or rich-text badge in the unified provider API.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">描述统一提供接口中的纯文本或富文本角标。</para>
     /// </summary>
     public readonly record struct ExtraIconAmountLabelSpec(
         string Text,
@@ -17,8 +17,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         ExtraIconAmountLabelTextMode TextMode = ExtraIconAmountLabelTextMode.Plain)
     {
         /// <summary>
-        ///     Converts an original plain slot to a spec.
-        ///     将原始普通槽位转换为 spec。
+        ///     <para xml:lang="en">Creates a badge description from a plain-text entry.</para>
+        ///     <para xml:lang="zh-CN">根据纯文本条目创建角标描述。</para>
         /// </summary>
         public ExtraIconAmountLabelSpec(ExtraIconAmountLabelSlot slot,
             ExtraIconAmountLabelTextMode textMode = ExtraIconAmountLabelTextMode.Plain)
@@ -27,8 +27,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Converts a rich-text slot to a spec.
-        ///     将富文本槽位转换为 spec。
+        ///     <para xml:lang="en">Creates a badge description from a rich-text entry.</para>
+        ///     <para xml:lang="zh-CN">根据富文本条目创建角标描述。</para>
         /// </summary>
         public ExtraIconAmountLabelSpec(ExtraIconRichTextLabelSlot slot)
             : this(slot.Text, slot.Corner, slot.CustomRect, slot.FontColor, slot.FontOutlineColor,
@@ -37,8 +37,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Preset-corner spec with no color overrides.
-        ///     无颜色覆盖的预设角 spec。
+        ///     <para xml:lang="en">Creates a badge at a built-in corner without color overrides.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建不带颜色覆盖的角标。</para>
         /// </summary>
         public ExtraIconAmountLabelSpec(string text, ExtraIconAmountLabelCorner corner,
             ExtraIconAmountLabelTextMode textMode = ExtraIconAmountLabelTextMode.Plain)
@@ -47,8 +47,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-bounds spec with no color overrides.
-        ///     无颜色覆盖的自定义边界 spec。
+        ///     <para xml:lang="en">Creates a badge with explicit bounds and no color overrides.</para>
+        ///     <para xml:lang="zh-CN">创建具有显式边界且不带颜色覆盖的角标。</para>
         /// </summary>
         public ExtraIconAmountLabelSpec(string text, ExtraIconAmountLabelCorner corner, Rect2 customRect,
             ExtraIconAmountLabelTextMode textMode = ExtraIconAmountLabelTextMode.Plain)
@@ -57,8 +57,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Converts an original plain slot to a plain spec.
-        ///     将原始普通槽位转换为普通 spec。
+        ///     <para xml:lang="en">Converts a plain-text entry to a badge description.</para>
+        ///     <para xml:lang="zh-CN">将纯文本条目转换为角标描述。</para>
         /// </summary>
         public static implicit operator ExtraIconAmountLabelSpec(ExtraIconAmountLabelSlot slot)
         {
@@ -66,8 +66,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Converts a rich-text slot to a rich-text spec.
-        ///     将富文本槽位转换为富文本 spec。
+        ///     <para xml:lang="en">Converts a rich-text entry to a badge description.</para>
+        ///     <para xml:lang="zh-CN">将富文本条目转换为角标描述。</para>
         /// </summary>
         public static implicit operator ExtraIconAmountLabelSpec(ExtraIconRichTextLabelSlot slot)
         {
@@ -75,8 +75,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Plain preset-corner spec.
-        ///     普通预设角 spec。
+        ///     <para xml:lang="en">Creates a plain-text badge at a built-in corner.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建纯文本角标。</para>
         /// </summary>
         public static ExtraIconAmountLabelSpec Plain(ExtraIconAmountLabelCorner corner, string text)
         {
@@ -84,8 +84,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Rich-text preset-corner spec.
-        ///     富文本预设角 spec。
+        ///     <para xml:lang="en">Creates a rich-text badge at a built-in corner.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建富文本角标。</para>
         /// </summary>
         public static ExtraIconAmountLabelSpec RichText(ExtraIconAmountLabelCorner corner, string text)
         {
@@ -93,8 +93,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Plain custom-bounds spec.
-        ///     普通自定义边界 spec。
+        ///     <para xml:lang="en">Creates a plain-text badge with custom bounds.</para>
+        ///     <para xml:lang="zh-CN">创建使用自定义边界的纯文本角标。</para>
         /// </summary>
         public static ExtraIconAmountLabelSpec PlainCustom(string text, Rect2 customRect)
         {
@@ -102,8 +102,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Rich-text custom-bounds spec.
-        ///     富文本自定义边界 spec。
+        ///     <para xml:lang="en">Creates a rich-text badge with custom bounds.</para>
+        ///     <para xml:lang="zh-CN">创建使用自定义边界的富文本角标。</para>
         /// </summary>
         public static ExtraIconAmountLabelSpec RichTextCustom(string text, Rect2 customRect)
         {
@@ -111,8 +111,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Plain custom edge spec.
-        ///     普通自定义边缘 spec。
+        ///     <para xml:lang="en">Creates a plain-text badge from host-local edge offsets.</para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建纯文本角标。</para>
         /// </summary>
         public static ExtraIconAmountLabelSpec PlainCustom(string text, float left, float top, float right,
             float bottom)
@@ -121,8 +121,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Rich-text custom edge spec.
-        ///     富文本自定义边缘 spec。
+        ///     <para xml:lang="en">Creates a rich-text badge from host-local edge offsets.</para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建富文本角标。</para>
         /// </summary>
         public static ExtraIconAmountLabelSpec RichTextCustom(string text, float left, float top, float right,
             float bottom)

@@ -10,8 +10,12 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Settings.Patches
 {
     /// <summary>
-    ///     Injects the RitsuLib mod settings shortcut under the vanilla patch notes button on the main menu.
-    ///     在主菜单原版更新日志按钮下方注入 RitsuLib 模组设置快捷入口。
+    ///     <para xml:lang="en">
+    ///         Adds the RitsuLib mod settings shortcut below the game's patch notes button on the main menu.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在游戏主菜单的更新日志按钮下方添加 RitsuLib 模组设置快捷入口。
+    ///     </para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -209,6 +213,8 @@ namespace STS2RitsuLib.Settings.Patches
                 !patchNotesButton.Visible)
                 return false;
 
+            // The explicit alternatives document the three valid hidden-screen states.
+            // ReSharper disable once MergeIntoPattern
             return mainMenu.PatchNotesScreen is not { } patchNotesScreen ||
                    !GodotObject.IsInstanceValid(patchNotesScreen) ||
                    (!patchNotesScreen.IsOpen && !patchNotesScreen.Visible);

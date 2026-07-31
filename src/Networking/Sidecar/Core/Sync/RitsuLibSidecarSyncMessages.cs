@@ -15,62 +15,118 @@ namespace STS2RitsuLib.Networking.Sidecar
     }
 
     /// <summary>
-    ///     Whether a sidecar sync message may tolerate missing peers or send failures.
-    ///     Sidecar 同步消息是否允许缺失 peer 或发送失败。
+    ///     <para xml:lang="en">Specifies whether a Sidecar sync message tolerates unavailable peers or send failures.</para>
+    ///     <para xml:lang="zh-CN">指定 Sidecar 同步消息是否容忍不可用的对等方或发送失败。</para>
     /// </summary>
     public enum RitsuLibSidecarSyncFailurePolicy : byte
     {
         /// <summary>
-        ///     Game-flow messages: every targeted sidecar-capable peer must be reachable before local handling runs.
-        ///     游戏流程消息：本地处理前，所有目标 sidecar peer 都必须可达。
+        ///     <para xml:lang="en">
+        ///         For game-flow messages, every targeted Sidecar-capable peer must be reachable before local
+        ///         handling runs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">用于游戏流程消息；本地处理前，每个目标且支持 Sidecar 的对等方都必须可达。</para>
         /// </summary>
         Required = 0,
 
         /// <summary>
-        ///     Non-gameplay messages only: missing peers are skipped and failures do not block local handling.
-        ///     仅用于非游戏流程消息：缺失 peer 会被跳过，失败不会阻止本地处理。
+        ///     <para xml:lang="en">
+        ///         For non-gameplay messages only; unavailable peers are skipped and failures do not block local
+        ///         handling.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">仅用于非游戏流程消息；不可用的对等方会被跳过，失败不会阻止本地处理。</para>
         /// </summary>
         BestEffort = 1,
     }
 
     /// <summary>
-    ///     Host broadcast target set for a sidecar sync message.
-    ///     Sidecar 同步消息的主机广播目标集合。
+    ///     <para xml:lang="en">Specifies the host broadcast target set for a Sidecar sync message.</para>
+    ///     <para xml:lang="zh-CN">指定 Sidecar 同步消息的主机广播目标集合。</para>
     /// </summary>
     public enum RitsuLibSidecarSyncBroadcastScope : byte
     {
         /// <summary>
-        ///     Matches vanilla <see cref="INetGameService.SendMessage{T}(T)" /> host broadcast behavior.
-        ///     对齐原版 <see cref="INetGameService.SendMessage{T}(T)" /> 的主机广播行为。
+        ///     <para xml:lang="en">
+        ///         Matches the host broadcast behavior of vanilla <see cref="INetGameService.SendMessage{T}(T)" />
+        ///         .
+        ///     </para>
+        ///     <para xml:lang="zh-CN">与原版 <see cref="INetGameService.SendMessage{T}(T)" /> 的主机广播行为一致。</para>
         /// </summary>
         ReadyPeers = 0,
 
         /// <summary>
-        ///     Sends to every connected peer; intended for lobby/session sidecar flows before vanilla ready state.
-        ///     发送给所有已连接 peer；用于原版 ready 状态前的 lobby/session sidecar 流程。
+        ///     <para xml:lang="en">Sends to every connected peer, for lobby or session flows before vanilla marks peers ready.</para>
+        ///     <para xml:lang="zh-CN">向每个已连接对等方发送，用于原版将对等方标记为就绪前的大厅或会话流程。</para>
         /// </summary>
         AllConnectedPeers = 1,
     }
 
     /// <summary>
-    ///     Describes a sidecar message with vanilla-like message policy without registering an <see cref="INetMessage" />
-    ///     subtype in the game's generated message id table.
-    ///     描述一个不注册到游戏生成 message id 表、但具备原版式消息策略的 sidecar 消息。
+    ///     <para xml:lang="en">
+    ///         Describes a Sidecar message with vanilla-like routing and delivery policy without registering an
+    ///         <see cref="INetMessage" /> subtype in the game's generated message-ID table.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">描述具备原版式路由和传递策略的 Sidecar 消息，而不在游戏生成的消息 ID 表中注册 <see cref="INetMessage" /> 子类型。</para>
     /// </summary>
-    /// <param name="ModuleId">Stable owner id for opcode derivation.</param>
-    /// <param name="MessageKey">Stable message key for opcode derivation.</param>
-    /// <param name="Serialize">Serializes the typed payload.</param>
-    /// <param name="Deserialize">Deserializes the typed payload.</param>
-    /// <param name="Handle">Runs when buffering and optional location gating have released the message.</param>
-    /// <param name="LocationTargeted">When true, the message carries the current run location and waits for it.</param>
-    /// <param name="ShouldBuffer">When true, the message waits behind vanilla <see cref="NetMessageBus" /> buffering.</param>
-    /// <param name="Mode">Vanilla transport mode used when sending this message.</param>
-    /// <param name="Channel">Optional explicit channel; null uses <see cref="NetTransferModeExtensions.ToChannelId" />.</param>
-    /// <param name="FailurePolicy">Whether all targeted recipients are required for game-flow safety.</param>
-    /// <param name="BroadcastScope">Which host peers receive host-originated or host-relayed broadcasts.</param>
-    /// <param name="DispatchLocalOnBroadcast">Whether host/singleplayer broadcasts also run the local handler.</param>
-    /// <param name="LogLevel">Vanilla-style network receive log level.</param>
-    /// <param name="ShouldBroadcast">Vanilla-style host relay flag for client-originated sends.</param>
+    /// <param name="ModuleId">
+    ///     <para xml:lang="en">Stable owner ID used to derive the opcode.</para>
+    ///     <para xml:lang="zh-CN">用于派生操作码的稳定所有者 ID。</para>
+    /// </param>
+    /// <param name="MessageKey">
+    ///     <para xml:lang="en">Stable message key used to derive the opcode.</para>
+    ///     <para xml:lang="zh-CN">用于派生操作码的稳定消息键。</para>
+    /// </param>
+    /// <param name="Serialize">
+    ///     <para xml:lang="en">Serializes the typed payload.</para>
+    ///     <para xml:lang="zh-CN">序列化强类型载荷。</para>
+    /// </param>
+    /// <param name="Deserialize">
+    ///     <para xml:lang="en">Deserializes the typed payload.</para>
+    ///     <para xml:lang="zh-CN">反序列化强类型载荷。</para>
+    /// </param>
+    /// <param name="Handle">
+    ///     <para xml:lang="en">Runs after buffering and optional location gating release the message.</para>
+    ///     <para xml:lang="zh-CN">在缓冲和可选位置门控释放消息后运行。</para>
+    /// </param>
+    /// <param name="LocationTargeted">
+    ///     <para xml:lang="en">Whether the message carries and waits for the current run location.</para>
+    ///     <para xml:lang="zh-CN">消息是否携带并等待当前局内位置。</para>
+    /// </param>
+    /// <param name="ShouldBuffer">
+    ///     <para xml:lang="en">Whether the message waits behind vanilla <see cref="NetMessageBus" /> buffering.</para>
+    ///     <para xml:lang="zh-CN">消息是否等待原版 <see cref="NetMessageBus" /> 缓冲。</para>
+    /// </param>
+    /// <param name="Mode">
+    ///     <para xml:lang="en">Vanilla transport mode used to send the message.</para>
+    ///     <para xml:lang="zh-CN">发送消息所用的原版传输模式。</para>
+    /// </param>
+    /// <param name="Channel">
+    ///     <para xml:lang="en">
+    ///         Optional explicit channel; <see langword="null" /> uses
+    ///         <see cref="NetTransferModeExtensions.ToChannelId" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">可选显式通道；<see langword="null" /> 时使用 <see cref="NetTransferModeExtensions.ToChannelId" />。</para>
+    /// </param>
+    /// <param name="FailurePolicy">
+    ///     <para xml:lang="en">Whether every targeted recipient is required for game-flow safety.</para>
+    ///     <para xml:lang="zh-CN">游戏流程安全是否要求每个目标接收方可用。</para>
+    /// </param>
+    /// <param name="BroadcastScope">
+    ///     <para xml:lang="en">Host peers receiving host-originated or host-relayed broadcasts.</para>
+    ///     <para xml:lang="zh-CN">接收主机发起或主机转发广播的主机对等方。</para>
+    /// </param>
+    /// <param name="DispatchLocalOnBroadcast">
+    ///     <para xml:lang="en">Whether host or single-player broadcasts also start the local handler.</para>
+    ///     <para xml:lang="zh-CN">主机或单人游戏广播是否也启动本地处理器。</para>
+    /// </param>
+    /// <param name="LogLevel">
+    ///     <para xml:lang="en">Vanilla-style network receive log level.</para>
+    ///     <para xml:lang="zh-CN">原版式网络接收日志级别。</para>
+    /// </param>
+    /// <param name="ShouldBroadcast">
+    ///     <para xml:lang="en">Whether client-originated sends request host relay.</para>
+    ///     <para xml:lang="zh-CN">客户端发起的发送是否请求主机转发。</para>
+    /// </param>
     public sealed record RitsuLibSidecarSyncMessageDescriptor<T>(
         string ModuleId,
         string MessageKey,
@@ -88,8 +144,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         bool ShouldBroadcast = false)
     {
         /// <summary>
-        ///     Preserves the original constructor ABI for mods compiled before transport/failure policy was added.
-        ///     为 transport/failure policy 加入前编译的 mod 保留原构造函数 ABI。
+        ///     <para xml:lang="en">
+        ///         Preserves the original constructor ABI for mods compiled before transport and failure policies
+        ///         were added.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为传输和失败策略加入前编译的模组保留原始构造函数 ABI。</para>
         /// </summary>
         public RitsuLibSidecarSyncMessageDescriptor(
             string moduleId,
@@ -113,14 +172,29 @@ namespace STS2RitsuLib.Networking.Sidecar
     }
 
     /// <summary>
-    ///     Runtime context delivered to a sidecar sync message handler.
-    ///     传递给 sidecar 同步消息处理器的运行时上下文。
+    ///     <para xml:lang="en">Provides runtime context to a Sidecar sync-message handler.</para>
+    ///     <para xml:lang="zh-CN">向 Sidecar 同步消息处理器提供运行时上下文。</para>
     /// </summary>
-    /// <param name="Message">Typed message payload.</param>
-    /// <param name="SenderNetId">Original vanilla sender id, preserved across host relay.</param>
-    /// <param name="NetService">Current net service, when available.</param>
-    /// <param name="IsHostIngest">True when this peer received the packet as host.</param>
-    /// <param name="Location">Run location carried by a location-targeted descriptor.</param>
+    /// <param name="Message">
+    ///     <para xml:lang="en">Typed message payload.</para>
+    ///     <para xml:lang="zh-CN">强类型消息载荷。</para>
+    /// </param>
+    /// <param name="SenderNetId">
+    ///     <para xml:lang="en">Original vanilla sender ID, preserved through host relay.</para>
+    ///     <para xml:lang="zh-CN">通过主机转发保留的原始原版发送方 ID。</para>
+    /// </param>
+    /// <param name="NetService">
+    ///     <para xml:lang="en">Current network service when available.</para>
+    ///     <para xml:lang="zh-CN">可用时的当前网络服务。</para>
+    /// </param>
+    /// <param name="IsHostIngest">
+    ///     <para xml:lang="en">Whether this peer received the packet as host.</para>
+    ///     <para xml:lang="zh-CN">此对等方是否以主机身份接收该数据包。</para>
+    /// </param>
+    /// <param name="Location">
+    ///     <para xml:lang="en">Run location carried by a location-targeted descriptor.</para>
+    ///     <para xml:lang="zh-CN">由位置目标描述符携带的局内位置。</para>
+    /// </param>
     public readonly record struct RitsuLibSidecarSyncMessageContext<T>(
         T Message,
         ulong SenderNetId,
@@ -129,8 +203,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         RunLocation? Location);
 
     /// <summary>
-    ///     Sends sidecar messages using vanilla reliable channel ordering, net buffering, and optional run-location gating.
-    ///     使用原版可靠 channel 顺序、网络缓冲和可选 run-location 门控发送 sidecar 消息。
+    ///     <para xml:lang="en">
+    ///         Sends Sidecar messages with vanilla-style routing, buffering, and optional run-location gating. Local
+    ///         handlers start asynchronously; their failures are logged and do not change a prior successful send result.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用原版式路由、缓冲和可选局内位置门控发送 Sidecar 消息。本地处理器异步启动；其失败会被记录，不会改变先前成功的发送结果。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarSyncMessages
     {
@@ -139,8 +218,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static readonly Logger NetworkLogger = new("RitsuLibSidecarSync", LogType.Network);
 
         /// <summary>
-        ///     Registers a sync message descriptor and returns its stable sidecar opcode.
-        ///     注册同步消息描述符，并返回其稳定 sidecar opcode。
+        ///     <para xml:lang="en">Registers a sync-message descriptor and returns its stable Sidecar opcode.</para>
+        ///     <para xml:lang="zh-CN">注册同步消息描述符并返回其稳定 Sidecar 操作码。</para>
         /// </summary>
         public static ulong Register<T>(RitsuLibSidecarSyncMessageDescriptor<T> descriptor)
         {
@@ -185,8 +264,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Sends a sync message with vanilla <see cref="INetGameService.SendMessage{T}(T)" /> routing semantics.
-        ///     使用原版 <see cref="INetGameService.SendMessage{T}(T)" /> 路由语义发送同步消息。
+        ///     <para xml:lang="en">
+        ///         Sends a sync message using <see cref="INetGameService.SendMessage{T}(T)" />-style routing
+        ///         semantics.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用 <see cref="INetGameService.SendMessage{T}(T)" /> 式路由语义发送同步消息。</para>
         /// </summary>
         public static bool Send<T>(
             INetGameService? netService,
@@ -220,8 +302,11 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Sends a sync message from client to host, or handles it locally for host/singleplayer services.
-        ///     从客户端向主机发送同步消息；在主机或单人服务中则本地处理。
+        ///     <para xml:lang="en">
+        ///         Sends a sync message from client to host, or starts local handling for host and single-player
+        ///         services.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">从客户端向主机发送同步消息，或在主机和单人游戏服务中启动本地处理。</para>
         /// </summary>
         public static bool SendToHost<T>(
             INetGameService? netService,
@@ -241,8 +326,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Sends a sync message to the host and asks the host to relay it to ready peers.
-        ///     向主机发送同步消息，并请求主机转发给已 ready 的 peer。
+        ///     <para xml:lang="en">Sends a sync message to the host and requests relay to the descriptor's broadcast scope.</para>
+        ///     <para xml:lang="zh-CN">向主机发送同步消息，并请求转发到描述符的广播范围。</para>
         /// </summary>
         public static bool SendToHostAndBroadcast<T>(
             INetGameService? netService,
@@ -266,8 +351,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Sends a sync message from host to one peer.
-        ///     从主机向单个 peer 发送同步消息。
+        ///     <para xml:lang="en">Sends a sync message from host to one peer.</para>
+        ///     <para xml:lang="zh-CN">从主机向单个对等方发送同步消息。</para>
         /// </summary>
         public static bool SendToPeer<T>(
             INetGameService? netService,
@@ -288,8 +373,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Broadcasts a sync message from host to all ready sidecar-capable peers and handles it locally.
-        ///     从主机向所有已 ready 且支持 sidecar 的 peer 广播同步消息，并在本地处理。
+        ///     <para xml:lang="en">
+        ///         Broadcasts a sync message from the host to the descriptor's Sidecar-capable target peers and, when
+        ///         configured, starts its local handler after the remote broadcast succeeds.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从主机向描述符的支持 Sidecar 的目标对等方广播同步消息，并在配置要求时于远程广播成功后启动本地处理器。
+        ///     </para>
         /// </summary>
         public static bool Broadcast<T>(
             INetGameService? netService,

@@ -4,10 +4,12 @@ namespace STS2RitsuLib.Content
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Snapshots lazy patched <see cref="ModelDb" /> getter output once; nested getter calls pass
+    ///         Materializes a model sequence before extending it while allowing nested model lookups to pass
     ///         through unchanged.
     ///     </para>
-    ///     <para xml:lang="zh-CN">对 lazy patched <see cref="ModelDb" /> getter 输出做一次快照；嵌套 getter 调用原样透传。</para>
+    ///     <para xml:lang="zh-CN">
+    ///         扩展模型序列前将其实例化，同时让嵌套模型查找保持原样。
+    ///     </para>
     /// </summary>
     internal static class ModelDbGetterMerge
     {

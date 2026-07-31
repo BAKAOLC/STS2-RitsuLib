@@ -4,10 +4,11 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Utils.Persistence.Patches
 {
     /// <summary>
-    ///     Framework trigger point for safe data operations.
-    ///     Fires after SaveManager has initialized/switched profile path, then forwards to DataReadyLifecycle.
-    ///     安全数据操作的框架触发点。
-    ///     在 SaveManager 初始化 / 切换档案路径后触发，然后转发给 DataReadyLifecycle。
+    ///     <para xml:lang="en">
+    ///         Notifies <see cref="DataReadyLifecycle" /> after <see cref="SaveManager" /> initializes or
+    ///         switches the profile path, establishing the trigger point for safe data operations.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在 <see cref="SaveManager" /> 初始化或切换档案路径后通知 <see cref="DataReadyLifecycle" />，作为安全执行数据操作的触发点。</para>
     /// </summary>
     internal class ProfilePathInitializedPatch : IPatchMethod
     {

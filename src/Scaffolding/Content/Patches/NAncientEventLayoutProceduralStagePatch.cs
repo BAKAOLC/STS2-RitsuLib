@@ -10,11 +10,10 @@ using STS2RitsuLib.Scaffolding.Content.Visuals;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     After <see cref="NAncientEventLayout.InitializeVisuals" />, replaces the instantiated background subtree with
-    ///     procedural stage layers when <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> is set.
-    ///     在 <see cref="NAncientEventLayout.InitializeVisuals" /> 之后，当设置了
-    ///     <see cref="AncientEventPresentationAssetProfile.StageProcedural" /> 时，
-    ///     用程序化舞台图层替换已实例化的背景子树。
+    ///     <para xml:lang="en">
+    ///         Replaces an Ancient event's initialized background subtree with configured procedural stage layers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">使用已配置的程序化舞台图层替换先古事件初始化后的背景子树。</para>
     /// </summary>
     internal class NAncientEventLayoutProceduralStagePatch : IPatchMethod
     {
@@ -40,6 +39,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (stage == null)
                 return;
 
+            if (string.IsNullOrWhiteSpace(stage.BackgroundVideoPath) && stage.BackgroundCueSet == null)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[AncientStage] Could not mount StageProcedural for '{ancient.Id}' because no background video or cue set was configured.");
+                return;
+            }
+
             var container = AncientBgContainer(__instance);
             if (container == null || !GodotObject.IsInstanceValid(container))
             {
@@ -48,13 +54,48 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 return;
             }
 
-            foreach (var child in container.GetChildren().ToList())
+            var originalChildren = container.GetChildren().ToList();
+            var originalInstanceIds = originalChildren
+                .Where(GodotObject.IsInstanceValid)
+                .Select(static child => child.GetInstanceId())
+                .ToHashSet();
+
+            try
             {
+                AncientStageProceduralRootFactory.BuildAndMount(container, stage);
+            }
+            catch (Exception ex)
+            {
+                RemoveNewChildren(container, originalInstanceIds);
+                RitsuLibFramework.Logger.Warn(
+                    $"[AncientStage] Failed to mount StageProcedural for '{ancient.Id}': {ex.Message}. Keeping the existing background.");
+                return;
+            }
+
+            // Keep Godot collection enumeration and node teardown ordering explicit.
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var child in originalChildren)
+            {
+                if (!GodotObject.IsInstanceValid(child) || child.GetParent() != container)
+                    continue;
+
                 container.RemoveChildSafely(child);
                 child.QueueFreeSafely();
             }
+        }
 
-            AncientStageProceduralRootFactory.BuildAndMount(container, stage);
+        private static void RemoveNewChildren(NAncientBgContainer container, HashSet<ulong> originalInstanceIds)
+        {
+            // Keep Godot collection enumeration and node teardown ordering explicit.
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var child in container.GetChildren().ToList())
+            {
+                if (!GodotObject.IsInstanceValid(child) || originalInstanceIds.Contains(child.GetInstanceId()))
+                    continue;
+
+                container.RemoveChildSafely(child);
+                child.QueueFreeSafely();
+            }
         }
 
         [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_ancientEvent")]

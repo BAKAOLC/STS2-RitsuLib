@@ -5,8 +5,10 @@ using MegaCrit.Sts2.Core.Saves;
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
-    ///     Epoch-related game-mode checks on <see cref="SerializableRun" /> and the active <see cref="IRunState" />.
-    ///     <see cref="SerializableRun" /> 和活动 <see cref="IRunState" /> 上与纪元相关的游戏模式检查。
+    ///     <para xml:lang="en">
+    ///         Provides epoch-related game-mode checks for serialized and active runs.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供针对已序列化及当前游戏局的纪元相关游戏模式检查。</para>
     /// </summary>
     internal static class Sts2RunGameModeCompat
     {

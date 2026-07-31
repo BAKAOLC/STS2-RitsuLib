@@ -8,10 +8,14 @@ using STS2RitsuLib.Scaffolding.Characters.Visuals;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     When <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c> is set, builds the
-    ///     rest-site character node in memory instead of loading <c>RestSiteAnimPath</c>.
-    ///     当 <see cref="IModCharacterAssetOverrides.WorldProceduralVisuals" /><c>.RestSite</c> 已设置时，在内存中构建休息点角色节点，而不是加载
-    ///     <c>RestSiteAnimPath</c>。
+    ///     <para xml:lang="en">
+    ///         Creates <see cref="NRestSiteCharacter" /> nodes through the procedural rest-site definition when one
+    ///         is available; otherwise, creates a compatible node from the character's rest-site scene or texture.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         有可用的程序化休息处定义时，通过该定义创建 <see cref="NRestSiteCharacter" /> 节点；否则从角色的
+    ///         休息处场景或纹理创建兼容节点。
+    ///     </para>
     /// </summary>
     internal class NRestSiteCharacterCreateProceduralPatch : IPatchMethod
     {

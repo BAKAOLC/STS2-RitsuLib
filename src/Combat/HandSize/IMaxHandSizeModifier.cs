@@ -3,14 +3,14 @@ using MegaCrit.Sts2.Core.Entities.Players;
 namespace STS2RitsuLib.Combat.HandSize
 {
     /// <summary>
-    ///     Extensible modifier contract for player max-hand-size calculation.
-    ///     玩家最大手牌数计算的可扩展 modifier 契约。
+    ///     <para xml:lang="en">Defines extensible modifiers for calculating a player's maximum hand size.</para>
+    ///     <para xml:lang="zh-CN">定义用于计算玩家手牌上限的可扩展修正器。</para>
     /// </summary>
     public interface IMaxHandSizeModifier
     {
         /// <summary>
-        ///     Early pass modifier.
-        ///     早期 pass modifier。
+        ///     <para xml:lang="en">Modifies the maximum hand size during the early pass.</para>
+        ///     <para xml:lang="zh-CN">在早期阶段修正手牌上限。</para>
         /// </summary>
         int ModifyMaxHandSize(Player player, int currentMaxHandSize)
         {
@@ -18,8 +18,8 @@ namespace STS2RitsuLib.Combat.HandSize
         }
 
         /// <summary>
-        ///     Late pass modifier.
-        ///     晚期 pass modifier。
+        ///     <para xml:lang="en">Modifies the maximum hand size during the late pass.</para>
+        ///     <para xml:lang="zh-CN">在后期阶段修正手牌上限。</para>
         /// </summary>
         int ModifyMaxHandSizeLate(Player player, int currentMaxHandSize)
         {

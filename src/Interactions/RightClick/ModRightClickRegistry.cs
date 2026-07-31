@@ -20,8 +20,8 @@ using STS2RitsuLib.Networking.Sidecar;
 namespace STS2RitsuLib.Interactions.RightClick
 {
     /// <summary>
-    ///     Registry and dispatcher for model right-click interactions.
-    ///     模型右键交互的注册表与分发器。
+    ///     <para xml:lang="en">Registers and dispatches synchronized right-click interactions for models.</para>
+    ///     <para xml:lang="zh-CN">注册并分发模型的同步右键交互。</para>
     /// </summary>
     public static class ModRightClickRegistry
     {
@@ -72,8 +72,8 @@ namespace STS2RitsuLib.Interactions.RightClick
                 GameActionType.NonCombat);
 
         /// <summary>
-        ///     Registers a custom right-click handler. Higher priority handlers run first.
-        ///     注册自定义右键 handler；优先级越高越先运行。
+        ///     <para xml:lang="en">Registers a custom local handler. Higher-priority handlers run first.</para>
+        ///     <para xml:lang="zh-CN">注册自定义本地处理器；优先级越高，运行越早。</para>
         /// </summary>
         public static void Register(IModRightClickHandler handler)
         {
@@ -90,21 +90,39 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         /// <summary>
-        ///     Registers a synced right-click binding for models of type <typeparamref name="TModel" />.
-        ///     为 <typeparamref name="TModel" /> 类型的模型注册同步右键绑定。
+        ///     <para xml:lang="en">
+        ///         Registers a synchronized right-click binding for models of type <typeparamref name="TModel" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TModel" /> 类型的模型注册同步右键绑定。</para>
         /// </summary>
-        /// <param name="modId">Owning mod id. 所属 mod id。</param>
-        /// <param name="localStem">Local binding id stem. 本地 binding id stem。</param>
-        /// <param name="canHandle">
-        ///     Execution-time guard. It runs after the synced action resolves the model on each peer. Do not use this
-        ///     delegate for local-only UI filtering.
-        ///     执行期判定：同步动作在各端解析模型后调用。不要将它用于仅本地 UI 过滤。
+        /// <param name="modId">
+        ///     <para xml:lang="en">The ID of the mod that owns the binding.</para>
+        ///     <para xml:lang="zh-CN">拥有该绑定的模组 ID。</para>
         /// </param>
-        /// <param name="execute">Synced right-click behavior. 同步右键行为。</param>
-        /// <param name="priority">Binding priority; higher values run first. 优先级越高越先运行。</param>
+        /// <param name="localStem">
+        ///     <para xml:lang="en">The binding's mod-local ID stem.</para>
+        ///     <para xml:lang="zh-CN">该绑定在模组内部使用的 ID 主体。</para>
+        /// </param>
+        /// <param name="canHandle">
+        ///     <para xml:lang="en">
+        ///         The execution-time guard, invoked after each peer resolves the synchronized model. Do not use it for
+        ///         local-only UI filtering.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         执行阶段的判断条件，在各端解析出同步模型后调用。请勿将其用于仅限本地的界面筛选。
+        ///     </para>
+        /// </param>
+        /// <param name="execute">
+        ///     <para xml:lang="en">The synchronized right-click behavior.</para>
+        ///     <para xml:lang="zh-CN">同步执行的右键操作。</para>
+        /// </param>
+        /// <param name="priority">
+        ///     <para xml:lang="en">The binding priority; bindings with higher values run first.</para>
+        ///     <para xml:lang="zh-CN">绑定优先级；数值越高，运行越早。</para>
+        /// </param>
         /// <returns>
-        ///     A disposable registration handle.
-        ///     可释放的注册句柄。
+        ///     <para xml:lang="en">A handle whose disposal unregisters the binding.</para>
+        ///     <para xml:lang="zh-CN">释放后会注销该绑定的句柄。</para>
         /// </returns>
         public static IDisposable Register<TModel>(
             string modId,
@@ -126,26 +144,46 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         /// <summary>
-        ///     Registers a synced right-click binding for models of type <typeparamref name="TModel" />.
-        ///     为 <typeparamref name="TModel" /> 类型的模型注册同步右键绑定。
+        ///     <para xml:lang="en">
+        ///         Registers a synchronized right-click binding for models of type <typeparamref name="TModel" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为 <typeparamref name="TModel" /> 类型的模型注册同步右键绑定。</para>
         /// </summary>
-        /// <param name="modId">Owning mod id. 所属 mod id。</param>
-        /// <param name="localStem">Local binding id stem. 本地 binding id stem。</param>
-        /// <param name="execute">Synced right-click behavior. 同步右键行为。</param>
-        /// <param name="priority">Binding priority; higher values run first. 优先级越高越先运行。</param>
+        /// <param name="modId">
+        ///     <para xml:lang="en">The ID of the mod that owns the binding.</para>
+        ///     <para xml:lang="zh-CN">拥有该绑定的模组 ID。</para>
+        /// </param>
+        /// <param name="localStem">
+        ///     <para xml:lang="en">The binding's mod-local ID stem.</para>
+        ///     <para xml:lang="zh-CN">该绑定在模组内部使用的 ID 主体。</para>
+        /// </param>
+        /// <param name="execute">
+        ///     <para xml:lang="en">The synchronized right-click behavior.</para>
+        ///     <para xml:lang="zh-CN">同步执行的右键操作。</para>
+        /// </param>
+        /// <param name="priority">
+        ///     <para xml:lang="en">The binding priority; bindings with higher values run first.</para>
+        ///     <para xml:lang="zh-CN">绑定优先级；数值越高，运行越早。</para>
+        /// </param>
         /// <param name="canHandleLocal">
-        ///     Optional local-only fast filter. Use only stable, local UI facts here; mutable gameplay state should be
-        ///     checked in <paramref name="canExecute" /> or <paramref name="execute" />.
-        ///     可选的仅本地快速过滤。这里只应使用稳定的本地 UI 信息；可变游戏状态应在
-        ///     <paramref name="canExecute" /> 或 <paramref name="execute" /> 中检查。
+        ///     <para xml:lang="en">
+        ///         An optional local-only fast filter. Check only stable local UI facts here; mutable gameplay state should be
+        ///         checked by <paramref name="canExecute" /> or <paramref name="execute" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选且仅在本地运行的快速筛选。此处只应检查稳定的本地界面信息；可变的游戏状态应由
+        ///         <paramref name="canExecute" /> 或 <paramref name="execute" /> 检查。
+        ///     </para>
         /// </param>
         /// <param name="canExecute">
-        ///     Optional execution-time guard. It runs after the synced action resolves the model on each peer.
-        ///     可选执行期判定：同步动作在各端解析模型后调用。
+        ///     <para xml:lang="en">
+        ///         An optional execution-time guard, invoked after each peer resolves the synchronized model.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">可选的执行阶段判断条件，在各端解析出同步模型后调用。</para>
         /// </param>
         /// <returns>
-        ///     A disposable registration handle.
-        ///     可释放的注册句柄。
+        ///     <para xml:lang="en">A handle whose disposal unregisters the binding.</para>
+        ///     <para xml:lang="zh-CN">释放后会注销该绑定的句柄。</para>
         /// </returns>
         public static IDisposable Register<TModel>(
             string modId,
@@ -183,8 +221,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         /// <summary>
-        ///     Attempts to dispatch a local right-click request.
-        ///     尝试分发一个本地右键请求。
+        ///     <para xml:lang="en">Attempts to dispatch a local right-click request.</para>
+        ///     <para xml:lang="zh-CN">尝试分发本地右键请求。</para>
         /// </summary>
         public static bool TryDispatch(ModRightClickContext context)
         {

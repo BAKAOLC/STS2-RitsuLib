@@ -2,6 +2,13 @@ using STS2RitsuLib.Data;
 
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Schedules registered automatic update checks and defers their execution while the player is in
+    ///         combat.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">调度已注册的自动更新检查，并在玩家处于战斗中时延后执行。</para>
+    /// </summary>
     internal static class AutomaticUpdateCheckScheduler
     {
         private static readonly Lock SyncRoot = new();
@@ -10,6 +17,7 @@ namespace STS2RitsuLib.Updates
         private static int? _deferredFromOrder;
         private static int _nextOrder;
         private static bool _initialized;
+        private static bool _initializing;
         private static bool _loopStarted;
 
         internal static IDisposable Register(
@@ -37,25 +45,53 @@ namespace STS2RitsuLib.Updates
                 Checks[check.Id] = check;
             }
 
-            return new Registration(check.Id);
+            return new Registration(check);
         }
 
         private static void Initialize()
         {
             lock (SyncRoot)
             {
-                if (_initialized)
+                if (_initialized || _initializing)
                     return;
 
-                _initialized = true;
+                _initializing = true;
+            }
+
+            var subscriptions = new List<IDisposable>();
+            try
+            {
                 UpdateCheckSessionState.Initialize();
-                RitsuLibFramework.SubscribeLifecycle<EssentialInitializationStartingEvent>(_ =>
-                    StartLoop("essential initialization starting"));
-                RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
-                    StartLoop("first main menu fallback"));
-                RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => TryRunDeferredCycle());
-                RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(_ => TryRunDeferredCycle());
-                RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => TryRunDeferredCycle());
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<EssentialInitializationStartingEvent>(_ =>
+                        StartLoop("essential initialization starting")));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ =>
+                        StartLoop("first main menu fallback")));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<MainMenuReadyEvent>(_ => TryRunDeferredCycle()));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<RoomExitedEvent>(_ => TryRunDeferredCycle()));
+                subscriptions.Add(
+                    RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => TryRunDeferredCycle()));
+
+                lock (SyncRoot)
+                {
+                    _initialized = true;
+                }
+            }
+            catch
+            {
+                for (var i = subscriptions.Count - 1; i >= 0; i--)
+                    subscriptions[i].Dispose();
+                throw;
+            }
+            finally
+            {
+                lock (SyncRoot)
+                {
+                    _initializing = false;
+                }
             }
         }
 
@@ -145,11 +181,11 @@ namespace STS2RitsuLib.Updates
                     return;
                 }
 
-                if (!check.IsEnabled())
-                    continue;
-
                 try
                 {
+                    if (!check.IsEnabled())
+                        continue;
+
                     RitsuLibFramework.Logger.Debug(
                         $"[UpdateCheck] Running automatic check: {check.DisplayName}.");
                     await check.CheckAsync(CancellationToken.None).ConfigureAwait(false);
@@ -219,7 +255,7 @@ namespace STS2RitsuLib.Updates
             });
         }
 
-        private sealed class Registration(string id) : IDisposable
+        private sealed class Registration(ScheduledCheck check) : IDisposable
         {
             private bool _disposed;
 
@@ -231,7 +267,8 @@ namespace STS2RitsuLib.Updates
                 _disposed = true;
                 lock (SyncRoot)
                 {
-                    Checks.Remove(id);
+                    if (Checks.TryGetValue(check.Id, out var current) && ReferenceEquals(current, check))
+                        Checks.Remove(check.Id);
                 }
             }
         }

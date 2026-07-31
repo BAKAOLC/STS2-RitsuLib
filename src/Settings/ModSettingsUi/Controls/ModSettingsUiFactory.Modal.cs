@@ -1,21 +1,76 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
-    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    ///     <para xml:lang="en">Creates the reusable layout, page chrome, and controls used by RitsuLib settings pages.</para>
+    ///     <para xml:lang="zh-CN">创建 RitsuLib 设置页面使用的可复用布局、页面框架与控件。</para>
     /// </summary>
     public static partial class ModSettingsUiFactory
     {
         private const int ModalCanvasLayer = 120;
 
         /// <summary>
-        ///     Full-viewport dim + centered panel, same chrome as mod settings. Blocks input under the layer.
-        ///     全视口变暗 + 居中面板，外观与 mod 设置相同。阻止该层下方的输入。
+        ///     <para xml:lang="en">
+        ///         Shows a full-viewport, input-blocking confirmation dialog with themed chrome and restores the
+        ///         previous focus when it closes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">显示一个覆盖整个视口、阻止下层输入的主题确认对话框，并在关闭时恢复此前的焦点。</para>
         /// </summary>
+        /// <param name="attachParent">
+        ///     <para xml:lang="en">The node that receives the modal canvas layer.</para>
+        ///     <para xml:lang="zh-CN">用于挂载模态画布层的节点。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The nonempty dialog title.</para>
+        ///     <para xml:lang="zh-CN">非空的对话框标题。</para>
+        /// </param>
+        /// <param name="body">
+        ///     <para xml:lang="en">The dialog body; an empty string leaves a blank body row.</para>
+        ///     <para xml:lang="zh-CN">对话框正文；空字符串会保留一个空白正文行。</para>
+        /// </param>
+        /// <param name="cancelText">
+        ///     <para xml:lang="en">
+        ///         The cancel-button label, required when <paramref name="showCancel" /> is
+        ///         <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">取消按钮标签；<paramref name="showCancel" /> 为 <see langword="true" /> 时必须提供非空文本。</para>
+        /// </param>
+        /// <param name="confirmText">
+        ///     <para xml:lang="en">The nonempty confirm-button label.</para>
+        ///     <para xml:lang="zh-CN">非空的确认按钮标签。</para>
+        /// </param>
+        /// <param name="confirmIsDanger">
+        ///     <para xml:lang="en">Whether the confirm button uses the danger tone instead of the accent tone.</para>
+        ///     <para xml:lang="zh-CN">确认按钮是否使用危险色调而非强调色调。</para>
+        /// </param>
+        /// <param name="onConfirm">
+        ///     <para xml:lang="en">The action invoked before the dialog closes after confirmation.</para>
+        ///     <para xml:lang="zh-CN">确认后、对话框关闭前调用的操作。</para>
+        /// </param>
+        /// <param name="showCancel">
+        ///     <para xml:lang="en">Whether to include a cancel button.</para>
+        ///     <para xml:lang="zh-CN">是否显示取消按钮。</para>
+        /// </param>
+        /// <param name="onCancel">
+        ///     <para xml:lang="en">The optional action invoked when the cancel button is used.</para>
+        ///     <para xml:lang="zh-CN">使用取消按钮时调用的可选操作。</para>
+        /// </param>
+        /// <param name="onDismiss">
+        ///     <para xml:lang="en">The optional action invoked when the modal shield dismisses the dialog.</para>
+        ///     <para xml:lang="zh-CN">模态遮罩关闭对话框时调用的可选操作。</para>
+        /// </param>
+        /// <param name="escapeTriggersCancel">
+        ///     <para xml:lang="en">Whether Escape activates cancel, or confirm when no cancel button is shown.</para>
+        ///     <para xml:lang="zh-CN">Escape 键是否触发取消；未显示取消按钮时则触发确认。</para>
+        /// </param>
+        /// <param name="cancelIsDanger">
+        ///     <para xml:lang="en">Whether the cancel button uses the danger tone.</para>
+        ///     <para xml:lang="zh-CN">取消按钮是否使用危险色调。</para>
+        /// </param>
         public static void ShowStyledConfirm(
             Node attachParent,
             string title,
@@ -148,8 +203,14 @@ namespace STS2RitsuLib.Settings
                 confirmIsDanger ? ModSettingsButtonTone.Danger : ModSettingsButtonTone.Accent,
                 () =>
                 {
-                    onConfirm();
-                    CloseDialog(false, false);
+                    try
+                    {
+                        onConfirm();
+                    }
+                    finally
+                    {
+                        CloseDialog(false, false);
+                    }
                 })
             {
                 CustomMinimumSize = actionButtonMinSize,
@@ -220,11 +281,17 @@ namespace STS2RitsuLib.Settings
                     viewport.SizeChanged -= OnViewportSized;
                 if (GodotObject.IsInstanceValid(canvasLayer))
                     canvasLayer.QueueFree();
-                if (cancelled)
-                    onCancel?.Invoke();
-                else if (dismissed)
-                    onDismiss?.Invoke();
-                RestorePreviousFocus();
+                try
+                {
+                    if (cancelled)
+                        onCancel?.Invoke();
+                    else if (dismissed)
+                        onDismiss?.Invoke();
+                }
+                finally
+                {
+                    RestorePreviousFocus();
+                }
             }
 
             void RestorePreviousFocus()
@@ -291,9 +358,25 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Shows a styled one-button notice dialog.
-        ///     显示主题化单按钮提示对话框。
+        ///     <para xml:lang="en">Shows a themed notice dialog with one dismiss button.</para>
+        ///     <para xml:lang="zh-CN">显示只有一个关闭按钮的主题提示对话框。</para>
         /// </summary>
+        /// <param name="attachParent">
+        ///     <para xml:lang="en">The node that receives the modal canvas layer.</para>
+        ///     <para xml:lang="zh-CN">用于挂载模态画布层的节点。</para>
+        /// </param>
+        /// <param name="title">
+        ///     <para xml:lang="en">The nonempty dialog title.</para>
+        ///     <para xml:lang="zh-CN">非空的对话框标题。</para>
+        /// </param>
+        /// <param name="body">
+        ///     <para xml:lang="en">The dialog body.</para>
+        ///     <para xml:lang="zh-CN">对话框正文。</para>
+        /// </param>
+        /// <param name="dismissText">
+        ///     <para xml:lang="en">The nonempty dismiss-button label.</para>
+        ///     <para xml:lang="zh-CN">非空的关闭按钮标签。</para>
+        /// </param>
         public static void ShowStyledNotice(
             Node attachParent,
             string title,
@@ -363,7 +446,7 @@ namespace STS2RitsuLib.Settings
                        @event.IsActionPressed(MegaInput.left) ||
                        @event.IsActionPressed(MegaInput.right) ||
                        @event.IsActionPressed(MegaInput.select) ||
-                       @event.IsActionPressed(MegaInput.accept) ||
+                       @event.IsActionPressed(Sts2InputCompat.ConfirmAction) ||
                        @event.IsActionPressed(MegaInput.cancel) ||
                        @event.IsActionPressed(MegaInput.pauseAndBack);
             }

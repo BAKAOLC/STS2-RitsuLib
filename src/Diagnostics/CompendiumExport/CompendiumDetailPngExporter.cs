@@ -17,12 +17,15 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Diagnostics.CompendiumExport
 {
     /// <summary>
-    ///     Renders compendium-style detail panels in an offscreen <see cref="SubViewport" />: relic inspect
-    ///     (same <c>inspect_relic_screen</c> <c>Popup</c> subtree) and potion lab focus view
-    ///     (<see cref="NPotion" /> at 1.2x + hover tips, matching focus + tips layout).
-    ///     在离屏 <see cref="SubViewport" /> 中渲染概要风格的详情面板：遗物查看
-    ///     （同一个 <c>inspect_relic_screen</c> <c>Popup</c> 子树）和药水实验室聚焦视图
-    ///     （1.2x 的 <see cref="NPotion" /> + 悬停提示，匹配聚焦 + 提示布局）。
+    ///     <para xml:lang="en">
+    ///         Renders compendium-style relic inspection and potion-lab focus panels in an offscreen
+    ///         <see cref="SubViewport" />. Each capture attempt releases its temporary scene subtree in a
+    ///         <c>finally</c> path, including after capture or frame-wait failures.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在离屏 <see cref="SubViewport" /> 中渲染图鉴风格的遗物查看面板和药水实验室聚焦面板。每次捕获尝试都会在
+    ///         <c>finally</c> 路径中释放临时场景子树，包括捕获或等待帧失败后。
+    ///     </para>
     /// </summary>
     public static class CompendiumDetailPngExporter
     {
@@ -50,13 +53,16 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         private const int FramesBetweenItems = 1;
         private const int FramesBeforeRetry = 8;
         private const int MaxCaptureAttemptsPerFile = 2;
+        private static int _exportInProgress;
 
         private static readonly Vector2 RelicInspectMinUnscaledFloor = Vector2.Zero;
         private static readonly Vector2 PotionRowMinUnscaledFloor = Vector2.Zero;
 
         /// <summary>
-        ///     Starts a batch export for the requested <see cref="CompendiumPngExportRequest" />.
-        ///     为请求的 <see cref="CompendiumPngExportRequest" /> 启动批量导出。
+        ///     <para xml:lang="en">
+        ///         Starts the requested compendium-detail batch export when no other compendium export is running.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在没有其他图鉴导出运行时启动请求的图鉴详情批量导出。</para>
         /// </summary>
         public static void BeginExport(CompendiumPngExportRequest request, Action<string>? log = null)
         {
@@ -66,9 +72,23 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 return;
             }
 
+            if (Interlocked.CompareExchange(ref _exportInProgress, 1, 0) != 0)
+            {
+                log?.Invoke("Cannot export: another compendium detail PNG export is already running.");
+                return;
+            }
+
             var req = request;
             var lg = log;
-            Callable.From(() => RunExportOnMainThreadEntry(req, lg)).CallDeferred();
+            try
+            {
+                Callable.From(() => RunExportOnMainThreadEntry(req, lg)).CallDeferred();
+            }
+            catch
+            {
+                Volatile.Write(ref _exportInProgress, 0);
+                throw;
+            }
         }
 
         private static async void RunExportOnMainThreadEntry(CompendiumPngExportRequest request, Action<string>? log)
@@ -81,6 +101,10 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             {
                 log?.Invoke($"Compendium detail export stopped: {ex.Message}");
                 GD.PushError($"Compendium detail PNG export: {ex}");
+            }
+            finally
+            {
+                Volatile.Write(ref _exportInProgress, 0);
             }
         }
 
@@ -95,6 +119,18 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             if (request is { Relics: false, Potions: false })
             {
                 log?.Invoke("Nothing to export: enable Relics and/or Potions in the request.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(request.OutputDirectory))
+            {
+                log?.Invoke("Cannot export: choose an output folder.");
+                return;
+            }
+
+            if (!double.IsFinite(request.Scale))
+            {
+                log?.Invoke("Cannot export: scale must be a finite number.");
                 return;
             }
 
@@ -117,9 +153,9 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 return;
             }
 
-            var idFilter = string.IsNullOrEmpty(request.IdFilterSubstring)
+            var idFilter = string.IsNullOrWhiteSpace(request.IdFilterSubstring)
                 ? null
-                : request.IdFilterSubstring;
+                : request.IdFilterSubstring.Trim();
             var includeRelicHover = request.IncludeRelicHoverTips;
             IReadOnlyList<RelicModel> relicList =
                 request.Relics ? BuildRelicExportList(idFilter) : Array.Empty<RelicModel>();
@@ -170,7 +206,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                         }
 
                         progressUi.SetProgress(done, relic.Id.Entry);
-                        var fileName = SanitizeFilePart(relic.Id.Entry) + "_relic.png";
+                        var fileName = CardPngExporter.BuildSafeFileStem(relic.Id.Entry, "relic") + "_relic.png";
                         var filePath = Path.Combine(outDir, fileName);
                         if (await TryCaptureRelicWithRetriesAsync(tree, relic, filePath, scale, includeRelicHover, log,
                                 fileName))
@@ -204,7 +240,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                         }
 
                         progressUi.SetProgress(done, potion.Id.Entry);
-                        var fileName = SanitizeFilePart(potion.Id.Entry) + "_potion.png";
+                        var fileName = CardPngExporter.BuildSafeFileStem(potion.Id.Entry, "potion") + "_potion.png";
                         var filePath = Path.Combine(outDir, fileName);
                         if (await TryCapturePotionWithRetriesAsync(tree, potion, filePath, scale, log, fileName))
                         {
@@ -415,16 +451,16 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             float scale, bool includeRelicHover, Action<string>? log, string? logLinePrefix, string logFileTag)
         {
             var host = new Control { Name = "RitsuCompendiumRelicExportHost", Position = new(-5000, -5000) };
-            bool ok;
-            var vp = BuildRelicInspectViewport(relic, scale, includeRelicHover, out var refList);
-            if (vp == null)
-            {
-                log?.Invoke($"{logLinePrefix}{logFileTag}: NRelic/inspect build failed (TestMode).");
-                return false;
-            }
-
+            var ok = false;
             try
             {
+                var vp = BuildRelicInspectViewport(relic, scale, includeRelicHover, out var refList);
+                if (vp == null)
+                {
+                    log?.Invoke($"{logLinePrefix}{logFileTag}: relic inspect build failed (TestMode).");
+                    return false;
+                }
+
                 host.AddChild(vp);
                 NGame.Instance!.AddChild(host);
                 await WaitMainThreadFrames(tree, FramesAfterHostAdded);
@@ -439,13 +475,22 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             catch (Exception ex)
             {
                 log?.Invoke($"{logLinePrefix}{logFileTag}: {ex.Message}");
-                ok = false;
+            }
+            finally
+            {
+                try
+                {
+                    await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
+                }
+                finally
+                {
+                    if (GodotObject.IsInstanceValid(host))
+                        DisposeExportHost(host);
+                }
+
+                await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
             }
 
-            await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
-            if (GodotObject.IsInstanceValid(host))
-                DisposeExportHost(host);
-            await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
             return ok;
         }
 
@@ -453,16 +498,16 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             float scale, Action<string>? log, string? logLinePrefix, string logFileTag)
         {
             var host = new Control { Name = "RitsuCompendiumPotionExportHost", Position = new(-5000, -5000) };
-            bool ok;
-            var vp = BuildPotionLabDetailViewport(potion, scale, out var refList);
-            if (vp == null)
-            {
-                log?.Invoke($"{logLinePrefix}{logFileTag}: potion build failed (TestMode).");
-                return false;
-            }
-
+            var ok = false;
             try
             {
+                var vp = BuildPotionLabDetailViewport(potion, scale, out var refList);
+                if (vp == null)
+                {
+                    log?.Invoke($"{logLinePrefix}{logFileTag}: potion build failed (TestMode).");
+                    return false;
+                }
+
                 host.AddChild(vp);
                 NGame.Instance!.AddChild(host);
                 await WaitMainThreadFrames(tree, FramesAfterHostAdded);
@@ -477,13 +522,22 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             catch (Exception ex)
             {
                 log?.Invoke($"{logLinePrefix}{logFileTag}: {ex.Message}");
-                ok = false;
+            }
+            finally
+            {
+                try
+                {
+                    await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
+                }
+                finally
+                {
+                    if (GodotObject.IsInstanceValid(host))
+                        DisposeExportHost(host);
+                }
+
+                await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
             }
 
-            await WaitMainThreadFrames(tree, FramesFlushBeforeSyncDispose);
-            if (GodotObject.IsInstanceValid(host))
-                DisposeExportHost(host);
-            await WaitMainThreadFrames(tree, FramesAfterSyncTeardown);
             return ok;
         }
 
@@ -686,12 +740,6 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
 
             var n = ModelDb.AllPotionPools.SelectMany(pool => pool.AllPotions).Count();
             return (all, dep, n);
-        }
-
-        private static string SanitizeFilePart(string entry)
-        {
-            var s = Path.GetInvalidFileNameChars().Aggregate(entry, (current, c) => current.Replace(c, '_'));
-            return string.IsNullOrEmpty(s) ? "export" : s;
         }
     }
 }

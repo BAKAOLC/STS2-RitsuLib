@@ -9,14 +9,14 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Command API for mutating registered secondary-resource amounts.
-    ///     用于修改已注册次级资源数量的命令 API。
+    ///     <para xml:lang="en">Provides commands that mutate registered secondary-resource amounts.</para>
+    ///     <para xml:lang="zh-CN">提供修改已注册次级资源数量的命令。</para>
     /// </summary>
     public static class SecondaryResourceCmd
     {
         /// <summary>
-        ///     Reads the current amount without creating state when the feature is inactive.
-        ///     读取当前数量；功能未启用时不会创建状态。
+        ///     <para xml:lang="en">Gets the current amount without creating state when no resources are registered.</para>
+        ///     <para xml:lang="zh-CN">获取当前数量；未注册资源时不会创建状态。</para>
         /// </summary>
         public static int Get(Player player, string resourceId)
         {
@@ -24,8 +24,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Calculates the current max amount, or null for resources without a max concept.
-        ///     计算当前最大数量；没有上限概念的资源返回 null。
+        ///     <para xml:lang="en">Gets the current maximum, or <see langword="null" /> for an uncapped resource.</para>
+        ///     <para xml:lang="zh-CN">获取当前最大数量；资源没有上限时返回 <see langword="null" />。</para>
         /// </summary>
         public static int? GetMax(Player player, string resourceId)
         {
@@ -33,8 +33,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Gains a resource amount after gain hooks.
-        ///     在 gain hook 处理后获得资源数量。
+        ///     <para xml:lang="en">Adds a positive amount after applying gain checks and modifiers.</para>
+        ///     <para xml:lang="zh-CN">通过增加检查并应用修正后，增加一个正数数量。</para>
         /// </summary>
         public static async Task<int> Gain(
             Player player,
@@ -45,27 +45,44 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (amount <= 0 || !TryResolve(player, resourceId, out var combatState, out var definition))
                 return Get(player, resourceId);
 
+            return await GainCore(
+                combatState,
+                player,
+                definition,
+                amount,
+                SecondaryResourceChangeReason.Gain,
+                source);
+        }
+
+        private static async Task<int> GainCore(
+            CombatStateLike combatState,
+            Player player,
+            SecondaryResourceDefinition definition,
+            int amount,
+            SecondaryResourceChangeReason reason,
+            AbstractModel? source)
+        {
             var context = new SecondaryResourceContext(combatState, player, definition, source);
             if (!SecondaryResourceHook.ShouldGain(context, amount))
-                return Get(player, resourceId);
+                return Get(player, definition.Id);
 
             var modified = SecondaryResourceHook.ModifyGain(context, amount);
-            var effective = Math.Max(0, (int)Math.Floor(modified));
+            var effective = SecondaryResourceAmountMath.FloorAndClamp(modified, 0, int.MaxValue);
             if (effective <= 0)
-                return Get(player, resourceId);
+                return Get(player, definition.Id);
 
             return await SetCore(
                 combatState,
                 player,
                 definition,
-                Get(player, definition.Id) + effective,
-                SecondaryResourceChangeReason.Gain,
+                SecondaryResourceAmountMath.AddSaturating(Get(player, definition.Id), effective),
+                reason,
                 source);
         }
 
         /// <summary>
-        ///     Loses a resource amount.
-        ///     失去指定资源数量。
+        ///     <para xml:lang="en">Subtracts a positive amount from a resource.</para>
+        ///     <para xml:lang="zh-CN">从资源中减去一个正数数量。</para>
         /// </summary>
         public static async Task<int> Lose(
             Player player,
@@ -80,14 +97,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 combatState,
                 player,
                 definition,
-                Get(player, definition.Id) - amount,
+                SecondaryResourceAmountMath.SubtractSaturating(Get(player, definition.Id), amount),
                 SecondaryResourceChangeReason.Lose,
                 source);
         }
 
         /// <summary>
-        ///     Sets the current amount.
-        ///     设置当前数量。
+        ///     <para xml:lang="en">Sets the current amount after applying the resource bounds.</para>
+        ///     <para xml:lang="zh-CN">应用资源上下限后设置当前数量。</para>
         /// </summary>
         public static async Task<int> Set(
             Player player,
@@ -108,8 +125,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Spends a resource amount after spend hooks.
-        ///     在 spend hook 处理后消耗资源数量。
+        ///     <para xml:lang="en">Pays a positive amount after applying spend checks.</para>
+        ///     <para xml:lang="zh-CN">通过支付检查后支付一个正数数量。</para>
         /// </summary>
         public static async Task<bool> Spend(
             Player player,
@@ -182,8 +199,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Resets a resource to its default or max amount.
-        ///     将资源重置为默认数量或最大数量。
+        ///     <para xml:lang="en">Resets a resource to its default amount or current maximum.</para>
+        ///     <para xml:lang="zh-CN">将资源重置为默认数量或当前最大数量。</para>
         /// </summary>
         public static async Task<int> Reset(
             Player player,
@@ -194,6 +211,23 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (!TryResolve(player, resourceId, out var combatState, out var definition))
                 return 0;
 
+            return await ResetCore(
+                combatState,
+                player,
+                definition,
+                toMax,
+                SecondaryResourceChangeReason.Reset,
+                source);
+        }
+
+        private static async Task<int> ResetCore(
+            CombatStateLike combatState,
+            Player player,
+            SecondaryResourceDefinition definition,
+            bool toMax,
+            SecondaryResourceChangeReason reason,
+            AbstractModel? source)
+        {
             var context = new SecondaryResourceContext(combatState, player, definition, source);
             if (!SecondaryResourceHook.ShouldReset(context))
                 return Get(player, definition.Id);
@@ -208,21 +242,22 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 player,
                 definition,
                 target,
-                SecondaryResourceChangeReason.Reset,
+                reason,
                 source,
                 true);
 
             if (oldAmount != newAmount)
                 SecondaryResourceHistory.Reset(combatState,
-                    new(combatState, player, definition, oldAmount, newAmount, newAmount - oldAmount,
-                        SecondaryResourceChangeReason.Reset, source));
+                    new(combatState, player, definition, oldAmount, newAmount,
+                        SecondaryResourceAmountMath.SubtractSaturating(newAmount, oldAmount),
+                        reason, source));
 
             return newAmount;
         }
 
         /// <summary>
-        ///     Applies built-in start-of-turn policies to all registered resources.
-        ///     对所有已注册资源应用内建回合开始策略。
+        ///     <para xml:lang="en">Applies each registered resource's built-in turn-start policy.</para>
+        ///     <para xml:lang="zh-CN">应用各已注册资源的内置回合开始策略。</para>
         /// </summary>
         public static async Task ApplyTurnStartPolicies(Player player, AbstractModel? source = null)
         {
@@ -245,14 +280,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 case SecondaryResourceTurnStartPolicy.None:
                     return;
                 case SecondaryResourceTurnStartPolicy.ResetToMax:
-                    await Reset(player, definition.Id, true, source);
+                    if (TryResolve(player, definition.Id, out var resetCombatState, out _))
+                        await ResetCore(
+                            resetCombatState,
+                            player,
+                            definition,
+                            true,
+                            SecondaryResourceChangeReason.TurnStart,
+                            source);
                     return;
                 case SecondaryResourceTurnStartPolicy.AddMaxToCurrent:
-                    if (GetMax(player, definition.Id) is { } max)
-                        await Gain(player, definition.Id, max, source);
+                    if (GetMax(player, definition.Id) is > 0 and var max &&
+                        TryResolve(player, definition.Id, out var gainCombatState, out _))
+                        await GainCore(
+                            gainCombatState,
+                            player,
+                            definition,
+                            max,
+                            SecondaryResourceChangeReason.TurnStart,
+                            source);
                     return;
                 case SecondaryResourceTurnStartPolicy.Clear:
-                    await Set(player, definition.Id, definition.MinAmount, source);
+                    if (TryResolve(player, definition.Id, out var clearCombatState, out _))
+                        await SetCore(
+                            clearCombatState,
+                            player,
+                            definition,
+                            definition.MinAmount,
+                            SecondaryResourceChangeReason.TurnStart,
+                            source);
                     return;
                 default:
 #pragma warning disable CA2208
@@ -282,7 +338,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 definition,
                 oldAmount,
                 newAmount,
-                newAmount - oldAmount,
+                SecondaryResourceAmountMath.SubtractSaturating(newAmount, oldAmount),
                 reason,
                 source);
 

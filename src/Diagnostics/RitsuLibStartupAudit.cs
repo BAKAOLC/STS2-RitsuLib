@@ -4,13 +4,15 @@ using System.Text;
 namespace STS2RitsuLib.Diagnostics
 {
     /// <summary>
-    ///     Accumulates wall-clock durations of RitsuLib's own startup phases (bootstraps, patch application, and
-    ///     framework-internal lifecycle hooks) and emits consolidated audit reports to the log. Only time spent inside
-    ///     RitsuLib code is recorded; the gaps where the engine or other mods run are deliberately excluded, so the
-    ///     totals reflect RitsuLib's own startup cost.
-    ///     累计 RitsuLib 自身启动各阶段（bootstrap、补丁应用、框架内部生命周期钩子）的墙钟耗时，
-    ///     并向日志输出合并后的审计报告。仅记录在 RitsuLib 代码内消耗的时间；引擎或其它 mod 运行的
-    ///     空档被有意排除，因此汇总值反映的是 RitsuLib 自身的启动开销。
+    ///     <para xml:lang="en">
+    ///         Accumulates wall-clock durations for RitsuLib's own startup phases, including bootstrap work, patch
+    ///         application, and internal lifecycle hooks, and writes consolidated audit reports to the log. Time spent
+    ///         between these phases in the engine or other mods is excluded.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         累计 RitsuLib 自身各启动阶段的墙钟耗时，包括引导初始化、补丁应用和内部生命周期钩子，并向日志写入
+    ///         汇总审计报告。各阶段之间由引擎或其他模组消耗的时间不计入其中。
+    ///     </para>
     /// </summary>
     internal static class RitsuLibStartupAudit
     {
@@ -21,8 +23,12 @@ namespace STS2RitsuLib.Diagnostics
         [ThreadStatic] private static MeasureScope? _currentScope;
 
         /// <summary>
-        ///     Times <paramref name="action" /> and records its duration under <paramref name="phase" />.
-        ///     对 <paramref name="action" /> 计时，并以 <paramref name="phase" /> 记录其耗时。
+        ///     <para xml:lang="en">
+        ///         Measures <paramref name="action" /> and records its duration under <paramref name="phase" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         测量 <paramref name="action" /> 的耗时，并以 <paramref name="phase" /> 作为阶段名称记录。
+        ///     </para>
         /// </summary>
         internal static void Measure(string phase, Action action)
         {
@@ -40,8 +46,14 @@ namespace STS2RitsuLib.Diagnostics
         }
 
         /// <summary>
-        ///     Times <paramref name="func" /> and records its duration under <paramref name="phase" />, returning the result.
-        ///     对 <paramref name="func" /> 计时并以 <paramref name="phase" /> 记录其耗时，返回其结果。
+        ///     <para xml:lang="en">
+        ///         Measures <paramref name="func" />, records its duration under <paramref name="phase" />, and returns
+        ///         the function result.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         测量 <paramref name="func" /> 的耗时并以 <paramref name="phase" /> 作为阶段名称记录，然后返回函数
+        ///         结果。
+        ///     </para>
         /// </summary>
         internal static T Measure<T>(string phase, Func<T> func)
         {
@@ -59,8 +71,8 @@ namespace STS2RitsuLib.Diagnostics
         }
 
         /// <summary>
-        ///     Records a pre-measured phase duration.
-        ///     记录一个已测得的阶段耗时。
+        ///     <para xml:lang="en">Records a previously measured phase duration.</para>
+        ///     <para xml:lang="zh-CN">记录一个已测量的阶段耗时。</para>
         /// </summary>
         internal static void Record(string phase, double milliseconds)
         {
@@ -72,8 +84,13 @@ namespace STS2RitsuLib.Diagnostics
         }
 
         /// <summary>
-        ///     Logs every RitsuLib self-time phase recorded so far as a single consolidated block with one total line.
-        ///     将迄今为止记录的所有 RitsuLib 自身耗时阶段作为单个合并块输出，并附带一行总计。
+        ///     <para xml:lang="en">
+        ///         Logs all RitsuLib self-time phases recorded so far as one consolidated block with an exclusive-time
+        ///         total.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将截至当前记录的所有 RitsuLib 自身耗时阶段作为一个汇总块写入日志，并附带独占耗时总计。
+        ///     </para>
         /// </summary>
         internal static void LogReport(string title)
         {

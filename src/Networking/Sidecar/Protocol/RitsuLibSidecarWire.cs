@@ -3,63 +3,92 @@ using System.Buffers.Binary;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Wire-level constants for the RitsuLib multiplayer sidecar envelope. Values are fixed; nothing is derived
-    ///     from reflection or sorted type lists.
-    ///     RitsuLib 多人 sidecar envelope 的线级常量。值是固定的；没有任何内容派生
-    ///     自反射或排序后的类型列表。
+    ///     <para xml:lang="en">
+    ///         Provides the fixed wire-format constants for RitsuLib multiplayer sidecar envelopes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供 RitsuLib 多人 sidecar 信封所使用的固定线路格式常量。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarWire
     {
         /// <summary>
-        ///     ENet / Steam channel for reliable sidecar traffic. Placed high to reduce overlap with other mods that
-        ///     pick low spare channels; vanilla 0.104.0 uses 0 and 1 only.
-        ///     可靠 sidecar 流量使用的 ENet / Steam channel。放在较高位置，以减少与
-        ///     选择低位备用 channel 的其他 mod 重叠；原版 0.104.0 只使用 0 和 1。
+        ///     <para xml:lang="en">
+        ///         The recommended ENet or Steam channel for reliable sidecar traffic.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可靠 sidecar 流量使用的推荐 ENet 或 Steam 通道。
+        ///     </para>
         /// </summary>
         public const int RecommendedReliableChannel = 48;
 
         /// <summary>
-        ///     ENet channel for best-effort sidecar traffic.
-        ///     best-effort sidecar 流量使用的 ENet channel。
+        ///     <para xml:lang="en">
+        ///         The recommended ENet or Steam channel for best-effort sidecar traffic.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尽力而为的 sidecar 流量使用的推荐 ENet 或 Steam 通道。
+        ///     </para>
         /// </summary>
         public const int RecommendedUnreliableChannel = 49;
 
         /// <summary>
-        ///     Wire format version written by <see cref="RitsuLibSidecar.CreateEnvelope" />.
-        ///     <see cref="RitsuLibSidecar.CreateEnvelope" /> 写入的线格式版本。
+        ///     <para xml:lang="en">
+        ///         The wire-format version written by the current library.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前库写入的线路格式版本。
+        ///     </para>
         /// </summary>
         public const ushort CurrentWireFormatVersion = 2;
 
         /// <summary>
-        ///     Highest wire format this library accepts.
-        ///     此库接受的最高线格式版本。
+        ///     <para xml:lang="en">
+        ///         The highest wire-format version accepted by this library.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前库接受的最高线路格式版本。
+        ///     </para>
         /// </summary>
         public const ushort SupportedWireFormatVersionMax = 2;
 
         /// <summary>
-        ///     Maximum logical payload size (after gzip decompress).
-        ///     最大逻辑载荷大小（gzip 解压之后）。
+        ///     <para xml:lang="en">
+        ///         The maximum logical payload size after optional decompression.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选解压后的最大逻辑载荷大小。
+        ///     </para>
         /// </summary>
         public const uint MaxPayloadBytes = 4 * RitsuLibSidecarBinaryLayout.MiB;
 
         /// <summary>
-        ///     Maximum header extension segment length (generous margin for future header TLVs).
-        ///     最大 header 扩展段长度（为未来 header TLV 预留的宽裕余量）。
+        ///     <para xml:lang="en">
+        ///         The maximum header-extension length.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         标头扩展的最大长度。
+        ///     </para>
         /// </summary>
         public const uint MaxHeaderExtensionBytes = 64 * RitsuLibSidecarBinaryLayout.KiB;
 
         /// <summary>
-        ///     Length of <see cref="Magic" />.
-        ///     <see cref="Magic" /> 的长度。
+        ///     <para xml:lang="en">
+        ///         Gets the length of <see cref="Magic" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="Magic" /> 的长度。
+        ///     </para>
         /// </summary>
         public static int MagicLength => Magic.Length;
 
         /// <summary>
-        ///     Minimum on-wire size: magic + wire version + flags + opcode + payload length + extension length (no
-        ///     extension bytes, no payload).
-        ///     extension bytes, no payload).
-        ///     最小线上大小：magic + wire version + flags + opcode + payload length + extension length（无
-        ///     extension 字节，无 payload）。
+        ///     <para xml:lang="en">
+        ///         Gets the minimum encoded envelope size, excluding extension and payload bytes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取不含扩展和载荷字节的最小信封编码大小。
+        ///     </para>
         /// </summary>
         public static int MinEnvelopeSize => MagicLength +
                                              RitsuLibSidecarBinaryLayout.U16Size +
@@ -69,14 +98,22 @@ namespace STS2RitsuLib.Networking.Sidecar
                                              RitsuLibSidecarBinaryLayout.U32Size;
 
         /// <summary>
-        ///     Packet prefix; <c>"STS2RitsuLib"u8</c>.
-        ///     数据包前缀；<c>"STS2RitsuLib"u8</c>。
+        ///     <para xml:lang="en">
+        ///         Gets the <c>"STS2RitsuLib"u8</c> packet prefix.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <c>"STS2RitsuLib"u8</c> 数据包前缀。
+        ///     </para>
         /// </summary>
         public static ReadOnlySpan<byte> Magic => "STS2RitsuLib"u8;
 
         /// <summary>
-        ///     Returns true when <paramref name="packet" /> begins with <see cref="Magic" />.
-        ///     当 <paramref name="packet" /> 以 <see cref="Magic" /> 开头时返回 true。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when <paramref name="packet" /> begins with <see cref="Magic" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <paramref name="packet" /> 以 <see cref="Magic" /> 开头时返回 <see langword="true" />。
+        ///     </para>
         /// </summary>
         public static bool MatchesMagic(ReadOnlySpan<byte> packet)
         {
@@ -84,10 +121,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Reads the 64-bit opcode from a sidecar envelope prefix when <see cref="MatchesMagic" /> holds and the
-        ///     span is long enough; does not validate the full envelope.
-        ///     当 <see cref="MatchesMagic" /> 成立且
-        ///     span 足够长时，从 sidecar envelope 前缀读取 64 位 opcode；不验证完整 envelope。
+        ///     <para xml:lang="en">
+        ///         Tries to read the 64-bit opcode from a sufficiently long sidecar envelope prefix without validating
+        ///         the complete envelope.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从长度足够的 sidecar 信封前缀读取 64 位操作码，但不验证完整信封。
+        ///     </para>
         /// </summary>
         public static bool TryPeekOpcode(ReadOnlySpan<byte> packet, out ulong opcode)
         {

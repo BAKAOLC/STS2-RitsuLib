@@ -4,9 +4,42 @@ using STS2RitsuLib.Utils.Persistence;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Value binding that reads/writes a field of persisted model <typeparamref name="TModel" /> via the mod data store.
-    ///     通过 mod data store 读写持久化模型 <typeparamref name="TModel" /> 字段的值绑定。
+    ///     <para xml:lang="en">
+    ///         Reads and writes one value in a persisted <typeparamref name="TModel" /> through the owning mod's data
+    ///         store.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过所属模组的数据存储读写持久化 <typeparamref name="TModel" /> 中的一个值。
+    ///     </para>
     /// </summary>
+    /// <typeparam name="TModel">
+    ///     <para xml:lang="en">The persisted model type.</para>
+    ///     <para xml:lang="zh-CN">持久化模型类型。</para>
+    /// </typeparam>
+    /// <typeparam name="TValue">
+    ///     <para xml:lang="en">The bound value type.</para>
+    ///     <para xml:lang="zh-CN">绑定值类型。</para>
+    /// </typeparam>
+    /// <param name="modId">
+    ///     <para xml:lang="en">The ID of the mod that owns the model.</para>
+    ///     <para xml:lang="zh-CN">所属模组的 ID。</para>
+    /// </param>
+    /// <param name="dataKey">
+    ///     <para xml:lang="en">The persisted model's data key.</para>
+    ///     <para xml:lang="zh-CN">持久化模型的数据键。</para>
+    /// </param>
+    /// <param name="scope">
+    ///     <para xml:lang="en">The model's save scope.</para>
+    ///     <para xml:lang="zh-CN">模型的保存作用域。</para>
+    /// </param>
+    /// <param name="getter">
+    ///     <para xml:lang="en">The function that reads the value from the model.</para>
+    ///     <para xml:lang="zh-CN">从模型读取值的函数。</para>
+    /// </param>
+    /// <param name="setter">
+    ///     <para xml:lang="en">The callback that writes the value into the model.</para>
+    ///     <para xml:lang="zh-CN">将值写入模型的回调。</para>
+    /// </param>
     public sealed class ModSettingsValueBinding<TModel, TValue>(
         string modId,
         string dataKey,
@@ -16,48 +49,62 @@ namespace STS2RitsuLib.Settings
         : IModSettingsValueBinding<TValue>
         where TModel : class, new()
     {
-        /// <summary>
-        ///     Mod id used to resolve <see cref="RitsuLibFramework.GetDataStore" />.
-        ///     用于解析 <see cref="RitsuLibFramework.GetDataStore" /> 的 mod id。
-        /// </summary>
-        public string ModId { get; } = modId;
+        private readonly Func<TModel, TValue> _getter =
+            ModSettingsBindingValidation.RequireNonNull(getter, nameof(getter));
+
+        private readonly Action<TModel, TValue> _setter =
+            ModSettingsBindingValidation.RequireNonNull(setter, nameof(setter));
 
         /// <summary>
-        ///     Key of the persisted model blob.
-        ///     持久化模型 blob 的键。
+        ///     <para xml:lang="en">
+        ///         Gets the mod ID used to resolve <see cref="RitsuLibFramework.GetDataStore" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取用于解析 <see cref="RitsuLibFramework.GetDataStore" /> 的模组 ID。
+        ///     </para>
         /// </summary>
-        public string DataKey { get; } = dataKey;
+        public string ModId { get; } = ModSettingsBindingValidation.RequireNonEmpty(modId, nameof(modId));
 
         /// <summary>
-        ///     Persistence scope for the backing store entry.
-        ///     后备存储条目的持久化作用域。
+        ///     <para xml:lang="en">Gets the persisted model's data key.</para>
+        ///     <para xml:lang="zh-CN">获取持久化模型的数据键。</para>
+        /// </summary>
+        public string DataKey { get; } = ModSettingsBindingValidation.RequireNonEmpty(dataKey, nameof(dataKey));
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the save scope of the backing data-store entry.</para>
+        ///     <para xml:lang="zh-CN">获取底层数据存储条目的保存作用域。</para>
         /// </summary>
         public SaveScope Scope { get; } = scope;
 
         /// <summary>
-        ///     Reads the current value from the model in the store.
-        ///     从存储中的模型读取当前值。
+        ///     <para xml:lang="en">Reads the current value from the stored model.</para>
+        ///     <para xml:lang="zh-CN">从已存储的模型读取当前值。</para>
         /// </summary>
         public TValue Read()
         {
             var store = RitsuLibFramework.GetDataStore(ModId);
-            return getter(store.Get<TModel>(DataKey));
+            return _getter(store.Get<TModel>(DataKey));
         }
 
         /// <summary>
-        ///     Mutates the model in memory (call <see cref="Save" /> to flush).
-        ///     在内存中修改模型（调用 <see cref="Save" /> 以 flush）。
+        ///     <para xml:lang="en">
+        ///         Writes the value to the in-memory model. Call <see cref="Save" /> to persist the model's data key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将值写入内存中的模型。调用 <see cref="Save" /> 可持久化该模型的数据键。
+        ///     </para>
         /// </summary>
         public void Write(TValue value)
         {
             var store = RitsuLibFramework.GetDataStore(ModId);
-            store.Modify<TModel>(DataKey, model => setter(model, value));
+            store.Modify<TModel>(DataKey, model => _setter(model, value));
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <summary>
-        ///     Persists the data key for this mod.
-        ///     持久化此 mod 的数据键。
+        ///     <para xml:lang="en">Persists this binding's data key through the owning mod's data store.</para>
+        ///     <para xml:lang="zh-CN">通过所属模组的数据存储持久化该绑定的数据键。</para>
         /// </summary>
         public void Save()
         {
@@ -66,9 +113,30 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     In-memory binding for previews, tests, or non-persisted UI; uses JSON adapter for structured clipboard.
-    ///     In-memory binding 用于 previews, tests, 或 non-persisted UI; 使用 JSON adapter 用于 structured clipboard.
+    ///     <para xml:lang="en">
+    ///         Stores a transient setting in memory for previews, tests, or temporary UI and provides a JSON adapter for
+    ///         cloning and clipboard operations.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为预览、测试或临时界面在内存中保存瞬时设置，并提供用于克隆与剪贴板操作的 JSON 适配器。
+    ///     </para>
     /// </summary>
+    /// <typeparam name="TValue">
+    ///     <para xml:lang="en">The setting value type.</para>
+    ///     <para xml:lang="zh-CN">设置值类型。</para>
+    /// </typeparam>
+    /// <param name="modId">
+    ///     <para xml:lang="en">The logical owning mod ID used for UI identity.</para>
+    ///     <para xml:lang="zh-CN">用于界面标识的逻辑所属模组 ID。</para>
+    /// </param>
+    /// <param name="dataKey">
+    ///     <para xml:lang="en">The logical data key used for UI identity.</para>
+    ///     <para xml:lang="zh-CN">用于界面标识的逻辑数据键。</para>
+    /// </param>
+    /// <param name="initialValue">
+    ///     <para xml:lang="en">The initial value and source for future default-value clones.</para>
+    ///     <para xml:lang="zh-CN">初始值，也是之后创建默认值副本的来源。</para>
+    /// </param>
     public sealed class InMemoryModSettingsValueBinding<TValue>(string modId, string dataKey, TValue initialValue)
         : IStructuredModSettingsValueBinding<TValue>, ITransientModSettingsBinding,
             IDefaultModSettingsValueBinding<TValue>
@@ -83,32 +151,37 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Logical mod id (for UI identity; not persisted by this type).
-        ///     Logical mod id (用于 UI identity; not persisted 通过 this type).
+        ///     <para xml:lang="en">Gets the logical mod ID used for UI identity; it is not persisted.</para>
+        ///     <para xml:lang="zh-CN">获取用于界面标识的逻辑模组 ID；该 ID 不会被持久化。</para>
         /// </summary>
-        public string ModId { get; } = modId;
+        public string ModId { get; } = ModSettingsBindingValidation.RequireNonEmpty(modId, nameof(modId));
 
         /// <summary>
-        ///     Logical data key segment.
-        ///     逻辑 data key 片段。
+        ///     <para xml:lang="en">Gets the logical data key used for UI identity.</para>
+        ///     <para xml:lang="zh-CN">获取用于界面标识的逻辑数据键。</para>
         /// </summary>
-        public string DataKey { get; } = dataKey;
+        public string DataKey { get; } = ModSettingsBindingValidation.RequireNonEmpty(dataKey, nameof(dataKey));
 
         /// <summary>
-        ///     Always <see cref="SaveScope.Global" />; <see cref="Save" /> is a no-op.
-        ///     始终为 <see cref="SaveScope.Global" />；<see cref="Save" /> 不执行任何操作。
+        ///     <para xml:lang="en">
+        ///         Gets <see cref="SaveScope.Global" /> for interface compatibility. <see cref="Save" /> performs no
+        ///         operation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为满足接口约定而返回 <see cref="SaveScope.Global" />；<see cref="Save" /> 不执行任何操作。
+        ///     </para>
         /// </summary>
         public SaveScope Scope => SaveScope.Global;
 
         /// <summary>
-        ///     JSON round-trip adapter for clone and clipboard.
-        ///     JSON round-trip adapter 用于 clone 和 clipboard.
+        ///     <para xml:lang="en">Gets the JSON adapter used for cloning and clipboard operations.</para>
+        ///     <para xml:lang="zh-CN">获取用于克隆与剪贴板操作的 JSON 适配器。</para>
         /// </summary>
         public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } = ModSettingsStructuredData.Json<TValue>();
 
         /// <summary>
-        ///     Returns the current in-memory value.
-        ///     返回当前内存值。
+        ///     <para xml:lang="en">Reads the current in-memory value.</para>
+        ///     <para xml:lang="zh-CN">读取当前内存值。</para>
         /// </summary>
         public TValue Read()
         {
@@ -116,8 +189,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets the in-memory value.
-        ///     设置内存值。
+        ///     <para xml:lang="en">Writes the current in-memory value and publishes a value-written notification.</para>
+        ///     <para xml:lang="zh-CN">写入当前内存值并发布值写入通知。</para>
         /// </summary>
         public void Write(TValue value)
         {
@@ -132,9 +205,26 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Wraps an inner binding and attaches a structured adapter without changing persistence behavior.
-    ///     包装内部绑定并附加结构化适配器，同时不改变持久化行为。
+    ///     <para xml:lang="en">
+    ///         Adds a structured value adapter to an existing binding while forwarding its reads, writes, and
+    ///         persistence.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为现有绑定添加结构化值适配器，同时转发其读取、写入与持久化操作。
+    ///     </para>
     /// </summary>
+    /// <typeparam name="TValue">
+    ///     <para xml:lang="en">The bound value type.</para>
+    ///     <para xml:lang="zh-CN">绑定值类型。</para>
+    /// </typeparam>
+    /// <param name="inner">
+    ///     <para xml:lang="en">The binding to decorate.</para>
+    ///     <para xml:lang="zh-CN">要装饰的绑定。</para>
+    /// </param>
+    /// <param name="adapter">
+    ///     <para xml:lang="en">The structured value adapter to expose.</para>
+    ///     <para xml:lang="zh-CN">要公开的结构化值适配器。</para>
+    /// </param>
     public sealed class StructuredModSettingsValueBinding<TValue>(
         IModSettingsValueBinding<TValue> inner,
         IStructuredModSettingsValueAdapter<TValue> adapter)
@@ -142,53 +232,90 @@ namespace STS2RitsuLib.Settings
             IModSettingsUiRefreshEquivalence,
             IModSettingsBindingSaveDispatch
     {
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+        private readonly IModSettingsValueBinding<TValue> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_inner];
 
         /// <inheritdoc />
-        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [inner];
+        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [_inner];
 
         /// <inheritdoc />
-        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [_inner];
 
         /// <inheritdoc />
-        public string ModId => inner.ModId;
+        public string ModId => _inner.ModId;
 
         /// <inheritdoc />
-        public string DataKey => inner.DataKey;
+        public string DataKey => _inner.DataKey;
 
         /// <inheritdoc />
-        public SaveScope Scope => inner.Scope;
+        public SaveScope Scope => _inner.Scope;
 
         /// <summary>
-        ///     Adapter used for serialization and clipboard.
-        ///     用于序列化和剪贴板的适配器。
+        ///     <para xml:lang="en">Gets the adapter used for cloning, serialization, and clipboard operations.</para>
+        ///     <para xml:lang="zh-CN">获取用于克隆、序列化与剪贴板操作的适配器。</para>
         /// </summary>
-        public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } = adapter;
+        public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } =
+            ModSettingsBindingValidation.RequireNonNull(adapter, nameof(adapter));
 
         /// <inheritdoc />
         public TValue Read()
         {
-            return inner.Read();
+            return _inner.Read();
         }
 
         /// <inheritdoc />
         public void Write(TValue value)
         {
-            inner.Write(value);
+            _inner.Write(value);
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            inner.Save();
+            _inner.Save();
         }
     }
 
     /// <summary>
-    ///     Binding that projects a child value out of a parent binding (e.g. one field of a settings record).
-    ///     从父绑定投影出子值的绑定（例如设置记录的某个字段）。
+    ///     <para xml:lang="en">
+    ///         Projects a child value from a parent binding, such as one field of a settings record, and writes changes
+    ///         back by replacing the parent value.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从父绑定投影子值（例如设置记录中的一个字段），并通过替换父值写回更改。
+    ///     </para>
     /// </summary>
+    /// <typeparam name="TSource">
+    ///     <para xml:lang="en">The parent value type.</para>
+    ///     <para xml:lang="zh-CN">父值类型。</para>
+    /// </typeparam>
+    /// <typeparam name="TValue">
+    ///     <para xml:lang="en">The projected value type.</para>
+    ///     <para xml:lang="zh-CN">投影值类型。</para>
+    /// </typeparam>
+    /// <param name="parent">
+    ///     <para xml:lang="en">The parent binding.</para>
+    ///     <para xml:lang="zh-CN">父绑定。</para>
+    /// </param>
+    /// <param name="dataKey">
+    ///     <para xml:lang="en">The optional child segment appended to the parent data key.</para>
+    ///     <para xml:lang="zh-CN">追加到父数据键的可选子片段。</para>
+    /// </param>
+    /// <param name="getter">
+    ///     <para xml:lang="en">The function that reads the projected value.</para>
+    ///     <para xml:lang="zh-CN">读取投影值的函数。</para>
+    /// </param>
+    /// <param name="setter">
+    ///     <para xml:lang="en">The function that returns a parent value containing the projected change.</para>
+    ///     <para xml:lang="zh-CN">返回包含投影更改的父值的函数。</para>
+    /// </param>
+    /// <param name="adapter">
+    ///     <para xml:lang="en">An optional adapter for the projected value type.</para>
+    ///     <para xml:lang="zh-CN">投影值类型的可选适配器。</para>
+    /// </param>
     public sealed class ProjectedModSettingsValueBinding<TSource, TValue>(
         IModSettingsValueBinding<TSource> parent,
         string dataKey,
@@ -197,28 +324,45 @@ namespace STS2RitsuLib.Settings
         IStructuredModSettingsValueAdapter<TValue>? adapter = null)
         : IStructuredModSettingsValueBinding<TValue>, IModSettingsUiRefreshPropagation, IModSettingsBindingSaveDispatch
     {
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [parent];
+        private readonly Func<TSource, TValue> _getter =
+            ModSettingsBindingValidation.RequireNonNull(getter, nameof(getter));
+
+        private readonly IModSettingsValueBinding<TSource> _parent =
+            ModSettingsBindingValidation.RequireNonNull(parent, nameof(parent));
+
+        private readonly Func<TSource, TValue, TSource> _setter =
+            ModSettingsBindingValidation.RequireNonNull(setter, nameof(setter));
+
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_parent];
 
         /// <inheritdoc />
-        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [parent];
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [_parent];
 
         /// <inheritdoc />
-        public string ModId => parent.ModId;
+        public string ModId => _parent.ModId;
 
         /// <summary>
-        ///     Composite key <c>parent.DataKey.{segment}</c> when the constructor segment is non-empty; otherwise the parent
-        ///     data key.
-        ///     当构造函数 segment 非空时为复合 key <c>parent.DataKey.{segment}</c>；否则为父级
-        ///     data key。
+        ///     <para xml:lang="en">
+        ///         Gets <c>parent.DataKey.{segment}</c> when the child segment is not blank; otherwise, gets the parent's
+        ///         data key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         子片段非空白时获取 <c>parent.DataKey.{segment}</c>；否则获取父绑定的数据键。
+        ///     </para>
         /// </summary>
-        public string DataKey => string.IsNullOrWhiteSpace(dataKey) ? parent.DataKey : $"{parent.DataKey}.{dataKey}";
+        public string DataKey =>
+            string.IsNullOrWhiteSpace(dataKey) ? _parent.DataKey : $"{_parent.DataKey}.{dataKey}";
 
         /// <inheritdoc />
-        public SaveScope Scope => parent.Scope;
+        public SaveScope Scope => _parent.Scope;
 
         /// <summary>
-        ///     Adapter for the projected type; defaults to JSON when the parent is not structured.
-        ///     投影类型的适配器；当父级不是结构化绑定时默认为 JSON。
+        ///     <para xml:lang="en">
+        ///         Gets the projected value adapter, using the built-in JSON adapter when none was supplied.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取投影值适配器；未提供时使用内置 JSON 适配器。
+        ///     </para>
         /// </summary>
         public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } =
             adapter ?? ModSettingsStructuredData.Json<TValue>();
@@ -226,28 +370,53 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public TValue Read()
         {
-            return getter(parent.Read());
+            return _getter(_parent.Read());
         }
 
         /// <inheritdoc />
         public void Write(TValue value)
         {
-            var source = parent.Read();
-            parent.Write(setter(source, value));
+            var source = _parent.Read();
+            _parent.Write(_setter(source, value));
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            parent.Save();
+            _parent.Save();
         }
     }
 
     /// <summary>
-    ///     Decorates a binding with default-value factory and structured adapter resolution for reset and clipboard.
-    ///     Decorates a binding 带有 default-value factory 和 structured adapter resolution 用于 re设置 和 clipboard.
+    ///     <para xml:lang="en">
+    ///         Adds a reset default-value factory to a binding and exposes the structured adapter used by clipboard
+    ///         operations.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为绑定添加供重置使用的默认值工厂，并公开剪贴板操作使用的结构化适配器。
+    ///     </para>
     /// </summary>
+    /// <typeparam name="TValue">
+    ///     <para xml:lang="en">The bound value type.</para>
+    ///     <para xml:lang="zh-CN">绑定值类型。</para>
+    /// </typeparam>
+    /// <param name="inner">
+    ///     <para xml:lang="en">The binding to decorate.</para>
+    ///     <para xml:lang="zh-CN">要装饰的绑定。</para>
+    /// </param>
+    /// <param name="defaultValueFactory">
+    ///     <para xml:lang="en">The function that creates a value for each reset operation.</para>
+    ///     <para xml:lang="zh-CN">为每次重置操作创建值的函数。</para>
+    /// </param>
+    /// <param name="adapter">
+    ///     <para xml:lang="en">
+    ///         The fallback structured adapter when the inner binding does not already provide one.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         内部绑定尚未提供结构化适配器时使用的回退适配器。
+    ///     </para>
+    /// </param>
     public sealed class DefaultModSettingsValueBinding<TValue>(
         IModSettingsValueBinding<TValue> inner,
         Func<TValue> defaultValueFactory,
@@ -255,34 +424,43 @@ namespace STS2RitsuLib.Settings
         : IStructuredModSettingsValueBinding<TValue>, IDefaultModSettingsValueBinding<TValue>,
             IModSettingsUiRefreshPropagation, IModSettingsUiRefreshEquivalence, IModSettingsBindingSaveDispatch
     {
+        private readonly Func<TValue> _defaultValueFactory =
+            ModSettingsBindingValidation.RequireNonNull(defaultValueFactory, nameof(defaultValueFactory));
+
+        private readonly IModSettingsValueBinding<TValue> _inner =
+            ModSettingsBindingValidation.RequireNonNull(inner, nameof(inner));
+
         /// <inheritdoc />
         public TValue CreateDefaultValue()
         {
-            return defaultValueFactory();
+            return _defaultValueFactory();
         }
 
-        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [inner];
+        IReadOnlyList<IModSettingsBinding> IModSettingsBindingSaveDispatch.ImmediateSaveTargets => [_inner];
 
         /// <inheritdoc />
-        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [inner];
+        public IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty => [_inner];
 
         /// <inheritdoc />
-        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [inner];
+        public IEnumerable<IModSettingsBinding> ExtraBindingsToMarkDirtyForUi => [_inner];
 
         /// <inheritdoc />
-        public string ModId => inner.ModId;
+        public string ModId => _inner.ModId;
 
         /// <inheritdoc />
-        public string DataKey => inner.DataKey;
+        public string DataKey => _inner.DataKey;
 
         /// <inheritdoc />
-        public SaveScope Scope => inner.Scope;
+        public SaveScope Scope => _inner.Scope;
 
         /// <summary>
-        ///     Adapter from the inner structured binding when present; otherwise the optional constructor adapter or JSON
-        ///     default.
-        ///     存在内部结构化绑定时取其适配器；否则使用可选构造函数适配器或 JSON
-        ///     默认适配器。
+        ///     <para xml:lang="en">
+        ///         Gets the inner binding's structured adapter when available; otherwise, gets the supplied fallback or
+        ///         the built-in JSON adapter.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         内部绑定提供结构化适配器时获取该适配器；否则获取所提供的回退适配器或内置 JSON 适配器。
+        ///     </para>
         /// </summary>
         public IStructuredModSettingsValueAdapter<TValue> Adapter { get; } =
             inner is IStructuredModSettingsValueBinding<TValue> structured
@@ -292,20 +470,20 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public TValue Read()
         {
-            return inner.Read();
+            return _inner.Read();
         }
 
         /// <inheritdoc />
         public void Write(TValue value)
         {
-            inner.Write(value);
+            _inner.Write(value);
             ModSettingsBindingWriteEvents.NotifyValueWritten(this);
         }
 
         /// <inheritdoc />
         public void Save()
         {
-            inner.Save();
+            _inner.Save();
         }
     }
 
@@ -330,7 +508,12 @@ namespace STS2RitsuLib.Settings
                 value = JsonSerializer.Deserialize<TValue>(text, options)!;
                 return true;
             }
-            catch
+            catch (JsonException)
+            {
+                value = default!;
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 value = default!;
                 return false;
@@ -345,7 +528,11 @@ namespace STS2RitsuLib.Settings
     {
         public List<TItem> Clone(List<TItem> value)
         {
-            return itemAdapter == null ? [.. value] : [.. value.Select(itemAdapter.Clone)];
+            if (itemAdapter != null)
+                return [.. value.Select(itemAdapter.Clone)];
+
+            var json = JsonSerializer.Serialize(value, options);
+            return JsonSerializer.Deserialize<List<TItem>>(json, options) ?? [];
         }
 
         public string Serialize(List<TItem> value)
@@ -360,7 +547,12 @@ namespace STS2RitsuLib.Settings
                 value = JsonSerializer.Deserialize<List<TItem>>(text, options) ?? [];
                 return true;
             }
-            catch
+            catch (JsonException)
+            {
+                value = [];
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 value = [];
                 return false;

@@ -8,8 +8,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Models.Capabilities.Patches
 {
     /// <summary>
-    ///     Bridges generic model display capabilities into non-card model families.
-    ///     将通用模型展示能力桥接到非卡牌模型族。
+    ///     <para xml:lang="en">Applies generic model-display capabilities to non-card model families.</para>
+    ///     <para xml:lang="zh-CN">将通用模型显示能力应用到非卡牌模型类型。</para>
     /// </summary>
     internal static class ModelDisplayCapabilityPatches
     {

@@ -1,38 +1,52 @@
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Higher-level playback routing options such as singleton channels and tagged groups.
-    ///     高级播放路由选项，例如单例通道和带标签的组。
+    ///     <para xml:lang="en">Configures optional named-channel ownership and tag-group membership for a playback handle.</para>
+    ///     <para xml:lang="zh-CN">配置播放句柄可选的命名通道归属和标签组成员关系。</para>
     /// </summary>
     public sealed class AudioRoutingOptions
     {
         /// <summary>
-        ///     Optional singleton channel name. New playback can keep or replace the current channel owner.
-        ///     可选单例通道名称。新播放可以保留或替换当前通道所有者。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional case-sensitive channel name; null, empty, or whitespace
+        ///         disables channel routing.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或初始化可选且区分大小写的通道名称；为 <see langword="null" />、空或空白时禁用通道路由。</para>
         /// </summary>
         public string? Channel { get; init; }
 
         /// <summary>
-        ///     Optional group tag for bulk stop or replacement patterns.
-        ///     用于批量停止或替换模式的可选组标签。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the optional case-sensitive tag name; null, empty, or whitespace disables
+        ///         tag routing.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或初始化可选且区分大小写的标签名称；为 <see langword="null" />、空或空白时禁用标签路由。</para>
         /// </summary>
         public string? Tag { get; init; }
 
         /// <summary>
-        ///     Channel collision behavior when <see cref="Channel" /> is already occupied.
-        ///     <see cref="Channel" /> 已被占用时的通道冲突行为。
+        ///     <para xml:lang="en">Gets or initializes the collision policy used when <see cref="Channel" /> already has an owner.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化 <see cref="Channel" /> 已有占用者时使用的冲突策略。</para>
         /// </summary>
         public AudioChannelMode ChannelMode { get; init; } = AudioChannelMode.ReplaceExisting;
 
         /// <summary>
-        ///     Whether replacement should allow fade-out for the previous owner.
-        ///     替换是否应允许上一所有者淡出。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether channel and tag-group replacement cleanup may fade out previous
+        ///         handles.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或初始化清理被通道或标签组替换的旧句柄时是否允许淡出。</para>
         /// </summary>
         public bool AllowFadeOutOnReplace { get; init; } = true;
 
         /// <summary>
-        ///     When true and <see cref="Tag" /> is set, existing handles in that tag stop before the new handle is attached.
-        ///     为 true 且设置了 <see cref="Tag" /> 时，新句柄附加前会先停止该标签中的现有句柄。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether existing handles in <see cref="Tag" /> must all release before the new handle
+        ///         is attached. Incomplete cleanup causes routing to fail.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化在附加新句柄前是否必须释放 <see cref="Tag" /> 中的所有现有句柄；清理未完成会导致路由失败。
+        ///     </para>
         /// </summary>
         public bool ReplaceTaggedGroup { get; init; }
     }

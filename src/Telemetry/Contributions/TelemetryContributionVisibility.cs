@@ -3,23 +3,30 @@ using System.Text.Json.Serialization;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Visibility policy for a telemetry contribution provider.
-    ///     telemetry contribution provider 的可见性策略。
+    ///     <para xml:lang="en">Specifies a telemetry contribution provider's visibility policy.</para>
+    ///     <para xml:lang="zh-CN">指定遥测数据贡献提供程序的可见性策略。</para>
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum TelemetryContributionVisibility
     {
         /// <summary>
-        ///     Contribution is private to the owning applicant and is attached to that applicant's own subscribed
-        ///     requests without extra shared-source consent.
-        ///     contribution 仅属于拥有它的申请方，会附加到该申请方自己订阅的申请中，
-        ///     不需要额外的共享来源授权。
+        ///     <para xml:lang="en">
+        ///         The contribution is private to its owning applicant and is attached to that applicant's subscribed
+        ///         requests without additional consent for a shared source.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         此数据贡献仅供其所属申请方使用，可附加到该申请方订阅的申请项，无需额外授予共享来源权限。
+        ///     </para>
         /// </summary>
         PrivateToApplicant,
 
         /// <summary>
-        ///     Contribution may be routed to applicants that subscribe to it and receive explicit user consent.
-        ///     contribution 可路由给订阅它并获得用户明确授权的申请方。
+        ///     <para xml:lang="en">
+        ///         The contribution may be routed to subscribing applicants that have received explicit user consent.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         此数据贡献可路由给已订阅且获得用户明确授权的申请方。
+        ///     </para>
         /// </summary>
         SharedToAuthorizedSubscribers,
     }

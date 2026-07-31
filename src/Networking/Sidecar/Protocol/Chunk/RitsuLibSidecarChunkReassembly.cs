@@ -99,6 +99,15 @@ namespace STS2RitsuLib.Networking.Sidecar
                 }
                 else
                 {
+                    if (segment.Length > st.TotalLogicalSize - st.AccumulatedLogicalBytes)
+                    {
+                        RitsuLibSidecarRepeatedWarningLog.Warn(
+                            $"chunk-accumulated-length-overflow:sender={sender}:op={userOpcode}",
+                            "[Sidecar] Chunk data exceeds the declared payload size; dropping stream.");
+                        _streams.Remove(key);
+                        return false;
+                    }
+
                     var owned = GC.AllocateUninitializedArray<byte>(segment.Length);
                     segment.CopyTo(owned.AsSpan());
                     st.Parts[index] = owned;

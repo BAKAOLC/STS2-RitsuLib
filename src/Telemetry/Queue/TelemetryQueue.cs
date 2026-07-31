@@ -15,9 +15,23 @@ namespace STS2RitsuLib.Telemetry
             {
                 var doc = ReadQueue(envelope.ApplicantId);
                 doc.Events.Add(envelope);
+                TelemetryEnvelope[] discarded = [];
                 if (doc.Events.Count > MaxEventsPerApplicant)
-                    doc.Events.RemoveRange(0, doc.Events.Count - MaxEventsPerApplicant);
-                WriteQueue(envelope.ApplicantId, doc);
+                {
+                    var overflow = doc.Events.Count - MaxEventsPerApplicant;
+                    discarded = [.. doc.Events.Take(overflow)];
+                    doc.Events.RemoveRange(0, overflow);
+                }
+
+                var write = WriteQueue(envelope.ApplicantId, doc);
+                if (!write.Success)
+                {
+                    TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents([envelope]);
+                    throw new InvalidOperationException(
+                        $"Failed to persist telemetry queue for '{envelope.ApplicantId}': {write.ErrorMessage}");
+                }
+
+                TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(discarded);
                 RitsuLibFramework.Logger.Debug(
                     $"[Telemetry] Queued event '{envelope.EventName}' for applicant '{envelope.ApplicantId}'. Queue size: {doc.Events.Count}.");
             }
@@ -61,6 +75,10 @@ namespace STS2RitsuLib.Telemetry
                     {
                         result = await applicant.Adapter.SendAsync(applicant, batch, cancellationToken);
                     }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
                     catch (Exception ex)
                     {
                         result = TelemetrySendResult.Fail(ex.Message);
@@ -68,10 +86,14 @@ namespace STS2RitsuLib.Telemetry
 
                     var shouldContinue = await RitsuMainThread.InvokeAsync(
                         () => CommitBatchResult(applicantId, batch, result),
-                        cancellationToken);
+                        CancellationToken.None);
                     if (!shouldContinue)
                         return;
                 }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -99,8 +121,12 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 var doc = ReadQueue(applicantId);
+                var write = WriteQueue(applicantId, new());
+                if (!write.Success)
+                    throw new InvalidOperationException(
+                        $"Failed to clear telemetry queue for '{applicantId}': {write.ErrorMessage}");
+
                 TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(doc.Events);
-                WriteQueue(applicantId, new());
                 RitsuLibFramework.Logger.Info($"[Telemetry] Cleared queue for applicant '{applicantId}'.");
             }
         }
@@ -121,8 +147,12 @@ namespace STS2RitsuLib.Telemetry
                 var dropped = DropUnauthorizedEvents(applicant, doc);
                 if (dropped.Count > 0)
                 {
+                    var write = WriteQueue(applicantId, doc);
+                    if (!write.Success)
+                        throw new InvalidOperationException(
+                            $"Failed to persist unauthorized telemetry removal for '{applicantId}': {write.ErrorMessage}");
+
                     TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(dropped);
-                    WriteQueue(applicantId, doc);
                     RitsuLibFramework.Logger.Info(
                         $"[Telemetry] Dropped {dropped.Count} unauthorized queued event(s) for applicant '{applicantId}'.");
                 }
@@ -146,31 +176,37 @@ namespace STS2RitsuLib.Telemetry
 
                 if (result.Success)
                 {
-                    TelemetryRuntime.MarkStartupDeliveryConfirmed(batch);
                     var queue = ReadQueue(applicantId);
-                    var remainingCount = queue.Events.Count;
-                    if (TryRemoveSentPrefix(queue, batch))
-                    {
-                        WriteQueue(applicantId, queue);
-                        remainingCount = queue.Events.Count;
-                    }
-                    else
+                    if (!TryRemoveSentPrefix(queue, batch))
                     {
                         RitsuLibFramework.Logger.Warn(
                             $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}', but queue changed unexpectedly. Keeping queued events to avoid data loss.");
+                        return false;
                     }
 
+                    var queueWrite = WriteQueue(applicantId, queue);
+                    if (!queueWrite.Success)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}', but failed to persist queue removal: {queueWrite.ErrorMessage}");
+                        state.LastError = queueWrite.ErrorMessage;
+                        state.FailureCount++;
+                        WriteStateWithWarning(applicantId, state);
+                        return false;
+                    }
+
+                    TelemetryRuntime.MarkStartupDeliveryConfirmed(batch);
                     state.LastError = null;
                     state.FailureCount = 0;
                     RitsuLibFramework.Logger.Debug(
-                        $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}'. Remaining queue size: {remainingCount}.");
-                    WriteState(applicantId, state);
+                        $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}'. Remaining queue size: {queue.Events.Count}.");
+                    WriteStateWithWarning(applicantId, state);
                     return true;
                 }
 
                 state.LastError = result.ErrorMessage;
                 state.FailureCount++;
-                WriteState(applicantId, state);
+                WriteStateWithWarning(applicantId, state);
                 RitsuLibFramework.Logger.Warn(
                     $"[Telemetry] Send failed for applicant '{applicantId}': {result.ErrorMessage}");
                 return false;
@@ -179,32 +215,93 @@ namespace STS2RitsuLib.Telemetry
 
         private static TelemetryQueueDocument ReadQueue(string applicantId)
         {
+            var path = TelemetryPaths.QueuePath(applicantId);
             var result = FileOperations.ReadJson<TelemetryQueueDocument>(
-                TelemetryPaths.QueuePath(applicantId),
+                path,
                 TelemetryJson.Options,
                 "TelemetryQueue");
-            return result is { Success: true, Data: not null } ? result.Data : new();
+            var migrated = false;
+            if (result is not { Success: true, Data: not null })
+            {
+                var legacyPath = TelemetryPaths.LegacyQueuePath(applicantId);
+                if (!string.Equals(path, legacyPath, StringComparison.Ordinal))
+                {
+                    result = FileOperations.ReadJson<TelemetryQueueDocument>(
+                        legacyPath,
+                        TelemetryJson.Options,
+                        "TelemetryQueueLegacy");
+                    migrated = result is { Success: true, Data: not null };
+                }
+            }
+
+            var document = result is { Success: true, Data: not null } ? result.Data : new();
+            document.Events ??= [];
+            // Keep migration filtering and persistence grouped as one optional transaction.
+            // ReSharper disable once InvertIf
+            if (migrated)
+            {
+                document.Events =
+                [
+                    .. document.Events.Where(evt =>
+                        evt != null &&
+                        string.Equals(evt.ApplicantId, applicantId, StringComparison.OrdinalIgnoreCase)),
+                ];
+                var migrationWrite = WriteQueue(applicantId, document);
+                if (!migrationWrite.Success)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Telemetry] Failed to persist migrated queue for applicant '{applicantId}': {migrationWrite.ErrorMessage}");
+            }
+
+            return document;
         }
 
-        private static void WriteQueue(string applicantId, TelemetryQueueDocument doc)
+        private static FileOperations.WriteResult WriteQueue(string applicantId, TelemetryQueueDocument doc)
         {
-            FileOperations.WriteJson(TelemetryPaths.QueuePath(applicantId), doc, TelemetryJson.Options,
+            return FileOperations.WriteJson(TelemetryPaths.QueuePath(applicantId), doc, TelemetryJson.Options,
                 "TelemetryQueue");
         }
 
         private static TelemetryQueueState ReadState(string applicantId)
         {
+            var path = TelemetryPaths.StatePath(applicantId);
             var result = FileOperations.ReadJson<TelemetryQueueState>(
-                TelemetryPaths.StatePath(applicantId),
+                path,
                 TelemetryJson.Options,
                 "TelemetryQueueState");
-            return result is { Success: true, Data: not null } ? result.Data : new();
+            var migrated = false;
+            if (result is not { Success: true, Data: not null })
+            {
+                var legacyPath = TelemetryPaths.LegacyStatePath(applicantId);
+                if (!string.Equals(path, legacyPath, StringComparison.Ordinal))
+                {
+                    result = FileOperations.ReadJson<TelemetryQueueState>(
+                        legacyPath,
+                        TelemetryJson.Options,
+                        "TelemetryQueueStateLegacy");
+                    migrated = result is { Success: true, Data: not null };
+                }
+            }
+
+            var state = result is { Success: true, Data: not null } ? result.Data : new();
+            state.FailureCount = Math.Max(0, state.FailureCount);
+            if (migrated)
+                WriteStateWithWarning(applicantId, state);
+
+            return state;
         }
 
-        private static void WriteState(string applicantId, TelemetryQueueState state)
+        private static FileOperations.WriteResult WriteState(string applicantId, TelemetryQueueState state)
         {
-            FileOperations.WriteJson(TelemetryPaths.StatePath(applicantId), state, TelemetryJson.Options,
+            return FileOperations.WriteJson(TelemetryPaths.StatePath(applicantId), state, TelemetryJson.Options,
                 "TelemetryQueueState");
+        }
+
+        private static void WriteStateWithWarning(string applicantId, TelemetryQueueState state)
+        {
+            var write = WriteState(applicantId, state);
+            if (!write.Success)
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Failed to persist queue state for applicant '{applicantId}': {write.ErrorMessage}");
         }
 
         private static void RecordFlushFailure(string applicantId, Exception exception)
@@ -220,7 +317,7 @@ namespace STS2RitsuLib.Telemetry
                     state.LastSendUtc = DateTimeOffset.UtcNow;
                     state.LastError = exception.Message;
                     state.FailureCount++;
-                    WriteState(applicantId, state);
+                    WriteStateWithWarning(applicantId, state);
                 }
             }
             catch (Exception stateException)
@@ -238,11 +335,18 @@ namespace STS2RitsuLib.Telemetry
             for (var i = queue.Events.Count - 1; i >= 0; i--)
             {
                 var evt = queue.Events[i];
-                if (TelemetryRegistry.TryGetRequest(applicant, evt.RequestId, out var request) &&
+                if (evt != null &&
+                    string.Equals(evt.Schema, TelemetrySchemas.EventV1, StringComparison.Ordinal) &&
+                    string.Equals(evt.ApplicantId, applicant.ApplicantId, StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(evt.EventName) &&
+                    evt.Properties != null &&
+                    TelemetryRegistry.TryGetRequest(applicant, evt.RequestId, out var request) &&
+                    request.Category == evt.Category &&
                     TelemetryConsentStore.IsRequestGranted(applicant, request))
                     continue;
 
-                dropped.Add(evt);
+                if (evt != null)
+                    dropped.Add(evt);
                 queue.Events.RemoveAt(i);
             }
 

@@ -7,12 +7,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.Rewards.Patches
 {
     /// <summary>
-    ///     Flushes reward sideband data into <see cref="SerializableRoom.EncounterState" /> after
-    ///     <see cref="CombatRoom.ToSerializable" /> creates serializable rewards.
-    ///     <c>EncounterState</c>。
-    ///     在 <see cref="CombatRoom.ToSerializable" /> 创建可序列化 reward 后，将 reward sideband 数据写入
-    ///     <see cref="SerializableRoom.EncounterState" />。
-    ///     <c>EncounterState</c>。
+    ///     <para xml:lang="en">
+    ///         Writes supplemental reward data to <see cref="SerializableRoom.EncounterState" /> after
+    ///         <see cref="CombatRoom.ToSerializable" /> creates the serializable rewards.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="CombatRoom.ToSerializable" /> 创建可序列化奖励后，将奖励补充数据写入
+    ///         <see cref="SerializableRoom.EncounterState" />。
+    ///     </para>
     /// </summary>
     internal sealed class CombatRoomToSerializableRewardExtPatch : IPatchMethod
     {
@@ -50,10 +52,16 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
     }
 
     /// <summary>
-    ///     Restores reward sideband data from <see cref="SerializableRoom.EncounterState" /> before
-    ///     <see cref="CombatRoom.FromSerializable" /> rebuilds rewards.
-    ///     在 <see cref="CombatRoom.FromSerializable" /> 重建 reward 前，从 <see cref="SerializableRoom.EncounterState" /> 还原 reward
-    ///     sideband 数据。
+    ///     <para xml:lang="en">
+    ///         Restores supplemental reward data from <see cref="SerializableRoom.EncounterState" /> before
+    ///         <see cref="CombatRoom.FromSerializable" /> rebuilds rewards, and removes unsupported
+    ///         <see cref="RewardType.None" /> entries whether or not supplemental data exists.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="CombatRoom.FromSerializable" /> 重建奖励前，从
+    ///         <see cref="SerializableRoom.EncounterState" /> 恢复奖励补充数据；无论补充数据是否存在，
+    ///         都会移除不受支持的 <see cref="RewardType.None" /> 项。
+    ///     </para>
     /// </summary>
     internal sealed class CombatRoomFromSerializableRewardExtPatch : IPatchMethod
     {
@@ -71,30 +79,30 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
 
         public static void Prefix(SerializableRoom serializableRoom)
         {
-            if (serializableRoom.EncounterState == null)
-                return;
-
-            var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
-
-            foreach (var (key, json) in serializableRoom.EncounterState)
+            if (serializableRoom.EncounterState != null)
             {
-                if (!RewardSerializationExt.TryParseKey(key, out var netId, out var index))
-                    continue;
+                var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
 
-                if (!serializableRoom.ExtraRewards.TryGetValue(netId, out var rewards))
-                    continue;
+                foreach (var (key, json) in serializableRoom.EncounterState)
+                {
+                    if (!RewardSerializationExt.TryParseKey(key, out var netId, out var index))
+                        continue;
 
-                if (index < 0 || index >= rewards.Count)
-                    continue;
+                    if (!serializableRoom.ExtraRewards.TryGetValue(netId, out var rewards))
+                        continue;
 
-                var ext = RewardSerializationExt.FromJson(json);
-                if (ext == null)
-                    continue;
-                // Match the ToSerializable side: keep custom reward payloads, leave CardReward data to BaseLib.
-                if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
-                    continue;
+                    if (index < 0 || index >= rewards.Count)
+                        continue;
 
-                RewardSerializationExt.SetExtData(rewards[index], ext);
+                    var ext = RewardSerializationExt.FromJson(json);
+                    if (ext == null)
+                        continue;
+                    // Match the ToSerializable side: keep custom reward payloads, leave CardReward data to BaseLib.
+                    if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
+                        continue;
+
+                    RewardSerializationExt.SetExtData(rewards[index], ext);
+                }
             }
 
             foreach (var (_, rewards) in serializableRoom.ExtraRewards)

@@ -1,34 +1,41 @@
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Optional handler contract implemented by classes that declare themselves with
-    ///     <see cref="STS2RitsuLib.Interop.AutoRegistration.RegisterOwnedCardPileAttribute" />. When the
-    ///     attribute sees a type implementing this interface, the auto-registration pipeline instantiates
-    ///     the type once (requires a parameterless constructor) and wires its
-    ///     <see cref="OnOpen" /> method into <see cref="ModCardPileSpec.OnOpen" />.
-    ///     由声明 <see cref="STS2RitsuLib.Interop.AutoRegistration.RegisterOwnedCardPileAttribute" /> 的类可选实现的
-    ///     handler contract。当 attribute 发现某个类型实现此接口时，auto-registration 管线会实例化
-    ///     该类型一次（需要无参构造函数），并将其
-    ///     <see cref="OnOpen" /> 方法接入 <see cref="ModCardPileSpec.OnOpen" />。
+    ///     <para xml:lang="en">
+    ///         Defines the optional open handler recognized on a type marked with
+    ///         <see cref="STS2RitsuLib.Interop.AutoRegistration.RegisterOwnedCardPileAttribute" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义 <see cref="STS2RitsuLib.Interop.AutoRegistration.RegisterOwnedCardPileAttribute" />
+    ///         所标记类型可实现的牌堆打开处理器。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     The interface is entirely optional — annotated types may leave the button to open the default
-    ///     <c>NCardPileScreen</c>. Handler instances are cached per registered pile, so the same instance
-    ///     services every click for that pile's lifetime.
-    ///     此接口完全可选；带注解类型可以让按钮打开默认
-    ///     <c>NCardPileScreen</c>。handler 实例按已注册牌堆缓存，因此同一实例
-    ///     会服务该牌堆生命周期内的每次点击。
+    ///     <para xml:lang="en">
+    ///         Auto-registration creates one handler instance through a parameterless constructor and assigns
+    ///         <see cref="OnOpen" /> to <see cref="ModCardPileSpec.OnOpen" />. A marked type that does not implement
+    ///         this interface retains the default pile-screen behavior.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         自动注册会通过无参构造函数创建一个处理器实例，并将 <see cref="OnOpen" /> 赋给
+    ///         <see cref="ModCardPileSpec.OnOpen" />。被标记但未实现此接口的类型仍使用默认牌堆界面。
+    ///     </para>
     /// </remarks>
     public interface IModCardPileHandler
     {
         /// <summary>
-        ///     Invoked when the pile's UI button is released. See <see cref="ModCardPileSpec.OnOpen" /> for
-        ///     the full contract (empty-pile short-circuit, open-default-screen toggle, etc.).
-        ///     <see cref="ModCardPileSpec.OnOpen" />。
-        ///     牌堆的 UI 按钮释放时调用。完整契约（空牌堆短路、默认画面开关等）参见
-        ///     <see cref="ModCardPileSpec.OnOpen" />。
-        ///     <see cref="ModCardPileSpec.OnOpen" />。
+        ///     <para xml:lang="en">
+        ///         Handles a nonempty pile after its UI button is released. See
+        ///         <see cref="ModCardPileSpec.OnOpen" /> for the complete invocation contract.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         牌堆界面按钮释放后处理非空牌堆。完整调用约定参见 <see cref="ModCardPileSpec.OnOpen" />。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The pile, player, definition, and button associated with the request.</para>
+        ///     <para xml:lang="zh-CN">与请求关联的牌堆、玩家、定义和按钮。</para>
+        /// </param>
         void OnOpen(ModCardPileOpenContext context);
     }
 }

@@ -6,6 +6,13 @@ using STS2RitsuLib.Ui.Toast;
 
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Integrates RitsuLib's own release-manifest update check with settings, Steam Workshop routing,
+    ///         and user notifications.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 自身的发布清单更新检查与设置、Steam 创意工坊路由及用户通知集成。</para>
+    /// </summary>
     internal static class RitsuLibUpdateCheckService
     {
         private const double UpdateCheckToastDurationSeconds = 8.0d;
@@ -22,12 +29,12 @@ namespace STS2RitsuLib.Updates
                 if (_initialized)
                     return;
 
-                _initialized = true;
                 AutomaticUpdateCheckScheduler.Register(
                     "ritsulib",
                     "RitsuLib",
                     RitsuLibSettingsStore.IsUpdateCheckEnabled,
                     CheckAutoAsync);
+                _initialized = true;
             }
         }
 

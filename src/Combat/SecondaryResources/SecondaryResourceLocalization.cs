@@ -6,14 +6,19 @@ using STS2RitsuLib.Localization.SmartFormat;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Dynamic variable that carries the secondary-resource id used by <see cref="SecondaryResourceIconsFormatter" />.
-    ///     携带次级资源 id 的动态变量，供 <see cref="SecondaryResourceIconsFormatter" /> 使用。
+    ///     <para xml:lang="en">
+    ///         Carries a secondary-resource ID and numeric value for
+    ///         <see cref="SecondaryResourceIconsFormatter" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="SecondaryResourceIconsFormatter" /> 携带次级资源 ID 和数值。
+    ///     </para>
     /// </summary>
     public class SecondaryResourceVar : DynamicVar
     {
         /// <summary>
-        ///     Creates a secondary-resource dynamic variable.
-        ///     创建一个次级资源动态变量。
+        ///     <para xml:lang="en">Initializes a secondary-resource dynamic variable.</para>
+        ///     <para xml:lang="zh-CN">初始化次级资源动态变量。</para>
         /// </summary>
         public SecondaryResourceVar(string name, string resourceId, decimal baseValue)
             : base(name, baseValue)
@@ -23,21 +28,21 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Full secondary-resource compound id.
-        ///     完整的次级资源 compound id。
+        ///     <para xml:lang="en">Gets the full secondary-resource ID.</para>
+        ///     <para xml:lang="zh-CN">获取完整次级资源 ID。</para>
         /// </summary>
         public string ResourceId { get; }
     }
 
     /// <summary>
-    ///     Factory helpers for secondary-resource localization variables.
-    ///     次级资源本地化变量的工厂辅助工具。
+    ///     <para xml:lang="en">Creates secondary-resource localization variables.</para>
+    ///     <para xml:lang="zh-CN">创建次级资源本地化变量。</para>
     /// </summary>
     public static class SecondaryResourceVars
     {
         /// <summary>
-        ///     Creates a secondary-resource variable from a full resource compound id.
-        ///     使用完整资源 compound id 创建次级资源变量。
+        ///     <para xml:lang="en">Creates a variable from a full resource ID.</para>
+        ///     <para xml:lang="zh-CN">使用完整资源 ID 创建变量。</para>
         /// </summary>
         public static SecondaryResourceVar For(string name, string resourceId, decimal baseValue)
         {
@@ -45,8 +50,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates a secondary-resource variable from a mod id and local resource id.
-        ///     使用 mod id 和本地资源 id 创建次级资源变量。
+        ///     <para xml:lang="en">Creates a variable from a mod ID and mod-local resource ID.</para>
+        ///     <para xml:lang="zh-CN">使用模组 ID 和模组内资源 ID 创建变量。</para>
         /// </summary>
         public static SecondaryResourceVar ForLocal(
             string name,
@@ -59,16 +64,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     SmartFormat source for the fixed secondary-resource localization marker.
-    ///     固定次级资源本地化 marker 的 SmartFormat source。
+    ///     <para xml:lang="en">Provides the fixed secondary-resource selector to SmartFormat.</para>
+    ///     <para xml:lang="zh-CN">向 SmartFormat 提供固定的次级资源选择器。</para>
     /// </summary>
     public sealed class SecondaryResourceLocStringSource : ISource
     {
         /// <summary>
-        ///     Fixed selector used by localization JSON, for example
-        ///     <c>{secondaryResource:secondaryResourceIcons(charge,1)}</c>.
-        ///     本地化 JSON 使用的固定 selector，例如
-        ///     <c>{secondaryResource:secondaryResourceIcons(charge,1)}</c>。
+        ///     <para xml:lang="en">
+        ///         The selector used by localization JSON, for example
+        ///         <c>{secondaryResource:secondaryResourceIcons(charge,1)}</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         本地化 JSON 使用的选择器，例如
+        ///         <c>{secondaryResource:secondaryResourceIcons(charge,1)}</c>。
+        ///     </para>
         /// </summary>
         public const string SelectorName = "secondaryResource";
 
@@ -87,8 +96,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     SmartFormat formatter for secondary-resource rich-text icons.
-    ///     次级资源富文本图标的 SmartFormat formatter。
+    ///     <para xml:lang="en">Formats secondary-resource rich-text icons for SmartFormat.</para>
+    ///     <para xml:lang="zh-CN">为 SmartFormat 格式化次级资源富文本图标。</para>
     /// </summary>
     public sealed class SecondaryResourceIconsFormatter : IFormatter
     {
@@ -138,7 +147,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     return TryResolveMarkerOptions(formattingInfo.FormatterOptions, out resourceId, out amount);
                 case SecondaryResourceVar secondaryResourceVar:
                     resourceId = secondaryResourceVar.ResourceId;
-                    amount = Convert.ToInt32(secondaryResourceVar.PreviewValue);
+                    amount = SecondaryResourceAmountMath.RoundAndClamp(
+                        secondaryResourceVar.PreviewValue,
+                        int.MinValue,
+                        int.MaxValue);
                     dynamicVar = secondaryResourceVar;
                     return true;
                 case DynamicVar value:
@@ -146,7 +158,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         return false;
 
                     resourceId = options;
-                    amount = Convert.ToInt32(value.PreviewValue);
+                    amount = SecondaryResourceAmountMath.RoundAndClamp(
+                        value.PreviewValue,
+                        int.MinValue,
+                        int.MaxValue);
                     dynamicVar = value;
                     return true;
                 case SecondaryResourceDefinition definition:
@@ -162,7 +177,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         return false;
 
                     resourceId = options;
-                    amount = (int)value;
+                    amount = SecondaryResourceAmountMath.TruncateAndClamp(value, int.MinValue, int.MaxValue);
                     return true;
                 case int value:
                     if (string.IsNullOrWhiteSpace(options))
@@ -218,14 +233,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Text helpers for secondary-resource rich-text icons.
-    ///     次级资源富文本图标的文本辅助工具。
+    ///     <para xml:lang="en">Provides localized text and rich-text icons for secondary resources.</para>
+    ///     <para xml:lang="zh-CN">提供次级资源的本地化文本和富文本图标。</para>
     /// </summary>
     public static class SecondaryResourceText
     {
         /// <summary>
-        ///     Returns the rich-text icon tag for a registered secondary resource.
-        ///     返回已注册次级资源的富文本图标标签。
+        ///     <para xml:lang="en">Gets the rich-text icon tag for a registered resource.</para>
+        ///     <para xml:lang="zh-CN">获取已注册资源的富文本图标标签。</para>
         /// </summary>
         public static string GetIconTag(string resourceId)
         {
@@ -235,8 +250,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to return the rich-text icon tag for a registered secondary resource.
-        ///     尝试返回已注册次级资源的富文本图标标签。
+        ///     <para xml:lang="en">Attempts to get the rich-text icon tag for a registered resource.</para>
+        ///     <para xml:lang="zh-CN">尝试获取已注册资源的富文本图标标签。</para>
         /// </summary>
         public static bool TryGetIconTag(string resourceId, out string iconTag)
         {
@@ -248,13 +263,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (string.IsNullOrWhiteSpace(path))
                 return false;
 
-            iconTag = $"[img]{path}[/img]";
+            iconTag = $"[img]{path.Trim()}[/img]";
             return true;
         }
 
         /// <summary>
-        ///     Returns a title LocString for the resource when the effective key exists.
-        ///     当资源的实际标题 key 存在时返回标题 LocString。
+        ///     <para xml:lang="en">Gets the resource title when its effective localization key exists.</para>
+        ///     <para xml:lang="zh-CN">实际本地化键存在时获取资源标题。</para>
         /// </summary>
         public static LocString? GetTitle(SecondaryResourceDefinition definition)
         {
@@ -263,8 +278,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns a title LocString with secondary-resource amount variables when the effective key exists.
-        ///     当资源的实际标题 key 存在时，返回带次级资源数量变量的标题 LocString。
+        ///     <para xml:lang="en">Gets the resource title with amount variables.</para>
+        ///     <para xml:lang="zh-CN">获取带有数量变量的资源标题。</para>
         /// </summary>
         public static LocString? GetTitle(
             SecondaryResourceDefinition definition,
@@ -277,8 +292,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the formatted resource title, falling back to a readable local id.
-        ///     返回格式化后的资源标题；缺失时回退为可读的本地 id。
+        ///     <para xml:lang="en">Gets formatted title text, falling back to the effective localization key.</para>
+        ///     <para xml:lang="zh-CN">获取格式化标题文本；没有文本时回退到实际本地化键。</para>
         /// </summary>
         public static string GetTitleText(SecondaryResourceDefinition definition)
         {
@@ -287,8 +302,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns a description LocString for the resource when the effective key exists.
-        ///     当资源的实际描述 key 存在时返回描述 LocString。
+        ///     <para xml:lang="en">Gets the resource description when its effective localization key exists.</para>
+        ///     <para xml:lang="zh-CN">实际本地化键存在时获取资源说明。</para>
         /// </summary>
         public static LocString? GetDescription(SecondaryResourceDefinition definition)
         {
@@ -297,8 +312,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns a description LocString with secondary-resource amount variables when the effective key exists.
-        ///     当资源的实际描述 key 存在时，返回带次级资源数量变量的描述 LocString。
+        ///     <para xml:lang="en">Gets the resource description with amount variables.</para>
+        ///     <para xml:lang="zh-CN">获取带有数量变量的资源说明。</para>
         /// </summary>
         public static LocString? GetDescription(
             SecondaryResourceDefinition definition,
@@ -311,8 +326,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the formatted resource description, falling back to the full resource id.
-        ///     返回格式化后的资源描述；缺失时回退为完整资源 id。
+        ///     <para xml:lang="en">Gets formatted description text, falling back to the effective localization key.</para>
+        ///     <para xml:lang="zh-CN">获取格式化说明文本；没有文本时回退到实际本地化键。</para>
         /// </summary>
         public static string GetDescriptionText(SecondaryResourceDefinition definition)
         {

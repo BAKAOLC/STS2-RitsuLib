@@ -49,12 +49,15 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     When <see cref="RitsuLibSettingsStore.IsLocTableCompatEnabled" /> is true, returns a placeholder
-    ///     <c>LocString</c> and logs <c>[Localization][DebugCompat]</c> once per key for misses in
-    ///     <c>LocTable.GetLocString</c>. When false, vanilla throw-on-miss behavior applies.
-    ///     当 <see cref="RitsuLibSettingsStore.IsLocTableCompatEnabled" /> 为 true 时，为
-    ///     <c>LocTable.GetLocString</c> 中的缺失项返回占位 <c>LocString</c>，并按每个键记录一次 <c>[Localization][DebugCompat]</c>。为 false
-    ///     时，使用原版缺失即抛出的行为。
+    ///     <para xml:lang="en">
+    ///         When localization-table debug compatibility is enabled, makes <c>LocTable.GetLocString</c>
+    ///         return a key-preserving placeholder for missing entries and logs one <c>[Localization][DebugCompat]</c> warning
+    ///         per table, key, and method. Otherwise, the base game's throw-on-missing behavior is unchanged.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         启用本地化表调试兼容时，使 <c>LocTable.GetLocString</c> 为缺失条目返回保留原键的占位值，并按表、键和方法各记录一次
+    ///         <c>[Localization][DebugCompat]</c> 警告；否则保留原版缺失即抛异常的行为。
+    ///     </para>
     /// </summary>
     internal class LocTableGetLocStringCompatibilityPatch : IPatchMethod
     {
@@ -88,12 +91,15 @@ namespace STS2RitsuLib.Localization.Patches
     }
 
     /// <summary>
-    ///     When <see cref="RitsuLibSettingsStore.IsLocTableCompatEnabled" /> is true, returns the raw key
-    ///     string and logs <c>[Localization][DebugCompat]</c> once per key for misses in <c>LocTable.GetRawText</c>.
-    ///     When false, vanilla throw-on-miss behavior applies.
-    ///     当 <see cref="RitsuLibSettingsStore.IsLocTableCompatEnabled" /> 为 true 时，返回 raw key
-    ///     字符串，并为 <c>LocTable.GetRawText</c> 中的缺失项按每个键记录一次 <c>[Localization][DebugCompat]</c>。
-    ///     为 false 时，使用原版缺失即抛出的行为。
+    ///     <para xml:lang="en">
+    ///         When localization-table debug compatibility is enabled, makes <c>LocTable.GetRawText</c> return
+    ///         the raw key for missing entries and logs one <c>[Localization][DebugCompat]</c> warning per table, key, and
+    ///         method. Otherwise, the base game's throw-on-missing behavior is unchanged.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         启用本地化表调试兼容时，使 <c>LocTable.GetRawText</c> 为缺失条目返回原始键，并按表、键和方法各记录一次
+    ///         <c>[Localization][DebugCompat]</c> 警告；否则保留原版缺失即抛异常的行为。
+    ///     </para>
     /// </summary>
     internal class LocTableGetRawTextCompatibilityPatch : IPatchMethod
     {

@@ -1,64 +1,70 @@
+using System.Collections.ObjectModel;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Mutable list used while resolving a model's default capabilities.
-    ///     解析模型默认能力时使用的可变列表。
+    ///     <para xml:lang="en">Mutable list used while resolving a model's default capabilities.</para>
+    ///     <para xml:lang="zh-CN">解析模型默认能力时使用的可变列表。</para>
     /// </summary>
     public sealed class ModelCapabilityList
     {
         private readonly List<IModelCapability> _capabilities = [];
+        private ReadOnlyCollection<IModelCapability>? _readOnlyCapabilities;
 
         /// <summary>
-        ///     All capabilities in default execution order.
-        ///     默认执行顺序中的所有能力。
+        ///     <para xml:lang="en">All capabilities in default execution order.</para>
+        ///     <para xml:lang="zh-CN">默认执行顺序中的所有能力。</para>
         /// </summary>
-        public IReadOnlyList<IModelCapability> All => _capabilities;
+        public IReadOnlyList<IModelCapability> All => _readOnlyCapabilities ??= _capabilities.AsReadOnly();
 
         /// <summary>
-        ///     Number of capabilities in the list.
-        ///     列表中的能力数量。
+        ///     <para xml:lang="en">Number of capabilities in the list.</para>
+        ///     <para xml:lang="zh-CN">列表中的能力数量。</para>
         /// </summary>
         public int Count => _capabilities.Count;
 
         /// <summary>
-        ///     Adds an already-created capability instance to the end of the list.
-        ///     添加一个已经创建好的能力实例到列表末尾。
+        ///     <para xml:lang="en">Adds an already-created capability instance to the end of the list.</para>
+        ///     <para xml:lang="zh-CN">添加一个已经创建好的能力实例到列表末尾。</para>
         /// </summary>
         /// <remarks>
-        ///     Use this overload for plain, non-model-backed <see cref="IModelCapability" /> implementations or
-        ///     for instances that already came from the registry. Do not call constructors for types inheriting
-        ///     <see cref="ModelCapability" /> here; register the type with <c>RegisterModelCapability</c> and add
-        ///     it with <see cref="Add{TCapability}()" /> or <see cref="Add(Type)" /> so creation goes through
-        ///     <c>ModelDb</c>.
-        ///     此重载用于普通的、非模型化 <see cref="IModelCapability" /> 实现，或已由 registry 创建的实例。
-        ///     不要在这里直接构造继承 <see cref="ModelCapability" /> 的类型；应先用
-        ///     <c>RegisterModelCapability</c> 注册类型，再通过 <see cref="Add{TCapability}()" /> 或
-        ///     <see cref="Add(Type)" /> 添加，让创建流程经过 <c>ModelDb</c>。
+        ///     <para xml:lang="en">
+        ///         Use this overload for plain, non-model-backed <see cref="IModelCapability" /> implementations or
+        ///         for instances that already came from the registry. Do not call constructors for types inheriting
+        ///         <see cref="ModelCapability" /> here; register the type with <c>RegisterModelCapability</c> and add
+        ///         it with <see cref="Add{TCapability}()" /> or <see cref="Add(Type)" /> so creation goes through
+        ///         <c>ModelDb</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         此重载用于普通的非模型化 <see cref="IModelCapability" /> 实现，或已由注册表创建的实例。
+        ///         不要在这里直接构造继承 <see cref="ModelCapability" /> 的类型；应先用
+        ///         <c>RegisterModelCapability</c> 注册类型，再通过 <see cref="Add{TCapability}()" /> 或
+        ///         <see cref="Add(Type)" /> 添加，让创建流程经过 <c>ModelDb</c>。
+        ///     </para>
         /// </remarks>
         public IModelCapability Add(IModelCapability capability)
         {
-            ArgumentNullException.ThrowIfNull(capability);
-            if (capability is ModelCapability &&
-                ModelCapabilityRegistry.GetCapabilityId(capability.GetType()) == null)
-                throw new InvalidOperationException(
-                    $"Model-backed capability type is not registered: {capability.GetType().FullName}. " +
-                    "Register it with RegisterModelCapability and add it by type instead of passing a constructed instance.");
+            ValidateCapability(capability);
+            EnsureInstanceNotPresent(capability);
 
             _capabilities.Add(capability);
             return capability;
         }
 
         /// <summary>
-        ///     Creates a capability and adds it to the end of the list.
-        ///     创建能力并添加到列表末尾。
+        ///     <para xml:lang="en">Creates a capability and adds it to the end of the list.</para>
+        ///     <para xml:lang="zh-CN">创建能力并添加到列表末尾。</para>
         /// </summary>
         /// <remarks>
-        ///     This is the preferred default-capability path for registered <see cref="ModelCapability" /> types.
-        ///     Registered model-backed capabilities are created through <c>ModelDb</c>, not by direct constructors.
-        ///     这是注册过的 <see cref="ModelCapability" /> 类型在默认能力中的首选入口。
-        ///     已注册的模型化能力会通过 <c>ModelDb</c> 创建，而不是直接调用构造函数。
+        ///     <para xml:lang="en">
+        ///         This is the preferred default-capability path for registered <see cref="ModelCapability" /> types.
+        ///         Registered model-backed capabilities are created through <c>ModelDb</c>, not by direct constructors.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         这是注册过的 <see cref="ModelCapability" /> 类型在默认能力中的首选入口。
+        ///         已注册的模型化能力会通过 <c>ModelDb</c> 创建，而不是直接调用构造函数。
+        ///     </para>
         /// </remarks>
         public TCapability Add<TCapability>() where TCapability : class, IModelCapability
         {
@@ -68,14 +74,18 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a capability of <paramref name="capabilityType" /> and adds it to the end of the list.
-        ///     创建 <paramref name="capabilityType" /> 类型能力并添加到列表末尾。
+        ///     <para xml:lang="en">Creates a capability of <paramref name="capabilityType" /> and adds it to the end of the list.</para>
+        ///     <para xml:lang="zh-CN">创建 <paramref name="capabilityType" /> 类型能力并添加到列表末尾。</para>
         /// </summary>
         /// <remarks>
-        ///     Use this overload when the capability type is only known at runtime. Registered
-        ///     <see cref="ModelCapability" /> types are created through <c>ModelDb</c>.
-        ///     当能力类型只在运行时已知时使用此重载。已注册的 <see cref="ModelCapability" /> 类型会通过
-        ///     <c>ModelDb</c> 创建。
+        ///     <para xml:lang="en">
+        ///         Use this overload when the capability type is only known at runtime. Registered
+        ///         <see cref="ModelCapability" /> types are created through <c>ModelDb</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当能力类型只在运行时已知时使用此重载。已注册的 <see cref="ModelCapability" /> 类型会通过
+        ///         <c>ModelDb</c> 创建。
+        ///     </para>
         /// </remarks>
         public IModelCapability Add(Type capabilityType)
         {
@@ -85,8 +95,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a registered capability and adds it to the end of the list.
-        ///     创建已注册能力并添加到列表末尾。
+        ///     <para xml:lang="en">Creates a registered capability and adds it to the end of the list.</para>
+        ///     <para xml:lang="zh-CN">创建已注册能力并添加到列表末尾。</para>
         /// </summary>
         public TCapability AddFromRegistry<TCapability>() where TCapability : class, IModelCapability
         {
@@ -96,8 +106,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Inserts a created capability at <paramref name="index" />.
-        ///     创建能力并插入到 <paramref name="index" />。
+        ///     <para xml:lang="en">Inserts a created capability at <paramref name="index" />.</para>
+        ///     <para xml:lang="zh-CN">创建能力并插入到 <paramref name="index" />。</para>
         /// </summary>
         public TCapability Insert<TCapability>(int index) where TCapability : class, IModelCapability
         {
@@ -107,8 +117,11 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a capability of <paramref name="capabilityType" /> and inserts it at <paramref name="index" />.
-        ///     创建 <paramref name="capabilityType" /> 类型能力并插入到 <paramref name="index" />。
+        ///     <para xml:lang="en">
+        ///         Creates a capability of <paramref name="capabilityType" /> and inserts it at
+        ///         <paramref name="index" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建 <paramref name="capabilityType" /> 类型能力并插入到 <paramref name="index" />。</para>
         /// </summary>
         public IModelCapability Insert(int index, Type capabilityType)
         {
@@ -169,23 +182,33 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Adds all <paramref name="capabilities" /> to the end of the list.
-        ///     将所有 <paramref name="capabilities" /> 添加到列表末尾。
+        ///     <para xml:lang="en">Adds all <paramref name="capabilities" /> to the end of the list.</para>
+        ///     <para xml:lang="zh-CN">将所有 <paramref name="capabilities" /> 添加到列表末尾。</para>
         /// </summary>
         public void AddRange(IEnumerable<IModelCapability> capabilities)
         {
             ArgumentNullException.ThrowIfNull(capabilities);
-            foreach (var capability in capabilities)
-                Add(capability);
+            var additions = capabilities.ToArray();
+            HashSet<IModelCapability> instances = new(_capabilities, ReferenceEqualityComparer.Instance);
+            foreach (var capability in additions)
+            {
+                ValidateCapability(capability);
+                if (!instances.Add(capability))
+                    throw new InvalidOperationException(
+                        $"The same capability instance cannot appear more than once: {capability.CapabilityId}");
+            }
+
+            _capabilities.AddRange(additions);
         }
 
         /// <summary>
-        ///     Inserts <paramref name="capability" /> at <paramref name="index" />.
-        ///     在 <paramref name="index" /> 插入 <paramref name="capability" />。
+        ///     <para xml:lang="en">Inserts <paramref name="capability" /> at <paramref name="index" />.</para>
+        ///     <para xml:lang="zh-CN">在 <paramref name="index" /> 插入 <paramref name="capability" />。</para>
         /// </summary>
         public IModelCapability Insert(int index, IModelCapability capability)
         {
-            ArgumentNullException.ThrowIfNull(capability);
+            ValidateCapability(capability);
+            EnsureInstanceNotPresent(capability);
             if (index < 0 || index > _capabilities.Count)
                 throw new ArgumentOutOfRangeException(nameof(index), index, "Index is outside the list bounds.");
 
@@ -194,9 +217,11 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Inserts <paramref name="capability" /> before the first capability of type
-        ///     <typeparamref name="TExisting" />.
-        ///     将 <paramref name="capability" /> 插入到第一个 <typeparamref name="TExisting" /> 能力之前。
+        ///     <para xml:lang="en">
+        ///         Inserts <paramref name="capability" /> before the first capability of type
+        ///         <typeparamref name="TExisting" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="capability" /> 插入到第一个 <typeparamref name="TExisting" /> 能力之前。</para>
         /// </summary>
         public IModelCapability? InsertBefore<TExisting>(
             IModelCapability capability,
@@ -207,9 +232,11 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Inserts <paramref name="capability" /> after the first capability of type
-        ///     <typeparamref name="TExisting" />.
-        ///     将 <paramref name="capability" /> 插入到第一个 <typeparamref name="TExisting" /> 能力之后。
+        ///     <para xml:lang="en">
+        ///         Inserts <paramref name="capability" /> after the first capability of type
+        ///         <typeparamref name="TExisting" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="capability" /> 插入到第一个 <typeparamref name="TExisting" /> 能力之后。</para>
         /// </summary>
         public IModelCapability? InsertAfter<TExisting>(
             IModelCapability capability,
@@ -220,8 +247,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Shorthand for <see cref="InsertBefore{TExisting}" />.
-        ///     <see cref="InsertBefore{TExisting}" /> 的简写。
+        ///     <para xml:lang="en">Shorthand for <see cref="InsertBefore{TExisting}" />.</para>
+        ///     <para xml:lang="zh-CN"><see cref="InsertBefore{TExisting}" /> 的简写。</para>
         /// </summary>
         public IModelCapability? Before<TExisting>(
             IModelCapability capability,
@@ -232,8 +259,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Shorthand for <see cref="InsertAfter{TExisting}" />.
-        ///     <see cref="InsertAfter{TExisting}" /> 的简写。
+        ///     <para xml:lang="en">Shorthand for <see cref="InsertAfter{TExisting}" />.</para>
+        ///     <para xml:lang="zh-CN"><see cref="InsertAfter{TExisting}" /> 的简写。</para>
         /// </summary>
         public IModelCapability? After<TExisting>(
             IModelCapability capability,
@@ -244,8 +271,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes the first capability of type <typeparamref name="TCapability" />.
-        ///     移除第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Removes the first capability of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">移除第一个 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public TCapability? Remove<TCapability>() where TCapability : class, IModelCapability
         {
@@ -259,8 +286,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes every capability of type <typeparamref name="TCapability" />.
-        ///     移除所有 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Removes every capability of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">移除所有 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public IReadOnlyList<TCapability> RemoveAll<TCapability>() where TCapability : class, IModelCapability
         {
@@ -279,24 +306,28 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Replaces the first capability of type <typeparamref name="TCapability" />.
-        ///     替换第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Replaces the first capability of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">替换第一个 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public bool Replace<TCapability>(IModelCapability replacement) where TCapability : class, IModelCapability
         {
-            ArgumentNullException.ThrowIfNull(replacement);
+            ValidateCapability(replacement);
 
             var index = _capabilities.FindIndex(static capability => capability is TCapability);
             if (index < 0)
                 return false;
+            if (_capabilities.Where((_, candidateIndex) => candidateIndex != index)
+                .Any(candidate => ReferenceEquals(candidate, replacement)))
+                throw new InvalidOperationException(
+                    $"The same capability instance cannot appear more than once: {replacement.CapabilityId}");
 
             _capabilities[index] = replacement;
             return true;
         }
 
         /// <summary>
-        ///     Gets the first capability of type <typeparamref name="TCapability" />.
-        ///     获取第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Gets the first capability of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">获取第一个 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public TCapability? Get<TCapability>() where TCapability : class, IModelCapability
         {
@@ -304,8 +335,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets all capabilities of type <typeparamref name="TCapability" />.
-        ///     获取所有 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Gets all capabilities of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">获取所有 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public IReadOnlyList<TCapability> GetAll<TCapability>() where TCapability : class, IModelCapability
         {
@@ -313,8 +344,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns true when the list contains a capability of type <typeparamref name="TCapability" />.
-        ///     当列表包含 <typeparamref name="TCapability" /> 类型能力时返回 true。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when the list contains a capability of type
+        ///         <typeparamref name="TCapability" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若列表包含 <typeparamref name="TCapability" /> 类型的能力，则为 <see langword="true" />；
+        ///         否则为 <see langword="false" />。
+        ///     </para>
         /// </summary>
         public bool Contains<TCapability>() where TCapability : class, IModelCapability
         {
@@ -350,6 +387,32 @@ namespace STS2RitsuLib.Models.Capabilities
         internal IModelCapability[] ToArray()
         {
             return [.. _capabilities];
+        }
+
+        internal void Restore(IReadOnlyList<IModelCapability> capabilities)
+        {
+            _capabilities.Clear();
+            _capabilities.AddRange(capabilities);
+        }
+
+        private void EnsureInstanceNotPresent(IModelCapability capability)
+        {
+            if (_capabilities.Any(existing => ReferenceEquals(existing, capability)))
+                throw new InvalidOperationException(
+                    $"The same capability instance cannot appear more than once: {capability.CapabilityId}");
+        }
+
+        private static void ValidateCapability(IModelCapability capability)
+        {
+            ArgumentNullException.ThrowIfNull(capability);
+            if (capability.Owner != null)
+                throw new InvalidOperationException(
+                    $"Capability '{capability.CapabilityId}' is already attached to model '{capability.Owner.Id}'.");
+            if (capability is ModelCapability &&
+                ModelCapabilityRegistry.GetCapabilityId(capability.GetType()) == null)
+                throw new InvalidOperationException(
+                    $"Model-backed capability type is not registered: {capability.GetType().FullName}. " +
+                    "Register it with RegisterModelCapability and add it by type instead of passing a constructed instance.");
         }
     }
 
@@ -431,10 +494,10 @@ namespace STS2RitsuLib.Models.Capabilities
 
             var capabilities = new ModelCapabilityList();
             if (owner is IModelCapabilitySource provider)
-                TryRunProvider(owner, provider, capabilities);
+                RunProvider(provider, capabilities);
 
             foreach (var modifier in GetModifiers(owner))
-                TryRunModifier(owner, modifier, capabilities);
+                RunModifier(owner, modifier, capabilities);
 
             return capabilities.ToArray();
         }
@@ -472,35 +535,36 @@ namespace STS2RitsuLib.Models.Capabilities
             }
         }
 
-        private static void TryRunProvider(
-            AbstractModel owner,
+        private static void RunProvider(
             IModelCapabilitySource provider,
             ModelCapabilityList capabilities)
         {
+            var snapshot = capabilities.ToArray();
             try
             {
                 provider.BuildDefaultCapabilities(capabilities);
             }
-            catch (Exception ex)
+            catch
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[ModelCapabilities] Default capability provider failed for {owner.Id}: {ex.Message}");
+                capabilities.Restore(snapshot);
+                throw;
             }
         }
 
-        private static void TryRunModifier(
+        private static void RunModifier(
             AbstractModel owner,
             ModelDefaultCapabilityModifierEntry modifier,
             ModelCapabilityList capabilities)
         {
+            var snapshot = capabilities.ToArray();
             try
             {
                 modifier.Modify(owner, capabilities);
             }
-            catch (Exception ex)
+            catch
             {
-                RitsuLibFramework.Logger.Warn(
-                    $"[ModelCapabilities] Default capability modifier '{modifier.ModId}/{modifier.ModifierId}' failed for {owner.Id}: {ex.Message}");
+                capabilities.Restore(snapshot);
+                throw;
             }
         }
 

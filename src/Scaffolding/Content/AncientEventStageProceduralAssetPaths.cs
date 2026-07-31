@@ -3,8 +3,12 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Enumerates resource paths referenced by procedural ancient stage definitions for room preloading.
-    ///     枚举远古事件程序化舞台定义引用的资源路径，用于房间预加载。
+    ///     <para xml:lang="en">
+    ///         Collects the resource paths referenced by a procedural Ancient event stage for room preloading.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         收集程序化先古之民事件舞台引用的资源路径，以便预加载房间资源。
+    ///     </para>
     /// </summary>
     internal static class AncientEventStageProceduralAssetPaths
     {

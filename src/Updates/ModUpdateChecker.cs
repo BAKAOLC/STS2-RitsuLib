@@ -9,8 +9,8 @@ using HttpClient = System.Net.Http.HttpClient;
 namespace STS2RitsuLib.Updates
 {
     /// <summary>
-    ///     Lightweight update checker for self-hosted or mirrored release manifests.
-    ///     用于自托管或镜像发布 manifest 的轻量更新检查器。
+    ///     <para xml:lang="en">Checks self-hosted or mirrored release manifests for available mod updates.</para>
+    ///     <para xml:lang="zh-CN">检查自托管或镜像发布清单中是否有可用的模组更新。</para>
     /// </summary>
     public static class ModUpdateChecker
     {
@@ -19,16 +19,20 @@ namespace STS2RitsuLib.Updates
         private static readonly HttpClient Client = new();
         private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
         private static readonly Lock SessionLock = new();
-        private static readonly HashSet<string> ScheduledSessionChecks = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> ScheduledSessionChecks = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Registers a periodic automatic update check. Checks start before essential game initialization and update
-        ///     notifications are deferred until the main menu is active.
-        ///     注册周期性自动更新检查。检查会在游戏必要初始化前开始，更新通知会延后到主菜单处于活动状态时显示。
+        ///     <para xml:lang="en">
+        ///         Registers a periodic automatic update check. Checks start before essential game initialization, and
+        ///         notifications are deferred until the main menu is active.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册周期性自动更新检查。检查会在游戏必要初始化之前开始，通知会延后到主菜单处于活动状态时显示。
+        ///     </para>
         /// </summary>
         /// <returns>
-        ///     A disposable registration. Disposing it cancels later automatic checks for this mod.
-        ///     可释放的注册。释放后会取消此 Mod 后续自动检查。
+        ///     <para xml:lang="en">A disposable registration. Disposing it stops later automatic checks for this mod.</para>
+        ///     <para xml:lang="zh-CN">可释放的注册。释放后会停止该模组后续的自动检查。</para>
         /// </returns>
         public static IDisposable RegisterOnFirstMainMenu(ModUpdateCheckOptions options)
         {
@@ -41,22 +45,34 @@ namespace STS2RitsuLib.Updates
                     return new NoopDisposable();
             }
 
-            var registration = AutomaticUpdateCheckScheduler.Register(
-                $"mod-update:{key}",
-                options.DisplayName,
-                static () => true,
-                cancellationToken => CheckAndToastAsync(
-                    options,
-                    false,
-                    true,
+            try
+            {
+                var registration = AutomaticUpdateCheckScheduler.Register(
                     $"mod-update:{key}",
-                    cancellationToken));
-            return new RegisteredSessionCheck(key, registration);
+                    options.DisplayName,
+                    static () => true,
+                    cancellationToken => CheckAndToastAsync(
+                        options,
+                        false,
+                        true,
+                        $"mod-update:{key}",
+                        cancellationToken));
+                return new RegisteredSessionCheck(key, registration);
+            }
+            catch
+            {
+                lock (SessionLock)
+                {
+                    ScheduledSessionChecks.Remove(key);
+                }
+
+                throw;
+            }
         }
 
         /// <summary>
-        ///     Registers a periodic update check using string URLs for the common call path.
-        ///     使用字符串 URL 为常见调用路径注册周期性更新检查。
+        ///     <para xml:lang="en">Registers a periodic update check using string URLs for the common call path.</para>
+        ///     <para xml:lang="zh-CN">使用字符串 URL 为常见调用路径注册周期性更新检查。</para>
         /// </summary>
         public static IDisposable RegisterOnFirstMainMenu(
             string modId,
@@ -74,8 +90,8 @@ namespace STS2RitsuLib.Updates
         }
 
         /// <summary>
-        ///     Runs the update check immediately without showing UI.
-        ///     立即运行更新检查，但不显示 UI。
+        ///     <para xml:lang="en">Runs the update check immediately without showing UI notifications.</para>
+        ///     <para xml:lang="zh-CN">立即运行更新检查，但不显示界面通知。</para>
         /// </summary>
         public static async Task<ModUpdateCheckResult> CheckAsync(
             ModUpdateCheckOptions options,
@@ -106,6 +122,10 @@ namespace STS2RitsuLib.Updates
             try
             {
                 manifest = await FetchManifestAsync(options, cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex) when
                 (ex is HttpRequestException or IOException or TaskCanceledException or OperationCanceledException)
@@ -167,8 +187,8 @@ namespace STS2RitsuLib.Updates
         }
 
         /// <summary>
-        ///     Runs the update check immediately using string URLs, without showing UI.
-        ///     使用字符串 URL 立即运行更新检查，但不显示 UI。
+        ///     <para xml:lang="en">Runs the update check immediately from string URLs without showing UI notifications.</para>
+        ///     <para xml:lang="zh-CN">使用字符串 URL 立即运行更新检查，但不显示界面通知。</para>
         /// </summary>
         public static Task<ModUpdateCheckResult> CheckAsync(
             string modId,
@@ -189,14 +209,15 @@ namespace STS2RitsuLib.Updates
         }
 
         /// <summary>
-        ///     Runs the update check immediately and shows a toast when a newer version is available.
-        ///     立即运行更新检查；发现新版本时显示 toast。
+        ///     <para xml:lang="en">Runs the update check immediately and shows a toast when a newer version is available.</para>
+        ///     <para xml:lang="zh-CN">立即运行更新检查；发现新版本时显示浮动通知。</para>
         /// </summary>
         public static Task<ModUpdateCheckResult> CheckAndToastAsync(
             ModUpdateCheckOptions options,
             bool showCompletionToast = false,
             CancellationToken cancellationToken = default)
         {
+            ValidateOptions(options);
             return CheckAndToastAsync(
                 options,
                 showCompletionToast,
@@ -243,8 +264,8 @@ namespace STS2RitsuLib.Updates
         }
 
         /// <summary>
-        ///     Runs the update check immediately using string URLs and shows a toast when a newer version is available.
-        ///     使用字符串 URL 立即运行更新检查；发现新版本时显示 toast。
+        ///     <para xml:lang="en">Runs the update check from string URLs and shows a toast when a newer version is available.</para>
+        ///     <para xml:lang="zh-CN">使用字符串 URL 运行更新检查；发现新版本时显示浮动通知。</para>
         /// </summary>
         public static Task<ModUpdateCheckResult> CheckAndToastAsync(
             string modId,
@@ -542,6 +563,10 @@ namespace STS2RitsuLib.Updates
                 throw new ArgumentException("ReleasePageUri must use http or https when provided.", nameof(options));
             if (options.Timeout <= TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(options), "Timeout must be positive.");
+            if (options.ToastDurationSeconds is { } duration &&
+                (!double.IsFinite(duration) || duration <= 0))
+                throw new ArgumentOutOfRangeException(nameof(options),
+                    "ToastDurationSeconds must be finite and positive when provided.");
             if (options.SteamWorkshopItemId is 0)
                 throw new ArgumentOutOfRangeException(nameof(options),
                     "SteamWorkshopItemId must be positive when provided.");

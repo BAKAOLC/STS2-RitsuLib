@@ -3,30 +3,49 @@ using System.Text.Json;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Raised before page copy; when <see cref="SuppressDefaultClipboardWrite" /> is true, the default JSON envelope is
-    ///     not written.
-    ///     页面复制前触发；当 <see cref="SuppressDefaultClipboardWrite" /> 为 true 时，默认 JSON 信封不会写入。
+    ///     <para xml:lang="en">
+    ///         Supplies context for a page-copy request. Setting <see cref="SuppressDefaultClipboardWrite" /> prevents
+    ///         the default JSON envelope from replacing a subscriber-provided clipboard value.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供页面复制请求的上下文。设置 <see cref="SuppressDefaultClipboardWrite" /> 可阻止默认 JSON 信封覆盖
+    ///         订阅者写入的剪贴板内容。
+    ///     </para>
     /// </summary>
     public sealed class ModSettingsPageCopyEventArgs(ModSettingsPageUiContext context) : EventArgs
     {
         /// <summary>
-        ///     Page context being copied.
-        ///     正在复制的页面上下文。
+        ///     <para xml:lang="en">
+        ///         Gets the page context being copied.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取正在复制的页面上下文。
+        ///     </para>
         /// </summary>
-        public ModSettingsPageUiContext Context { get; } = context;
+        public ModSettingsPageUiContext Context { get; } =
+            context ?? throw new ArgumentNullException(nameof(context));
 
         /// <summary>
-        ///     When true, <see cref="ModSettingsUiChromeClipboard" /> skips writing the default envelope.
-        ///     为 true 时，<see cref="ModSettingsUiChromeClipboard" /> 跳过默认信封写入。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether <see cref="ModSettingsUiChromeClipboard" /> skips the default envelope write.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置 <see cref="ModSettingsUiChromeClipboard" /> 是否跳过默认信封写入。
+        ///     </para>
         /// </summary>
         public bool SuppressDefaultClipboardWrite { get; set; }
     }
 
     /// <summary>
-    ///     Page paste: subscribers run first; if none handle, default applies binding values from
-    ///     <see cref="ModSettingsPageDataClipboardPayload" />.
-    ///     页面粘贴：先运行订阅者；如果无人处理，则默认从
-    ///     <see cref="ModSettingsPageDataClipboardPayload" /> 应用 binding 值。
+    ///     <para xml:lang="en">
+    ///         Supplies context for a page-paste request. Subscribers run in registration order until one sets
+    ///         <see cref="Handled" />; otherwise the default path restores matching setting values from
+    ///         <see cref="ModSettingsPageDataClipboardPayload" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供页面粘贴请求的上下文。订阅者按注册顺序运行，直至其中一个设置 <see cref="Handled" />；
+    ///         若无人处理，默认流程会从 <see cref="ModSettingsPageDataClipboardPayload" /> 恢复 ID 匹配的设置值。
+    ///     </para>
     /// </summary>
     public sealed class ModSettingsPagePasteEventArgs(
         ModSettingsPageUiContext target,
@@ -34,52 +53,92 @@ namespace STS2RitsuLib.Settings
         : EventArgs
     {
         /// <summary>
-        ///     Page receiving the paste.
-        ///     接收粘贴的页面。
+        ///     <para xml:lang="en">
+        ///         Gets the page receiving the paste.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取接收粘贴的页面。
+        ///     </para>
         /// </summary>
-        public ModSettingsPageUiContext Target { get; } = target;
+        public ModSettingsPageUiContext Target { get; } =
+            target ?? throw new ArgumentNullException(nameof(target));
 
         /// <summary>
-        ///     Deserialized page payload from the clipboard, when valid.
-        ///     剪贴板中反序列化出的页面载荷，前提是有效。
+        ///     <para xml:lang="en">
+        ///         Gets the validated page payload deserialized from the clipboard, or <see langword="null" /> when the
+        ///         clipboard does not contain a compatible envelope.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取从剪贴板反序列化并通过验证的页面载荷；剪贴板不包含兼容信封时为
+        ///         <see langword="null" />。
+        ///     </para>
         /// </summary>
         public ModSettingsPageDataClipboardPayload? Payload { get; } = payload;
 
         /// <summary>
-        ///     When true, this paste was consumed and later subscribers should not run.
-        ///     为 true 时，此次粘贴已被消费，后续订阅者不应运行。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether this request has been handled. Setting it stops later subscribers and default
+        ///         handling.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置该请求是否已处理。设为 <see langword="true" /> 后不再运行后续订阅者和默认逻辑。
+        ///     </para>
         /// </summary>
         public bool Handled { get; set; }
 
         /// <summary>
-        ///     Outcome after handling (whether paste applied successfully).
-        ///     处理后的结果（粘贴是否成功应用）。
+        ///     <para xml:lang="en">
+        ///         Gets or sets the result returned when <see cref="Handled" /> is
+        ///         <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置 <see cref="Handled" /> 为 <see langword="true" /> 时返回的处理结果。
+        ///     </para>
         /// </summary>
         public bool Success { get; set; }
     }
 
     /// <summary>
-    ///     Raised before section copy.
-    ///     section 复制前触发。
+    ///     <para xml:lang="en">
+    ///         Supplies context for a section-copy request.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供节复制请求的上下文。
+    ///     </para>
     /// </summary>
     public sealed class ModSettingsSectionCopyEventArgs(ModSettingsSectionUiContext context) : EventArgs
     {
         /// <summary>
-        ///     Section context being copied.
-        ///     正在复制的 section 上下文。
+        ///     <para xml:lang="en">
+        ///         Gets the section context being copied.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取正在复制的节上下文。
+        ///     </para>
         /// </summary>
-        public ModSettingsSectionUiContext Context { get; } = context;
+        public ModSettingsSectionUiContext Context { get; } =
+            context ?? throw new ArgumentNullException(nameof(context));
 
         /// <summary>
-        ///     When true, default envelope write is skipped.
-        ///     为 true 时，跳过默认信封写入。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether the default envelope write is skipped.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置是否跳过默认信封写入。
+        ///     </para>
         /// </summary>
         public bool SuppressDefaultClipboardWrite { get; set; }
     }
 
     /// <summary>
-    ///     Section paste: subscribers first, then default applies binding snapshots by entry id.
-    ///     section 粘贴：先运行订阅者，然后默认按条目 id 应用 binding 快照。
+    ///     <para xml:lang="en">
+    ///         Supplies context for a section-paste request. Subscribers run in registration order until one sets
+    ///         <see cref="Handled" />; otherwise the default path restores setting snapshots by entry ID.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供节粘贴请求的上下文。订阅者按注册顺序运行，直至其中一个设置 <see cref="Handled" />；
+    ///         若无人处理，默认流程会按条目 ID 恢复设置快照。
+    ///     </para>
     /// </summary>
     public sealed class ModSettingsSectionPasteEventArgs(
         ModSettingsSectionUiContext target,
@@ -87,45 +146,79 @@ namespace STS2RitsuLib.Settings
         : EventArgs
     {
         /// <summary>
-        ///     Section receiving the paste.
-        ///     接收粘贴的 section。
+        ///     <para xml:lang="en">
+        ///         Gets the section receiving the paste.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取接收粘贴的节。
+        ///     </para>
         /// </summary>
-        public ModSettingsSectionUiContext Target { get; } = target;
+        public ModSettingsSectionUiContext Target { get; } =
+            target ?? throw new ArgumentNullException(nameof(target));
 
         /// <summary>
-        ///     Deserialized section payload when the clipboard is valid.
-        ///     剪贴板有效时反序列化出的 section 载荷。
+        ///     <para xml:lang="en">
+        ///         Gets the validated section payload deserialized from the clipboard, or <see langword="null" /> when
+        ///         the clipboard does not contain a compatible envelope.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取从剪贴板反序列化并通过验证的节载荷；剪贴板不包含兼容信封时为
+        ///         <see langword="null" />。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionDataClipboardPayload? Payload { get; } = payload;
 
         /// <summary>
-        ///     When true, a subscriber handled the paste and defaults should not run.
-        ///     为 true 时，某个订阅者已处理粘贴，默认逻辑不应运行。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether this request has been handled. Setting it stops later subscribers and default
+        ///         handling.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置该请求是否已处理。设为 <see langword="true" /> 后不再运行后续订阅者和默认逻辑。
+        ///     </para>
         /// </summary>
         public bool Handled { get; set; }
 
         /// <summary>
-        ///     Whether the handler or default paste reported success.
-        ///     处理程序或默认粘贴是否报告成功。
+        ///     <para xml:lang="en">
+        ///         Gets or sets the result returned when <see cref="Handled" /> is
+        ///         <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置 <see cref="Handled" /> 为 <see langword="true" /> 时返回的处理结果。
+        ///     </para>
         /// </summary>
         public bool Success { get; set; }
     }
 
     /// <summary>
-    ///     Clipboard helpers for page/section chrome: copy serializes binding values; paste restores matching entry ids.
-    ///     页面 / section chrome 的剪贴板辅助方法：复制会序列化 binding 值；粘贴会恢复匹配的条目 id。
+    ///     <para xml:lang="en">
+    ///         Copies page or section setting snapshots into typed clipboard envelopes and restores values whose target
+    ///         and entry IDs match.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将页面或节的设置快照复制到带类型的剪贴板信封中，并恢复目标与条目 ID 均匹配的值。
+    ///     </para>
     /// </summary>
     public static class ModSettingsUiChromeClipboard
     {
         /// <summary>
-        ///     Clipboard envelope kind for whole-page chrome data.
-        ///     整页 chrome 数据的剪贴板信封种类。
+        ///     <para xml:lang="en">
+        ///         Clipboard-envelope discriminator for whole-page snapshots.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         整页快照的剪贴板信封类型标识。
+        ///     </para>
         /// </summary>
         public const string PageKind = "ritsulib.settings.ui.page";
 
         /// <summary>
-        ///     Clipboard envelope kind for single-section chrome data.
-        ///     单个 section chrome 数据的剪贴板信封种类。
+        ///     <para xml:lang="en">
+        ///         Clipboard-envelope discriminator for single-section snapshots.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         单个节快照的剪贴板信封类型标识。
+        ///     </para>
         /// </summary>
         public const string SectionKind = "ritsulib.settings.ui.section";
 
@@ -133,47 +226,97 @@ namespace STS2RitsuLib.Settings
         private const string SectionDataTypeName = "ritsulib.settings.ui.section.data.v1";
 
         /// <summary>
-        ///     When true, page Paste is enabled when clipboard matches and ModId/PageId match the page.
-        ///     为 true 时，若剪贴板匹配且 ModId/PageId 与页面一致，则启用页面粘贴。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether page paste controls may be enabled for a compatible clipboard payload whose mod
+        ///         and page IDs match the target.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置是否可为兼容且模组与页面 ID 均匹配目标的剪贴板载荷启用页面粘贴控件。
+        ///     </para>
         /// </summary>
         public static bool EnablePagePasteUi { get; set; } = true;
 
         /// <summary>
-        ///     When true, section Paste is enabled when clipboard matches and ModId/PageId match.
-        ///     为 true 时，若剪贴板匹配且 ModId/PageId 一致，则启用 section 粘贴。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether section paste controls may be enabled for a compatible clipboard payload whose
+        ///         mod, page, and section IDs match the target.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置是否可为兼容且模组、页面与节 ID 均匹配目标的剪贴板载荷启用节粘贴控件。
+        ///     </para>
         /// </summary>
         public static bool EnableSectionPasteUi { get; set; } = true;
 
         /// <summary>
-        ///     Raised before default page copy; handlers may suppress the default clipboard write.
-        ///     默认页面复制前触发；处理程序可以抑制默认剪贴板写入。
+        ///     <para xml:lang="en">
+        ///         Occurs before the default page snapshot is written to the clipboard.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在默认页面快照写入剪贴板前发生。
+        ///     </para>
         /// </summary>
         public static event Action<ModSettingsPageCopyEventArgs>? PageCopyRequested;
 
         /// <summary>
-        ///     Raised before default page paste; set <see cref="ModSettingsPagePasteEventArgs.Handled" /> to take over.
-        ///     默认页面粘贴前触发；设置 <see cref="ModSettingsPagePasteEventArgs.Handled" /> 以接管处理。
+        ///     <para xml:lang="en">
+        ///         Occurs before the default page paste. A subscriber can set
+        ///         <see cref="ModSettingsPagePasteEventArgs.Handled" /> to provide the result and stop further handling.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在默认页面粘贴前发生。订阅者可设置 <see cref="ModSettingsPagePasteEventArgs.Handled" />
+        ///         以提供结果并停止后续处理。
+        ///     </para>
         /// </summary>
         public static event Action<ModSettingsPagePasteEventArgs>? PagePasteRequested;
 
         /// <summary>
-        ///     Raised before default section copy.
-        ///     默认 section 复制前触发。
+        ///     <para xml:lang="en">
+        ///         Occurs before the default section snapshot is written to the clipboard.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在默认节快照写入剪贴板前发生。
+        ///     </para>
         /// </summary>
         public static event Action<ModSettingsSectionCopyEventArgs>? SectionCopyRequested;
 
         /// <summary>
-        ///     Raised before default section paste.
-        ///     默认 section 粘贴前触发。
+        ///     <para xml:lang="en">
+        ///         Occurs before the default section paste. A subscriber can set
+        ///         <see cref="ModSettingsSectionPasteEventArgs.Handled" /> to provide the result and stop further
+        ///         handling.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在默认节粘贴前发生。订阅者可设置 <see cref="ModSettingsSectionPasteEventArgs.Handled" />
+        ///         以提供结果并停止后续处理。
+        ///     </para>
         /// </summary>
         public static event Action<ModSettingsSectionPasteEventArgs>? SectionPasteRequested;
 
         /// <summary>
-        ///     Serializes all binding snapshots on <paramref name="context" />.Page to the clipboard unless suppressed.
-        ///     除非被抑制，否则将 <paramref name="context" />.Page 上的所有 binding 快照序列化到剪贴板。
+        ///     <para xml:lang="en">
+        ///         Requests a page copy, then writes snapshots of all settings on the page to the clipboard unless a
+        ///         subscriber suppresses the default write.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求复制页面；除非订阅者阻止默认写入，否则将页面中全部设置的快照写入剪贴板。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The page context to copy.</para>
+        ///     <para xml:lang="zh-CN">要复制的页面上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         Always <see langword="true" /> after the request is suppressed or the default clipboard write
+        ///         completes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求被阻止默认写入或默认剪贴板写入完成后始终为 <see langword="true" />。
+        ///     </para>
+        /// </returns>
         public static bool TryCopyPage(ModSettingsPageUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             var args = new ModSettingsPageCopyEventArgs(context);
             PageCopyRequested?.Invoke(args);
             if (args.SuppressDefaultClipboardWrite)
@@ -184,7 +327,8 @@ namespace STS2RitsuLib.Settings
                     StringComparer.OrdinalIgnoreCase);
             foreach (var section in context.Page.Sections)
             {
-                var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(StringComparer.Ordinal);
+                var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(
+                    StringComparer.OrdinalIgnoreCase);
                 foreach (var entry in section.Entries)
                     entry.CollectChromeBindingSnapshots(map);
 
@@ -208,11 +352,35 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Parses <paramref name="clipboardText" /> into a page payload when kind and type match.
-        ///     当 kind 和类型匹配时，将 <paramref name="clipboardText" /> 解析为页面载荷。
+        ///     <para xml:lang="en">
+        ///         Attempts to read a structurally valid page snapshot from a clipboard envelope with the expected kind
+        ///         and payload type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从类型标识与载荷类型均符合预期的剪贴板信封中读取结构有效的页面快照。
+        ///     </para>
         /// </summary>
+        /// <param name="clipboardText">
+        ///     <para xml:lang="en">The clipboard text to parse.</para>
+        ///     <para xml:lang="zh-CN">要解析的剪贴板文本。</para>
+        /// </param>
+        /// <param name="payload">
+        ///     <para xml:lang="en">The parsed page payload when successful; otherwise, <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">成功时为解析出的页面载荷；否则为 <see langword="null" />。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the envelope contains valid identifiers, collections, and binding
+        ///         snapshots; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         信封包含有效标识、集合和绑定快照时为 <see langword="true" />；否则为
+        ///         <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool TryGetPageDataPayload(string clipboardText, out ModSettingsPageDataClipboardPayload? payload)
         {
+            ArgumentNullException.ThrowIfNull(clipboardText);
             payload = null;
             if (!ModSettingsClipboardData.TryDeserializeEnvelope(clipboardText, out var env) || env == null)
                 return false;
@@ -225,22 +393,54 @@ namespace STS2RitsuLib.Settings
 
             try
             {
-                payload = JsonSerializer.Deserialize<ModSettingsPageDataClipboardPayload>(env.Payload);
-                return payload != null;
+                var parsed = JsonSerializer.Deserialize<ModSettingsPageDataClipboardPayload>(env.Payload);
+                // Deserialization can violate nullable annotations when required JSON members are missing or null.
+                // ReSharper disable once RedundantAlwaysMatchSubpattern
+                if (parsed is not { Sections: not null } ||
+                    string.IsNullOrWhiteSpace(parsed.ModId) ||
+                    string.IsNullOrWhiteSpace(parsed.PageId) ||
+                    !TryNormalizeSections(parsed.Sections, out var sections))
+                    return false;
+
+                payload = parsed with { Sections = sections };
+                return true;
             }
-            catch
+            catch (JsonException)
+            {
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 return false;
             }
         }
 
         /// <summary>
-        ///     True when paste UI should be enabled and clipboard payload targets the same mod and page as
-        ///     <paramref name="context" />.
-        ///     当应启用粘贴 UI，且剪贴板载荷目标与 <paramref name="context" /> 的 mod 和页面相同时为 true。
+        ///     <para xml:lang="en">
+        ///         Determines whether page paste controls should be enabled for the current clipboard contents and
+        ///         target page.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确定是否应针对当前剪贴板内容与目标页面启用页面粘贴控件。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The target page context.</para>
+        ///     <para xml:lang="zh-CN">目标页面上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when page paste UI is enabled and a valid payload has matching mod and page
+        ///         IDs; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         页面粘贴界面已启用且有效载荷的模组与页面 ID 均匹配时为 <see langword="true" />；
+        ///         否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool CanPastePage(ModSettingsPageUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             if (!EnablePagePasteUi)
                 return false;
 
@@ -248,16 +448,35 @@ namespace STS2RitsuLib.Settings
                 !TryGetPageDataPayload(clip, out var payload) || payload == null)
                 return false;
 
-            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal) &&
-                   string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
+            return IsPagePayloadForTarget(payload, context);
         }
 
         /// <summary>
-        ///     Invokes paste subscribers then applies default binding restore when unhandled.
-        ///     调用粘贴订阅者；未被处理时应用默认 binding 恢复。
+        ///     <para xml:lang="en">
+        ///         Requests a page paste and returns the first subscriber-provided result; if no subscriber handles the
+        ///         request, restores matching setting snapshots from the clipboard.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求粘贴页面并返回首个处理该请求的订阅者所提供的结果；若无人处理，则从剪贴板恢复匹配的设置快照。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The page context receiving the paste.</para>
+        ///     <para xml:lang="zh-CN">接收粘贴的页面上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         The handling subscriber's result, or <see langword="true" /> when the default path applied at least
+        ///         one matching snapshot; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         处理请求的订阅者所提供的结果；若使用默认流程，则至少应用一个匹配快照时为
+        ///         <see langword="true" />，否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool TryPastePage(ModSettingsPageUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             ModSettingsClipboardAccess.TryGetText(out var clip);
             TryGetPageDataPayload(clip, out var payload);
 
@@ -276,17 +495,37 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Copies binding snapshots for one section to the clipboard unless suppressed.
-        ///     除非被抑制，否则将一个 section 的 binding 快照复制到剪贴板。
+        ///     <para xml:lang="en">
+        ///         Requests a section copy, then writes snapshots of all settings in the section to the clipboard unless
+        ///         a subscriber suppresses the default write.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求复制节；除非订阅者阻止默认写入，否则将节中全部设置的快照写入剪贴板。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The section context to copy.</para>
+        ///     <para xml:lang="zh-CN">要复制的节上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         Always <see langword="true" /> after the request is suppressed or the default clipboard write
+        ///         completes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求被阻止默认写入或默认剪贴板写入完成后始终为 <see langword="true" />。
+        ///     </para>
+        /// </returns>
         public static bool TryCopySection(ModSettingsSectionUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             var args = new ModSettingsSectionCopyEventArgs(context);
             SectionCopyRequested?.Invoke(args);
             if (args.SuppressDefaultClipboardWrite)
                 return true;
 
-            var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(StringComparer.Ordinal);
+            var map = new Dictionary<string, ModSettingsChromeBindingSnapshot>(
+                StringComparer.OrdinalIgnoreCase);
             foreach (var entry in context.Section.Entries)
                 entry.CollectChromeBindingSnapshots(map);
 
@@ -308,12 +547,36 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Parses <paramref name="clipboardText" /> into a section payload when valid.
-        ///     有效时，将 <paramref name="clipboardText" /> 解析为 section 载荷。
+        ///     <para xml:lang="en">
+        ///         Attempts to read a structurally valid section snapshot from a clipboard envelope with the expected
+        ///         kind and payload type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从类型标识与载荷类型均符合预期的剪贴板信封中读取结构有效的节快照。
+        ///     </para>
         /// </summary>
+        /// <param name="clipboardText">
+        ///     <para xml:lang="en">The clipboard text to parse.</para>
+        ///     <para xml:lang="zh-CN">要解析的剪贴板文本。</para>
+        /// </param>
+        /// <param name="payload">
+        ///     <para xml:lang="en">The parsed section payload when successful; otherwise, <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">成功时为解析出的节载荷；否则为 <see langword="null" />。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the envelope contains valid identifiers, a binding collection, and
+        ///         binding snapshots; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         信封包含有效标识、绑定集合和绑定快照时为 <see langword="true" />；否则为
+        ///         <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool TryGetSectionDataPayload(string clipboardText,
             out ModSettingsSectionDataClipboardPayload? payload)
         {
+            ArgumentNullException.ThrowIfNull(clipboardText);
             payload = null;
             if (!ModSettingsClipboardData.TryDeserializeEnvelope(clipboardText, out var env) || env == null)
                 return false;
@@ -326,21 +589,55 @@ namespace STS2RitsuLib.Settings
 
             try
             {
-                payload = JsonSerializer.Deserialize<ModSettingsSectionDataClipboardPayload>(env.Payload);
-                return payload != null;
+                var parsed = JsonSerializer.Deserialize<ModSettingsSectionDataClipboardPayload>(env.Payload);
+                // Deserialization can violate nullable annotations when required JSON members are missing or null.
+                // ReSharper disable once RedundantAlwaysMatchSubpattern
+                if (parsed is not { Bindings: not null } ||
+                    string.IsNullOrWhiteSpace(parsed.ModId) ||
+                    string.IsNullOrWhiteSpace(parsed.PageId) ||
+                    string.IsNullOrWhiteSpace(parsed.SectionId) ||
+                    !TryNormalizeBindings(parsed.Bindings, out var bindings))
+                    return false;
+
+                payload = parsed with { Bindings = bindings };
+                return true;
             }
-            catch
+            catch (JsonException)
+            {
+                return false;
+            }
+            catch (NotSupportedException)
             {
                 return false;
             }
         }
 
         /// <summary>
-        ///     True when section paste UI is allowed and clipboard matches the page’s mod and page id.
-        ///     当允许 section 粘贴 UI 且剪贴板与页面的 mod 和 page id 匹配时为 true。
+        ///     <para xml:lang="en">
+        ///         Determines whether section paste controls should be enabled for the current clipboard contents and
+        ///         target section.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确定是否应针对当前剪贴板内容与目标节启用节粘贴控件。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The target section context.</para>
+        ///     <para xml:lang="zh-CN">目标节上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when section paste UI is enabled and a valid payload has matching mod, page,
+        ///         and section IDs; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         节粘贴界面已启用且有效载荷的模组、页面与节 ID 均匹配时为
+        ///         <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool CanPasteSection(ModSettingsSectionUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             if (!EnableSectionPasteUi)
                 return false;
 
@@ -348,16 +645,35 @@ namespace STS2RitsuLib.Settings
                 !TryGetSectionDataPayload(clip, out var payload) || payload == null)
                 return false;
 
-            return string.Equals(payload.ModId, context.Page.ModId, StringComparison.Ordinal) &&
-                   string.Equals(payload.PageId, context.Page.Id, StringComparison.Ordinal);
+            return IsSectionPayloadForTarget(payload, context);
         }
 
         /// <summary>
-        ///     Invokes section paste subscribers then restores bindings by entry id when unhandled.
-        ///     调用 section 粘贴订阅者；未被处理时按条目 id 恢复 binding。
+        ///     <para xml:lang="en">
+        ///         Requests a section paste and returns the first subscriber-provided result; if no subscriber handles
+        ///         the request, restores matching setting snapshots from the clipboard.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求粘贴节并返回首个处理该请求的订阅者所提供的结果；若无人处理，则从剪贴板恢复匹配的设置快照。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The section context receiving the paste.</para>
+        ///     <para xml:lang="zh-CN">接收粘贴的节上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         The handling subscriber's result, or <see langword="true" /> when the default path applied at least
+        ///         one matching snapshot; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         处理请求的订阅者所提供的结果；若使用默认流程，则至少应用一个匹配快照时为
+        ///         <see langword="true" />，否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool TryPasteSection(ModSettingsSectionUiContext context)
         {
+            ArgumentNullException.ThrowIfNull(context);
             ModSettingsClipboardAccess.TryGetText(out var clip);
             TryGetSectionDataPayload(clip, out var payload);
 
@@ -378,18 +694,18 @@ namespace STS2RitsuLib.Settings
         private static bool TryApplyDefaultPageDataPaste(ModSettingsPageUiContext target,
             ModSettingsPageDataClipboardPayload? payload)
         {
-            if (payload?.Sections.Count is not > 0)
+            if (payload?.Sections is not { Count: > 0 } || !IsPagePayloadForTarget(payload, target))
                 return false;
 
             var any = false;
             foreach (var section in target.Page.Sections)
             {
-                if (!payload.Sections.TryGetValue(section.Id, out var map) || map.Count == 0)
+                if (!payload.Sections.TryGetValue(section.Id, out var map) || map is not { Count: > 0 })
                     continue;
 
                 foreach (var entry in section.Entries)
                 {
-                    if (!map.TryGetValue(entry.Id, out var snap))
+                    if (!map.TryGetValue(entry.Id, out var snap) || snap == null)
                         continue;
                     if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
                         any = true;
@@ -402,19 +718,73 @@ namespace STS2RitsuLib.Settings
         private static bool TryApplyDefaultSectionDataPaste(ModSettingsSectionUiContext target,
             ModSettingsSectionDataClipboardPayload? payload)
         {
-            if (payload?.Bindings.Count is not > 0)
+            if (payload?.Bindings is not { Count: > 0 } || !IsSectionPayloadForTarget(payload, target))
                 return false;
 
             var any = false;
             foreach (var entry in target.Section.Entries)
             {
-                if (!payload.Bindings.TryGetValue(entry.Id, out var snap))
+                if (!payload.Bindings.TryGetValue(entry.Id, out var snap) || snap == null)
                     continue;
                 if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
                     any = true;
             }
 
             return any;
+        }
+
+        private static bool IsPagePayloadForTarget(
+            ModSettingsPageDataClipboardPayload payload,
+            ModSettingsPageUiContext target)
+        {
+            return string.Equals(payload.ModId, target.Page.ModId, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(payload.PageId, target.Page.Id, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsSectionPayloadForTarget(
+            ModSettingsSectionDataClipboardPayload payload,
+            ModSettingsSectionUiContext target)
+        {
+            return string.Equals(payload.ModId, target.Page.ModId, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(payload.PageId, target.Page.Id, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(payload.SectionId, target.Section.Id, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool TryNormalizeSections(
+            Dictionary<string, Dictionary<string, ModSettingsChromeBindingSnapshot>> source,
+            out Dictionary<string, Dictionary<string, ModSettingsChromeBindingSnapshot>> sections)
+        {
+            sections = new(StringComparer.OrdinalIgnoreCase);
+            foreach (var (sectionId, sourceBindings) in source)
+                if (string.IsNullOrWhiteSpace(sectionId) ||
+                    sourceBindings == null ||
+                    !TryNormalizeBindings(sourceBindings, out var bindings) ||
+                    !sections.TryAdd(sectionId, bindings))
+                    return false;
+
+            return true;
+        }
+
+        private static bool TryNormalizeBindings(
+            Dictionary<string, ModSettingsChromeBindingSnapshot> source,
+            out Dictionary<string, ModSettingsChromeBindingSnapshot> bindings)
+        {
+            bindings = new(StringComparer.OrdinalIgnoreCase);
+            foreach (var (entryId, snapshot) in source)
+                // Dictionary values may originate in deserialized, externally supplied clipboard data.
+                // ReSharper disable RedundantAlwaysMatchSubpattern
+                if (string.IsNullOrWhiteSpace(entryId) ||
+                    snapshot is not
+                    {
+                        TypeFullName: not null,
+                        SchemaSignature: not null,
+                        JsonPayload: not null,
+                    } ||
+                    !bindings.TryAdd(entryId, snapshot))
+                    return false;
+            // ReSharper restore RedundantAlwaysMatchSubpattern
+
+            return true;
         }
     }
 }

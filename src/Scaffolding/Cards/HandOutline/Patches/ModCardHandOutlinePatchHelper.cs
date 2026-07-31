@@ -1,14 +1,18 @@
+using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Scaffolding.Combat;
 
 namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
 {
     internal static class ModCardHandOutlinePatchHelper
     {
+        private static readonly FieldInfo? HandField = AccessTools.Field(typeof(NHandCardHolder), "_hand");
+
         internal static bool TryGetRule(
             NHandCardHolder? holder,
             out CardModel model,
@@ -29,7 +33,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             return true;
         }
 
-        internal static void ApplyHighlight(
+        internal static bool ApplyHighlight(
             NHandCardHolder? holder,
             CardModel model,
             ModCardHandOutlineEvaluation evaluation)
@@ -37,33 +41,30 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             if (CombatManager.Instance is not { IsInProgress: true } ||
                 !TryGetCardModel(holder, out var currentModel) ||
                 !ReferenceEquals(currentModel, model))
-                return;
+                return false;
 
             try
             {
                 var cardNode = holder!.CardNode;
                 if (cardNode == null || !GodotObject.IsInstanceValid(cardNode) ||
                     !GodotObject.IsInstanceValid(cardNode.CardHighlight))
-                    return;
+                    return false;
 
-                var inPlayPhase = model.IsOwnerPlayPhase();
-                var canPlay = model.CanPlay();
-                var shouldGlowRed = inPlayPhase && model.ShouldGlowRed;
-                var shouldGlowGold = inPlayPhase && canPlay && model.ShouldGlowGold;
-                var vanillaShow = canPlay || shouldGlowRed || shouldGlowGold;
-                var force = evaluation.Rule.VisibleWhenUnplayable && !vanillaShow;
-                if (!vanillaShow && !force)
-                    return;
+                var builtInShow = ShouldShowBuiltInHighlight(holder, model);
+                var force = evaluation.Rule.VisibleWhenUnplayable && !builtInShow;
+                if (!builtInShow && !force)
+                    return false;
 
                 var highlight = cardNode.CardHighlight;
                 if (force)
                     highlight.AnimShow();
 
-                var c = evaluation.Color;
-                highlight.Modulate = new(c.R, c.G, c.B, highlight.Modulate.A);
+                highlight.Modulate = evaluation.Color;
+                return true;
             }
             catch (ObjectDisposedException)
             {
+                return false;
             }
         }
 
@@ -81,17 +82,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
                     !GodotObject.IsInstanceValid(flash))
                     return;
 
-                var inPlayPhase = model.IsOwnerPlayPhase();
-                var canPlay = model.CanPlay();
-                var shouldGlowRed = inPlayPhase && model.ShouldGlowRed;
-                var shouldGlowGold = inPlayPhase && canPlay && model.ShouldGlowGold;
-                var vanillaShow = canPlay || shouldGlowRed || shouldGlowGold;
-                var force = evaluation.Rule.VisibleWhenUnplayable && !vanillaShow;
-                if (!vanillaShow && !force)
+                var builtInShow = ShouldShowBuiltInHighlight(holder!, model);
+                var force = evaluation.Rule.VisibleWhenUnplayable && !builtInShow;
+                if (!builtInShow && !force)
                     return;
 
-                var c = evaluation.Color;
-                flash.Modulate = new(c.R, c.G, c.B, flash.Modulate.A);
+                flash.Modulate = evaluation.Color;
             }
             catch (ObjectDisposedException)
             {
@@ -119,6 +115,20 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches
             {
                 return false;
             }
+        }
+
+        private static bool ShouldShowBuiltInHighlight(NHandCardHolder holder, CardModel model)
+        {
+            var canPlay = model.CanPlay();
+            var inPlayPhase = model.IsOwnerPlayPhase();
+            var shouldGlowRed = inPlayPhase && model.ShouldGlowRed;
+
+            var selectModeOverride =
+                (HandField?.GetValue(holder) as NPlayerHand)?.SelectModeGoldGlowOverride;
+            var shouldGlowGold = selectModeOverride?.Invoke(model) ??
+                                 (inPlayPhase && canPlay && model.ShouldGlowGold);
+
+            return canPlay || shouldGlowRed || shouldGlowGold;
         }
 
         private static bool IsHolderUsable(NHandCardHolder? holder)

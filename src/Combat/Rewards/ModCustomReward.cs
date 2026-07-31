@@ -10,14 +10,27 @@ using MegaCrit.Sts2.Core.TestSupport;
 namespace STS2RitsuLib.Combat.Rewards
 {
     /// <summary>
-    ///     Base class for RitsuLib custom rewards with built-in description, icon, and save/load plumbing.
-    ///     RitsuLib 自定义 reward 基类，封装描述、图标与存读档基础逻辑。
+    ///     <para xml:lang="en">
+    ///         Provides a base implementation for RitsuLib custom rewards, including localization, optional icon
+    ///         loading, and save-data creation.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 RitsuLib 自定义奖励提供基础实现，包括本地化、可选图标加载以及存档数据创建。
+    ///     </para>
     /// </summary>
+    /// <param name="player">
+    ///     <para xml:lang="en">The player who owns the reward.</para>
+    ///     <para xml:lang="zh-CN">拥有该奖励的玩家。</para>
+    /// </param>
     /// <remarks>
-    ///     Reward-set selection is synchronized by vanilla, but reward-specific side effects must either be
-    ///     deterministic on every client or explicitly synchronized by the derived reward.
-    ///     奖励集合中“选择了哪个奖励”由原版同步；但奖励自身造成的副作用必须在每个客户端确定性执行，
-    ///     或由派生奖励显式同步。
+    ///     <para xml:lang="en">
+    ///         The base game synchronizes which reward is selected from a reward set. Reward-specific side effects
+    ///         must still be deterministic on every client or explicitly synchronized by the derived type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         原版会同步奖励集合中选中的奖励。奖励自身的副作用仍须在各客户端确定性执行，
+    ///         或由派生类型显式同步。
+    ///     </para>
     /// </remarks>
     public abstract class ModCustomReward(Player player) : Reward(player), IModSerializableReward
     {
@@ -34,22 +47,22 @@ namespace STS2RitsuLib.Combat.Rewards
         public override LocString Description => new(DescriptionLocTable, DescriptionLocKey);
 
         /// <summary>
-        ///     Localization table used by <see cref="Description" />.
-        ///     <see cref="Description" /> 使用的本地化表。
+        ///     <para xml:lang="en">Gets the localization table used by <see cref="Description" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Description" /> 使用的本地化表。</para>
         /// </summary>
         protected virtual string DescriptionLocTable => "gameplay_ui";
 
         /// <summary>
-        ///     Localization key used by <see cref="Description" />.
-        ///     <see cref="Description" /> 使用的本地化 key。
+        ///     <para xml:lang="en">Gets the localization key used by <see cref="Description" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="Description" /> 使用的本地化键。</para>
         /// </summary>
         protected virtual string DescriptionLocKey => ModRewardRegistry.TryGetId(ModRewardType, out var id)
             ? id
             : ModRewardType.ToString();
 
         /// <summary>
-        ///     Optional Godot resource path for the reward icon.
-        ///     reward 图标的可选 Godot 资源路径。
+        ///     <para xml:lang="en">Gets the optional Godot resource path for the reward icon.</para>
+        ///     <para xml:lang="zh-CN">获取奖励图标的可选 Godot 资源路径。</para>
         /// </summary>
         protected virtual string? RewardIconPath => null;
 
@@ -105,9 +118,29 @@ namespace STS2RitsuLib.Combat.Rewards
         }
 
         /// <summary>
-        ///     Creates a serializable reward with a typed mod-owned payload.
-        ///     使用类型化 payload 创建可存档 reward。
+        ///     <para xml:lang="en">
+        ///         Creates serializable reward data with a strongly typed, mod-owned payload.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用由模组维护的强类型载荷创建可序列化奖励数据。
+        ///     </para>
         /// </summary>
+        /// <typeparam name="TPayload">
+        ///     <para xml:lang="en">The payload type.</para>
+        ///     <para xml:lang="zh-CN">载荷类型。</para>
+        /// </typeparam>
+        /// <param name="payload">
+        ///     <para xml:lang="en">The mod-owned payload to serialize.</para>
+        ///     <para xml:lang="zh-CN">要序列化、由模组维护的载荷。</para>
+        /// </param>
+        /// <param name="jsonTypeInfo">
+        ///     <para xml:lang="en">The source-generated JSON metadata for <typeparamref name="TPayload" />.</para>
+        ///     <para xml:lang="zh-CN"><typeparamref name="TPayload" /> 的源生成 JSON 元数据。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The serializable reward data.</para>
+        ///     <para xml:lang="zh-CN">可序列化的奖励数据。</para>
+        /// </returns>
         protected SerializableReward ToSerializable<TPayload>(
             TPayload payload,
             JsonTypeInfo<TPayload> jsonTypeInfo)

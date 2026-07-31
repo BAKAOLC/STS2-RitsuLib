@@ -1,8 +1,11 @@
 namespace STS2RitsuLib.Localization
 {
     /// <summary>
-    ///     Emits at most one warning per key when ancient dialogue resolution yields nothing but the run must continue.
-    ///     当远古事件 dialogue 解析结果为空但跑局必须继续时，每个 key 最多发出一次警告。
+    ///     <para xml:lang="en">
+    ///         Emits at most one warning for each missing ancient-event dialogue key while allowing the
+    ///         current run to continue.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">先古之民事件对话键缺失但当前局内流程仍需继续时，每个键至多发出一次警告。</para>
     /// </summary>
     internal static class AncientDialogueMissingWarnings
     {

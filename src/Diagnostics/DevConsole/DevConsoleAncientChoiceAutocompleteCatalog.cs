@@ -4,12 +4,22 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Resolves ancient event option tokens to localized display titles for dev-console autocomplete.
+    ///     <para xml:lang="en">
+    ///         Resolves ancient-event option tokens and localized titles for developer-console autocomplete.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为开发者控制台自动补全解析先古之民事件选项标记及其本地化标题。
+    ///     </para>
     /// </summary>
     internal static class DevConsoleAncientChoiceAutocompleteCatalog
     {
         /// <summary>
-        ///     Returns a display title for <paramref name="choiceToken" /> under <paramref name="ancientEntryId" />.
+        ///     <para xml:lang="en">
+        ///         Returns the display title of <paramref name="choiceToken" /> in the specified ancient event.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回指定先古之民事件中 <paramref name="choiceToken" /> 的显示标题。
+        ///     </para>
         /// </summary>
         public static string? TryGetDisplayTitle(string ancientEntryId, string choiceToken)
         {
@@ -22,7 +32,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Returns whether <paramref name="partial" /> matches the option title or linked relic id/title.
+        ///     <para xml:lang="en">
+        ///         Returns whether <paramref name="partial" /> matches the option title or the linked relic's ID or
+        ///         title.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="partial" /> 是否匹配选项标题或关联遗物的 ID、标题。
+        ///     </para>
         /// </summary>
         public static bool MatchesLocalizedTitle(string ancientEntryId, string choiceToken, string partial)
         {

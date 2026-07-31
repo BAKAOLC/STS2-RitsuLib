@@ -10,8 +10,8 @@ using STS2RitsuLib.RunData;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Save and restore helpers for secondary-resource state.
-    ///     次级资源状态的保存和恢复辅助工具。
+    ///     <para xml:lang="en">Saves and restores persistent secondary-resource state.</para>
+    ///     <para xml:lang="zh-CN">保存和恢复需要持久化的次级资源状态。</para>
     /// </summary>
     public static class SecondaryResourcePersistence
     {
@@ -23,25 +23,61 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 () => new(),
                 new() { WritePolicy = RunSavedDataWritePolicy.WhenNonDefault });
 
+        private static readonly Lock InitializeGate = new();
         private static bool _initialized;
+        private static bool _initializing;
 
         /// <summary>
-        ///     Registers lifecycle persistence hooks.
-        ///     注册生命周期持久化 hook。
+        ///     <para xml:lang="en">Registers the combat lifecycle handlers used for persistence.</para>
+        ///     <para xml:lang="zh-CN">注册持久化所用的战斗生命周期处理器。</para>
         /// </summary>
         public static void Initialize()
         {
-            if (_initialized)
-                return;
+            lock (InitializeGate)
+            {
+                if (_initialized || _initializing)
+                    return;
 
-            _initialized = true;
-            RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>(OnCombatStarting);
-            RitsuLibFramework.SubscribeLifecycle<CombatEndedEvent>(OnCombatEnded);
+                _initializing = true;
+            }
+
+            IDisposable? startingSubscription = null;
+            IDisposable? endedSubscription = null;
+            try
+            {
+                startingSubscription =
+                    RitsuLibFramework.SubscribeLifecycle<CombatStartingEvent>(OnCombatStarting);
+                endedSubscription =
+                    RitsuLibFramework.SubscribeLifecycle<CombatEndedEvent>(OnCombatEnded);
+                lock (InitializeGate)
+                {
+                    _initialized = true;
+                }
+            }
+            catch
+            {
+                endedSubscription?.Dispose();
+                startingSubscription?.Dispose();
+                throw;
+            }
+            finally
+            {
+                lock (InitializeGate)
+                {
+                    _initializing = false;
+                }
+            }
         }
 
         /// <summary>
-        ///     Creates a serializable snapshot for selected persistence policies.
-        ///     为选定的持久化策略创建可序列化快照。
+        ///     <para xml:lang="en">
+        ///         Creates a serializable snapshot. Run-scoped resources are always included; combat-scoped resources
+        ///         are included only when <paramref name="includeCombatScoped" /> is <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建可序列化快照。始终包含一局游戏范围的资源；仅当 <paramref name="includeCombatScoped" /> 为
+        ///         <see langword="true" /> 时包含战斗范围资源。
+        ///     </para>
         /// </summary>
         public static SecondaryResourceRunSaveState CreateSnapshot(
             CombatStateLike combatState,
@@ -60,8 +96,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Restores a snapshot into current combat state.
-        ///     将快照恢复到当前战斗状态中。
+        ///     <para xml:lang="en">Restores registered run- and combat-scoped values into a combat.</para>
+        ///     <para xml:lang="zh-CN">将已注册的一局游戏范围与战斗范围资源值恢复到一场战斗中。</para>
         /// </summary>
         public static void RestoreSnapshot(CombatStateLike combatState, SecondaryResourceRunSaveState snapshot)
         {
@@ -142,20 +178,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Serializable secondary-resource state grouped by player net id.
-    ///     按玩家 net id 分组的可序列化次级资源状态。
+    ///     <para xml:lang="en">Stores serializable secondary-resource state grouped by player network ID.</para>
+    ///     <para xml:lang="zh-CN">存储按玩家网络 ID 分组的可序列化次级资源状态。</para>
     /// </summary>
     public sealed class SecondaryResourceRunSaveState
     {
         /// <summary>
-        ///     Resource amounts by player net id and resource id.
-        ///     按玩家 net id 和资源 id 存储的资源数量。
+        ///     <para xml:lang="en">Gets or sets amounts indexed first by player network ID, then by resource ID.</para>
+        ///     <para xml:lang="zh-CN">获取或设置先按玩家网络 ID、再按资源 ID 索引的数量。</para>
         /// </summary>
         public Dictionary<ulong, Dictionary<string, int>> PlayerAmounts { get; set; } = [];
 
         /// <summary>
-        ///     True when no resource amounts are stored.
-        ///     未存储任何资源数量时为 true。
+        ///     <para xml:lang="en">Gets whether no resource amounts are stored.</para>
+        ///     <para xml:lang="zh-CN">获取是否未存储任何资源数量。</para>
         /// </summary>
         public bool IsEmpty => PlayerAmounts.Count == 0 ||
                                PlayerAmounts.Values.All(static amounts => amounts.Count == 0);

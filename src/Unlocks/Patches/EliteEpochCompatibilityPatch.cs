@@ -6,10 +6,13 @@ using STS2RitsuLib.Scaffolding.Characters;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Delegates elite epoch handling for mod characters to <c>EliteEpochModHandling</c> when the dedicated
-    ///     check method exists.
-    ///     当专用检查方法存在时，将 mod 角色的精英纪元处理委托给 <c>EliteEpochModHandling</c>。
-    ///     检查方法存在。
+    ///     <para xml:lang="en">
+    ///         Routes elite-epoch handling for mod characters through <c>EliteEpochModHandling</c> when the game exposes
+    ///         a dedicated check method.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         游戏提供专用检查方法时，通过 <c>EliteEpochModHandling</c> 处理模组角色的精英纪元。
+    ///     </para>
     /// </summary>
     internal class EliteEpochCompatibilityPatch : IPatchMethod
     {

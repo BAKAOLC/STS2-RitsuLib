@@ -8,12 +8,15 @@ namespace STS2RitsuLib
     public static partial class RitsuLibFramework
     {
         /// <summary>
-        ///     Registers a relic visibility rule. Returning false hides the relic from normal relic UI.
-        ///     注册遗物可见性规则。返回 false 会将该遗物从正常遗物 UI 中隐藏。
+        ///     <para xml:lang="en">
+        ///         Registers a relic-visibility rule. Returning <see langword="false" /> hides the relic from
+        ///         normal relic UI.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册遗物可见性规则。返回 <see langword="false" /> 会从正常遗物界面隐藏该遗物。</para>
         /// </summary>
         /// <returns>
-        ///     A disposable registration handle.
-        ///     可释放的注册句柄。
+        ///     <para xml:lang="en">Disposable registration handle.</para>
+        ///     <para xml:lang="zh-CN">可释放的注册句柄。</para>
         /// </returns>
         public static IDisposable RegisterRelicVisibilityRule(string modId, Func<RelicModel, bool> isVisible)
         {
@@ -21,8 +24,8 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Returns whether RitsuLib should show a relic in normal relic UI.
-        ///     返回 RitsuLib 是否应在正常遗物 UI 中显示该遗物。
+        ///     <para xml:lang="en">Returns whether RitsuLib should show a relic in normal relic UI.</para>
+        ///     <para xml:lang="zh-CN">返回 RitsuLib 是否应在正常遗物界面显示该遗物。</para>
         /// </summary>
         public static bool IsRelicVisible(RelicModel relic)
         {
@@ -30,12 +33,12 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Refreshes the active run relic UI after relic visibility state changes.
-        ///     在遗物可见性状态变化后，刷新当前跑局的遗物 UI。
+        ///     <para xml:lang="en">Refreshes the active run's relic UI after relic-visibility state changes.</para>
+        ///     <para xml:lang="zh-CN">在遗物可见性状态变更后刷新当前一局游戏的遗物界面。</para>
         /// </summary>
         /// <returns>
-        ///     True if an active relic inventory was found and changed.
-        ///     如果找到当前遗物栏且内容发生变化，则返回 true。
+        ///     <para xml:lang="en">Whether an active relic inventory was found and changed.</para>
+        ///     <para xml:lang="zh-CN">是否找到并变更了活动遗物栏。</para>
         /// </returns>
         public static bool RefreshRelicVisibility()
         {
@@ -43,12 +46,12 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Refreshes a specific relic inventory after relic visibility state changes.
-        ///     在遗物可见性状态变化后，刷新指定遗物栏。
+        ///     <para xml:lang="en">Refreshes a specific relic inventory after relic-visibility state changes.</para>
+        ///     <para xml:lang="zh-CN">在遗物可见性状态变更后刷新指定遗物栏。</para>
         /// </summary>
         /// <returns>
-        ///     True if the inventory contents changed.
-        ///     如果遗物栏内容发生变化，则返回 true。
+        ///     <para xml:lang="en">Whether the inventory contents changed.</para>
+        ///     <para xml:lang="zh-CN">遗物栏内容是否已变更。</para>
         /// </returns>
         public static bool RefreshRelicVisibility(NRelicInventory inventory)
         {

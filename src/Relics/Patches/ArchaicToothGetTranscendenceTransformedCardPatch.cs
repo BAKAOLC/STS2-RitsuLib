@@ -6,8 +6,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Relics.Patches
 {
     /// <summary>
-    ///     Applies mod transcendence templates with the same upgrade / enchantment carry-over as vanilla.
-    ///     以与原版相同的升级/附魔继承方式应用 mod 超越模板。
+    ///     <para xml:lang="en">
+    ///         Applies mod-provided transcendence templates while preserving upgrades and enchantments as the base game does.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">应用模组提供的超越模板，并依照游戏本体的方式继承升级与附魔。</para>
     /// </summary>
     internal sealed class ArchaicToothGetTranscendenceTransformedCardPatch : IPatchMethod
     {

@@ -10,8 +10,8 @@ using MegaCrit.Sts2.Core.Nodes.HoverTips;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     Helper class for adding hover tips.
-    ///     用于追加悬停提示的辅助类。
+    ///     <para xml:lang="en">Provides helpers for appending hover tips to active game UI controls.</para>
+    ///     <para xml:lang="zh-CN">提供用于向活动游戏界面控件追加悬停提示的辅助方法。</para>
     /// </summary>
     public static class HoverTipHelper
     {
@@ -19,12 +19,15 @@ namespace STS2RitsuLib
         private const float HoverTipWidth = 360f;
 
         /// <summary>
-        ///     Appends a text hover tip to <paramref name="owner" />'s active hover tip set.
-        ///     向 <paramref name="owner" /> 的活动悬停提示集合追加文本悬停提示。
+        ///     <para xml:lang="en">Appends a text hover tip to <paramref name="owner" />'s active hover-tip set.</para>
+        ///     <para xml:lang="zh-CN">向 <paramref name="owner" /> 的活动悬停提示集合追加文本悬停提示。</para>
         /// </summary>
         /// <returns>
-        ///     False when no hover tip set is bound to the control.
-        ///     当该控件未绑定悬停提示集合时返回 false。
+        ///     <para xml:lang="en">
+        ///         <see langword="false" /> when no hover-tip set is bound to the control or the set has no
+        ///         text-tip container.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">该控件未绑定悬停提示集合，或集合没有文本提示容器时为 <see langword="false" />。</para>
         /// </returns>
         public static bool AddTipToOwner(Control owner, string title, string description)
         {
@@ -33,12 +36,12 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Appends card preview hover tips for <paramref name="cards" /> to <paramref name="owner" />.
-        ///     向 <paramref name="owner" /> 追加 <paramref name="cards" /> 的卡牌预览悬停提示。
+        ///     <para xml:lang="en">Appends card-preview hover tips for <paramref name="cards" /> to <paramref name="owner" />.</para>
+        ///     <para xml:lang="zh-CN">向 <paramref name="owner" /> 追加 <paramref name="cards" /> 的卡牌预览悬停提示。</para>
         /// </summary>
         /// <returns>
-        ///     False when no hover tip set is bound or no tips were added.
-        ///     未绑定悬停提示集合或没有追加任何提示时返回 false。
+        ///     <para xml:lang="en"><see langword="false" /> when no hover-tip set is bound or no tip was added.</para>
+        ///     <para xml:lang="zh-CN">未绑定悬停提示集合或未追加任何提示时为 <see langword="false" />。</para>
         /// </returns>
         public static bool AddCardTipsToOwner(Control owner, IEnumerable<CardModel> cards)
         {

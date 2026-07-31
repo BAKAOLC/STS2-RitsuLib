@@ -1,13 +1,16 @@
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Models.Characters;
+using MegaCrit.Sts2.Core.Saves;
 
 namespace STS2RitsuLib.Saves
 {
     /// <summary>
-    ///     Run history UI calls <see cref="ModelDb.GetById{T}" /> for acts/characters. When a mod is unloaded, those ids
-    ///     are missing and vanilla throws; we fall back so the screen can render like deprecated event/encounter handling.
-    ///     跑局历史 UI 会为章节/角色调用 <see cref="ModelDb.GetById{T}" />。当 mod 被卸载时，这些 id
-    ///     会缺失且原版会抛出；我们提供 fallback，使界面能像处理已弃用事件/遭遇一样渲染。
+    ///     <para xml:lang="en">
+    ///         Resolves acts and characters referenced by run history, using the base game's deprecated-model placeholders
+    ///         when the owning mod is unavailable.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         解析游戏历史引用的章节与角色；当所属模组不可用时，改用原版游戏的已弃用模型占位项。
+    ///     </para>
     /// </summary>
     internal static class RunHistoryMissingModelSupport
     {
@@ -19,8 +22,8 @@ namespace STS2RitsuLib.Saves
 
             RitsuLibFramework.Logger.Warn(
                 "[Saves] Run history references character not in ModelDb (mod likely unloaded): " + id +
-                ". Using Ironclad for preview UI.");
-            return ModelDb.Character<Ironclad>();
+                ". Using DeprecatedCharacter for preview UI.");
+            return SaveUtil.CharacterOrDeprecated(id);
         }
 
         internal static ActModel ActForRunHistory(ModelId id)
@@ -31,8 +34,8 @@ namespace STS2RitsuLib.Saves
 
             RitsuLibFramework.Logger.Warn(
                 "[Saves] Run history references act not in ModelDb (mod likely unloaded): " + id +
-                ". Using first vanilla act for section header.");
-            return ModelDb.Acts.First();
+                ". Using DeprecatedAct for section header.");
+            return SaveUtil.ActOrDeprecated(id);
         }
     }
 }

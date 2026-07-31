@@ -3,117 +3,127 @@ using Godot;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Location hint for a mod card pile's UI node or fly-in target. Explicit anchors take precedence over
-    ///     style defaults; when no anchor is provided, ritsulib auto-stacks same-style piles in registration
-    ///     order ("explicit anchor + auto-stack fallback").
-    ///     mod 卡牌牌堆的 UI 节点或飞入目标的位置提示。显式 anchor 优先于 style 默认值；
-    ///     未提供 anchor 时，ritsulib 会按注册顺序自动堆叠同样式牌堆
-    ///     （“显式 anchor + 自动堆叠后备”）。
+    ///     <para xml:lang="en">
+    ///         Identifies the layout slot used by a mod card-pile control or its position fallback.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">标识模组卡牌牌堆控件或其位置回退所使用的布局槽位。</para>
     /// </summary>
     public enum ModCardPileAnchorKind
     {
         /// <summary>
-        ///     Let the style's default slot decide; multiple entries auto-stack along the style axis.
-        ///     由样式的默认 slot 决定；多个条目会沿样式轴自动堆叠。
+        ///     <para xml:lang="en">Uses the default slot for the selected UI style.</para>
+        ///     <para xml:lang="zh-CN">使用所选界面样式的默认槽位。</para>
         /// </summary>
         StyleDefault = 0,
 
         /// <summary>
-        ///     Near the bottom-left draw pile button (auto-stacks rightwards toward the discard row).
-        ///     靠近左下抽牌堆按钮（向右朝弃牌行自动堆叠）。
+        ///     <para xml:lang="en">Places the control in the row extending right from the draw-pile button.</para>
+        ///     <para xml:lang="zh-CN">将控件放在从抽牌堆按钮向右延伸的行中。</para>
         /// </summary>
         BottomLeftPrimary = 1,
 
         /// <summary>
-        ///     Near the bottom-left discard button (auto-stacks rightwards on overflow).
-        ///     靠近左下 discard 按钮（溢出时向右自动堆叠）。
+        ///     <para xml:lang="en">Places the control in the row extending right from the discard-pile button.</para>
+        ///     <para xml:lang="zh-CN">将控件放在从弃牌堆按钮向右延伸的行中。</para>
         /// </summary>
         BottomLeftSecondary = 2,
 
         /// <summary>
-        ///     Near the bottom-right exhaust button (auto-stacks leftwards on overflow).
-        ///     靠近右下 exhaust 按钮（溢出时向左自动堆叠）。
+        ///     <para xml:lang="en">Places the control in the row extending left from the exhaust-pile button.</para>
+        ///     <para xml:lang="zh-CN">将控件放在从消耗牌堆按钮向左延伸的行中。</para>
         /// </summary>
         BottomRightPrimary = 3,
 
         /// <summary>
-        ///     Reserved for a future second bottom-right slot; stacks left of the primary.
-        ///     为未来第二个右下 slot 保留；堆叠在 primary 左侧。
+        ///     <para xml:lang="en">
+        ///         Places the control after the primary bottom-right slots while reserving the first primary slot.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将控件放在右下主槽位之后，并始终保留第一个主槽位。</para>
         /// </summary>
         BottomRightSecondary = 4,
 
         /// <summary>
-        ///     Slot in the top bar immediately after the vanilla deck button.
-        ///     top bar 中紧跟原版 deck 按钮之后的 slot。
+        ///     <para xml:lang="en">Places the control immediately after the base-game deck button.</para>
+        ///     <para xml:lang="zh-CN">将控件放在原版牌组按钮之后。</para>
         /// </summary>
         TopBarAfterDeck = 5,
 
         /// <summary>
-        ///     Slot in the top bar before the right-most modifier cluster.
-        ///     top bar 中位于最右侧 modifier cluster 之前的 slot。
+        ///     <para xml:lang="en">Places the control before the top bar's modifier group.</para>
+        ///     <para xml:lang="zh-CN">将控件放在顶部栏的修改器组之前。</para>
         /// </summary>
         TopBarBeforeModifiers = 6,
 
         /// <summary>
-        ///     Centered above the vanilla hand (used by <see cref="ModCardPileUiStyle.ExtraHand" />).
-        ///     位于原版 hand 上方居中（由 <see cref="ModCardPileUiStyle.ExtraHand" /> 使用）。
+        ///     <para xml:lang="en">
+        ///         Centers an <see cref="ModCardPileUiStyle.ExtraHand" /> container above the base-game hand.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModCardPileUiStyle.ExtraHand" /> 容器居中放在原版手牌上方。
+        ///     </para>
         /// </summary>
         ExtraHandAbove = 7,
 
         /// <summary>
-        ///     Centered below the vanilla hand (used by <see cref="ModCardPileUiStyle.ExtraHand" />).
-        ///     位于原版 hand 下方居中（由 <see cref="ModCardPileUiStyle.ExtraHand" /> 使用）。
+        ///     <para xml:lang="en">
+        ///         Centers an <see cref="ModCardPileUiStyle.ExtraHand" /> container below the base-game hand.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <see cref="ModCardPileUiStyle.ExtraHand" /> 容器居中放在原版手牌下方。
+        ///     </para>
         /// </summary>
         ExtraHandBelow = 8,
 
         /// <summary>
-        ///     User-specified mount position; pairing of <see cref="ModCardPileAnchor.CustomPosition" /> /
-        ///     <see cref="ModCardPileAnchor.CustomAuthoringPivot" /> is described under <see cref="ModCardPileAnchor" />.
-        ///     用户指定的 mount 位置；<see cref="ModCardPileAnchor.CustomPosition" /> /
-        ///     <see cref="ModCardPileAnchor.CustomAuthoringPivot" /> 的配对规则见 <see cref="ModCardPileAnchor" />。
+        ///     <para xml:lang="en">
+        ///         Uses <see cref="ModCardPileAnchor.CustomPosition" /> and
+        ///         <see cref="ModCardPileAnchor.CustomAuthoringPivot" /> to place the control explicitly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <see cref="ModCardPileAnchor.CustomPosition" /> 和
+        ///         <see cref="ModCardPileAnchor.CustomAuthoringPivot" /> 明确放置控件。
+        ///     </para>
         /// </summary>
         Custom = 9,
     }
 
     /// <summary>
-    ///     UI anchoring descriptor paired with <see cref="ModCardPileUiStyle" />. Combines a discrete slot kind
-    ///     with an optional pixel offset (and an authoring point for <see cref="ModCardPileAnchorKind.Custom" />).
-    ///     Preserved construction shapes: primary (<see cref="Kind" />, <see cref="Offset" />, optional custom
-    ///     fields); two-argument (<c>kind</c>, <c>offset</c>); three-argument custom (<c>kind</c>,
-    ///     <c>offset</c>, <c>customPosition</c>); pivot as either <see cref="Vector2" /> or separate floats.
-    ///     与 <see cref="ModCardPileUiStyle" /> 配对的 UI 锚定描述。组合离散 slot kind 与可选像素 offset
-    ///     （以及 <see cref="ModCardPileAnchorKind.Custom" /> 使用的创作点）。保留的构造形状包括：
-    ///     primary（<see cref="Kind" />、<see cref="Offset" />、可选 custom 字段）；
-    ///     双参数（<c>kind</c>、<c>offset</c>）；三参数 custom（<c>kind</c>、<c>offset</c>、
-    ///     <c>customPosition</c>）；pivot 可用 <see cref="Vector2" /> 或拆分 float 表示。
+    ///     <para xml:lang="en">
+    ///         Describes a card-pile control's layout slot, offset, and optional custom authoring point.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">描述卡牌牌堆控件的布局槽位、偏移和可选自定义定位点。</para>
     /// </summary>
     /// <param name="Kind">
-    ///     Discrete slot the pile wants to attach to.
-    ///     牌堆想附着到的离散 slot。
+    ///     <para xml:lang="en">The layout slot used by the card-pile control.</para>
+    ///     <para xml:lang="zh-CN">卡牌牌堆控件使用的布局槽位。</para>
     /// </param>
     /// <param name="Offset">
-    ///     Additional pixel offset in the mount parent's local space, applied together with resolving
-    ///     <paramref name="CustomPosition" /> for <see cref="ModCardPileAnchorKind.Custom" />.
-    ///     mount parent 本地空间中的额外像素 offset；对 <see cref="ModCardPileAnchorKind.Custom" /> 会与解析后的
-    ///     <paramref name="CustomPosition" /> 一起应用。
+    ///     <para xml:lang="en">
+    ///         An additional offset in the parent control's local coordinate system.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">父控件局部坐标系中的额外偏移。</para>
     /// </param>
     /// <param name="CustomPosition">
-    ///     Point in the mount parent's local space lying on nominal pile chrome after pivot resolution when
-    ///     <paramref name="Kind" /> is <see cref="ModCardPileAnchorKind.Custom" />; ignored otherwise.
-    ///     当 <paramref name="Kind" /> 为 <see cref="ModCardPileAnchorKind.Custom" /> 时，pivot 解析后位于名义
-    ///     牌堆 chrome 上、以 mount parent 本地空间表示的点；其它情况忽略。
+    ///     <para xml:lang="en">
+    ///         For <see cref="ModCardPileAnchorKind.Custom" />, the authoring point in the parent control's local
+    ///         coordinate system; ignored for other anchor kinds.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用 <see cref="ModCardPileAnchorKind.Custom" /> 时，父控件局部坐标系中的定位点；
+    ///         其他锚点类型会忽略此值。
+    ///     </para>
     /// </param>
     /// <param name="CustomAuthoringPivot">
-    ///     For <see cref="ModCardPileAnchorKind.Custom" />: component-wise fractions (typically 0..1) mapping
-    ///     <paramref name="CustomPosition" /> to a landmark on nominal chrome —
-    ///     <c>(0,0)</c> top-left, <c>(0.5,0.5)</c> center, <c>(1,1)</c> bottom-right. Injected upper-left corner is
-    ///     <c>CustomPosition + Offset − nominalChromeSize * CustomAuthoringPivot</c>; ignored unless
-    ///     <paramref name="Kind" /> is <see cref="ModCardPileAnchorKind.Custom" />.
-    ///     对 <see cref="ModCardPileAnchorKind.Custom" />：逐分量比例（通常每轴 0..1），用于将
-    ///     <paramref name="CustomPosition" /> 映射到名义 chrome 上的 landmark：
-    ///     <c>(0,0)</c> 左上，<c>(0.5,0.5)</c> 中心，<c>(1,1)</c> 右下。注入的左上角为
-    ///     <c>CustomPosition + Offset − nominalChromeSize * CustomAuthoringPivot</c>；除非
-    ///     <paramref name="Kind" /> 为 <see cref="ModCardPileAnchorKind.Custom" />，否则忽略。
+    ///     <para xml:lang="en">
+    ///         For <see cref="ModCardPileAnchorKind.Custom" />, the component-wise fraction of the nominal control
+    ///         size placed at <paramref name="CustomPosition" />. Common values are <c>(0, 0)</c> for the upper-left
+    ///         corner, <c>(0.5, 0.5)</c> for the center, and <c>(1, 1)</c> for the lower-right corner.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用 <see cref="ModCardPileAnchorKind.Custom" /> 时，放在 <paramref name="CustomPosition" />
+    ///         处的名义控件尺寸分量比例。常用值包括表示左上角的 <c>(0, 0)</c>、表示中心的
+    ///         <c>(0.5, 0.5)</c> 和表示右下角的 <c>(1, 1)</c>。
+    ///     </para>
     /// </param>
     public readonly record struct ModCardPileAnchor(
         ModCardPileAnchorKind Kind,
@@ -122,46 +132,71 @@ namespace STS2RitsuLib.CardPiles
         Vector2 CustomAuthoringPivot = default)
     {
         /// <summary>
-        ///     Historical two-argument anchor shape preserved for call sites (
-        ///     <c>
-        ///         <see cref="Offset" />
-        ///     </c>
-        ///     plus
-        ///     default custom fields).
-        ///     <c>
-        ///         <see cref="Offset" />
-        ///     </c>
-        ///     为调用点保留的历史双参数 anchor 形状（
-        ///     <c>
-        ///         <see cref="Offset" />
-        ///     </c>
-        ///     加默认 custom 字段）。
-        ///     <c>
-        ///         <see cref="Offset" />
-        ///     </c>
+        ///     <para xml:lang="en">
+        ///         Creates an anchor with an offset and default custom-position values.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建带偏移且自定义位置值为默认值的锚点。</para>
         /// </summary>
+        /// <param name="kind">
+        ///     <para xml:lang="en">The layout slot used by the card-pile control.</para>
+        ///     <para xml:lang="zh-CN">卡牌牌堆控件使用的布局槽位。</para>
+        /// </param>
+        /// <param name="offset">
+        ///     <para xml:lang="en">The additional local offset.</para>
+        ///     <para xml:lang="zh-CN">额外局部偏移。</para>
+        /// </param>
         public ModCardPileAnchor(ModCardPileAnchorKind kind, Vector2 offset)
             : this(kind, offset, default, default)
         {
         }
 
         /// <summary>
-        ///     Three-argument custom anchor shape preserving <c>kind + offset + customPosition</c> with pivot
-        ///     defaulting to <see cref="PivotUpperLeft" />.
-        ///     <see cref="PivotUpperLeft" />。
-        ///     三参数 custom anchor 形状，保留 <c>kind + offset + customPosition</c>，pivot 默认为
-        ///     <see cref="PivotUpperLeft" />。
-        ///     <see cref="PivotUpperLeft" />。
+        ///     <para xml:lang="en">
+        ///         Creates an anchor whose custom authoring pivot is <see cref="PivotUpperLeft" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建自定义定位枢轴为 <see cref="PivotUpperLeft" /> 的锚点。</para>
         /// </summary>
+        /// <param name="kind">
+        ///     <para xml:lang="en">The layout slot used by the card-pile control.</para>
+        ///     <para xml:lang="zh-CN">卡牌牌堆控件使用的布局槽位。</para>
+        /// </param>
+        /// <param name="offset">
+        ///     <para xml:lang="en">The additional local offset.</para>
+        ///     <para xml:lang="zh-CN">额外局部偏移。</para>
+        /// </param>
+        /// <param name="customPosition">
+        ///     <para xml:lang="en">The custom authoring point in the parent control's local coordinates.</para>
+        ///     <para xml:lang="zh-CN">父控件局部坐标系中的自定义定位点。</para>
+        /// </param>
         public ModCardPileAnchor(ModCardPileAnchorKind kind, Vector2 offset, Vector2 customPosition)
             : this(kind, offset, customPosition, default)
         {
         }
 
         /// <summary>
-        ///     Custom anchor with authoring pivot expressed as scalar fractions (typically 0..1 per axis).
-        ///     使用创作 pivot 的标量比例表示形式的 custom anchor（通常每轴 0..1）。
+        ///     <para xml:lang="en">Creates an anchor with separate horizontal and vertical pivot fractions.</para>
+        ///     <para xml:lang="zh-CN">创建分别指定水平和垂直枢轴比例的锚点。</para>
         /// </summary>
+        /// <param name="kind">
+        ///     <para xml:lang="en">The layout slot used by the card-pile control.</para>
+        ///     <para xml:lang="zh-CN">卡牌牌堆控件使用的布局槽位。</para>
+        /// </param>
+        /// <param name="offset">
+        ///     <para xml:lang="en">The additional local offset.</para>
+        ///     <para xml:lang="zh-CN">额外局部偏移。</para>
+        /// </param>
+        /// <param name="customPosition">
+        ///     <para xml:lang="en">The custom authoring point in the parent control's local coordinates.</para>
+        ///     <para xml:lang="zh-CN">父控件局部坐标系中的自定义定位点。</para>
+        /// </param>
+        /// <param name="customAuthoringPivotX">
+        ///     <para xml:lang="en">The horizontal fraction of the nominal control size at the authoring point.</para>
+        ///     <para xml:lang="zh-CN">定位点对应的名义控件宽度比例。</para>
+        /// </param>
+        /// <param name="customAuthoringPivotY">
+        ///     <para xml:lang="en">The vertical fraction of the nominal control size at the authoring point.</para>
+        ///     <para xml:lang="zh-CN">定位点对应的名义控件高度比例。</para>
+        /// </param>
         public ModCardPileAnchor(
             ModCardPileAnchorKind kind,
             Vector2 offset,
@@ -173,55 +208,85 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Pivot that places <see cref="CustomPosition" /> on nominal chrome upper-left (<c>(0,0)</c>,
-        ///     default <see cref="ModCardPileAnchorKind.Custom" /> behaviour).
-        ///     将 <see cref="CustomPosition" /> 放到名义 chrome 左上角的 pivot（<c>(0,0)</c>，
-        ///     默认 <see cref="ModCardPileAnchorKind.Custom" /> 行为）。
+        ///     <para xml:lang="en">Gets the pivot that places the control's upper-left corner at the authoring point.</para>
+        ///     <para xml:lang="zh-CN">获取将控件左上角放在定位点的枢轴。</para>
         /// </summary>
         public static Vector2 PivotUpperLeft => Vector2.Zero;
 
         /// <summary>
-        ///     Pivot that places <see cref="CustomPosition" /> on nominal chrome geometric center.
-        ///     将 <see cref="CustomPosition" /> 放到名义 chrome 几何中心的 pivot。
+        ///     <para xml:lang="en">Gets the pivot that places the control's center at the authoring point.</para>
+        ///     <para xml:lang="zh-CN">获取将控件中心放在定位点的枢轴。</para>
         /// </summary>
         public static Vector2 PivotCenter => Vector2.One * 0.5f;
 
         /// <summary>
-        ///     Convenience anchor that falls back to the style's default slot.
-        ///     回退到样式默认 slot 的便捷 anchor。
+        ///     <para xml:lang="en">Gets an anchor that uses the selected UI style's default slot.</para>
+        ///     <para xml:lang="zh-CN">获取使用所选界面样式默认槽位的锚点。</para>
         /// </summary>
         public static ModCardPileAnchor Default { get; } = new(ModCardPileAnchorKind.StyleDefault);
 
         /// <summary>
-        ///     Builds a <see cref="ModCardPileAnchorKind.Custom" /> anchor at authored chrome upper-left
-        ///     <paramref name="upperLeftPosition" /> (<see cref="PivotUpperLeft" /> semantics).
-        ///     在 authored chrome 左上角 <paramref name="upperLeftPosition" /> 构建
-        ///     <see cref="ModCardPileAnchorKind.Custom" /> anchor（<see cref="PivotUpperLeft" /> 语义）。
+        ///     <para xml:lang="en">
+        ///         Creates a custom anchor whose upper-left corner is <paramref name="upperLeftPosition" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建左上角位于 <paramref name="upperLeftPosition" /> 的自定义锚点。
+        ///     </para>
         /// </summary>
+        /// <param name="upperLeftPosition">
+        ///     <para xml:lang="en">The upper-left position in the parent control's local coordinates.</para>
+        ///     <para xml:lang="zh-CN">父控件局部坐标系中的左上角位置。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The custom anchor.</para>
+        ///     <para xml:lang="zh-CN">自定义锚点。</para>
+        /// </returns>
         public static ModCardPileAnchor AtPosition(Vector2 upperLeftPosition)
         {
             return new(ModCardPileAnchorKind.Custom, Vector2.Zero, upperLeftPosition);
         }
 
         /// <summary>
-        ///     Builds a <see cref="ModCardPileAnchorKind.Custom" /> anchor at <paramref name="authoringPoint" />
-        ///     interpreted as landmark <paramref name="chromePivotFraction" /> on nominal chrome (<c>X,Y</c> typically
-        ///     between 0 and 1 inclusive).
-        ///     在 <paramref name="authoringPoint" /> 构建 <see cref="ModCardPileAnchorKind.Custom" /> anchor，
-        ///     并将其解释为名义 chrome 上的 landmark <paramref name="chromePivotFraction" />
-        ///     （<c>X,Y</c> 通常位于 0 到 1 之间，含端点）。
+        ///     <para xml:lang="en">
+        ///         Creates a custom anchor that places <paramref name="chromePivotFraction" /> of the nominal control
+        ///         size at <paramref name="authoringPoint" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建自定义锚点，将名义控件尺寸的 <paramref name="chromePivotFraction" /> 比例位置放在
+        ///         <paramref name="authoringPoint" />。
+        ///     </para>
         /// </summary>
+        /// <param name="authoringPoint">
+        ///     <para xml:lang="en">The authoring point in the parent control's local coordinates.</para>
+        ///     <para xml:lang="zh-CN">父控件局部坐标系中的定位点。</para>
+        /// </param>
+        /// <param name="chromePivotFraction">
+        ///     <para xml:lang="en">The component-wise fraction of the nominal control size at the authoring point.</para>
+        ///     <para xml:lang="zh-CN">定位点对应的名义控件尺寸分量比例。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The custom anchor.</para>
+        ///     <para xml:lang="zh-CN">自定义锚点。</para>
+        /// </returns>
         public static ModCardPileAnchor AtPivot(Vector2 authoringPoint, Vector2 chromePivotFraction)
         {
             return new(ModCardPileAnchorKind.Custom, Vector2.Zero, authoringPoint, chromePivotFraction);
         }
 
         /// <summary>
-        ///     Builds a <see cref="ModCardPileAnchorKind.Custom" /> anchor placing nominal chrome geometric center at
-        ///     <paramref name="centerPosition" /> (<see cref="PivotCenter" /> semantics).
-        ///     构建 <see cref="ModCardPileAnchorKind.Custom" /> anchor，将名义 chrome 的几何中心放在
-        ///     <paramref name="centerPosition" />（<see cref="PivotCenter" /> 语义）。
+        ///     <para xml:lang="en">
+        ///         Creates a custom anchor whose center is <paramref name="centerPosition" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建中心位于 <paramref name="centerPosition" /> 的自定义锚点。</para>
         /// </summary>
+        /// <param name="centerPosition">
+        ///     <para xml:lang="en">The center position in the parent control's local coordinates.</para>
+        ///     <para xml:lang="zh-CN">父控件局部坐标系中的中心位置。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The custom anchor.</para>
+        ///     <para xml:lang="zh-CN">自定义锚点。</para>
+        /// </returns>
         public static ModCardPileAnchor AtCenter(Vector2 centerPosition)
         {
             return new(ModCardPileAnchorKind.Custom, Vector2.Zero, centerPosition, PivotCenter);

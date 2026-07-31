@@ -7,12 +7,15 @@ namespace STS2RitsuLib
     public static partial class RitsuLibFramework
     {
         /// <summary>
-        ///     Registers an ancient card candidate that <see cref="DustyTome" /> should prefer for the specified character.
-        ///     注册一个 <see cref="DustyTome" /> 应为指定角色优先选择的 ancient 卡牌候选。
+        ///     <para xml:lang="en">
+        ///         Registers an Ancient card candidate that <see cref="DustyTome" /> should prefer for the
+        ///         specified character.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册供 <see cref="DustyTome" /> 为指定角色优先选择的先古卡牌候选项。</para>
         /// </summary>
         /// <param name="registeringModId">
-        ///     Optional mod id for diagnostics.
-        ///     用于诊断消息的可选 Mod id。
+        ///     <para xml:lang="en">Optional mod ID used for diagnostics.</para>
+        ///     <para xml:lang="zh-CN">用于诊断的可选模组 ID。</para>
         /// </param>
         public static void RegisterDustyTomeCard<TCharacter, TAncientCard>(string? registeringModId = null)
             where TCharacter : CharacterModel
@@ -22,8 +25,11 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Registers a <see cref="DustyTome" /> card candidate using CLR types for both character and ancient card.
-        ///     使用角色和 ancient 卡牌的 CLR 类型注册 <see cref="DustyTome" /> 卡牌候选。
+        ///     <para xml:lang="en">
+        ///         Registers a <see cref="DustyTome" /> card candidate from CLR types for the character and
+        ///         Ancient card.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用角色和先古卡牌的 CLR 类型注册 <see cref="DustyTome" /> 卡牌候选项。</para>
         /// </summary>
         public static void RegisterDustyTomeCard(Type characterType, Type ancientCardType,
             string? registeringModId = null)
@@ -32,8 +38,11 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Registers a <see cref="DustyTome" /> card candidate using an explicit character id and ancient card type.
-        ///     使用显式角色 id 和 ancient 卡牌类型注册 <see cref="DustyTome" /> 卡牌候选。
+        ///     <para xml:lang="en">
+        ///         Registers a <see cref="DustyTome" /> card candidate from an explicit character ID and
+        ///         Ancient-card type.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用显式角色 ID 和先古卡牌类型注册 <see cref="DustyTome" /> 卡牌候选项。</para>
         /// </summary>
         public static void RegisterDustyTomeCard(ModelId characterId, Type ancientCardType,
             string? registeringModId = null)

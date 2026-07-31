@@ -9,8 +9,8 @@ using STS2RitsuLib.Scaffolding.Godot;
 namespace STS2RitsuLib.Models.Capabilities.Patches
 {
     /// <summary>
-    ///     Bridges card overlay capabilities into <see cref="NCard" /> after vanilla overlay reloads.
-    ///     在原版覆盖层重载后，将卡牌覆盖层能力桥接到 <see cref="NCard" />。
+    ///     <para xml:lang="en">Applies card-overlay capabilities to <see cref="NCard" /> after vanilla overlays reload.</para>
+    ///     <para xml:lang="zh-CN">在原版覆盖层重新加载后，将卡牌覆盖层能力应用到 <see cref="NCard" />。</para>
     /// </summary>
     internal static class CardOverlayCapabilityPatches
     {

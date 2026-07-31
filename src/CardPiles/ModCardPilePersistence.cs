@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.RunData;
@@ -117,16 +118,19 @@ namespace STS2RitsuLib.CardPiles
             CardPile pile,
             SerializableCard serializableCard)
         {
+            CardModel card;
             try
             {
-                var card = runState.LoadCard(serializableCard, player);
-                pile.AddInternal(card, -1, true);
+                card = runState.LoadCard(serializableCard, player);
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] Failed to restore card in run-persistent pile '{pile.Type}': {ex.Message}");
+                    $"[CardPiles] Failed to load a card for run-persistent pile '{pile.Type}': {ex}");
+                return;
             }
+
+            pile.AddInternal(card, -1, true);
         }
 
         private static bool HasRunPersistentDefinitions()
@@ -137,21 +141,21 @@ namespace STS2RitsuLib.CardPiles
     }
 
     /// <summary>
-    ///     Serializable run-persistent card pile contents for one player.
-    ///     单个玩家的可序列化 RunPersistent 牌堆内容。
+    ///     <para xml:lang="en">Represents one player's serializable run-persistent pile contents.</para>
+    ///     <para xml:lang="zh-CN">表示单个玩家可序列化的局内持久牌堆内容。</para>
     /// </summary>
     public sealed class ModCardPilePlayerSaveState
     {
         /// <summary>
-        ///     Cards grouped by registered card-pile id.
-        ///     按已注册牌堆 id 分组的卡牌。
+        ///     <para xml:lang="en">Gets or sets serialized cards grouped by registered pile ID.</para>
+        ///     <para xml:lang="zh-CN">获取或设置按已注册牌堆 ID 分组的序列化卡牌。</para>
         /// </summary>
         public Dictionary<string, List<SerializableCard>> Piles { get; set; } =
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     True when no cards are stored.
-        ///     未存储任何卡牌时为 true。
+        ///     <para xml:lang="en">Gets whether the state contains no cards.</para>
+        ///     <para xml:lang="zh-CN">获取该状态是否未包含任何卡牌。</para>
         /// </summary>
         public bool IsEmpty => Piles.Count == 0 || Piles.Values.All(static cards => cards.Count == 0);
     }

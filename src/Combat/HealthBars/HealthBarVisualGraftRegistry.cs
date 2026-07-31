@@ -4,30 +4,39 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 namespace STS2RitsuLib.Combat.HealthBars
 {
     /// <summary>
-    ///     Runtime context for resolving visual graft metrics on a creature health bar.
-    ///     用于解析生物生命条上 visual graft 指标的运行时上下文。
+    ///     <para xml:lang="en">Provides the creature used to resolve visual health-bar extension metrics.</para>
+    ///     <para xml:lang="zh-CN">提供用于解析生命条视觉扩展参数的生物。</para>
     /// </summary>
     /// <param name="Creature">
-    ///     Creature whose bar is being evaluated.
-    ///     正在评估生命条的生物。
+    ///     <para xml:lang="en">The creature whose health bar is being evaluated.</para>
+    ///     <para xml:lang="zh-CN">正在评估生命条的生物。</para>
     /// </param>
     public readonly record struct HealthBarVisualGraftContext(Creature Creature);
 
     /// <summary>
-    ///     Extra HP-length grafted onto the right end of the current HP fill for bar geometry and right-side forecasts.
-    ///     嫁接到当前 HP 填充右端的额外 HP 长度，用于生命条几何和右侧 forecast。
+    ///     <para xml:lang="en">
+    ///         Describes the visual HP length and appearance appended to the current-HP edge for health-bar geometry
+    ///         and right-origin forecasts.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述附加到当前生命值边缘的视觉生命值长度和外观，用于生命条布局和右侧起点预测。
+    ///     </para>
     /// </summary>
     /// <param name="GraftHp">
-    ///     Additional HP units drawn past the current HP edge along the bar.
-    ///     沿生命条绘制到当前 HP 边缘之外的额外 HP 单位。
+    ///     <para xml:lang="en">The additional visual HP units drawn beyond the current-HP edge.</para>
+    ///     <para xml:lang="zh-CN">在当前生命值边缘之外绘制的额外视觉生命值单位。</para>
     /// </param>
     /// <param name="GraftSelfModulate">
-    ///     Optional tint for the graft strip; null uses a default extension color.
-    ///     graft 条的可选染色；null 使用默认扩展颜色。
+    ///     <para xml:lang="en">
+    ///         The optional modulation color for the extension strip; <see langword="null" /> uses the default color.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         扩展条的可选调制色；为 <see langword="null" /> 时使用默认颜色。
+    ///     </para>
     /// </param>
     /// <param name="GraftMaterial">
-    ///     Optional material for the graft strip.
-    ///     graft 条的可选 material。
+    ///     <para xml:lang="en">The optional material for the extension strip.</para>
+    ///     <para xml:lang="zh-CN">扩展条的可选材质。</para>
     /// </param>
     public readonly record struct HealthBarVisualGraftMetrics(
         int GraftHp,
@@ -35,9 +44,13 @@ namespace STS2RitsuLib.Combat.HealthBars
         Material? GraftMaterial)
     {
         /// <summary>
-        ///     Initializes metrics with no custom appearance.
-        ///     初始化没有自定义外观的指标。
+        ///     <para xml:lang="en">Initializes metrics without a custom color or material.</para>
+        ///     <para xml:lang="zh-CN">初始化不带自定义颜色或材质的参数。</para>
         /// </summary>
+        /// <param name="graftHp">
+        ///     <para xml:lang="en">The additional visual HP units.</para>
+        ///     <para xml:lang="zh-CN">额外视觉生命值单位。</para>
+        /// </param>
         public HealthBarVisualGraftMetrics(int graftHp)
             : this(graftHp, null, null)
         {
@@ -45,35 +58,69 @@ namespace STS2RitsuLib.Combat.HealthBars
     }
 
     /// <summary>
-    ///     Supplies visual graft metrics for a creature (temporary HP bar extension, etc.).
-    ///     为生物提供 visual graft 指标（临时 HP 条扩展等）。
+    ///     <para xml:lang="en">Supplies visual health-bar extension metrics for a creature.</para>
+    ///     <para xml:lang="zh-CN">为生物提供生命条视觉扩展参数。</para>
     /// </summary>
     public interface IHealthBarVisualGraftSource
     {
         /// <summary>
-        ///     Returns graft metrics for <paramref name="context" />; yield zero
-        ///     <see cref="HealthBarVisualGraftMetrics.GraftHp" />
-        ///     when none apply.
-        ///     返回 <paramref name="context" /> 的 graft 指标；不适用时产生零
-        ///     <see cref="HealthBarVisualGraftMetrics.GraftHp" />。
+        ///     <para xml:lang="en">
+        ///         Gets extension metrics for <paramref name="context" />. Return zero
+        ///         <see cref="HealthBarVisualGraftMetrics.GraftHp" /> when no extension applies.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="context" /> 的扩展参数。没有适用的扩展时，应令
+        ///         <see cref="HealthBarVisualGraftMetrics.GraftHp" /> 为零。
+        ///     </para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The creature being rendered.</para>
+        ///     <para xml:lang="zh-CN">正在渲染的生物上下文。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The visual extension metrics.</para>
+        ///     <para xml:lang="zh-CN">视觉扩展参数。</para>
+        /// </returns>
         HealthBarVisualGraftMetrics GetHealthBarVisualGraft(HealthBarVisualGraftContext context);
     }
 
     /// <summary>
-    ///     Aggregates graft metrics from creature powers and registered providers.
-    ///     汇总来自生物能力和已注册 provider 的 graft 指标。
+    ///     <para xml:lang="en">
+    ///         Registers and aggregates visual health-bar extension sources from mods and creature powers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册并汇总来自模组和生物能力的生命条视觉扩展来源。
+    ///     </para>
     /// </summary>
     public static class HealthBarVisualGraftRegistry
     {
         private static readonly Lock SyncRoot = new();
-        private static readonly Dictionary<(string ModId, string SourceId), ProviderEntry> Providers = [];
+
+        private static readonly Dictionary<(string ModId, string SourceId), ProviderEntry> Providers =
+            new(HealthBarProviderKeyComparer.Instance);
+
         private static long _nextRegistrationOrder;
 
         /// <summary>
-        ///     Registers or replaces a graft source implemented by <typeparamref name="TSource" />.
-        ///     注册或替换由 <typeparamref name="TSource" /> 实现的 graft source。
+        ///     <para xml:lang="en">
+        ///         Registers or replaces a visual extension source implemented by <typeparamref name="TSource" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册或替换由 <typeparamref name="TSource" /> 实现的视觉扩展来源。
+        ///     </para>
         /// </summary>
+        /// <typeparam name="TSource">
+        ///     <para xml:lang="en">The source type with a parameterless constructor.</para>
+        ///     <para xml:lang="zh-CN">具有无参构造函数的来源类型。</para>
+        /// </typeparam>
+        /// <param name="modId">
+        ///     <para xml:lang="en">The owning mod ID.</para>
+        ///     <para xml:lang="zh-CN">所属模组的 ID。</para>
+        /// </param>
+        /// <param name="sourceId">
+        ///     <para xml:lang="en">The optional mod-local source ID; defaults to the source type name.</para>
+        ///     <para xml:lang="zh-CN">可选的模组内来源 ID；默认使用来源类型名称。</para>
+        /// </param>
         public static void Register<TSource>(string modId, string? sourceId = null)
             where TSource : IHealthBarVisualGraftSource, new()
         {
@@ -81,30 +128,56 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Registers or replaces a graft source instance.
-        ///     注册或替换 graft source 实例。
+        ///     <para xml:lang="en">Registers or replaces a visual extension source instance.</para>
+        ///     <para xml:lang="zh-CN">注册或替换视觉扩展来源实例。</para>
         /// </summary>
+        /// <param name="modId">
+        ///     <para xml:lang="en">The owning mod ID.</para>
+        ///     <para xml:lang="zh-CN">所属模组的 ID。</para>
+        /// </param>
+        /// <param name="sourceId">
+        ///     <para xml:lang="en">The source ID within the mod.</para>
+        ///     <para xml:lang="zh-CN">该来源在模组内的 ID。</para>
+        /// </param>
+        /// <param name="source">
+        ///     <para xml:lang="en">The source instance.</para>
+        ///     <para xml:lang="zh-CN">来源实例。</para>
+        /// </param>
         public static void Register(string modId, string sourceId, IHealthBarVisualGraftSource source)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(sourceId);
             ArgumentNullException.ThrowIfNull(source);
 
+            var normalizedModId = modId.Trim();
+            var normalizedSourceId = sourceId.Trim();
             lock (SyncRoot)
             {
-                var key = (modId, sourceId);
+                var key = (normalizedModId, normalizedSourceId);
                 var registrationOrder = Providers.TryGetValue(key, out var existing)
                     ? existing.RegistrationOrder
                     : _nextRegistrationOrder++;
 
-                Providers[key] = new(modId, sourceId, source, registrationOrder);
+                Providers[key] = new(normalizedModId, normalizedSourceId, source, registrationOrder);
             }
         }
 
         /// <summary>
-        ///     Removes a previously registered graft source.
-        ///     移除先前注册的 graft source。
+        ///     <para xml:lang="en">Removes a previously registered visual extension source.</para>
+        ///     <para xml:lang="zh-CN">移除先前注册的视觉扩展来源。</para>
         /// </summary>
+        /// <param name="modId">
+        ///     <para xml:lang="en">The mod ID used at registration.</para>
+        ///     <para xml:lang="zh-CN">注册时使用的模组 ID。</para>
+        /// </param>
+        /// <param name="sourceId">
+        ///     <para xml:lang="en">The source ID used at registration.</para>
+        ///     <para xml:lang="zh-CN">注册时使用的来源 ID。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when a source was removed.</para>
+        ///     <para xml:lang="zh-CN">移除来源时为 <see langword="true" />。</para>
+        /// </returns>
         public static bool Unregister(string modId, string sourceId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -112,13 +185,20 @@ namespace STS2RitsuLib.Combat.HealthBars
 
             lock (SyncRoot)
             {
-                return Providers.Remove((modId, sourceId));
+                return Providers.Remove((modId.Trim(), sourceId.Trim()));
             }
         }
 
         /// <summary>
-        ///     Sums graft HP from powers and registered providers; first non-null appearance wins for tint/material.
-        ///     汇总来自能力和已注册 provider 的 graft HP；第一个非 null 外观决定 tint/material。
+        ///     <para xml:lang="en">
+        ///         Sums positive extension HP from powers and registered sources with saturation at
+        ///         <see cref="int.MaxValue" />. The first non-null modulation color and material win independently,
+        ///         even when supplied by a source whose HP contribution is not positive.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         汇总能力和已注册来源提供的正数扩展生命值，并在 <see cref="int.MaxValue" /> 处饱和。
+        ///         最先出现的非空调制色和材质分别生效，即使提供外观的来源没有提供正数生命值。
+        ///     </para>
         /// </summary>
         internal static HealthBarVisualGraftMetrics Aggregate(Creature creature)
         {
@@ -132,10 +212,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             foreach (var source in creature.Powers.OfType<IHealthBarVisualGraftSource>())
                 try
                 {
-                    var m = source.GetHealthBarVisualGraft(context);
-                    sumHp += Math.Max(0, m.GraftHp);
-                    color ??= m.GraftSelfModulate;
-                    material ??= m.GraftMaterial;
+                    Merge(source.GetHealthBarVisualGraft(context));
                 }
                 catch (Exception ex)
                 {
@@ -152,10 +229,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             foreach (var entry in snapshot)
                 try
                 {
-                    var m = entry.Source.GetHealthBarVisualGraft(context);
-                    sumHp += Math.Max(0, m.GraftHp);
-                    color ??= m.GraftSelfModulate;
-                    material ??= m.GraftMaterial;
+                    Merge(entry.Source.GetHealthBarVisualGraft(context));
                 }
                 catch (Exception ex)
                 {
@@ -164,6 +238,13 @@ namespace STS2RitsuLib.Combat.HealthBars
                 }
 
             return new(sumHp, color, material);
+
+            void Merge(HealthBarVisualGraftMetrics metrics)
+            {
+                sumHp = (int)Math.Min(int.MaxValue, (long)sumHp + Math.Max(0, metrics.GraftHp));
+                color ??= metrics.GraftSelfModulate;
+                material ??= metrics.GraftMaterial;
+            }
         }
 
         private readonly record struct ProviderEntry(

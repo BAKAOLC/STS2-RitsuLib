@@ -11,10 +11,13 @@ namespace STS2RitsuLib.Settings
             {
                 return predicate();
             }
-            catch
+            catch (Exception ex)
             {
-                // Preserve the established fail-open behavior for third-party predicates.
-                return true;
+                var method = predicate.Method;
+                var predicateName = $"{method.DeclaringType?.FullName ?? "<unknown>"}.{method.Name}";
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Predicate '{predicateName}' failed and was treated as false: {ex}");
+                return false;
             }
         }
     }

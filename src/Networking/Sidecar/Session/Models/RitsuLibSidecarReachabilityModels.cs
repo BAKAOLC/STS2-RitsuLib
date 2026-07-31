@@ -3,45 +3,73 @@ using MegaCrit.Sts2.Core.Multiplayer.Game;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Reachability state for a remote peer from the sidecar sender's point of view.
-    ///     从 sidecar 发送方视角看的远程 peer 可达性状态。
+    ///     <para xml:lang="en">
+    ///         Specifies whether a remote peer can receive sidecar traffic.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         指定远程对等端能否接收 sidecar 流量。
+    ///     </para>
     /// </summary>
     public enum RitsuLibSidecarPeerReachability
     {
         /// <summary>
-        ///     No safe capability verdict yet.
-        ///     尚无安全的能力判定。
+        ///     <para xml:lang="en">
+        ///         No capability verdict is available yet.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尚无可用的功能判定。
+        ///     </para>
         /// </summary>
         Unknown = 0,
 
         /// <summary>
-        ///     Peer is confirmed to support sidecar traffic.
-        ///     已确认 peer 支持 sidecar 流量。
+        ///     <para xml:lang="en">
+        ///         The peer is confirmed to support sidecar traffic.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         已确认该对等端支持 sidecar 流量。
+        ///     </para>
         /// </summary>
         Supported = 1,
 
         /// <summary>
-        ///     Peer is confirmed incompatible and must not receive sidecar packets.
-        ///     已确认 peer 不兼容，且不得接收 sidecar 数据包。
+        ///     <para xml:lang="en">
+        ///         The peer is confirmed incompatible and must not receive sidecar packets.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         已确认该对等端不兼容，不得向其发送 sidecar 数据包。
+        ///     </para>
         /// </summary>
         Unsupported = 2,
     }
 
     /// <summary>
-    ///     Raised when sidecar session binds to a multiplayer <see cref="INetGameService" />.
-    ///     当 sidecar 会话绑定到多人 <see cref="INetGameService" /> 时引发。
+    ///     <para xml:lang="en">
+    ///         Describes a sidecar session binding to a multiplayer <see cref="INetGameService" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述 sidecar 会话与多人 <see cref="INetGameService" /> 的绑定。
+    ///     </para>
     /// </summary>
     public readonly record struct SidecarSessionBoundEvent(INetGameService NetService, long Epoch);
 
     /// <summary>
-    ///     Raised when sidecar session becomes unbound.
-    ///     当 sidecar 会话变为未绑定时引发。
+    ///     <para xml:lang="en">
+    ///         Describes a sidecar session becoming unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述 sidecar 会话解除绑定。
+    ///     </para>
     /// </summary>
     public readonly record struct SidecarSessionUnboundEvent(long Epoch);
 
     /// <summary>
-    ///     Raised when a peer reachability state transitions.
-    ///     peer 可达性状态转换时引发。
+    ///     <para xml:lang="en">
+    ///         Describes a change in peer reachability.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述对等端可达性发生变化。
+    ///     </para>
     /// </summary>
     public readonly record struct SidecarPeerReachabilityChangedEvent(
         ulong PeerNetId,
@@ -51,8 +79,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         long Epoch);
 
     /// <summary>
-    ///     Raised when handshake metadata for a peer is accepted.
-    ///     接受某个 peer 的握手元数据时引发。
+    ///     <para xml:lang="en">
+    ///         Describes an accepted sidecar handshake from a peer.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述已接受的对等端 sidecar 握手。
+    ///     </para>
     /// </summary>
     public readonly record struct SidecarHandshakeCompletedEvent(
         ulong PeerNetId,

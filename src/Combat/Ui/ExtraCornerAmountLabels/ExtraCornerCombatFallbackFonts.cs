@@ -6,8 +6,8 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     Last-resort font when no vanilla reference control is available (e.g. node not ready).
-    ///     没有可用原版参考 control 时的最后后备字体（例如节点尚未 ready）。
+    ///     <para xml:lang="en">Applies a fallback font when the host's base-game reference label is unavailable.</para>
+    ///     <para xml:lang="zh-CN">当宿主的游戏原有参考标签不可用时，应用回退字体。</para>
     /// </summary>
     internal static class ExtraCornerCombatFallbackFonts
     {

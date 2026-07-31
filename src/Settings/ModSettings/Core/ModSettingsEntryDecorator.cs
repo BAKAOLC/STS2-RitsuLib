@@ -3,9 +3,18 @@ using Godot;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Preserves the complete behavior of an entry while one aspect is decorated by a section builder.
-    ///     在 section builder 装饰条目的某一项行为时，保留该条目的完整行为。
+    ///     <para xml:lang="en">
+    ///         Forwards every entry behavior to an inner definition so a section builder can decorate one concern
+    ///         without discarding the others.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将条目的全部行为转发到内部定义，使节构建器能够装饰单项功能而不丢失其他功能。
+    ///     </para>
     /// </summary>
+    /// <param name="inner">
+    ///     <para xml:lang="en">The entry definition whose behavior is forwarded.</para>
+    ///     <para xml:lang="zh-CN">其行为将被转发的条目定义。</para>
+    /// </param>
     internal abstract class ModSettingsEntryDecorator(ModSettingsEntryDefinition inner)
         : ModSettingsEntryDefinition(inner.Id, inner.Label, inner.Description)
     {

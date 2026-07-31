@@ -9,15 +9,21 @@ using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Scaffolding.Characters.Patches;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
 using STS2RitsuLib.Scaffolding.Godot;
+using STS2RitsuLib.Scaffolding.Godot.NodeFactories;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Harmony patches that call mod runtime Godot factory interfaces from vanilla model entry points. Prefixes use
-    ///     Harmony <c>Priority.First</c> so path-based overrides still run when factories return <c>null</c>.
-    ///     从原版模型入口点调用 mod 运行时 Godot 工厂接口的 Harmony 补丁。前缀使用
-    ///     Harmony <c>Priority.First</c> 因此当工厂返回 <c>null</c> 时，基于路径的覆盖仍会运行。
+    ///     <para xml:lang="en">
+    ///         Supplies Harmony prefixes that invoke mod runtime Godot factories from vanilla model entry points.
+    ///         A factory returning <see langword="null" />, throwing, or producing an invalid Godot object leaves the
+    ///         original path available to later override patches and the base game.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供从原版模型入口调用模组运行时 Godot 工厂的 Harmony 前缀。工厂返回 <see langword="null" />、抛出异常或
+    ///         产生无效的 Godot 对象时，后续覆盖补丁和游戏本体仍可使用原有路径。
+    ///     </para>
     /// </summary>
     internal static class ModModelRuntimeGodotFactoryPatches
     {
@@ -285,9 +291,92 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
         }
 
+        private static bool TryInvokeGodotFactory<TResult>(
+            object owner,
+            string memberName,
+            Func<TResult?> factory,
+            out TResult created)
+            where TResult : GodotObject
+        {
+            created = null!;
+
+            TResult? candidate;
+            try
+            {
+                candidate = factory();
+            }
+            catch (Exception ex)
+            {
+                LogRuntimeFactoryFailure(owner, memberName, ex);
+                return false;
+            }
+
+            if (candidate == null)
+                return false;
+
+            if (!GodotObject.IsInstanceValid(candidate))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Godot] Runtime factory {DescribeFactoryOwner(owner)}.{memberName} returned an invalid {typeof(TResult).Name}. Falling back.");
+                return false;
+            }
+
+            created = candidate;
+            return true;
+        }
+
+        private static bool TryInvokeFactory<TResult>(
+            object owner,
+            string memberName,
+            Func<TResult?> factory,
+            out TResult created)
+            where TResult : class
+        {
+            created = null!;
+
+            try
+            {
+                var candidate = factory();
+                if (candidate == null)
+                    return false;
+
+                created = candidate;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogRuntimeFactoryFailure(owner, memberName, ex);
+                return false;
+            }
+        }
+
+        private static bool TryGetFactoryFlag(object owner, string memberName, Func<bool> accessor)
+        {
+            try
+            {
+                return accessor();
+            }
+            catch (Exception ex)
+            {
+                LogRuntimeFactoryFailure(owner, memberName, ex);
+                return false;
+            }
+        }
+
+        private static void LogRuntimeFactoryFailure(object owner, string memberName, Exception ex)
+        {
+            RitsuLibFramework.Logger.Warn(
+                $"[Godot] Runtime factory {DescribeFactoryOwner(owner)}.{memberName} failed: {ex.Message}. Falling back.");
+        }
+
+        private static string DescribeFactoryOwner(object owner)
+        {
+            return owner.GetType().FullName ?? owner.GetType().Name;
+        }
+
         /// <summary>
-        ///     Patches <see cref="MonsterModel.CreateVisuals" /> for <see cref="IModCreatureVisualsFactory" />.
-        ///     为 <see cref="IModCreatureVisualsFactory" /> 修补<see cref="MonsterModel.CreateVisuals" />。
+        ///     <para xml:lang="en">Integrates runtime creature-visual factories with <see cref="MonsterModel.CreateVisuals" />.</para>
+        ///     <para xml:lang="zh-CN">将运行时生物视觉工厂接入 <see cref="MonsterModel.CreateVisuals" />。</para>
         /// </summary>
         internal class MonsterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
         {
@@ -303,35 +392,55 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null,
-            ///     falling back to the obsolete <see cref="IModMonsterCreatureVisualsFactory" /> for existing mods.
-            ///     当 <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> 返回非 null 时使用它，
-            ///     并为现有 mod 回退到已过时的 <see cref="IModMonsterCreatureVisualsFactory" />。
+            ///     <para xml:lang="en">
+            ///         Uses a valid result from <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" />; otherwise
+            ///         attempts the obsolete monster-specific factory, then permits the original method to run.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         使用 <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> 的有效结果；否则尝试已过时的
+            ///         怪物专用工厂，仍无结果时让原方法继续执行。
+            ///     </para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(MonsterModel __instance, ref NCreatureVisuals __result)
             {
-                NCreatureVisuals? created = null;
-                if (__instance is IModCreatureVisualsFactory factory)
-                    created = factory.TryCreateCreatureVisuals();
+                // Preserve the explicit preference order between current and obsolete factory interfaces.
+                // ReSharper disable once DuplicatedSequentialIfBodies
+                if (__instance is IModCreatureVisualsFactory factory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        factory.TryCreateCreatureVisuals,
+                        out NCreatureVisuals created))
+                    return UseCreatedVisuals(created, out __result);
 
 #pragma warning disable CS0618
-                if (created == null && __instance is IModMonsterCreatureVisualsFactory legacyFactory)
-                    created = legacyFactory.TryCreateCreatureVisuals();
+                if (__instance is IModMonsterCreatureVisualsFactory legacyFactory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModMonsterCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        legacyFactory.TryCreateCreatureVisuals,
+                        out created))
+                    return UseCreatedVisuals(created, out __result);
 #pragma warning restore CS0618
 
-                if (created == null)
-                    return true;
+                return true;
 
-                ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
-                __result = created;
-                return false;
+                static bool UseCreatedVisuals(NCreatureVisuals created, out NCreatureVisuals result)
+                {
+                    ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
+                    result = created;
+                    return false;
+                }
             }
         }
 
         /// <summary>
-        ///     Patches <see cref="CharacterModel.CreateVisuals" /> for <see cref="IModCreatureVisualsFactory" />.
-        ///     为 <see cref="IModCreatureVisualsFactory" /> 修补<see cref="CharacterModel.CreateVisuals" />。
+        ///     <para xml:lang="en">
+        ///         Integrates creature-visual factories and profile resources with
+        ///         <see cref="CharacterModel.CreateVisuals" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将生物视觉工厂和配置资源接入 <see cref="CharacterModel.CreateVisuals" />。</para>
         /// </summary>
         internal class CharacterCreatureVisualsRuntimeFactoryPatch : IPatchMethod
         {
@@ -347,35 +456,64 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> when it returns non-null,
-            ///     falling back to the obsolete <see cref="IModCharacterCreatureVisualsFactory" /> for existing mods.
-            ///     当 <see cref="IModCreatureVisualsFactory.TryCreateCreatureVisuals" /> 返回非 null 时使用它，
-            ///     并为现有 mod 回退到已过时的 <see cref="IModCharacterCreatureVisualsFactory" />。
+            ///     <para xml:lang="en">
+            ///         Prefers a valid general factory result, then the obsolete character-specific factory, then a configured
+            ///         visuals scene or texture (including the placeholder-character fallback) before the original method.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         依次优先使用通用工厂的有效结果、已过时的角色专用工厂，以及已配置的视觉场景或纹理（包括占位角色回退）；
+            ///         都不可用时再执行原方法。
+            ///     </para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, ref NCreatureVisuals __result)
             {
-                NCreatureVisuals? created = null;
-                if (__instance is IModCreatureVisualsFactory factory)
-                    created = factory.TryCreateCreatureVisuals();
+                // Preserve the explicit preference order between current and obsolete factory interfaces.
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                // ReSharper disable once DuplicatedSequentialIfBodies
+                if (__instance is IModCreatureVisualsFactory factory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        factory.TryCreateCreatureVisuals,
+                        out NCreatureVisuals created))
+                    return UseCreatedVisuals(created, out __result);
 
 #pragma warning disable CS0618
-                if (created == null && __instance is IModCharacterCreatureVisualsFactory legacyFactory)
-                    created = legacyFactory.TryCreateCreatureVisuals();
+                if (__instance is IModCharacterCreatureVisualsFactory legacyFactory &&
+                    TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModCharacterCreatureVisualsFactory.TryCreateCreatureVisuals),
+                        legacyFactory.TryCreateCreatureVisuals,
+                        out created))
+                    return UseCreatedVisuals(created, out __result);
 #pragma warning restore CS0618
 
-                if (created == null && !TryCreateCharacterResourceVisuals(__instance, out created)) return true;
-                ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
-                __result = created;
-                return false;
+                // ReSharper disable once ConvertIfStatementToReturnStatement
+                if (!TryCreateCharacterResourceVisuals(__instance, out created))
+                    return true;
+
+                return UseCreatedVisuals(created, out __result);
+
+                static bool UseCreatedVisuals(NCreatureVisuals created, out NCreatureVisuals result)
+                {
+                    RitsuNCreatureVisualsNodeFactory.EnsureFormVfxHolder(created);
+                    ModCreatureVisualPlayback.RegisterRitsuCreatureVisual(created);
+                    result = created;
+                    return false;
+                }
             }
         }
 
         /// <summary>
-        ///     Patches <see cref="CharacterModel.Icon" /> so <see cref="CharacterAssetProfile" /><c>.Ui.IconPath</c> may
-        ///     be either the vanilla <see cref="PackedScene" /> or a plain <see cref="Texture2D" />.
-        ///     修补 <see cref="CharacterModel.Icon" />，让 <see cref="CharacterAssetProfile" /><c>.Ui.IconPath</c>
-        ///     可以是原版 <see cref="PackedScene" />，也可以是普通 <see cref="Texture2D" />。
+        ///     <para xml:lang="en">
+        ///         Lets a character's icon path resolve to either a <see cref="PackedScene" /> or a <see cref="Texture2D" />;
+        ///         textures are wrapped in a configured <see cref="TextureRect" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使角色图标路径既可解析为 <see cref="PackedScene" />，也可解析为 <see cref="Texture2D" />；纹理会包装为
+        ///         已配置的 <see cref="TextureRect" />。
+        ///     </para>
         /// </summary>
         internal class CharacterIconRuntimeFactoryPatch : IPatchMethod
         {
@@ -411,10 +549,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <see cref="CharacterModel.GenerateAnimator" /> for
-        ///     <see cref="IModCreatureAnimatorFactory" />.
-        ///     为 <see cref="IModCreatureAnimatorFactory" /> 修补
-        ///     <see cref="CharacterModel.GenerateAnimator" />。
+        ///     <para xml:lang="en">
+        ///         Integrates runtime creature-animator factories with
+        ///         <see cref="CharacterModel.GenerateAnimator" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将运行时生物动画器工厂接入 <see cref="CharacterModel.GenerateAnimator" />。</para>
         /// </summary>
         internal class CharacterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
         {
@@ -430,34 +569,56 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> when it returns non-null,
-            ///     falling back to the obsolete <see cref="IModCharacterCreatureAnimatorFactory" /> for existing mods.
-            ///     当 <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> 返回非 null 时使用它，
-            ///     并为现有 mod 回退到已过时的 <see cref="IModCharacterCreatureAnimatorFactory" />。
+            ///     <para xml:lang="en">
+            ///         Uses a non-null general animator factory result, then the obsolete character-specific factory; otherwise
+            ///         permits the original method to create the animator.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         使用非空的通用动画器工厂结果，再尝试已过时的角色专用工厂；都没有结果时让原方法创建动画器。
+            ///     </para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(CharacterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
             {
-                CreatureAnimator? created = null;
-                if (__instance is IModCreatureAnimatorFactory factory)
-                    created = factory.TryCreateCreatureAnimator(controller);
+                // Preserve the explicit preference order between current and obsolete factory interfaces.
+                // ReSharper disable once DuplicatedSequentialIfBodies
+                // ReSharper disable once InvertIf
+                if (__instance is IModCreatureAnimatorFactory factory &&
+                    TryInvokeFactory(
+                        __instance,
+                        nameof(IModCreatureAnimatorFactory.TryCreateCreatureAnimator),
+                        () => factory.TryCreateCreatureAnimator(controller),
+                        out CreatureAnimator created))
+                {
+                    __result = created;
+                    return false;
+                }
 
 #pragma warning disable CS0618
-                if (created == null && __instance is IModCharacterCreatureAnimatorFactory legacyFactory)
-                    created = legacyFactory.TryCreateCreatureAnimator(controller);
+                // Preserve the obsolete factory as an explicit second-choice branch.
+                // ReSharper disable once InvertIf
+                if (__instance is IModCharacterCreatureAnimatorFactory legacyFactory &&
+                    TryInvokeFactory(
+                        __instance,
+                        nameof(IModCharacterCreatureAnimatorFactory.TryCreateCreatureAnimator),
+                        () => legacyFactory.TryCreateCreatureAnimator(controller),
+                        out created))
+                {
+                    __result = created;
+                    return false;
+                }
 #pragma warning restore CS0618
 
-                if (created == null)
-                    return true;
-
-                __result = created;
-                return false;
+                return true;
             }
         }
 
         /// <summary>
-        ///     Patches <see cref="MonsterModel.GenerateAnimator" /> for <see cref="IModCreatureAnimatorFactory" />.
-        ///     为 <see cref="IModCreatureAnimatorFactory" /> 修补<see cref="MonsterModel.GenerateAnimator" />。
+        ///     <para xml:lang="en">
+        ///         Integrates runtime creature-animator factories with
+        ///         <see cref="MonsterModel.GenerateAnimator" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将运行时生物动画器工厂接入 <see cref="MonsterModel.GenerateAnimator" />。</para>
         /// </summary>
         internal class MonsterCreatureAnimatorRuntimeFactoryPatch : IPatchMethod
         {
@@ -473,8 +634,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> when it returns non-null.
-            ///     当 <see cref="IModCreatureAnimatorFactory.TryCreateCreatureAnimator" /> 返回非 null 时使用它。
+            ///     <para xml:lang="en">Uses a non-null factory result; otherwise permits the original method to create the animator.</para>
+            ///     <para xml:lang="zh-CN">使用非空的工厂结果；否则让原方法创建动画器。</para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(MonsterModel __instance, MegaSprite controller, ref CreatureAnimator __result)
@@ -482,8 +643,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModCreatureAnimatorFactory factory)
                     return true;
 
-                var created = factory.TryCreateCreatureAnimator(controller);
-                if (created == null)
+                if (!TryInvokeFactory(
+                        __instance,
+                        nameof(IModCreatureAnimatorFactory.TryCreateCreatureAnimator),
+                        () => factory.TryCreateCreatureAnimator(controller),
+                        out var created))
                     return true;
 
                 __result = created;
@@ -492,8 +656,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <see cref="EncounterModel.CreateScene" /> for <see cref="IModEncounterCombatSceneFactory" />.
-        ///     为 <see cref="IModEncounterCombatSceneFactory" /> 修补<see cref="EncounterModel.CreateScene" />。
+        ///     <para xml:lang="en">Integrates encounter combat-scene factories with <see cref="EncounterModel.CreateScene" />.</para>
+        ///     <para xml:lang="zh-CN">将遭遇战斗场景工厂接入 <see cref="EncounterModel.CreateScene" />。</para>
         /// </summary>
         internal class EncounterCombatSceneRuntimeFactoryPatch : IPatchMethod
         {
@@ -509,8 +673,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModEncounterCombatSceneFactory.TryCreateEncounterCombatScene" /> when it returns non-null.
-            ///     当 <see cref="IModEncounterCombatSceneFactory.TryCreateEncounterCombatScene" /> 返回非 null 时使用它。
+            ///     <para xml:lang="en">Uses a valid factory result; otherwise permits the original scene creation path.</para>
+            ///     <para xml:lang="zh-CN">使用有效的工厂结果；否则让原始场景创建路径继续执行。</para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EncounterModel __instance, ref Control __result)
@@ -518,8 +682,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModEncounterCombatSceneFactory factory)
                     return true;
 
-                var created = factory.TryCreateEncounterCombatScene();
-                if (created == null)
+                if (!TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModEncounterCombatSceneFactory.TryCreateEncounterCombatScene),
+                        factory.TryCreateEncounterCombatScene,
+                        out var created))
                     return true;
 
                 __result = created;
@@ -528,8 +695,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <see cref="EventModel.CreateScene" /> for <see cref="IModEventLayoutPackedSceneFactory" />.
-        ///     为 <see cref="IModEventLayoutPackedSceneFactory" /> 修补<see cref="EventModel.CreateScene" />。
+        ///     <para xml:lang="en">Integrates event-layout scene factories with <see cref="EventModel.CreateScene" />.</para>
+        ///     <para xml:lang="zh-CN">将事件布局场景工厂接入 <see cref="EventModel.CreateScene" />。</para>
         /// </summary>
         internal class EventLayoutPackedSceneRuntimeFactoryPatch : IPatchMethod
         {
@@ -545,8 +712,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene" /> when it returns non-null.
-            ///     当 <see cref="IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene" /> 返回非 null 时使用它。
+            ///     <para xml:lang="en">Uses a valid factory result; otherwise permits the original scene creation path.</para>
+            ///     <para xml:lang="zh-CN">使用有效的工厂结果；否则让原始场景创建路径继续执行。</para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref PackedScene __result)
@@ -554,15 +721,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModEventLayoutPackedSceneFactory factory)
                     return true;
 
-                var created = factory.TryCreateLayoutPackedScene();
-                if (created == null)
-                    return true;
-
-                if (!ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                if (!TryInvokeGodotFactory(
                         __instance,
-                        created,
                         nameof(IModEventLayoutPackedSceneFactory.TryCreateLayoutPackedScene),
-                        $"runtime factory '{factory.GetType().FullName}'"))
+                        factory.TryCreateLayoutPackedScene,
+                        out var created))
                     return true;
 
                 __result = created;
@@ -571,10 +734,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <see cref="EventModel.CreateBackgroundScene" /> for
-        ///     <see cref="IModEventBackgroundPackedSceneFactory" />.
-        ///     为
-        ///     <see cref="IModEventBackgroundPackedSceneFactory" /> 修补 <see cref="EventModel.CreateBackgroundScene" />。
+        ///     <para xml:lang="en">
+        ///         Integrates event-background scene factories with
+        ///         <see cref="EventModel.CreateBackgroundScene" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将事件背景场景工厂接入 <see cref="EventModel.CreateBackgroundScene" />。</para>
         /// </summary>
         internal class EventBackgroundPackedSceneRuntimeFactoryPatch : IPatchMethod
         {
@@ -590,10 +754,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene" /> when it returns
-            ///     non-null.
-            ///     当 <see cref="IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene" /> 返回
-            ///     非 null 时使用。
+            ///     <para xml:lang="en">
+            ///         Uses a valid factory result unless the event supplies a procedural Ancient-stage presentation, which
+            ///         retains precedence; otherwise permits the original scene creation path.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         除非事件提供了优先的程序化先古事件舞台表现，否则使用有效的工厂结果；否则让原始场景创建路径继续执行。
+            ///     </para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref PackedScene __result)
@@ -607,15 +774,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (__instance is not IModEventBackgroundPackedSceneFactory factory)
                     return true;
 
-                var created = factory.TryCreateBackgroundPackedScene();
-                if (created == null)
-                    return true;
-
-                if (!ContentAssetOverridePatchHelper.IsPackedSceneOverrideAvailable(
+                if (!TryInvokeGodotFactory(
                         __instance,
-                        created,
                         nameof(IModEventBackgroundPackedSceneFactory.TryCreateBackgroundPackedScene),
-                        $"runtime factory '{factory.GetType().FullName}'"))
+                        factory.TryCreateBackgroundPackedScene,
+                        out var created))
                     return true;
 
                 __result = created;
@@ -624,8 +787,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <c>EventModel.HasVfx</c> for <see cref="IModEventVfxFactory" />.
-        ///     为 <see cref="IModEventVfxFactory" /> 修补<c>EventModel.HasVfx</c>。
+        ///     <para xml:lang="en">Integrates the event-VFX factory availability flag with <c>EventModel.HasVfx</c>.</para>
+        ///     <para xml:lang="zh-CN">将事件视觉特效工厂的可用标志接入 <c>EventModel.HasVfx</c>。</para>
         /// </summary>
         internal class EventHasVfxRuntimeFactoryPatch : IPatchMethod
         {
@@ -639,13 +802,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Yields <c>true</c> when <see cref="IModEventVfxFactory.SuppliesCustomEventVfx" /> is set.
-            ///     当 <see cref="IModEventVfxFactory.SuppliesCustomEventVfx" /> 已设置时生成 <c>true</c>。
+            ///     <para xml:lang="en">Supplies <see langword="true" /> when the factory reports custom event VFX.</para>
+            ///     <para xml:lang="zh-CN">工厂报告提供自定义事件视觉特效时，返回 <see langword="true" />。</para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref bool __result)
             {
-                if (__instance is not IModEventVfxFactory { SuppliesCustomEventVfx: true })
+                if (__instance is not IModEventVfxFactory factory ||
+                    !TryGetFactoryFlag(
+                        __instance,
+                        nameof(IModEventVfxFactory.SuppliesCustomEventVfx),
+                        () => factory.SuppliesCustomEventVfx))
                     return true;
 
                 __result = true;
@@ -654,8 +821,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <see cref="EventModel.CreateVfx" /> for <see cref="IModEventVfxFactory" />.
-        ///     为 <see cref="IModEventVfxFactory" /> 修补<see cref="EventModel.CreateVfx" />。
+        ///     <para xml:lang="en">Integrates event-VFX factories with <see cref="EventModel.CreateVfx" />.</para>
+        ///     <para xml:lang="zh-CN">将事件视觉特效工厂接入 <see cref="EventModel.CreateVfx" />。</para>
         /// </summary>
         internal class EventCreateVfxRuntimeFactoryPatch : IPatchMethod
         {
@@ -669,17 +836,24 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModEventVfxFactory.TryCreateEventVfx" /> when it returns non-null.
-            ///     当 <see cref="IModEventVfxFactory.TryCreateEventVfx" /> 返回非 null 时使用它。
+            ///     <para xml:lang="en">Uses a valid factory result only when the factory reports custom event VFX.</para>
+            ///     <para xml:lang="zh-CN">仅当工厂报告提供自定义事件视觉特效时，才使用其有效结果。</para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(EventModel __instance, ref Node2D __result)
             {
-                if (__instance is not IModEventVfxFactory { SuppliesCustomEventVfx: true } factory)
+                if (__instance is not IModEventVfxFactory factory ||
+                    !TryGetFactoryFlag(
+                        __instance,
+                        nameof(IModEventVfxFactory.SuppliesCustomEventVfx),
+                        () => factory.SuppliesCustomEventVfx))
                     return true;
 
-                var created = factory.TryCreateEventVfx();
-                if (created == null)
+                if (!TryInvokeGodotFactory(
+                        __instance,
+                        nameof(IModEventVfxFactory.TryCreateEventVfx),
+                        factory.TryCreateEventVfx,
+                        out var created))
                     return true;
 
                 __result = created;
@@ -688,8 +862,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Patches <see cref="OrbModel.CreateSprite" /> for <see cref="IModOrbSpriteFactory" />.
-        ///     为 <see cref="IModOrbSpriteFactory" /> 修补<see cref="OrbModel.CreateSprite" />。
+        ///     <para xml:lang="en">
+        ///         Integrates orb sprite factories and mod scene conversion with
+        ///         <see cref="OrbModel.CreateSprite" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将充能球精灵工厂和模组场景转换接入 <see cref="OrbModel.CreateSprite" />。</para>
         /// </summary>
         internal class OrbSpriteRuntimeFactoryPatch : IPatchMethod
         {
@@ -705,21 +882,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             /// <summary>
-            ///     Uses <see cref="IModOrbSpriteFactory.TryCreateOrbSprite" /> when it returns non-null.
-            ///     当 <see cref="IModOrbSpriteFactory.TryCreateOrbSprite" /> 返回非 null 时使用它。
+            ///     <para xml:lang="en">
+            ///         Uses a valid sprite-factory result first. For an orb asset override, it next attempts to instantiate the
+            ///         configured sprite path as a <see cref="Node2D" /> before allowing the original path.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">
+            ///         首先使用有效的精灵工厂结果。对于充能球资源覆盖，接着尝试将配置的精灵路径实例化为
+            ///         <see cref="Node2D" />，失败后才让原始路径继续执行。
+            ///     </para>
             /// </summary>
             [HarmonyPriority(Priority.First)]
             public static bool Prefix(OrbModel __instance, ref Node2D __result)
             {
                 if (__instance is IModOrbSpriteFactory spriteFactory)
-                {
-                    var fromFactory = spriteFactory.TryCreateOrbSprite();
-                    if (fromFactory != null)
+                    if (TryInvokeGodotFactory(
+                            __instance,
+                            nameof(IModOrbSpriteFactory.TryCreateOrbSprite),
+                            spriteFactory.TryCreateOrbSprite,
+                            out var fromFactory))
                     {
                         __result = fromFactory;
                         return false;
                     }
-                }
 
                 if (__instance is not IModOrbAssetOverrides)
                     return true;
@@ -736,7 +920,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     return true;
                 }
 
-                var node2D = RitsuGodotNodeFactories.CreateFromScene<Node2D>(scene, PackedScene.GenEditState.Disabled);
+                Node2D node2D;
+                try
+                {
+                    node2D = RitsuGodotNodeFactories.CreateFromScene<Node2D>(
+                        scene,
+                        PackedScene.GenEditState.Disabled);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Godot] Failed to instantiate {__instance.GetType().Name}.{nameof(IModOrbAssetOverrides.CustomVisualsScenePath)} '{path}' as {nameof(Node2D)}: {ex.Message}. Falling back.");
+                    return true;
+                }
+
+                if (!GodotObject.IsInstanceValid(node2D))
+                {
+                    ContentAssetOverridePatchHelper.LogLoadFailure(
+                        __instance,
+                        nameof(IModOrbAssetOverrides.CustomVisualsScenePath),
+                        path,
+                        nameof(Node2D));
+                    return true;
+                }
+
                 if (node2D.GetNodeOrNull("SpineSkeleton") is { } spineNode)
                     new MegaSprite(spineNode).GetAnimationState().SetAnimation("idle_loop");
 

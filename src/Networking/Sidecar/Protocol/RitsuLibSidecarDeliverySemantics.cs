@@ -1,36 +1,47 @@
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     How a sidecar payload should be sent and (by convention) interpreted. The first byte of
-    ///     <see cref="RitsuLibSidecarEnvelope.ParsedEnvelope.HeaderExtension" />, when present, records this; see
-    ///     <see cref="RitsuLibSidecarHeaderExtension.GetDeliveryOrUnspecified" />.
-    ///     sidecar 载荷应如何发送以及按约定如何解释。存在时，
-    ///     <see cref="RitsuLibSidecarEnvelope.ParsedEnvelope.HeaderExtension" /> 的第一个字节记录此信息；见
-    ///     <see cref="RitsuLibSidecarHeaderExtension.GetDeliveryOrUnspecified" />。
+    ///     <para xml:lang="en">
+    ///         Specifies how a sidecar payload is transported and, by convention, interpreted. When present, the
+    ///         first byte of the envelope header extension stores this value.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         指定 sidecar 载荷的传输方式及其约定语义。信封标头扩展存在投递标签时，其首字节存储此值。
+    ///     </para>
     /// </summary>
     public enum RitsuLibSidecarDeliverySemantics : byte
     {
         /// <summary>
-        ///     Unordered / loss-tolerant: map to unreliable transport and a best-effort channel. Handlers may run
-        ///     as soon as the frame arrives; no cross-stream ordering is implied.
-        ///     无序 / 容忍丢失：映射到不可靠传输和 best-effort channel。处理器可在
-        ///     frame 到达后立即运行；不隐含跨流排序。
+        ///     <para xml:lang="en">
+        ///         Uses unreliable transport on the best-effort channel. Frames may be lost or reordered, and handlers
+        ///         may run as soon as a frame arrives.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用尽力而为通道上的不可靠传输。帧可能丢失或乱序，且处理器可以在帧到达后立即运行。
+        ///     </para>
         /// </summary>
         BestEffort = 0,
 
         /// <summary>
-        ///     Reliable, ordered with respect to other reliable sidecar traffic on the same ENet stream. This does not
-        ///     by itself marshal handler code to the Godot main thread or merge with vanilla game action serialization;
-        ///     it only selects transport parameters for sidecar envelopes.
-        ///     相对于同一 ENet stream 上其他可靠 sidecar 流量可靠且有序。这本身不会
-        ///     把处理器代码调度到 Godot 主线程，也不会与原版游戏 action 序列化合并；
-        ///     它只为 sidecar envelope 选择传输参数。
+        ///     <para xml:lang="en">
+        ///         Uses reliable transport on the sidecar synchronization channel. This does not marshal handlers to
+        ///         the Godot main thread or merge them into vanilla game-action serialization.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 sidecar 同步通道上的可靠传输。这不会将处理器调度到 Godot 主线程，也不会将其并入原版游戏
+        ///         动作的序列化流程。
+        ///     </para>
         /// </summary>
         StableSync = 1,
 
         /// <summary>
-        ///     Header extension omits a delivery tag; treated like <see cref="StableSync" /> for send helpers.
-        ///     Header 扩展省略投递标签；发送辅助方法会按 <see cref="StableSync" /> 处理。
+        ///     <para xml:lang="en">
+        ///         Omits the delivery tag when an envelope is built directly. High-level send methods treat this value
+        ///         as <see cref="StableSync" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         直接构建信封时省略投递标签；高层发送方法会将此值按 <see cref="StableSync" /> 处理。
+        ///     </para>
         /// </summary>
         Unspecified = 0xFF,
     }

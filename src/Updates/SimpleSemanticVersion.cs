@@ -1,5 +1,9 @@
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">Represents and compares a permissive semantic version with numeric and prerelease identifiers.</para>
+    ///     <para xml:lang="zh-CN">表示并比较包含数字及预发布标识符的宽松语义版本。</para>
+    /// </summary>
     internal readonly record struct SimpleSemanticVersion(
         IReadOnlyList<long> Numbers,
         IReadOnlyList<string> Prerelease
@@ -44,9 +48,12 @@ namespace STS2RitsuLib.Updates
             return 0;
         }
 
-        public static bool TryParse(string text, out SimpleSemanticVersion version)
+        public static bool TryParse(string? text, out SimpleSemanticVersion version)
         {
             version = default;
+            if (text == null)
+                return false;
+
             var normalized = text.Trim();
             if (normalized.Length == 0)
                 return false;
@@ -55,7 +62,12 @@ namespace STS2RitsuLib.Updates
 
             var buildIndex = normalized.IndexOf('+', StringComparison.Ordinal);
             if (buildIndex >= 0)
+            {
+                var build = normalized[(buildIndex + 1)..];
+                if (!IsValidIdentifierList(build))
+                    return false;
                 normalized = normalized[..buildIndex];
+            }
 
             var prerelease = Array.Empty<string>();
             var prereleaseIndex = normalized.IndexOf('-', StringComparison.Ordinal);
@@ -63,19 +75,21 @@ namespace STS2RitsuLib.Updates
             {
                 var prereleaseText = normalized[(prereleaseIndex + 1)..];
                 normalized = normalized[..prereleaseIndex];
-                prerelease = prereleaseText
-                    .Split(['.', '-'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (!IsValidIdentifierList(prereleaseText))
+                    return false;
+                prerelease = prereleaseText.Split('.');
             }
 
-            var numberParts =
-                normalized.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var numberParts = normalized.Split('.');
             if (numberParts.Length == 0)
                 return false;
 
             var numbers = new long[numberParts.Length];
             for (var i = 0; i < numberParts.Length; i++)
             {
-                if (!long.TryParse(numberParts[i], out var n) || n < 0)
+                if (numberParts[i].Length == 0 ||
+                    !numberParts[i].All(char.IsAsciiDigit) ||
+                    !long.TryParse(numberParts[i], out var n))
                     return false;
                 numbers[i] = n;
             }
@@ -84,16 +98,42 @@ namespace STS2RitsuLib.Updates
             return true;
         }
 
+        private static bool IsValidIdentifierList(string text)
+        {
+            if (text.Length == 0)
+                return false;
+
+            return text.Split('.').All(static identifier =>
+                identifier.Length > 0 &&
+                identifier.All(static character =>
+                    char.IsAsciiLetterOrDigit(character) || character == '-'));
+        }
+
         private static int ComparePrereleaseIdentifier(string left, string right)
         {
-            var leftNumeric = long.TryParse(left, out var leftNumber);
-            var rightNumeric = long.TryParse(right, out var rightNumber);
+            var leftNumeric = left.All(char.IsAsciiDigit);
+            var rightNumeric = right.All(char.IsAsciiDigit);
             return leftNumeric switch
             {
-                true when rightNumeric => leftNumber.CompareTo(rightNumber),
+                true when rightNumeric => CompareNumericIdentifiers(left, right),
                 true => -1,
-                _ => rightNumeric ? 1 : string.Compare(left, right, StringComparison.OrdinalIgnoreCase),
+                _ => rightNumeric ? 1 : string.Compare(left, right, StringComparison.Ordinal),
             };
+        }
+
+        private static int CompareNumericIdentifiers(string left, string right)
+        {
+            var normalizedLeft = left.TrimStart('0');
+            var normalizedRight = right.TrimStart('0');
+            if (normalizedLeft.Length == 0)
+                normalizedLeft = "0";
+            if (normalizedRight.Length == 0)
+                normalizedRight = "0";
+
+            var lengthComparison = normalizedLeft.Length.CompareTo(normalizedRight.Length);
+            return lengthComparison != 0
+                ? lengthComparison
+                : string.Compare(normalizedLeft, normalizedRight, StringComparison.Ordinal);
         }
     }
 }

@@ -5,45 +5,54 @@ using MegaCrit.Sts2.Core.Timeline;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     <see cref="EpochModel" /> base that unlocks relics from declared CLR types and optional timeline expansions.
-    ///     <see cref="EpochModel" /> 基类：从声明的 CLR 类型解锁遗物，并可选扩展时间线。
+    ///     <para xml:lang="en">
+    ///         Provides an <see cref="EpochModel" /> base that unlocks relics declared by CLR type and optionally expands
+    ///         the timeline.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供按 CLR 类型声明并解锁遗物的 <see cref="EpochModel" /> 基类，也可选择扩展时间线。
+    ///     </para>
     /// </summary>
     public abstract class RelicUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
-        ///     Resolved <see cref="RelicModel" /> instances for <see cref="RelicTypes" />.
-        ///     解析出的 <see cref="RelicModel" /> 实例，用于 <see cref="RelicTypes" />。
+        ///     <para xml:lang="en">Gets the <see cref="RelicModel" /> instances resolved from <see cref="RelicTypes" />.</para>
+        ///     <para xml:lang="zh-CN">获取从 <see cref="RelicTypes" /> 解析出的 <see cref="RelicModel" /> 实例。</para>
         /// </summary>
-        public IReadOnlyList<RelicModel> Relics =>
-        [
-            .. RelicTypes
-                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type))),
-        ];
+        public IReadOnlyList<RelicModel> Relics => RequireUnlockPresentationItems(
+            RelicTypes
+                .Select(type => ModelDb.GetById<RelicModel>(ModelDb.GetId(type)))
+                .ToArray(),
+            nameof(RelicTypes));
 
         /// <inheritdoc />
         public override string UnlockText => CreateRelicUnlockText([.. Relics]);
 
         /// <summary>
-        ///     CLR types of relics to unlock; each must be registered in <see cref="ModelDb" />.
-        ///     要解锁的遗物 CLR 类型; 每个都必须注册到 <see cref="ModelDb" />。
+        ///     <para xml:lang="en">Gets the CLR types of relics to unlock; each must be registered in <see cref="ModelDb" />.</para>
+        ///     <para xml:lang="zh-CN">获取要解锁的遗物 CLR 类型；每种类型都必须已注册到 <see cref="ModelDb" />。</para>
         /// </summary>
         protected abstract IEnumerable<Type> RelicTypes { get; }
 
         /// <summary>
-        ///     Additional epoch types to append when this epoch unlocks; default none.
-        ///     要追加的额外纪元类型 当此纪元解锁时; 默认为无。
+        ///     <para xml:lang="en">Gets additional epoch types appended when this epoch unlocks.</para>
+        ///     <para xml:lang="zh-CN">获取此纪元解锁时追加的其他纪元类型。</para>
         /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 
         /// <summary>
-        ///     Same as <see cref="RelicTypes" /> for batch <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" />
-        ///     registration from a content-pack manifest.
-        ///     同 <see cref="RelicTypes" /> 用于批量 <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" />
-        ///     从内容包 manifest 注册。
+        ///     <para xml:lang="en">
+        ///         Enumerates <see cref="RelicTypes" /> for batch
+        ///         <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> registration by a content pack.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         枚举 <see cref="RelicTypes" />，供内容包批量调用
+        ///         <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> 注册。
+        ///     </para>
         /// </summary>
         public IEnumerable<Type> EnumerateUnlockRelicTypes()
         {
-            return RelicTypes;
+            return RelicTypes.ToArray();
         }
 
         /// <inheritdoc />
@@ -55,7 +64,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            NTimelineScreen.Instance.QueueRelicUnlock([.. Relics]);
+            var relics = Relics;
+            NTimelineScreen.Instance.QueueRelicUnlock([.. relics]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

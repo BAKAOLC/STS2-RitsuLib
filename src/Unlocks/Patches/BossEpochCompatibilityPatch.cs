@@ -6,14 +6,20 @@ using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters;
 
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Applies mod-specific boss-win epoch rules instead of vanilla fifteen-boss logic for mod characters.
-    ///     对 mod 角色应用 mod 专属 Boss 胜利纪元规则，而非原版十五次 Boss 逻辑。
+    ///     <para xml:lang="en">
+    ///         Applies registered boss-victory epoch rules instead of the base game's fifteen-boss rule for mod
+    ///         characters.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对模组角色应用已注册的首领战胜利纪元规则，取代游戏本体的十五次首领战规则。
+    ///     </para>
     /// </summary>
     internal class BossEpochCompatibilityPatch : IPatchMethod
     {
@@ -51,6 +57,9 @@ namespace STS2RitsuLib.Unlocks.Patches
             }
 
             if (SaveManager.Instance.Progress.IsEpochObtained(rule.EpochId))
+                return false;
+
+            if (Sts2RunGameModeCompat.AreMidRunEpochsLockedFor(localPlayer))
                 return false;
 
             var bossIds = ModelDb.Acts

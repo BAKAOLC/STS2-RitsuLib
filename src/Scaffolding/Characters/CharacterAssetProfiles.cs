@@ -5,26 +5,35 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Characters
 {
     /// <summary>
-    ///     Factory and merge helpers for <see cref="CharacterAssetProfile" /> using vanilla path conventions.
-    ///     使用原版路径约定的 <see cref="CharacterAssetProfile" /> 工厂和合并辅助工具。
+    ///     <para xml:lang="en">
+    ///         Creates and merges <see cref="CharacterAssetProfile" /> instances using base-game path conventions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按照原版路径约定创建和合并 <see cref="CharacterAssetProfile" /> 实例。
+    ///     </para>
     /// </summary>
     public static class CharacterAssetProfiles
     {
         /// <summary>
-        ///     Default character id used when no placeholder is specified (<c>ironclad</c>).
-        ///     未指定占位符时使用的默认角色 id（<c>ironclad</c>）。
+        ///     <para xml:lang="en">Default placeholder character ID.</para>
+        ///     <para xml:lang="zh-CN">默认的占位角色 ID。</para>
         /// </summary>
         public const string DefaultPlaceholderCharacterId = "ironclad";
 
         /// <summary>
-        ///     Builds a profile with <c>res://</c> paths matching base-game layout for <paramref name="characterId" />.
-        ///     为 <paramref name="characterId" /> 构建带 <c>res://</c> 路径、匹配基础游戏布局的 profile。
+        ///     <para xml:lang="en">
+        ///         Builds a profile containing base-game-layout paths derived from
+        ///         <paramref name="characterId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建包含原版布局路径的配置；各路径根据 <paramref name="characterId" /> 派生。
+        ///     </para>
         /// </summary>
         public static CharacterAssetProfile FromCharacterId(string characterId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(characterId);
 
-            var id = characterId.ToLowerInvariant();
+            var id = characterId.Trim().ToLowerInvariant();
 
             return new(
                 new(
@@ -57,10 +66,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns <paramref name="profile" /> or empty; if <paramref name="placeholderCharacterId" /> is set, merges
-        ///     missing fields from that vanilla character.
-        ///     返回 <paramref name="profile" /> 或 empty；如果设置了 <paramref name="placeholderCharacterId" />，则从该原版角色合并
-        ///     缺失字段。
+        ///     <para xml:lang="en">
+        ///         Returns the supplied profile, filling its missing fields from a placeholder character when one is
+        ///         specified.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回给定配置；指定占位角色时，以该角色的配置填充缺失字段。
+        ///     </para>
         /// </summary>
         public static CharacterAssetProfile Resolve(CharacterAssetProfile? profile, string? placeholderCharacterId)
         {
@@ -72,8 +84,15 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Per-field prefer-<paramref name="profile" /> / fallback-<paramref name="fallback" /> merge.
-        ///     逐字段合并：优先 <paramref name="profile" />，回退为 <paramref name="fallback" />。
+        ///     <para xml:lang="en">
+        ///         Merges profiles field by field, preferring non-<see langword="null" /> values from
+        ///         <paramref name="profile" />. For card overrides, <see cref="CardVisualStyle.Default" /> is treated
+        ///         as unspecified.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         逐字段合并配置，优先使用 <paramref name="profile" /> 中非 <see langword="null" /> 的值；
+        ///         合并卡牌覆盖时，<see cref="CardVisualStyle.Default" /> 视为未指定。
+        ///     </para>
         /// </summary>
         public static CharacterAssetProfile Merge(CharacterAssetProfile? fallback, CharacterAssetProfile? profile)
         {
@@ -98,8 +117,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>ironclad</c>.
-        ///     id 为 <c>ironclad</c> 的 <see cref="FromCharacterId" /> 快捷方式。
+        ///     <para xml:lang="en">Creates the base-game Ironclad profile.</para>
+        ///     <para xml:lang="zh-CN">创建原版铁甲战士资源配置。</para>
         /// </summary>
         public static CharacterAssetProfile Ironclad()
         {
@@ -107,8 +126,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>silent</c>.
-        ///     id 为 <c>silent</c> 的 <see cref="FromCharacterId" /> 快捷方式。
+        ///     <para xml:lang="en">Creates the base-game Silent profile.</para>
+        ///     <para xml:lang="zh-CN">创建原版静默猎手资源配置。</para>
         /// </summary>
         public static CharacterAssetProfile Silent()
         {
@@ -116,8 +135,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>defect</c>.
-        ///     id 为 <c>defect</c> 的 <see cref="FromCharacterId" /> 快捷方式。
+        ///     <para xml:lang="en">Creates the base-game Defect profile.</para>
+        ///     <para xml:lang="zh-CN">创建原版故障机器人资源配置。</para>
         /// </summary>
         public static CharacterAssetProfile Defect()
         {
@@ -125,8 +144,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>regent</c>.
-        ///     id 为 <c>regent</c> 的 <see cref="FromCharacterId" /> 快捷方式。
+        ///     <para xml:lang="en">Creates the base-game Regent profile.</para>
+        ///     <para xml:lang="zh-CN">创建原版储君资源配置。</para>
         /// </summary>
         public static CharacterAssetProfile Regent()
         {
@@ -134,8 +153,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Shortcut for <see cref="FromCharacterId" /> with id <c>necrobinder</c>.
-        ///     id 为 <c>necrobinder</c> 的 <see cref="FromCharacterId" /> 快捷方式。
+        ///     <para xml:lang="en">Creates the base-game Necrobinder profile.</para>
+        ///     <para xml:lang="zh-CN">创建原版亡灵契约师资源配置。</para>
         /// </summary>
         public static CharacterAssetProfile Necrobinder()
         {
@@ -259,8 +278,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Merges two nullable relic icon profiles; <paramref name="preferred" /> fields win when set.
-        ///     合并两个可为 null 的遗物图标 profile；设置了 <paramref name="preferred" /> 的字段时优先使用。
+        ///     <para xml:lang="en">
+        ///         Merges nullable relic profiles, preferring fields from <paramref name="preferred" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         合并可空遗物配置，优先使用 <paramref name="preferred" /> 中已设置的字段。
+        ///     </para>
         /// </summary>
         internal static RelicAssetProfile? MergeRelicAssetProfilesPreferSecond(RelicAssetProfile? fallback,
             RelicAssetProfile? preferred)
@@ -458,8 +481,13 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Merges <paramref name="fallback" /> into <paramref name="profile" /> for any null component or field.
-        ///     将 <paramref name="fallback" /> 合并到 <paramref name="profile" /> 中任何为 null 的组件或字段。
+        ///     <para xml:lang="en">
+        ///         Fills missing components and fields in <paramref name="profile" /> from
+        ///         <paramref name="fallback" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="fallback" /> 填充 <paramref name="profile" /> 中缺失的组件和字段。
+        ///     </para>
         /// </summary>
         public static CharacterAssetProfile FillMissingFrom(this CharacterAssetProfile profile,
             CharacterAssetProfile fallback)
@@ -470,8 +498,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Fills missing entries using <see cref="FromCharacterId" />.
-        ///     使用 <see cref="FromCharacterId" /> 填充缺失条目。
+        ///     <para xml:lang="en">
+        ///         Fills missing fields from the base-game-layout profile for <paramref name="characterId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="characterId" /> 对应的原版布局配置填充缺失字段。
+        ///     </para>
         /// </summary>
         public static CharacterAssetProfile WithPlaceholder(this CharacterAssetProfile profile, string characterId)
         {
@@ -480,8 +512,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.Scenes" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.Scenes" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its scene assets replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了场景资源的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithScenes(this CharacterAssetProfile profile,
             CharacterSceneAssetSet scenes)
@@ -492,8 +524,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.Ui" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.Ui" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its UI assets replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了界面资源的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithUi(this CharacterAssetProfile profile, CharacterUiAssetSet ui)
         {
@@ -503,8 +535,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.Vfx" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.Vfx" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its VFX assets replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了视觉特效资源的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithVfx(this CharacterAssetProfile profile, CharacterVfxAssetSet vfx)
         {
@@ -514,8 +546,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.Spine" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.Spine" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its Spine assets replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了 Spine 资源的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithSpine(this CharacterAssetProfile profile, CharacterSpineAssetSet spine)
         {
@@ -525,8 +557,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.Audio" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.Audio" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its audio assets replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了音频资源的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithAudio(this CharacterAssetProfile profile, CharacterAudioAssetSet audio)
         {
@@ -536,8 +568,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.Multiplayer" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.Multiplayer" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its multiplayer assets replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了多人游戏资源的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithMultiplayer(this CharacterAssetProfile profile,
             CharacterMultiplayerAssetSet multiplayer)
@@ -548,8 +580,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.VisualCues" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.VisualCues" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its visual cues replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了视觉提示的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithVisualCues(this CharacterAssetProfile profile, VisualCueSet visualCues)
         {
@@ -559,8 +591,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.WorldProceduralVisuals" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.WorldProceduralVisuals" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its procedural world visuals replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了程序化世界视觉资源的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithWorldProceduralVisuals(this CharacterAssetProfile profile,
             CharacterWorldProceduralVisualSet worldVisuals)
@@ -571,8 +603,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its base-game relic visual overrides replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了原版遗物视觉覆盖的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithVanillaRelicVisualOverrides(this CharacterAssetProfile profile,
             CharacterVanillaRelicVisualOverride[] vanillaRelicVisualOverrides)
@@ -583,8 +615,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its base-game potion visual overrides replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了原版药水视觉覆盖的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithVanillaPotionVisualOverrides(this CharacterAssetProfile profile,
             CharacterVanillaPotionVisualOverride[] vanillaPotionVisualOverrides)
@@ -595,8 +627,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Returns a copy with <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> replaced.
-        ///     返回一个替换了 <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> 的副本。
+        ///     <para xml:lang="en">Returns a copy with its base-game card visual overrides replaced.</para>
+        ///     <para xml:lang="zh-CN">返回替换了原版卡牌视觉覆盖的副本。</para>
         /// </summary>
         public static CharacterAssetProfile WithVanillaCardVisualOverrides(this CharacterAssetProfile profile,
             CharacterVanillaCardVisualOverride[] vanillaCardVisualOverrides)

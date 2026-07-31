@@ -8,7 +8,6 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
-using STS2RitsuLib.Scaffolding.Characters;
 #if !STS2_AT_LEAST_0_108_0
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Utils;
@@ -70,7 +69,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
 #if STS2_AT_LEAST_0_106_0 && !STS2_AT_LEAST_0_108_0
     /// <summary>
-    ///     Allows mod epoch art overrides to control the placeholder label.
+    ///     <para xml:lang="en">Allows mod epoch artwork to suppress the timeline placeholder label.</para>
+    ///     <para xml:lang="zh-CN">允许模组时代美术资源隐藏时间线占位标签。</para>
     /// </summary>
     internal class EpochArtPlaceholderPatch : IPatchMethod
     {
@@ -117,8 +117,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 #endif
 
     /// <summary>
-    ///     Patches <see cref="CardModel" /> portrait path getters for <see cref="IModCardAssetOverrides" />.
-    ///     为 <see cref="IModCardAssetOverrides" /> 修补<see cref="CardModel" /> portrait 路径 getter。
+    ///     <para xml:lang="en">
+    ///         Applies character-owned and <see cref="IModCardAssetOverrides" /> portrait-path overrides to
+    ///         <see cref="CardModel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将角色所属和 <see cref="IModCardAssetOverrides" /> 卡图路径覆盖应用到 <see cref="CardModel" />。
+    ///     </para>
     /// </summary>
     internal class CardPortraitPathPatch : IPatchMethod
     {
@@ -177,8 +182,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches portrait availability flags so custom paths from <see cref="IModCardAssetOverrides" /> are honored.
-    ///     修补肖像可用性标志，使来自 <see cref="IModCardAssetOverrides" /> 的自定义路径生效。
+    ///     <para xml:lang="en">Makes card portrait availability checks honor custom portrait paths.</para>
+    ///     <para xml:lang="zh-CN">使卡图可用性检查识别自定义卡图路径。</para>
     /// </summary>
     internal class CardPortraitAvailabilityPatch : IPatchMethod
     {
@@ -196,8 +201,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardModel __instance, ref bool __result)
         {
-            return __instance is not IModCardAssetOverrides overrides ||
-                   TryHasPortrait(__instance, overrides, ref __result);
+            if (__instance is IModCardAssetOverrides overrides)
+                return TryHasPortrait(__instance, overrides, ref __result);
+
+            return ModCharacterOwnedVisualOverrideHelper.TryCardPortraitExists(__instance, ref __result);
         }
 
         internal static bool TryHasPortrait(CardModel instance, IModCardAssetOverrides overrides, ref bool result)
@@ -233,14 +240,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardModel __instance, ref bool __result)
         {
-            return __instance is not IModCardAssetOverrides overrides ||
-                   CardPortraitAvailabilityPatch.TryHasBetaPortrait(__instance, overrides, ref __result);
+            if (__instance is IModCardAssetOverrides overrides)
+                return CardPortraitAvailabilityPatch.TryHasBetaPortrait(__instance, overrides, ref __result);
+
+            return ModCharacterOwnedVisualOverrideHelper.TryCardBetaPortraitExists(__instance, ref __result);
         }
     }
 
     /// <summary>
-    ///     Patches card frame, portrait border, and energy icon texture getters for mod path overrides.
-    ///     为 mod 路径覆盖修补卡牌框、肖像边框和能量图标纹理 getter。
+    ///     <para xml:lang="en">
+    ///         Applies mod path overrides to card frame, portrait-border, energy-icon, and Ancient-card textures.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将模组路径覆盖应用到卡牌边框、卡图边框、能量图标和先古卡牌纹理。</para>
     /// </summary>
     internal class CardTextureOverridePatch : IPatchMethod
     {
@@ -386,8 +397,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="CardModel" /> frame material resolution for custom <c>.tres</c> paths.
-    ///     修补 <see cref="CardModel" /> 边框材质解析，以支持自定义 <c>.tres</c> 路径。
+    ///     <para xml:lang="en">
+    ///         Applies direct, external, character-owned, and path-based frame-material overrides to
+    ///         <see cref="CardModel" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将直接、外部、角色所属和基于路径的边框材质覆盖应用到 <see cref="CardModel" />。
+    ///     </para>
     /// </summary>
     internal class CardFrameMaterialPatch : IPatchMethod
     {
@@ -406,7 +422,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static bool Prefix(CardModel __instance, ref Material __result)
         {
             if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardFrameMaterialOverride>(
-                    __instance, ref __result, static o => o.CustomFrameMaterial))
+                    __instance,
+                    ref __result,
+                    static overrides => overrides.CustomFrameMaterial,
+                    nameof(IModCardFrameMaterialOverride.CustomFrameMaterial)))
                 return false;
 
             if (ExternalCardMaterialOverrideRegistry.TryGetFrameMaterial(__instance, out var externalFrameMaterial))
@@ -427,10 +446,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches pool-level frame material so <see cref="IModCardPoolFrameMaterial.PoolFrameMaterial" /> can replace path
-    ///     lookup.
-    ///     修补池级边框材质，使 <see cref="IModCardPoolFrameMaterial.PoolFrameMaterial" /> 可以替换路径
-    ///     查找。
+    ///     <para xml:lang="en">
+    ///         Allows a card pool to supply its frame <see cref="Material" /> directly or through an external override.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">允许卡池直接提供边框 <see cref="Material" />，或使用外部覆盖。</para>
     /// </summary>
     internal class CardPoolFrameMaterialPatch : IPatchMethod
     {
@@ -448,21 +467,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardPoolModel __instance, ref Material __result)
         {
-            if (__instance is not IModCardPoolFrameMaterial pool)
-            {
-                if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance, out var externalMaterial))
-                    return true;
-
-                __result = externalMaterial;
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardPoolFrameMaterial>(
+                    __instance,
+                    ref __result,
+                    static overrides => overrides.PoolFrameMaterial,
+                    nameof(IModCardPoolFrameMaterial.PoolFrameMaterial)))
                 return false;
-            }
-
-            var material = pool.PoolFrameMaterial;
-            if (material != null)
-            {
-                __result = material;
-                return false;
-            }
 
             if (!ExternalCardMaterialOverrideRegistry.TryGetPoolFrameMaterial(__instance,
                     out var externalFrameMaterial))
@@ -474,8 +484,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Applies explicit card visual style overrides after vanilla reloads rarity-driven card visuals.
-    ///     在原版按稀有度重载卡牌视觉后，应用显式卡面样式覆盖。
+    ///     <para xml:lang="en">
+    ///         Applies explicit standard or Ancient card visual styles after the base game reloads a card's visuals.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在原版游戏重载卡牌视觉后，应用明确指定的标准或先古卡牌视觉样式。</para>
     /// </summary>
     internal class CardVisualStylePatch : IPatchMethod
     {
@@ -640,8 +652,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static Material ResolveStandardBannerMaterial(CardModel model)
         {
             Material material = null!;
-            if (model is IModCardBannerMaterialOverride { CustomBannerMaterial: { } directBannerMaterial })
-                return directBannerMaterial;
+            if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardBannerMaterialOverride>(
+                    model,
+                    ref material,
+                    static overrides => overrides.CustomBannerMaterial,
+                    nameof(IModCardBannerMaterialOverride.CustomBannerMaterial)))
+                return material;
 
             if (ExternalCardMaterialOverrideRegistry.TryGetBannerMaterial(model, out var externalBannerMaterial))
                 return externalBannerMaterial;
@@ -753,8 +769,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Applies custom portrait <see cref="Material" /> overrides after <see cref="NCard" /> reloads vanilla visuals.
-    ///     在 <see cref="NCard" /> 重载原版视觉后应用自定义卡图 <see cref="Material" /> 覆盖。
+    ///     <para xml:lang="en">
+    ///         Applies custom card-portrait <see cref="Material" /> overrides after <see cref="NCard" /> reloads its
+    ///         base-game visuals.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="NCard" /> 重载原版视觉后，应用自定义卡图 <see cref="Material" /> 覆盖。
+    ///     </para>
     /// </summary>
     internal class CardPortraitMaterialPatch : IPatchMethod
     {
@@ -793,7 +814,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             material = null!;
             if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride<IModCardPortraitMaterialOverride>(
-                    card, ref material, static o => o.CustomPortraitMaterial))
+                    card,
+                    ref material,
+                    static overrides => overrides.CustomPortraitMaterial,
+                    nameof(IModCardPortraitMaterialOverride.CustomPortraitMaterial)))
                 return true;
 
             if (ExternalCardMaterialOverrideRegistry.TryGetPortraitMaterial(card, out material))
@@ -811,8 +835,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Applies custom visual overrides for card subnodes that do not expose model getters.
-    ///     为没有 model getter 的卡牌子节点应用自定义视觉覆盖。
+    ///     <para xml:lang="en">
+    ///         Applies custom visual overrides to card subnodes that do not expose corresponding model properties.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将自定义视觉覆盖应用到没有对应模型属性的卡牌子节点。</para>
     /// </summary>
     internal class CardNodeMaterialPatch : IPatchMethod
     {
@@ -863,6 +889,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%PortraitBorder",
                 static o => o.CustomPortraitBorderMaterial,
+                nameof(IModCardPortraitBorderMaterialOverride.CustomPortraitBorderMaterial),
                 static o => o.CustomPortraitBorderMaterialPath,
                 nameof(IModCardAssetOverrides.CustomPortraitBorderMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderMaterial);
@@ -872,6 +899,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%EnergyIcon",
                 static o => o.CustomEnergyIconMaterial,
+                nameof(IModCardEnergyIconMaterialOverride.CustomEnergyIconMaterial),
                 static o => o.CustomEnergyIconMaterialPath,
                 nameof(IModCardAssetOverrides.CustomEnergyIconMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconMaterial);
@@ -881,6 +909,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%AncientBorder",
                 static o => o.CustomAncientBorderMaterial,
+                nameof(IModCardAncientBorderMaterialOverride.CustomAncientBorderMaterial),
                 static o => o.CustomAncientBorderMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientBorderMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderMaterial);
@@ -890,6 +919,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%AncientTextBg",
                 static o => o.CustomAncientTextBgMaterial,
+                nameof(IModCardAncientTextBgMaterialOverride.CustomAncientTextBgMaterial),
                 static o => o.CustomAncientTextBgMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientTextBgMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgMaterial);
@@ -899,6 +929,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 model,
                 "%AncientBanner",
                 static o => o.CustomAncientBannerMaterial,
+                nameof(IModCardAncientBannerMaterialOverride.CustomAncientBannerMaterial),
                 static o => o.CustomAncientBannerMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientBannerMaterialPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerMaterial);
@@ -927,12 +958,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             CardModel model,
             NodePath nodePath,
             Func<TDirectOverride, Material?> directSelector,
+            string directMemberName,
             Func<IModCardAssetOverrides, string?> pathSelector,
             string memberName,
             TryCharacterOwnedMaterialOverride tryCharacterOwned)
             where TDirectOverride : class
         {
-            if (!TryGetMaterial(model, directSelector, pathSelector, memberName, tryCharacterOwned, out var material))
+            if (!TryGetMaterial(
+                    model,
+                    directSelector,
+                    directMemberName,
+                    pathSelector,
+                    memberName,
+                    tryCharacterOwned,
+                    out var material))
                 return;
 
             var node = card.GetNodeOrNull<CanvasItem>(nodePath);
@@ -945,6 +984,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static bool TryGetMaterial<TDirectOverride>(
             CardModel model,
             Func<TDirectOverride, Material?> directSelector,
+            string directMemberName,
             Func<IModCardAssetOverrides, string?> pathSelector,
             string memberName,
             TryCharacterOwnedMaterialOverride tryCharacterOwned,
@@ -953,7 +993,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         {
             material = null!;
             if (!ContentAssetOverridePatchHelper.TryUseDirectMaterialOverride(
-                    model, ref material, directSelector))
+                    model,
+                    ref material,
+                    directSelector,
+                    directMemberName))
                 return true;
 
             if (!tryCharacterOwned(model, ref material))
@@ -990,8 +1033,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="CardModel.AllPortraitPaths" /> so custom portrait/beta paths participate in preload lists.
-    ///     修补<see cref="CardModel.AllPortraitPaths" />，使自定义 portrait/beta 路径 participate in 预加载 列表。
+    ///     <para xml:lang="en">
+    ///         Adds custom regular and beta portrait paths to <see cref="CardModel.AllPortraitPaths" /> for preloading.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将自定义普通和测试版卡图路径添加到 <see cref="CardModel.AllPortraitPaths" />，以供预加载。
+    ///     </para>
     /// </summary>
     internal class CardAllPortraitPathsPatch : IPatchMethod
     {
@@ -1009,18 +1056,27 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool Prefix(CardModel __instance, ref IEnumerable<string> __result)
         {
-            var ownedCharacterPaths = ModCharacterOwnedVisualOverrideHelper.GetExistingCardPortraitPaths(__instance);
-            if (ownedCharacterPaths.Length <= 0)
-                return __instance is not IModCardAssetOverrides overrides
-                       || ContentAssetOverridePatchHelper.TryUsePortraitPathList(__instance, overrides, ref __result);
-            __result = ownedCharacterPaths;
-            return false;
+            // Keep the owned-character override path visually distinct from the generic interface fallback.
+            // ReSharper disable once InvertIf
+            if (ModCharacterOwnedVisualOverrideHelper.TryGetExistingCardPortraitPaths(
+                    __instance,
+                    out var ownedPortraitPath,
+                    out var ownedBetaPortraitPath))
+            {
+                __result = ownedBetaPortraitPath == null
+                    ? [ownedPortraitPath ?? __instance.PortraitPath]
+                    : [ownedPortraitPath ?? __instance.PortraitPath, ownedBetaPortraitPath];
+                return false;
+            }
+
+            return __instance is not IModCardAssetOverrides overrides
+                   || ContentAssetOverridePatchHelper.TryUsePortraitPathList(__instance, overrides, ref __result);
         }
     }
 
     /// <summary>
-    ///     Patches built-in overlay scene path for cards implementing <see cref="IModCardAssetOverrides" />.
-    ///     为实现 <see cref="IModCardAssetOverrides" /> 的卡牌修补内置覆盖层场景路径。
+    ///     <para xml:lang="en">Applies custom built-in overlay scene paths to cards.</para>
+    ///     <para xml:lang="zh-CN">将自定义内置覆盖层场景路径应用到卡牌。</para>
     /// </summary>
     internal class CardOverlayPathPatch : IPatchMethod
     {
@@ -1058,8 +1114,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="CardModel.HasBuiltInOverlay" /> using existence checks on custom overlay scene paths.
-    ///     使用自定义覆盖层场景路径的存在性检查来修补 <see cref="CardModel.HasBuiltInOverlay" />。
+    ///     <para xml:lang="en">
+    ///         Makes <see cref="CardModel.HasBuiltInOverlay" /> honor available custom overlay scenes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使 <see cref="CardModel.HasBuiltInOverlay" /> 识别可用的自定义覆盖层场景。
+    ///     </para>
     /// </summary>
     internal class CardOverlayAvailabilityPatch : IPatchMethod
     {
@@ -1087,17 +1147,24 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (string.IsNullOrWhiteSpace(path))
                 return true;
 
-            __result = ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
-                __instance,
-                path,
-                nameof(IModCardAssetOverrides.CustomOverlayScenePath));
+            if (!ContentAssetOverridePatchHelper.IsPackedScenePathOverrideAvailable(
+                    __instance,
+                    path,
+                    nameof(IModCardAssetOverrides.CustomOverlayScenePath)))
+                return true;
+
+            __result = true;
             return false;
         }
     }
 
     /// <summary>
-    ///     Patches <see cref="CardModel.CreateOverlay" /> to instantiate mod overlay scenes when configured.
-    ///     修补 <see cref="CardModel.CreateOverlay" />，在配置后实例化 mod 覆盖层场景。
+    ///     <para xml:lang="en">
+    ///         Makes <see cref="CardModel.CreateOverlay" /> instantiate a configured custom overlay scene.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使 <see cref="CardModel.CreateOverlay" /> 实例化已配置的自定义覆盖层场景。
+    ///     </para>
     /// </summary>
     internal class CardOverlayCreatePatch : IPatchMethod
     {
@@ -1134,12 +1201,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="RelicModel.IconPath" /> and packed atlas icon/outline path getters (used by vanilla
-    ///     <c>Icon</c> / <c>IconOutline</c> loaders) for mod-character per–relic-id paths (owner match) first, then
-    ///     <see cref="IModRelicAssetOverrides" />.
-    ///     修补 <see cref="RelicModel.IconPath" /> 和 packed atlas 图标/轮廓路径 getter（原版
-    ///     <c>Icon</c> / <c>IconOutline</c> 加载器使用）：优先使用 mod 角色按遗物 id 的路径（所有者匹配），然后使用
-    ///     <see cref="IModRelicAssetOverrides" />。
+    ///     <para xml:lang="en">
+    ///         Applies relic icon-path overrides in character-owned, external-registry, then relic-interface order.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按角色所属覆盖、外部注册表、遗物接口的顺序应用遗物图标路径覆盖。
+    ///     </para>
     /// </summary>
     internal class RelicIconPathPatch : IPatchMethod
     {
@@ -1160,10 +1227,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" /> when
-        ///     applicable, then <see cref="IModRelicAssetOverrides" /> custom paths.
-        ///     当条件满足时提供 <see cref="IModCharacterAssetOverrides.TryGetVanillaRelicVisualOverrideForOwnedRelic" />
-        ///     applicable, then <see cref="IModRelicAssetOverrides" /> 自定义 路径。
+        ///     <para xml:lang="en">Applies the first available relic icon-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的遗物图标路径覆盖。</para>
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(RelicModel __instance, ref string __result)
@@ -1176,12 +1241,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconPath(instance, ref result))
                 return false;
 
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconPath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetRelicIconPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.RelicIconPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
                 instance,
@@ -1195,12 +1260,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (!ModCharacterOwnedVisualOverrideHelper.TryRelicIconOutlinePath(instance, ref result))
                 return false;
 
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetRelicIconOutlinePath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetRelicIconOutlinePath(instance, out var path)
+                        ? path
+                        : null,
+                    "ExternalAssetOverrideRegistry.RelicIconOutlinePath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModRelicAssetOverrides>(
                 instance,
@@ -1229,10 +1296,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches relic icon texture getters (main, outline, big): mod-character owned-relic overrides first, then
-    ///     <see cref="IModRelicAssetOverrides" />.
-    ///     修补遗物图标纹理 getter（主图、轮廓、大图）：优先使用 mod 角色拥有的遗物覆盖，然后使用
-    ///     <see cref="IModRelicAssetOverrides" />。
+    ///     <para xml:lang="en">
+    ///         Applies main, outline, and large relic icon overrides in character-owned, external-registry, then
+    ///         relic-interface order.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按角色所属覆盖、外部注册表、遗物接口的顺序应用遗物主图标、轮廓图标和大图标覆盖。
+    ///     </para>
     /// </summary>
     internal class RelicTexturePatch : IPatchMethod
     {
@@ -1344,11 +1414,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="PowerModel.IconPath" /> and <see cref="PowerModel.PackedIconPath" /> (used by vanilla
-    ///     <c>Icon</c> loader) for <see cref="IModPowerAssetOverrides" />.
-    ///     为 <see cref="IModPowerAssetOverrides" /> 修补 <see cref="PowerModel.IconPath" /> 和
-    ///     <see cref="PowerModel.PackedIconPath" />（原版
-    ///     <c>Icon</c> 加载器使用）。
+    ///     <para xml:lang="en">
+    ///         Applies external-registry and <see cref="IModPowerAssetOverrides" /> path overrides to
+    ///         <see cref="PowerModel.IconPath" /> and <see cref="PowerModel.PackedIconPath" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将外部注册表和 <see cref="IModPowerAssetOverrides" /> 路径覆盖应用到
+    ///         <see cref="PowerModel.IconPath" /> 与 <see cref="PowerModel.PackedIconPath" />。
+    ///     </para>
     /// </summary>
     internal class PowerIconPathPatch : IPatchMethod
     {
@@ -1366,8 +1439,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Supplies <see cref="IModPowerAssetOverrides.CustomIconPath" /> when the resource exists.
-        ///     当资源存在时提供 <see cref="IModPowerAssetOverrides.CustomIconPath" />。
+        ///     <para xml:lang="en">Applies the first available power icon-path override.</para>
+        ///     <para xml:lang="zh-CN">应用首个可用的能力图标路径覆盖。</para>
         /// </summary>
         [HarmonyPriority(410)]
         public static bool Prefix(PowerModel __instance, ref string __result)
@@ -1377,12 +1450,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static bool TryPowerIconPath(PowerModel instance, ref string result)
         {
-            // ReSharper disable once InvertIf
-            if (ExternalAssetOverrideRegistry.TryGetPowerIconPath(instance, out var externalPath))
-            {
-                result = externalPath;
+            if (!ContentAssetOverridePatchHelper.TryUseExternalPathOverride(
+                    instance,
+                    ref result,
+                    () => ExternalAssetOverrideRegistry.TryGetPowerIconPath(instance, out var path) ? path : null,
+                    "ExternalAssetOverrideRegistry.PowerIconPath"))
                 return false;
-            }
 
             return ContentAssetOverridePatchHelper.TryUseStringOverride<IModPowerAssetOverrides>(
                 instance,
@@ -1393,8 +1466,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches power standard and big icon textures for mod path overrides.
-    ///     为 mod 路径覆盖修补能力标准图标和大图标纹理。
+    ///     <para xml:lang="en">Applies external-registry and mod-path overrides to power icon textures.</para>
+    ///     <para xml:lang="zh-CN">将外部注册表和模组路径覆盖应用到能力图标纹理。</para>
     /// </summary>
     internal class PowerTexturePatch : IPatchMethod
     {

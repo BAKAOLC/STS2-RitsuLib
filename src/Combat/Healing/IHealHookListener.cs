@@ -1,14 +1,14 @@
 namespace STS2RitsuLib.Combat.Healing
 {
     /// <summary>
-    ///     Optional listener for creature healing hooks.
-    ///     生物治疗 hook 的可选监听器。
+    ///     <para xml:lang="en">Defines optional hooks for modifying creature healing.</para>
+    ///     <para xml:lang="zh-CN">定义修正生物治疗量的可选钩子。</para>
     /// </summary>
     public interface IHealHookListener
     {
         /// <summary>
-        ///     Returns an amount to add during the additive healing modifier pass.
-        ///     在 additive 治疗修正阶段返回要增加的数值。
+        ///     <para xml:lang="en">Returns an amount to add during the additive modifier pass.</para>
+        ///     <para xml:lang="zh-CN">返回在加法修正阶段要增加的数值。</para>
         /// </summary>
         decimal ModifyHealAdditive(HealContext context, decimal amount)
         {
@@ -16,8 +16,8 @@ namespace STS2RitsuLib.Combat.Healing
         }
 
         /// <summary>
-        ///     Returns a multiplier for the multiplicative healing modifier pass.
-        ///     在 multiplicative 治疗修正阶段返回倍率。
+        ///     <para xml:lang="en">Returns a multiplier for the multiplicative modifier pass.</para>
+        ///     <para xml:lang="zh-CN">返回乘法修正阶段使用的倍率。</para>
         /// </summary>
         decimal ModifyHealMultiplicative(HealContext context, decimal amount)
         {
@@ -25,8 +25,8 @@ namespace STS2RitsuLib.Combat.Healing
         }
 
         /// <summary>
-        ///     Modifies the healing amount after additive and multiplicative passes.
-        ///     在 additive 和 multiplicative 阶段之后修正治疗数值。
+        ///     <para xml:lang="en">Modifies the healing amount after the additive and multiplicative passes.</para>
+        ///     <para xml:lang="zh-CN">在加法和乘法修正阶段结束后修正治疗量。</para>
         /// </summary>
         decimal ModifyHealAmount(HealContext context, decimal amount)
         {

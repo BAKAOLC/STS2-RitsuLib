@@ -13,9 +13,13 @@ namespace STS2RitsuLib.Content
                 new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Registers asset overrides for a card pool id entry, merged field-by-field with existing
-        ///     registrations. Later calls win for non-null fields.
-        ///     为卡池 id entry 注册资源覆盖，并与现有注册按字段合并。非 null 字段以后续调用为准。
+        ///     <para xml:lang="en">
+        ///         Registers asset replacements for a card-pool ID entry. Non-null fields from later
+        ///         registrations take precedence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为卡牌牌池 ID 条目注册资源替换。后注册的非空字段优先。
+        ///     </para>
         /// </summary>
         public void RegisterCardPoolAssetReplacement(string cardPoolEntry, CardPoolAssetProfile assetProfile)
         {
@@ -46,12 +50,19 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Removes this mod's registered asset overrides for the specified card pool id entry.
-        ///     移除此 mod 为指定卡池 id entry 注册的资源覆盖。
+        ///     <para xml:lang="en">
+        ///         Removes this mod's asset replacements for the specified card-pool ID entry.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">移除此模组为指定卡牌牌池 ID 条目注册的资源替换。</para>
         /// </summary>
         /// <returns>
-        ///     <c>true</c> when this mod had an override and it was removed.
-        ///     当此 mod 曾有覆盖且已移除时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when a registration was removed; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除了注册时为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
         /// </returns>
         public bool RemoveCardPoolAssetReplacement(string cardPoolEntry)
         {

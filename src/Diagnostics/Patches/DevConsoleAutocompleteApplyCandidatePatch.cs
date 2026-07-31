@@ -8,7 +8,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Diagnostics.Patches
 {
     /// <summary>
-    ///     Strips localized autocomplete suffix labels before applying a selected candidate to the input line.
+    ///     <para xml:lang="en">
+    ///         Removes localized autocomplete suffix labels before applying a selected candidate to the input line.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将选中的候选项应用到输入行之前，移除其本地化自动补全后缀标签。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleAutocompleteApplyCandidatePatch : IPatchMethod
     {

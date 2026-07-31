@@ -17,7 +17,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 Active[state.StreamId] = state;
             }
 
-            ScheduleTtlDrop(state.StreamId, DefaultTtl);
+            ScheduleTtlDrop(state, DefaultTtl);
         }
 
         internal static void TryRemove(ulong streamId)
@@ -28,7 +28,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
-        private static void ScheduleTtlDrop(ulong streamId, TimeSpan ttl)
+        private static void ScheduleTtlDrop(OutboundChunkStream state, TimeSpan ttl)
         {
             if (Engine.GetMainLoop() is not SceneTree tree)
                 return;
@@ -42,7 +42,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 t.Timeout -= OnTtl;
                 lock (Gate)
                 {
-                    Active.Remove(streamId);
+                    if (Active.TryGetValue(state.StreamId, out var current) && ReferenceEquals(current, state))
+                        Active.Remove(state.StreamId);
                 }
             }
         }

@@ -3,8 +3,11 @@ using Godot;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Default implementation behind <see cref="GameFmod.Playback" />.
-    ///     <see cref="GameFmod.Playback" /> 背后的默认实现。
+    ///     <para xml:lang="en">
+    ///         Implements <see cref="GameFmod.Playback" /> with typed handles, playback options, routing, and
+    ///         lifecycle ownership.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">使用类型化句柄、播放选项、路由和生命周期归属实现 <see cref="GameFmod.Playback" />。</para>
     /// </summary>
     public sealed class GameAudioService : IGameAudio
     {
@@ -13,8 +16,8 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Shared singleton instance.
-        ///     共享的单例实例。
+        ///     <para xml:lang="en">Gets the shared playback service.</para>
+        ///     <para xml:lang="zh-CN">获取共享播放服务。</para>
         /// </summary>
         public static GameAudioService Shared { get; } = new();
 
@@ -22,42 +25,23 @@ namespace STS2RitsuLib.Audio
         public AudioPlayResult Play(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
-
-            if (options.CooldownMs <= 0)
-                return source switch
-                {
-                    StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
-                    StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
-                    SoundFileSource fileSource => PlaySoundFile(fileSource, options),
-                    ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
-                    StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
-                    StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
-                        options),
-                    SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
-                    _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
-                };
-            var cooldownKey = options.DebugName ?? source.ToString() ?? source.GetType().Name;
-            if (!FmodPlaybackThrottle.TryEnter(cooldownKey, options.CooldownMs))
+            if (options.ScopeToken is { IsClosing: true })
+                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "The audio scope token is disposed.");
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (!TryEnterCooldown(source, options))
                 return AudioPlayResult.Fail(AudioPlayStatus.SkippedCooldown);
 
-            return source switch
-            {
-                StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
-                StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
-                SoundFileSource fileSource => PlaySoundFile(fileSource, options),
-                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
-                StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
-                StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
-                    options),
-                SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
-                _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
-            };
+            return PlayCore(source, options);
         }
 
         /// <inheritdoc />
         public AudioPlayResult PlayOneShot(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (options.ScopeToken is { IsClosing: true })
+                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "The audio scope token is disposed.");
+            if (!TryEnterCooldown(source, options))
+                return AudioPlayResult.Fail(AudioPlayStatus.SkippedCooldown);
 
             return source switch
             {
@@ -67,7 +51,7 @@ namespace STS2RitsuLib.Audio
                 StudioGuidSource guidSource => PlayStudioGuid(guidSource, options),
                 SoundFileSource fileSource => PlaySoundFile(fileSource, options),
                 ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
-                _ => Play(source, options),
+                _ => AudioPlayResult.Fail(AudioPlayStatus.NotSupported),
             };
         }
 
@@ -75,12 +59,15 @@ namespace STS2RitsuLib.Audio
         public AudioLoopHandle? PlayLoop(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (options.ScopeToken is { IsClosing: true })
+                return null;
+            if (!TryEnterCooldown(source, options))
+                return null;
+
             var result = source switch
             {
                 StudioEventSource eventSource => PlayStudioLoop(eventSource, options),
                 StudioGuidSource guidSource => PlayStudioLoopFromGuid(guidSource, options),
-                SoundFileSource fileSource => PlaySoundFile(fileSource, options),
-                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
                 StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
                     options),
@@ -94,9 +81,13 @@ namespace STS2RitsuLib.Audio
         public AudioMusicHandle? PlayMusic(AudioSource source, AudioPlaybackOptions? options = null)
         {
             options ??= new();
+            if (options.ScopeToken is { IsClosing: true })
+                return null;
+            if (!TryEnterCooldown(source, options))
+                return null;
+
             var result = source switch
             {
-                StudioEventSource eventSource when options.UseVanillaRouting => PlayVanillaMusic(eventSource, options),
                 StudioEventSource eventSource => PlayStudioEvent(eventSource, options, true),
                 StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options, true),
                 StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options, true),
@@ -138,27 +129,37 @@ namespace STS2RitsuLib.Audio
             return AudioChannelRegistry.Shared.StopTag(tag, allowFadeOut);
         }
 
-        private static AudioPlayResult PlayVanillaOneShot(StudioEventSource source, AudioPlaybackOptions options)
+        private static AudioPlayResult PlayCore(AudioSource source, AudioPlaybackOptions options)
         {
-            if (options.GetParameters().Count == 0)
-                GameFmod.Studio.PlayOneShot(source.Path, options.Volume);
-            else
-                GameFmod.Studio.PlayOneShot(source.Path, options.GetParameters(), options.Volume);
-
-            return AudioPlayResult.Started();
+            return source switch
+            {
+                StudioEventSource eventSource => PlayStudioEvent(eventSource, options),
+                StudioGuidSource guidSource => PlayStudioEventFromGuid(guidSource, options),
+                SoundFileSource fileSource => PlaySoundFile(fileSource, options),
+                ResourceSoundFileSource resourceFileSource => PlayResourceSoundFile(resourceFileSource, options),
+                StreamingMusicSource musicSource => PlayStreamingMusic(musicSource, options),
+                StreamingResourceMusicSource resourceMusicSource => PlayStreamingResourceMusic(resourceMusicSource,
+                    options),
+                SnapshotSource snapshotSource => PlaySnapshot(snapshotSource, options),
+                _ => AudioPlayResult.Fail(AudioPlayStatus.InvalidSource),
+            };
         }
 
-        private static AudioPlayResult PlayVanillaMusic(StudioEventSource source, AudioPlaybackOptions options)
+        private static AudioPlayResult PlayVanillaOneShot(StudioEventSource source, AudioPlaybackOptions options)
         {
-            GameFmod.Studio.PlayMusic(source.Path);
+            var started = options.GetParameters().Count == 0
+                ? GameFmodAudioService.Shared.TryPlayOneShot(source.Path, options.Volume)
+                : GameFmodAudioService.Shared.TryPlayOneShot(source.Path, options.GetParameters(), options.Volume);
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (!started)
+                return AudioPlayResult.Fail(AudioPlayStatus.MissingManager);
+
             return AudioPlayResult.Started();
         }
 
         private static AudioPlayResult PlayStudioGuid(StudioGuidSource source, AudioPlaybackOptions options)
         {
-            return !FmodStudioDirectOneShots.TryPlayUsingGuid(source.Value)
-                ? AudioPlayResult.Fail(AudioPlayStatus.Failed)
-                : AudioPlayResult.Started();
+            return PlayStudioEventFromGuid(source, options);
         }
 
         private static AudioPlayResult PlayStudioLoop(StudioEventSource source, AudioPlaybackOptions options)
@@ -181,24 +182,7 @@ namespace STS2RitsuLib.Audio
             AudioPlaybackOptions options)
         {
             var handle = new AudioLoopHandle(source, ResolveScope(options), instance);
-            if (!TryApplyRouting(handle, options))
-            {
-                handle.Dispose();
-                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
-            }
-
-            handle.TrySetVolume(options.Volume);
-            foreach (var parameter in options.GetParameters())
-                handle.TrySetParameter(parameter.Key, parameter.Value);
-            if (options.UsesLoopParameter)
-                handle.TrySetParameter("loop", 0);
-            if (options.StartPaused)
-                handle.TryPause();
-            if (options.AutoPlay)
-                handle.TryPlay();
-
-            AudioLifecycleRegistry.Shared.Attach(handle, options);
-            return AudioPlayResult.Started(handle);
+            return AttachAndConfigure(handle, options, options.UsesLoopParameter);
         }
 
         private static AudioPlayResult PlayStudioEvent(StudioEventSource source, AudioPlaybackOptions options,
@@ -226,22 +210,7 @@ namespace STS2RitsuLib.Audio
                 ? new AudioMusicHandle(source, ResolveScope(options), instance)
                 : new AudioEventHandle(source, ResolveScope(options), instance);
 
-            if (!TryApplyRouting(handle, options))
-            {
-                handle.Dispose();
-                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
-            }
-
-            handle.TrySetVolume(options.Volume);
-            foreach (var parameter in options.GetParameters())
-                handle.TrySetParameter(parameter.Key, parameter.Value);
-            if (options.StartPaused)
-                handle.TryPause();
-            if (options.AutoPlay)
-                handle.TryPlay();
-
-            AudioLifecycleRegistry.Shared.Attach(handle, options);
-            return AudioPlayResult.Started(handle);
+            return AttachAndConfigure(handle, options);
         }
 
         private static AudioPlayResult PlaySoundFile(SoundFileSource source, AudioPlaybackOptions options)
@@ -251,21 +220,7 @@ namespace STS2RitsuLib.Audio
                 return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
 
             var handle = new AudioFileHandle(source, ResolveScope(options), instance);
-            if (!TryApplyRouting(handle, options))
-            {
-                handle.Dispose();
-                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
-            }
-
-            handle.TrySetVolume(options.Volume);
-            handle.TrySetPitch(options.Pitch);
-            if (options.StartPaused)
-                handle.TryPause();
-            if (options.AutoPlay)
-                handle.TryPlay();
-
-            AudioLifecycleRegistry.Shared.Attach(handle, options);
-            return AudioPlayResult.Started(handle);
+            return AttachAndConfigure(handle, options);
         }
 
         private static AudioPlayResult PlayResourceSoundFile(ResourceSoundFileSource source,
@@ -276,21 +231,7 @@ namespace STS2RitsuLib.Audio
                 return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
 
             var handle = new AudioFileHandle(source, ResolveScope(options), instance);
-            if (!TryApplyRouting(handle, options))
-            {
-                handle.Dispose();
-                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
-            }
-
-            handle.TrySetVolume(options.Volume);
-            handle.TrySetPitch(options.Pitch);
-            if (options.StartPaused)
-                handle.TryPause();
-            if (options.AutoPlay)
-                handle.TryPlay();
-
-            AudioLifecycleRegistry.Shared.Attach(handle, options);
-            return AudioPlayResult.Started(handle);
+            return AttachAndConfigure(handle, options);
         }
 
         private static AudioPlayResult PlayStreamingMusic(StreamingMusicSource source, AudioPlaybackOptions options,
@@ -304,21 +245,7 @@ namespace STS2RitsuLib.Audio
                 ? new AudioMusicHandle(source, ResolveScope(options), instance)
                 : new AudioLoopHandle(source, ResolveScope(options), instance);
 
-            if (!TryApplyRouting(handle, options))
-            {
-                handle.Dispose();
-                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
-            }
-
-            handle.TrySetVolume(options.Volume);
-            handle.TrySetPitch(options.Pitch);
-            if (options.StartPaused)
-                handle.TryPause();
-            if (options.AutoPlay)
-                handle.TryPlay();
-
-            AudioLifecycleRegistry.Shared.Attach(handle, options);
-            return AudioPlayResult.Started(handle);
+            return AttachAndConfigure(handle, options);
         }
 
         private static AudioPlayResult PlayStreamingResourceMusic(StreamingResourceMusicSource source,
@@ -332,38 +259,53 @@ namespace STS2RitsuLib.Audio
                 ? new AudioMusicHandle(source, ResolveScope(options), instance)
                 : new AudioLoopHandle(source, ResolveScope(options), instance);
 
-            if (!TryApplyRouting(handle, options))
-            {
-                handle.Dispose();
-                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
-            }
-
-            handle.TrySetVolume(options.Volume);
-            handle.TrySetPitch(options.Pitch);
-            if (options.StartPaused)
-                handle.TryPause();
-            if (options.AutoPlay)
-                handle.TryPlay();
-
-            AudioLifecycleRegistry.Shared.Attach(handle, options);
-            return AudioPlayResult.Started(handle);
+            return AttachAndConfigure(handle, options);
         }
 
         private static AudioPlayResult PlaySnapshot(SnapshotSource source, AudioPlaybackOptions options)
         {
-            var instance = FmodStudioSnapshots.TryStart(source.Path);
+            var instance = FmodStudioEventInstances.TryCreate(source.Path);
             if (instance is null)
                 return AudioPlayResult.Fail(AudioPlayStatus.MissingInstance);
 
             var handle = new AudioSnapshotHandle(source, ResolveScope(options), instance);
-            if (!TryApplyRouting(handle, options))
-            {
-                handle.Dispose();
-                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "Channel already occupied.");
-            }
+            return AttachAndConfigure(handle, options);
+        }
 
-            AudioLifecycleRegistry.Shared.Attach(handle, options);
+        private static AudioPlayResult AttachAndConfigure(
+            AudioHandleBase handle,
+            AudioPlaybackOptions options,
+            bool applyLoopParameter = false)
+        {
+            handle.AllowFadeOutOnStop = options.AllowFadeOutOnStop;
+            if (!AudioLifecycleRegistry.Shared.TryAttach(handle, options))
+                return AudioPlayResult.Fail(AudioPlayStatus.Failed, "The audio scope token is disposed.");
+
+            if (!TryApplyRouting(handle, options))
+                return FailHandle(handle, "Audio routing could not be applied.");
+            if (!handle.TrySetVolume(options.Volume))
+                return FailHandle(handle, "The initial volume could not be applied.");
+            if (!handle.TrySetPitch(options.Pitch))
+                return FailHandle(handle, "The initial pitch could not be applied.");
+
+            foreach (var parameter in options.GetParameters())
+                if (!handle.TrySetParameter(parameter.Key, parameter.Value))
+                    return FailHandle(handle, $"The initial parameter '{parameter.Key}' could not be applied.");
+
+            if (applyLoopParameter && !handle.TrySetParameter("loop", 0))
+                return FailHandle(handle, "The initial loop parameter could not be applied.");
+            if (options.AutoPlay && !handle.TryPlay())
+                return FailHandle(handle, "Playback could not be started.");
+            if (options.StartPaused && !handle.TryPause())
+                return FailHandle(handle, "The initial paused state could not be applied.");
+
             return AudioPlayResult.Started(handle);
+        }
+
+        private static AudioPlayResult FailHandle(AudioHandleBase handle, string message)
+        {
+            handle.Dispose();
+            return AudioPlayResult.Fail(AudioPlayStatus.Failed, message);
         }
 
         private static bool TryApplyRouting(IAudioHandle handle, AudioPlaybackOptions options)
@@ -376,8 +318,9 @@ namespace STS2RitsuLib.Audio
                 return string.IsNullOrWhiteSpace(routing.Channel) ||
                        AudioChannelRegistry.Shared.TryClaimChannel(routing.Channel, handle, routing.ChannelMode,
                            routing.AllowFadeOutOnReplace);
-            if (routing.ReplaceTaggedGroup)
-                AudioChannelRegistry.Shared.StopTag(routing.Tag, routing.AllowFadeOutOnReplace);
+            if (routing.ReplaceTaggedGroup &&
+                !AudioChannelRegistry.Shared.TryClearTag(routing.Tag, routing.AllowFadeOutOnReplace))
+                return false;
 
             AudioChannelRegistry.Shared.AttachTag(routing.Tag, handle);
 
@@ -389,6 +332,15 @@ namespace STS2RitsuLib.Audio
         private static AudioLifecycleScope ResolveScope(AudioPlaybackOptions options)
         {
             return options.ScopeToken?.Scope ?? options.Scope;
+        }
+
+        private static bool TryEnterCooldown(AudioSource source, AudioPlaybackOptions options)
+        {
+            if (options.CooldownMs <= 0 || source is null)
+                return true;
+
+            var cooldownKey = options.DebugName ?? source.ToString() ?? source.GetType().Name;
+            return FmodPlaybackThrottle.TryEnter(cooldownKey, options.CooldownMs);
         }
     }
 }

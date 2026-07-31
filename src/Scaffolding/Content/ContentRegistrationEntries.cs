@@ -10,25 +10,30 @@ using STS2RitsuLib.Scaffolding.Characters;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Declarative manifest entry that registers content with a <see cref="ModContentRegistry" /> when applied.
-    ///     声明式 manifest 条目，应用时会向 <see cref="ModContentRegistry" /> 注册内容。
+    ///     <para xml:lang="en">
+    ///         Represents a declarative manifest entry that registers content with a
+    ///         <see cref="ModContentRegistry" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示向 <see cref="ModContentRegistry" /> 注册内容的声明式清单条目。
+    ///     </para>
     /// </summary>
     public interface IContentRegistrationEntry
     {
         /// <summary>
-        ///     Performs the registration for this entry against <paramref name="registry" />.
-        ///     针对 <paramref name="registry" /> 执行此条目的注册。
+        ///     <para xml:lang="en">Registers this entry with <paramref name="registry" />.</para>
+        ///     <para xml:lang="zh-CN">向 <paramref name="registry" /> 注册此条目。</para>
         /// </summary>
         void Register(ModContentRegistry registry);
     }
 
     /// <summary>
-    ///     Registers a mod character model type.
-    ///     注册一个 Mod 角色模型类型。
+    ///     <para xml:lang="en">Registers a mod character model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组角色模型类型。</para>
     /// </summary>
     /// <typeparam name="TCharacter">
-    ///     Concrete <see cref="CharacterModel" /> to register.
-    ///     要注册的具体 <see cref="CharacterModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="CharacterModel" /> type to register.</para>
+    ///     <para xml:lang="zh-CN">要注册的具体 <see cref="CharacterModel" /> 类型。</para>
     /// </typeparam>
     public sealed class CharacterRegistrationEntry<TCharacter> : IContentRegistrationEntry
         where TCharacter : CharacterModel
@@ -45,8 +50,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends starter-deck copies of <typeparamref name="TCard" /> when this character entry is registered.
-        ///     注册此角色条目时，向初始牌组追加 <typeparamref name="TCard" /> 的若干复制。
+        ///     <para xml:lang="en">
+        ///         Appends <paramref name="count" /> copies of <typeparamref name="TCard" /> to the starting deck when
+        ///         this character entry is registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册此角色条目时，向初始牌组追加 <paramref name="count" /> 张
+        ///         <typeparamref name="TCard" />。
+        ///     </para>
         /// </summary>
         public CharacterRegistrationEntry<TCharacter> AddStartingCard<TCard>(int count = 1)
             where TCard : CardModel
@@ -55,8 +66,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends starter-deck copies of <typeparamref name="TCard" /> when this character entry is registered.
-        ///     注册此角色条目时，向初始牌组追加 <typeparamref name="TCard" /> 的若干复制。
+        ///     <para xml:lang="en">
+        ///         Appends <paramref name="count" /> copies of <typeparamref name="TCard" /> to the starting deck at
+        ///         the specified registration <paramref name="order" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按指定注册顺序 <paramref name="order" />，向初始牌组追加 <paramref name="count" /> 张
+        ///         <typeparamref name="TCard" />。
+        ///     </para>
         /// </summary>
         public CharacterRegistrationEntry<TCharacter> AddStartingCard<TCard>(int count, int order)
             where TCard : CardModel
@@ -67,8 +84,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends starting relic copies of <typeparamref name="TRelic" /> when this character entry is registered.
-        ///     注册此角色条目时，追加 <typeparamref name="TRelic" /> 的若干初始遗物复制。
+        ///     <para xml:lang="en">
+        ///         Appends <paramref name="count" /> copies of <typeparamref name="TRelic" /> to the starting relics
+        ///         when this character entry is registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册此角色条目时，向初始遗物追加 <paramref name="count" /> 个
+        ///         <typeparamref name="TRelic" />。
+        ///     </para>
         /// </summary>
         public CharacterRegistrationEntry<TCharacter> AddStartingRelic<TRelic>(int count = 1)
             where TRelic : RelicModel
@@ -77,8 +100,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends starting relic copies of <typeparamref name="TRelic" /> when this character entry is registered.
-        ///     注册此角色条目时，追加 <typeparamref name="TRelic" /> 的若干初始遗物复制。
+        ///     <para xml:lang="en">
+        ///         Appends <paramref name="count" /> copies of <typeparamref name="TRelic" /> to the starting relics at
+        ///         the specified registration <paramref name="order" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按指定注册顺序 <paramref name="order" />，向初始遗物追加 <paramref name="count" /> 个
+        ///         <typeparamref name="TRelic" />。
+        ///     </para>
         /// </summary>
         public CharacterRegistrationEntry<TCharacter> AddStartingRelic<TRelic>(int count, int order)
             where TRelic : RelicModel
@@ -89,8 +118,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends starting potion copies of <typeparamref name="TPotion" /> when this character entry is registered.
-        ///     注册此角色条目时，追加 <typeparamref name="TPotion" /> 的若干初始药水复制。
+        ///     <para xml:lang="en">
+        ///         Appends <paramref name="count" /> copies of <typeparamref name="TPotion" /> to the starting potions
+        ///         when this character entry is registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册此角色条目时，向初始药水追加 <paramref name="count" /> 瓶
+        ///         <typeparamref name="TPotion" />。
+        ///     </para>
         /// </summary>
         public CharacterRegistrationEntry<TCharacter> AddStartingPotion<TPotion>(int count = 1)
             where TPotion : PotionModel
@@ -99,8 +134,14 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Appends starting potion copies of <typeparamref name="TPotion" /> when this character entry is registered.
-        ///     注册此角色条目时，追加 <typeparamref name="TPotion" /> 的若干初始药水复制。
+        ///     <para xml:lang="en">
+        ///         Appends <paramref name="count" /> copies of <typeparamref name="TPotion" /> to the starting potions
+        ///         at the specified registration <paramref name="order" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按指定注册顺序 <paramref name="order" />，向初始药水追加 <paramref name="count" /> 瓶
+        ///         <typeparamref name="TPotion" />。
+        ///     </para>
         /// </summary>
         public CharacterRegistrationEntry<TCharacter> AddStartingPotion<TPotion>(int count, int order)
             where TPotion : PotionModel
@@ -112,22 +153,14 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers additional starter-deck copies of a card for an already-known character type.
-    ///     为已知角色类型注册额外的初始牌组卡牌复制。
+    ///     <para xml:lang="en">Registers additional starting-deck cards for a known character type.</para>
+    ///     <para xml:lang="zh-CN">为已知角色类型注册额外的初始牌组卡牌。</para>
     /// </summary>
-    public sealed class CharacterStarterCardRegistrationEntry<TCharacter, TCard>(int count, int order)
+    public sealed class CharacterStarterCardRegistrationEntry<TCharacter, TCard>(int count = 1, int order = 0)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TCard : CardModel
     {
-        /// <summary>
-        ///     Legacy overload for binary compatibility; forwards to the primary constructor with default order <c>0</c>.
-        ///     用于二进制兼容的旧重载；转发到主构造函数并使用默认排序 <c>0</c>。
-        /// </summary>
-        public CharacterStarterCardRegistrationEntry(int count = 1) : this(count, 0)
-        {
-        }
-
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
@@ -136,22 +169,14 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers additional starting relic copies for an already-known character type.
-    ///     为已知角色类型注册额外的初始遗物复制。
+    ///     <para xml:lang="en">Registers additional starting relics for a known character type.</para>
+    ///     <para xml:lang="zh-CN">为已知角色类型注册额外的初始遗物。</para>
     /// </summary>
-    public sealed class CharacterStarterRelicRegistrationEntry<TCharacter, TRelic>(int count, int order)
+    public sealed class CharacterStarterRelicRegistrationEntry<TCharacter, TRelic>(int count = 1, int order = 0)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TRelic : RelicModel
     {
-        /// <summary>
-        ///     Legacy overload for binary compatibility; forwards to the primary constructor with default order <c>0</c>.
-        ///     用于二进制兼容的旧重载；转发到主构造函数并使用默认排序 <c>0</c>。
-        /// </summary>
-        public CharacterStarterRelicRegistrationEntry(int count = 1) : this(count, 0)
-        {
-        }
-
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
@@ -160,22 +185,14 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers additional starting potion copies for an already-known character type.
-    ///     为已知角色类型注册额外的初始药水复制。
+    ///     <para xml:lang="en">Registers additional starting potions for a known character type.</para>
+    ///     <para xml:lang="zh-CN">为已知角色类型注册额外的初始药水。</para>
     /// </summary>
-    public sealed class CharacterStarterPotionRegistrationEntry<TCharacter, TPotion>(int count, int order)
+    public sealed class CharacterStarterPotionRegistrationEntry<TCharacter, TPotion>(int count = 1, int order = 0)
         : IContentRegistrationEntry
         where TCharacter : CharacterModel
         where TPotion : PotionModel
     {
-        /// <summary>
-        ///     Legacy overload for binary compatibility; forwards to the primary constructor with default order <c>0</c>.
-        ///     用于二进制兼容的旧重载；转发到主构造函数并使用默认排序 <c>0</c>。
-        /// </summary>
-        public CharacterStarterPotionRegistrationEntry(int count = 1) : this(count, 0)
-        {
-        }
-
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)
         {
@@ -184,8 +201,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers direct asset replacement for a target character id (vanilla or mod).
-    ///     为目标角色 id（原版或 Mod）注册直接资源替换。
+    ///     <para xml:lang="en">Registers a direct asset replacement for a base-game or mod character ID.</para>
+    ///     <para xml:lang="zh-CN">为游戏本体或模组角色 ID 注册直接资源替换。</para>
     /// </summary>
     public sealed class CharacterAssetReplacementRegistrationEntry(
         string characterEntry,
@@ -199,12 +216,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod act model type.
-    ///     注册一个 Mod Act 模型类型。
+    ///     <para xml:lang="en">Registers a mod act model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组章节模型类型。</para>
     /// </summary>
     /// <typeparam name="TAct">
-    ///     Concrete <see cref="ActModel" /> to register.
-    ///     要注册的具体 <see cref="ActModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="ActModel" /> type to register.</para>
+    ///     <para xml:lang="zh-CN">要注册的具体 <see cref="ActModel" /> 类型。</para>
     /// </typeparam>
     public sealed class ActRegistrationEntry<TAct> : IContentRegistrationEntry
         where TAct : ActModel
@@ -217,20 +234,20 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a card type with its pool and optional public entry options.
-    ///     将卡牌类型及其池和可选公开条目选项一起注册。
+    ///     <para xml:lang="en">Registers a card type in a card pool with optional public-entry settings.</para>
+    ///     <para xml:lang="zh-CN">在牌池中注册卡牌类型，并应用可选的公开条目设置。</para>
     /// </summary>
     /// <typeparam name="TPool">
-    ///     Card pool model type.
-    ///     卡牌池模型类型。
+    ///     <para xml:lang="en">The card-pool model type.</para>
+    ///     <para xml:lang="zh-CN">牌池模型类型。</para>
     /// </typeparam>
     /// <typeparam name="TCard">
-    ///     Card model type.
-    ///     CardModel类型。
+    ///     <para xml:lang="en">The card model type.</para>
+    ///     <para xml:lang="zh-CN">卡牌模型类型。</para>
     /// </typeparam>
     /// <param name="publicEntry">
-    ///     Optional stable entry / visibility options.
-    ///     可选的稳定条目/可见性选项。
+    ///     <para xml:lang="en">The optional stable-entry and visibility settings.</para>
+    ///     <para xml:lang="zh-CN">可选的稳定条目和可见性设置。</para>
     /// </param>
     public sealed class CardRegistrationEntry<TPool, TCard>(ModelPublicEntryOptions publicEntry = default)
         : IContentRegistrationEntry
@@ -245,16 +262,26 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers <see cref="ModCardHandGlowRegistry" /> rules for a card type (gold/red hand highlights).
-    ///     为卡牌类型注册 <see cref="ModCardHandGlowRegistry" /> 规则（金色/红色手牌高亮）。
+    ///     <para xml:lang="en">
+    ///         Registers gold and red hand-glow rules for a card type with
+    ///         <see cref="ModCardHandGlowRegistry" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="ModCardHandGlowRegistry" /> 为卡牌类型注册金色和红色手牌发光规则。
+    ///     </para>
     /// </summary>
     /// <typeparam name="TCard">
-    ///     <see cref="CardModel" /> subtype.
-    ///     <see cref="CardModel" /> 子类型。
+    ///     <para xml:lang="en">The <see cref="CardModel" /> subtype.</para>
+    ///     <para xml:lang="zh-CN"><see cref="CardModel" /> 子类型。</para>
     /// </typeparam>
     /// <param name="rules">
-    ///     Predicate rules; merged with <see cref="ModCardHandGlowRules.Or" /> if registered twice.
-    ///     谓词规则；重复注册时会通过 <see cref="ModCardHandGlowRules.Or" /> 合并。
+    ///     <para xml:lang="en">
+    ///         The predicate rules, combined through <see cref="ModCardHandGlowRules.Or" /> with earlier
+    ///         registrations.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         谓词规则；存在较早注册时通过 <see cref="ModCardHandGlowRules.Or" /> 合并。
+    ///     </para>
     /// </param>
     public sealed class CardHandGlowRegistrationEntry<TCard>(ModCardHandGlowRules rules) : IContentRegistrationEntry
         where TCard : CardModel
@@ -267,16 +294,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers <see cref="ModCardHandOutlineRegistry" /> tint rules for a card type (arbitrary hand-highlight colors).
-    ///     为卡牌类型注册 <see cref="ModCardHandOutlineRegistry" /> 染色规则（任意手牌高亮颜色）。
+    ///     <para xml:lang="en">
+    ///         Registers custom hand-outline color rules for a card type with
+    ///         <see cref="ModCardHandOutlineRegistry" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="ModCardHandOutlineRegistry" /> 为卡牌类型注册自定义手牌描边颜色规则。
+    ///     </para>
     /// </summary>
     public sealed class CardHandOutlineRegistrationEntry<TCard> : IContentRegistrationEntry where TCard : CardModel
     {
         private readonly ModCardHandOutlineRules _rules;
 
         /// <summary>
-        ///     Registers one or more custom hand-outline rules.
-        ///     注册一条或多条自定义手牌描边规则。
+        ///     <para xml:lang="en">Creates an entry from typed hand-outline rules.</para>
+        ///     <para xml:lang="zh-CN">使用强类型手牌描边规则创建条目。</para>
         /// </summary>
         public CardHandOutlineRegistrationEntry(ModCardHandOutlineRules<TCard> rules)
             : this(rules.ToUntyped(), true)
@@ -284,43 +316,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Registers one custom hand-outline rule.
-        ///     注册一条自定义手牌描边规则。
+        ///     <para xml:lang="en">Creates an entry from one typed hand-outline switch rule.</para>
+        ///     <para xml:lang="zh-CN">使用一条强类型手牌描边切换规则创建条目。</para>
         /// </summary>
         public CardHandOutlineRegistrationEntry(ModCardHandOutlineSwitchRule<TCard> rule)
             : this(ModCardHandOutlineRules<TCard>.Of(rule))
         {
-        }
-
-        /// <summary>
-        ///     Registers one or more type-erased custom hand-outline rules.
-        ///     注册一条或多条类型擦除自定义手牌描边规则。
-        /// </summary>
-        [Obsolete("Use CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineRules<TCard>).")]
-        public CardHandOutlineRegistrationEntry(ModCardHandOutlineRules rules)
-        {
-            _rules = rules;
-        }
-
-        /// <summary>
-        ///     Registers one type-erased custom hand-outline rule.
-        ///     注册一条类型擦除自定义手牌描边规则。
-        /// </summary>
-        [Obsolete("Use CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
-        public CardHandOutlineRegistrationEntry(ModCardHandOutlineSwitchRule rule)
-            : this(ModCardHandOutlineRules.Of(rule), true)
-        {
-        }
-
-        /// <summary>
-        ///     Registers one legacy custom hand-outline rule.
-        ///     注册一条旧版自定义手牌描边规则。
-        /// </summary>
-        [Obsolete(
-            "Use CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineRules<TCard>) or CardHandOutlineRegistrationEntry<TCard>(ModCardHandOutlineSwitchRule<TCard>).")]
-        public CardHandOutlineRegistrationEntry(ModCardHandOutlineRule rule)
-        {
-            _rules = ModCardHandOutlineRules.Of(rule.ToSwitchRule());
         }
 
         private CardHandOutlineRegistrationEntry(ModCardHandOutlineRules rules, bool _)
@@ -336,20 +337,20 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a relic type with its pool and optional public entry options.
-    ///     将遗物类型及其池和可选公开条目选项一起注册。
+    ///     <para xml:lang="en">Registers a relic type in a relic pool with optional public-entry settings.</para>
+    ///     <para xml:lang="zh-CN">在遗物池中注册遗物类型，并应用可选的公开条目设置。</para>
     /// </summary>
     /// <typeparam name="TPool">
-    ///     Relic pool model type.
-    ///     遗物池模型类型。
+    ///     <para xml:lang="en">The relic-pool model type.</para>
+    ///     <para xml:lang="zh-CN">遗物池模型类型。</para>
     /// </typeparam>
     /// <typeparam name="TRelic">
-    ///     Relic model type.
-    ///     RelicModel类型。
+    ///     <para xml:lang="en">The relic model type.</para>
+    ///     <para xml:lang="zh-CN">遗物模型类型。</para>
     /// </typeparam>
     /// <param name="publicEntry">
-    ///     Optional stable entry / visibility options.
-    ///     可选的稳定条目/可见性选项。
+    ///     <para xml:lang="en">The optional stable-entry and visibility settings.</para>
+    ///     <para xml:lang="zh-CN">可选的稳定条目和可见性设置。</para>
     /// </param>
     public sealed class RelicRegistrationEntry<TPool, TRelic>(ModelPublicEntryOptions publicEntry = default)
         : IContentRegistrationEntry
@@ -364,20 +365,20 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a potion type with its pool and optional public entry options.
-    ///     将药水类型及其池和可选公开条目选项一起注册。
+    ///     <para xml:lang="en">Registers a potion type in a potion pool with optional public-entry settings.</para>
+    ///     <para xml:lang="zh-CN">在药水池中注册药水类型，并应用可选的公开条目设置。</para>
     /// </summary>
     /// <typeparam name="TPool">
-    ///     Potion pool model type.
-    ///     药水池模型类型。
+    ///     <para xml:lang="en">The potion-pool model type.</para>
+    ///     <para xml:lang="zh-CN">药水池模型类型。</para>
     /// </typeparam>
     /// <typeparam name="TPotion">
-    ///     Potion model type.
-    ///     药水模型类型。
+    ///     <para xml:lang="en">The potion model type.</para>
+    ///     <para xml:lang="zh-CN">药水模型类型。</para>
     /// </typeparam>
     /// <param name="publicEntry">
-    ///     Optional stable entry / visibility options.
-    ///     可选的稳定条目/可见性选项。
+    ///     <para xml:lang="en">The optional stable-entry and visibility settings.</para>
+    ///     <para xml:lang="zh-CN">可选的稳定条目和可见性设置。</para>
     /// </param>
     public sealed class PotionRegistrationEntry<TPool, TPotion>(ModelPublicEntryOptions publicEntry = default)
         : IContentRegistrationEntry
@@ -392,12 +393,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a standalone power model type.
-    ///     注册一个独立能力模型类型。
+    ///     <para xml:lang="en">Registers a standalone power model type.</para>
+    ///     <para xml:lang="zh-CN">注册独立的能力模型类型。</para>
     /// </summary>
     /// <typeparam name="TPower">
-    ///     Concrete <see cref="PowerModel" />.
-    ///     具体 <see cref="PowerModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="PowerModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="PowerModel" /> 类型。</para>
     /// </typeparam>
     public sealed class PowerRegistrationEntry<TPower> : IContentRegistrationEntry
         where TPower : PowerModel
@@ -410,16 +411,16 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a non-power health bar forecast source type.
-    ///     注册一个非能力的生命条预测来源类型。
+    ///     <para xml:lang="en">Registers a non-power health-bar forecast source.</para>
+    ///     <para xml:lang="zh-CN">注册不属于能力的生命条预测来源。</para>
     /// </summary>
     /// <typeparam name="TSource">
-    ///     Concrete forecast source type.
-    ///     具体预测来源类型。
+    ///     <para xml:lang="en">The concrete forecast-source type.</para>
+    ///     <para xml:lang="zh-CN">具体预测来源类型。</para>
     /// </typeparam>
     /// <param name="sourceId">
-    ///     Optional stable id; defaults to the source type name.
-    ///     可选稳定 id；默认使用来源类型名。
+    ///     <para xml:lang="en">The optional stable ID; defaults to the source type name.</para>
+    ///     <para xml:lang="zh-CN">可选的稳定 ID；默认使用来源类型名称。</para>
     /// </param>
     public sealed class HealthBarForecastRegistrationEntry<TSource>(string? sourceId = null)
         : IContentRegistrationEntry
@@ -433,12 +434,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a shared card pool type (not tied to a single character registration here).
-    ///     注册一个共享卡牌池类型（此处不绑定到单个角色注册）。
+    ///     <para xml:lang="en">Registers a shared card-pool type without attaching it to a character.</para>
+    ///     <para xml:lang="zh-CN">注册不绑定到角色的共享牌池类型。</para>
     /// </summary>
     /// <typeparam name="TPool">
-    ///     Concrete <see cref="CardPoolModel" />.
-    ///     具体 <see cref="CardPoolModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="CardPoolModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="CardPoolModel" /> 类型。</para>
     /// </typeparam>
     public sealed class SharedCardPoolRegistrationEntry<TPool> : IContentRegistrationEntry
         where TPool : CardPoolModel
@@ -451,12 +452,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod orb model type.
-    ///     注册一个 mod 充能球模型类型。
+    ///     <para xml:lang="en">Registers a mod orb model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组充能球模型类型。</para>
     /// </summary>
     /// <typeparam name="TOrb">
-    ///     Concrete <see cref="OrbModel" />.
-    ///     具体 <see cref="OrbModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="OrbModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="OrbModel" /> 类型。</para>
     /// </typeparam>
     public sealed class OrbRegistrationEntry<TOrb> : IContentRegistrationEntry
         where TOrb : OrbModel
@@ -469,12 +470,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod enchantment model type.
-    ///     注册一个 mod 附魔模型类型。
+    ///     <para xml:lang="en">Registers a mod enchantment model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组附魔模型类型。</para>
     /// </summary>
     /// <typeparam name="TEnchantment">
-    ///     Concrete <see cref="EnchantmentModel" />.
-    ///     具体 <see cref="EnchantmentModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="EnchantmentModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="EnchantmentModel" /> 类型。</para>
     /// </typeparam>
     public sealed class EnchantmentRegistrationEntry<TEnchantment> : IContentRegistrationEntry
         where TEnchantment : EnchantmentModel
@@ -487,12 +488,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod affliction model type.
-    ///     注册一个 mod 苦痛模型类型。
+    ///     <para xml:lang="en">Registers a mod affliction model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组侵蚀模型类型。</para>
     /// </summary>
     /// <typeparam name="TAffliction">
-    ///     Concrete <see cref="AfflictionModel" />.
-    ///     具体 <see cref="AfflictionModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="AfflictionModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="AfflictionModel" /> 类型。</para>
     /// </typeparam>
     public sealed class AfflictionRegistrationEntry<TAffliction> : IContentRegistrationEntry
         where TAffliction : AfflictionModel
@@ -505,12 +506,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod achievement model type.
-    ///     注册一个 mod 成就模型类型。
+    ///     <para xml:lang="en">Registers a mod achievement model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组成就模型类型。</para>
     /// </summary>
     /// <typeparam name="TAchievement">
-    ///     Concrete <see cref="AchievementModel" />.
-    ///     具体 <see cref="AchievementModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="AchievementModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="AchievementModel" /> 类型。</para>
     /// </typeparam>
     public sealed class AchievementRegistrationEntry<TAchievement> : IContentRegistrationEntry
         where TAchievement : AchievementModel
@@ -523,12 +524,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod singleton model type.
-    ///     注册一个 mod singleton 模型类型。
+    ///     <para xml:lang="en">Registers a mod singleton model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组单例模型类型。</para>
     /// </summary>
     /// <typeparam name="TSingleton">
-    ///     Concrete <see cref="SingletonModel" />.
-    ///     具体 <see cref="SingletonModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="SingletonModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="SingletonModel" /> 类型。</para>
     /// </typeparam>
     public sealed class SingletonRegistrationEntry<TSingleton> : IContentRegistrationEntry
         where TSingleton : SingletonModel
@@ -541,12 +542,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod modifier as a good daily modifier.
-    ///     将一个 mod modifier 注册为正面每日 modifier。
+    ///     <para xml:lang="en">Registers a mod modifier in the good daily-modifier pool.</para>
+    ///     <para xml:lang="zh-CN">将模组修正项注册到正面每日修正项池。</para>
     /// </summary>
     /// <typeparam name="TModifier">
-    ///     Concrete <see cref="ModifierModel" />.
-    ///     具体 <see cref="ModifierModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="ModifierModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="ModifierModel" /> 类型。</para>
     /// </typeparam>
     public sealed class GoodModifierRegistrationEntry<TModifier> : IContentRegistrationEntry
         where TModifier : ModifierModel
@@ -559,12 +560,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod modifier as a bad daily modifier.
-    ///     将一个 mod modifier 注册为负面每日 modifier。
+    ///     <para xml:lang="en">Registers a mod modifier in the bad daily-modifier pool.</para>
+    ///     <para xml:lang="zh-CN">将模组修正项注册到负面每日修正项池。</para>
     /// </summary>
     /// <typeparam name="TModifier">
-    ///     Concrete <see cref="ModifierModel" />.
-    ///     具体 <see cref="ModifierModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="ModifierModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="ModifierModel" /> 类型。</para>
     /// </typeparam>
     public sealed class BadModifierRegistrationEntry<TModifier> : IContentRegistrationEntry
         where TModifier : ModifierModel
@@ -577,12 +578,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a shared relic pool model type.
-    ///     注册一个共享遗物池模型类型。
+    ///     <para xml:lang="en">Registers a shared relic-pool model type.</para>
+    ///     <para xml:lang="zh-CN">注册共享遗物池模型类型。</para>
     /// </summary>
     /// <typeparam name="TPool">
-    ///     Concrete <see cref="RelicPoolModel" />.
-    ///     具体 <see cref="RelicPoolModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="RelicPoolModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="RelicPoolModel" /> 类型。</para>
     /// </typeparam>
     public sealed class SharedRelicPoolRegistrationEntry<TPool> : IContentRegistrationEntry
         where TPool : RelicPoolModel
@@ -595,12 +596,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a shared potion pool model type.
-    ///     注册一个共享药水池模型类型。
+    ///     <para xml:lang="en">Registers a shared potion-pool model type.</para>
+    ///     <para xml:lang="zh-CN">注册共享药水池模型类型。</para>
     /// </summary>
     /// <typeparam name="TPool">
-    ///     Concrete <see cref="PotionPoolModel" />.
-    ///     具体 <see cref="PotionPoolModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="PotionPoolModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="PotionPoolModel" /> 类型。</para>
     /// </typeparam>
     public sealed class SharedPotionPoolRegistrationEntry<TPool> : IContentRegistrationEntry
         where TPool : PotionPoolModel
@@ -613,12 +614,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a mod monster model type.
-    ///     注册一个 mod 怪物模型类型。
+    ///     <para xml:lang="en">Registers a mod monster model type.</para>
+    ///     <para xml:lang="zh-CN">注册模组怪物模型类型。</para>
     /// </summary>
     /// <typeparam name="TMonster">
-    ///     Concrete <see cref="MonsterModel" />.
-    ///     具体 <see cref="MonsterModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="MonsterModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="MonsterModel" /> 类型。</para>
     /// </typeparam>
     public sealed class MonsterRegistrationEntry<TMonster> : IContentRegistrationEntry
         where TMonster : MonsterModel
@@ -631,12 +632,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a shared event model type.
-    ///     注册一个共享EventModel类型。
+    ///     <para xml:lang="en">Registers a shared event model type.</para>
+    ///     <para xml:lang="zh-CN">注册共享事件模型类型。</para>
     /// </summary>
     /// <typeparam name="TEvent">
-    ///     Concrete <see cref="EventModel" />.
-    ///     具体 <see cref="EventModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="EventModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="EventModel" /> 类型。</para>
     /// </typeparam>
     public sealed class SharedEventRegistrationEntry<TEvent> : IContentRegistrationEntry
         where TEvent : EventModel
@@ -649,8 +650,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an encounter model scoped to <typeparamref name="TAct" />.
-    ///     注册一个限定在 <typeparamref name="TAct" /> 范围内的遭遇模型。
+    ///     <para xml:lang="en">Registers an encounter model for <typeparamref name="TAct" />.</para>
+    ///     <para xml:lang="zh-CN">为 <typeparamref name="TAct" /> 注册遭遇模型。</para>
     /// </summary>
     public sealed class ActEncounterRegistrationEntry<TAct, TEncounter> : IContentRegistrationEntry
         where TAct : ActModel
@@ -664,13 +665,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an encounter model merged into every act’s encounter list (see
-    ///     <c>ModContentRegistry.RegisterGlobalEncounter&lt;TEncounter&gt;()</c>).
-    ///     注册一个会合并到每个 act 遭遇列表中的遭遇模型（见
+    ///     <para xml:lang="en">Registers an encounter model in every act's encounter list.</para>
+    ///     <para xml:lang="zh-CN">将遭遇模型注册到所有章节的遭遇列表中。</para>
     /// </summary>
     /// <typeparam name="TEncounter">
-    ///     Concrete <see cref="EncounterModel" />.
-    ///     具体 <see cref="EncounterModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="EncounterModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="EncounterModel" /> 类型。</para>
     /// </typeparam>
     public sealed class GlobalEncounterRegistrationEntry<TEncounter> : IContentRegistrationEntry
         where TEncounter : EncounterModel
@@ -683,8 +683,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an event model scoped to <typeparamref name="TAct" />.
-    ///     注册一个限定在 <typeparamref name="TAct" /> 范围内的EventModel。
+    ///     <para xml:lang="en">Registers an event model for <typeparamref name="TAct" />.</para>
+    ///     <para xml:lang="zh-CN">为 <typeparamref name="TAct" /> 注册事件模型。</para>
     /// </summary>
     public sealed class ActEventRegistrationEntry<TAct, TEvent> : IContentRegistrationEntry
         where TAct : ActModel
@@ -698,12 +698,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a shared ancient event model type.
-    ///     注册一个共享 ancient EventModel类型。
+    ///     <para xml:lang="en">Registers a shared Ancient event model type.</para>
+    ///     <para xml:lang="zh-CN">注册共享先古之民事件模型类型。</para>
     /// </summary>
     /// <typeparam name="TAncient">
-    ///     Concrete <see cref="AncientEventModel" />.
-    ///     具体 <see cref="AncientEventModel" />。
+    ///     <para xml:lang="en">The concrete <see cref="AncientEventModel" /> type.</para>
+    ///     <para xml:lang="zh-CN">具体 <see cref="AncientEventModel" /> 类型。</para>
     /// </typeparam>
     public sealed class SharedAncientRegistrationEntry<TAncient> : IContentRegistrationEntry
         where TAncient : AncientEventModel
@@ -716,8 +716,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an ancient event model scoped to <typeparamref name="TAct" />.
-    ///     注册一个限定在 <typeparamref name="TAct" /> 范围内的 ancient EventModel。
+    ///     <para xml:lang="en">Registers an Ancient event model for <typeparamref name="TAct" />.</para>
+    ///     <para xml:lang="zh-CN">为 <typeparamref name="TAct" /> 注册先古之民事件模型。</para>
     /// </summary>
     public sealed class ActAncientRegistrationEntry<TAct, TAncient> : IContentRegistrationEntry
         where TAct : ActModel
@@ -731,8 +731,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers extra initial-option injection rules for a specific ancient model type.
-    ///     为特定 ancient 模型类型注册额外初始选项注入规则。
+    ///     <para xml:lang="en">Registers an additional initial-option rule for an Ancient model type.</para>
+    ///     <para xml:lang="zh-CN">为先古之民模型类型注册额外的初始选项规则。</para>
     /// </summary>
     public sealed class AncientOptionRegistrationEntry<TAncient>(ModAncientOptionRule rule) : IContentRegistrationEntry
         where TAncient : AncientEventModel
@@ -745,8 +745,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a card candidate for the Trash Heap event's Grab option.
-    ///     为垃圾堆事件的“拿取”选项注册一张候选卡牌。
+    ///     <para xml:lang="en">Registers a card candidate for the Trash Heap event's Grab option.</para>
+    ///     <para xml:lang="zh-CN">为“垃圾堆”事件的“拿取”选项注册候选卡牌。</para>
     /// </summary>
     public sealed class TrashHeapCardRegistrationEntry<TCard> : IContentRegistrationEntry
         where TCard : CardModel
@@ -759,8 +759,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a relic candidate for the Trash Heap event's Dive In option.
-    ///     为垃圾堆事件的“深入翻找”选项注册一个候选遗物。
+    ///     <para xml:lang="en">Registers a relic candidate for the Trash Heap event's Dive In option.</para>
+    ///     <para xml:lang="zh-CN">为“垃圾堆”事件的“深入翻找”选项注册候选遗物。</para>
     /// </summary>
     public sealed class TrashHeapRelicRegistrationEntry<TRelic> : IContentRegistrationEntry
         where TRelic : RelicModel
@@ -773,8 +773,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a generated placeholder card from a stable entry stem.
-    ///     通过稳定条目词干注册一张生成式占位卡牌。
+    ///     <para xml:lang="en">Registers a generated placeholder card from a stable entry stem.</para>
+    ///     <para xml:lang="zh-CN">使用稳定条目前缀注册生成的占位卡牌。</para>
     /// </summary>
     public sealed class PlaceholderCardRegistrationEntry<TPool>(
         string stableEntryStem,
@@ -789,8 +789,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a generated placeholder card with explicit public entry options.
-    ///     使用显式公开条目选项注册一张生成式占位卡牌。
+    ///     <para xml:lang="en">
+    ///         Registers a generated placeholder card with explicit public-entry settings.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用显式公开条目设置注册生成的占位卡牌。
+    ///     </para>
     /// </summary>
     public sealed class PlaceholderCardFromOptionsRegistrationEntry<TPool>(
         ModelPublicEntryOptions publicEntry,
@@ -805,8 +809,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a generated placeholder relic from a stable entry stem.
-    ///     通过稳定条目词干注册一个生成式占位遗物。
+    ///     <para xml:lang="en">Registers a generated placeholder relic from a stable entry stem.</para>
+    ///     <para xml:lang="zh-CN">使用稳定条目前缀注册生成的占位遗物。</para>
     /// </summary>
     public sealed class PlaceholderRelicRegistrationEntry<TPool>(
         string stableEntryStem,
@@ -821,8 +825,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a generated placeholder relic with explicit public entry options.
-    ///     使用显式公开条目选项注册一个生成式占位遗物。
+    ///     <para xml:lang="en">
+    ///         Registers a generated placeholder relic with explicit public-entry settings.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用显式公开条目设置注册生成的占位遗物。
+    ///     </para>
     /// </summary>
     public sealed class PlaceholderRelicFromOptionsRegistrationEntry<TPool>(
         ModelPublicEntryOptions publicEntry,
@@ -837,8 +845,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a generated placeholder potion from a stable entry stem.
-    ///     通过稳定条目词干注册一瓶生成式占位药水。
+    ///     <para xml:lang="en">Registers a generated placeholder potion from a stable entry stem.</para>
+    ///     <para xml:lang="zh-CN">使用稳定条目前缀注册生成的占位药水。</para>
     /// </summary>
     public sealed class PlaceholderPotionRegistrationEntry<TPool>(
         string stableEntryStem,
@@ -853,8 +861,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a generated placeholder potion with explicit public entry options.
-    ///     使用显式公开条目选项注册一瓶生成式占位药水。
+    ///     <para xml:lang="en">
+    ///         Registers a generated placeholder potion with explicit public-entry settings.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用显式公开条目设置注册生成的占位药水。
+    ///     </para>
     /// </summary>
     public sealed class PlaceholderPotionFromOptionsRegistrationEntry<TPool>(
         ModelPublicEntryOptions publicEntry,
@@ -869,16 +881,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an <see cref="ArchaicTooth" /> transcendence mapping (starter deck card → ancient transform target).
-    ///     注册一个 <see cref="ArchaicTooth" /> 超越映射（初始牌组卡牌 → ancient 转化目标）。
+    ///     <para xml:lang="en">
+    ///         Registers an <see cref="ArchaicTooth" /> transcendence mapping from a starting card type to an Ancient
+    ///         card type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册从初始卡牌类型到先古卡牌类型的 <see cref="ArchaicTooth" /> 超越映射。
+    ///     </para>
     /// </summary>
     /// <typeparam name="TStarterCard">
-    ///     Deck card id to match.
-    ///     要匹配的牌组卡牌 id。
+    ///     <para xml:lang="en">The starting card type to match.</para>
+    ///     <para xml:lang="zh-CN">要匹配的初始卡牌类型。</para>
     /// </typeparam>
     /// <typeparam name="TAncientCard">
-    ///     Transform target prototype from <see cref="ModelDb.Card{T}" />.
-    ///     来自 <see cref="ModelDb.Card{T}" /> 的转化目标原型。
+    ///     <para xml:lang="en">The Ancient card type used as the transformation target.</para>
+    ///     <para xml:lang="zh-CN">作为转化目标的先古卡牌类型。</para>
     /// </typeparam>
     public sealed class
         ArchaicToothTranscendenceRegistrationEntry<TStarterCard, TAncientCard> : IContentRegistrationEntry
@@ -893,16 +910,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers an <see cref="ArchaicTooth" /> transcendence mapping with explicit starter id and ancient card type.
-    ///     使用显式初始卡牌 id 和 ancient 卡牌类型注册一个 <see cref="ArchaicTooth" /> 超越映射。
+    ///     <para xml:lang="en">
+    ///         Registers an <see cref="ArchaicTooth" /> transcendence mapping from an explicit starting-card ID to an
+    ///         Ancient card type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册从显式初始卡牌 ID 到先古卡牌类型的 <see cref="ArchaicTooth" /> 超越映射。
+    ///     </para>
     /// </summary>
     /// <param name="StarterCardId">
-    ///     Deck card model id to match.
-    ///     要匹配的牌组CardModel id。
+    ///     <para xml:lang="en">The starting-card model ID to match.</para>
+    ///     <para xml:lang="zh-CN">要匹配的初始卡牌模型 ID。</para>
     /// </param>
     /// <param name="AncientCardType">
-    ///     Concrete ancient card type (resolved via <see cref="ModelDb" /> at runtime).
-    ///     具体 ancient 卡牌类型（运行时通过 <see cref="ModelDb" /> 解析）。
+    ///     <para xml:lang="en">The concrete Ancient card type resolved through <see cref="ModelDb" />.</para>
+    ///     <para xml:lang="zh-CN">通过 <see cref="ModelDb" /> 解析的具体先古卡牌类型。</para>
     /// </param>
     public sealed record ArchaicToothTranscendenceByIdRegistrationEntry(
         ModelId StarterCardId,
@@ -919,8 +941,8 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a <see cref="DustyTome" /> candidate (character → ancient card).
-    ///     注册一个 <see cref="DustyTome" /> 候选（角色 → ancient 卡牌）。
+    ///     <para xml:lang="en">Registers a character-to-Ancient-card candidate for <see cref="DustyTome" />.</para>
+    ///     <para xml:lang="zh-CN">为 <see cref="DustyTome" /> 注册角色到先古卡牌的候选映射。</para>
     /// </summary>
     public sealed class DustyTomeCardRegistrationEntry<TCharacter, TAncientCard> : IContentRegistrationEntry
         where TCharacter : CharacterModel
@@ -934,8 +956,12 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a <see cref="DustyTome" /> candidate with explicit character id and ancient card type.
-    ///     使用显式角色 id 和 ancient 卡牌类型注册一个 <see cref="DustyTome" /> 候选。
+    ///     <para xml:lang="en">
+    ///         Registers a <see cref="DustyTome" /> candidate with an explicit character ID and Ancient card type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用显式角色 ID 和先古卡牌类型注册 <see cref="DustyTome" /> 候选。
+    ///     </para>
     /// </summary>
     public sealed record DustyTomeCardByIdRegistrationEntry(
         ModelId CharacterId,
@@ -949,16 +975,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a <see cref="TouchOfOrobas" /> refinement mapping (starter relic → upgraded relic).
-    ///     注册一个 <see cref="TouchOfOrobas" /> 精炼映射（初始遗物 → 升级遗物）。
+    ///     <para xml:lang="en">
+    ///         Registers a <see cref="TouchOfOrobas" /> refinement mapping from a starting relic type to an upgraded
+    ///         relic type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册从初始遗物类型到升级遗物类型的 <see cref="TouchOfOrobas" /> 精炼映射。
+    ///     </para>
     /// </summary>
     /// <typeparam name="TStarterRelic">
-    ///     Starter relic id to match.
-    ///     要匹配的初始遗物 id。
+    ///     <para xml:lang="en">The starting relic type to match.</para>
+    ///     <para xml:lang="zh-CN">要匹配的初始遗物类型。</para>
     /// </typeparam>
     /// <typeparam name="TUpgradedRelic">
-    ///     Replacement relic prototype from <see cref="ModelDb.Relic{T}" />.
-    ///     来自 <see cref="ModelDb.Relic{T}" /> 的替换遗物原型。
+    ///     <para xml:lang="en">The upgraded relic type used as the replacement.</para>
+    ///     <para xml:lang="zh-CN">作为替换目标的升级遗物类型。</para>
     /// </typeparam>
     public sealed class
         TouchOfOrobasRefinementRegistrationEntry<TStarterRelic, TUpgradedRelic> : IContentRegistrationEntry
@@ -973,16 +1004,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     Registers a <see cref="TouchOfOrobas" /> refinement mapping with explicit starter id and upgraded relic type.
-    ///     使用显式初始遗物 id 和升级遗物类型注册一个 <see cref="TouchOfOrobas" /> 精炼映射。
+    ///     <para xml:lang="en">
+    ///         Registers a <see cref="TouchOfOrobas" /> refinement mapping from an explicit starting-relic ID to an
+    ///         upgraded relic type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         注册从显式初始遗物 ID 到升级遗物类型的 <see cref="TouchOfOrobas" /> 精炼映射。
+    ///     </para>
     /// </summary>
     /// <param name="StarterRelicId">
-    ///     Starter relic id to match.
-    ///     要匹配的初始遗物 id。
+    ///     <para xml:lang="en">The starting-relic model ID to match.</para>
+    ///     <para xml:lang="zh-CN">要匹配的初始遗物模型 ID。</para>
     /// </param>
     /// <param name="UpgradedRelicType">
-    ///     Concrete upgraded relic type (resolved via <see cref="ModelDb" /> at runtime).
-    ///     具体升级遗物类型（运行时通过 <see cref="ModelDb" /> 解析）。
+    ///     <para xml:lang="en">The concrete upgraded relic type resolved through <see cref="ModelDb" />.</para>
+    ///     <para xml:lang="zh-CN">通过 <see cref="ModelDb" /> 解析的具体升级遗物类型。</para>
     /// </param>
     public sealed record TouchOfOrobasRefinementByIdRegistrationEntry(
         ModelId StarterRelicId,

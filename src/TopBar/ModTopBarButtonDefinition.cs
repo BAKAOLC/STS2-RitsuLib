@@ -4,8 +4,8 @@ using MegaCrit.Sts2.Core.Localization;
 namespace STS2RitsuLib.TopBar
 {
     /// <summary>
-    ///     Immutable registry entry for a mod-owned top-bar button.
-    ///     mod 拥有的顶部栏按钮的不可变注册表条目。
+    ///     <para xml:lang="en">Immutable definition of a registered mod top-bar button.</para>
+    ///     <para xml:lang="zh-CN">已注册的模组顶部栏按钮的不可变定义。</para>
     /// </summary>
     public sealed record ModTopBarButtonDefinition
     {
@@ -15,7 +15,7 @@ namespace STS2RitsuLib.TopBar
             string? iconPath,
             int order,
             Vector2 offset,
-            Action<ModTopBarButtonContext>? onClick,
+            Action<ModTopBarButtonContext> onClick,
             Func<ModTopBarButtonContext, bool>? visibleWhen,
             Func<ModTopBarButtonContext, bool>? isOpenWhen,
             Func<ModTopBarButtonContext, int>? countProvider)
@@ -32,68 +32,96 @@ namespace STS2RitsuLib.TopBar
         }
 
         /// <summary>
-        ///     Owning mod id.
-        ///     所属 mod id。
+        ///     <para xml:lang="en">ID of the owning mod.</para>
+        ///     <para xml:lang="zh-CN">所属模组的 ID。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     Normalized global id (e.g. <c>MYMOD_TOPBARBUTTON_RECIPES</c>).
-        ///     规范化全局 id (e.g. <c>MYMOD_TOPBARBUTTON_RECIPES</c>)。
+        ///     <para xml:lang="en">Trimmed global ID, for example <c>MYMOD_TOPBARBUTTON_RECIPES</c>.</para>
+        ///     <para xml:lang="zh-CN">去除首尾空白后的全局 ID，例如 <c>MYMOD_TOPBARBUTTON_RECIPES</c>。</para>
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        ///     Godot resource path for the icon, or null.
-        ///     图标的 Godot 资源路径, 或 null。
+        ///     <para xml:lang="en">Godot resource path for the icon, or <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">图标的 Godot 资源路径；未指定时为 <see langword="null" />。</para>
         /// </summary>
         public string? IconPath { get; }
 
         /// <summary>
-        ///     Sort order within this mod's top-bar buttons.
-        ///     排序顺序 在此 mod 的顶部栏按钮内。
+        ///     <para xml:lang="en">
+        ///         Global sort order among registered action buttons. Lower values appear closer to the
+        ///         vanilla deck button.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         已注册操作按钮之间的全局排序值；值越小越靠近原版牌组按钮。
+        ///     </para>
         /// </summary>
         public int Order { get; }
 
         /// <summary>
-        ///     Extra pixel offset on top of the auto-stacked slot.
-        ///     叠加在自动堆叠槽上的额外像素偏移。
+        ///     <para xml:lang="en">Additional visual offset from the automatically arranged slot.</para>
+        ///     <para xml:lang="zh-CN">相对于自动排列槽位的额外视觉偏移。</para>
         /// </summary>
         public Vector2 Offset { get; }
 
         /// <summary>
-        ///     Click handler; see <see cref="ModTopBarButtonSpec.OnClick" />.
-        ///     点击处理器; 见 <see cref="ModTopBarButtonSpec.OnClick" />。
+        ///     <para xml:lang="en">Click handler. See <see cref="ModTopBarButtonSpec.OnClick" />.</para>
+        ///     <para xml:lang="zh-CN">点击回调。参见 <see cref="ModTopBarButtonSpec.OnClick" />。</para>
         /// </summary>
-        public Action<ModTopBarButtonContext>? OnClick { get; }
+        public Action<ModTopBarButtonContext> OnClick { get; }
 
         /// <summary>
-        ///     Optional visibility predicate; see <see cref="ModTopBarButtonSpec.VisibleWhen" />.
-        ///     可选可见性谓词; 见 <see cref="ModTopBarButtonSpec.VisibleWhen" />。
+        ///     <para xml:lang="en">
+        ///         Optional visibility predicate. See <see cref="ModTopBarButtonSpec.VisibleWhen" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的可见性谓词。参见 <see cref="ModTopBarButtonSpec.VisibleWhen" />。
+        ///     </para>
         /// </summary>
         public Func<ModTopBarButtonContext, bool>? VisibleWhen { get; }
 
         /// <summary>
-        ///     Optional "screen open" predicate; see <see cref="ModTopBarButtonSpec.IsOpenWhen" />.
-        ///     可选“屏幕打开”谓词; 见 <see cref="ModTopBarButtonSpec.IsOpenWhen" />。
+        ///     <para xml:lang="en">
+        ///         Optional predicate for the selected/open visual state. See
+        ///         <see cref="ModTopBarButtonSpec.IsOpenWhen" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         控制选中或打开状态视觉效果的可选谓词。参见
+        ///         <see cref="ModTopBarButtonSpec.IsOpenWhen" />。
+        ///     </para>
         /// </summary>
         public Func<ModTopBarButtonContext, bool>? IsOpenWhen { get; }
 
         /// <summary>
-        ///     Optional count provider for the badge; see <see cref="ModTopBarButtonSpec.CountProvider" />.
-        ///     徽章的可选计数提供器；见 <see cref="ModTopBarButtonSpec.CountProvider" />。
+        ///     <para xml:lang="en">
+        ///         Optional count provider for the label. See <see cref="ModTopBarButtonSpec.CountProvider" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         计数标签的可选数量提供器。参见 <see cref="ModTopBarButtonSpec.CountProvider" />。
+        ///     </para>
         /// </summary>
         public Func<ModTopBarButtonContext, int>? CountProvider { get; }
 
         /// <summary>
-        ///     Hover-tip title resolved against <c>static_hover_tips</c> with key <c>{Id}.title</c>.
-        ///     悬停提示标题 基于解析 <c>static_hover_tips</c> 与 键 <c>{Id}.title</c>。
+        ///     <para xml:lang="en">
+        ///         Hover-tip title read from <c>static_hover_tips</c> under key <c>{Id}.title</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从 <c>static_hover_tips</c> 的 <c>{Id}.title</c> 键读取的悬停提示标题。
+        ///     </para>
         /// </summary>
         public LocString Title => new(ModTopBarButtonSpec.HoverTipLocTable, $"{Id}.title");
 
         /// <summary>
-        ///     Hover-tip description resolved against <c>static_hover_tips</c> with key <c>{Id}.description</c>.
-        ///     根据键 <c>{Id}.description</c> 从 <c>static_hover_tips</c> 解析的悬停提示描述。
+        ///     <para xml:lang="en">
+        ///         Hover-tip description read from <c>static_hover_tips</c> under key
+        ///         <c>{Id}.description</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从 <c>static_hover_tips</c> 的 <c>{Id}.description</c> 键读取的悬停提示描述。
+        ///     </para>
         /// </summary>
         public LocString Description => new(ModTopBarButtonSpec.HoverTipLocTable, $"{Id}.description");
     }

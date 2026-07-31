@@ -1,21 +1,18 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
+using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Godot <see cref="Button" /> defaults lean on <c>ui_accept</c>; STS2 maps controller confirm to
-    ///     <see cref="MegaInput.select" /> (<c>ui_select</c>) like
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl" />.
-    ///     Godot <see cref="Button" /> 默认偏向 <c>ui_accept</c>；STS2 会像
-    ///     <see cref="MegaCrit.Sts2.Core.Nodes.GodotExtensions.NClickableControl" /> 一样，将控制器确认映射到
-    ///     <see cref="MegaInput.select" />（<c>ui_select</c>）。
+    ///     <para xml:lang="en">A Godot button that accepts Slay the Spire 2's select and version-appropriate confirm actions.</para>
+    ///     <para xml:lang="zh-CN">同时接受《杀戮尖塔 2》的选择操作和当前游戏版本确认操作的 Godot 按钮。</para>
     /// </summary>
     public partial class ModSettingsGamepadCompatibleButton : Button
     {
         /// <summary>
-        ///     Creates a button that maps both keyboard and controller confirm actions to press behavior.
-        ///     创建一个按钮，将键盘和控制器确认动作都映射为按下行为。
+        ///     <para xml:lang="en">Initializes a button without clipping content outside its bounds.</para>
+        ///     <para xml:lang="zh-CN">初始化一个不会裁剪边界外内容的按钮。</para>
         /// </summary>
         public ModSettingsGamepadCompatibleButton()
         {
@@ -23,17 +20,21 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Handles controller confirm input so the button behaves like standard STS2 clickable controls.
-        ///     处理控制器确认输入，使按钮表现得像标准 STS2 可点击控件。
+        ///     <para xml:lang="en">
+        ///         Emits <see cref="BaseButton.SignalName.Pressed" /> for non-repeated select or confirm input
+        ///         while the button is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">按钮启用时，对非重复的选择或确认输入发出 <see cref="BaseButton.SignalName.Pressed" /> 信号。</para>
         /// </summary>
         /// <param name="event">
-        ///     The input event to process.
-        ///     要处理的输入事件。
+        ///     <para xml:lang="en">The GUI input event to process.</para>
+        ///     <para xml:lang="zh-CN">要处理的 GUI 输入事件。</para>
         /// </param>
         public override void _GuiInput(InputEvent @event)
         {
             if (!Disabled && !@event.IsEcho() &&
-                (@event.IsActionPressed(MegaInput.select) || @event.IsActionPressed(MegaInput.accept)))
+                (@event.IsActionPressed(MegaInput.select) ||
+                 @event.IsActionPressed(Sts2InputCompat.ConfirmAction)))
             {
                 EmitSignal(BaseButton.SignalName.Pressed);
                 AcceptEvent();

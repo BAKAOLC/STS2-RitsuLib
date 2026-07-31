@@ -4,14 +4,14 @@ using HarmonyLib;
 namespace STS2RitsuLib.Patching
 {
     /// <summary>
-    ///     Small helpers for resolving private game members used by Harmony patches.
-    ///     用于 Harmony patch 解析私有游戏成员的小型辅助方法。
+    ///     <para xml:lang="en">Provides helpers for resolving non-public game members used by Harmony patches.</para>
+    ///     <para xml:lang="zh-CN">提供用于解析 Harmony 补丁所需非公开游戏成员的辅助方法。</para>
     /// </summary>
     public static class PrivateAccess
     {
         /// <summary>
-        ///     Resolves a field, including inherited fields.
-        ///     解析字段，包括继承字段。
+        ///     <para xml:lang="en">Resolves a field, including inherited fields.</para>
+        ///     <para xml:lang="zh-CN">解析字段，包括继承的字段。</para>
         /// </summary>
         public static FieldInfo Field<TTarget>(string fieldName)
         {
@@ -19,8 +19,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a field, including inherited fields.
-        ///     解析字段，包括继承字段。
+        ///     <para xml:lang="en">Resolves a field, including inherited fields.</para>
+        ///     <para xml:lang="zh-CN">解析字段，包括继承的字段。</para>
         /// </summary>
         public static FieldInfo Field(Type targetType, string fieldName)
         {
@@ -32,8 +32,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a field declared directly on the target type.
-        ///     解析直接声明在目标类型上的字段。
+        ///     <para xml:lang="en">Resolves a field declared directly on the target type.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明在目标类型上的字段。</para>
         /// </summary>
         public static FieldInfo DeclaredField<TTarget>(string fieldName)
         {
@@ -41,8 +41,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a field declared directly on the target type.
-        ///     解析直接声明在目标类型上的字段。
+        ///     <para xml:lang="en">Resolves a field declared directly on the target type.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明在目标类型上的字段。</para>
         /// </summary>
         public static FieldInfo DeclaredField(Type targetType, string fieldName)
         {
@@ -54,8 +54,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Creates a fast field-ref accessor for a private field.
-        ///     为私有字段创建快速 field-ref 访问器。
+        ///     <para xml:lang="en">Creates a by-reference accessor for a field.</para>
+        ///     <para xml:lang="zh-CN">为字段创建按引用访问器。</para>
         /// </summary>
         public static AccessTools.FieldRef<TTarget, TField> FieldRef<TTarget, TField>(string fieldName)
         {
@@ -64,8 +64,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method, including inherited methods.
-        ///     解析方法，包括继承方法。
+        ///     <para xml:lang="en">Resolves a method, including inherited methods.</para>
+        ///     <para xml:lang="zh-CN">解析方法，包括继承的方法。</para>
         /// </summary>
         public static MethodInfo Method<TTarget>(string methodName)
         {
@@ -73,8 +73,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method, including inherited methods.
-        ///     解析方法，包括继承方法。
+        ///     <para xml:lang="en">Resolves a method, including inherited methods.</para>
+        ///     <para xml:lang="zh-CN">解析方法，包括继承的方法。</para>
         /// </summary>
         public static MethodInfo Method(Type targetType, string methodName)
         {
@@ -86,8 +86,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method using an exact parameter signature, including inherited methods.
-        ///     使用精确参数签名解析方法，包括继承方法。
+        ///     <para xml:lang="en">Resolves a method by exact parameter signature, including inherited methods.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析方法，包括继承的方法。</para>
         /// </summary>
         public static MethodInfo Method<TTarget>(string methodName, params Type[] parameterTypes)
         {
@@ -95,8 +95,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method using an exact parameter signature, including inherited methods.
-        ///     使用精确参数签名解析方法，包括继承方法。
+        ///     <para xml:lang="en">Resolves a method by exact parameter signature, including inherited methods.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析方法，包括继承的方法。</para>
         /// </summary>
         public static MethodInfo Method(Type targetType, string methodName, params Type[] parameterTypes)
         {
@@ -110,8 +110,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method declared directly on the target type.
-        ///     解析直接声明在目标类型上的方法。
+        ///     <para xml:lang="en">Resolves a method declared directly on the target type.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明在目标类型上的方法。</para>
         /// </summary>
         public static MethodInfo DeclaredMethod<TTarget>(string methodName)
         {
@@ -119,8 +119,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method declared directly on the target type.
-        ///     解析直接声明在目标类型上的方法。
+        ///     <para xml:lang="en">Resolves a method declared directly on the target type.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明在目标类型上的方法。</para>
         /// </summary>
         public static MethodInfo DeclaredMethod(Type targetType, string methodName)
         {
@@ -132,8 +132,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method using an exact parameter signature, declared directly on the target type.
-        ///     使用精确参数签名解析直接声明在目标类型上的方法。
+        ///     <para xml:lang="en">Resolves a directly declared method by exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析直接声明在目标类型上的方法。</para>
         /// </summary>
         public static MethodInfo DeclaredMethod<TTarget>(string methodName, params Type[] parameterTypes)
         {
@@ -141,8 +141,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method using an exact parameter signature, declared directly on the target type.
-        ///     使用精确参数签名解析直接声明在目标类型上的方法。
+        ///     <para xml:lang="en">Resolves a directly declared method by exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析直接声明在目标类型上的方法。</para>
         /// </summary>
         public static MethodInfo DeclaredMethod(Type targetType, string methodName, params Type[] parameterTypes)
         {
@@ -156,8 +156,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Creates a delegate for a resolved method.
-        ///     为已解析方法创建委托。
+        ///     <para xml:lang="en">Creates a delegate for a resolved method.</para>
+        ///     <para xml:lang="zh-CN">为已解析的方法创建委托。</para>
         /// </summary>
         public static TDelegate MethodDelegate<TDelegate>(MethodInfo method) where TDelegate : Delegate
         {
@@ -166,8 +166,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method and creates a delegate for it.
-        ///     解析方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a method and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析方法并为其创建委托。</para>
         /// </summary>
         public static TDelegate MethodDelegate<TTarget, TDelegate>(string methodName) where TDelegate : Delegate
         {
@@ -175,8 +175,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method and creates a delegate for it.
-        ///     解析方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a method and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析方法并为其创建委托。</para>
         /// </summary>
         public static TDelegate MethodDelegate<TDelegate>(Type targetType, string methodName)
             where TDelegate : Delegate
@@ -185,8 +185,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method using an exact parameter signature and creates a delegate for it.
-        ///     使用精确参数签名解析方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a method by exact parameter signature and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析方法并为其创建委托。</para>
         /// </summary>
         public static TDelegate MethodDelegate<TTarget, TDelegate>(string methodName, params Type[] parameterTypes)
             where TDelegate : Delegate
@@ -195,8 +195,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a method using an exact parameter signature and creates a delegate for it.
-        ///     使用精确参数签名解析方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a method by exact parameter signature and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析方法并为其创建委托。</para>
         /// </summary>
         public static TDelegate MethodDelegate<TDelegate>(
             Type targetType,
@@ -208,8 +208,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared method and creates a delegate for it.
-        ///     解析直接声明的方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared method and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明的方法并为其创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredMethodDelegate<TTarget, TDelegate>(string methodName)
             where TDelegate : Delegate
@@ -218,8 +218,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared method and creates a delegate for it.
-        ///     解析直接声明的方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared method and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明的方法并为其创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredMethodDelegate<TDelegate>(Type targetType, string methodName)
             where TDelegate : Delegate
@@ -228,8 +228,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared method using an exact parameter signature and creates a delegate for it.
-        ///     使用精确参数签名解析直接声明的方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared method by exact parameter signature and creates a delegate.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析直接声明的方法并创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredMethodDelegate<TTarget, TDelegate>(
             string methodName,
@@ -240,8 +240,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared method using an exact parameter signature and creates a delegate for it.
-        ///     使用精确参数签名解析直接声明的方法并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared method by exact parameter signature and creates a delegate.</para>
+        ///     <para xml:lang="zh-CN">按精确参数签名解析直接声明的方法并创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredMethodDelegate<TDelegate>(
             Type targetType,
@@ -253,8 +253,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared property getter and creates a delegate for it.
-        ///     解析直接声明的属性 getter 并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared property getter and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明的属性 getter 并为其创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredGetterDelegate<TTarget, TDelegate>(string propertyName)
             where TDelegate : Delegate
@@ -263,8 +263,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared property getter and creates a delegate for it.
-        ///     解析直接声明的属性 getter 并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared property getter and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明的属性 getter 并为其创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredGetterDelegate<TDelegate>(Type targetType, string propertyName)
             where TDelegate : Delegate
@@ -278,8 +278,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared property setter and creates a delegate for it.
-        ///     解析直接声明的属性 setter 并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared property setter and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明的属性 setter 并为其创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredSetterDelegate<TTarget, TDelegate>(string propertyName)
             where TDelegate : Delegate
@@ -288,8 +288,8 @@ namespace STS2RitsuLib.Patching
         }
 
         /// <summary>
-        ///     Resolves a directly declared property setter and creates a delegate for it.
-        ///     解析直接声明的属性 setter 并为其创建委托。
+        ///     <para xml:lang="en">Resolves a directly declared property setter and creates a delegate for it.</para>
+        ///     <para xml:lang="zh-CN">解析直接声明的属性 setter 并为其创建委托。</para>
         /// </summary>
         public static TDelegate DeclaredSetterDelegate<TDelegate>(Type targetType, string propertyName)
             where TDelegate : Delegate

@@ -1,16 +1,23 @@
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals.Definition
 {
     /// <summary>
-    ///     Entry point for procedural merchant / rest-site visuals (no custom <c>tscn</c> for those characters). Runtime
-    ///     nodes are built by <c>ModWorldSceneVisualNodeFactory</c> in the parent <c>Visuals</c> namespace.
-    ///     程序化商人 / 休息点视觉的入口点（这些角色不需要自定义 <c>tscn</c>）。运行时节点由父级
-    ///     <c>Visuals</c> 命名空间中的 <c>ModWorldSceneVisualNodeFactory</c> 构建。
+    ///     <para xml:lang="en">
+    ///         Provides the entry point for procedural merchant and rest-site visuals that do not require custom
+    ///         <c>tscn</c> scenes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供程序化商人和休息处形象的入口，使其无需自定义 <c>tscn</c> 场景。
+    ///     </para>
     /// </summary>
     public static class ModCharacterWorldSceneVisuals
     {
         /// <summary>
-        ///     Begins a <see cref="CharacterWorldProceduralVisualSet" /> builder.
-        ///     开始一个 <see cref="CharacterWorldProceduralVisualSet" /> 构建器。
+        ///     <para xml:lang="en">
+        ///         Creates a builder for <see cref="CharacterWorldProceduralVisualSet" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建 <see cref="CharacterWorldProceduralVisualSet" /> 构建器。
+        ///     </para>
         /// </summary>
         public static CharacterWorldProceduralVisualSetBuilder Procedural()
         {

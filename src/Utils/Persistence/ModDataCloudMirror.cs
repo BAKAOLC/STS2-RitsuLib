@@ -5,6 +5,13 @@ using STS2RitsuLib.Platform.Steam;
 
 namespace STS2RitsuLib.Utils.Persistence
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Mirrors registered mod-data files between local account storage and the game's cloud save
+    ///         store.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在本地账户存储与游戏云存档之间镜像已注册的模组数据文件。</para>
+    /// </summary>
     internal static class ModDataCloudMirror
     {
         private const int SteamRemoteScanYieldEvery = 32;
@@ -369,10 +376,11 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     Enumerates every <c>mod_data/</c> path present on Steam Remote Storage. No settings UI uses this yet;
-        ///     reserved for a future full cloud file manager (browse / delete unrelated keys, etc.).
-        ///     枚举 Steam Remote Storage 上存在的每个 <c>mod_data/</c> 路径。当前还没有设置 UI 使用它；
-        ///     保留给未来完整云文件管理器使用（浏览 / 删除无关键等）。
+        ///     <para xml:lang="en">
+        ///         Enumerates every <c>mod_data/</c> path in Steam Remote Storage. Reserved for future cloud-file
+        ///         management tools.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">枚举 Steam 远程存储中的所有 <c>mod_data/</c> 路径，供未来的云文件管理工具使用。</para>
         /// </summary>
         internal static async Task<List<string>> CollectRemoteModDataRelativePathsAsync(SceneTree tree,
             CancellationToken ct = default)

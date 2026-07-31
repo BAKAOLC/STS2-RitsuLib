@@ -9,10 +9,8 @@ using STS2RitsuLib.Utils.Persistence.Migration;
 namespace STS2RitsuLib.Data
 {
     /// <summary>
-    ///     Unified data store for all mod persistent data.
-    ///     Uses key-based registration to avoid hardcoded per-data properties and methods.
-    ///     所有 mod 持久化数据的统一数据存储。
-    ///     使用基于键的注册，避免为每种数据硬编码属性和方法。
+    ///     <para xml:lang="en">Provides key-based registration and access for a mod's persistent and in-memory data.</para>
+    ///     <para xml:lang="zh-CN">为模组的持久化数据和内存数据提供基于键的注册与访问。</para>
     /// </summary>
     public class ModDataStore
     {
@@ -26,7 +24,6 @@ namespace STS2RitsuLib.Data
 
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly Logger _logger;
-        private readonly MigrationManager _migrationManager;
         private bool _profileEventsSubscribed;
         private int _registrationScopeDepth;
         private bool _registrationScopeInitializeProfileIfReady;
@@ -41,13 +38,11 @@ namespace STS2RitsuLib.Data
                 DefaultIgnoreCondition = JsonIgnoreCondition.Never,
                 IncludeFields = false,
             };
-
-            _migrationManager = new();
         }
 
         /// <summary>
-        ///     Owning mod id for this store instance.
-        ///     此存储实例所属的 mod ID。
+        ///     <para xml:lang="en">Gets the ID of the mod that owns this store.</para>
+        ///     <para xml:lang="zh-CN">获取此存储所属的模组 ID。</para>
         /// </summary>
         public string ModId { get; }
 
@@ -57,32 +52,32 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     True after every global-scoped entry has completed initialization and load.
-        ///     所有全局作用域条目完成初始化和加载后为 true。
+        ///     <para xml:lang="en">Gets whether every global entry has been initialized and loaded.</para>
+        ///     <para xml:lang="zh-CN">获取所有全局条目是否均已初始化并加载。</para>
         /// </summary>
         public bool IsGlobalInitialized { get; private set; }
 
         /// <summary>
-        ///     True after profile-scoped entries for the active profile are initialized.
-        ///     当前活动档案的档案作用域条目初始化后为 true。
+        ///     <para xml:lang="en">Gets whether entries for the active profile have been initialized.</para>
+        ///     <para xml:lang="zh-CN">获取当前档案的条目是否已初始化。</para>
         /// </summary>
         public bool IsProfileInitialized { get; private set; }
 
         /// <summary>
-        ///     Whether this store has at least one <see cref="SaveScope.Profile" /> registration.
-        ///     此存储是否至少有一个 <see cref="SaveScope.Profile" /> 注册。
+        ///     <para xml:lang="en">Gets whether this store contains any <see cref="SaveScope.Profile" /> registrations.</para>
+        ///     <para xml:lang="zh-CN">获取此存储是否包含任何 <see cref="SaveScope.Profile" /> 注册。</para>
         /// </summary>
         public bool HasProfileScopedEntries => _entries.Values.Any(e => e.Scope == SaveScope.Profile);
 
         internal event Action<string>? EntryReloaded;
 
         /// <summary>
-        ///     Defers eager initialization of newly registered entries until the scope is disposed.
-        ///     将新注册条目的急切初始化延迟到作用域释放时执行。
+        ///     <para xml:lang="en">Defers eager initialization of newly registered entries until the returned scope is disposed.</para>
+        ///     <para xml:lang="zh-CN">将新注册条目的立即初始化推迟到返回的作用域被释放时。</para>
         /// </summary>
         /// <param name="initializeProfileIfReady">
-        ///     When true and profile data is already initialized, profile-scoped registrations initialize on scope end.
-        ///     为 true 且档案数据已初始化时，档案作用域注册会在作用域结束时初始化。
+        ///     <para xml:lang="en">Whether new profile entries should initialize at scope end when profile data is already ready.</para>
+        ///     <para xml:lang="zh-CN">档案数据已就绪时，是否在作用域结束时初始化新的档案条目。</para>
         /// </param>
         public IDisposable BeginRegistrationScope(bool initializeProfileIfReady = true)
         {
@@ -92,8 +87,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Returns the process-wide store for <paramref name="modId" />.
-        ///     返回 <paramref name="modId" /> 对应的进程级存储。
+        ///     <para xml:lang="en">Gets the process-wide store for <paramref name="modId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 对应的进程级存储。</para>
         /// </summary>
         public static ModDataStore For(string modId)
         {
@@ -136,14 +131,14 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Initializes and loads every global-scoped entry that is not yet initialized (safe during early startup).
-        ///     初始化并加载所有尚未初始化的全局作用域条目（可安全用于早期启动阶段）。
+        ///     <para xml:lang="en">Initializes and loads every uninitialized global entry.</para>
+        ///     <para xml:lang="zh-CN">初始化并加载所有尚未初始化的全局条目。</para>
         /// </summary>
         public void InitializeGlobal()
         {
             foreach (var entry in _entries.Values.Where(e => e is { Scope: SaveScope.Global, IsInitialized: false }))
             {
-                entry.Initialize(_jsonOptions, _migrationManager);
+                entry.Initialize(_jsonOptions);
                 entry.Load();
             }
 
@@ -151,8 +146,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Initializes and loads profile-scoped entries once the profile path is valid (subscribes to profile changes).
-        ///     在档案路径有效后初始化并加载档案作用域条目（同时订阅档案变更）。
+        ///     <para xml:lang="en">Initializes and loads profile entries, then subscribes to profile changes.</para>
+        ///     <para xml:lang="zh-CN">初始化并加载档案条目，然后订阅档案变更事件。</para>
         /// </summary>
         public void InitializeProfileScoped()
         {
@@ -169,7 +164,7 @@ namespace STS2RitsuLib.Data
             foreach (var entry in _entries.Values.Where(e =>
                          e is { IsInitialized: false, Scope: SaveScope.Profile }))
             {
-                entry.Initialize(_jsonOptions, _migrationManager);
+                entry.Initialize(_jsonOptions);
                 entry.Load();
             }
 
@@ -179,36 +174,36 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Registers a JSON-backed persistence slot identified by <paramref name="key" />.
-        ///     注册一个由 JSON 支持、以 <c>key</c> 标识的持久化槽。
+        ///     <para xml:lang="en">Registers a JSON-backed data slot identified by <paramref name="key" />.</para>
+        ///     <para xml:lang="zh-CN">注册由 JSON 支持、以 <paramref name="key" /> 标识的数据槽。</para>
         /// </summary>
         /// <param name="key">
-        ///     Logical key used with <see cref="Get{T}" />, <see cref="Modify{T}" />, and <see cref="Save" />.
-        ///     与 <see cref="Get{T}" />、<see cref="Modify{T}" /> 和 <see cref="Save" /> 一起使用的逻辑键。
+        ///     <para xml:lang="en">The logical key used to access the data slot.</para>
+        ///     <para xml:lang="zh-CN">用于访问数据槽的逻辑键。</para>
         /// </param>
         /// <param name="fileName">
-        ///     File name segment passed to <see cref="ProfileManager" /> path resolution.
-        ///     传递给 <see cref="ProfileManager" /> 路径解析的文件名片段。
+        ///     <para xml:lang="en">The file-name segment supplied to <see cref="ProfileManager" />.</para>
+        ///     <para xml:lang="zh-CN">传递给 <see cref="ProfileManager" /> 的文件名片段。</para>
         /// </param>
         /// <param name="scope">
-        ///     Global or profile persistence scope.
-        ///     全局或档案持久化作用域。
+        ///     <para xml:lang="en">The data slot's save scope.</para>
+        ///     <para xml:lang="zh-CN">数据槽的保存作用域。</para>
         /// </param>
         /// <param name="defaultFactory">
-        ///     Factory for the in-memory default when no file exists.
-        ///     文件不存在时用于创建内存默认值的工厂。
+        ///     <para xml:lang="en">An optional factory for the default value when no file exists.</para>
+        ///     <para xml:lang="zh-CN">文件不存在时，用于创建默认值的可选工厂。</para>
         /// </param>
         /// <param name="autoCreateIfMissing">
-        ///     When true, creates the on-disk file if absent after first save.
-        ///     为 true 时，首次保存后如果磁盘文件不存在则创建它。
+        ///     <para xml:lang="en">Whether a missing file should be created automatically.</para>
+        ///     <para xml:lang="zh-CN">文件缺失时是否自动创建。</para>
         /// </param>
         /// <param name="migrationConfig">
-        ///     Optional schema versioning configuration for migrations.
-        ///     用于迁移的可选 schema 版本配置。
+        ///     <para xml:lang="en">Optional schema-version configuration for migrations.</para>
+        ///     <para xml:lang="zh-CN">用于迁移的可选架构版本配置。</para>
         /// </param>
         /// <param name="migrations">
-        ///     Optional migration steps; requires <paramref name="migrationConfig" />.
-        ///     可选迁移步骤；需要 <paramref name="migrationConfig" />。
+        ///     <para xml:lang="en">Optional migration steps; requires <paramref name="migrationConfig" />.</para>
+        ///     <para xml:lang="zh-CN">可选的迁移步骤；需要同时提供 <paramref name="migrationConfig" />。</para>
         /// </param>
         public void Register<T>(
             string key,
@@ -224,40 +219,40 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Registers a JSON-backed persistence slot identified by <paramref name="key" />.
-        ///     注册一个由 JSON 支持、以 <c>key</c> 标识的持久化槽。
+        ///     <para xml:lang="en">Registers a JSON-backed data slot with an explicit cloud-sync policy.</para>
+        ///     <para xml:lang="zh-CN">注册由 JSON 支持的数据槽，并显式指定云同步策略。</para>
         /// </summary>
         /// <param name="key">
-        ///     Logical key used with <see cref="Get{T}" />, <see cref="Modify{T}" />, and <see cref="Save" />.
-        ///     与 <see cref="Get{T}" />、<see cref="Modify{T}" /> 和 <see cref="Save" /> 一起使用的逻辑键。
+        ///     <para xml:lang="en">The logical key used to access the data slot.</para>
+        ///     <para xml:lang="zh-CN">用于访问数据槽的逻辑键。</para>
         /// </param>
         /// <param name="fileName">
-        ///     File name segment passed to <see cref="ProfileManager" /> path resolution.
-        ///     传递给 <see cref="ProfileManager" /> 路径解析的文件名片段。
+        ///     <para xml:lang="en">The file-name segment supplied to <see cref="ProfileManager" />.</para>
+        ///     <para xml:lang="zh-CN">传递给 <see cref="ProfileManager" /> 的文件名片段。</para>
         /// </param>
         /// <param name="scope">
-        ///     Global or profile persistence scope.
-        ///     全局或档案持久化作用域。
+        ///     <para xml:lang="en">The data slot's save scope.</para>
+        ///     <para xml:lang="zh-CN">数据槽的保存作用域。</para>
         /// </param>
         /// <param name="defaultFactory">
-        ///     Factory for the in-memory default when no file exists.
-        ///     文件不存在时用于创建内存默认值的工厂。
+        ///     <para xml:lang="en">An optional factory for the default value when no file exists.</para>
+        ///     <para xml:lang="zh-CN">文件不存在时，用于创建默认值的可选工厂。</para>
         /// </param>
         /// <param name="autoCreateIfMissing">
-        ///     When true, creates the on-disk file if absent after first save.
-        ///     为 true 时，首次保存后如果磁盘文件不存在则创建它。
+        ///     <para xml:lang="en">Whether a missing file should be created automatically.</para>
+        ///     <para xml:lang="zh-CN">文件缺失时是否自动创建。</para>
         /// </param>
         /// <param name="migrationConfig">
-        ///     Optional schema versioning configuration for migrations.
-        ///     用于迁移的可选 schema 版本配置。
+        ///     <para xml:lang="en">Optional schema-version configuration for migrations.</para>
+        ///     <para xml:lang="zh-CN">用于迁移的可选架构版本配置。</para>
         /// </param>
         /// <param name="migrations">
-        ///     Optional migration steps; requires <paramref name="migrationConfig" />.
-        ///     可选迁移步骤；需要 <paramref name="migrationConfig" />。
+        ///     <para xml:lang="en">Optional migration steps; requires <paramref name="migrationConfig" />.</para>
+        ///     <para xml:lang="zh-CN">可选的迁移步骤；需要同时提供 <paramref name="migrationConfig" />。</para>
         /// </param>
         /// <param name="syncToCloud">
-        ///     When false, this persisted slot stays local-only and is excluded from RitsuLib mod-data cloud sync.
-        ///     为 false 时，此持久化槽仅保留在本地，不参与 RitsuLib 的 mod data 云同步。
+        ///     <para xml:lang="en">Whether this persisted slot participates in RitsuLib's mod-data cloud sync.</para>
+        ///     <para xml:lang="zh-CN">此持久化数据槽是否参与 RitsuLib 的模组数据云同步。</para>
         /// </param>
         public void Register<T>(
             string key,
@@ -270,10 +265,13 @@ namespace STS2RitsuLib.Data
             IEnumerable<IMigration>? migrations = null)
             where T : class, new()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+
             if (_entries.ContainsKey(key))
                 throw new InvalidOperationException($"Data key '{key}' is already registered.");
 
-            ConfigureMigration<T>(migrationConfig, migrations);
+            var migrationManager = CreateMigrationManager<T>(migrationConfig, migrations);
 
             if (scope == SaveScope.InMemory)
             {
@@ -289,6 +287,7 @@ namespace STS2RitsuLib.Data
                 scope,
                 defaultFactory ?? (() => new()),
                 autoCreateIfMissing,
+                migrationManager,
                 _logger
             );
 
@@ -301,15 +300,18 @@ namespace STS2RitsuLib.Data
 
             if (!IsGlobalInitialized && scope == SaveScope.Global) return;
             if (!IsProfileInitialized && scope == SaveScope.Profile) return;
-            registration.Initialize(_jsonOptions, _migrationManager);
+            registration.Initialize(_jsonOptions);
             registration.Load();
         }
 
         /// <summary>
-        ///     Registers a JSON-backed persistence slot identified by <paramref name="key" /> using an explicit
-        ///     <see cref="StorageContext" /> provider for path resolution.
-        ///     注册一个由 JSON 支持、以 <paramref name="key" /> 标识的持久化槽，并使用显式
-        ///     <see cref="StorageContext" /> 提供器解析路径。
+        ///     <para xml:lang="en">
+        ///         Registers a JSON-backed data slot using an explicit <see cref="StorageContext" /> provider for path
+        ///         resolution.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册由 JSON 支持的数据槽，并使用显式的 <see cref="StorageContext" /> 提供器解析路径。
+        ///     </para>
         /// </summary>
         public void Register<T>(
             string key,
@@ -327,46 +329,49 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Registers a JSON-backed persistence slot identified by <paramref name="key" /> using an explicit
-        ///     <see cref="StorageContext" /> provider for path resolution.
-        ///     注册一个由 JSON 支持、以 <paramref name="key" /> 标识的持久化槽，并使用显式
-        ///     <see cref="StorageContext" /> 提供器解析路径。
+        ///     <para xml:lang="en">
+        ///         Registers a JSON-backed data slot using an explicit <see cref="StorageContext" /> provider and
+        ///         cloud-sync policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册由 JSON 支持的数据槽，并使用显式的 <see cref="StorageContext" /> 提供器和云同步策略。
+        ///     </para>
         /// </summary>
         /// <param name="key">
-        ///     Logical key used with <see cref="Get{T}" />, <see cref="Modify{T}" />, and <see cref="Save" />.
-        ///     与 <see cref="Get{T}" />、<see cref="Modify{T}" /> 和 <see cref="Save" /> 一起使用的逻辑键。
+        ///     <para xml:lang="en">The logical key used to access the data slot.</para>
+        ///     <para xml:lang="zh-CN">用于访问数据槽的逻辑键。</para>
         /// </param>
         /// <param name="fileName">
-        ///     File name segment passed to path resolution.
-        ///     传递给路径解析的文件名片段。
+        ///     <para xml:lang="en">The file-name segment supplied to path resolution.</para>
+        ///     <para xml:lang="zh-CN">传递给路径解析流程的文件名片段。</para>
         /// </param>
         /// <param name="scope">
-        ///     Global or profile persistence scope.
-        ///     全局或档案持久化作用域。
+        ///     <para xml:lang="en">The data slot's save scope.</para>
+        ///     <para xml:lang="zh-CN">数据槽的保存作用域。</para>
         /// </param>
         /// <param name="contextProvider">
-        ///     Provider used to resolve the current storage context.
-        ///     用于解析当前存储上下文的提供器。
+        ///     <para xml:lang="en">The provider used to resolve the current storage context.</para>
+        ///     <para xml:lang="zh-CN">用于解析当前存储上下文的提供器。</para>
         /// </param>
         /// <param name="syncToCloud">
-        ///     When false, this persisted slot stays local-only and is excluded from RitsuLib mod-data cloud sync.
-        ///     为 false 时，此持久化槽仅保留在本地，不参与 RitsuLib 的 mod data 云同步。
+        ///     <para xml:lang="en">Whether this persisted slot participates in RitsuLib's mod-data cloud sync.</para>
+        ///     <para xml:lang="zh-CN">此持久化数据槽是否参与 RitsuLib 的模组数据云同步。</para>
         /// </param>
         /// <param name="defaultFactory">
-        ///     Factory for the in-memory default when no file exists.
-        ///     文件不存在时用于创建内存默认值的工厂。
+        ///     <para xml:lang="en">An optional factory for the default value when no file exists.</para>
+        ///     <para xml:lang="zh-CN">文件不存在时，用于创建默认值的可选工厂。</para>
         /// </param>
         /// <param name="autoCreateIfMissing">
-        ///     When true, creates the on-disk file if absent after first save.
-        ///     为 true 时，首次保存后如果磁盘文件不存在则创建它。
+        ///     <para xml:lang="en">Whether a missing file should be created automatically.</para>
+        ///     <para xml:lang="zh-CN">文件缺失时是否自动创建。</para>
         /// </param>
         /// <param name="migrationConfig">
-        ///     Optional schema versioning configuration for migrations.
-        ///     用于迁移的可选 schema 版本配置。
+        ///     <para xml:lang="en">Optional schema-version configuration for migrations.</para>
+        ///     <para xml:lang="zh-CN">用于迁移的可选架构版本配置。</para>
         /// </param>
         /// <param name="migrations">
-        ///     Optional migration steps; requires <paramref name="migrationConfig" />.
-        ///     可选迁移步骤；需要 <paramref name="migrationConfig" />。
+        ///     <para xml:lang="en">Optional migration steps; requires <paramref name="migrationConfig" />.</para>
+        ///     <para xml:lang="zh-CN">可选的迁移步骤；需要同时提供 <paramref name="migrationConfig" />。</para>
         /// </param>
         public void Register<T>(
             string key,
@@ -380,12 +385,14 @@ namespace STS2RitsuLib.Data
             IEnumerable<IMigration>? migrations = null)
             where T : class, new()
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(key);
+            ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
             ArgumentNullException.ThrowIfNull(contextProvider);
 
             if (_entries.ContainsKey(key))
                 throw new InvalidOperationException($"Data key '{key}' is already registered.");
 
-            ConfigureMigration<T>(migrationConfig, migrations);
+            var migrationManager = CreateMigrationManager<T>(migrationConfig, migrations);
 
             if (scope == SaveScope.InMemory)
                 throw new InvalidOperationException("SaveScope.InMemory does not support contextProvider overload.");
@@ -397,6 +404,7 @@ namespace STS2RitsuLib.Data
                 scope,
                 defaultFactory ?? (() => new()),
                 autoCreateIfMissing,
+                migrationManager,
                 _logger,
                 contextProvider
             );
@@ -410,38 +418,46 @@ namespace STS2RitsuLib.Data
 
             if (!IsGlobalInitialized && scope == SaveScope.Global) return;
             if (!IsProfileInitialized && scope == SaveScope.Profile) return;
-            registration.Initialize(_jsonOptions, _migrationManager);
+            registration.Initialize(_jsonOptions);
             registration.Load();
         }
 
-        private void ConfigureMigration<T>(
+        private static MigrationManager CreateMigrationManager<T>(
             ModDataMigrationConfig? migrationConfig,
             IEnumerable<IMigration>? migrations)
             where T : class, new()
         {
+            var migrationManager = new MigrationManager();
+
             if (migrationConfig != null)
-                _migrationManager.RegisterConfig<T>(
+                migrationManager.RegisterConfig<T>(
                     migrationConfig.CurrentDataVersion,
                     migrationConfig.MinimumSupportedDataVersion,
                     migrationConfig.SchemaVersionProperty
                 );
 
             if (migrations == null)
-                return;
+                return migrationManager;
 
             if (migrationConfig == null)
                 throw new InvalidOperationException(
                     $"Migration config for type '{typeof(T).Name}' requires a current version.");
 
             foreach (var migration in migrations)
-                _migrationManager.RegisterMigration<T>(migration);
+                migrationManager.RegisterMigration<T>(migration);
+
+            return migrationManager;
         }
 
         /// <summary>
-        ///     Returns the live instance for <paramref name="key" />.
-        ///     Profile reloads may replace this root instance; use <see cref="CreateCache{T}" /> for cached access.
-        ///     返回 <c>key</c> 对应的实时实例。
-        ///     档案重新加载可能替换此根实例；缓存访问请使用 <see cref="CreateCache{T}" />。
+        ///     <para xml:lang="en">
+        ///         Gets the live instance for <paramref name="key" />. Profile reloads can replace the root instance;
+        ///         use <see cref="CreateCache{T}" /> for cache-aware access.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="key" /> 对应的实时实例。重新加载档案可能替换其根实例；需要缓存感知的访问时，
+        ///         请使用 <see cref="CreateCache{T}" />。
+        ///     </para>
         /// </summary>
         public T Get<T>(string key) where T : class, new()
         {
@@ -456,8 +472,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Creates a small cache wrapper that invalidates itself when this store reloads <paramref name="key" />.
-        ///     创建一个小型缓存包装器，在此存储重新加载 <paramref name="key" /> 时自动失效。
+        ///     <para xml:lang="en">Creates a cache wrapper that invalidates itself when <paramref name="key" /> is reloaded.</para>
+        ///     <para xml:lang="zh-CN">创建缓存包装器，并在重新加载 <paramref name="key" /> 时自动使其失效。</para>
         /// </summary>
         public ModDataStoreCache<T> CreateCache<T>(string key) where T : class, new()
         {
@@ -465,8 +481,11 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Mutates the instance for <paramref name="key" /> in place (persists via <see cref="Save" />).
-        ///     原地修改 <paramref name="key" /> 对应的实例（通过 <see cref="Save" /> 持久化）。
+        ///     <para xml:lang="en">
+        ///         Mutates the instance for <paramref name="key" /> in place; call <see cref="Save" /> to persist
+        ///         it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">原地修改 <paramref name="key" /> 对应的实例；调用 <see cref="Save" /> 可将其持久化。</para>
         /// </summary>
         public void Modify<T>(string key, Action<T> modifier) where T : class, new()
         {
@@ -486,8 +505,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Writes the entry for <paramref name="key" /> to disk.
-        ///     将 <c>key</c> 对应的条目写入磁盘。
+        ///     <para xml:lang="en">Writes the entry for <paramref name="key" /> to disk.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="key" /> 对应的条目写入磁盘。</para>
         /// </summary>
         public void Save(string key)
         {
@@ -498,8 +517,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Whether a file already existed when the entry was first loaded.
-        ///     条目首次加载时文件是否已经存在。
+        ///     <para xml:lang="en">Gets whether the entry's file existed when it was first loaded.</para>
+        ///     <para xml:lang="zh-CN">获取首次加载条目时，其文件是否已经存在。</para>
         /// </summary>
         public bool HasExistingData(string key)
         {
@@ -507,12 +526,12 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Reloads entries whose resolved path changed (e.g. after profile switch).
-        ///     重新加载解析路径发生变化的条目（例如档案切换后）。
+        ///     <para xml:lang="en">Reloads entries whose resolved path has changed, such as after a profile switch.</para>
+        ///     <para xml:lang="zh-CN">重新加载解析路径已发生变化的条目，例如切换档案后的条目。</para>
         /// </summary>
         /// <returns>
-        ///     True if any entry reloaded.
-        ///     如果有任何条目被重新加载，则为 true。
+        ///     <para xml:lang="en"><see langword="true" /> if any entry was reloaded; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">如果重新加载了任何条目，则为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool ReloadIfPathChanged()
         {
@@ -530,8 +549,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Persists every registered entry.
-        ///     持久化所有已注册条目。
+        ///     <para xml:lang="en">Persists every registered entry.</para>
+        ///     <para xml:lang="zh-CN">持久化所有已注册的条目。</para>
         /// </summary>
         public void SaveAll()
         {
@@ -565,7 +584,7 @@ namespace STS2RitsuLib.Data
                 throw new KeyNotFoundException($"Data key '{key}' is not registered.");
 
             if (entry is not { IsInitialized: false, Scope: SaveScope.Global }) return entry;
-            entry.Initialize(_jsonOptions, _migrationManager);
+            entry.Initialize(_jsonOptions);
             entry.Load();
             RefreshGlobalInitializationState();
 
@@ -646,7 +665,7 @@ namespace STS2RitsuLib.Data
             public bool HadExistingData => false;
             public bool IsInitialized { get; private set; }
 
-            public void Initialize(JsonSerializerOptions jsonOptions, MigrationManager migrationManager)
+            public void Initialize(JsonSerializerOptions jsonOptions)
             {
                 if (IsInitialized) return;
                 _data = defaultFactory();
@@ -689,7 +708,7 @@ namespace STS2RitsuLib.Data
             Type DataType { get; }
             bool HadExistingData { get; }
             bool IsInitialized { get; }
-            void Initialize(JsonSerializerOptions jsonOptions, MigrationManager migrationManager);
+            void Initialize(JsonSerializerOptions jsonOptions);
             void Load();
             void Save();
             void SaveToProfilePath(int profileId);
@@ -703,6 +722,7 @@ namespace STS2RitsuLib.Data
             SaveScope scope,
             Func<T> defaultFactory,
             bool autoCreateIfMissing,
+            MigrationManager migrationManager,
             Logger logger,
             Func<StorageContext>? contextProvider = null)
             : IRegisteredDataEntry where T : class, new()
@@ -718,7 +738,7 @@ namespace STS2RitsuLib.Data
             public bool HadExistingData { get; private set; }
             public bool IsInitialized => _entry != null;
 
-            public void Initialize(JsonSerializerOptions jsonOptions, MigrationManager migrationManager)
+            public void Initialize(JsonSerializerOptions jsonOptions)
             {
                 if (_entry != null) return;
 

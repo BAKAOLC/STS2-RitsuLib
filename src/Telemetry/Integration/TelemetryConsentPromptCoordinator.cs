@@ -6,16 +6,21 @@ using STS2RitsuLib.Ui.Toast;
 namespace STS2RitsuLib.Telemetry.Integration
 {
     /// <summary>
-    ///     Shows the first-menu telemetry consent toast and starts authorized startup delivery.
-    ///     显示首次主菜单 telemetry 授权 toast，并启动已授权启动数据投递。
+    ///     <para xml:lang="en">
+    ///         Shows the telemetry consent notification on the first main menu and starts delivery of authorized
+    ///         startup data.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         首次进入主菜单时显示遥测授权通知，并开始投递已获授权的启动数据。
+    ///     </para>
     /// </summary>
     internal static class TelemetryConsentPromptCoordinator
     {
         private static bool _handledFirstMainMenu;
 
         /// <summary>
-        ///     Runs once after the main menu is ready.
-        ///     在主菜单就绪后运行一次。
+        ///     <para xml:lang="en">Runs the first-main-menu flow at most once per process.</para>
+        ///     <para xml:lang="zh-CN">每个进程最多运行一次首次主菜单流程。</para>
         /// </summary>
         internal static void TryRunFirstMainMenuFlow()
         {
@@ -143,7 +148,7 @@ namespace STS2RitsuLib.Telemetry.Integration
             {
                 L(
                     "ritsulib.telemetry.prompt.bodyIntro",
-                    "The following mods request permission to send telemetry to their own fixed endpoints. Startup facts have already been sampled locally and will only be sent after consent."),
+                    "This mod requests permission to send telemetry to its fixed endpoint. Startup information has already been sampled locally and will only be sent after consent."),
                 "",
                 $"{applicant.ResolveDisplayName()} ({applicant.ApplicantId})",
                 string.Format(

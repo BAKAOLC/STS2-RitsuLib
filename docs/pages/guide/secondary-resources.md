@@ -9,7 +9,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 
 ::: en
 
-Use `RitsuLibFramework.GetSecondaryResourceRegistry(modId)` to declare combat resources that behave like mod-owned energy, ammo, stance counters, or other card-payment state.
+Use `RitsuLibFramework.GetSecondaryResourceRegistry(modId)` to declare combat resources such as mod-defined energy, ammunition, stance counters, or other card-payment state.
 
 ```csharp
 var resources = RitsuLibFramework.GetSecondaryResourceRegistry("MyMod");
@@ -23,17 +23,17 @@ var charge = resources.Register("charge", new SecondaryResourceDefinition(
     largeIconPath: "res://MyMod/assets/ui/charge_large.png"));
 ```
 
-The registry expands the local id into a stable compound id. Use that returned `charge.Id` when you need a concrete resource id later.
+The registry expands the mod-local ID into a stable full resource ID. Use the returned `charge.Id` whenever another API needs that full ID. Registering the same ID again returns the definition registered first.
 
 `baseMaxAmount` is optional. Leave it `null` for resources without a max concept.
 
-With the default layout, one resource stays on one predictable path:
+By default, each resource uses the following localization layout:
 
-- loc table: `static_hover_tips`
+- localization table: `static_hover_tips`
 - title key: `{resourceId}.title`
 - description key: `{resourceId}.description`
 
-Only pass `locTable`, `titleKey`, or `descriptionKey` when you are intentionally overriding that layout.
+Only pass `locTable`, `titleKey`, or `descriptionKey` when you need to override that layout. Surrounding whitespace in these values and the icon paths is ignored.
 
 :::
 
@@ -41,7 +41,7 @@ Only pass `locTable`, `titleKey`, or `descriptionKey` when you are intentionally
 
 ::: zh-CN
 
-用 `RitsuLibFramework.GetSecondaryResourceRegistry(modId)` 声明战斗资源。它适合表达模组自定义的能量、弹药、姿态计数，或其他需要参与卡牌支付的状态。
+使用 `RitsuLibFramework.GetSecondaryResourceRegistry(modId)` 声明战斗资源。它适合表示模组自定义的能量、弹药、姿态计数，以及其他参与卡牌支付的状态。
 
 ```csharp
 var resources = RitsuLibFramework.GetSecondaryResourceRegistry("MyMod");
@@ -55,17 +55,17 @@ var charge = resources.Register("charge", new SecondaryResourceDefinition(
     largeIconPath: "res://MyMod/assets/ui/charge_large.png"));
 ```
 
-注册器会把本地 id 扩展成稳定的 compound id。后续需要具体资源 id 时，直接使用返回定义上的 `charge.Id`。
+注册表会把模组内 ID 扩展成稳定的完整资源 ID。其他 API 需要完整 ID 时，使用返回定义中的 `charge.Id`。重复注册同一 ID 时会返回最先注册的定义。
 
 `baseMaxAmount` 是可选的。没有上限概念的资源保持 `null` 即可。
 
-按默认约定，一个资源会稳定落在同一套路径上：
+默认情况下，每种资源使用以下本地化约定：
 
-- loc table：`static_hover_tips`
-- title key：`{resourceId}.title`
-- description key：`{resourceId}.description`
+- 本地化表：`static_hover_tips`
+- 标题键：`{resourceId}.title`
+- 说明键：`{resourceId}.description`
 
-只有在你明确要覆盖这套路径时，再传 `locTable`、`titleKey`、`descriptionKey`。
+仅在需要覆盖这套约定时传入 `locTable`、`titleKey` 或 `descriptionKey`。这些值和图标路径的首尾空白会被忽略。
 
 :::
 
@@ -87,13 +87,13 @@ var spent = await SecondaryResourceCmd.Spend(player, charge.Id, 2, card, source:
 await SecondaryResourceCmd.Reset(player, charge.Id, toMax: true);
 ```
 
-Built-in turn-start handling comes from `SecondaryResourceTurnStartPolicy`:
+Built-in turn-start behavior is selected with `SecondaryResourceTurnStartPolicy`:
 
 | Policy | Effect |
 | --- | --- |
 | `None` | Keep the current amount |
-| `ResetToMax` | Set current amount to the hook-adjusted max |
-| `AddMaxToCurrent` | Add the hook-adjusted max to the current amount |
+| `ResetToMax` | Set the current amount to the hook-adjusted maximum |
+| `AddMaxToCurrent` | Add the hook-adjusted maximum to the current amount |
 | `Clear` | Set current amount to the resource minimum |
 
 Persistence is separate:
@@ -101,7 +101,7 @@ Persistence is separate:
 | Policy | Saved scope |
 | --- | --- |
 | `None` | Runtime only |
-| `Combat` | Currently mostly equivalent to `None`; normal run saves do not restore in-progress combat state |
+| `Combat` | Included only in explicitly requested combat snapshots; excluded from normal run-save synchronization |
 | `Run` | Persist across combats in the same run |
 
 :::
@@ -124,22 +124,22 @@ var spent = await SecondaryResourceCmd.Spend(player, charge.Id, 2, card, source:
 await SecondaryResourceCmd.Reset(player, charge.Id, toMax: true);
 ```
 
-内建的回合开始行为由 `SecondaryResourceTurnStartPolicy` 控制：
+内置的回合开始行为由 `SecondaryResourceTurnStartPolicy` 控制：
 
 | 策略 | 效果 |
 | --- | --- |
 | `None` | 保持当前数量 |
-| `ResetToMax` | 把当前数量设为经过 hook 修正后的最大值 |
-| `AddMaxToCurrent` | 将经过 hook 修正后的最大值加到当前数量 |
-| `Clear` | 把当前数量设为资源最小值 |
+| `ResetToMax` | 将当前数量设为经钩子修正后的最大值 |
+| `AddMaxToCurrent` | 将经钩子修正后的最大值加到当前数量 |
+| `Clear` | 将当前数量设为资源下限 |
 
 持久化范围单独由 `SecondaryResourcePersistencePolicy` 控制：
 
 | 策略 | 存储范围 |
 | --- | --- |
-| `None` | 仅运行时存在 |
-| `Combat` | 目前基本等同于 `None`；普通跑局存档不会恢复进行中的战斗状态 |
-| `Run` | 在同一游戏中跨战斗保留 |
+| `None` | 仅在运行时存在 |
+| `Combat` | 仅包含在显式请求的战斗快照中；常规跑局存档同步不会保存 |
+| `Run` | 在同一局游戏中跨战斗保留 |
 
 :::
 
@@ -147,7 +147,7 @@ await SecondaryResourceCmd.Reset(player, charge.Id, toMax: true);
 
 ::: en
 
-Secondary resources integrate into `CardModel.CanPlay`, `SpendResources`, auto-play bookkeeping, and end-of-turn cleanup. Attach costs directly to cards:
+Secondary resources integrate with `CardModel.CanPlay`, `SpendResources`, auto-play bookkeeping, and end-of-turn cleanup. Fixed and X costs can be attached directly to a card:
 
 ```csharp
 card.SecondaryCosts()
@@ -162,22 +162,22 @@ Use `SecondaryResourceCostDuration` to scope temporary modifiers:
 
 | Duration | Cleared when |
 | --- | --- |
-| `Permanent` | You replace or clear it manually |
-| `UntilPlayed` | The next successful play finishes |
+| `Permanent` | Replaced or cleared explicitly |
+| `UntilPlayed` | After the card is next played successfully |
 | `ThisTurn` | End of turn cleanup runs |
-| `ThisCombat` | The card object leaves combat |
+| `ThisCombat` | The card's combat instance is discarded |
 
-When the player cannot pay all material secondary costs, `CanPlay` fails automatically.
+When a required secondary-resource cost cannot be paid and its insufficient-payment policy does not allow a shortfall, `CanPlay` fails automatically.
 
-For optional "kicker" style payments, use card play uses instead of hard costs:
+For optional payments that enable an additional effect, use named card-play uses instead of hard costs:
 
 ```csharp
 card.SecondaryResourceUses()
     .SpendIfAvailable("bonus_charge", charge.Id, 2);
 ```
 
-Optional spends never block `CanPlay`. If enough resource remains after required costs, RitsuLib spends it during
-`SpendResources` and records the line as activated on the play ledger:
+Optional payments never block `CanPlay`. If enough resource remains after required payments, RitsuLib spends it during
+`SpendResources` and marks the named line as active in the play ledger:
 
 ```csharp
 var ledger = cardPlay.SecondaryResources();
@@ -187,7 +187,7 @@ if (ledger.Activated("bonus_charge"))
 }
 ```
 
-You can also declare required costs through the same use set when one card needs multiple named lines:
+You can also declare required costs through the same use collection when one card needs multiple named entries:
 
 ```csharp
 card.SecondaryResourceUses()
@@ -195,11 +195,14 @@ card.SecondaryResourceUses()
     .SpendIfAvailable("bonus_charge", charge.Id, 2);
 ```
 
-Required uses reserve resource before optional spends, so optional lines cannot consume resource needed by hard costs.
-Existing `SecondaryCosts()` entries are treated as unnamed required uses keyed by resource id for compatibility.
+Required uses reserve resources before extra and optional payments, so later entries cannot consume resources needed by
+hard costs. For compatibility, each `SecondaryCosts()` entry becomes a required use whose ID is the resource ID.
 
-For repeatable "kicker stack" payments, use `SpendExtra(...)`. It runs after required payments and shortfall replacement,
-but before ordinary optional spends:
+Use IDs must be unique across `SecondaryCosts()`, `SecondaryResourceUses()`, and capability-contributed uses on the same
+card. RitsuLib rejects duplicate IDs before committing any payment.
+
+For a repeatable payment that buys as many full stacks as possible, use `SpendExtra(...)`. It is resolved after required
+payments and shortfall replacement, but before ordinary optional payments:
 
 ```csharp
 card.SecondaryResourceUses()
@@ -211,8 +214,9 @@ card.SecondaryResourceUses()
         maxStacks: null);
 ```
 
-`perStackAmount` must be positive. `maxStacks: null` means no explicit cap; RitsuLib spends as many full stacks as the
-remaining resource can pay. A remainder that cannot complete one stack is not spent.
+`perStackAmount` must be positive, and repeatable payments cannot use an X cost. `maxStacks: null` means no explicit cap;
+RitsuLib pays for as many full stacks as the remaining resource allows. A remainder that cannot complete one stack is
+not spent.
 
 ```csharp
 var ledger = cardPlay.SecondaryResources();
@@ -231,8 +235,8 @@ if (totalStarsSpent >= 20)
 }
 ```
 
-Required costs normally block play when the resource is short. To allow a required cost to pass with a shortfall, attach
-an explicit insufficient-payment policy:
+Required costs normally block play when the resource is insufficient. To allow a required cost to pass with an unpaid
+amount, attach an explicit insufficient-payment policy:
 
 ```csharp
 card.SecondaryResourceUses()
@@ -247,12 +251,11 @@ card.SecondaryResourceUses()
         });
 ```
 
-`ctx.Shortfall` is the remaining unpaid amount. By default, RitsuLib spends the available amount first; pass
-`spendAvailable: false` if the shortfall payment should leave the resource untouched.
+`ctx.Shortfall` is the remaining unpaid amount. By default, RitsuLib spends the available resource first; pass
+`spendAvailable: false` when the resource itself should remain untouched.
 
-When another payment source can replace the missing resource, add a side-effect-free resolver. The resolver is allowed
-to inspect state during `CanPlay`, but must not mutate state. Return a commit callback to spend the replacement source
-later:
+When another payment source can replace the missing resource, add a side-effect-free resolver. The resolver may inspect
+state during `CanPlay`, but must not mutate it. Return a commit callback that pays the replacement source later:
 
 ```csharp
 card.SecondaryResourceUses()
@@ -285,8 +288,8 @@ card.SecondaryResourceUses()
         });
 ```
 
-If replacement payments cover the full original shortfall, the line is considered playable without a remaining
-shortfall penalty. The ledger records all three amounts:
+If replacement payments cover the entire original shortfall, the entry is playable without a remaining-shortfall
+callback. The ledger records the original, covered, and remaining amounts:
 
 ```csharp
 var ledger = cardPlay.SecondaryResources();
@@ -295,14 +298,14 @@ var covered = ledger.CoveredShortfallByUse("seven_stars");
 var remaining = ledger.ShortfallByUse("seven_stars");
 ```
 
-Model, capability, and global hook listeners can also participate in the same pre-commit planning step by implementing
-`ResolveSecondaryResourceShortfall(...)`. This hook receives the current resolution and should return a new pure
-resolution without mutating gameplay state.
+Models, capabilities, and global listeners can also participate in the same pre-commit planning step by implementing
+`ResolveSecondaryResourceShortfall(...)`. The hook receives the current resolution and must return a non-null,
+side-effect-free replacement resolution without mutating gameplay state.
 
-When the permission to use shortfall is itself dynamic, implement
-`ModifySecondaryResourceInsufficientPayment(...)`. For example, a relic can leave normal cards blocked by default, then
-return `SecondaryResourceInsufficientPayment.AllowPlayWithReplacement(...)` only while that relic is active. This hook
-also runs during `CanPlay`, so it must only inspect state and return a policy.
+When permission to leave an amount unpaid is dynamic, implement
+`ModifySecondaryResourceInsufficientPayment(...)`. For example, a relic can keep normal cards blocked by default and
+return `SecondaryResourceInsufficientPayment.AllowPlayWithReplacement(...)` only while the relic is active. This hook
+also runs during `CanPlay`, so it may only inspect state and must return a non-null policy.
 
 ::: 
 
@@ -310,7 +313,7 @@ also runs during `CanPlay`, so it must only inspect state and return a policy.
 
 ::: zh-CN
 
-次级资源已经接入 `CardModel.CanPlay`、`SpendResources`、自动打出流程和回合结束清理。把费用直接挂到卡牌对象上即可：
+次级资源已接入 `CardModel.CanPlay`、`SpendResources`、自动打出记录和回合结束清理。固定费用和 X 费用可以直接附加到卡牌：
 
 ```csharp
 card.SecondaryCosts()
@@ -325,22 +328,22 @@ card.SecondaryCosts()
 
 | 持续时间 | 清除时机 |
 | --- | --- |
-| `Permanent` | 手动覆盖或清除 |
-| `UntilPlayed` | 下一次成功打出结束后 |
+| `Permanent` | 被显式替换或清除时 |
+| `UntilPlayed` | 卡牌下一次成功打出后 |
 | `ThisTurn` | 回合结束清理时 |
-| `ThisCombat` | 卡牌对象离开战斗时 |
+| `ThisCombat` | 卡牌的战斗实例被丢弃时 |
 
-玩家无法支付全部有效次级费用时，`CanPlay` 会自动失败。
+玩家无法支付必需的次级资源费用，且资源不足支付策略不允许留下缺口时，`CanPlay` 会自动失败。
 
-对于类似 kicker 的“可选支付并触发额外效果”，使用出牌条款，而不是硬费用：
+需要“可选支付并启用额外效果”时，使用具名出牌条目，而不是硬性费用：
 
 ```csharp
 card.SecondaryResourceUses()
     .SpendIfAvailable("bonus_charge", charge.Id, 2);
 ```
 
-可选支付永远不会阻止 `CanPlay`。如果在必需费用预留后仍有足够资源，RitsuLib 会在 `SpendResources` 阶段消耗它，
-并在本次出牌的 ledger 上把该条款标记为已激活：
+可选支付永远不会阻止 `CanPlay`。如果为必需支付预留后仍有足够资源，RitsuLib 会在 `SpendResources` 阶段支付，
+并在本次出牌的支付记录中将对应具名条目标记为已激活：
 
 ```csharp
 var ledger = cardPlay.SecondaryResources();
@@ -350,7 +353,7 @@ if (ledger.Activated("bonus_charge"))
 }
 ```
 
-如果一张牌需要多个具名行，也可以通过同一个 use set 声明必需费用：
+如果一张牌需要多个具名条目，也可以通过同一个出牌条目集合声明必需费用：
 
 ```csharp
 card.SecondaryResourceUses()
@@ -358,11 +361,14 @@ card.SecondaryResourceUses()
     .SpendIfAvailable("bonus_charge", charge.Id, 2);
 ```
 
-必需条款会先预留资源，然后再判断可选支付，所以可选行不会抢走硬费用所需的资源。为了兼容旧代码，已有
-`SecondaryCosts()` 条目会被视为以 resource id 为 key 的未具名必需条款。
+必需条目会先预留资源，再解析额外支付和可选支付，因此后续条目不会占用硬性费用所需的资源。为兼容旧代码，
+每个 `SecondaryCosts()` 条目都会转成以资源 ID 作为条目 ID 的必需支付。
 
-对于类似“每额外支付一份就叠一层”的 kicker 支付，使用 `SpendExtra(...)`。它会在必需支付和短缺替代之后、
-普通可选支付之前运行：
+同一张牌上的 `SecondaryCosts()`、`SecondaryResourceUses()` 和能力所贡献的条目必须使用互不重复的条目 ID。
+RitsuLib 会在扣除任何资源前拒绝重复 ID。
+
+需要“每额外支付一份就获得一层”的可重复支付时，使用 `SpendExtra(...)`。它会在必需支付和缺口替代之后、
+普通可选支付之前解析：
 
 ```csharp
 card.SecondaryResourceUses()
@@ -374,8 +380,8 @@ card.SecondaryResourceUses()
         maxStacks: null);
 ```
 
-`perStackAmount` 必须为正数。`maxStacks: null` 表示不设置显式上限；RitsuLib 会按剩余资源能支付的完整份数尽可能消耗。
-不足一整份的余数不会被消耗。
+`perStackAmount` 必须为正数，且可重复支付不能使用 X 费用。`maxStacks: null` 表示不设置显式上限；
+RitsuLib 会根据剩余资源尽可能支付完整份数，不足一份的余数不会被支付。
 
 ```csharp
 var ledger = cardPlay.SecondaryResources();
@@ -394,7 +400,7 @@ if (totalStarsSpent >= 20)
 }
 ```
 
-必需费用默认会在资源不足时阻止出牌。如果某个必需费用允许短缺通过，可以显式附加短缺支付策略：
+必需费用默认会在资源不足时阻止出牌。如果某项必需费用允许留下缺口，可以显式附加资源不足支付策略：
 
 ```csharp
 card.SecondaryResourceUses()
@@ -409,11 +415,11 @@ card.SecondaryResourceUses()
         });
 ```
 
-`ctx.Shortfall` 是剩余未支付数量。默认会先消耗可用资源；如果短缺支付不应改变该资源，传入
+`ctx.Shortfall` 是剩余未支付数量。默认会先支付可用资源；如果缺口处理不应改变该资源，传入
 `spendAvailable: false`。
 
-如果缺少的资源可以由其他支付来源替代，使用无副作用的 resolver。resolver 可以在 `CanPlay` 阶段读取状态，
-但不能修改状态；真正的替代支付应放在返回结果的 commit 回调中：
+如果缺少的资源可以由其他支付来源替代，应使用无副作用的解析器。解析器可以在 `CanPlay` 阶段读取状态，
+但不能修改状态；真正的替代支付应放在返回方案的提交回调中：
 
 ```csharp
 card.SecondaryResourceUses()
@@ -446,7 +452,8 @@ card.SecondaryResourceUses()
         });
 ```
 
-当替代支付完全覆盖原始短缺时，该行会被视为没有剩余短缺的可打出支付，不再触发短缺惩罚。ledger 会记录三段数量：
+替代支付完全补足原始缺口后，该条目可正常出牌，也不会再调用剩余缺口回调。支付记录会保存原始、
+已补足和剩余三种数量：
 
 ```csharp
 var ledger = cardPlay.SecondaryResources();
@@ -455,12 +462,13 @@ var covered = ledger.CoveredShortfallByUse("seven_stars");
 var remaining = ledger.ShortfallByUse("seven_stars");
 ```
 
-模型、capability 和全局 hook listener 也可以实现 `ResolveSecondaryResourceShortfall(...)` 参与同一个提交前规划步骤。
-这个 hook 会收到当前解析结果，并应返回一个新的纯解析结果；不要在这里修改游戏状态。
+模型、能力和全局监听器也可以实现 `ResolveSecondaryResourceShortfall(...)`，参与同一个提交前规划步骤。
+该钩子会收到当前解析结果，并且必须在不修改游戏状态的前提下返回非空、无副作用的替代支付方案。
 
-如果“是否允许短缺”本身也是动态的，实现 `ModifySecondaryResourceInsufficientPayment(...)`。例如某个遗物可以让普通卡
-默认仍然被不足资源阻止，但在遗物生效时才返回 `SecondaryResourceInsufficientPayment.AllowPlayWithReplacement(...)`。
-这个 hook 同样会在 `CanPlay` 阶段运行，因此只能读取状态并返回策略。
+如果“是否允许留下未支付数量”本身是动态的，应实现 `ModifySecondaryResourceInsufficientPayment(...)`。
+例如，某件遗物可以让普通卡默认仍因资源不足而无法打出，只在遗物生效时返回
+`SecondaryResourceInsufficientPayment.AllowPlayWithReplacement(...)`。该钩子同样会在 `CanPlay` 阶段运行，
+因此只能读取状态，并且必须返回非空策略。
 
 :::
 
@@ -468,20 +476,21 @@ var remaining = ledger.ShortfallByUse("seven_stars");
 
 ::: en
 
-Implement `ISecondaryResourceHookListener` on models or capabilities when the resource should react to gameplay:
+Implement `ISecondaryResourceHookListener` on a model or capability when secondary-resource behavior must react to gameplay:
 
-- Modify gain, max amount, costs, or captured secondary X values
-- Dynamically modify whether a required shortfall blocks play, is allowed, or can be replaced
+- Modify gains, maximum amounts, costs, or secondary X values captured for a card play
+- Dynamically decide whether an unpaid required amount blocks play, is allowed, or can be replaced
 - Use `ModifySecondaryResourceCostLate(...)` when a cost modifier should run after normal secondary cost modifiers,
   mirroring the game's late energy-cost pass
-- Veto gain, spend, or built-in reset steps
+- Prevent gains, payments, or calls to `SecondaryResourceCmd.Reset(...)`; this includes the `ResetToMax` turn-start policy,
+  but not `AddMaxToCurrent` or `Clear`
 - `ShouldSpendSecondaryResource(...)` blocks `CanPlay` for required card costs; optional spend lines simply become
   inactive when vetoed
-- React after change, spend, or reset
+- React after an amount change, payment, remaining-shortfall payment, or reset
 
 For process-wide behavior, register a global listener through `SecondaryResourceHook.RegisterGlobalListener(...)`.
 
-For built-in energy and stars, use `IPlayerResourceHookListener` on a model or capability, or register a global listener
+For the game's energy and Stars resources, use `IPlayerResourceHookListener` on a model or capability, or register a global listener
 through `PlayerResourceHook.RegisterGlobalListener(...)`. `AfterPlayerEnergyGained(...)` and
 `AfterPlayerStarsGained(...)` run after successful `PlayerCmd.GainEnergy(...)` / `PlayerCmd.GainStars(...)` calls and
 receive the actual gained amount plus old and new totals.
@@ -489,14 +498,16 @@ receive the actual gained amount plus old and new totals.
 For combat presentation:
 
 - `AlwaysShowInCombatUi(...)` and `AlwaysShowInCombatUiForCharacter(...)` keep a resource visible before it is gained
-- `RegisterCombatUi(...)`, `RegisterCardUi(...)`, and `RegisterMultiplayerPlayerStateUi(...)` attach custom Godot nodes through the node-attachment runtime
-- custom `RegisterCombatUi(...)` updates should use `ctx.VisibleDefinitions` or `definition.IsVisibleInCombatUi(ctx.Player)` when deciding whether their nodes are visible
+- `RegisterCombatUi(...)`, `RegisterCardUi(...)`, and `RegisterMultiplayerPlayerStateUi(...)` attach custom Godot nodes through the node-attachment system
+- custom `RegisterCombatUi(...)` updates should use `ctx.VisibleDefinitions` or `definition.IsVisibleInCombatUi(ctx.Player)` to decide whether their nodes are visible
 - the `RegisterCombatUi(...)` overload with `SecondaryResourceCombatUiChangedHandler` receives formal UI change
   notifications after the combat UI refreshes. Use `ctx.Definition`, `ctx.OldAmount`, `ctx.NewAmount`, `ctx.Delta`,
   `ctx.Reason`, and `ctx.Source` to play presentation-only feedback such as particles or pulses
-- `NSecondaryResourceCardCostUi` is a simple single-resource card-cost wrapper node for `RegisterCardUi(...)`; bind one resource id per node and place each node yourself
-- When a card-cost node is deliberately placed in the vanilla star-cost slot, set `SecondaryResourceCardCostUiStyle.ReserveVanillaStarCostSlot = true` so enchanted cards keep the same enchantment-tab layout vanilla uses for star-cost cards. For custom grouped cost UI, call `SecondaryResourceCardUiLayout.ReserveVanillaStarCostSlot(ctx.Parent)` from the card UI updater when the visible group occupies that slot.
-- Built-in `NSecondaryResourceIcon` / `NSecondaryResourceCounter` hover tips always use the resource title and description. Pass a `SecondaryResourceIconStyle` with `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` when you need custom placement. Hover-tip title and description receive `Amount`, `HasMaxAmount`, and `MaxAmount` LocString variables so localization can decide how to show dynamic amounts.
+- registered UI callbacks are isolated: a callback failure is logged once and does not abort the rest of the UI refresh
+- `NSecondaryResourceCardCostUi` is a single-entry card-cost node for `RegisterCardUi(...)`; bind one resource or one
+  named use per node and place each node explicitly
+- When a card-cost node is deliberately placed in the game's Stars-cost slot, set `SecondaryResourceCardCostUiStyle.ReserveVanillaStarCostSlot = true` so enchanted cards retain the game's Stars-cost enchantment-tab layout. For custom grouped cost UI, call `SecondaryResourceCardUiLayout.ReserveVanillaStarCostSlot(ctx.Parent)` from the card UI updater when the visible group occupies that slot.
+- Built-in `NSecondaryResourceIcon` / `NSecondaryResourceCounter` hover tips always use the resource title and description. Pass a `SecondaryResourceIconStyle` with `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` when you need custom placement. Hover-tip title and description receive `Amount`, `HasMaxAmount`, and `MaxAmount` `LocString` variables so localization can decide how to show dynamic amounts.
 
 ```csharp
 resources.RegisterCombatUi(
@@ -513,12 +524,12 @@ resources.RegisterCombatUi(
 For text:
 
 - `SecondaryResourceText.GetIconTag(...)` returns a rich-text `[img]...[/img]` icon tag
-- `SecondaryResourceVars.For(...)` and `SecondaryResourceVars.ForLocal(...)` create SmartFormat-friendly dynamic vars
-- `{secondaryResource:secondaryResourceIcons(charge,1)}` renders a fixed amount from a registered resource id or
-  unique local id
-- `{Cost:secondaryResourceIcons(charge)}` renders a dynamic var amount with a fixed registered resource id or unique
-  local id
-- Titles and descriptions come from the resource loc table and keys
+- `SecondaryResourceVars.For(...)` and `SecondaryResourceVars.ForLocal(...)` create SmartFormat-friendly dynamic variables
+- `{secondaryResource:secondaryResourceIcons(charge,1)}` renders a fixed amount from a registered resource ID or an
+  unambiguous mod-local ID
+- `{Cost:secondaryResourceIcons(charge)}` renders a dynamic variable using a registered resource ID or an unambiguous
+  mod-local ID
+- titles and descriptions come from the resource's localization table and keys
 
 :::
 
@@ -526,19 +537,19 @@ For text:
 
 ::: zh-CN
 
-如果资源需要响应游戏逻辑，可以在模型或 capability 上实现 `ISecondaryResourceHookListener`：
+如果次级资源行为需要响应游戏逻辑，可以在模型或能力上实现 `ISecondaryResourceHookListener`：
 
-- 修正 gain、max、cost 或捕获到的次级 X 值
-- 动态修正必需费用短缺是阻止出牌、允许短缺，还是可被替代支付覆盖
-- 如果某个费用修正应在普通次级费用修正之后执行，使用 `ModifySecondaryResourceCostLate(...)`，对应游戏的 late
-  energy-cost pass
-- 阻止 gain、spend 或内建 reset
-- `ShouldSpendSecondaryResource(...)` 会让必需卡牌费用在 `CanPlay` 阶段被阻止；可选支付行被阻止时只会变为未激活
-- 在 change、spend、reset 之后执行附加逻辑
+- 修正获得量、最大数量、费用或一次出牌所记录的次级 X 值
+- 动态决定必需支付的未支付数量会阻止出牌、允许保留，还是可由替代支付补足
+- 某项费用修正需要在常规次级费用修正之后执行时，使用 `ModifySecondaryResourceCostLate(...)`，对应游戏的后置能量费用修正阶段
+- 阻止资源增加、支付或对 `SecondaryResourceCmd.Reset(...)` 的调用；这包括回合开始的 `ResetToMax`，
+  但不包括 `AddMaxToCurrent` 或 `Clear`
+- `ShouldSpendSecondaryResource(...)` 会使必需卡牌费用无法通过 `CanPlay`；可选支付被阻止时只会变为未激活
+- 在数量变化、支付、仍有缺口的支付或重置之后执行附加逻辑
 
 进程级行为可通过 `SecondaryResourceHook.RegisterGlobalListener(...)` 注册全局监听器。
 
-内建能量和辉星使用模型或 capability 上的 `IPlayerResourceHookListener`，也可以通过
+游戏内置的能量和辉星使用模型或能力上的 `IPlayerResourceHookListener`，也可以通过
 `PlayerResourceHook.RegisterGlobalListener(...)` 注册全局监听器。`AfterPlayerEnergyGained(...)` 和
 `AfterPlayerStarsGained(...)` 会在成功调用 `PlayerCmd.GainEnergy(...)` / `PlayerCmd.GainStars(...)` 后运行，
 上下文包含实际获得量以及变化前后的总量。
@@ -546,14 +557,15 @@ For text:
 对于战斗表现层：
 
 - `AlwaysShowInCombatUi(...)` 和 `AlwaysShowInCombatUiForCharacter(...)` 可以让资源在尚未获得前也显示出来
-- `RegisterCombatUi(...)`、`RegisterCardUi(...)`、`RegisterMultiplayerPlayerStateUi(...)` 可以借助 node attachment 体系挂接自定义 Godot 节点
+- `RegisterCombatUi(...)`、`RegisterCardUi(...)`、`RegisterMultiplayerPlayerStateUi(...)` 可通过节点挂载机制附加自定义 Godot 节点
 - 自定义 `RegisterCombatUi(...)` 更新逻辑应使用 `ctx.VisibleDefinitions` 或 `definition.IsVisibleInCombatUi(ctx.Player)` 判断节点是否可见
 - 带 `SecondaryResourceCombatUiChangedHandler` 的 `RegisterCombatUi(...)` 重载会在战斗 UI 刷新后收到正式的
   UI 变更通知。用 `ctx.Definition`、`ctx.OldAmount`、`ctx.NewAmount`、`ctx.Delta`、`ctx.Reason` 和
   `ctx.Source` 判断是否播放粒子、脉冲等纯表现反馈
-- `NSecondaryResourceCardCostUi` 是用于 `RegisterCardUi(...)` 的单资源简易卡牌费用包装节点；每个节点绑定一个 resource id，并由注册方分别指定位置
-- 如果卡牌费用节点明确放在原版辉星费用槽，设置 `SecondaryResourceCardCostUiStyle.ReserveVanillaStarCostSlot = true`，这样带附魔的卡会沿用原版辉星费用卡牌的附魔标签布局。自定义聚合费用 UI 可在可见费用组占用该槽位时，从卡牌 UI updater 调用 `SecondaryResourceCardUiLayout.ReserveVanillaStarCostSlot(ctx.Parent)`。
-- 内建 `NSecondaryResourceIcon` / `NSecondaryResourceCounter` 的 hover tip 始终使用资源的 title 和 description。需要自定义位置时，传入带 `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` 的 `SecondaryResourceIconStyle`。hover-tip title 和 description 会收到 `Amount`、`HasMaxAmount` 和 `MaxAmount` 这些 LocString 变量，由本地化文本决定如何显示动态数量。
+- 已注册的界面回调彼此隔离；某个回调失败时只记录一次警告，不会中止其余界面刷新
+- `NSecondaryResourceCardCostUi` 是用于 `RegisterCardUi(...)` 的单条目卡牌费用节点；每个节点可绑定一种资源或一个具名条目，并由注册方明确指定位置
+- 卡牌费用节点明确放在游戏的辉星费用槽时，应设置 `SecondaryResourceCardCostUiStyle.ReserveVanillaStarCostSlot = true`，让带附魔的卡牌沿用辉星费用卡牌的附魔标签布局。自定义聚合费用界面占用该槽位时，可在卡牌界面更新器中调用 `SecondaryResourceCardUiLayout.ReserveVanillaStarCostSlot(ctx.Parent)`
+- 内置 `NSecondaryResourceIcon` / `NSecondaryResourceCounter` 的悬浮提示始终使用资源标题和说明。需要自定义位置时，传入带有 `HoverTip = SecondaryResourceHoverTipStyle.Default with { ResolveGlobalPosition = ... }` 的 `SecondaryResourceIconStyle`。悬浮提示的标题和说明会收到 `Amount`、`HasMaxAmount` 和 `MaxAmount` 这些 `LocString` 变量，由本地化文本决定如何显示动态数量
 
 ```csharp
 resources.RegisterCombatUi(
@@ -570,9 +582,9 @@ resources.RegisterCombatUi(
 对于文本表现：
 
 - `SecondaryResourceText.GetIconTag(...)` 返回富文本 `[img]...[/img]` 图标标签
-- `SecondaryResourceVars.For(...)` 和 `SecondaryResourceVars.ForLocal(...)` 用于 SmartFormat 动态变量
-- `{secondaryResource:secondaryResourceIcons(charge,1)}` 用已注册资源 id 或唯一 local id 渲染固定数量
-- `{Cost:secondaryResourceIcons(charge)}` 用固定的已注册资源 id 或唯一 local id 渲染 dynamic var 数量
-- 标题和描述来自资源定义上的本地化表与 key
+- `SecondaryResourceVars.For(...)` 和 `SecondaryResourceVars.ForLocal(...)` 用于创建 SmartFormat 动态变量
+- `{secondaryResource:secondaryResourceIcons(charge,1)}` 使用已注册资源 ID 或无歧义的模组内 ID 渲染固定数量
+- `{Cost:secondaryResourceIcons(charge)}` 使用已注册资源 ID 或无歧义的模组内 ID 渲染动态变量
+- 标题和说明来自资源定义中的本地化表与键
 
 :::

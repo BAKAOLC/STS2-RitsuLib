@@ -3,12 +3,18 @@ using STS2RitsuLib.Combat.SecondaryResources;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Completion sources and localized labels for registered secondary-resource ids.
+    ///     <para xml:lang="en">
+    ///         Provides autocomplete candidates and localized labels for registered secondary-resource IDs.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为已注册的次要资源 ID 提供自动补全候选项和本地化标签。
+    ///     </para>
     /// </summary>
     public static class DevConsoleSecondaryResourceAutocompleteCatalog
     {
         /// <summary>
-        ///     Returns registered secondary-resource ids in deterministic order.
+        ///     <para xml:lang="en">Returns registered secondary-resource IDs in deterministic order.</para>
+        ///     <para xml:lang="zh-CN">按确定顺序返回已注册的次要资源 ID。</para>
         /// </summary>
         public static string[] GetResourceIds()
         {
@@ -21,7 +27,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Appends registered secondary-resource ids to <paramref name="candidates" />.
+        ///     <para xml:lang="en">
+        ///         Appends registered secondary-resource IDs to <paramref name="candidates" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将已注册的次要资源 ID 追加到 <paramref name="candidates" />。
+        ///     </para>
         /// </summary>
         public static void AppendResourceIdCandidates(ICollection<string> candidates)
         {
@@ -32,7 +43,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Resolves a full resource id or an unambiguous resource-local id.
+        ///     <para xml:lang="en">
+        ///         Resolves a full resource ID or an unambiguous resource-local ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析完整资源 ID 或无歧义的资源本地 ID。
+        ///     </para>
         /// </summary>
         public static bool TryResolveResource(
             string input,
@@ -58,7 +74,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Returns the localized title for a registered resource id, or null when unavailable.
+        ///     <para xml:lang="en">
+        ///         Returns the localized title for a registered resource ID, or <see langword="null" /> when
+        ///         unavailable.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回已注册资源 ID 的本地化标题；无法取得时返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public static string? TryGetLocalizedTitle(string resourceId)
         {
@@ -68,7 +90,12 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Returns the localized title for a registered resource, or null when unavailable.
+        ///     <para xml:lang="en">
+        ///         Returns the localized title for a registered resource, or <see langword="null" /> when unavailable.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回已注册资源的本地化标题；无法取得时返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public static string? TryGetLocalizedTitle(SecondaryResourceDefinition definition)
         {
@@ -85,7 +112,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Returns whether <paramref name="partial" /> matches a resource id, unique local id, or localized title.
+        ///     <para xml:lang="en">
+        ///         Returns whether <paramref name="partial" /> matches a resource ID, an unambiguous local ID, or a
+        ///         localized title.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="partial" /> 是否匹配资源 ID、无歧义的本地 ID 或本地化标题。
+        ///     </para>
         /// </summary>
         public static bool MatchesResourceIdOrTitle(string resourceId, string partial)
         {

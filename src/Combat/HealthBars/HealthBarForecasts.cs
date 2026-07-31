@@ -4,49 +4,62 @@ using MegaCrit.Sts2.Core.Combat;
 namespace STS2RitsuLib.Combat.HealthBars
 {
     /// <summary>
-    ///     Convenience helpers for building health bar forecast segments.
-    ///     用于构建生命条 forecast 片段的便捷辅助方法。
+    ///     <para xml:lang="en">Provides convenience methods for building health-bar forecast segments.</para>
+    ///     <para xml:lang="zh-CN">提供用于构建生命条预测片段的便捷方法。</para>
     /// </summary>
     public static class HealthBarForecasts
     {
         /// <summary>
-        ///     Starts a general-purpose sequence builder for <paramref name="context" />.
-        ///     为 <paramref name="context" /> 启动一个通用序列构建器。
+        ///     <para xml:lang="en">Creates a general-purpose sequence builder for <paramref name="context" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="context" /> 创建通用序列构建器。</para>
         /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The forecast context, which must contain a creature.</para>
+        ///     <para xml:lang="zh-CN">预测上下文，其中必须包含生物。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A new sequence builder.</para>
+        ///     <para xml:lang="zh-CN">新建的序列构建器。</para>
+        /// </returns>
         public static HealthBarForecastSequenceBuilder For(HealthBarForecastContext context)
         {
+            ArgumentNullException.ThrowIfNull(context.Creature);
             return new(context);
         }
 
-        /// <summary>
-        ///     Starts a right-growing forecast lane with a fixed <paramref name="color" />.
-        ///     启动一条固定 <paramref name="color" /> 的向右增长 forecast 轨道。
-        /// </summary>
+        /// <inheritdoc cref="FromRight(HealthBarForecastContext, Color, Color?, bool)" />
         public static HealthBarForecastLaneBuilder FromRight(HealthBarForecastContext context, Color color)
         {
             return FromRight(context, color, null);
         }
 
         /// <summary>
-        ///     Starts a right-growing lane with separate optional <see cref="CanvasItem.SelfModulate" /> for the nine-patch
-        ///     overlay (e.g. white when <see cref="Godot.Material" /> carries tint).
-        ///     启动一条向右增长轨道，并为九宫格覆盖层提供单独的可选 <see cref="CanvasItem.SelfModulate" />
-        ///     （例如当 <see cref="Godot.Material" /> 携带染色时使用白色）。
+        ///     <para xml:lang="en">
+        ///         Creates a fixed-color forecast lane that extends inward from the current-HP edge.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建从当前生命值边缘向内延伸的固定颜色预测轨道。</para>
         /// </summary>
         /// <param name="context">
-        ///     Forecast context.
-        ///     Forecast 上下文。
+        ///     <para xml:lang="en">The forecast context, which must contain a creature.</para>
+        ///     <para xml:lang="zh-CN">预测上下文，其中必须包含生物。</para>
         /// </param>
         /// <param name="color">
-        ///     Lethal label color and fallback overlay modulate.
-        ///     致命标签颜色和后备覆盖 modulate。
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
         /// </param>
         /// <param name="overlaySelfModulate">
-        ///     When set, used as overlay <see cref="CanvasItem.SelfModulate" /> instead of
-        ///     <paramref name="color" />.
-        ///     设置后，作为覆盖层 <see cref="CanvasItem.SelfModulate" /> 使用，而不是
-        ///     <paramref name="color" />。
+        ///     <para xml:lang="en">
+        ///         The optional overlay <see cref="CanvasItem.SelfModulate" />. When omitted,
+        ///         <paramref name="color" /> is used.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         覆盖层可选的 <see cref="CanvasItem.SelfModulate" />；省略时使用 <paramref name="color" />。
+        ///     </para>
         /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A lane builder whose segments can recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">其片段可以改变生命值文本颜色的轨道构建器。</para>
+        /// </returns>
         public static HealthBarForecastLaneBuilder FromRight(
             HealthBarForecastContext context,
             Color color,
@@ -55,7 +68,37 @@ namespace STS2RitsuLib.Combat.HealthBars
             return FromRight(context, color, overlaySelfModulate, true);
         }
 
-        /// <inheritdoc cref="FromRight(HealthBarForecastContext, Color, Color?)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates a fixed-color forecast lane that extends inward from the current-HP edge.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建从当前生命值边缘向内延伸的固定颜色预测轨道。</para>
+        /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The forecast context, which must contain a creature.</para>
+        ///     <para xml:lang="zh-CN">预测上下文，其中必须包含生物。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
+        /// </param>
+        /// <param name="overlaySelfModulate">
+        ///     <para xml:lang="en">
+        ///         The optional overlay <see cref="CanvasItem.SelfModulate" />. When omitted,
+        ///         <paramref name="color" /> is used.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         覆盖层可选的 <see cref="CanvasItem.SelfModulate" />；省略时使用 <paramref name="color" />。
+        ///     </para>
+        /// </param>
+        /// <param name="affectsHpLabel">
+        ///     <para xml:lang="en">Whether lethal forecasts in this lane may recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">该轨道的预测致命时是否可以改变生命值文本颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A new lane builder.</para>
+        ///     <para xml:lang="zh-CN">新建的轨道构建器。</para>
+        /// </returns>
         public static HealthBarForecastLaneBuilder FromRight(
             HealthBarForecastContext context,
             Color color,
@@ -66,16 +109,13 @@ namespace STS2RitsuLib.Combat.HealthBars
                 affectsHpLabel);
         }
 
-        /// <summary>
-        ///     Starts a left-growing forecast lane with a fixed <paramref name="color" />.
-        ///     启动一条固定 <paramref name="color" /> 的向左增长 forecast 轨道。
-        /// </summary>
+        /// <inheritdoc cref="FromLeft(HealthBarForecastContext, Color, Color?, bool)" />
         public static HealthBarForecastLaneBuilder FromLeft(HealthBarForecastContext context, Color color)
         {
             return FromLeft(context, color, null);
         }
 
-        /// <inheritdoc cref="FromRight(HealthBarForecastContext, Color, Color?)" />
+        /// <inheritdoc cref="FromLeft(HealthBarForecastContext, Color, Color?, bool)" />
         public static HealthBarForecastLaneBuilder FromLeft(
             HealthBarForecastContext context,
             Color color,
@@ -84,7 +124,37 @@ namespace STS2RitsuLib.Combat.HealthBars
             return FromLeft(context, color, overlaySelfModulate, true);
         }
 
-        /// <inheritdoc cref="FromRight(HealthBarForecastContext, Color, Color?)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates a fixed-color forecast lane that extends inward from the empty edge.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建从生命条空白侧边缘向内延伸的固定颜色预测轨道。</para>
+        /// </summary>
+        /// <param name="context">
+        ///     <para xml:lang="en">The forecast context, which must contain a creature.</para>
+        ///     <para xml:lang="zh-CN">预测上下文，其中必须包含生物。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
+        /// </param>
+        /// <param name="overlaySelfModulate">
+        ///     <para xml:lang="en">
+        ///         The optional overlay <see cref="CanvasItem.SelfModulate" />. When omitted,
+        ///         <paramref name="color" /> is used.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         覆盖层可选的 <see cref="CanvasItem.SelfModulate" />；省略时使用 <paramref name="color" />。
+        ///     </para>
+        /// </param>
+        /// <param name="affectsHpLabel">
+        ///     <para xml:lang="en">Whether lethal forecasts in this lane may recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">该轨道的预测致命时是否可以改变生命值文本颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A new lane builder.</para>
+        ///     <para xml:lang="zh-CN">新建的轨道构建器。</para>
+        /// </returns>
         public static HealthBarForecastLaneBuilder FromLeft(
             HealthBarForecastContext context,
             Color color,
@@ -95,10 +165,7 @@ namespace STS2RitsuLib.Combat.HealthBars
                 affectsHpLabel);
         }
 
-        /// <summary>
-        ///     Returns a single segment when <paramref name="amount" /> is positive, with optional material only.
-        ///     当 <paramref name="amount" /> 为正数时，返回一个仅带可选 material 的单片段。
-        /// </summary>
+        /// <inheritdoc cref="Single(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public static IEnumerable<HealthBarForecastSegment> Single(
             int amount,
             Color color,
@@ -109,36 +176,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             return Single(amount, color, direction, order, overlayMaterial, null);
         }
 
-        /// <summary>
-        ///     Returns a single segment when <paramref name="amount" /> is positive, with optional material and overlay
-        ///     <see cref="CanvasItem.SelfModulate" />.
-        ///     当 <paramref name="amount" /> 为正数时，返回一个带可选 material 和覆盖层
-        ///     <see cref="CanvasItem.SelfModulate" /> 的单片段。
-        /// </summary>
-        /// <param name="amount">
-        ///     HP chunk size.
-        ///     HP 块大小。
-        /// </param>
-        /// <param name="color">
-        ///     Lethal label color and fallback modulate.
-        ///     致命标签颜色和后备 modulate。
-        /// </param>
-        /// <param name="direction">
-        ///     Growth direction.
-        ///     增长方向。
-        /// </param>
-        /// <param name="order">
-        ///     Sort order among segments.
-        ///     片段之间的排序顺序。
-        /// </param>
-        /// <param name="overlayMaterial">
-        ///     Optional segment material.
-        ///     可选片段 material。
-        /// </param>
-        /// <param name="overlaySelfModulate">
-        ///     When set, stored on <see cref="HealthBarForecastSegment.OverlaySelfModulate" />.
-        ///     设置后，存储到 <see cref="HealthBarForecastSegment.OverlaySelfModulate" />。
-        /// </param>
+        /// <inheritdoc cref="Single(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public static IEnumerable<HealthBarForecastSegment> Single(
             int amount,
             Color color,
@@ -150,7 +188,52 @@ namespace STS2RitsuLib.Combat.HealthBars
             return Single(amount, color, direction, order, overlayMaterial, overlaySelfModulate, true);
         }
 
-        /// <inheritdoc cref="Single(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates one forecast segment when <paramref name="amount" /> is positive; otherwise, returns an empty
+        ///         sequence.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="amount" /> 为正数时创建一个预测片段；否则返回空序列。
+        ///     </para>
+        /// </summary>
+        /// <param name="amount">
+        ///     <para xml:lang="en">The HP amount represented by the segment.</para>
+        ///     <para xml:lang="zh-CN">片段表示的生命值数值。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
+        /// </param>
+        /// <param name="direction">
+        ///     <para xml:lang="en">The edge from which the segment extends.</para>
+        ///     <para xml:lang="zh-CN">片段延伸的起始边缘。</para>
+        /// </param>
+        /// <param name="order">
+        ///     <para xml:lang="en">The primary render order.</para>
+        ///     <para xml:lang="zh-CN">主要渲染顺序。</para>
+        /// </param>
+        /// <param name="overlayMaterial">
+        ///     <para xml:lang="en">The optional overlay material.</para>
+        ///     <para xml:lang="zh-CN">可选的覆盖材质。</para>
+        /// </param>
+        /// <param name="overlaySelfModulate">
+        ///     <para xml:lang="en">
+        ///         The optional overlay <see cref="CanvasItem.SelfModulate" />. When omitted,
+        ///         <paramref name="color" /> is used.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         覆盖层可选的 <see cref="CanvasItem.SelfModulate" />；省略时使用 <paramref name="color" />。
+        ///     </para>
+        /// </param>
+        /// <param name="affectsHpLabel">
+        ///     <para xml:lang="en">Whether a lethal forecast from this segment may recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">该片段的预测致命时是否可以改变生命值文本颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A one-segment sequence, or an empty sequence for a nonpositive amount.</para>
+        ///     <para xml:lang="zh-CN">包含一个片段的序列；数值非正时为空序列。</para>
+        /// </returns>
         public static IEnumerable<HealthBarForecastSegment> Single(
             int amount,
             Color color,
@@ -170,10 +253,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             ];
         }
 
-        /// <summary>
-        ///     Returns a single segment when <paramref name="amount" /> is positive, without a custom material.
-        ///     当 <paramref name="amount" /> 为正数时，返回一个不带自定义 material 的单片段。
-        /// </summary>
+        /// <inheritdoc cref="Single(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public static IEnumerable<HealthBarForecastSegment> Single(
             int amount,
             Color color,
@@ -185,25 +265,27 @@ namespace STS2RitsuLib.Combat.HealthBars
     }
 
     /// <summary>
-    ///     Mutable builder for one forecast source's ordered segment sequence.
-    ///     一个 forecast source 的有序片段序列的可变构建器。
+    ///     <para xml:lang="en">Builds an ordered sequence of segments for one forecast source.</para>
+    ///     <para xml:lang="zh-CN">为单个预测来源构建有序片段序列。</para>
     /// </summary>
+    /// <param name="context">
+    ///     <para xml:lang="en">The forecast context, which must contain a creature.</para>
+    ///     <para xml:lang="zh-CN">预测上下文，其中必须包含生物。</para>
+    /// </param>
     public sealed class HealthBarForecastSequenceBuilder(HealthBarForecastContext context)
     {
         private readonly List<HealthBarForecastSegment> _segments = [];
 
         /// <summary>
-        ///     Forecast context associated with this sequence.
-        ///     与此序列关联的 forecast 上下文。
+        ///     <para xml:lang="en">Gets the forecast context associated with this sequence.</para>
+        ///     <para xml:lang="zh-CN">获取与该序列关联的预测上下文。</para>
         /// </summary>
-        public HealthBarForecastContext Context { get; } = context;
+        public HealthBarForecastContext Context { get; } =
+            context.Creature == null
+                ? throw new ArgumentException("The forecast context must contain a creature.", nameof(context))
+                : context;
 
-        /// <summary>
-        ///     Appends a segment when <paramref name="amount" /> is positive.
-        ///     Consecutive segments with identical color, direction, order, material reference, and overlay modulate are merged.
-        ///     当 <paramref name="amount" /> 为正数时追加一个片段。
-        ///     颜色、方向、顺序、material 引用和覆盖 modulate 均相同的连续片段会被合并。
-        /// </summary>
+        /// <inheritdoc cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public HealthBarForecastSequenceBuilder Add(
             int amount,
             Color color,
@@ -214,34 +296,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             return Add(amount, color, direction, order, overlayMaterial, null);
         }
 
-        /// <summary>
-        ///     Appends a segment when <paramref name="amount" /> is positive, with explicit overlay modulate.
-        ///     当 <paramref name="amount" /> 为正数时，追加一个带显式覆盖 modulate 的片段。
-        /// </summary>
-        /// <param name="amount">
-        ///     HP chunk size.
-        ///     HP 块大小。
-        /// </param>
-        /// <param name="color">
-        ///     Lethal label color and fallback modulate.
-        ///     致命标签颜色和后备 modulate。
-        /// </param>
-        /// <param name="direction">
-        ///     Growth direction.
-        ///     增长方向。
-        /// </param>
-        /// <param name="order">
-        ///     Sort order among segments.
-        ///     片段之间的排序顺序。
-        /// </param>
-        /// <param name="overlayMaterial">
-        ///     Optional segment material.
-        ///     可选片段 material。
-        /// </param>
-        /// <param name="overlaySelfModulate">
-        ///     Optional overlay <see cref="CanvasItem.SelfModulate" />; null uses <paramref name="color" />.
-        ///     可选覆盖层 <see cref="CanvasItem.SelfModulate" />；为 null 时使用 <paramref name="color" />。
-        /// </param>
+        /// <inheritdoc cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public HealthBarForecastSequenceBuilder Add(
             int amount,
             Color color,
@@ -253,7 +308,63 @@ namespace STS2RitsuLib.Combat.HealthBars
             return Add(amount, color, direction, order, overlayMaterial, overlaySelfModulate, true);
         }
 
-        /// <inheritdoc cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Appends a segment when <paramref name="amount" /> is positive. Consecutive compatible segments are
+        ///         merged, with their combined amount capped at <see cref="int.MaxValue" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="amount" /> 为正数时追加片段。相邻且所有显示与排序属性均兼容的片段会合并，
+        ///         合计数值不超过 <see cref="int.MaxValue" />。
+        ///     </para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Compatibility requires equal colors, direction, order, overlay material reference, overlay
+        ///         modulation, empty-edge layout, exclusive Z group, and HP-label behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         兼容要求颜色、方向、顺序、覆盖材质引用、覆盖层调制色、空白侧布局、互斥 Z 组和生命值文本
+        ///         行为均相同。
+        ///     </para>
+        /// </remarks>
+        /// <param name="amount">
+        ///     <para xml:lang="en">The HP amount represented by the segment.</para>
+        ///     <para xml:lang="zh-CN">片段表示的生命值数值。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
+        /// </param>
+        /// <param name="direction">
+        ///     <para xml:lang="en">The edge from which the segment extends.</para>
+        ///     <para xml:lang="zh-CN">片段延伸的起始边缘。</para>
+        /// </param>
+        /// <param name="order">
+        ///     <para xml:lang="en">The primary render order.</para>
+        ///     <para xml:lang="zh-CN">主要渲染顺序。</para>
+        /// </param>
+        /// <param name="overlayMaterial">
+        ///     <para xml:lang="en">The optional overlay material.</para>
+        ///     <para xml:lang="zh-CN">可选的覆盖材质。</para>
+        /// </param>
+        /// <param name="overlaySelfModulate">
+        ///     <para xml:lang="en">
+        ///         The optional overlay <see cref="CanvasItem.SelfModulate" />. When omitted,
+        ///         <paramref name="color" /> is used.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         覆盖层可选的 <see cref="CanvasItem.SelfModulate" />；省略时使用 <paramref name="color" />。
+        ///     </para>
+        /// </param>
+        /// <param name="affectsHpLabel">
+        ///     <para xml:lang="en">Whether a lethal forecast from this segment may recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">该片段的预测致命时是否可以改变生命值文本颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This builder.</para>
+        ///     <para xml:lang="zh-CN">当前构建器。</para>
+        /// </returns>
         public HealthBarForecastSequenceBuilder Add(
             int amount,
             Color color,
@@ -274,7 +385,10 @@ namespace STS2RitsuLib.Combat.HealthBars
                 var last = _segments[^1];
                 if (CanMerge(last, segment))
                 {
-                    _segments[^1] = last with { Amount = last.Amount + segment.Amount };
+                    _segments[^1] = last with
+                    {
+                        Amount = (int)Math.Min(int.MaxValue, (long)last.Amount + segment.Amount),
+                    };
                     return this;
                 }
             }
@@ -283,10 +397,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             return this;
         }
 
-        /// <summary>
-        ///     Appends a segment without a custom material.
-        ///     追加一个不带自定义 material 的片段。
-        /// </summary>
+        /// <inheritdoc cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public HealthBarForecastSequenceBuilder Add(
             int amount,
             Color color,
@@ -296,10 +407,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             return Add(amount, color, direction, order, null, null);
         }
 
-        /// <summary>
-        ///     Appends all positive amounts as consecutive segments.
-        ///     将所有正数数量追加为连续片段。
-        /// </summary>
+        /// <inheritdoc cref="AddRange(IEnumerable{int}, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public HealthBarForecastSequenceBuilder AddRange(
             IEnumerable<int> amounts,
             Color color,
@@ -310,34 +418,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             return AddRange(amounts, color, direction, order, overlayMaterial, null);
         }
 
-        /// <summary>
-        ///     Appends all positive amounts as consecutive segments with explicit overlay modulate.
-        ///     将所有正数数量追加为带显式覆盖 modulate 的连续片段。
-        /// </summary>
-        /// <param name="amounts">
-        ///     HP chunk sizes.
-        ///     HP 块大小。
-        /// </param>
-        /// <param name="color">
-        ///     Lethal label color and fallback modulate.
-        ///     致命标签颜色和后备 modulate。
-        /// </param>
-        /// <param name="direction">
-        ///     Growth direction.
-        ///     增长方向。
-        /// </param>
-        /// <param name="order">
-        ///     Sort order among segments.
-        ///     片段之间的排序顺序。
-        /// </param>
-        /// <param name="overlayMaterial">
-        ///     Optional segment material.
-        ///     可选片段 material。
-        /// </param>
-        /// <param name="overlaySelfModulate">
-        ///     Optional overlay <see cref="CanvasItem.SelfModulate" /> shared by chunks.
-        ///     由各块共享的可选覆盖层 <see cref="CanvasItem.SelfModulate" />。
-        /// </param>
+        /// <inheritdoc cref="AddRange(IEnumerable{int}, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public HealthBarForecastSequenceBuilder AddRange(
             IEnumerable<int> amounts,
             Color color,
@@ -349,7 +430,51 @@ namespace STS2RitsuLib.Combat.HealthBars
             return AddRange(amounts, color, direction, order, overlayMaterial, overlaySelfModulate, true);
         }
 
-        /// <inheritdoc cref="AddRange(IEnumerable{int}, Color, HealthBarForecastGrowthDirection, int, Material?, Color?)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Passes each amount to
+        ///         <see cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" /> in
+        ///         enumeration order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按枚举顺序将每个数值传给
+        ///         <see cref="Add(int, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />。
+        ///     </para>
+        /// </summary>
+        /// <param name="amounts">
+        ///     <para xml:lang="en">The HP amounts to append. Nonpositive values are ignored.</para>
+        ///     <para xml:lang="zh-CN">待追加的生命值数值；忽略非正值。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
+        /// </param>
+        /// <param name="direction">
+        ///     <para xml:lang="en">The edge from which the segments extend.</para>
+        ///     <para xml:lang="zh-CN">片段延伸的起始边缘。</para>
+        /// </param>
+        /// <param name="order">
+        ///     <para xml:lang="en">The primary render order.</para>
+        ///     <para xml:lang="zh-CN">主要渲染顺序。</para>
+        /// </param>
+        /// <param name="overlayMaterial">
+        ///     <para xml:lang="en">The optional overlay material.</para>
+        ///     <para xml:lang="zh-CN">可选的覆盖材质。</para>
+        /// </param>
+        /// <param name="overlaySelfModulate">
+        ///     <para xml:lang="en">
+        ///         The optional overlay <see cref="CanvasItem.SelfModulate" /> shared by the segments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">所有片段共用的可选覆盖层 <see cref="CanvasItem.SelfModulate" />。</para>
+        /// </param>
+        /// <param name="affectsHpLabel">
+        ///     <para xml:lang="en">Whether lethal forecasts from these segments may recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">这些片段的预测致命时是否可以改变生命值文本颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This builder.</para>
+        ///     <para xml:lang="zh-CN">当前构建器。</para>
+        /// </returns>
         public HealthBarForecastSequenceBuilder AddRange(
             IEnumerable<int> amounts,
             Color color,
@@ -367,10 +492,7 @@ namespace STS2RitsuLib.Combat.HealthBars
             return this;
         }
 
-        /// <summary>
-        ///     Appends all positive amounts as consecutive segments without a custom material.
-        ///     将所有正数数量追加为不带自定义 material 的连续片段。
-        /// </summary>
+        /// <inheritdoc cref="AddRange(IEnumerable{int}, Color, HealthBarForecastGrowthDirection, int, Material?, Color?, bool)" />
         public HealthBarForecastSequenceBuilder AddRange(
             IEnumerable<int> amounts,
             Color color,
@@ -381,9 +503,34 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Appends segments that trigger at the start of <paramref name="triggerSide" />'s turn.
-        ///     追加在 <paramref name="triggerSide" /> 回合开始时触发的片段。
+        ///     <para xml:lang="en">
+        ///         Appends segments without a custom material, ordered for the start of
+        ///         <paramref name="triggerSide" />'s turn.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         追加不带自定义材质并按 <paramref name="triggerSide" /> 一方回合开始时机排序的片段。
+        ///     </para>
         /// </summary>
+        /// <param name="triggerSide">
+        ///     <para xml:lang="en">The side whose turn-start timing determines the order.</para>
+        ///     <para xml:lang="zh-CN">以其回合开始时机决定顺序的一方。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">The segment color.</para>
+        ///     <para xml:lang="zh-CN">片段颜色。</para>
+        /// </param>
+        /// <param name="direction">
+        ///     <para xml:lang="en">The edge from which the segments extend.</para>
+        ///     <para xml:lang="zh-CN">片段延伸的起始边缘。</para>
+        /// </param>
+        /// <param name="amounts">
+        ///     <para xml:lang="en">The HP amounts to append.</para>
+        ///     <para xml:lang="zh-CN">待追加的生命值数值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This builder.</para>
+        ///     <para xml:lang="zh-CN">当前构建器。</para>
+        /// </returns>
         public HealthBarForecastSequenceBuilder AddSideTurnStart(
             CombatSide triggerSide,
             Color color,
@@ -398,9 +545,34 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Appends segments that trigger at the end of <paramref name="triggerSide" />'s turn.
-        ///     追加在 <paramref name="triggerSide" /> 回合结束时触发的片段。
+        ///     <para xml:lang="en">
+        ///         Appends segments without a custom material, ordered for the end of
+        ///         <paramref name="triggerSide" />'s turn.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         追加不带自定义材质并按 <paramref name="triggerSide" /> 一方回合结束时机排序的片段。
+        ///     </para>
         /// </summary>
+        /// <param name="triggerSide">
+        ///     <para xml:lang="en">The side whose turn-end timing determines the order.</para>
+        ///     <para xml:lang="zh-CN">以其回合结束时机决定顺序的一方。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">The segment color.</para>
+        ///     <para xml:lang="zh-CN">片段颜色。</para>
+        /// </param>
+        /// <param name="direction">
+        ///     <para xml:lang="en">The edge from which the segments extend.</para>
+        ///     <para xml:lang="zh-CN">片段延伸的起始边缘。</para>
+        /// </param>
+        /// <param name="amounts">
+        ///     <para xml:lang="en">The HP amounts to append.</para>
+        ///     <para xml:lang="zh-CN">待追加的生命值数值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This builder.</para>
+        ///     <para xml:lang="zh-CN">当前构建器。</para>
+        /// </returns>
         public HealthBarForecastSequenceBuilder AddSideTurnEnd(
             CombatSide triggerSide,
             Color color,
@@ -414,52 +586,92 @@ namespace STS2RitsuLib.Combat.HealthBars
                 HealthBarForecastOrder.ForSideTurnEnd(Context.Creature, triggerSide));
         }
 
-        /// <summary>
-        ///     Creates a fixed-color right-growing lane on this sequence.
-        ///     在此序列上创建一条固定颜色、向右增长的轨道。
-        /// </summary>
+        /// <inheritdoc cref="FromRight(Color, Color?, bool)" />
         public HealthBarForecastLaneBuilder FromRight(Color color)
         {
             return FromRight(color, null);
         }
 
-        /// <inheritdoc cref="HealthBarForecasts.FromRight(HealthBarForecastContext, Color, Color?)" />
+        /// <inheritdoc cref="FromRight(Color, Color?, bool)" />
         public HealthBarForecastLaneBuilder FromRight(Color color, Color? overlaySelfModulate)
         {
             return FromRight(color, overlaySelfModulate, true);
         }
 
-        /// <inheritdoc cref="FromRight(Color, Color?)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates a fixed-color lane on this sequence that extends inward from the current-HP edge.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在该序列上创建从当前生命值边缘向内延伸的固定颜色轨道。</para>
+        /// </summary>
+        /// <param name="color">
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
+        /// </param>
+        /// <param name="overlaySelfModulate">
+        ///     <para xml:lang="en">The optional independent overlay color.</para>
+        ///     <para xml:lang="zh-CN">可选的独立覆盖层颜色。</para>
+        /// </param>
+        /// <param name="affectsHpLabel">
+        ///     <para xml:lang="en">Whether lethal forecasts in this lane may recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">该轨道的预测致命时是否可以改变生命值文本颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A new lane builder backed by this sequence.</para>
+        ///     <para xml:lang="zh-CN">以该序列为基础的新轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder FromRight(Color color, Color? overlaySelfModulate, bool affectsHpLabel)
         {
             return new(this, color, HealthBarForecastGrowthDirection.FromRight, overlaySelfModulate, affectsHpLabel);
         }
 
-        /// <summary>
-        ///     Creates a fixed-color left-growing lane on this sequence.
-        ///     在此序列上创建一条固定颜色、向左增长的轨道。
-        /// </summary>
+        /// <inheritdoc cref="FromLeft(Color, Color?, bool)" />
         public HealthBarForecastLaneBuilder FromLeft(Color color)
         {
             return FromLeft(color, null);
         }
 
-        /// <inheritdoc cref="FromRight(Color, Color?)" />
+        /// <inheritdoc cref="FromLeft(Color, Color?, bool)" />
         public HealthBarForecastLaneBuilder FromLeft(Color color, Color? overlaySelfModulate)
         {
             return FromLeft(color, overlaySelfModulate, true);
         }
 
-        /// <inheritdoc cref="FromRight(Color, Color?)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates a fixed-color lane on this sequence that extends inward from the empty edge.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在该序列上创建从生命条空白侧边缘向内延伸的固定颜色轨道。</para>
+        /// </summary>
+        /// <param name="color">
+        ///     <para xml:lang="en">The lethal HP-label color and fallback overlay color.</para>
+        ///     <para xml:lang="zh-CN">致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
+        /// </param>
+        /// <param name="overlaySelfModulate">
+        ///     <para xml:lang="en">The optional independent overlay color.</para>
+        ///     <para xml:lang="zh-CN">可选的独立覆盖层颜色。</para>
+        /// </param>
+        /// <param name="affectsHpLabel">
+        ///     <para xml:lang="en">Whether lethal forecasts in this lane may recolor the HP label.</para>
+        ///     <para xml:lang="zh-CN">该轨道的预测致命时是否可以改变生命值文本颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A new lane builder backed by this sequence.</para>
+        ///     <para xml:lang="zh-CN">以该序列为基础的新轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder FromLeft(Color color, Color? overlaySelfModulate, bool affectsHpLabel)
         {
             return new(this, color, HealthBarForecastGrowthDirection.FromLeft, overlaySelfModulate, affectsHpLabel);
         }
 
         /// <summary>
-        ///     Returns the built sequence snapshot.
-        ///     返回已构建的序列快照。
+        ///     <para xml:lang="en">Returns a snapshot of the built segment sequence.</para>
+        ///     <para xml:lang="zh-CN">返回已构建片段序列的快照。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">An immutable view backed by a new array, or an empty collection.</para>
+        ///     <para xml:lang="zh-CN">由新数组承载的只读视图，或空集合。</para>
+        /// </returns>
         public IReadOnlyList<HealthBarForecastSegment> Build()
         {
             return _segments.Count == 0 ? [] : _segments.ToArray();
@@ -479,28 +691,30 @@ namespace STS2RitsuLib.Combat.HealthBars
     }
 
     /// <summary>
-    ///     Convenience wrapper for the common case of one fixed-color forecast lane.
-    ///     常见单条固定颜色 forecast 轨道场景的便捷包装器。
+    ///     <para xml:lang="en">Builds a fixed-color forecast lane on a parent sequence.</para>
+    ///     <para xml:lang="zh-CN">在父序列上构建固定颜色的预测轨道。</para>
     /// </summary>
     /// <param name="sequence">
-    ///     Parent sequence builder.
-    ///     父序列构建器。
+    ///     <para xml:lang="en">The parent sequence builder.</para>
+    ///     <para xml:lang="zh-CN">父序列构建器。</para>
     /// </param>
     /// <param name="color">
-    ///     Lane label / fallback modulate color.
-    ///     轨道标签 / 后备 modulate 颜色。
+    ///     <para xml:lang="en">The lane's lethal HP-label color and fallback overlay color.</para>
+    ///     <para xml:lang="zh-CN">轨道致命时的生命值文本颜色，也是覆盖层的回退颜色。</para>
     /// </param>
     /// <param name="direction">
-    ///     Growth edge for this lane.
-    ///     此轨道的增长边。
+    ///     <para xml:lang="en">The edge from which this lane extends.</para>
+    ///     <para xml:lang="zh-CN">该轨道延伸的起始边缘。</para>
     /// </param>
     /// <param name="overlaySelfModulate">
-    ///     When set, used as <see cref="CanvasItem.SelfModulate" /> for segments in this lane.
-    ///     设置后，用作此轨道中片段的 <see cref="CanvasItem.SelfModulate" />。
+    ///     <para xml:lang="en">
+    ///         The optional overlay <see cref="CanvasItem.SelfModulate" /> shared by this lane's segments.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">该轨道所有片段共用的可选覆盖层 <see cref="CanvasItem.SelfModulate" />。</para>
     /// </param>
     /// <param name="affectsHpLabel">
-    ///     Whether this lane's segments can recolor the HP label at lethal threshold.
-    ///     此轨道中的片段达到致命阈值时是否可以重染 HP 标签。
+    ///     <para xml:lang="en">Whether lethal forecasts in this lane may recolor the HP label.</para>
+    ///     <para xml:lang="zh-CN">该轨道的预测致命时是否可以改变生命值文本颜色。</para>
     /// </param>
     public sealed class HealthBarForecastLaneBuilder(
         HealthBarForecastSequenceBuilder sequence,
@@ -510,53 +724,101 @@ namespace STS2RitsuLib.Combat.HealthBars
         bool affectsHpLabel = true)
     {
         /// <summary>
-        ///     Parent sequence builder.
-        ///     父序列构建器。
+        ///     <para xml:lang="en">Gets the parent sequence builder.</para>
+        ///     <para xml:lang="zh-CN">获取父序列构建器。</para>
         /// </summary>
-        public HealthBarForecastSequenceBuilder Sequence { get; } = sequence;
+        public HealthBarForecastSequenceBuilder Sequence { get; } =
+            sequence ?? throw new ArgumentNullException(nameof(sequence));
 
         /// <summary>
-        ///     Appends a segment with explicit <paramref name="order" /> and optional <paramref name="overlayMaterial" />.
-        ///     追加带显式 <paramref name="order" /> 和可选 <paramref name="overlayMaterial" /> 的片段。
+        ///     <para xml:lang="en">
+        ///         Appends a positive segment using this lane's appearance and direction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用该轨道的外观和方向追加数值为正的片段。</para>
         /// </summary>
+        /// <param name="amount">
+        ///     <para xml:lang="en">The HP amount represented by the segment.</para>
+        ///     <para xml:lang="zh-CN">片段表示的生命值数值。</para>
+        /// </param>
+        /// <param name="order">
+        ///     <para xml:lang="en">The primary render order.</para>
+        ///     <para xml:lang="zh-CN">主要渲染顺序。</para>
+        /// </param>
+        /// <param name="overlayMaterial">
+        ///     <para xml:lang="en">The optional overlay material.</para>
+        ///     <para xml:lang="zh-CN">可选的覆盖材质。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This lane builder.</para>
+        ///     <para xml:lang="zh-CN">当前轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder Add(int amount, int order, Material? overlayMaterial)
         {
             Sequence.Add(amount, color, direction, order, overlayMaterial, overlaySelfModulate, affectsHpLabel);
             return this;
         }
 
-        /// <summary>
-        ///     Appends a segment without a custom material.
-        ///     追加一个不带自定义 material 的片段。
-        /// </summary>
+        /// <inheritdoc cref="Add(int, int, Material?)" />
         public HealthBarForecastLaneBuilder Add(int amount, int order = 0)
         {
             return Add(amount, order, null);
         }
 
         /// <summary>
-        ///     Appends multiple segments with the same <paramref name="order" /> and optional <paramref name="overlayMaterial" />.
-        ///     追加多个具有相同 <paramref name="order" /> 和可选 <paramref name="overlayMaterial" /> 的片段。
+        ///     <para xml:lang="en">
+        ///         Appends positive amounts using this lane's appearance and direction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用该轨道的外观和方向追加数值为正的片段。</para>
         /// </summary>
+        /// <param name="amounts">
+        ///     <para xml:lang="en">The HP amounts to append. Nonpositive values are ignored.</para>
+        ///     <para xml:lang="zh-CN">待追加的生命值数值；忽略非正值。</para>
+        /// </param>
+        /// <param name="order">
+        ///     <para xml:lang="en">The primary render order shared by the segments.</para>
+        ///     <para xml:lang="zh-CN">所有片段共用的主要渲染顺序。</para>
+        /// </param>
+        /// <param name="overlayMaterial">
+        ///     <para xml:lang="en">The optional overlay material shared by the segments.</para>
+        ///     <para xml:lang="zh-CN">所有片段共用的可选覆盖材质。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This lane builder.</para>
+        ///     <para xml:lang="zh-CN">当前轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder AddRange(IEnumerable<int> amounts, int order, Material? overlayMaterial)
         {
             Sequence.AddRange(amounts, color, direction, order, overlayMaterial, overlaySelfModulate, affectsHpLabel);
             return this;
         }
 
-        /// <summary>
-        ///     Appends multiple segments without a custom material.
-        ///     追加多个不带自定义 material 的片段。
-        /// </summary>
+        /// <inheritdoc cref="AddRange(IEnumerable{int}, int, Material?)" />
         public HealthBarForecastLaneBuilder AddRange(IEnumerable<int> amounts, int order = 0)
         {
             return AddRange(amounts, order, null);
         }
 
         /// <summary>
-        ///     Appends segments that trigger at the start of <paramref name="triggerSide" />'s turn.
-        ///     追加在 <paramref name="triggerSide" /> 回合开始时触发的片段。
+        ///     <para xml:lang="en">
+        ///         Appends segments without a custom material, ordered for the start of
+        ///         <paramref name="triggerSide" />'s turn.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         追加不带自定义材质并按 <paramref name="triggerSide" /> 一方回合开始时机排序的片段。
+        ///     </para>
         /// </summary>
+        /// <param name="triggerSide">
+        ///     <para xml:lang="en">The side whose turn-start timing determines the order.</para>
+        ///     <para xml:lang="zh-CN">以其回合开始时机决定顺序的一方。</para>
+        /// </param>
+        /// <param name="amounts">
+        ///     <para xml:lang="en">The HP amounts to append.</para>
+        ///     <para xml:lang="zh-CN">待追加的生命值数值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This lane builder.</para>
+        ///     <para xml:lang="zh-CN">当前轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder AtSideTurnStart(CombatSide triggerSide, params int[] amounts)
         {
             var order = HealthBarForecastOrder.ForSideTurnStart(Sequence.Context.Creature, triggerSide);
@@ -565,9 +827,26 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Appends segments that trigger at the end of <paramref name="triggerSide" />'s turn.
-        ///     追加在 <paramref name="triggerSide" /> 回合结束时触发的片段。
+        ///     <para xml:lang="en">
+        ///         Appends segments without a custom material, ordered for the end of
+        ///         <paramref name="triggerSide" />'s turn.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         追加不带自定义材质并按 <paramref name="triggerSide" /> 一方回合结束时机排序的片段。
+        ///     </para>
         /// </summary>
+        /// <param name="triggerSide">
+        ///     <para xml:lang="en">The side whose turn-end timing determines the order.</para>
+        ///     <para xml:lang="zh-CN">以其回合结束时机决定顺序的一方。</para>
+        /// </param>
+        /// <param name="amounts">
+        ///     <para xml:lang="en">The HP amounts to append.</para>
+        ///     <para xml:lang="zh-CN">待追加的生命值数值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">This lane builder.</para>
+        ///     <para xml:lang="zh-CN">当前轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder AtSideTurnEnd(CombatSide triggerSide, params int[] amounts)
         {
             var order = HealthBarForecastOrder.ForSideTurnEnd(Sequence.Context.Creature, triggerSide);
@@ -576,27 +855,47 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Starts another right-growing lane on the same parent sequence.
-        ///     在同一父序列上启动另一条向右增长轨道。
+        ///     <para xml:lang="en">Creates another lane from the current-HP edge on the same parent sequence.</para>
+        ///     <para xml:lang="zh-CN">在同一父序列上创建另一条从当前生命值边缘开始的轨道。</para>
         /// </summary>
+        /// <param name="nextColor">
+        ///     <para xml:lang="en">The next lane's color.</para>
+        ///     <para xml:lang="zh-CN">下一条轨道的颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The new lane builder.</para>
+        ///     <para xml:lang="zh-CN">新建的轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder ThenFromRight(Color nextColor)
         {
             return Sequence.FromRight(nextColor, null);
         }
 
         /// <summary>
-        ///     Starts another left-growing lane on the same parent sequence.
-        ///     在同一父序列上启动另一条向左增长轨道。
+        ///     <para xml:lang="en">Creates another lane from the empty edge on the same parent sequence.</para>
+        ///     <para xml:lang="zh-CN">在同一父序列上创建另一条从生命条空白侧边缘开始的轨道。</para>
         /// </summary>
+        /// <param name="nextColor">
+        ///     <para xml:lang="en">The next lane's color.</para>
+        ///     <para xml:lang="zh-CN">下一条轨道的颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The new lane builder.</para>
+        ///     <para xml:lang="zh-CN">新建的轨道构建器。</para>
+        /// </returns>
         public HealthBarForecastLaneBuilder ThenFromLeft(Color nextColor)
         {
             return Sequence.FromLeft(nextColor, null);
         }
 
         /// <summary>
-        ///     Returns the built segment snapshot.
-        ///     返回已构建的片段快照。
+        ///     <para xml:lang="en">Returns a snapshot of the parent sequence's built segments.</para>
+        ///     <para xml:lang="zh-CN">返回父序列中已构建片段的快照。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The built segment snapshot.</para>
+        ///     <para xml:lang="zh-CN">已构建的片段快照。</para>
+        /// </returns>
         public IReadOnlyList<HealthBarForecastSegment> Build()
         {
             return Sequence.Build();

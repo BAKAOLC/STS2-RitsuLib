@@ -27,6 +27,25 @@ namespace STS2RitsuLib.Telemetry
             JsonNode payload,
             IReadOnlyDictionary<string, object?>? properties = null)
         {
+            TryCapturePayload(eventName, requestId, payload, properties);
+        }
+
+        public void CaptureException(
+            Exception exception,
+            IReadOnlyDictionary<string, object?>? properties = null)
+        {
+            ArgumentNullException.ThrowIfNull(exception);
+
+            var payload = DiagnosticsTelemetryCollector.BuildExceptionPayload(exception);
+            CapturePayload("exception", "diagnostics", payload, properties);
+        }
+
+        internal bool TryCapturePayload(
+            string eventName,
+            string requestId,
+            JsonNode payload,
+            IReadOnlyDictionary<string, object?>? properties = null)
+        {
             ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
             ArgumentException.ThrowIfNullOrWhiteSpace(requestId);
             ArgumentNullException.ThrowIfNull(payload);
@@ -35,14 +54,14 @@ namespace STS2RitsuLib.Telemetry
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Telemetry] Dropped event '{eventName}' for applicant '{ApplicantId}': request '{requestId}' is not registered.");
-                return;
+                return false;
             }
 
             if (!TelemetryConsentStore.IsRequestGranted(applicant, request))
             {
                 RitsuLibFramework.Logger.Debug(
                     $"[Telemetry] Dropped event '{eventName}' for applicant '{ApplicantId}': request '{requestId}' is not authorized.");
-                return;
+                return false;
             }
 
             try
@@ -57,22 +76,14 @@ namespace STS2RitsuLib.Telemetry
                 TelemetryTaskRunner.Forget(
                     TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId),
                     "flush_applicant");
+                return true;
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Telemetry] Capture failed for event '{eventName}' and applicant '{ApplicantId}': {ex.Message}");
+                return false;
             }
-        }
-
-        public void CaptureException(
-            Exception exception,
-            IReadOnlyDictionary<string, object?>? properties = null)
-        {
-            ArgumentNullException.ThrowIfNull(exception);
-
-            var payload = DiagnosticsTelemetryCollector.BuildExceptionPayload(exception);
-            CapturePayload("exception", "diagnostics", payload, properties);
         }
 
         private bool TryResolveRequest(

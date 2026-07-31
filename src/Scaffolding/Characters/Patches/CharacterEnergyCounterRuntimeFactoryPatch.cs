@@ -10,9 +10,14 @@ using STS2RitsuLib.Scaffolding.Godot;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Allows mod characters to convert legacy energy-counter scenes into <see cref="NEnergyCounter" /> before
-    ///     vanilla tries to instantiate the scene as the final type directly.
-    ///     允许 mod 角色在原版尝试直接将场景实例化为最终类型之前，将旧版能量计数器场景转换为 <see cref="NEnergyCounter" />。
+    ///     <para xml:lang="en">
+    ///         Converts a mod character's compatible legacy energy-counter scene into an
+    ///         <see cref="NEnergyCounter" /> before the base game attempts to instantiate the scene as that type.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在游戏本体尝试将场景直接实例化为 <see cref="NEnergyCounter" /> 前，将模组角色兼容的旧版能量计数器
+    ///         场景转换为该类型。
+    ///     </para>
     /// </summary>
     internal class CharacterEnergyCounterRuntimeFactoryPatch : IPatchMethod
     {
@@ -30,10 +35,14 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         }
 
         /// <summary>
-        ///     Converts a mod energy-counter scene into <see cref="NEnergyCounter" /> and injects the owning player
-        ///     before vanilla performs direct scene instantiation.
-        ///     将 mod 能量计数器场景转换为 <see cref="NEnergyCounter" />，并在原版执行直接场景实例化之前
-        ///     注入所属玩家。
+        ///     <para xml:lang="en">
+        ///         Converts a mod energy-counter scene into <see cref="NEnergyCounter" /> and assigns its owning
+        ///         player before the base game performs direct scene instantiation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将模组能量计数器场景转换为 <see cref="NEnergyCounter" /> 并设置其所属玩家，然后跳过游戏本体的
+        ///         直接场景实例化。
+        ///     </para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(Player player, ref NEnergyCounter? __result)

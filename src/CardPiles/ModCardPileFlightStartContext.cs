@@ -6,10 +6,13 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Context passed to <see cref="ModCardPileSpec.FlightStartPositionResolver" /> when shuffle-style fly
-    ///     visuals need a source/start position for a mod pile.
-    ///     当 shuffle 风格飞行动画需要 mod 牌堆的源/起点位置时，传给
-    ///     <see cref="ModCardPileSpec.FlightStartPositionResolver" /> 的上下文。
+    ///     <para xml:lang="en">
+    ///         Provides information for resolving the start position of a shuffle-flight visual whose source is
+    ///         a registered mod pile.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供用于解析洗牌飞行动画起始位置的信息；该动画的来源是已注册的模组牌堆。
+    ///     </para>
     /// </summary>
     public sealed class ModCardPileFlightStartContext : IModCardPileFlightContext
     {
@@ -28,26 +31,26 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Ritsulib's default start position for this request.
-        ///     ritsulib 为此请求计算的默认起点位置。
+        ///     <para xml:lang="en">Gets the start position RitsuLib resolved for this request.</para>
+        ///     <para xml:lang="zh-CN">获取 RitsuLib 为本次请求解析的起始位置。</para>
         /// </summary>
         public Vector2 DefaultStartPosition { get; }
 
         /// <summary>
-        ///     Source pile for this shuffle fly visual.
-        ///     此 shuffle 飞行动画的源牌堆。
+        ///     <para xml:lang="en">Gets the source pile of the shuffle-flight visual.</para>
+        ///     <para xml:lang="zh-CN">获取洗牌飞行动画的来源牌堆。</para>
         /// </summary>
         public CardPile StartPile { get; }
 
         /// <summary>
-        ///     Destination pile for this shuffle fly visual.
-        ///     此 shuffle 飞行动画的目标牌堆。
+        ///     <para xml:lang="en">Gets the destination pile of the shuffle-flight visual.</para>
+        ///     <para xml:lang="zh-CN">获取洗牌飞行动画的目标牌堆。</para>
         /// </summary>
         public CardPile TargetPile { get; }
 
         /// <summary>
-        ///     Definition of the source pile.
-        ///     源牌堆的定义。
+        ///     <para xml:lang="en">Gets the registered definition of the source pile.</para>
+        ///     <para xml:lang="zh-CN">获取来源牌堆的已注册定义。</para>
         /// </summary>
         public ModCardPileDefinition Definition { get; }
 

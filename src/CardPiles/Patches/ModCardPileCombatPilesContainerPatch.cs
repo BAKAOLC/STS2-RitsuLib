@@ -6,16 +6,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Injects bottom-row mod pile buttons (<see cref="ModCardPileUiStyle.BottomLeft" /> /
-    ///     <see cref="ModCardPileUiStyle.BottomRight" />) into <see cref="NCombatPilesContainer" /> after its
-    ///     vanilla <c>_Ready</c> finishes wiring up draw / discard / exhaust.
-    ///     （<see cref="ModCardPileUiStyle.BottomLeft" /> / <see cref="ModCardPileUiStyle.BottomRight" />）
-    ///     在原版 <c>_Ready</c> 完成 draw / discard / exhaust 接线后，将底部 row 的 mod pile 按钮
-    ///     （<see cref="ModCardPileUiStyle.BottomLeft" />
-    ///     <see cref="ModCardPileUiStyle.BottomRight" />）
-    ///     注入 <see cref="NCombatPilesContainer" />。
-    ///     （<see cref="ModCardPileUiStyle.BottomLeft" />
-    ///     <see cref="ModCardPileUiStyle.BottomRight" />）
+    ///     <para xml:lang="en">
+    ///         Injects bottom-row mod pile buttons after <see cref="NCombatPilesContainer" /> becomes ready.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="NCombatPilesContainer" /> 就绪后注入底部区域的模组牌堆按钮。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileCombatPilesContainerReadyPatch : IPatchMethod
     {
@@ -35,12 +31,13 @@ namespace STS2RitsuLib.CardPiles.Patches
     }
 
     /// <summary>
-    ///     Forwards <see cref="NCombatPilesContainer.Initialize" /> to every injected
-    ///     <see cref="NModCardPileButton" /> so each mod pile binds to the active <see cref="Player" />
-    ///     alongside the vanilla draw / discard / exhaust buttons.
-    ///     将 <see cref="NCombatPilesContainer.Initialize" /> 转发给每个已注入的
-    ///     <see cref="NModCardPileButton" />，使每个 mod 牌堆与原版 draw / discard / exhaust 按钮一起绑定到
-    ///     当前 <see cref="Player" />。
+    ///     <para xml:lang="en">
+    ///         Binds injected bottom-row pile buttons to the player passed to
+    ///         <see cref="NCombatPilesContainer.Initialize" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将已注入的底部牌堆按钮绑定到传给 <see cref="NCombatPilesContainer.Initialize" /> 的玩家。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileCombatPilesContainerInitializePatch : IPatchMethod
     {

@@ -5,9 +5,14 @@ using MegaCrit.Sts2.Core.Rooms;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Builds <see cref="BackgroundAssets" /> from an arbitrary <c>res://</c> layers directory using the same file naming
-    ///     rules as vanilla (<c>_bg_</c> / <c>_fg_</c>).
-    ///     使用与原版相同的文件命名规则（<c>_bg_</c> / <c>_fg_</c>），从任意 <c>res://</c> layers 目录构建 <see cref="BackgroundAssets" />。
+    ///     <para xml:lang="en">
+    ///         Builds <see cref="BackgroundAssets" /> from a <c>res://</c> layer directory using the base game's
+    ///         <c>_bg_</c> and <c>_fg_</c> filename conventions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用原版游戏的 <c>_bg_</c> 和 <c>_fg_</c> 文件名约定，从 <c>res://</c> 图层目录构建
+    ///         <see cref="BackgroundAssets" />。
+    ///     </para>
     /// </summary>
     internal static class ActBackgroundLayersFactory
     {

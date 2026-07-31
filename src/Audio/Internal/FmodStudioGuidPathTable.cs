@@ -5,6 +5,7 @@ namespace STS2RitsuLib.Audio.Internal
     internal static class FmodStudioGuidPathTable
     {
         private static readonly Lock Gate = new();
+        private static readonly Lock ParseGate = new();
         private static Dictionary<string, string> _eventPathToGuid = [];
 
         internal static int EventMappingCount
@@ -20,28 +21,47 @@ namespace STS2RitsuLib.Audio.Internal
 
         internal static void Clear()
         {
+            lock (ParseGate)
             lock (Gate)
             {
                 _eventPathToGuid = [];
             }
         }
 
-        internal static bool TryLoadFromResourceFile(string resourcePath)
+        internal static bool TryLoadFromResourceFile(string resourcePath, out int parsedEventMappings)
         {
+            parsedEventMappings = 0;
             if (string.IsNullOrWhiteSpace(resourcePath) || !FileAccess.FileExists(resourcePath))
                 return false;
 
-            using var file = FileAccess.Open(resourcePath, FileAccess.ModeFlags.Read);
-            if (file is null)
-                return false;
+            try
+            {
+                using var file = FileAccess.Open(resourcePath, FileAccess.ModeFlags.Read);
+                if (file is null)
+                    return false;
 
-            ParseAndReplace(file.GetAsText(), resourcePath);
-            return true;
+                parsedEventMappings = ParseAndMerge(file.GetAsText(), resourcePath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[Audio] Failed to load FMOD GUID mappings from '{resourcePath}': {ex}");
+                return false;
+            }
         }
 
-        internal static void ParseAndReplace(string text, string? sourceLabel = null)
+        internal static int ParseAndMerge(string text, string? sourceLabel = null)
         {
-            var lines = text.Replace("\r\n", "\n").Split('\n');
+            lock (ParseGate)
+            {
+                return ParseAndMergeCore(text, sourceLabel);
+            }
+        }
+
+        private static int ParseAndMergeCore(string text, string? sourceLabel)
+        {
+            var lines = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
             Dictionary<string, string> next;
             lock (Gate)
             {
@@ -58,6 +78,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
 
             var prefix = string.IsNullOrEmpty(sourceLabel) ? "[Audio] guids.txt" : $"[Audio] guids.txt ({sourceLabel})";
+            var parsedEventMappings = 0;
 
             for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
             {
@@ -98,9 +119,12 @@ namespace STS2RitsuLib.Audio.Internal
 
                 if (next.TryGetValue(pathPart, out var existingForPath) &&
                     !string.Equals(existingForPath, braced, StringComparison.OrdinalIgnoreCase))
+                {
                     RitsuLibFramework.Logger.Warn(
                         $"{prefix} line {lineIndex + 1}: duplicate event path '{pathPart}' was already mapped to " +
                         $"'{existingForPath}'; overwriting with '{braced}'.");
+                    RemoveReplacedReverseMapping(existingForPath, pathPart);
+                }
 
                 if (guidKeyToFirstPath.TryGetValue(dedupeKey, out var firstPath) &&
                     !string.Equals(firstPath, pathPart, StringComparison.Ordinal))
@@ -111,11 +135,37 @@ namespace STS2RitsuLib.Audio.Internal
                     guidKeyToFirstPath.TryAdd(dedupeKey, pathPart);
 
                 next[pathPart] = braced;
+                parsedEventMappings++;
             }
 
             lock (Gate)
             {
                 _eventPathToGuid = next;
+            }
+
+            return parsedEventMappings;
+
+            void RemoveReplacedReverseMapping(string oldGuid, string replacedPath)
+            {
+                if (!TryParseStoredGuid(oldGuid, out var oldParsed))
+                    return;
+
+                var oldKey = oldParsed.ToString("N");
+                if (!guidKeyToFirstPath.TryGetValue(oldKey, out var recordedPath) ||
+                    !string.Equals(recordedPath, replacedPath, StringComparison.Ordinal))
+                    return;
+
+                guidKeyToFirstPath.Remove(oldKey);
+                foreach (var candidate in next)
+                {
+                    if (string.Equals(candidate.Key, replacedPath, StringComparison.Ordinal) ||
+                        !TryParseStoredGuid(candidate.Value, out var candidateGuid) ||
+                        candidateGuid != oldParsed)
+                        continue;
+
+                    guidKeyToFirstPath.Add(oldKey, candidate.Key);
+                    break;
+                }
             }
         }
 

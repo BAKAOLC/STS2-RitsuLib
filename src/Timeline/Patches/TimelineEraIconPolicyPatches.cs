@@ -7,8 +7,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Timeline.Patches
 {
     /// <summary>
-    ///     Applies era-axis icon policy with default behavior that hides icons when a custom era has no texture.
-    ///     应用 纪元轴图标策略 默认行为是在以下情况隐藏图标： a 自定义纪元没有纹理。
+    ///     <para xml:lang="en">
+    ///         Applies timeline-axis icon policies, hiding a custom era's icon by default when no texture is available.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">应用时间线坐标轴图标策略；自定义时代没有可用纹理时，默认隐藏其图标。</para>
     /// </summary>
     internal sealed class NTimelineScreenGetEraIconPolicyPatch : IPatchMethod
     {
@@ -75,8 +77,8 @@ namespace STS2RitsuLib.Timeline.Patches
     }
 
     /// <summary>
-    ///     Hides the era icon node when no texture was resolved.
-    ///     未解析到纹理时隐藏 era 图标节点。
+    ///     <para xml:lang="en">Hides an era icon node when no texture was resolved.</para>
+    ///     <para xml:lang="zh-CN">未解析出纹理时隐藏时代图标节点。</para>
     /// </summary>
     internal sealed class NEraColumnHideEmptyIconPatch : IPatchMethod
     {

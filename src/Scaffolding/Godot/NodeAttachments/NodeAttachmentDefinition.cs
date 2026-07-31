@@ -3,8 +3,8 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
 {
     /// <summary>
-    ///     Immutable audit record for a ready-time node attachment registration.
-    ///     ready 阶段节点挂载注册的不可变审计记录。
+    ///     <para xml:lang="en">Describes an immutable node-attachment registration applied during <c>_Ready</c>.</para>
+    ///     <para xml:lang="zh-CN">描述在 <c>_Ready</c> 阶段应用的不可变节点附加注册。</para>
     /// </summary>
     public sealed class NodeAttachmentDefinition
     {
@@ -35,68 +35,72 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Mod id that owns this attachment.
-        ///     拥有该挂载项的 mod id。
+        ///     <para xml:lang="en">Gets the mod ID that owns this attachment.</para>
+        ///     <para xml:lang="zh-CN">获取拥有此附加项的模组 ID。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     Fully qualified attachment id.
-        ///     完整限定的挂载 id。
+        ///     <para xml:lang="en">Gets the fully qualified attachment ID.</para>
+        ///     <para xml:lang="zh-CN">获取完全限定的附加项 ID。</para>
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        ///     Local id supplied by the owning mod.
-        ///     拥有方 mod 提供的本地 id。
+        ///     <para xml:lang="en">Gets the local ID supplied by the owning mod.</para>
+        ///     <para xml:lang="zh-CN">获取所属模组提供的本地 ID。</para>
         /// </summary>
         public string LocalId { get; }
 
         /// <summary>
-        ///     Parent node type whose ready lifecycle installs this attachment.
-        ///     ready 生命周期会安装该挂载项的父节点类型。
+        ///     <para xml:lang="en">Gets the parent node type whose <c>_Ready</c> lifecycle installs this attachment.</para>
+        ///     <para xml:lang="zh-CN">获取在 <c>_Ready</c> 生命周期中安装此附加项的父节点类型。</para>
         /// </summary>
         public Type ParentType { get; }
 
         /// <summary>
-        ///     Expected attached child node type.
-        ///     期望的被挂载子节点类型。
+        ///     <para xml:lang="en">Gets the expected type of the attached child node.</para>
+        ///     <para xml:lang="zh-CN">获取所附加子节点的预期类型。</para>
         /// </summary>
         public Type NodeType { get; }
 
         /// <summary>
-        ///     Options captured at registration time.
-        ///     注册时捕获的选项。
+        ///     <para xml:lang="en">Gets the options captured at registration time.</para>
+        ///     <para xml:lang="zh-CN">获取注册时记录的选项。</para>
         /// </summary>
         public NodeAttachmentOptions Options { get; }
 
         /// <summary>
-        ///     Creation source label such as factory, scene, or converted-scene.
-        ///     创建来源标签，例如 factory、scene 或 converted-scene。
+        ///     <para xml:lang="en">Gets the creation-source label, such as <c>factory</c> or <c>scene</c>.</para>
+        ///     <para xml:lang="zh-CN">获取创建来源标签，例如 <c>factory</c> 或 <c>scene</c>。</para>
         /// </summary>
         public string SourceKind { get; }
 
         /// <summary>
-        ///     Scene path used by scene-backed registrations, if any.
-        ///     scene-backed 注册使用的 scene 路径（如果有）。
+        ///     <para xml:lang="en">Gets the scene path used by a scene-backed registration, if any.</para>
+        ///     <para xml:lang="zh-CN">获取基于场景的注册所使用的场景路径（如果有）。</para>
         /// </summary>
         public string? ScenePath { get; }
 
         /// <summary>
-        ///     Stable ordering among attachments on the same parent.
-        ///     同一父节点上各挂载项的稳定顺序。
+        ///     <para xml:lang="en">Gets the stable order among attachments on the same parent.</para>
+        ///     <para xml:lang="zh-CN">获取同一父节点上各附加项的稳定顺序。</para>
         /// </summary>
         public int Order => Options.Order;
 
         /// <summary>
-        ///     Optional direct-child name assigned to the attached node.
-        ///     分配给挂载节点的可选直接子节点名称。
+        ///     <para xml:lang="en">Gets the optional direct-child name assigned to the attached node.</para>
+        ///     <para xml:lang="zh-CN">获取分配给所附加节点的可选直接子节点名称。</para>
         /// </summary>
         public string? Name => Options.Name;
 
         /// <summary>
-        ///     Setup delegate adapted to untyped Node parameters for diagnostics.
-        ///     适配为非泛型 Node 参数、用于诊断的 setup 委托。
+        ///     <para xml:lang="en">
+        ///         Gets the setup delegate adapted to non-generic <see cref="Node" /> parameters for diagnostics.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取为诊断而适配为非泛型 <see cref="Node" /> 参数的配置委托。
+        ///     </para>
         /// </summary>
         public Action<Node, Node>? Setup { get; }
 
@@ -111,8 +115,9 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         internal Node CreateNode(Node parent)
         {
             var node = _factory(parent);
-            if (node == null)
-                throw new InvalidOperationException($"Node attachment '{Id}' factory returned null.");
+            if (!GodotObject.IsInstanceValid(node))
+                throw new InvalidOperationException(
+                    $"Node attachment '{Id}' factory returned a null or invalid Godot node.");
 
             if (!NodeType.IsInstanceOfType(node))
                 throw new InvalidOperationException(

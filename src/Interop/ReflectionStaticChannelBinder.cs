@@ -5,45 +5,63 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Builds <see cref="ReflectionStaticChannel" /> instances from static method naming conventions.
-    ///     根据静态方法命名约定构建 <see cref="ReflectionStaticChannel" /> 实例。
+    ///     <para xml:lang="en">
+    ///         Builds <see cref="ReflectionStaticChannel" /> instances from static method naming conventions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">根据静态方法命名约定构建 <see cref="ReflectionStaticChannel" /> 实例。</para>
     /// </summary>
     public static class ReflectionStaticChannelBinder
     {
         /// <summary>
-        ///     Binds optional JSON tiers and required object resolvers described by <paramref name="convention" />.
-        ///     绑定 <paramref name="convention" /> 描述的可选 JSON tier 和必需 object resolver。
+        ///     <para xml:lang="en">
+        ///         Binds the required object accessors and any compatible optional JSON operations described by
+        ///         <paramref name="convention" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         绑定 <paramref name="convention" /> 描述的必需对象访问器及所有签名兼容的可选 JSON 操作。
+        ///     </para>
         /// </summary>
         /// <param name="providerType">
-        ///     Static-method provider type to reflect against.
-        ///     要反射的静态方法提供方类型。
+        ///     <para xml:lang="en">Static-method provider type to inspect.</para>
+        ///     <para xml:lang="zh-CN">要检查的静态方法提供方类型。</para>
         /// </param>
         /// <param name="convention">
-        ///     Method names for object resolvers and optional JSON DOM hooks.
-        ///     object resolver 和可选 JSON DOM hook 的方法名。
+        ///     <para xml:lang="en">Method names for required object accessors and optional JSON operations.</para>
+        ///     <para xml:lang="zh-CN">必需对象访问器和可选 JSON 操作的方法名。</para>
         /// </param>
         /// <returns>
-        ///     A channel with compiled delegates.
-        ///     带已编译 delegate 的 channel。
+        ///     <para xml:lang="en">A channel containing the compiled delegates.</para>
+        ///     <para xml:lang="zh-CN">包含已编译委托的通道。</para>
         /// </returns>
         /// <exception cref="InvalidOperationException">
-        ///     Required object resolver methods are missing.
-        ///     缺少必需的 object resolver 方法。
+        ///     <para xml:lang="en">The required object methods are missing or have incompatible signatures.</para>
+        ///     <para xml:lang="zh-CN">必需的对象方法缺失或签名不兼容。</para>
         /// </exception>
         public static ReflectionStaticChannel Bind(Type providerType, ReflectionInteropConvention convention)
         {
             ArgumentNullException.ThrowIfNull(providerType);
             ArgumentNullException.ThrowIfNull(convention);
+            ArgumentException.ThrowIfNullOrWhiteSpace(convention.ObjectGetMethodName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(convention.ObjectSetMethodName);
 
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
-            var getObject = providerType.GetMethod(convention.ObjectGetMethodName, flags, [typeof(string)]);
-            var setObject = providerType.GetMethod(convention.ObjectSetMethodName, flags,
+            var objectGetMethodName = convention.ObjectGetMethodName.Trim();
+            var objectSetMethodName = convention.ObjectSetMethodName.Trim();
+            var getObject = providerType.GetMethod(objectGetMethodName, flags, [typeof(string)]);
+            var setObject = providerType.GetMethod(objectSetMethodName, flags,
                 [typeof(string), typeof(object)]);
 
             if (getObject == null || setObject == null)
                 throw new InvalidOperationException(
-                    $"Provider {providerType.FullName} requires static {convention.ObjectGetMethodName}(string) and {convention.ObjectSetMethodName}(string, object).");
+                    $"Provider {providerType.FullName} requires static {objectGetMethodName}(string) and " +
+                    $"{objectSetMethodName}(string, object).");
+            if (getObject.ReturnType == typeof(void) || getObject.ContainsGenericParameters)
+                throw new InvalidOperationException(
+                    $"Provider method {providerType.FullName}.{objectGetMethodName}(string) must return a value.");
+            if (setObject.ReturnType != typeof(void) || setObject.ContainsGenericParameters)
+                throw new InvalidOperationException(
+                    $"Provider method {providerType.FullName}.{objectSetMethodName}(string, object) must return void.");
 
             var mergePatchGet = string.IsNullOrWhiteSpace(convention.MergePatchGetMethodName)
                 ? null
@@ -62,9 +80,9 @@ namespace STS2RitsuLib.Interop
                 : providerType.GetMethod(convention.JsonPatchApplyMethodName.Trim(), flags,
                       [typeof(string), typeof(JsonNode)]) ??
                   providerType.GetMethod(convention.JsonPatchApplyMethodName.Trim(), flags,
-                      [typeof(string), typeof(JsonObject)]) ??
+                      [typeof(string), typeof(JsonArray)]) ??
                   providerType.GetMethod(convention.JsonPatchApplyMethodName.Trim(), flags,
-                      [typeof(string), typeof(JsonArray)]);
+                      [typeof(string), typeof(JsonObject)]);
             var nodeGet = string.IsNullOrWhiteSpace(convention.NodeGetMethodName)
                 ? null
                 : providerType.GetMethod(convention.NodeGetMethodName.Trim(), flags,
@@ -101,10 +119,8 @@ namespace STS2RitsuLib.Interop
                 TryBindRootJsonSetter(setRootObj),
                 TryBindNodeSetter(nodeSet),
                 TryBindMergeAt(mergeAt),
-                getJson == null ? null : CompileStaticStringToNullableStringGetter(getJson),
-                setJson == null
-                    ? null
-                    : (Action<string, string>)Delegate.CreateDelegate(typeof(Action<string, string>), setJson),
+                TryBindJsonTextGetter(getJson),
+                TryBindJsonTextSetter(setJson),
                 TryBindJsonPatchApply(jsonPatchApply));
 
             return new(
@@ -189,7 +205,10 @@ namespace STS2RitsuLib.Interop
 
             var objDelegate =
                 (Action<string, JsonObject>)Delegate.CreateDelegate(typeof(Action<string, JsonObject>), method);
-            return (k, n) => objDelegate(k, n as JsonObject ?? new JsonObject());
+            return (k, n) => objDelegate(
+                k,
+                n as JsonObject ?? throw new InvalidOperationException(
+                    $"{method.DeclaringType?.FullName}.{method.Name} only accepts object merge patches."));
         }
 
         private static Action<string, JsonNode?>? TryBindJsonPatchApply(MethodInfo? method)
@@ -208,7 +227,10 @@ namespace STS2RitsuLib.Interop
             {
                 var arrDelegate =
                     (Action<string, JsonArray>)Delegate.CreateDelegate(typeof(Action<string, JsonArray>), method);
-                return (k, n) => arrDelegate(k, n as JsonArray ?? []);
+                return (k, n) => arrDelegate(
+                    k,
+                    n as JsonArray ?? throw new InvalidOperationException(
+                        $"{method.DeclaringType?.FullName}.{method.Name} requires a JSON Patch array."));
             }
 
             if (ps[1].ParameterType != typeof(JsonObject))
@@ -216,7 +238,38 @@ namespace STS2RitsuLib.Interop
 
             var objDelegate =
                 (Action<string, JsonObject>)Delegate.CreateDelegate(typeof(Action<string, JsonObject>), method);
-            return (k, n) => objDelegate(k, n as JsonObject ?? new JsonObject());
+            return (k, n) => objDelegate(
+                k,
+                n as JsonObject ?? throw new InvalidOperationException(
+                    $"{method.DeclaringType?.FullName}.{method.Name} only accepts a JSON Patch object."));
+        }
+
+        private static Func<string, string?>? TryBindJsonTextGetter(MethodInfo? method)
+        {
+            if (method == null ||
+                method.ContainsGenericParameters ||
+                method.ReturnType != typeof(string))
+                return null;
+
+            var ps = method.GetParameters();
+            return ps.Length == 1 && ps[0].ParameterType == typeof(string)
+                ? (Func<string, string?>)Delegate.CreateDelegate(typeof(Func<string, string?>), method)
+                : null;
+        }
+
+        private static Action<string, string>? TryBindJsonTextSetter(MethodInfo? method)
+        {
+            if (method == null ||
+                method.ContainsGenericParameters ||
+                method.ReturnType != typeof(void))
+                return null;
+
+            var ps = method.GetParameters();
+            return ps.Length == 2 &&
+                   ps[0].ParameterType == typeof(string) &&
+                   ps[1].ParameterType == typeof(string)
+                ? (Action<string, string>)Delegate.CreateDelegate(typeof(Action<string, string>), method)
+                : null;
         }
 
         private static Func<string, string, JsonNode?>? TryBindNodeGetter(MethodInfo? method)
@@ -283,7 +336,9 @@ namespace STS2RitsuLib.Interop
             if (node == null)
                 return new();
 
-            return node as JsonObject ?? new JsonObject();
+            return node as JsonObject
+                   ?? throw new InvalidOperationException(
+                       $"The configured root JSON getter returned {node.GetType().Name}; a JsonObject was required.");
         }
 
         private static Func<string, object?> CompileStaticStringToObjectGetter(MethodInfo method)
@@ -305,16 +360,6 @@ namespace STS2RitsuLib.Interop
                 : Expression.Convert(p2, method.GetParameters()[1].ParameterType);
             var body = Expression.Call(method, p1, arg2);
             return Expression.Lambda<Action<string, object?>>(body, p1, p2).Compile();
-        }
-
-        private static Func<string, string?> CompileStaticStringToNullableStringGetter(MethodInfo method)
-        {
-            var param = Expression.Parameter(typeof(string), "k");
-            var call = Expression.Call(method, param);
-            Expression body = method.ReturnType == typeof(string)
-                ? call
-                : Expression.TypeAs(Expression.Convert(call, typeof(object)), typeof(string));
-            return Expression.Lambda<Func<string, string?>>(body, param).Compile();
         }
     }
 }

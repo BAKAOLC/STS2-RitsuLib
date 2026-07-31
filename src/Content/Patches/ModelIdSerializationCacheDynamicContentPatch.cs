@@ -18,11 +18,14 @@ using STS2RitsuLib.Timeline;
 namespace STS2RitsuLib.Content.Patches
 {
     /// <summary>
-    ///     Rebuilds <see cref="ModelIdSerializationCache" /> from the finalized <see cref="ModelDb" /> content after
-    ///     the existing initialization path when registered extensions are present, using a strict deterministic order
-    ///     so all network-relevant models share one stable net-id and hash source.
-    ///     当存在注册扩展内容时，在既有初始化路径之后使用严格确定的顺序，从最终 <see cref="ModelDb" /> 内容重建
-    ///     <see cref="ModelIdSerializationCache" />，让所有网络相关模型共用同一个稳定的 net-id 与 hash 来源。
+    ///     <para xml:lang="en">
+    ///         Rebuilds <see cref="ModelIdSerializationCache" /> in deterministic order after registered
+    ///         dynamic content has entered <see cref="ModelDb" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         已注册动态内容进入 <see cref="ModelDb" /> 后，按确定性顺序重建
+    ///         <see cref="ModelIdSerializationCache" />。
+    ///     </para>
     /// </summary>
     internal sealed class ModelIdSerializationCacheDynamicContentPatch : IPatchMethod
     {

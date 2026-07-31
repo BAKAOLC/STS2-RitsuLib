@@ -8,14 +8,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Fixes <see cref="NMouseCardPlay" /> targeting selection for <see cref="TargetType.AnyPlayer" />.
-    ///     Vanilla routes AnyPlayer to <c>MultiCreatureTargeting</c> (no arrow, no target selection).
-    ///     This patch routes it to <c>SingleCreatureTargeting</c> which already fully supports AnyPlayer
-    ///     through <see cref="NTargetManager" />.
-    ///     修复 <see cref="NMouseCardPlay" /> 对 <see cref="TargetType.AnyPlayer" /> 的目标选择。
-    ///     原版将 AnyPlayer 路由到 <c>MultiCreatureTargeting</c>（无箭头、无目标选择）。
-    ///     此补丁将其路由到 <c>SingleCreatureTargeting</c>，该流程已通过
-    ///     <see cref="NTargetManager" /> 完整支持 AnyPlayer。
+    ///     <para xml:lang="en">
+    ///         Routes <see cref="TargetType.AnyPlayer" /> through mouse single-creature selection. Vanilla routes it
+    ///         through multi-creature targeting, which neither shows an arrow nor selects a target.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="TargetType.AnyPlayer" /> 路由到鼠标单体选目标流程。原版会将其路由到群体目标流程，
+    ///         因而既不显示箭头，也不会选择目标。
+    ///     </para>
     /// </summary>
     internal sealed class NMouseCardPlayTargetSelectionAnyPlayerPatch : IPatchMethod
     {

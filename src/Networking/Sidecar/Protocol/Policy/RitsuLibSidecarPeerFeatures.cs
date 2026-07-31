@@ -1,39 +1,64 @@
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Feature bits advertised in <see cref="RitsuLibSidecarHandshakeBinary" />.
-    ///     <see cref="RitsuLibSidecarHandshakeBinary" /> 中宣告的 feature bit。
+    ///     <para xml:lang="en">
+    ///         Defines the feature flags advertised during a <see cref="RitsuLibSidecarHandshakeBinary" /> handshake.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义通过 <see cref="RitsuLibSidecarHandshakeBinary" /> 握手声明的功能标志。
+    ///     </para>
     /// </summary>
     [Flags]
     public enum RitsuLibSidecarPeerFeatures : uint
     {
         /// <summary>
-        ///     No optional features advertised.
-        ///     未宣告可选 feature。
+        ///     <para xml:lang="en">
+        ///         No optional features are advertised.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不声明任何可选功能。
+        ///     </para>
         /// </summary>
         None = 0,
 
         /// <summary>
-        ///     Chunked large-payload reassembly (opcode <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" />).
-        ///     分块大型载荷重组（opcode <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" />）。
+        ///     <para xml:lang="en">
+        ///         Supports reassembling large payloads sent through
+        ///         <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> messages.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         支持重组通过 <see cref="RitsuLibSidecarControlOpcodes.ChunkedFrame" /> 消息发送的大型载荷。
+        ///     </para>
         /// </summary>
         ChunkedStreams = 1 << 0,
 
         /// <summary>
-        ///     RitsuLib-managed actions can be carried inside vanilla action enqueue messages.
-        ///     RitsuLib 管理的 action 可承载在原版 action 入队消息中。
+        ///     <para xml:lang="en">
+        ///         Supports carrying RitsuLib-managed actions in vanilla action-enqueue messages.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         支持在原版动作入队消息中承载由 RitsuLib 管理的动作。
+        ///     </para>
         /// </summary>
         ManagedNetActions = 1 << 1,
 
         /// <summary>
-        ///     Sidecar envelope payloads may use the Brotli payload compression flag.
-        ///     Sidecar envelope payload 可使用 Brotli payload 压缩标志。
+        ///     <para xml:lang="en">
+        ///         Supports Brotli-compressed sidecar envelope payloads.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         支持使用 Brotli 压缩的 sidecar 信封载荷。
+        ///     </para>
         /// </summary>
         BrotliPayloadCompression = 1 << 2,
 
         /// <summary>
-        ///     Supports source-aware model right-click actions, including active combat orbs.
-        ///     支持带来源的模型右键动作，包括战斗中的充能球。
+        ///     <para xml:lang="en">
+        ///         Supports source-aware model right-click actions, including actions for active combat orbs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         支持保留来源信息的模型右键操作，包括对战斗中充能球的操作。
+        ///     </para>
         /// </summary>
         ModelRightClickV2 = 1 << 3,
     }

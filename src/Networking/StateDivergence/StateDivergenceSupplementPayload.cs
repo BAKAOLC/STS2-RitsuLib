@@ -11,6 +11,7 @@ using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Networking.MessageExtensions;
+using STS2RitsuLib.Networking.Sidecar;
 #if STS2_AT_LEAST_0_109_0
 using SavedPropertyCache = MegaCrit.Sts2.Core.Multiplayer.Serialization.ModelIdSerializationCache;
 
@@ -72,6 +73,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private const int PayloadVersion = 6;
         private const int MaxRecentLogRecords = 5000;
         private const int MaxCompressedPayloadBytes = 64 * 1024;
+        private static readonly Lock RegistrationLock = new();
         private static int _registered;
         private static readonly Lock PreparedOutgoingLock = new();
 
@@ -87,14 +89,21 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         public static void EnsureRegistered()
         {
-            if (Interlocked.Exchange(ref _registered, 1) == 1)
+            if (Volatile.Read(ref _registered) != 0)
                 return;
 
-            RitsuNetMessageTailExtensions.RegisterBytes<StateDivergenceMessage>(
-                ExtensionId,
-                PayloadVersion,
-                SerializePayload,
-                ReadPayload);
+            lock (RegistrationLock)
+            {
+                if (_registered != 0)
+                    return;
+
+                RitsuNetMessageTailExtensions.RegisterBytes<StateDivergenceMessage>(
+                    ExtensionId,
+                    PayloadVersion,
+                    SerializePayload,
+                    ReadPayload);
+                Volatile.Write(ref _registered, 1);
+            }
         }
 
         public static void Write(PacketWriter writer, StateDivergenceMessage message)
@@ -151,7 +160,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     : CreateLocalSnapshot(message.senderChecksum);
                 return EncodeWithinBudget(payload);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[State divergence diagnostics] Failed to create supplement payload: {ex.Message}");
@@ -206,7 +215,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 if (payload != null)
                     StateDivergenceSupplementStore.Store(payload);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[State divergence diagnostics] Failed to read supplement payload: {ex.Message}");
@@ -282,6 +291,14 @@ namespace STS2RitsuLib.Networking.StateDivergence
             out int compressedBytes)
         {
             var json = JsonSerializer.Serialize(ToWirePayload(payload), JsonOptions);
+            var uncompressedBytes = Encoding.UTF8.GetByteCount(json);
+            if ((uint)uncompressedBytes > RitsuLibSidecarWire.MaxPayloadBytes)
+            {
+                encoded = [];
+                compressedBytes = 0;
+                return false;
+            }
+
             var compressed = Brotli(Encoding.UTF8.GetBytes(json));
             compressedBytes = compressed.Length;
             if (compressed.Length > MaxCompressedPayloadBytes)
@@ -336,20 +353,20 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         private static byte[] Gunzip(byte[] data)
         {
-            using var input = new MemoryStream(data, false);
-            using var gzip = new GZipStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            gzip.CopyTo(output);
-            return output.ToArray();
+            if (RitsuLibSidecarCompression.TryGunzip(data, out var decompressed))
+                return decompressed;
+
+            throw new InvalidDataException(
+                $"The gzip supplement is invalid or exceeds {RitsuLibSidecarWire.MaxPayloadBytes} decompressed bytes.");
         }
 
         private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream([.. data], false);
-            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            brotli.CopyTo(output);
-            return output.ToArray();
+            if (RitsuLibSidecarCompression.TryBrotliDecompress(data, out var decompressed))
+                return decompressed;
+
+            throw new InvalidDataException(
+                $"The Brotli supplement is invalid or exceeds {RitsuLibSidecarWire.MaxPayloadBytes} decompressed bytes.");
         }
 
         private static StateDivergenceSupplementPayloadV6 ToWirePayload(StateDivergenceSupplementPayload payload)

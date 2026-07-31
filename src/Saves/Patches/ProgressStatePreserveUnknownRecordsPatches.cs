@@ -6,7 +6,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Saves.Patches
 {
     /// <summary>
-    ///     Captures mod progress records that vanilla parsing would skip while the owning content is unavailable.
+    ///     <para xml:lang="en">
+    ///         Captures progress records that the base game would discard while their owning mod content is unavailable.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         捕获原版游戏会在对应模组内容不可用时丢弃的进度记录。
+    ///     </para>
     /// </summary>
     internal sealed class ProgressStatePreserveUnknownRecordsFromSerializablePatch : IPatchMethod
     {
@@ -41,7 +46,12 @@ namespace STS2RitsuLib.Saves.Patches
     }
 
     /// <summary>
-    ///     Restores preserved unavailable mod records into the serializable progress payload before saving.
+    ///     <para xml:lang="en">
+    ///         Restores preserved records for unavailable mod content to the serializable progress data before it is saved.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         保存前，将为当前不可用的模组内容保留的记录恢复到可序列化进度数据中。
+    ///     </para>
     /// </summary>
     internal sealed class ProgressStatePreserveUnknownRecordsToSerializablePatch : IPatchMethod
     {
@@ -65,7 +75,12 @@ namespace STS2RitsuLib.Saves.Patches
     }
 
     /// <summary>
-    ///     Refreshes the progress mirror after a real progress load completes.
+    ///     <para xml:lang="en">
+    ///         Refreshes the progress mirror after a successful progress load.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         成功加载进度后刷新进度镜像。
+    ///     </para>
     /// </summary>
     internal sealed class ProgressStatePreserveUnknownRecordsLoadProgressPatch : IPatchMethod
     {

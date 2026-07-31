@@ -30,6 +30,7 @@ namespace STS2RitsuLib.Settings
 
         public static string Resolve(ModSettingsText? text, string fallback = "")
         {
+            ArgumentNullException.ThrowIfNull(fallback);
             return text?.Resolve() ?? fallback;
         }
 
@@ -66,11 +67,15 @@ namespace STS2RitsuLib.Settings
         private static partial Regex LegacyCodeTagRegex();
 
         /// <summary>
-        ///     Registers a callback invoked on the next UI refresh. Same as calling
-        ///     <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" /> with a full-pass spec (legacy behavior for
-        ///     extensions compiled against older RitsuLib).
-        ///     注册在下一次 UI 刷新时调用的回调。等同于使用完整遍历 spec 调用 <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" />（为针对旧版
-        ///     RitsuLib 编译的扩展保留的旧行为）。
+        ///     <para xml:lang="en">
+        ///         Registers a callback for full-pass UI refreshes. This is equivalent to calling
+        ///         <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" /> with the default full-pass
+        ///         specification and preserves compatibility with extensions built against older RitsuLib versions.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册用于完整遍历界面刷新的回调。该方法等同于使用默认的完整遍历规范调用
+        ///         <see cref="RegisterRefresh(Action, ModSettingsUiRefreshSpec)" />，并保留对旧版 RitsuLib 扩展的兼容性。
+        ///     </para>
         /// </summary>
         public void RegisterRefresh(Action action)
         {
@@ -78,13 +83,17 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Registers a callback invoked on the next UI refresh when its <paramref name="spec" /> matches the
-        ///     bindings that were marked dirty since the last flush.
-        ///     注册一个回调；当其 <paramref name="spec" /> 与上次 flush 后被标记为脏的
-        ///     binding 匹配时，在下一次 UI 刷新时调用。
+        ///     <para xml:lang="en">
+        ///         Registers a UI-refresh callback selected by <paramref name="spec" /> against bindings marked dirty
+        ///         since the previous refresh flush.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册界面刷新回调；<paramref name="spec" /> 会与上一次刷新队列执行后标记为脏的绑定进行匹配。
+        ///     </para>
         /// </summary>
         public void RegisterRefresh(Action action, ModSettingsUiRefreshSpec spec)
         {
+            ArgumentNullException.ThrowIfNull(action);
             submenu.RegisterRefreshAction(action, spec, pageScopeId);
         }
 
@@ -124,12 +133,18 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Re-evaluates Godot <c>Control.Visible</c> on each debounced refresh (sidebar targets that are not part of
-        ///     the main content refresh graph).
-        ///     在每次防抖刷新时重新评估 Godot <c>Control.Visible</c>（用于不属于主内容刷新图的侧边栏目标）。
+        ///     <para xml:lang="en">
+        ///         Registers a Godot control whose visibility predicate is reevaluated on every debounced refresh. This
+        ///         supports sidebar controls outside the main content refresh graph.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一个 Godot 控件，在每次防抖刷新时重新计算其可见性谓词。用于主内容刷新图之外的侧边栏控件。
+        ///     </para>
         /// </summary>
         public void RegisterDynamicVisibility(Control control, Func<bool> predicate)
         {
+            ArgumentNullException.ThrowIfNull(control);
+            ArgumentNullException.ThrowIfNull(predicate);
             submenu.RegisterDynamicVisibility(control, predicate, pageScopeId);
         }
 
@@ -145,6 +160,8 @@ namespace STS2RitsuLib.Settings
 
         public bool TryGetRowState<TValue>(string rowKey, string stateKey, out TValue? value)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(rowKey);
+            ArgumentException.ThrowIfNullOrWhiteSpace(stateKey);
             value = default;
             if (!_rowUiState.TryGetValue(rowKey, out var row) || !row.TryGetValue(stateKey, out var stored))
                 return false;
@@ -155,6 +172,8 @@ namespace STS2RitsuLib.Settings
 
         public void SetRowState<TValue>(string rowKey, string stateKey, TValue value)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(rowKey);
+            ArgumentException.ThrowIfNullOrWhiteSpace(stateKey);
             if (!_rowUiState.TryGetValue(rowKey, out var row))
             {
                 row = [];

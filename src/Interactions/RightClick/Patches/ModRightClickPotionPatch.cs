@@ -9,8 +9,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interactions.RightClick.Patches
 {
     /// <summary>
-    ///     Connects right-click dispatch to potion nodes.
-    ///     将右键分发接入药水节点。
+    ///     <para xml:lang="en">Connects right-click dispatch to potion holders.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入药水容器。</para>
     /// </summary>
     internal sealed class ModRightClickPotionPatch : IPatchMethod
     {

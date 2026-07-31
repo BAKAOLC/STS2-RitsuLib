@@ -28,38 +28,38 @@ namespace STS2RitsuLib.Data
 
                 _initializing = true;
 
-                using (RitsuLibFramework.BeginModDataRegistration(Const.ModId, false))
-                {
-                    Store.Register<RitsuLibSettings>(
-                        Const.SettingsKey,
-                        Const.SettingsFileName,
-                        SaveScope.Global,
-                        () => new(),
-                        true,
-                        new()
-                        {
-                            CurrentDataVersion = RitsuLibSettings.CurrentSchemaVersion,
-                            MinimumSupportedDataVersion = 0,
-                        },
-                        [
-                            new RitsuLibSettingsV0Or1ToV2Migration(),
-                            new RitsuLibSettingsV2ToV4Migration(),
-                            new RitsuLibSettingsV4ToV5Migration(),
-                            new RitsuLibSettingsV5ToV6Migration(),
-                            new RitsuLibSettingsV6ToV7Migration(),
-                            new RitsuLibSettingsV7ToV8Migration(),
-                            new RitsuLibSettingsV8ToV9Migration(),
-                            new RitsuLibSettingsV9ToV10Migration(),
-                            new RitsuLibSettingsV10ToV11Migration(),
-                            new RitsuLibSettingsV11ToV12Migration(),
-                            new RitsuLibSettingsV12ToV13Migration(),
-                            new RitsuLibSettingsV13ToV14Migration(),
-                            new RitsuLibSettingsV14ToV15Migration(),
-                        ]);
-                }
-
                 try
                 {
+                    using (RitsuLibFramework.BeginModDataRegistration(Const.ModId, false))
+                    {
+                        Store.Register<RitsuLibSettings>(
+                            Const.SettingsKey,
+                            Const.SettingsFileName,
+                            SaveScope.Global,
+                            () => new(),
+                            true,
+                            new()
+                            {
+                                CurrentDataVersion = RitsuLibSettings.CurrentSchemaVersion,
+                                MinimumSupportedDataVersion = 0,
+                            },
+                            [
+                                new RitsuLibSettingsV0Or1ToV2Migration(),
+                                new RitsuLibSettingsV2ToV4Migration(),
+                                new RitsuLibSettingsV4ToV5Migration(),
+                                new RitsuLibSettingsV5ToV6Migration(),
+                                new RitsuLibSettingsV6ToV7Migration(),
+                                new RitsuLibSettingsV7ToV8Migration(),
+                                new RitsuLibSettingsV8ToV9Migration(),
+                                new RitsuLibSettingsV9ToV10Migration(),
+                                new RitsuLibSettingsV10ToV11Migration(),
+                                new RitsuLibSettingsV11ToV12Migration(),
+                                new RitsuLibSettingsV12ToV13Migration(),
+                                new RitsuLibSettingsV13ToV14Migration(),
+                                new RitsuLibSettingsV14ToV15Migration(),
+                            ]);
+                    }
+
                     _initialized = true;
                     RitsuShellThemeRuntime.ApplyThemeId(GetSettings().UiShellThemeId);
                     LogConfigSnapshot();
@@ -83,8 +83,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Master debug-compatibility switch. When false, no RitsuLib soft-fail shims run.
-        ///     调试兼容性总开关。为 false 时，不运行任何 RitsuLib 软失败 shim。
+        ///     <para xml:lang="en">Gets whether the master switch for RitsuLib's debug-compatibility fallbacks is enabled.</para>
+        ///     <para xml:lang="zh-CN">获取 RitsuLib 调试兼容回退的总开关是否已启用。</para>
         /// </summary>
         internal static bool IsDebugCompatibilityMasterEnabled()
         {
@@ -93,8 +93,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     <c>LocTable</c> missing-key placeholders + warnings.
-        ///     <c>LocTable</c> 缺失键占位符与警告。
+        ///     <para xml:lang="en">Gets whether missing <c>LocTable</c> keys use placeholders and warnings.</para>
+        ///     <para xml:lang="zh-CN">获取缺失的 <c>LocTable</c> 键是否使用占位文本并输出警告。</para>
         /// </summary>
         internal static bool IsLocTableCompatEnabled()
         {
@@ -104,8 +104,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Skip invalid epoch grants with warnings instead of throwing.
-        ///     跳过无效 epoch 授予并输出警告，而不是抛出异常。
+        ///     <para xml:lang="en">Gets whether invalid epoch grants are skipped with warnings instead of throwing.</para>
+        ///     <para xml:lang="zh-CN">获取无效的纪元授予是否会被跳过并输出警告，而不是抛出异常。</para>
         /// </summary>
         internal static bool IsUnlockEpochCompatEnabled()
         {
@@ -115,8 +115,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     <c>THE_ARCHITECT</c> empty dialogue stub for registry characters.
-        ///     注册表角色使用的 <c>THE_ARCHITECT</c> 空对话桩。
+        ///     <para xml:lang="en">Gets whether registered characters receive an empty <c>THE_ARCHITECT</c> dialogue fallback.</para>
+        ///     <para xml:lang="zh-CN">获取已注册角色是否使用空白的 <c>THE_ARCHITECT</c> 对话回退。</para>
         /// </summary>
         internal static bool IsAncientArchitectCompatEnabled()
         {
@@ -296,8 +296,8 @@ namespace STS2RitsuLib.Data
         }
 
         /// <summary>
-        ///     Harmony patch dump UI / lifecycle reads paths and flags without exposing the store surface publicly.
-        ///     Harmony 补丁转储 UI/生命周期读取路径和标志，同时不公开暴露存储接口。
+        ///     <para xml:lang="en">Gets the Harmony patch-dump path and first-main-menu option.</para>
+        ///     <para xml:lang="zh-CN">获取 Harmony 补丁转储路径和首次进入主菜单时执行的选项。</para>
         /// </summary>
         internal static (string OutputPath, bool DumpOnFirstMainMenu) GetHarmonyPatchDumpOptions()
         {

@@ -4,14 +4,24 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Scaffolding.Combat
 {
     /// <summary>
-    ///     Compatibility helpers for querying the current player turn phase.
-    ///     查询当前玩家回合阶段的兼容 helper。
+    ///     <para xml:lang="en">
+    ///         Provides compatibility extensions for querying the current player turn phase.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供用于查询当前玩家回合阶段的兼容扩展方法。
+    ///     </para>
     /// </summary>
     public static class CombatTurnPhaseExtensions
     {
         /// <summary>
-        ///     Returns whether <paramref name="model" />'s owner is currently in the "Play" turn phase.
-        ///     返回 <paramref name="model" /> 的拥有者当前是否处于 “Play” 回合阶段。
+        ///     <para xml:lang="en">
+        ///         Returns whether the owner of <paramref name="model" /> is currently in the
+        ///         <see cref="PlayerTurnPhase.Play" /> phase.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="model" /> 的拥有者当前是否处于
+        ///         <see cref="PlayerTurnPhase.Play" /> 阶段。
+        ///     </para>
         /// </summary>
         public static bool IsOwnerPlayPhase(this CardModel model)
         {

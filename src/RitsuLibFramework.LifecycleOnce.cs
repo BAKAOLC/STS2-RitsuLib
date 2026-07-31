@@ -3,31 +3,39 @@ namespace STS2RitsuLib
     public static partial class RitsuLibFramework
     {
         /// <summary>
-        ///     Subscribes a typed callback that runs at most once per returned subscription: after each invocation the
-        ///     subscription is disposed and the handler is removed.
-        ///     订阅一个每个返回订阅最多只运行一次的强类型回调：每次调用后都会释放订阅并移除处理器。
+        ///     <para xml:lang="en">
+        ///         Subscribes a typed callback that runs at most once for the returned subscription. Each invocation
+        ///         disposes the subscription and removes the handler in a <c>finally</c> path.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         订阅一个强类型回调；对于返回的每个订阅，该回调最多运行一次。每次调用都会在 <c>finally</c> 中释放订阅并移除回调。
+        ///     </para>
         /// </summary>
         /// <typeparam name="TEvent">
-        ///     Concrete lifecycle event type (must be a struct or sealed class).
-        ///     具体生命周期事件类型（必须是结构体或密封类）。
+        ///     <para xml:lang="en">Concrete lifecycle event type, which must be a struct or sealed class.</para>
+        ///     <para xml:lang="zh-CN">具体生命周期事件类型，必须为结构体或密封类。</para>
         /// </typeparam>
         /// <param name="handler">
-        ///     Invoked once when a matching event is delivered (including synchronous replay).
-        ///     匹配事件送达时调用一次（包括同步回放）。
+        ///     <para xml:lang="en">Invoked once when a matching event is delivered, including synchronous replay.</para>
+        ///     <para xml:lang="zh-CN">在匹配事件送达时调用一次，包括同步重放。</para>
         /// </param>
         /// <param name="replayCurrentState">
-        ///     When true, invokes <paramref name="handler" /> once if a replayable last event exists, then disposes.
-        ///     为 true 时，如果存在可重放的最后事件，则调用 <paramref name="handler" /> 一次，然后释放。
+        ///     <para xml:lang="en">Whether to invoke <paramref name="handler" /> once for a replayable last event, then dispose.</para>
+        ///     <para xml:lang="zh-CN">是否在存在可重放的最后事件时调用 <paramref name="handler" /> 一次后释放订阅。</para>
         /// </param>
         /// <returns>
-        ///     Disposing unsubscribes without invoking the handler.
-        ///     释放返回值会取消订阅，且不会调用处理器。
+        ///     <para xml:lang="en">A subscription whose disposal unsubscribes without invoking the handler.</para>
+        ///     <para xml:lang="zh-CN">释放后会取消订阅且不调用回调的订阅。</para>
         /// </returns>
         /// <exception cref="NotSupportedException">
-        ///     Thrown when <typeparamref name="TEvent" /> is not eligible for typed dispatch (same rule as
-        ///     <see cref="SubscribeLifecycle{TEvent}(Action{TEvent}, bool)" />).
-        ///     当 <c>TEvent</c> 不符合强类型派发条件时抛出（规则与
-        ///     <c>SubscribeLifecycle{TEvent}(Action{TEvent}, bool)</c> 相同）。
+        ///     <para xml:lang="en">
+        ///         Thrown when <typeparamref name="TEvent" /> is ineligible for typed dispatch, using the same rule as
+        ///         <see cref="SubscribeLifecycle{TEvent}(Action{TEvent}, bool)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <typeparamref name="TEvent" /> 不符合强类型派发条件时抛出；规则与
+        ///         <see cref="SubscribeLifecycle{TEvent}(Action{TEvent}, bool)" /> 相同。
+        ///     </para>
         /// </exception>
         public static IDisposable SubscribeLifecycleOnce<TEvent>(
             Action<TEvent> handler,
@@ -77,6 +85,8 @@ namespace STS2RitsuLib
                 }
                 finally
                 {
+                    // The subscription is assigned before Wrapped can be published or invoked.
+                    // ReSharper disable once AccessToModifiedClosure
                     subscription?.Dispose();
                 }
             }

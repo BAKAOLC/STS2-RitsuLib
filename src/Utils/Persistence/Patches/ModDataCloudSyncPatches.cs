@@ -3,6 +3,10 @@ using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Utils.Persistence.Patches
 {
+    /// <summary>
+    ///     <para xml:lang="en">Groups game-profile lifecycle patches that schedule reconciliation of local and cloud mod data.</para>
+    ///     <para xml:lang="zh-CN">汇集在游戏档案生命周期中安排本地与云端模组数据协调同步的补丁。</para>
+    /// </summary>
     internal static class ModDataCloudSyncPatches
     {
         internal sealed class AfterInitProfileId : IPatchMethod

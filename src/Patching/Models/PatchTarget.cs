@@ -3,14 +3,14 @@ using HarmonyLib;
 namespace STS2RitsuLib.Patching.Models
 {
     /// <summary>
-    ///     Factory methods for common <see cref="ModPatchTarget" /> declarations.
-    ///     常见 <see cref="ModPatchTarget" /> 声明的工厂方法。
+    ///     <para xml:lang="en">Provides factory methods for common <see cref="ModPatchTarget" /> declarations.</para>
+    ///     <para xml:lang="zh-CN">提供用于声明常见 <see cref="ModPatchTarget" /> 的工厂方法。</para>
     /// </summary>
     public static class PatchTarget
     {
         /// <summary>
-        ///     Targets a method by name.
-        ///     按名称定位方法。
+        ///     <para xml:lang="en">Creates a target for a required method resolved by name.</para>
+        ///     <para xml:lang="zh-CN">创建按名称解析的必需方法目标。</para>
         /// </summary>
         public static ModPatchTarget Method<TTarget>(string methodName)
         {
@@ -18,8 +18,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a method by name.
-        ///     按名称定位方法。
+        ///     <para xml:lang="en">Creates a target for a required method resolved by name.</para>
+        ///     <para xml:lang="zh-CN">创建按名称解析的必需方法目标。</para>
         /// </summary>
         public static ModPatchTarget Method(Type targetType, string methodName)
         {
@@ -27,8 +27,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a method using an exact parameter signature.
-        ///     使用精确参数签名定位方法。
+        ///     <para xml:lang="en">Creates a target for a required method with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的必需方法目标。</para>
         /// </summary>
         public static ModPatchTarget Method<TTarget>(string methodName, params Type[] parameterTypes)
         {
@@ -36,8 +36,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a method using an exact parameter signature.
-        ///     使用精确参数签名定位方法。
+        ///     <para xml:lang="en">Creates a target for a required method with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的必需方法目标。</para>
         /// </summary>
         public static ModPatchTarget Method(Type targetType, string methodName, params Type[] parameterTypes)
         {
@@ -45,8 +45,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional method by name. Missing targets are ignored by the patcher.
-        ///     按名称定位可选方法。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates an optional method target resolved by name.</para>
+        ///     <para xml:lang="zh-CN">创建按名称解析的可选方法目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalMethod<TTarget>(string methodName)
         {
@@ -54,8 +54,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional method by name. Missing targets are ignored by the patcher.
-        ///     按名称定位可选方法。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates an optional method target resolved by name.</para>
+        ///     <para xml:lang="zh-CN">创建按名称解析的可选方法目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalMethod(Type targetType, string methodName)
         {
@@ -63,8 +63,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional method using an exact parameter signature. Missing targets are ignored by the patcher.
-        ///     使用精确参数签名定位可选方法。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates an optional method target with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的可选方法目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalMethod<TTarget>(string methodName, params Type[] parameterTypes)
         {
@@ -72,8 +72,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional method using an exact parameter signature. Missing targets are ignored by the patcher.
-        ///     使用精确参数签名定位可选方法。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates an optional method target with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的可选方法目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalMethod(Type targetType, string methodName, params Type[] parameterTypes)
         {
@@ -81,8 +81,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a property getter.
-        ///     定位属性 getter。
+        ///     <para xml:lang="en">Creates a target for a required property getter.</para>
+        ///     <para xml:lang="zh-CN">创建必需属性 getter 的目标。</para>
         /// </summary>
         public static ModPatchTarget Getter<TTarget>(string propertyName)
         {
@@ -90,8 +90,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a property getter.
-        ///     定位属性 getter。
+        ///     <para xml:lang="en">Creates a target for a required property getter.</para>
+        ///     <para xml:lang="zh-CN">创建必需属性 getter 的目标。</para>
         /// </summary>
         public static ModPatchTarget Getter(Type targetType, string propertyName)
         {
@@ -99,8 +99,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional property getter. Missing targets are ignored by the patcher.
-        ///     定位可选属性 getter。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates a target for an optional property getter.</para>
+        ///     <para xml:lang="zh-CN">创建可选属性 getter 的目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalGetter<TTarget>(string propertyName)
         {
@@ -108,8 +108,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional property getter. Missing targets are ignored by the patcher.
-        ///     定位可选属性 getter。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates a target for an optional property getter.</para>
+        ///     <para xml:lang="zh-CN">创建可选属性 getter 的目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalGetter(Type targetType, string propertyName)
         {
@@ -117,8 +117,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a property setter.
-        ///     定位属性 setter。
+        ///     <para xml:lang="en">Creates a target for a required property setter.</para>
+        ///     <para xml:lang="zh-CN">创建必需属性 setter 的目标。</para>
         /// </summary>
         public static ModPatchTarget Setter<TTarget>(string propertyName)
         {
@@ -126,8 +126,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a property setter.
-        ///     定位属性 setter。
+        ///     <para xml:lang="en">Creates a target for a required property setter.</para>
+        ///     <para xml:lang="zh-CN">创建必需属性 setter 的目标。</para>
         /// </summary>
         public static ModPatchTarget Setter(Type targetType, string propertyName)
         {
@@ -135,8 +135,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional property setter. Missing targets are ignored by the patcher.
-        ///     定位可选属性 setter。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates a target for an optional property setter.</para>
+        ///     <para xml:lang="zh-CN">创建可选属性 setter 的目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalSetter<TTarget>(string propertyName)
         {
@@ -144,8 +144,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional property setter. Missing targets are ignored by the patcher.
-        ///     定位可选属性 setter。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates a target for an optional property setter.</para>
+        ///     <para xml:lang="zh-CN">创建可选属性 setter 的目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalSetter(Type targetType, string propertyName)
         {
@@ -153,8 +153,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a constructor using an exact parameter signature.
-        ///     使用精确参数签名定位构造函数。
+        ///     <para xml:lang="en">Creates a target for a required constructor with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的必需构造函数目标。</para>
         /// </summary>
         public static ModPatchTarget Constructor<TTarget>(params Type[] parameterTypes)
         {
@@ -162,8 +162,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets a constructor using an exact parameter signature.
-        ///     使用精确参数签名定位构造函数。
+        ///     <para xml:lang="en">Creates a target for a required constructor with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的必需构造函数目标。</para>
         /// </summary>
         public static ModPatchTarget Constructor(Type targetType, params Type[] parameterTypes)
         {
@@ -171,8 +171,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional constructor using an exact parameter signature. Missing targets are ignored by the patcher.
-        ///     使用精确参数签名定位可选构造函数。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates a target for an optional constructor with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的可选构造函数目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalConstructor<TTarget>(params Type[] parameterTypes)
         {
@@ -180,8 +180,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an optional constructor using an exact parameter signature. Missing targets are ignored by the patcher.
-        ///     使用精确参数签名定位可选构造函数。目标缺失时由 patcher 忽略。
+        ///     <para xml:lang="en">Creates a target for an optional constructor with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的可选构造函数目标。</para>
         /// </summary>
         public static ModPatchTarget OptionalConstructor(Type targetType, params Type[] parameterTypes)
         {
@@ -189,8 +189,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an async method's compiler-generated MoveNext method.
-        ///     定位 async 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates a target for the compiler-generated <c>MoveNext</c> method of an async method.</para>
+        ///     <para xml:lang="zh-CN">创建异步方法中由编译器生成的 <c>MoveNext</c> 方法目标。</para>
         /// </summary>
         public static ModPatchTarget AsyncMethod<TTarget>(string methodName)
         {
@@ -198,8 +198,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an async method's compiler-generated MoveNext method.
-        ///     定位 async 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates a target for the compiler-generated <c>MoveNext</c> method of an async method.</para>
+        ///     <para xml:lang="zh-CN">创建异步方法中由编译器生成的 <c>MoveNext</c> 方法目标。</para>
         /// </summary>
         public static ModPatchTarget AsyncMethod(Type targetType, string methodName)
         {
@@ -207,8 +207,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an async method's compiler-generated MoveNext method using an exact parameter signature.
-        ///     使用精确参数签名定位 async 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates an async-method target with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的异步方法目标。</para>
         /// </summary>
         public static ModPatchTarget AsyncMethod<TTarget>(string methodName, params Type[] parameterTypes)
         {
@@ -216,8 +216,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an async method's compiler-generated MoveNext method using an exact parameter signature.
-        ///     使用精确参数签名定位 async 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates an async-method target with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的异步方法目标。</para>
         /// </summary>
         public static ModPatchTarget AsyncMethod(Type targetType, string methodName, params Type[] parameterTypes)
         {
@@ -225,8 +225,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an iterator method's compiler-generated MoveNext method.
-        ///     定位 iterator 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates a target for the compiler-generated <c>MoveNext</c> method of an iterator.</para>
+        ///     <para xml:lang="zh-CN">创建迭代器中由编译器生成的 <c>MoveNext</c> 方法目标。</para>
         /// </summary>
         public static ModPatchTarget EnumeratorMethod<TTarget>(string methodName)
         {
@@ -234,8 +234,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an iterator method's compiler-generated MoveNext method.
-        ///     定位 iterator 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates a target for the compiler-generated <c>MoveNext</c> method of an iterator.</para>
+        ///     <para xml:lang="zh-CN">创建迭代器中由编译器生成的 <c>MoveNext</c> 方法目标。</para>
         /// </summary>
         public static ModPatchTarget EnumeratorMethod(Type targetType, string methodName)
         {
@@ -243,8 +243,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an iterator method's compiler-generated MoveNext method using an exact parameter signature.
-        ///     使用精确参数签名定位 iterator 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates an iterator-method target with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的迭代器方法目标。</para>
         /// </summary>
         public static ModPatchTarget EnumeratorMethod<TTarget>(string methodName, params Type[] parameterTypes)
         {
@@ -252,8 +252,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Targets an iterator method's compiler-generated MoveNext method using an exact parameter signature.
-        ///     使用精确参数签名定位 iterator 方法的编译器生成 MoveNext 方法。
+        ///     <para xml:lang="en">Creates an iterator-method target with an exact parameter signature.</para>
+        ///     <para xml:lang="zh-CN">创建按精确参数签名解析的迭代器方法目标。</para>
         /// </summary>
         public static ModPatchTarget EnumeratorMethod(Type targetType, string methodName, params Type[] parameterTypes)
         {

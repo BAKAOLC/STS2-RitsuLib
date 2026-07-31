@@ -10,142 +10,148 @@ using STS2RitsuLib.Cards.FreePlay;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Visual style for the simple secondary-resource card-cost display.
-    ///     简易次级资源卡牌费用显示节点的视觉样式。
+    ///     <para xml:lang="en">Configures the appearance of <see cref="NSecondaryResourceCardCostUi" />.</para>
+    ///     <para xml:lang="zh-CN">配置 <see cref="NSecondaryResourceCardCostUi" /> 的外观。</para>
     /// </summary>
     public sealed record SecondaryResourceCardCostUiStyle
     {
         /// <summary>
-        ///     Root size for one cost slot.
-        ///     单个费用槽的根节点尺寸。
+        ///     <para xml:lang="en">Gets the size of one cost slot.</para>
+        ///     <para xml:lang="zh-CN">获取一个费用槽的尺寸。</para>
         /// </summary>
         public Vector2 SlotSize { get; init; } = new(48f, 48f);
 
         /// <summary>
-        ///     Icon rectangle size inside one slot.
-        ///     单个费用槽内图标矩形尺寸。
+        ///     <para xml:lang="en">Gets the icon rectangle size within the slot.</para>
+        ///     <para xml:lang="zh-CN">获取费用槽内图标矩形的尺寸。</para>
         /// </summary>
         public Vector2 IconSize { get; init; } = new(46f, 46f);
 
         /// <summary>
-        ///     Offset applied to the amount label relative to the centered icon rectangle.
-        ///     数量标签相对居中图标矩形的偏移。
+        ///     <para xml:lang="en">Gets the amount-label offset from the centered icon rectangle.</para>
+        ///     <para xml:lang="zh-CN">获取数量标签相对于居中图标矩形的偏移。</para>
         /// </summary>
         public Vector2 LabelOffset { get; init; }
 
         /// <summary>
-        ///     Whether this cost node occupies the vanilla star-cost slot and should keep the enchantment tab in the
-        ///     vanilla star-cost layout.
-        ///     该费用节点是否占用原版辉星费用槽，并应让附魔标签保持原版辉星费用布局。
+        ///     <para xml:lang="en">
+        ///         Gets whether this display occupies the game's Stars-cost slot and therefore reserves its
+        ///         enchantment-tab layout.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取该显示是否占用游戏的辉星费用槽，并因此预留其附魔标签布局。</para>
         /// </summary>
         public bool ReserveVanillaStarCostSlot { get; init; }
 
         /// <summary>
-        ///     Amount-label font size.
-        ///     数量标签字号。
+        ///     <para xml:lang="en">Gets the amount-label font size.</para>
+        ///     <para xml:lang="zh-CN">获取数量标签的字号。</para>
         /// </summary>
         public int FontSize { get; init; } = 28;
 
         /// <summary>
-        ///     Amount-label outline size.
-        ///     数量标签描边尺寸。
+        ///     <para xml:lang="en">Gets the amount-label outline size.</para>
+        ///     <para xml:lang="zh-CN">获取数量标签的描边尺寸。</para>
         /// </summary>
         public int OutlineSize { get; init; } = 7;
 
         /// <summary>
-        ///     Cost text color when the card can pay this line.
-        ///     卡牌可支付该行费用时的文本颜色。
+        ///     <para xml:lang="en">Gets the cost-text color for an entry that permits card play.</para>
+        ///     <para xml:lang="zh-CN">获取支付条目允许出牌时的费用文本颜色。</para>
         /// </summary>
         public Color AffordableColor { get; init; } = StsColors.cream;
 
         /// <summary>
-        ///     Cost text color when the card cannot pay this line.
-        ///     卡牌无法支付该行费用时的文本颜色。
+        ///     <para xml:lang="en">Gets the cost-text color for an entry that prevents card play.</para>
+        ///     <para xml:lang="zh-CN">获取支付条目阻止出牌时的费用文本颜色。</para>
         /// </summary>
         public Color UnaffordableColor { get; init; } = StsColors.red;
 
         /// <summary>
-        ///     Cost text color when a shortfall policy allows the card to be played.
-        ///     短缺策略允许卡牌打出时的文本颜色。
+        ///     <para xml:lang="en">
+        ///         Gets the cost-text color when an insufficient-payment policy permits a required shortfall.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取资源不足支付策略允许必需费用缺口时的费用文本颜色。</para>
         /// </summary>
         public Color ShortfallPlayableColor { get; init; } = StsColors.energyBlue;
 
         /// <summary>
-        ///     Cost text color when the resolved cost is higher than the base cost but still playable.
-        ///     已解析费用高于基础费用但仍可打出时的文本颜色。
+        ///     <para xml:lang="en">Gets the text color for a playable cost above its base value.</para>
+        ///     <para xml:lang="zh-CN">获取仍可支付但高于基础值的费用文本颜色。</para>
         /// </summary>
         public Color IncreasedColor { get; init; } = StsColors.energyBlue;
 
         /// <summary>
-        ///     Cost text color when the resolved cost is lower than the base cost.
-        ///     已解析费用低于基础费用时的文本颜色。
+        ///     <para xml:lang="en">Gets the text color for a cost below its base value.</para>
+        ///     <para xml:lang="zh-CN">获取低于基础值的费用文本颜色。</para>
         /// </summary>
         public Color DecreasedColor { get; init; } = StsColors.green;
 
         /// <summary>
-        ///     Cost text color when an optional line is unavailable for this play.
-        ///     可选支付行本次不可用时的文本颜色。
+        ///     <para xml:lang="en">Gets the text color for an unavailable optional payment.</para>
+        ///     <para xml:lang="zh-CN">获取不可用的可选支付所使用的文本颜色。</para>
         /// </summary>
         public Color? OptionalUnavailableColor { get; init; } = StsColors.gray;
 
         /// <summary>
-        ///     Cost text outline color when the card can pay this line.
-        ///     卡牌可支付该行费用时的文本描边颜色。
+        ///     <para xml:lang="en">Gets the text-outline color for an entry that permits card play.</para>
+        ///     <para xml:lang="zh-CN">获取支付条目允许出牌时的文本描边颜色。</para>
         /// </summary>
         public Color AffordableOutlineColor { get; init; } = StsColors.defaultStarCostOutline;
 
         /// <summary>
-        ///     Cost text outline color when the card cannot pay this line.
-        ///     卡牌无法支付该行费用时的文本描边颜色。
+        ///     <para xml:lang="en">Gets the text-outline color for an entry that prevents card play.</para>
+        ///     <para xml:lang="zh-CN">获取支付条目阻止出牌时的文本描边颜色。</para>
         /// </summary>
         public Color UnaffordableOutlineColor { get; init; } = StsColors.unplayableEnergyCostOutline;
 
         /// <summary>
-        ///     Cost text outline color when a shortfall policy allows the card to be played.
-        ///     短缺策略允许卡牌打出时的文本描边颜色。
+        ///     <para xml:lang="en">
+        ///         Gets the text-outline color when an insufficient-payment policy permits a required shortfall.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取资源不足支付策略允许必需费用缺口时的文本描边颜色。</para>
         /// </summary>
         public Color ShortfallPlayableOutlineColor { get; init; } = StsColors.energyBlueOutline;
 
         /// <summary>
-        ///     Cost text outline color when the resolved cost is higher than the base cost but still playable.
-        ///     已解析费用高于基础费用但仍可打出时的文本描边颜色。
+        ///     <para xml:lang="en">Gets the text-outline color for a playable cost above its base value.</para>
+        ///     <para xml:lang="zh-CN">获取仍可支付但高于基础值的费用文本描边颜色。</para>
         /// </summary>
         public Color IncreasedOutlineColor { get; init; } = StsColors.energyBlueOutline;
 
         /// <summary>
-        ///     Cost text outline color when the resolved cost is lower than the base cost.
-        ///     已解析费用低于基础费用时的文本描边颜色。
+        ///     <para xml:lang="en">Gets the text-outline color for a cost below its base value.</para>
+        ///     <para xml:lang="zh-CN">获取低于基础值的费用文本描边颜色。</para>
         /// </summary>
         public Color DecreasedOutlineColor { get; init; } = StsColors.energyGreenOutline;
 
         /// <summary>
-        ///     Cost text outline color when an optional line is unavailable for this play.
-        ///     可选支付行本次不可用时的文本描边颜色。
+        ///     <para xml:lang="en">Gets the text-outline color for an unavailable optional payment.</para>
+        ///     <para xml:lang="zh-CN">获取不可用的可选支付所使用的文本描边颜色。</para>
         /// </summary>
         public Color? OptionalUnavailableOutlineColor { get; init; } = StsColors.defaultStarCostOutline;
 
         /// <summary>
-        ///     Texture expand mode.
-        ///     贴图 expand mode。
+        ///     <para xml:lang="en">Gets the icon texture's size-expansion mode.</para>
+        ///     <para xml:lang="zh-CN">获取图标贴图的尺寸扩展模式。</para>
         /// </summary>
         public TextureRect.ExpandModeEnum ExpandMode { get; init; } = TextureRect.ExpandModeEnum.IgnoreSize;
 
         /// <summary>
-        ///     Texture stretch mode.
-        ///     贴图 stretch mode。
+        ///     <para xml:lang="en">Gets the icon texture's stretch mode.</para>
+        ///     <para xml:lang="zh-CN">获取图标贴图的拉伸模式。</para>
         /// </summary>
         public TextureRect.StretchModeEnum StretchMode { get; init; } =
             TextureRect.StretchModeEnum.KeepAspectCentered;
 
         /// <summary>
-        ///     Optional cost formatter. Receives the resolved payment line.
-        ///     可选费用格式化器，参数为已解析支付行。
+        ///     <para xml:lang="en">Gets an optional formatter for the resolved payment entry's cost text.</para>
+        ///     <para xml:lang="zh-CN">获取用于生成已解析支付条目费用文本的可选格式化器。</para>
         /// </summary>
         public Func<SecondaryResourcePaymentLine, string>? FormatCost { get; init; }
 
         /// <summary>
-        ///     Shared default style instance.
-        ///     共享默认样式实例。
+        ///     <para xml:lang="en">Gets the shared default style.</para>
+        ///     <para xml:lang="zh-CN">获取共享的默认样式。</para>
         /// </summary>
         public static SecondaryResourceCardCostUiStyle Default { get; } = new();
 
@@ -156,8 +162,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Simple reusable card-cost display for secondary resources.
-    ///     简易可复用的次级资源卡牌费用显示节点。
+    ///     <para xml:lang="en">Displays one reusable secondary-resource card-cost entry.</para>
+    ///     <para xml:lang="zh-CN">显示一项可复用的次级资源卡牌费用条目。</para>
     /// </summary>
     public partial class NSecondaryResourceCardCostUi : Control
     {
@@ -183,8 +189,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private string? _useId;
 
         /// <summary>
-        ///     Whether this node refreshes the bound card when its owner's secondary-resource state changes.
-        ///     该节点是否在卡牌所有者的次级资源状态变化时刷新已绑定卡牌。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether the display refreshes when the bound card owner's secondary-resource state
+        ///         changes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置卡牌所有者的次级资源状态变化时是否自动刷新显示。</para>
         /// </summary>
         public bool AutoRefresh
         {
@@ -199,8 +208,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates and configures a card-cost display node for one secondary resource.
-        ///     为一个次级资源创建并配置卡牌费用显示节点。
+        ///     <para xml:lang="en">Creates a card-cost display bound to one resource identifier.</para>
+        ///     <para xml:lang="zh-CN">创建绑定到一个资源标识符的卡牌费用显示节点。</para>
         /// </summary>
         public static NSecondaryResourceCardCostUi Create(
             string resourceId,
@@ -213,8 +222,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates and configures a card-cost display node for one secondary resource.
-        ///     为一个次级资源创建并配置卡牌费用显示节点。
+        ///     <para xml:lang="en">Creates a card-cost display bound to one resource definition.</para>
+        ///     <para xml:lang="zh-CN">创建绑定到一个资源定义的卡牌费用显示节点。</para>
         /// </summary>
         public static NSecondaryResourceCardCostUi Create(
             SecondaryResourceDefinition definition,
@@ -227,8 +236,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates and configures a card-cost display node for one play-use id.
-        ///     为一个出牌条款 id 创建并配置卡牌费用显示节点。
+        ///     <para xml:lang="en">
+        ///         Creates a card-cost display bound to one payment-use and resource identifier.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建绑定到一项支付条款及资源标识符的卡牌费用显示节点。</para>
         /// </summary>
         public static NSecondaryResourceCardCostUi CreateForUse(
             string useId,
@@ -242,8 +253,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates and configures a card-cost display node for one play-use id.
-        ///     为一个出牌条款 id 创建并配置卡牌费用显示节点。
+        ///     <para xml:lang="en">Creates a card-cost display bound to one payment use and resource definition.</para>
+        ///     <para xml:lang="zh-CN">创建绑定到一项支付条款及资源定义的卡牌费用显示节点。</para>
         /// </summary>
         public static NSecondaryResourceCardCostUi CreateForUse(
             string useId,
@@ -257,8 +268,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Configures the visual style.
-        ///     配置视觉样式。
+        ///     <para xml:lang="en">Applies a visual style and refreshes any resolved entry already displayed.</para>
+        ///     <para xml:lang="zh-CN">应用视觉样式，并刷新已在显示的已解析条目。</para>
         /// </summary>
         public void Configure(SecondaryResourceCardCostUiStyle? style = null)
         {
@@ -278,27 +289,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             ApplyLayout();
             ApplyLabelTheme();
+            if (_plan != null && _line != null)
+                Refresh(_plan, _line);
         }
 
         /// <summary>
-        ///     Binds this node to one secondary resource id.
-        ///     将该节点绑定到一个次级资源 id。
+        ///     <para xml:lang="en">Binds the display to one secondary-resource identifier.</para>
+        ///     <para xml:lang="zh-CN">将显示节点绑定到一个次级资源标识符。</para>
         /// </summary>
         public void Bind(string resourceId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             _useId = null;
             _resourceId = resourceId.Trim();
+            _definition = null;
 
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
+            {
                 Bind(definition);
+            }
             else if (IsNodeReady())
+            {
+                ApplyDefinition();
                 UpdateVisibility(false);
+            }
         }
 
         /// <summary>
-        ///     Binds this node to one secondary resource definition.
-        ///     将该节点绑定到一个次级资源定义。
+        ///     <para xml:lang="en">Binds the display to one secondary-resource definition.</para>
+        ///     <para xml:lang="zh-CN">将显示节点绑定到一个次级资源定义。</para>
         /// </summary>
         public void Bind(SecondaryResourceDefinition definition)
         {
@@ -311,11 +330,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             ApplyDefinition();
+            if (_boundCard != null)
+                Refresh(_boundCard);
         }
 
         /// <summary>
-        ///     Binds this node to one play-use id and its resource id.
-        ///     将该节点绑定到一个出牌条款 id 及其资源 id。
+        ///     <para xml:lang="en">Binds the display to one payment-use and resource identifier.</para>
+        ///     <para xml:lang="zh-CN">将显示节点绑定到一项支付条款及其资源标识符。</para>
         /// </summary>
         public void BindUse(string useId, string resourceId)
         {
@@ -324,16 +345,22 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             _useId = useId.Trim();
             _resourceId = resourceId.Trim();
+            _definition = null;
 
             if (ModSecondaryResourceRegistry.TryGet(_resourceId, out var definition))
+            {
                 BindUse(_useId, definition);
+            }
             else if (IsNodeReady())
+            {
+                ApplyDefinition();
                 UpdateVisibility(false);
+            }
         }
 
         /// <summary>
-        ///     Binds this node to one play-use id and resource definition.
-        ///     将该节点绑定到一个出牌条款 id 及其资源定义。
+        ///     <para xml:lang="en">Binds the display to one payment use and resource definition.</para>
+        ///     <para xml:lang="zh-CN">将显示节点绑定到一项支付条款及其资源定义。</para>
         /// </summary>
         public void BindUse(string useId, SecondaryResourceDefinition definition)
         {
@@ -348,11 +375,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 return;
 
             ApplyDefinition();
+            if (_boundCard != null)
+                Refresh(_boundCard);
         }
 
         /// <summary>
-        ///     Refreshes from a card UI update context.
-        ///     从卡牌 UI 更新上下文刷新。
+        ///     <para xml:lang="en">Refreshes from a card UI update context and reserves any configured Stars slot.</para>
+        ///     <para xml:lang="zh-CN">根据卡牌界面更新上下文刷新，并按配置预留辉星费用槽。</para>
         /// </summary>
         public void Refresh<TParent>(SecondaryResourceCardUiContext<TParent, NSecondaryResourceCardCostUi> context)
             where TParent : Node
@@ -365,8 +394,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Binds and refreshes this node from <paramref name="card" />.
-        ///     绑定并根据 <paramref name="card" /> 刷新该节点。
+        ///     <para xml:lang="en">Binds and refreshes the display from <paramref name="card" />.</para>
+        ///     <para xml:lang="zh-CN">绑定并根据 <paramref name="card" /> 刷新显示节点。</para>
         /// </summary>
         public void Refresh(CardModel card)
         {
@@ -378,8 +407,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Refreshes from a resolved payment plan.
-        ///     根据已解析支付计划刷新。
+        ///     <para xml:lang="en">Refreshes the bound card from a resolved payment plan.</para>
+        ///     <para xml:lang="zh-CN">根据已解析支付计划刷新已绑定卡牌的显示。</para>
         /// </summary>
         public void Refresh(CardModel card, SecondaryResourcePaymentPlan plan)
         {
@@ -387,8 +416,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Refreshes from a resolved payment plan and card visual context.
-        ///     根据已解析支付计划和卡牌视觉上下文刷新。
+        ///     <para xml:lang="en">
+        ///         Refreshes from a resolved payment plan, pile type, and card preview mode.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">根据已解析支付计划、牌堆类型及卡牌预览模式刷新显示。</para>
         /// </summary>
         public void Refresh(
             CardModel card,
@@ -427,8 +458,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Refreshes this node from the matching resolved payment line.
-        ///     根据匹配的已解析支付行刷新该节点。
+        ///     <para xml:lang="en">Refreshes the display from a matching resolved payment entry.</para>
+        ///     <para xml:lang="zh-CN">根据匹配的已解析支付条目刷新显示。</para>
         /// </summary>
         public void Refresh(SecondaryResourcePaymentPlan plan, SecondaryResourcePaymentLine line)
         {
@@ -464,6 +495,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 _lastOutlineColor = outlineColor;
                 _hasLastOutlineColor = true;
             }
+        }
+
+        /// <inheritdoc />
+        public override void _EnterTree()
+        {
+            UpdateStateSubscription();
         }
 
         /// <inheritdoc />
@@ -527,11 +564,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         private void ApplyDefinition()
         {
-            if (_definition == null || _texture == null)
+            if (_texture == null)
                 return;
 
+            if (_definition == null)
+            {
+                _texture.Texture = null;
+                return;
+            }
+
             var path = _definition.LargeIconPath ?? _definition.SmallIconPath;
-            _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path);
+            _texture.Texture = string.IsNullOrWhiteSpace(path) ? null : ResourceLoader.Load<Texture2D>(path.Trim());
         }
 
         private SecondaryResourcePaymentLine? FindLine(SecondaryResourcePaymentPlan plan)
@@ -609,9 +652,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             PileType pileType,
             CardPreviewMode previewMode)
         {
-            var useOptionalUnavailable =
-                _style.OptionalUnavailableColor.HasValue &&
-                _style.OptionalUnavailableOutlineColor.HasValue;
+            var useOptionalUnavailable = _style is
+            {
+                OptionalUnavailableColor: not null,
+                OptionalUnavailableOutlineColor: not null,
+            };
             return SecondaryResourceCardCostHelper.GetCostColor(
                     line,
                     pileType,

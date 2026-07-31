@@ -4,497 +4,545 @@ using STS2RitsuLib.Utils.Persistence.Migration;
 namespace STS2RitsuLib.Data.Models
 {
     /// <summary>
-    ///     Global JSON settings blob for RitsuLib itself (schema version and debug flags).
-    ///     RitsuLib 自身的全局 JSON 设置数据块（schema 版本和调试标志）。
+    ///     <para xml:lang="en">Represents RitsuLib's global JSON settings.</para>
+    ///     <para xml:lang="zh-CN">表示 RitsuLib 的全局 JSON 设置。</para>
     /// </summary>
     public sealed class RitsuLibSettings
     {
         /// <summary>
-        ///     Current schema version written by the library when creating or normalizing settings.
-        ///     库在创建或规范化设置时写入的当前 schema 版本。
+        ///     <para xml:lang="en">The current schema version written when settings are created or normalized.</para>
+        ///     <para xml:lang="zh-CN">创建或规范化设置时写入的当前架构版本。</para>
         /// </summary>
         public const int CurrentSchemaVersion = 15;
 
         internal const double DefaultToastDurationSeconds = 6d;
 
         /// <summary>
-        ///     Persisted schema version used by the migration pipeline
-        ///     (<see cref="ModDataVersion.SchemaVersionProperty" />).
-        ///     迁移管线使用的持久化 schema 版本
-        ///     （<see cref="ModDataVersion.SchemaVersionProperty" />）。
+        ///     <para xml:lang="en">Gets or sets the persisted schema version used by the migration pipeline.</para>
+        ///     <para xml:lang="zh-CN">获取或设置迁移流程使用的持久化架构版本。</para>
         /// </summary>
         [JsonPropertyName(ModDataVersion.SchemaVersionProperty)]
         public int SchemaVersion { get; set; } = CurrentSchemaVersion;
 
         /// <summary>
-        ///     When true and Steam Cloud is active for the session, RitsuLib keeps managed mod data in sync with
-        ///     vanilla’s remote store after saves and on profile init / switch.
-        ///     为 true 且本会话启用 Steam Cloud 时，RitsuLib 会在保存后以及档案初始化/切换时，让托管 mod 数据与原版远端存储保持同步。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether managed mod data is synchronized with the game's remote store while Steam Cloud
+        ///         is active.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置在 Steam 云可用时，是否将托管的模组数据与游戏的远端存储同步。</para>
         /// </summary>
         [JsonPropertyName("sync_mod_data_to_steam_cloud")]
         public bool SyncModDataToSteamCloud { get; set; }
 
         /// <summary>
-        ///     Master switch: when false, sub-flags are ignored and shim logic no-ops so patched targets follow vanilla
-        ///     code paths (<c>LocTable</c>, epoch grants, <c>THE_ARCHITECT</c> load, etc.).
-        ///     总开关：为 false 时忽略子标志且 shim 逻辑空操作，使补丁目标沿用原版代码路径（<c>LocTable</c>、epoch 授予、
-        ///     <c>THE_ARCHITECT</c> 加载等）。
+        ///     <para xml:lang="en">
+        ///         Gets or sets the master switch for debug-compatibility shims. When disabled, the individual flags are
+        ///         ignored and patched targets retain their original behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置调试兼容适配的总开关。禁用时将忽略各子选项，补丁目标保持原有行为。
+        ///     </para>
         /// </summary>
         [JsonPropertyName("debug_compatibility_mode")]
         public bool DebugCompatibilityMode { get; set; } = true;
 
         /// <summary>
-        ///     When master is on: soft-fail missing <c>LocTable</c> keys with placeholders and one-time
-        ///     <c>[Localization][DebugCompat]</c> warnings. Default true (on new installs and after schema migration).
-        ///     总开关开启时：缺失 <c>LocTable</c> 键会以占位符软失败，并输出一次性 <c>[Localization][DebugCompat]</c> 警告。
-        ///     默认 true（新安装和 schema 迁移后）。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether missing <c>LocTable</c> keys fall back to placeholders and emit one-time
+        ///         compatibility warnings.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置缺失的 <c>LocTable</c> 键是否回退到占位文本，并输出一次性的兼容性警告。
+        ///     </para>
         /// </summary>
         [JsonPropertyName("debug_compat_loc_table")]
         public bool DebugCompatLocTable { get; set; } = true;
 
         /// <summary>
-        ///     When master and this flag are on: skip invalid epoch grants on framework bridges with one-time
-        ///     <c>[Unlocks][DebugCompat]</c> warnings. Otherwise invalid ids use the original grant path (vanilla).
-        ///     Default true.
-        ///     总开关和此标志都开启时：框架桥接上的无效 epoch 授予会被跳过，并输出一次性
-        ///     <c>[Unlocks][DebugCompat]</c> 警告。否则无效 ID 会走原始授予路径（原版）。默认 true。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether framework bridges skip invalid epoch grants and emit one-time compatibility
+        ///         warnings.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置框架桥接是否跳过无效的纪元授予，并输出一次性的兼容性警告。</para>
         /// </summary>
         [JsonPropertyName("debug_compat_unlock_epoch")]
         public bool DebugCompatUnlockEpoch { get; set; } = true;
 
         /// <summary>
-        ///     When master is on: inject empty-lines <c>THE_ARCHITECT</c> dialogue for <c>ModContentRegistry</c>
-        ///     characters when vanilla resolves none. Default true.
-        ///     总开关开启时：当原版没有解析到对话时，为 <c>ModContentRegistry</c> 角色注入空行
-        ///     <c>THE_ARCHITECT</c> 对话。默认 true。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether characters registered through <c>ModContentRegistry</c> receive an empty
+        ///         <c>THE_ARCHITECT</c> dialogue fallback when the game resolves no dialogue.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置当游戏未解析到对话时，是否为通过 <c>ModContentRegistry</c> 注册的角色提供空白的
+        ///         <c>THE_ARCHITECT</c> 对话回退。
+        ///     </para>
         /// </summary>
         [JsonPropertyName("debug_compat_ancient_architect")]
         public bool DebugCompatAncientArchitect { get; set; } = true;
 
         /// <summary>
-        ///     Starts the browser debug log viewer for this session. It listens on loopback unless LAN access is enabled.
-        ///     为本会话启动浏览器调试日志查看器；除非启用局域网访问，否则仅监听 loopback。
+        ///     <para xml:lang="en">Gets or sets whether the browser-based debug log viewer starts for this session.</para>
+        ///     <para xml:lang="zh-CN">获取或设置是否为当前会话启动浏览器调试日志查看器。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_enabled")]
         public bool DebugLogViewerEnabled { get; set; } = true;
 
         /// <summary>
-        ///     Mirrors game logger callbacks into the debug log viewer event stream.
-        ///     将游戏 logger 回调镜像到调试日志查看器事件流。
+        ///     <para xml:lang="en">Gets or sets whether game logger callbacks are mirrored into the viewer's event stream.</para>
+        ///     <para xml:lang="zh-CN">获取或设置是否将游戏日志记录器的回调镜像到查看器的事件流。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_mirror_game_logs")]
         public bool DebugLogViewerMirrorGameLogs { get; set; } = true;
 
         /// <summary>
-        ///     When true, opens the debug log viewer in the system browser if no browser client connects shortly after startup.
-        ///     为 true 时，启动后短时间内若没有浏览器客户端连接，则在系统浏览器中打开调试日志查看器。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether the viewer opens in the system browser when no client connects shortly
+        ///         after startup.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置启动后短时间内没有客户端连接时，是否在系统浏览器中打开查看器。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_auto_open")]
         public bool DebugLogViewerAutoOpen { get; set; }
 
         /// <summary>
-        ///     When true, binds the debug log viewer to all network interfaces so devices on the same LAN can connect.
-        ///     为 true 时，调试日志查看器会监听所有网络接口，使同一局域网设备可以连接。
+        ///     <para xml:lang="en">Gets or sets whether the viewer binds to all network interfaces for LAN access.</para>
+        ///     <para xml:lang="zh-CN">获取或设置查看器是否监听所有网络接口，以允许局域网访问。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_lan_access_enabled")]
         public bool DebugLogViewerLanAccessEnabled { get; set; }
 
         /// <summary>
-        ///     HTTP port for the debug log viewer.
-        ///     调试日志查看器的 HTTP 端口。
+        ///     <para xml:lang="en">Gets or sets the debug log viewer's HTTP port.</para>
+        ///     <para xml:lang="zh-CN">获取或设置调试日志查看器的 HTTP 端口。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_port")]
         public int DebugLogViewerPort { get; set; } = 18742;
 
         /// <summary>
-        ///     Number of consecutive ports to try after <see cref="DebugLogViewerPort" /> when the preferred port is busy.
-        ///     首选端口被占用时，在 <see cref="DebugLogViewerPort" /> 后继续尝试的连续端口数量。
+        ///     <para xml:lang="en">Gets or sets how many consecutive fallback ports are tried when the preferred port is busy.</para>
+        ///     <para xml:lang="zh-CN">获取或设置首选端口被占用时继续尝试的连续备用端口数量。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_port_fallback_count")]
         public int DebugLogViewerPortFallbackCount { get; set; } = 20;
 
         /// <summary>
-        ///     Stable browser access token for the debug log viewer.
-        ///     调试日志查看器使用的稳定浏览器访问 token。
+        ///     <para xml:lang="en">Gets or sets the stable browser access token for the debug log viewer.</para>
+        ///     <para xml:lang="zh-CN">获取或设置调试日志查看器使用的稳定浏览器访问令牌。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_access_token")]
         public string DebugLogViewerAccessToken { get; set; } = "";
 
         /// <summary>
-        ///     Number of recent events retained in memory for newly opened browser sessions.
-        ///     为新打开的浏览器会话保留在内存中的最近事件数量。
+        ///     <para xml:lang="en">Gets or sets the number of recent events retained for newly opened browser sessions.</para>
+        ///     <para xml:lang="zh-CN">获取或设置为新打开的浏览器会话保留的最近事件数量。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_ring_buffer_capacity")]
         public int DebugLogViewerRingBufferCapacity { get; set; } = 10000;
 
         /// <summary>
-        ///     Maximum pending event count before the non-blocking debug pipeline starts dropping new events.
-        ///     非阻塞调试管道开始丢弃新事件前允许排队的最大事件数。
+        ///     <para xml:lang="en">
+        ///         Gets or sets the pending-event capacity before the non-blocking debug pipeline drops new
+        ///         events.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置非阻塞调试流程开始丢弃新事件前的待处理事件容量。</para>
         /// </summary>
         [JsonPropertyName("debug_log_viewer_queue_capacity")]
         public int DebugLogViewerQueueCapacity { get; set; } = 4096;
 
         /// <summary>
-        ///     When true, RitsuLib replaces vanilla dev-console history navigation with draft-preserving behavior.
-        ///     为 true 时，RitsuLib 会替换原版开发者控制台历史导航，使其保留正在编辑的草稿。
+        ///     <para xml:lang="en">Gets or sets whether developer-console history navigation preserves the current draft.</para>
+        ///     <para xml:lang="zh-CN">获取或设置开发者控制台的历史记录导航是否保留当前草稿。</para>
         /// </summary>
         [JsonPropertyName("dev_console_history_navigation_patch_enabled")]
         public bool DevConsoleHistoryNavigationPatchEnabled { get; set; } = true;
 
         /// <summary>
-        ///     When true, RitsuLib applies dev-console autocomplete display and candidate-source enhancements.
-        ///     为 true 时，RitsuLib 会应用开发者控制台补全显示和候选来源增强。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether developer-console autocomplete display and candidate-source enhancements
+        ///         are enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置是否启用开发者控制台的自动补全显示与候选来源增强。</para>
         /// </summary>
         [JsonPropertyName("dev_console_autocomplete_enhancements_enabled")]
         public bool DevConsoleAutocompleteEnhancementsEnabled { get; set; } = true;
 
         /// <summary>
-        ///     When true, hides/shows of the dev console clear the current input buffer.
-        ///     为 true 时，开发者控制台隐藏 / 显示路径会清空当前输入框。
+        ///     <para xml:lang="en">Gets or sets whether showing or hiding the developer console clears its input buffer.</para>
+        ///     <para xml:lang="zh-CN">获取或设置显示或隐藏开发者控制台时是否清空输入缓冲区。</para>
         /// </summary>
         [JsonPropertyName("dev_console_clear_input_on_visibility_change")]
         public bool DevConsoleClearInputOnVisibilityChange { get; set; }
 
         /// <summary>
-        ///     When true, cards, relics, and potions append a hover tip showing their source mod.
-        ///     为 true 时，卡牌、遗物和药水会追加显示其来源 mod 的悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether content-source hover tips are enabled.</para>
+        ///     <para xml:lang="zh-CN">获取或设置是否启用内容来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_enabled")]
         public bool ModSourceHoverTipsEnabled { get; set; }
 
         /// <summary>
-        ///     Controls whether content source hover tips show the display name, mod id, or both. Valid values are
-        ///     <c>name</c>, <c>id</c>, and <c>name_and_id</c>. Default <c>name_and_id</c>.
-        ///     控制内容来源悬停提示显示名称、mod id 或两者。有效值为 <c>name</c>、<c>id</c> 和
-        ///     <c>name_and_id</c>。默认 <c>name_and_id</c>。
+        ///     <para xml:lang="en">
+        ///         Gets or sets how content-source hover tips identify a mod. Valid values are <c>name</c>, <c>id</c>,
+        ///         and <c>name_and_id</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置内容来源悬停提示如何标识模组。有效值为 <c>name</c>、<c>id</c> 和
+        ///         <c>name_and_id</c>。
+        ///     </para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_display_style")]
         public string ModSourceHoverTipsDisplayStyle { get; set; } = "name_and_id";
 
         /// <summary>
-        ///     When true, vanilla cards, relics, and potions also show source hover tips.
-        ///     为 true 时，原版卡牌、遗物和药水也会显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether base-game content also shows source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置原版内容是否也显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_include_vanilla")]
         public bool ModSourceHoverTipsIncludeVanilla { get; set; }
 
         /// <summary>
-        ///     When true, selected hover tips outside inspect/detail screens also include source tips.
-        ///     为 true 时，详情/检查界面以外的部分悬停提示也会显示来源。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether supported hover tips outside inspect and detail screens include source
+        ///         information.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置详情界面以外受支持的悬停提示是否包含来源信息。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_include_non_details")]
         public bool ModSourceHoverTipsIncludeNonDetails { get; set; }
 
         /// <summary>
-        ///     Shows source hover tips for cards.
-        ///     为卡牌显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether cards show source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置卡牌是否显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_cards")]
         public bool ModSourceHoverTipsCards { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for relics.
-        ///     为遗物显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether relics show source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置遗物是否显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_relics")]
         public bool ModSourceHoverTipsRelics { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for potions.
-        ///     为药水显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether potions show source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置药水是否显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_potions")]
         public bool ModSourceHoverTipsPotions { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for powers.
-        ///     为能力显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether powers show source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置能力是否显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_powers")]
         public bool ModSourceHoverTipsPowers { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for orbs.
-        ///     为充能球显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether orbs show source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置充能球是否显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_orbs")]
         public bool ModSourceHoverTipsOrbs { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for enchantments.
-        ///     为附魔显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether enchantments show source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置附魔是否显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_enchantments")]
         public bool ModSourceHoverTipsEnchantments { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for afflictions.
-        ///     为苦痛显示来源悬停提示。
+        ///     <para xml:lang="en">Gets or sets whether afflictions show source hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取或设置苦痛是否显示来源悬停提示。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_afflictions")]
         public bool ModSourceHoverTipsAfflictions { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for keyword tooltips.
-        ///     为关键词悬停提示显示来源。
+        ///     <para xml:lang="en">Gets or sets whether keyword hover tips show source information.</para>
+        ///     <para xml:lang="zh-CN">获取或设置关键词悬停提示是否显示来源信息。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_keywords")]
         public bool ModSourceHoverTipsKeywords { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for event layouts.
-        ///     为事件界面显示来源提示。
+        ///     <para xml:lang="en">Gets or sets whether event layouts show source information.</para>
+        ///     <para xml:lang="zh-CN">获取或设置事件界面是否显示来源信息。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_events")]
         public bool ModSourceHoverTipsEvents { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for creature hover tips.
-        ///     为生物悬停提示显示来源。
+        ///     <para xml:lang="en">Gets or sets whether creature hover tips show source information.</para>
+        ///     <para xml:lang="zh-CN">获取或设置生物悬停提示是否显示来源信息。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_creatures")]
         public bool ModSourceHoverTipsCreatures { get; set; } = true;
 
         /// <summary>
-        ///     Shows source hover tips for base game term tooltips such as block and energy.
-        ///     为格挡、能量等基础游戏术语悬停提示显示来源。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether base-game term hover tips, such as block and energy, show source
+        ///         information.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置格挡、能量等原版术语的悬停提示是否显示来源信息。</para>
         /// </summary>
         [JsonPropertyName("mod_source_hover_tips_game_terms")]
         public bool ModSourceHoverTipsGameTerms { get; set; } = true;
 
         /// <summary>
-        ///     Absolute path or Godot <c>user://</c> path for Harmony patch dump output (text log).
-        ///     Harmony 补丁转储输出（文本日志）的绝对路径或 Godot <c>user://</c> 路径。
+        ///     <para xml:lang="en">Gets or sets the absolute or Godot <c>user://</c> path for Harmony patch-dump output.</para>
+        ///     <para xml:lang="zh-CN">获取或设置 Harmony 补丁转储输出使用的绝对路径或 Godot <c>user://</c> 路径。</para>
         /// </summary>
         [JsonPropertyName("harmony_patch_dump_output_path")]
         public string HarmonyPatchDumpOutputPath { get; set; } = string.Empty;
 
         /// <summary>
-        ///     When true, writes a dump once when the main menu first finishes loading this session (deferred).
-        ///     为 true 时，在本会话主菜单首次加载完成后延迟写入一次转储。
+        ///     <para xml:lang="en">Gets or sets whether a patch dump is written after the first main-menu load of the session.</para>
+        ///     <para xml:lang="zh-CN">获取或设置是否在当前会话首次加载主菜单后写入一次补丁转储。</para>
         /// </summary>
         [JsonPropertyName("harmony_patch_dump_on_first_main_menu")]
         public bool HarmonyPatchDumpOnFirstMainMenu { get; set; }
 
         /// <summary>
-        ///     Output folder for self-check bundles (report + harmony dump + copied godot.log + zip).
-        ///     自检包输出文件夹（报告 + Harmony 转储 + 复制的 godot.log + zip）。
+        ///     <para xml:lang="en">Gets or sets the output directory for self-check bundles.</para>
+        ///     <para xml:lang="zh-CN">获取或设置自检包的输出目录。</para>
         /// </summary>
         [JsonPropertyName("self_check_output_folder_path")]
         public string SelfCheckOutputFolderPath { get; set; } = "user://ritsulib_self_check";
 
         /// <summary>
-        ///     When true, runs one self-check bundle export after the first main-menu load each session.
-        ///     为 true 时，每个会话首次加载主菜单后运行一次自检包导出。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether one self-check bundle is exported after the session's first main-menu
+        ///         load.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置是否在每个会话首次加载主菜单后导出一次自检包。</para>
         /// </summary>
         [JsonPropertyName("self_check_on_first_main_menu")]
         public bool SelfCheckOnFirstMainMenu { get; set; }
 
         /// <summary>
-        ///     Output directory for dev card PNG batch export (absolute path or <c>user://</c>).
-        ///     开发用卡牌 PNG 批量导出的输出目录（绝对路径或 <c>user://</c>）。
+        ///     <para xml:lang="en">Gets or sets the output directory for developer card PNG batch exports.</para>
+        ///     <para xml:lang="zh-CN">获取或设置开发者卡牌 PNG 批量导出的输出目录。</para>
         /// </summary>
         [JsonPropertyName("card_png_export_output_path")]
         public string CardPngExportOutputPath { get; set; } = "";
 
         /// <summary>
-        ///     When true, export layout includes a right-hand hover-tip style column (approximation, not in-game tooltip
-        ///     positioning).
-        ///     为 true 时，导出布局包含右侧悬停提示样式列（近似效果，不是游戏内 tooltip 定位）。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether card exports include an approximate hover-tip-style column on the right.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置卡牌导出是否包含位于右侧的近似悬停提示样式栏。</para>
         /// </summary>
         [JsonPropertyName("card_png_export_include_hover")]
         public bool CardPngExportIncludeHover { get; set; }
 
         /// <summary>
-        ///     When true, also writes <c>_upgraded.png</c> for upgradable cards.
-        ///     为 true 时，也为可升级卡牌写入 <c>_upgraded.png</c>。
+        ///     <para xml:lang="en">Gets or sets whether upgradable cards also produce an <c>_upgraded.png</c> image.</para>
+        ///     <para xml:lang="zh-CN">获取或设置可升级卡牌是否同时导出 <c>_upgraded.png</c> 图像。</para>
         /// </summary>
         [JsonPropertyName("card_png_export_include_upgrades")]
         public bool CardPngExportIncludeUpgrades { get; set; } = true;
 
         /// <summary>
-        ///     Uniform scale for rendered cards (slider domain; clamped when exporting).
-        ///     渲染卡牌的统一缩放（滑块范围；导出时会钳制）。
+        ///     <para xml:lang="en">Gets or sets the uniform render scale for exported cards.</para>
+        ///     <para xml:lang="zh-CN">获取或设置导出卡牌的统一渲染缩放比例。</para>
         /// </summary>
         [JsonPropertyName("card_png_export_scale")]
         public double CardPngExportScale { get; set; } = 1d;
 
         /// <summary>
-        ///     Optional substring filter on <c>ModelId.Entry</c> (ordinal ignore-case); empty exports all.
-        ///     <c>ModelId.Entry</c> 上的可选子串过滤（序号忽略大小写）；为空则导出全部。
+        ///     <para xml:lang="en">Gets or sets an optional case-insensitive <c>ModelId.Entry</c> substring filter.</para>
+        ///     <para xml:lang="zh-CN">获取或设置可选的 <c>ModelId.Entry</c> 子串筛选条件；匹配时忽略大小写。</para>
         /// </summary>
         [JsonPropertyName("card_png_export_id_filter")]
         public string CardPngExportIdFilter { get; set; } = "";
 
         /// <summary>
-        ///     Maximum number of <em>base</em> cards to process; <c>0</c> means no limit.
-        ///     要处理的<em>基础</em>卡牌最大数量；<c>0</c> 表示无限制。
+        ///     <para xml:lang="en">Gets or sets the maximum number of base cards to export; <c>0</c> means unlimited.</para>
+        ///     <para xml:lang="zh-CN">获取或设置最多导出的基础卡牌数量；<c>0</c> 表示不限制。</para>
         /// </summary>
         [JsonPropertyName("card_png_export_max_base_cards")]
         public int CardPngExportMaxBaseCards { get; set; }
 
         /// <summary>
-        ///     When true, export includes cards that are registered but hidden from the in-game card library.
-        ///     为 true 时，导出包含已注册但在游戏内卡牌图鉴中隐藏的卡牌。
+        ///     <para xml:lang="en">Gets or sets whether exports include registered cards hidden from the in-game card library.</para>
+        ///     <para xml:lang="zh-CN">获取或设置导出是否包含已注册但在游戏内卡牌图鉴中隐藏的卡牌。</para>
         /// </summary>
         [JsonPropertyName("card_png_export_include_hidden_from_library")]
         public bool CardPngExportIncludeHiddenFromLibrary { get; set; }
 
         /// <summary>
-        ///     Output directory for relic inspect detail PNG export.
-        ///     遗物检查详情 PNG 导出的输出目录。
+        ///     <para xml:lang="en">Gets or sets the output directory for relic-detail PNG exports.</para>
+        ///     <para xml:lang="zh-CN">获取或设置遗物详情 PNG 导出的输出目录。</para>
         /// </summary>
         [JsonPropertyName("relic_detail_png_export_output_path")]
         public string RelicDetailPngExportOutputPath { get; set; } = "";
 
         /// <summary>
-        ///     Render scale for relic detail export.
-        ///     遗物详情导出的渲染缩放。
+        ///     <para xml:lang="en">Gets or sets the render scale for relic-detail exports.</para>
+        ///     <para xml:lang="zh-CN">获取或设置遗物详情导出的渲染缩放比例。</para>
         /// </summary>
         [JsonPropertyName("relic_detail_png_export_scale")]
         public double RelicDetailPngExportScale { get; set; } = 1d;
 
         /// <summary>
-        ///     Optional <c>ModelId.Entry</c> substring for relic detail export; empty = all.
-        ///     遗物详情导出的可选 <c>ModelId.Entry</c> 子串；为空表示全部。
+        ///     <para xml:lang="en">Gets or sets an optional <c>ModelId.Entry</c> substring filter for relic-detail exports.</para>
+        ///     <para xml:lang="zh-CN">获取或设置遗物详情导出使用的可选 <c>ModelId.Entry</c> 子串筛选条件。</para>
         /// </summary>
         [JsonPropertyName("relic_detail_png_export_id_filter")]
         public string RelicDetailPngExportIdFilter { get; set; } = "";
 
         /// <summary>
-        ///     When true, relic detail export includes the right-hand hover column.
-        ///     为 true 时，遗物详情导出包含右侧悬停列。
+        ///     <para xml:lang="en">Gets or sets whether relic-detail exports include the right-hand hover column.</para>
+        ///     <para xml:lang="zh-CN">获取或设置遗物详情导出是否包含右侧悬停提示栏。</para>
         /// </summary>
         [JsonPropertyName("relic_detail_png_export_include_hover")]
         public bool RelicDetailPngExportIncludeHover { get; set; } = true;
 
         /// <summary>
-        ///     Output directory for potion lab focus detail PNG export.
-        ///     药水实验室焦点详情 PNG 导出的输出目录。
+        ///     <para xml:lang="en">Gets or sets the output directory for potion-detail PNG exports.</para>
+        ///     <para xml:lang="zh-CN">获取或设置药水详情 PNG 导出的输出目录。</para>
         /// </summary>
         [JsonPropertyName("potion_detail_png_export_output_path")]
         public string PotionDetailPngExportOutputPath { get; set; } = "";
 
         /// <summary>
-        ///     Render scale for potion detail export.
-        ///     药水详情导出的渲染缩放。
+        ///     <para xml:lang="en">Gets or sets the render scale for potion-detail exports.</para>
+        ///     <para xml:lang="zh-CN">获取或设置药水详情导出的渲染缩放比例。</para>
         /// </summary>
         [JsonPropertyName("potion_detail_png_export_scale")]
         public double PotionDetailPngExportScale { get; set; } = 1d;
 
         /// <summary>
-        ///     Optional <c>ModelId.Entry</c> substring for potion detail export; empty = all.
-        ///     药水详情导出的可选 <c>ModelId.Entry</c> 子串；为空表示全部。
+        ///     <para xml:lang="en">Gets or sets an optional <c>ModelId.Entry</c> substring filter for potion-detail exports.</para>
+        ///     <para xml:lang="zh-CN">获取或设置药水详情导出使用的可选 <c>ModelId.Entry</c> 子串筛选条件。</para>
         /// </summary>
         [JsonPropertyName("potion_detail_png_export_id_filter")]
         public string PotionDetailPngExportIdFilter { get; set; } = "";
 
         /// <summary>
-        ///     Active shell theme id (e.g. <c>default</c>).
-        ///     当前活动的 shell 主题 ID（例如 <c>default</c>）。
+        ///     <para xml:lang="en">Gets or sets the active UI shell theme ID.</para>
+        ///     <para xml:lang="zh-CN">获取或设置当前界面外壳主题的 ID。</para>
         /// </summary>
         [JsonPropertyName("ui_shell_theme_id")]
         public string UiShellThemeId { get; set; } = "default";
 
         /// <summary>
-        ///     Default texture filter inherited by 2D canvas items. Valid values: <c>nearest</c>, <c>linear</c>,
-        ///     <c>nearest_mipmap</c>, and <c>linear_mipmap</c>.
-        ///     2D CanvasItem 继承的默认纹理过滤模式。有效值：<c>nearest</c>、<c>linear</c>、
-        ///     <c>nearest_mipmap</c> 和 <c>linear_mipmap</c>。
+        ///     <para xml:lang="en">
+        ///         Gets or sets the default texture filter inherited by 2D canvas items. Valid values are
+        ///         <c>nearest</c>, <c>linear</c>, <c>nearest_mipmap</c>, and <c>linear_mipmap</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置二维画布项目继承的默认纹理过滤模式。有效值为 <c>nearest</c>、<c>linear</c>、
+        ///         <c>nearest_mipmap</c> 和 <c>linear_mipmap</c>。
+        ///     </para>
         /// </summary>
         [JsonPropertyName("canvas_texture_filter_mode")]
         public string CanvasTextureFilterMode { get; set; } = "linear_mipmap";
 
         /// <summary>
-        ///     When true, RitsuLib periodically checks its mirrored update manifest.
-        ///     为 true 时，RitsuLib 会周期性检查镜像更新 manifest。
+        ///     <para xml:lang="en">Gets or sets whether RitsuLib periodically checks its mirrored update manifest.</para>
+        ///     <para xml:lang="zh-CN">获取或设置 RitsuLib 是否定期检查其镜像更新清单。</para>
         /// </summary>
         [JsonPropertyName("update_check_enabled")]
         public bool UpdateCheckEnabled { get; set; } = true;
 
         /// <summary>
-        ///     Automatic update-check interval in minutes. Applies to RitsuLib, Workshop, and registered mod checks.
-        ///     自动更新检查间隔（分钟）。应用于 RitsuLib、Workshop 和已注册的 Mod 检查。
+        ///     <para xml:lang="en">Gets or sets the automatic update-check interval in minutes.</para>
+        ///     <para xml:lang="zh-CN">获取或设置自动更新检查的间隔分钟数。</para>
         /// </summary>
         [JsonPropertyName("update_check_interval_minutes")]
         public double UpdateCheckIntervalMinutes { get; set; } = 60d;
 
         /// <summary>
-        ///     When true, periodic automatic update checks are deferred while combat is active.
-        ///     为 true 时，周期性自动更新检查会在战斗中延后。
+        ///     <para xml:lang="en">Gets or sets whether periodic update checks are deferred during combat.</para>
+        ///     <para xml:lang="zh-CN">获取或设置战斗期间是否推迟定期更新检查。</para>
         /// </summary>
         [JsonPropertyName("update_check_skip_in_combat")]
         public bool UpdateCheckSkipInCombat { get; set; } = true;
 
         /// <summary>
-        ///     When true and Steam Workshop is active, RitsuLib checks subscribed workshop items and asks Steam to
-        ///     download items whose installed state still needs an update.
-        ///     为 true 且 Steam Workshop 可用时，RitsuLib 会检查已订阅的 Workshop 项，并请求 Steam 下载仍需更新的项。
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether RitsuLib checks subscribed Steam Workshop items and requests downloads for
+        ///         installed items that require an update.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置 RitsuLib 是否检查已订阅的 Steam 创意工坊项目，并请求下载仍需更新的已安装项目。
+        ///     </para>
         /// </summary>
         [JsonPropertyName("steam_workshop_auto_update_check_enabled")]
         public bool SteamWorkshopAutoUpdateCheckEnabled { get; set; } = true;
 
         /// <summary>
-        ///     When true, shows the RitsuLib mod settings shortcut under the vanilla patch notes button on the main menu.
-        ///     为 true 时，在主菜单原版更新日志按钮下方显示 RitsuLib 模组设置快捷入口。
+        ///     <para xml:lang="en">Gets or sets whether the main menu shows a shortcut to RitsuLib's mod settings.</para>
+        ///     <para xml:lang="zh-CN">获取或设置主菜单是否显示 RitsuLib 模组设置的快捷入口。</para>
         /// </summary>
         [JsonPropertyName("main_menu_mod_settings_button_enabled")]
         public bool MainMenuModSettingsButtonEnabled { get; set; } = true;
 
         /// <summary>
-        ///     Automatic ModelDb deterministic final-content cache policy. Valid values: <c>off</c>, <c>auto</c>,
-        ///     <c>force</c>. Default <c>auto</c>.
-        ///     ModelDb 确定性最终内容缓存的自动策略。有效值：<c>off</c>、<c>auto</c>、<c>force</c>。默认
-        ///     <c>auto</c>。
+        ///     <para xml:lang="en">
+        ///         Gets or sets the deterministic final-content cache policy for <c>ModelDb</c>. Valid values are
+        ///         <c>off</c>, <c>auto</c>, and <c>force</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置 <c>ModelDb</c> 确定性最终内容缓存策略。有效值为 <c>off</c>、<c>auto</c> 和
+        ///         <c>force</c>。
+        ///     </para>
         /// </summary>
         [JsonPropertyName("modeldb_deterministic_sort_mode")]
         public string ModelDbDeterministicSortMode { get; set; } = "auto";
 
         /// <summary>
-        ///     Enables global non-blocking toast notifications.
-        ///     启用全局非阻塞 toast 通知。
+        ///     <para xml:lang="en">Gets or sets whether global non-blocking toast notifications are enabled.</para>
+        ///     <para xml:lang="zh-CN">获取或设置是否启用全局非阻塞通知消息。</para>
         /// </summary>
         [JsonPropertyName("toast_enabled")]
         public bool ToastEnabled { get; set; } = true;
 
         /// <summary>
-        ///     3x3 anchor id for toast placement (<c>topright</c>, <c>middlecenter</c>, etc.).
-        ///     toast 放置使用的 3x3 锚点 ID（<c>topright</c>、<c>middlecenter</c> 等）。
+        ///     <para xml:lang="en">Gets or sets the 3-by-3 anchor ID used to position toast notifications.</para>
+        ///     <para xml:lang="zh-CN">获取或设置通知消息位置使用的 3×3 锚点 ID。</para>
         /// </summary>
         [JsonPropertyName("toast_anchor")]
         public string ToastAnchor { get; set; } = "topright";
 
         /// <summary>
-        ///     Horizontal offset from the selected anchor in pixels.
-        ///     相对于所选锚点的水平偏移（像素）。
+        ///     <para xml:lang="en">Gets or sets the horizontal pixel offset from the selected toast anchor.</para>
+        ///     <para xml:lang="zh-CN">获取或设置通知消息相对于所选锚点的水平像素偏移。</para>
         /// </summary>
         [JsonPropertyName("toast_offset_x")]
         public double ToastOffsetX { get; set; } = -24d;
 
         /// <summary>
-        ///     Vertical offset from the selected anchor in pixels.
-        ///     相对于所选锚点的垂直偏移（像素）。
+        ///     <para xml:lang="en">Gets or sets the vertical pixel offset from the selected toast anchor.</para>
+        ///     <para xml:lang="zh-CN">获取或设置通知消息相对于所选锚点的垂直像素偏移。</para>
         /// </summary>
         [JsonPropertyName("toast_offset_y")]
         public double ToastOffsetY { get; set; } = 24d;
 
         /// <summary>
-        ///     Maximum number of toasts visible at once; overflow is queued.
-        ///     同时可见的 toast 最大数量；超出的会排队。
+        ///     <para xml:lang="en">
+        ///         Gets or sets the maximum number of simultaneously visible toast notifications; overflow is
+        ///         queued.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置同时可见的通知消息数量上限；超出部分将进入队列。</para>
         /// </summary>
         [JsonPropertyName("toast_max_visible")]
         public int ToastMaxVisible { get; set; } = 3;
 
         /// <summary>
-        ///     Default toast display duration (seconds) when requests do not override it.
-        ///     请求未覆盖时的默认 toast 显示时长（秒）。
+        ///     <para xml:lang="en">Gets or sets the default toast display duration in seconds.</para>
+        ///     <para xml:lang="zh-CN">获取或设置通知消息的默认显示时长（秒）。</para>
         /// </summary>
         [JsonPropertyName("toast_duration_seconds")]
         public double ToastDurationSeconds { get; set; } = DefaultToastDurationSeconds;
 
         /// <summary>
-        ///     Default animation preset id (<c>fade</c>, <c>fadeslide</c>, <c>fadescale</c>).
-        ///     默认动画预设 ID（<c>fade</c>、<c>fadeslide</c>、<c>fadescale</c>）。
+        ///     <para xml:lang="en">Gets or sets the default toast animation preset ID.</para>
+        ///     <para xml:lang="zh-CN">获取或设置通知消息的默认动画预设 ID。</para>
         /// </summary>
         [JsonPropertyName("toast_animation")]
         public string ToastAnimation { get; set; } = "fadeslide";

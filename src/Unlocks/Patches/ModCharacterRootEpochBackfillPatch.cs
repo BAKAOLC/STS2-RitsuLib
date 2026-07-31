@@ -9,7 +9,10 @@ using STS2RitsuLib.Timeline.Scaffolding;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Backfills mod character root epochs from existing prerequisite character run history.
+    ///     <para xml:lang="en">
+    ///         Backfills mod character root epochs from existing run history for their prerequisite characters.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">根据前置角色已有的游戏记录补发模组角色的根纪元。</para>
     /// </summary>
     internal sealed class ModCharacterRootEpochBackfillPatch : IPatchMethod
     {
@@ -77,8 +80,10 @@ namespace STS2RitsuLib.Unlocks.Patches
                 {
                     epoch = EpochModel.Get(epochId);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Could not resolve epoch '{epochId}' while scanning root-epoch backfill candidates: {ex}");
                     continue;
                 }
 
@@ -94,8 +99,10 @@ namespace STS2RitsuLib.Unlocks.Patches
                 {
                     character = ModelDb.GetById<CharacterModel>(ModelDb.GetId(characterType));
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Could not resolve character type '{characterType.FullName}' for root-epoch backfill: {ex}");
                     continue;
                 }
 
@@ -111,8 +118,11 @@ namespace STS2RitsuLib.Unlocks.Patches
                 {
                     prerequisiteId = ModelDb.GetId(prerequisiteType);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Could not resolve prerequisite character type '{prerequisiteType.FullName}' " +
+                        $"for root-epoch backfill: {ex}");
                     continue;
                 }
 

@@ -3,8 +3,8 @@ using STS2RitsuLib.Utils.Persistence.Context;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     Resolves local storage targets for different <see cref="SaveScope" /> domains.
-    ///     解析 local 存储 targets 用于 different <see cref="SaveScope" /> domains.
+    ///     <para xml:lang="en">Resolves local user-storage paths for each <see cref="SaveScope" />.</para>
+    ///     <para xml:lang="zh-CN">根据 <see cref="SaveScope" /> 解析本地用户存储路径。</para>
     /// </summary>
     internal static class StoragePathResolver
     {

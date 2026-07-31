@@ -49,7 +49,8 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                return $"diagnostics failed: {ex.Message}";
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] Mapped one-shot diagnostics failed: {ex}");
+                return $"diagnostics failed: {ex}";
             }
         }
 
@@ -109,8 +110,11 @@ namespace STS2RitsuLib.Audio.Internal
             var sb = new StringBuilder(256);
             foreach (var item in banksVar.AsGodotArray())
             {
+                if (item.VariantType != Variant.Type.Object)
+                    continue;
+
                 var bank = item.AsGodotObject();
-                if (bank is null)
+                if (bank is null || !GodotObject.IsInstanceValid(bank))
                     continue;
 
                 string resPath;
@@ -120,8 +124,10 @@ namespace STS2RitsuLib.Audio.Internal
                     resPath = bank.Call("get_godot_res_path").AsString();
                     n = bank.Call("get_event_description_count").AsInt64();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Audio] Failed to inspect an FMOD bank during mapped one-shot diagnostics: {ex}");
                     continue;
                 }
 
@@ -144,8 +150,11 @@ namespace STS2RitsuLib.Audio.Internal
             var hits = new List<string>(6);
             foreach (var item in allVar.AsGodotArray())
             {
+                if (item.VariantType != Variant.Type.Object)
+                    continue;
+
                 var desc = item.AsGodotObject();
-                if (desc is null)
+                if (desc is null || !GodotObject.IsInstanceValid(desc))
                     continue;
 
                 string p;
@@ -155,8 +164,10 @@ namespace STS2RitsuLib.Audio.Internal
                     p = desc.Call("get_path").AsString();
                     g = desc.Call("get_guid").AsString();
                 }
-                catch
+                catch (Exception ex)
                 {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[Audio] Failed to inspect an FMOD event description during mapped one-shot diagnostics: {ex}");
                     continue;
                 }
 

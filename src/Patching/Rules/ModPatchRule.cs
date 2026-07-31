@@ -4,51 +4,54 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Patching.Rules
 {
     /// <summary>
-    ///     Declarative rule: select types and methods in an assembly and emit <see cref="ModPatchInfo" /> rows for one patch
-    ///     type.
-    ///     声明式规则：在程序集中选择类型和方法，并为一个 patch 类型生成 <see cref="ModPatchInfo" /> 行。
+    ///     <para xml:lang="en">
+    ///         Defines a rule that selects methods from assemblies and creates <see cref="ModPatchInfo" /> instances for them.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义从程序集中选择方法并为其创建 <see cref="ModPatchInfo" /> 实例的规则。
+    ///     </para>
     /// </summary>
     public class ModPatchRule
     {
         /// <summary>
-        ///     Rule id prefix used when generating patch ids.
-        ///     生成 patch id 时使用的规则 id 前缀。
+        ///     <para xml:lang="en">Gets the prefix used for generated patch IDs.</para>
+        ///     <para xml:lang="zh-CN">获取用于生成补丁 ID 的前缀。</para>
         /// </summary>
         public string Id { get; init; } = "";
 
         /// <summary>
-        ///     Predicate that filters candidate declaring types.
-        ///     过滤候选声明类型的谓词。
+        ///     <para xml:lang="en">Gets the predicate used to select declaring types.</para>
+        ///     <para xml:lang="zh-CN">获取用于选择声明类型的谓词。</para>
         /// </summary>
         public Func<Type, bool> TypeSelector { get; init; } = _ => false;
 
         /// <summary>
-        ///     Predicate that filters methods on matched types.
-        ///     过滤匹配类型上的方法的谓词。
+        ///     <para xml:lang="en">Gets the predicate used to select methods on matched types.</para>
+        ///     <para xml:lang="zh-CN">获取用于从匹配类型中选择方法的谓词。</para>
         /// </summary>
         public Func<MethodInfo, bool> MethodSelector { get; init; } = _ => false;
 
         /// <summary>
-        ///     Static patch type whose Harmony methods are applied to each match.
-        ///     其 Harmony 方法会应用到每个匹配项的静态 patch 类型。
+        ///     <para xml:lang="en">Gets the static patch type applied to each selected method.</para>
+        ///     <para xml:lang="zh-CN">获取要应用到每个选中方法的静态补丁类型。</para>
         /// </summary>
         public Type? PatchType { get; init; }
 
         /// <summary>
-        ///     Whether generated patches are critical.
-        ///     生成的 patch 是否为关键 patch。
+        ///     <para xml:lang="en">Gets whether generated patches are critical.</para>
+        ///     <para xml:lang="zh-CN">获取生成的补丁是否属于严重补丁。</para>
         /// </summary>
         public bool IsCritical { get; init; } = true;
 
         /// <summary>
-        ///     Base description appended to each generated patch.
-        ///     追加到每个生成 patch 的基础描述。
+        ///     <para xml:lang="en">Gets the description prefix used for generated patches.</para>
+        ///     <para xml:lang="zh-CN">获取生成补丁所使用的描述前缀。</para>
         /// </summary>
         public string Description { get; init; } = "";
 
         /// <summary>
-        ///     Scans <paramref name="assembly" /> and returns one <see cref="ModPatchInfo" /> per selected method.
-        ///     扫描 <paramref name="assembly" />，并为每个选中的方法返回一个 <see cref="ModPatchInfo" />。
+        ///     <para xml:lang="en">Scans <paramref name="assembly" /> and creates one patch for each selected method.</para>
+        ///     <para xml:lang="zh-CN">扫描 <paramref name="assembly" />，并为每个选中的方法创建一个补丁。</para>
         /// </summary>
         public ModPatchInfo[] GeneratePatches(Assembly assembly)
         {
@@ -82,8 +85,8 @@ namespace STS2RitsuLib.Patching.Rules
         }
 
         /// <summary>
-        ///     Merges <see cref="GeneratePatches(Assembly)" /> across multiple assemblies.
-        ///     跨多个程序集合并 <see cref="GeneratePatches(Assembly)" />。
+        ///     <para xml:lang="en">Generates and combines patches from <paramref name="assemblies" />.</para>
+        ///     <para xml:lang="zh-CN">从 <paramref name="assemblies" /> 生成并合并补丁。</para>
         /// </summary>
         public ModPatchInfo[] GeneratePatches(params ReadOnlySpan<Assembly> assemblies)
         {
@@ -131,8 +134,8 @@ namespace STS2RitsuLib.Patching.Rules
     }
 
     /// <summary>
-    ///     Fluent builder for <see cref="ModPatchRule" />.
-    ///     <see cref="ModPatchRule" /> 的流式构建器。
+    ///     <para xml:lang="en">Provides a fluent builder for <see cref="ModPatchRule" />.</para>
+    ///     <para xml:lang="zh-CN">提供 <see cref="ModPatchRule" /> 的流式构建器。</para>
     /// </summary>
     public class PatchRuleBuilder
     {
@@ -144,8 +147,8 @@ namespace STS2RitsuLib.Patching.Rules
         private Func<Type, bool> _typeSelector = _ => false;
 
         /// <summary>
-        ///     Starts a rule with the given id prefix.
-        ///     使用给定 id 前缀开始一条规则。
+        ///     <para xml:lang="en">Starts a rule with the specified ID prefix.</para>
+        ///     <para xml:lang="zh-CN">使用指定的 ID 前缀开始构建规则。</para>
         /// </summary>
         public static PatchRuleBuilder Create(string id)
         {
@@ -153,8 +156,8 @@ namespace STS2RitsuLib.Patching.Rules
         }
 
         /// <summary>
-        ///     Sets the type filter.
-        ///     设置类型过滤器。
+        ///     <para xml:lang="en">Sets the type-selection predicate.</para>
+        ///     <para xml:lang="zh-CN">设置类型选择谓词。</para>
         /// </summary>
         public PatchRuleBuilder ForTypes(Func<Type, bool> selector)
         {
@@ -163,8 +166,8 @@ namespace STS2RitsuLib.Patching.Rules
         }
 
         /// <summary>
-        ///     Sets the method filter.
-        ///     设置方法过滤器。
+        ///     <para xml:lang="en">Sets the method-selection predicate.</para>
+        ///     <para xml:lang="zh-CN">设置方法选择谓词。</para>
         /// </summary>
         public PatchRuleBuilder ForMethods(Func<MethodInfo, bool> selector)
         {
@@ -173,8 +176,8 @@ namespace STS2RitsuLib.Patching.Rules
         }
 
         /// <summary>
-        ///     Sets the patch type applied to each match.
-        ///     设置应用到每个匹配项的 patch 类型。
+        ///     <para xml:lang="en">Sets the patch type applied to each selected method.</para>
+        ///     <para xml:lang="zh-CN">设置要应用到每个选中方法的补丁类型。</para>
         /// </summary>
         public PatchRuleBuilder WithPatch(Type patchType)
         {
@@ -183,8 +186,8 @@ namespace STS2RitsuLib.Patching.Rules
         }
 
         /// <summary>
-        ///     Sets whether generated patches are critical (default true).
-        ///     设置生成的 patch 是否为关键 patch（默认 true）。
+        ///     <para xml:lang="en">Sets whether generated patches are critical.</para>
+        ///     <para xml:lang="zh-CN">设置生成的补丁是否属于严重补丁。</para>
         /// </summary>
         public PatchRuleBuilder Critical(bool isCritical = true)
         {
@@ -193,8 +196,8 @@ namespace STS2RitsuLib.Patching.Rules
         }
 
         /// <summary>
-        ///     Sets the rule description prefix.
-        ///     设置规则描述前缀。
+        ///     <para xml:lang="en">Sets the description prefix used for generated patches.</para>
+        ///     <para xml:lang="zh-CN">设置生成补丁所使用的描述前缀。</para>
         /// </summary>
         public PatchRuleBuilder WithDescription(string description)
         {
@@ -203,8 +206,8 @@ namespace STS2RitsuLib.Patching.Rules
         }
 
         /// <summary>
-        ///     Materializes the rule.
-        ///     实体化规则。
+        ///     <para xml:lang="en">Builds the configured rule.</para>
+        ///     <para xml:lang="zh-CN">构建已配置的规则。</para>
         /// </summary>
         public ModPatchRule Build()
         {

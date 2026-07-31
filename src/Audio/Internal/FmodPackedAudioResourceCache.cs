@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Audio.Internal
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[Audio] FMOD resource playback failed to load imported audio resource: {resourcePath}; {ex.Message}");
+                    $"[Audio] FMOD resource playback failed to load imported audio resource: {resourcePath}; {ex}");
                 return false;
             }
 
@@ -133,7 +133,7 @@ namespace STS2RitsuLib.Audio.Internal
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[Audio] FMOD resource playback extraction failed: {resourcePath}; {stream.GetClass()}; {ex.Message}");
+                    $"[Audio] FMOD resource playback extraction failed: {resourcePath}; {stream.GetClass()}; {ex}");
                 return false;
             }
         }
@@ -149,16 +149,52 @@ namespace STS2RitsuLib.Audio.Internal
             var fileName =
                 $"{SanitizeFileName(Path.GetFileNameWithoutExtension(resourcePath))}-{digest[..16]}{extension}";
             var path = Path.Combine(cacheDir, fileName);
+            string? temporaryPath = null;
 
-            lock (Gate)
+            try
             {
-                Directory.CreateDirectory(cacheDir);
-                if (!File.Exists(path) || new FileInfo(path).Length != bytes.Length)
-                    File.WriteAllBytes(path, bytes);
+                lock (Gate)
+                {
+                    Directory.CreateDirectory(cacheDir);
+                    if (!IsValidCachedFile(path, bytes.Length, digest))
+                    {
+                        temporaryPath = Path.Combine(cacheDir, $"{fileName}.{Guid.NewGuid():N}.tmp");
+                        File.WriteAllBytes(temporaryPath, bytes);
+                        File.Move(temporaryPath, path, true);
+                        temporaryPath = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (temporaryPath != null)
+                    try
+                    {
+                        File.Delete(temporaryPath);
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] Could not remove failed FMOD cache write '{temporaryPath}': {cleanupEx}");
+                    }
+
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[Audio] FMOD resource cache write failed: {resourcePath}; {ex}");
+                return false;
             }
 
             absolutePath = path;
             return true;
+        }
+
+        private static bool IsValidCachedFile(string path, int expectedLength, string expectedDigest)
+        {
+            if (!File.Exists(path) || new FileInfo(path).Length != expectedLength)
+                return false;
+
+            using var stream = File.OpenRead(path);
+            var actualDigest = Convert.ToHexString(SHA256.HashData(stream));
+            return string.Equals(actualDigest, expectedDigest, StringComparison.OrdinalIgnoreCase);
         }
 
         private static byte[] BuildWavFile(AudioStreamWav wav)

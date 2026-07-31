@@ -48,16 +48,19 @@ namespace STS2RitsuLib.Relics.Visibility
                     continue;
 
                 var holder = nodes.FirstOrDefault(node => node.Relic.Model == relic);
+                var added = false;
                 if (holder == null)
                 {
                     AddRelic(inventory, relic, true, -1);
                     holder = nodes.FirstOrDefault(node => node.Relic.Model == relic);
-                    changed = true;
+                    added = holder != null;
                 }
 
-                if (holder != null)
-                    changed |= MoveToVisibleIndex(inventory, nodes, holder, visibleIndex);
+                if (holder == null)
+                    continue;
 
+                changed |= added;
+                changed |= MoveToVisibleIndex(inventory, nodes, holder, visibleIndex);
                 visibleIndex++;
             }
 

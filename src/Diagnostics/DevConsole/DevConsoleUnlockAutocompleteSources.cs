@@ -3,7 +3,12 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Candidate sources for <c>unlock</c> command discovery-id arguments.
+    ///     <para xml:lang="en">
+    ///         Provides candidates for discovery-ID arguments of the <c>unlock</c> command.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供 <c>unlock</c> 命令的发现 ID 参数候选项。
+    ///     </para>
     /// </summary>
     internal static class DevConsoleUnlockAutocompleteSources
     {

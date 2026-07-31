@@ -4,10 +4,13 @@ using Godot;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Holds the <see cref="RitsuShellTheme.Current" /> snapshot and the public lifecycle (apply theme,
-    ///     reapply on disk change, listen for changes, register mod tokens). All members are thread-safe.
-    ///     持有 <see cref="RitsuShellTheme.Current" /> 快照和公共生命周期（应用主题、
-    ///     在磁盘变更后重新应用、监听变更、注册 mod 令牌）。所有成员都是线程安全的。
+    ///     <para xml:lang="en">
+    ///         Manages the current shell-theme snapshot, theme application and reloads, change notifications,
+    ///         and mod token registrations. Public state transitions are synchronized.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         管理当前 Shell 主题快照、主题应用与重新加载、变更通知及模组令牌注册。公开的状态转换均会同步。
+    ///     </para>
     /// </summary>
     public static class RitsuShellThemeRuntime
     {
@@ -16,7 +19,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static readonly Lock Gate = new();
 
         private static readonly Dictionary<string, RitsuShellThemeModRegistration> ModRegistrations =
-            new(StringComparer.Ordinal);
+            new(StringComparer.OrdinalIgnoreCase);
 
         private static RitsuShellTheme? _current;
 
@@ -25,16 +28,23 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static bool _fontRefreshQueued;
 
         /// <summary>
-        ///     Last applied theme id (lowercase). Defaults to <c>default</c> until a successful apply.
-        ///     最后应用的主题 id (小写). 默认为 <c>default</c> 直到成功应用。
+        ///     <para xml:lang="en">
+        ///         Gets the normalized identifier of the active snapshot. The initial value is <c>default</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取当前活动快照的规范化标识符；初始值为 <c>default</c>。
+        ///     </para>
         /// </summary>
         public static string ActiveThemeId { get; private set; } = DefaultThemeId;
 
         /// <summary>
-        ///     Current theme snapshot. Calling this also lazily builds <c>default</c> if no theme has been
-        ///     applied yet.
-        ///     当前主题快照. 调用此项也会惰性构建 <c>default</c> if no theme h为 been
-        ///     应用 尚未。
+        ///     <para xml:lang="en">
+        ///         Gets the current theme snapshot. The first access builds <c>default</c> when necessary, and
+        ///         later accesses rebuild invalidated font resources lazily.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取当前主题快照。首次访问会在需要时构建 <c>default</c>；后续访问会延迟重建已失效的字体资源。
+        ///     </para>
         /// </summary>
         public static RitsuShellTheme Current
         {
@@ -47,14 +57,22 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Fired after the current snapshot has been replaced.
-        ///     当前快照被替换后触发。
+        ///     <para xml:lang="en">
+        ///         Occurs after <see cref="ApplyThemeId" /> successfully publishes a snapshot.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在 <see cref="ApplyThemeId" /> 成功发布主题快照后发生。
+        ///     </para>
         /// </summary>
         public static event Action? ThemeChanged;
 
         /// <summary>
-        ///     Builds the baseline snapshot if not yet built (uses <c>default</c>).
-        ///     构建基线快照 if 尚未构建 (使用 <c>default</c>)。
+        ///     <para xml:lang="en">
+        ///         Builds and publishes the <c>default</c> baseline snapshot if no snapshot exists.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若尚无主题快照，则构建并发布 <c>default</c> 基线快照。
+        ///     </para>
         /// </summary>
         public static void EnsureBaseline()
         {
@@ -68,14 +86,19 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Applies the named theme. <see langword="null" /> / blank picks <c>default</c>; if the lookup
-        ///     fails the current snapshot is preserved (or rebuilt as default).
-        ///     应用指定名称的主题。<see langword="null" /> / 空白会选择 <c>default</c>；如果查找
-        ///     失败，则保留当前快照（或重建为默认快照）。
+        ///     <para xml:lang="en">
+        ///         Applies a theme by identifier. A <see langword="null" /> or blank value selects
+        ///         <c>default</c>. If the requested theme cannot be built, the method tries <c>default</c>;
+        ///         if that also fails, the current snapshot is preserved.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按标识符应用主题。<see langword="null" /> 或空白值选择 <c>default</c>。请求的主题无法构建时，
+        ///         方法会尝试 <c>default</c>；若后者也失败，则保留当前快照。
+        ///     </para>
         /// </summary>
         /// <param name="themeId">
-        ///     Target theme id (case-insensitive).
-        ///     目标主题 id (不区分大小写)。
+        ///     <para xml:lang="en">The case-insensitive theme identifier to apply.</para>
+        ///     <para xml:lang="zh-CN">要应用的不区分大小写主题标识符。</para>
         /// </param>
         public static void ApplyThemeId(string? themeId)
         {
@@ -95,14 +118,21 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Re-applies the current <see cref="ActiveThemeId" />, optionally clearing the catalog cache so
-        ///     disk changes are picked up.
-        ///     重新应用当前 <see cref="ActiveThemeId" />，并可选择清除目录缓存，使
-        ///     磁盘变更被拾取。
+        ///     <para xml:lang="en">
+        ///         Clears cached fonts and reapplies <see cref="ActiveThemeId" />, optionally invalidating the
+        ///         catalog first so disk changes are loaded.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         清除缓存的字体并重新应用 <see cref="ActiveThemeId" />；可选择先使主题目录失效，以加载磁盘变更。
+        ///     </para>
         /// </summary>
         /// <param name="forceReloadCatalog">
-        ///     When <see langword="true" />, the on-disk catalog is reloaded.
-        ///     当为 <see langword="true" /> 时，重新加载磁盘目录。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> to reload embedded and on-disk theme documents.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若要重新加载内嵌及磁盘主题文档，则为 <see langword="true" />。
+        ///     </para>
         /// </param>
         public static void ReapplyActiveTheme(bool forceReloadCatalog)
         {
@@ -128,63 +158,94 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             {
                 Callable.From(FlushExternalFontCacheCleared).CallDeferred();
             }
-            catch
+            catch (Exception ex)
             {
                 lock (Gate)
                 {
                     _fontRefreshQueued = false;
                 }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[ShellTheme] Could not defer the external font-cache refresh: {ex}");
             }
         }
 
         /// <summary>
-        ///     Registers a mod's default DTFM tokens and optional apply callback. Subsequent
-        ///     <see cref="ApplyThemeId" /> calls merge these defaults before chain documents and invoke
-        ///     <paramref name="onApply" /> on every rebuild.
-        ///     注册 mod 的默认 DTFM 令牌和可选应用回调。后续
-        ///     <see cref="ApplyThemeId" /> 调用会先合并这些默认值，再合并链式文档，并在每次重建时调用
-        ///     <paramref name="onApply" />。
+        ///     <para xml:lang="en">
+        ///         Registers or replaces a mod's default token contribution and optional apply callback, then
+        ///         reapplies the active theme. Registered defaults are merged before the selected theme's
+        ///         inheritance chain.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册或替换模组的默认令牌贡献及可选应用回调，然后重新应用当前主题。已注册的默认令牌会在所选主题的
+        ///         继承链之前合并。
+        ///     </para>
         /// </summary>
         /// <param name="modId">
-        ///     Mod identifier.
-        ///     Mod 标识符。
+        ///     <para xml:lang="en">
+        ///         The case-insensitive mod identifier. Surrounding whitespace is removed; a blank value is ignored.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不区分大小写的模组标识符。首尾空白会被移除；空白值会被忽略。
+        ///     </para>
         /// </param>
         /// <param name="defaults">
-        ///     DTFM JSON tree (object) merged before chain documents.
-        ///     DTFM JSON tree (对象) 合并后 在链式文档之前。
+        ///     <para xml:lang="en">
+        ///         The optional Design Tokens Format Module object to clone and merge before theme documents.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的设计令牌格式模块对象；注册时会克隆，并在主题文档之前合并。
+        ///     </para>
         /// </param>
         /// <param name="onApply">
-        ///     Optional callback fired after every rebuild.
-        ///     可选 回调 fired 之后 every rebuild。
+        ///     <para xml:lang="en">
+        ///         The optional callback invoked after a successful theme application publishes a snapshot.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         成功应用主题并发布快照后调用的可选回调。
+        ///     </para>
         /// </param>
         public static void RegisterModTokens(string modId, JsonElement? defaults,
             Action<RitsuShellTheme>? onApply = null)
         {
             if (string.IsNullOrWhiteSpace(modId))
                 return;
+
+            var normalizedModId = modId.Trim();
+            var ownedDefaults = defaults?.Clone();
             lock (Gate)
             {
-                ModRegistrations[modId] = new(modId, defaults, onApply);
+                ModRegistrations[normalizedModId] = new(normalizedModId, ownedDefaults, onApply);
             }
 
             ReapplyActiveTheme(false);
         }
 
         /// <summary>
-        ///     Removes a previous <see cref="RegisterModTokens" /> entry.
-        ///     移除先前的 <see cref="RegisterModTokens" /> 条目。
+        ///     <para xml:lang="en">
+        ///         Removes a mod token registration and reapplies the active theme when an entry was present.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除模组令牌注册；若原条目存在，则重新应用当前主题。
+        ///     </para>
         /// </summary>
         /// <param name="modId">
-        ///     Mod identifier.
-        ///     Mod 标识符。
+        ///     <para xml:lang="en">
+        ///         The case-insensitive mod identifier. Surrounding whitespace is removed; a blank value is ignored.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不区分大小写的模组标识符。首尾空白会被移除；空白值会被忽略。
+        ///     </para>
         /// </param>
         public static void UnregisterModTokens(string modId)
         {
             if (string.IsNullOrWhiteSpace(modId))
                 return;
+
+            var normalizedModId = modId.Trim();
             lock (Gate)
             {
-                if (!ModRegistrations.Remove(modId))
+                if (!ModRegistrations.Remove(normalizedModId))
                     return;
             }
 
@@ -238,10 +299,29 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 modSnapshot = [.. ModRegistrations.Values];
             }
 
-            ThemeChanged?.Invoke();
+            var handlers = ThemeChanged?.GetInvocationList();
+            if (handlers != null)
+                foreach (var handler in handlers)
+                    try
+                    {
+                        ((Action)handler).Invoke();
+                    }
+                    catch (Exception ex)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[ShellTheme] ThemeChanged callback failed: {ex}");
+                    }
 
             foreach (var reg in modSnapshot)
-                reg.OnApply?.Invoke(snapshot);
+                try
+                {
+                    reg.OnApply?.Invoke(snapshot);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.CreateLogger(reg.ModId)
+                        .Warn($"[ShellTheme] Theme apply callback failed: {ex}");
+                }
         }
 
         private static void FlushExternalFontCacheCleared()

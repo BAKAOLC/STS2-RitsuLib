@@ -6,8 +6,13 @@ using STS2RitsuLib.Diagnostics;
 namespace STS2RitsuLib.Relics
 {
     /// <summary>
-    ///     Holds mod-supplied Dusty Tome card candidates, applied before the vanilla unlocked ancient-card fallback.
-    ///     保存 mod 提供的 Dusty Tome 卡牌候选，并在原版已解锁 ancient 卡牌兜底前应用。
+    ///     <para xml:lang="en">
+    ///         Stores mod-provided card candidates for Dusty Tome, which take precedence over the base game's unlocked
+    ///         Ancient card candidates.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         保存模组为尘封之书提供的候选卡牌；这些卡牌的优先级高于游戏本体已解锁的先古卡牌候选项。
+    ///     </para>
     /// </summary>
     internal static class DustyTomeCardRegistry
     {

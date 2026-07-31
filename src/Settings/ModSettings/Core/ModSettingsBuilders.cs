@@ -4,8 +4,10 @@ using Godot;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Fluent builder for a registered mod settings page: metadata, optional parent page, and sections.
-    ///     已注册 Mod 设置页的流式构建器：用于配置元数据、可选父页面和 sections。
+    ///     <para xml:lang="en">
+    ///         Builds a mod settings page by configuring its metadata, hierarchy, host-surface behavior, and sections.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">用于配置元数据、页面层级、宿主界面行为及节的模组设置页面构建器。</para>
     /// </summary>
     public sealed class ModSettingsPageBuilder
     {
@@ -24,10 +26,13 @@ namespace STS2RitsuLib.Settings
         private bool _useSourceAssemblyManifest = true;
 
         /// <summary>
-        ///     Initializes a builder for mod <paramref name="modId" />; <paramref name="pageId" /> defaults to the mod id when
-        ///     null or whitespace.
-        ///     为 mod <paramref name="modId" /> 初始化构建器；当 <paramref name="pageId" /> 为 null 或空白时，
-        ///     默认使用 mod id。
+        ///     <para xml:lang="en">
+        ///         Initializes a builder for <paramref name="modId" />. A null or whitespace
+        ///         <paramref name="pageId" /> defaults to the mod ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="modId" /> 初始化构建器；<paramref name="pageId" /> 为 null 或空白时默认使用模组 ID。
+        ///     </para>
         /// </summary>
         public ModSettingsPageBuilder(string modId, string? pageId = null)
             : this(modId, pageId, null)
@@ -43,56 +48,61 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Owning mod identifier.
-        ///     所属 Mod 标识符。
+        ///     <para xml:lang="en">Gets the owning mod ID.</para>
+        ///     <para xml:lang="zh-CN">获取所属模组 ID。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     Stable page id (used for navigation and chrome clipboard).
-        ///     稳定页面 id（用于导航和 chrome 剪贴板）。
+        ///     <para xml:lang="en">Gets the stable page ID used for navigation and page-level clipboard snapshots.</para>
+        ///     <para xml:lang="zh-CN">获取用于导航及页面级剪贴板快照的稳定页面 ID。</para>
         /// </summary>
         public string PageId { get; }
 
         /// <summary>
-        ///     Assembly that registered this page, used to resolve the host ModManager manifest for sidebar presentation.
-        ///     注册此页面的程序集，用于解析宿主 ModManager manifest 作为侧边栏展示信息来源。
+        ///     <para xml:lang="en">
+        ///         Gets the assembly that registered the page, if known. It can be used to locate the owning ModManager
+        ///         manifest for sidebar presentation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取注册此页面的程序集（如已知）；该程序集可用于查找所属 ModManager 清单并生成侧边栏展示信息。
+        ///     </para>
         /// </summary>
         public Assembly? SourceAssembly { get; }
 
         /// <summary>
-        ///     When set, this page appears as a child of the given parent page id.
-        ///     设置后，此页面会作为给定父页面 id 的子页面显示。
+        ///     <para xml:lang="en">Gets the optional ID of the page under which this page is nested.</para>
+        ///     <para xml:lang="zh-CN">获取此页面所隶属父页面的可选 ID。</para>
         /// </summary>
         public string? ParentPageId { get; private set; }
 
         /// <summary>
-        ///     Localized title shown in tabs and headers.
-        ///     显示在标签页和标题区域的本地化标题。
+        ///     <para xml:lang="en">Gets the optional localized page title displayed in navigation and headers.</para>
+        ///     <para xml:lang="zh-CN">获取在导航及标题区域显示的可选本地化页面标题。</para>
         /// </summary>
         public ModSettingsText? Title { get; private set; }
 
         /// <summary>
-        ///     Optional subtitle or long description for the page.
-        ///     页面可选副标题或长描述。
+        ///     <para xml:lang="en">Gets the optional localized page description.</para>
+        ///     <para xml:lang="zh-CN">获取可选的本地化页面说明。</para>
         /// </summary>
         public ModSettingsText? Description { get; private set; }
 
         /// <summary>
-        ///     Display name for the mod in the settings sidebar (separate from page titles).
-        ///     设置侧边栏中的 Mod 显示名称（独立于页面标题）。
+        ///     <para xml:lang="en">Gets the optional mod display name used by the settings sidebar.</para>
+        ///     <para xml:lang="zh-CN">获取设置侧边栏使用的可选模组显示名称。</para>
         /// </summary>
         public ModSettingsText? ModDisplayName { get; private set; }
 
         /// <summary>
-        ///     Ordering among sibling pages (lower first).
-        ///     同级页面之间的排序（数值越小越靠前）。
+        ///     <para xml:lang="en">Gets the sort order among sibling pages; lower values appear first.</para>
+        ///     <para xml:lang="zh-CN">获取同级页面之间的排序值；数值较小的页面排在前面。</para>
         /// </summary>
         public int SortOrder { get; private set; }
 
         /// <summary>
-        ///     Nests this page under <paramref name="parentPageId" /> in the UI hierarchy.
-        ///     在 UI 层级中将此页面嵌套到 <paramref name="parentPageId" /> 下。
+        ///     <para xml:lang="en">Nests the page under <paramref name="parentPageId" /> in the settings hierarchy.</para>
+        ///     <para xml:lang="zh-CN">在设置页面层级中将此页面置于 <paramref name="parentPageId" /> 之下。</para>
         /// </summary>
         public ModSettingsPageBuilder AsChildOf(string parentPageId)
         {
@@ -101,8 +111,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets the page title.
-        ///     设置页面标题。
+        ///     <para xml:lang="en">Sets the localized page title.</para>
+        ///     <para xml:lang="zh-CN">设置本地化页面标题。</para>
         /// </summary>
         public ModSettingsPageBuilder WithTitle(ModSettingsText title)
         {
@@ -111,8 +121,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets the page description.
-        ///     设置页面描述。
+        ///     <para xml:lang="en">Sets the localized page description.</para>
+        ///     <para xml:lang="zh-CN">设置本地化页面说明。</para>
         /// </summary>
         public ModSettingsPageBuilder WithDescription(ModSettingsText description)
         {
@@ -121,8 +131,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Hides this page's header description and disables the manifest description fallback.
-        ///     隐藏此页面的标题栏描述，并禁用 manifest 描述回退。
+        ///     <para xml:lang="en">
+        ///         Controls whether the page header omits its description and the manifest-description fallback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">控制页面标题区域是否隐藏说明并禁用清单说明回退。</para>
         /// </summary>
         public ModSettingsPageBuilder WithDescriptionHidden(bool hidden = true)
         {
@@ -131,10 +143,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets the mod display name in the sidebar and registers it with <see cref="ModSettingsRegistry" /> on
-        ///     <see cref="Build" />.
-        ///     设置侧边栏中的 mod 显示名称，并在 <see cref="Build" /> 时将其注册到
-        ///     <see cref="ModSettingsRegistry" />。
+        ///     <para xml:lang="en">
+        ///         Sets the mod display name that <see cref="Build" /> registers with
+        ///         <see cref="ModSettingsRegistry" /> for the sidebar.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         设置模组显示名称；<see cref="Build" /> 会将其注册到 <see cref="ModSettingsRegistry" /> 供侧边栏使用。
+        ///     </para>
         /// </summary>
         public ModSettingsPageBuilder WithModDisplayName(ModSettingsText displayName)
         {
@@ -143,8 +158,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets <see cref="SortOrder" />.
-        ///     设置 <see cref="SortOrder" />。
+        ///     <para xml:lang="en">Sets <see cref="SortOrder" />.</para>
+        ///     <para xml:lang="zh-CN">设置 <see cref="SortOrder" />。</para>
         /// </summary>
         public ModSettingsPageBuilder WithSortOrder(int sortOrder)
         {
@@ -153,10 +168,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Registers <see cref="ModSettingsRegistry.RegisterModSidebarOrder" /> for <see cref="ModId" /> when this page
-        ///     is built (repeat calls from the same mod should use the same value).
-        ///     构建此页面时，为 <see cref="ModId" /> 注册 <see cref="ModSettingsRegistry.RegisterModSidebarOrder" />
-        ///     （同一 mod 的重复调用应使用相同值）。
+        ///     <para xml:lang="en">
+        ///         Sets the mod-group sidebar order that <see cref="Build" /> registers for <see cref="ModId" />.
+        ///         Repeated registrations for the same mod must use the same value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         设置 <see cref="Build" /> 为 <see cref="ModId" /> 注册的模组分组侧边栏排序值；同一模组的重复注册必须使用相同值。
+        ///     </para>
         /// </summary>
         public ModSettingsPageBuilder WithModSidebarOrder(int order)
         {
@@ -165,10 +183,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Hides the page in the sidebar and main content when <paramref name="predicate" /> returns false (re-evaluated
-        ///     on settings UI refresh).
-        ///     当 <paramref name="predicate" /> 返回 false 时，在侧边栏和主内容中隐藏页面（设置 UI 刷新时
-        ///     重新求值）。
+        ///     <para xml:lang="en">
+        ///         Sets a predicate that is re-evaluated on settings UI refresh. A false result hides the page from
+        ///         both the sidebar and main content.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         设置在设置界面刷新时重新求值的谓词；结果为 false 时，在侧边栏及主内容中隐藏此页面。
+        ///     </para>
         /// </summary>
         public ModSettingsPageBuilder WithVisibleWhen(Func<bool> predicate)
         {
@@ -178,8 +199,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Disables the page (dimmed, non-interactive) while <paramref name="predicate" /> is false.
-        ///     当 <paramref name="predicate" /> 为 false 时禁用页面（变暗且不可交互）。
+        ///     <para xml:lang="en">
+        ///         Sets a predicate whose false result dims the page and disables interaction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置启用状态谓词；结果为 false 时页面会变暗且不可交互。</para>
         /// </summary>
         public ModSettingsPageBuilder WithEnabledWhen(Func<bool> predicate)
         {
@@ -189,8 +212,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Limits where this page appears (main menu vs run pause vs combat pause). Defaults to all surfaces.
-        ///     限制此页面出现的位置（主菜单、run 暂停、战斗暂停）。默认显示在所有 surface。
+        ///     <para xml:lang="en">
+        ///         Sets the host surfaces on which the page is visible. Pages are visible on all surfaces by default.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置此页面可见的宿主界面；默认在所有宿主界面中可见。</para>
         /// </summary>
         public ModSettingsPageBuilder WithVisibleOnHostSurfaces(ModSettingsHostSurface surfaces)
         {
@@ -199,8 +224,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Shows this page in the sidebar only after the user navigates to this page (or one of its child pages).
-        ///     仅在用户进入此页面（或它的子页面）后，才在侧边栏显示此页面。
+        ///     <para xml:lang="en">
+        ///         Makes the sidebar item visible only while this page or one of its descendants is active.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使侧边栏条目仅在此页面或其后代页面处于活动状态时可见。</para>
         /// </summary>
         public ModSettingsPageBuilder WithSidebarVisibleOnlyWhenActive()
         {
@@ -209,10 +236,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Controls whether the settings sidebar may use <see cref="SourceAssembly" /> to find the host ModManager
-        ///     manifest for this page&apos;s mod group. Enabled by default.
-        ///     控制设置侧边栏是否可以使用 <see cref="SourceAssembly" /> 查找此页面所属 Mod 分组的宿主 ModManager manifest。
-        ///     默认启用。
+        ///     <para xml:lang="en">
+        ///         Controls whether the sidebar may use <see cref="SourceAssembly" /> to locate the ModManager manifest
+        ///         for this page's mod group. Lookup is enabled by default.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         控制侧边栏是否可以通过 <see cref="SourceAssembly" /> 查找此页面所属模组分组的 ModManager 清单；默认启用。
+        ///     </para>
         /// </summary>
         public ModSettingsPageBuilder WithSourceAssemblyManifestLookup(bool enabled = true)
         {
@@ -221,8 +251,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Prevents this page&apos;s source assembly from being used for sidebar manifest presentation lookup.
-        ///     禁止使用此页面来源程序集进行侧边栏 manifest 展示信息查找。
+        ///     <para xml:lang="en">Disables sidebar manifest lookup through this page's source assembly.</para>
+        ///     <para xml:lang="zh-CN">禁用通过此页面来源程序集进行的侧边栏清单查找。</para>
         /// </summary>
         public ModSettingsPageBuilder WithoutSourceAssemblyManifestLookup()
         {
@@ -230,8 +260,11 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Host surfaces where controls on this page are read-only (combined with per-section masks).
-        ///     此页面控件只读的宿主 surface（会与每个 section 的掩码组合）。
+        ///     <para xml:lang="en">
+        ///         Sets the host surfaces on which the page's value controls are read-only. This mask is combined with
+        ///         each section's read-only mask.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置此页面数值控件处于只读状态的宿主界面；该掩码会与各节的只读掩码合并。</para>
         /// </summary>
         public ModSettingsPageBuilder WithReadOnlyOnHostSurfaces(ModSettingsHostSurface surfaces)
         {
@@ -240,8 +273,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Restricts which chrome menu actions are exposed for the page itself.
-        ///     限制页面自身暴露哪些 chrome 菜单操作。
+        ///     <para xml:lang="en">Sets the context-menu actions exposed for the page itself.</para>
+        ///     <para xml:lang="zh-CN">设置页面自身上下文菜单公开的操作。</para>
         /// </summary>
         public ModSettingsPageBuilder WithMenuCapabilities(ModSettingsMenuCapabilities capabilities)
         {
@@ -250,8 +283,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a section built by <paramref name="configure" />; <paramref name="id" /> must be unique on this page.
-        ///     添加由 <paramref name="configure" /> 构建的 section；<paramref name="id" /> 在此页面上必须唯一。
+        ///     <para xml:lang="en">
+        ///         Configures and adds a section. <paramref name="id" /> must be unique within this page,
+        ///         case-insensitively.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         配置并添加节；<paramref name="id" /> 在此页面内必须不区分大小写地保持唯一。
+        ///     </para>
         /// </summary>
         public ModSettingsPageBuilder AddSection(string id, Action<ModSettingsSectionBuilder> configure)
         {
@@ -268,8 +306,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Materializes the page; throws if no sections were added.
-        ///     生成页面对象；如果没有添加任何 section，则抛出异常。
+        ///     <para xml:lang="en">
+        ///         Materializes the page and performs pending mod-display and sidebar-order registrations. At least one
+        ///         section must have been added.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         生成页面并执行待处理的模组显示名称及侧边栏排序注册；必须已添加至少一个节。
+        ///     </para>
         /// </summary>
         public ModSettingsPage Build()
         {
@@ -304,8 +347,11 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Fluent builder for a settings section: collapsible chrome and typed entries (toggles, sliders, lists, etc.).
-    ///     设置 section 的流式构建器：配置可折叠 chrome 和类型化条目（开关、滑条、列表等）。
+    ///     <para xml:lang="en">
+    ///         Builds a settings section by configuring its display, availability, host-surface behavior, and typed
+    ///         entries.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">用于配置显示内容、可用状态、宿主界面行为及类型化条目的设置节构建器。</para>
     /// </summary>
     public sealed class ModSettingsSectionBuilder
     {
@@ -329,38 +375,40 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Stable section id within the page.
-        ///     页面内稳定的 section id。
+        ///     <para xml:lang="en">Gets the stable section ID within its page.</para>
+        ///     <para xml:lang="zh-CN">获取节在所属页面内的稳定 ID。</para>
         /// </summary>
         public string Id { get; }
 
         /// <summary>
-        ///     Optional section heading.
-        ///     可选 section 标题。
+        ///     <para xml:lang="en">Gets the optional localized section title.</para>
+        ///     <para xml:lang="zh-CN">获取可选的本地化节标题。</para>
         /// </summary>
         public ModSettingsText? Title { get; private set; }
 
         /// <summary>
-        ///     Optional body text under the title.
-        ///     标题下方的可选正文。
+        ///     <para xml:lang="en">Gets the optional localized description displayed below the title.</para>
+        ///     <para xml:lang="zh-CN">获取标题下方显示的可选本地化说明。</para>
         /// </summary>
         public ModSettingsText? Description { get; private set; }
 
         /// <summary>
-        ///     When true, the section can be collapsed in the UI.
-        ///     为 true 时，该 section 可在 UI 中折叠。
+        ///     <para xml:lang="en">Gets whether the section can be collapsed.</para>
+        ///     <para xml:lang="zh-CN">获取此节是否可以折叠。</para>
         /// </summary>
         public bool IsCollapsible { get; private set; }
 
         /// <summary>
-        ///     Initial collapsed state when <see cref="IsCollapsible" /> is true.
-        ///     <see cref="IsCollapsible" /> 为 true 时的初始折叠状态。
+        ///     <para xml:lang="en">
+        ///         Gets whether the section initially starts collapsed when <see cref="IsCollapsible" /> is enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取启用 <see cref="IsCollapsible" /> 时此节是否初始折叠。</para>
         /// </summary>
         public bool StartCollapsed { get; private set; }
 
         /// <summary>
-        ///     Sets <see cref="Title" />.
-        ///     设置 <see cref="Title" />。
+        ///     <para xml:lang="en">Sets the localized section title.</para>
+        ///     <para xml:lang="zh-CN">设置本地化节标题。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithTitle(ModSettingsText title)
         {
@@ -369,8 +417,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets <see cref="Description" />.
-        ///     设置 <see cref="Description" />。
+        ///     <para xml:lang="en">Sets the localized section description.</para>
+        ///     <para xml:lang="zh-CN">设置本地化节说明。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithDescription(ModSettingsText description)
         {
@@ -379,8 +427,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Marks the section collapsible; optionally starts collapsed.
-        ///     将该 section 标记为可折叠；可选地初始为折叠状态。
+        ///     <para xml:lang="en">Makes the section collapsible and optionally starts it collapsed.</para>
+        ///     <para xml:lang="zh-CN">使此节可折叠，并可选择让其初始处于折叠状态。</para>
         /// </summary>
         public ModSettingsSectionBuilder Collapsible(bool startCollapsed = false)
         {
@@ -390,8 +438,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Hides the section (and its sidebar shortcut) while <paramref name="predicate" /> is false.
-        ///     当 <paramref name="predicate" /> 为 false 时隐藏此 section（及其侧边栏快捷入口）。
+        ///     <para xml:lang="en">
+        ///         Sets a predicate whose false result hides the section and its sidebar shortcut.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置可见性谓词；结果为 false 时隐藏此节及其侧边栏快捷入口。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithVisibleWhen(Func<bool> predicate)
         {
@@ -401,8 +451,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Disables the section (dimmed, non-interactive) while <paramref name="predicate" /> is false.
-        ///     当 <paramref name="predicate" /> 为 false 时禁用此 section（变暗且不可交互）。
+        ///     <para xml:lang="en">
+        ///         Sets a predicate whose false result dims the section and disables interaction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置启用状态谓词；结果为 false 时节会变暗且不可交互。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithEnabledWhen(Func<bool> predicate)
         {
@@ -412,8 +464,11 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Limits where this section is shown. Defaults to all host surfaces.
-        ///     限制此 section 显示的位置。默认用于所有宿主界面。
+        ///     <para xml:lang="en">
+        ///         Sets the host surfaces on which the section is visible. Sections are visible on all surfaces by
+        ///         default.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置此节可见的宿主界面；默认在所有宿主界面中可见。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithVisibleOnHostSurfaces(ModSettingsHostSurface surfaces)
         {
@@ -422,8 +477,11 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Host surfaces where this section’s value controls are read-only (OR’d with the owning page mask).
-        ///     此 section 的值控件在哪些宿主界面中为只读（与所属页面掩码按 OR 合并）。
+        ///     <para xml:lang="en">
+        ///         Sets the host surfaces on which this section's value controls are read-only. This mask is combined
+        ///         with the owning page's mask.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置此节数值控件处于只读状态的宿主界面；该掩码会与所属页面的掩码合并。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithReadOnlyOnHostSurfaces(ModSettingsHostSurface surfaces)
         {
@@ -432,8 +490,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Restricts which chrome menu actions are exposed for the section itself.
-        ///     限制该 section 自身暴露哪些 chrome 菜单动作。
+        ///     <para xml:lang="en">Sets the context-menu actions exposed for the section itself.</para>
+        ///     <para xml:lang="zh-CN">设置节自身上下文菜单公开的操作。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithMenuCapabilities(ModSettingsMenuCapabilities capabilities)
         {
@@ -442,8 +500,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a non-interactive header row.
-        ///     添加非交互式标题行。
+        ///     <para xml:lang="en">Adds a non-interactive heading row.</para>
+        ///     <para xml:lang="zh-CN">添加不带交互控件的标题行。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddHeader(
             string id,
@@ -455,8 +513,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds read-only paragraph text with optional max height for scrolling.
-        ///     添加只读段落文本，并可指定用于滚动的最大高度。
+        ///     <para xml:lang="en">
+        ///         Adds a read-only rich-text paragraph with an optional maximum body height for scrolling.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">添加只读富文本段落，并可指定启用滚动的正文最大高度。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddParagraph(
             string id,
@@ -469,8 +529,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a read-only information card with title, optional subtitle, and body text.
-        ///     添加只读信息卡，包含标题、可选副标题和正文文本。
+        ///     <para xml:lang="en">Adds a read-only information card with a title, optional subtitle, and rich-text body.</para>
+        ///     <para xml:lang="zh-CN">添加包含标题、可选副标题及富文本正文的只读信息卡。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddInfoCard(
             string id,
@@ -483,8 +543,11 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a read-only runtime hotkey summary row with left text and right binding chips.
-        ///     添加只读运行时热键摘要行，左侧为文本，右侧为绑定 chip。
+        ///     <para xml:lang="en">
+        ///         Adds a read-only runtime hotkey summary with descriptive text on the left and binding labels on the
+        ///         right.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">添加只读的运行时热键摘要，左侧显示说明文本，右侧显示绑定标签。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddRuntimeHotkeySummary(
             string id,
@@ -498,8 +561,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a preview image resolved by <paramref name="textureProvider" />.
-        ///     添加由 <paramref name="textureProvider" /> 解析的预览图像。
+        ///     <para xml:lang="en">Adds an image preview resolved from <paramref name="textureProvider" /> when created.</para>
+        ///     <para xml:lang="zh-CN">添加创建时通过 <paramref name="textureProvider" /> 解析的图像预览。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddImage(
             string id,
@@ -509,15 +572,23 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description = null)
         {
             ArgumentNullException.ThrowIfNull(textureProvider);
+            if (!float.IsFinite(previewHeight) || previewHeight <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(previewHeight),
+                    "Image previewHeight must be finite and > 0.");
+
             AddEntry(id, new ImageModSettingsEntryDefinition(id, label, textureProvider, previewHeight, description));
             return this;
         }
 
         /// <summary>
-        ///     Adds an editable list bound to <paramref name="binding" /> with per-row editor from
-        ///     <paramref name="itemEditorFactory" /> or defaults.
-        ///     添加绑定到 <paramref name="binding" /> 的可编辑列表，每行编辑器来自
-        ///     <paramref name="itemEditorFactory" /> 或默认实现。
+        ///     <para xml:lang="en">
+        ///         Adds an editable list backed by <paramref name="binding" />, using
+        ///         <paramref name="itemEditorFactory" /> for each item when provided.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加由 <paramref name="binding" /> 支持的可编辑列表；提供 <paramref name="itemEditorFactory" />
+        ///         时使用该工厂创建各列表项编辑器。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder AddList<TItem>(
             string id,
@@ -548,11 +619,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds an editable list bound to <paramref name="binding" /> with optional collapsible item cards and
-        ///     compact header accessories.
-        ///     compact header accessories.
-        ///     添加绑定到 <paramref name="binding" /> 的可编辑列表，支持可选的可折叠条目卡和
-        ///     紧凑标题附件。
+        ///     <para xml:lang="en">
+        ///         Adds an editable list backed by <paramref name="binding" />, with optional collapsible item cards and
+        ///         compact controls in each item header.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加由 <paramref name="binding" /> 支持的可编辑列表，并可启用可折叠列表项卡片及标题栏紧凑控件。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder AddList<TItem>(
             string id,
@@ -589,8 +662,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a boolean toggle.
-        ///     添加布尔 toggle。
+        ///     <para xml:lang="en">Adds a boolean toggle.</para>
+        ///     <para xml:lang="zh-CN">添加布尔开关。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddToggle(
             string id,
@@ -604,8 +677,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds an integer range slider.
-        ///     添加整数范围 slider。
+        ///     <para xml:lang="en">Adds an integer slider over an inclusive range with a positive step.</para>
+        ///     <para xml:lang="zh-CN">添加在闭区间内按正步长调整数值的整数滑块。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddIntSlider(
             string id,
@@ -636,8 +709,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a floating-point range slider (<see cref="double" /> value domain).
-        ///     添加浮点范围 slider（<see cref="double" /> 值域）。
+        ///     <para xml:lang="en">
+        ///         Adds a <see cref="double" /> slider over a finite inclusive range with a finite positive step.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">添加在有限闭区间内按有限正步长调整数值的 <see cref="double" /> 滑块。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddSlider(
             string id,
@@ -649,11 +724,17 @@ namespace STS2RitsuLib.Settings
             Func<double, string>? valueFormatter = null,
             ModSettingsText? description = null)
         {
+            if (!double.IsFinite(minValue))
+                throw new ArgumentOutOfRangeException(nameof(minValue), "Slider minValue must be finite.");
+
+            if (!double.IsFinite(maxValue))
+                throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be finite.");
+
             if (maxValue < minValue)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be >= minValue.");
 
-            if (step <= 0d)
-                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be > 0.");
+            if (!double.IsFinite(step) || step <= 0d)
+                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be finite and > 0.");
 
             AddEntry(id, new SliderModSettingsEntryDefinition(
                 id,
@@ -667,15 +748,7 @@ namespace STS2RitsuLib.Settings
             return this;
         }
 
-        /// <summary>
-        ///     Legacy <see cref="float" /> overload for binary compatibility; uses a dedicated float slider entry (not
-        ///     the <see cref="double" /> control path) to avoid float/double conversion feedback loops.
-        ///     用于二进制兼容性的旧版 <see cref="float" /> 重载；使用专用 float slider 条目（不走
-        ///     <see cref="double" /> 控件路径），以避免 float/double 转换反馈循环。
-        /// </summary>
-        [Obsolete(
-            "Prefer AddSlider with IModSettingsValueBinding<double> and double range parameters. This overload exists only for compatibility with mods compiled against pre-double slider APIs.")]
-        public ModSettingsSectionBuilder AddSlider(
+        internal ModSettingsSectionBuilder AddFloatSlider(
             string id,
             ModSettingsText label,
             IModSettingsValueBinding<float> binding,
@@ -686,11 +759,17 @@ namespace STS2RitsuLib.Settings
             ModSettingsText? description = null)
         {
             ArgumentNullException.ThrowIfNull(binding);
+            if (!float.IsFinite(minValue))
+                throw new ArgumentOutOfRangeException(nameof(minValue), "Slider minValue must be finite.");
+
+            if (!float.IsFinite(maxValue))
+                throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be finite.");
+
             if (maxValue < minValue)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Slider maxValue must be >= minValue.");
 
-            if (step <= 0f)
-                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be > 0.");
+            if (!float.IsFinite(step) || step <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(step), "Slider step must be finite and > 0.");
 
             AddEntry(id, new FloatSliderModSettingsEntryDefinition(
                 id,
@@ -705,8 +784,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a fixed set of choices (stepper, dropdown, etc. per <paramref name="presentation" />).
-        ///     添加固定选项集（按 <paramref name="presentation" /> 使用 stepper、dropdown 等）。
+        ///     <para xml:lang="en">
+        ///         Adds a non-empty fixed option set using the specified <paramref name="presentation" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用指定的 <paramref name="presentation" /> 添加非空的固定选项集。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddChoice<TValue>(
             string id,
@@ -732,33 +813,42 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds choices that are re-evaluated on UI refresh and immediately before a dropdown opens. An empty
-        ///     result temporarily disables the control without changing the bound value.
-        ///     添加会在 UI 刷新及下拉列表展开前重新计算的选项；空结果会暂时禁用控件，但不会更改绑定值。
+        ///     <para xml:lang="en">
+        ///         Adds options that are re-evaluated on settings UI refresh and immediately before a drop-down list
+        ///         opens. An empty result temporarily disables the control without changing the bound value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加在设置界面刷新及下拉列表展开前重新计算的选项；空结果会暂时禁用控件，但不会更改绑定值。
+        ///     </para>
         /// </summary>
         /// <param name="id">
-        ///     Stable entry id within the section.
-        ///     Section 内稳定的条目 id。
+        ///     <para xml:lang="en">The stable entry ID within the section.</para>
+        ///     <para xml:lang="zh-CN">条目在节内的稳定 ID。</para>
         /// </param>
         /// <param name="label">
-        ///     Visible row label.
-        ///     可见行标签。
+        ///     <para xml:lang="en">The visible row label.</para>
+        ///     <para xml:lang="zh-CN">可见的行标签。</para>
         /// </param>
         /// <param name="binding">
-        ///     Backing value binding.
-        ///     后端值绑定。
+        ///     <para xml:lang="en">The binding that stores the selected value.</para>
+        ///     <para xml:lang="zh-CN">存储所选值的绑定。</para>
         /// </param>
         /// <param name="optionsProvider">
-        ///     Provider invoked when the control is created, on matching UI refresh passes, and before dropdown open.
-        ///     控件创建、匹配的 UI 刷新阶段及下拉列表展开前调用的选项提供器。
+        ///     <para xml:lang="en">
+        ///         The provider invoked when the entry is added, when the control is created, on UI refresh, and before
+        ///         a drop-down list opens.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加条目、创建控件、界面刷新以及下拉列表展开前调用的选项提供器。
+        ///     </para>
         /// </param>
         /// <param name="description">
-        ///     Optional hover description.
-        ///     可选悬停说明。
+        ///     <para xml:lang="en">The optional secondary description.</para>
+        ///     <para xml:lang="zh-CN">可选的次级说明。</para>
         /// </param>
         /// <param name="presentation">
-        ///     Choice presentation style.
-        ///     选项呈现样式。
+        ///     <para xml:lang="en">The visual presentation for the choices.</para>
+        ///     <para xml:lang="zh-CN">选项使用的视觉呈现方式。</para>
         /// </param>
         public ModSettingsSectionBuilder AddDynamicChoice<TValue>(
             string id,
@@ -769,7 +859,9 @@ namespace STS2RitsuLib.Settings
             ModSettingsChoicePresentation presentation = ModSettingsChoicePresentation.Stepper)
         {
             ArgumentNullException.ThrowIfNull(optionsProvider);
-            var options = optionsProvider();
+            var options = optionsProvider()
+                          ?? throw new InvalidOperationException(
+                              $"Dynamic choice setting '{id}' returned a null option list.");
 
             var entry = new ChoiceModSettingsEntryDefinition<TValue>(
                 id,
@@ -786,8 +878,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a choice control for enum <typeparamref name="TEnum" /> with optional per-value labels.
-        ///     为 enum <typeparamref name="TEnum" /> 添加 choice 控件，可为每个值指定可选标签。
+        ///     <para xml:lang="en">
+        ///         Adds a fixed choice control containing every value of <typeparamref name="TEnum" />, with optional
+        ///         custom labels.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加包含 <typeparamref name="TEnum" /> 所有枚举值的固定选项控件，并可指定自定义标签。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder AddEnumChoice<TEnum>(
             string id,
@@ -811,12 +908,32 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a color picker bound to a string (serialized color). 保留旧签名以维持 ABI 兼容。
+        ///     <para xml:lang="en">
+        ///         Adds the binary-compatible serialized-string color picker with alpha editing enabled and intensity
+        ///         editing disabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加保持二进制兼容的序列化字符串颜色选择器；启用透明度编辑并禁用强度编辑。
+        ///     </para>
         /// </summary>
-        /// <param name="id">Stable entry id within the section.</param>
-        /// <param name="label">Row label.</param>
-        /// <param name="binding">Backing string binding (hex preferred; see <see cref="ModSettingsColorControl" />).</param>
-        /// <param name="description">Optional description body.</param>
+        /// <param name="id">
+        ///     <para xml:lang="en">The stable entry ID within the section.</para>
+        ///     <para xml:lang="zh-CN">条目在节内的稳定 ID。</para>
+        /// </param>
+        /// <param name="label">
+        ///     <para xml:lang="en">The visible row label.</para>
+        ///     <para xml:lang="zh-CN">可见的行标签。</para>
+        /// </param>
+        /// <param name="binding">
+        ///     <para xml:lang="en">
+        ///         The binding that stores the serialized color; hexadecimal strings are preferred.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">存储序列化颜色的绑定；建议使用十六进制字符串。</para>
+        /// </param>
+        /// <param name="description">
+        ///     <para xml:lang="en">The optional secondary description.</para>
+        ///     <para xml:lang="zh-CN">可选的次级说明。</para>
+        /// </param>
         public ModSettingsSectionBuilder AddColor(
             string id,
             ModSettingsText label,
@@ -827,33 +944,41 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a color picker bound to a string (serialized color), with picker chrome options.
-        ///     添加绑定到字符串（序列化颜色）的颜色选择器，并带有选择器 chrome 选项。
+        ///     <para xml:lang="en">
+        ///         Adds a serialized-string color picker with explicit alpha and intensity editing options.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">添加由序列化字符串支持的颜色选择器，并明确指定透明度及强度编辑选项。</para>
         /// </summary>
         /// <param name="id">
-        ///     Stable entry id within the section.
-        ///     section 内稳定的条目 id。
+        ///     <para xml:lang="en">The stable entry ID within the section.</para>
+        ///     <para xml:lang="zh-CN">条目在节内的稳定 ID。</para>
         /// </param>
         /// <param name="label">
-        ///     Row label.
-        ///     行标签。
+        ///     <para xml:lang="en">The visible row label.</para>
+        ///     <para xml:lang="zh-CN">可见的行标签。</para>
         /// </param>
         /// <param name="binding">
-        ///     Backing string binding (hex preferred; see <see cref="ModSettingsColorControl" />).
+        ///     <para xml:lang="en">
+        ///         The binding that stores the serialized color; hexadecimal strings are preferred.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">存储序列化颜色的绑定；建议使用十六进制字符串。</para>
         /// </param>
         /// <param name="description">
-        ///     Optional description body.
-        ///     可选 description body.
+        ///     <para xml:lang="en">The optional secondary description.</para>
+        ///     <para xml:lang="zh-CN">可选的次级说明。</para>
         /// </param>
         /// <param name="editAlpha">
-        ///     Whether the picker allows editing alpha.
-        ///     取色器是否允许编辑 alpha。
+        ///     <para xml:lang="en">Whether the picker allows editing the alpha channel.</para>
+        ///     <para xml:lang="zh-CN">颜色选择器是否允许编辑透明度通道。</para>
         /// </param>
         /// <param name="editIntensity">
-        ///     Whether the picker allows intensity / HDR-style values (Godot
-        ///     <c>ColorPicker.EditIntensity</c>).
-        ///     选择器是否允许 intensity / HDR 风格值（Godot
-        ///     <c>ColorPicker.EditIntensity</c>）。
+        ///     <para xml:lang="en">
+        ///         Whether the picker enables HDR intensity editing through Godot
+        ///         <c>ColorPicker.EditIntensity</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         颜色选择器是否通过 Godot <c>ColorPicker.EditIntensity</c> 启用 HDR 强度编辑。
+        ///     </para>
         /// </param>
         public ModSettingsSectionBuilder AddColor(
             string id,
@@ -869,8 +994,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a single-line string field.
-        ///     添加单行字符串字段。
+        ///     <para xml:lang="en">Adds a single-line text field.</para>
+        ///     <para xml:lang="zh-CN">添加单行文本字段。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddString(
             string id,
@@ -884,10 +1009,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a single-line string field with optional visual validation (invalid text shows error chrome; commits
-        ///     are not blocked).
-        ///     添加单行字符串字段，并可选进行视觉校验（无效文本显示错误 chrome；提交
-        ///     不会被阻止）。
+        ///     <para xml:lang="en">
+        ///         Adds a single-line text field with optional invalid-state styling. A false validation result does
+        ///         not block committing the value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加可提供无效状态样式的单行文本字段；校验结果为 false 不会阻止提交该值。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder AddString(
             string id,
@@ -924,8 +1052,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a multiline string field.
-        ///     添加多行字符串字段。
+        ///     <para xml:lang="en">Adds a multiline text field.</para>
+        ///     <para xml:lang="zh-CN">添加多行文本字段。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddMultilineString(
             string id,
@@ -944,8 +1072,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a key binding capture row.
-        ///     添加按键绑定捕获行。
+        ///     <para xml:lang="en">Adds a keyboard binding capture row.</para>
+        ///     <para xml:lang="zh-CN">添加键盘绑定捕获行。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddKeyBinding(
             string id,
@@ -966,8 +1094,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds an input binding capture row that can record keyboard shortcuts and Godot/STS2 action bindings.
-        ///     添加输入绑定捕获行，可记录键盘快捷键和 Godot/STS2 action 绑定。
+        ///     <para xml:lang="en">
+        ///         Adds an input binding capture row that can record keyboard shortcuts and, when enabled, Godot or
+        ///         Slay the Spire 2 input actions.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加输入绑定捕获行，可记录键盘快捷键，并可选择允许记录 Godot 或《杀戮尖塔 2》输入动作。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder AddInputBinding(
             string id,
@@ -989,8 +1122,14 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a multi-key binding capture row. This path is native-only and must be explicitly opted into.
-        ///     添加多按键绑定捕获行。此路径仅限原生，必须显式选择启用。
+        ///     <para xml:lang="en">
+        ///         Adds a keyboard binding capture row that stores multiple bindings. Callers must explicitly opt in
+        ///         by passing <paramref name="allowMultipleBindings" /> as true.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加可存储多个绑定的键盘绑定捕获行；调用方必须将 <paramref name="allowMultipleBindings" />
+        ///         显式设为 true。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder AddKeyBinding(
             string id,
@@ -1017,9 +1156,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a button that runs <paramref name="action" /> (no persisted value).
-        ///     添加运行 <paramref name="action" /> 的按钮（无持久化值）。
-        ///     添加运行 <c>action</c> 的按钮（无持久化值）。
+        ///     <para xml:lang="en">
+        ///         Adds a button that invokes <paramref name="action" /> without storing a setting value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">添加调用 <paramref name="action" /> 且不存储设置值的按钮。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddButton(
             string id,
@@ -1035,8 +1175,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a button that runs <paramref name="action" /> with a settings UI host (for refresh after deferred work).
-        ///     添加使用设置 UI host 运行 <paramref name="action" /> 的按钮（用于延迟工作后的刷新）。
+        ///     <para xml:lang="en">
+        ///         Adds a button whose <paramref name="action" /> receives the settings UI host, allowing it to request
+        ///         a refresh after deferred work.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加将设置界面宿主传给 <paramref name="action" /> 的按钮，以便回调在延迟工作完成后请求刷新。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder AddButton(
             string id,
@@ -1053,8 +1198,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds navigation to another registered page <paramref name="targetPageId" />.
-        ///     添加到另一个已注册页面 <paramref name="targetPageId" /> 的导航。
+        ///     <para xml:lang="en">Adds a row that navigates to the registered page <paramref name="targetPageId" />.</para>
+        ///     <para xml:lang="zh-CN">添加导航到已注册页面 <paramref name="targetPageId" /> 的行。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddSubpage(
             string id,
@@ -1074,8 +1219,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Adds a custom row built by <paramref name="controlFactory" />.
-        ///     添加由 <paramref name="controlFactory" /> 构建的自定义行。
+        ///     <para xml:lang="en">Adds a custom row created by <paramref name="controlFactory" />.</para>
+        ///     <para xml:lang="zh-CN">添加由 <paramref name="controlFactory" /> 创建的自定义行。</para>
         /// </summary>
         public ModSettingsSectionBuilder AddCustom(
             string id,
@@ -1099,8 +1244,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Overrides the chrome menu capabilities for one entry in this section.
-        ///     覆盖此 section 中某个条目的 chrome 菜单能力。
+        ///     <para xml:lang="en">Sets the context-menu actions exposed for one previously added entry.</para>
+        ///     <para xml:lang="zh-CN">设置先前已添加条目所公开的上下文菜单操作。</para>
         /// </summary>
         public ModSettingsSectionBuilder ConfigureEntryMenu(string id, ModSettingsMenuCapabilities capabilities)
         {
@@ -1113,8 +1258,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Host surfaces where one entry's interactive controls are read-only.
-        ///     配置某个条目的交互控件在哪些宿主界面中只读。
+        ///     <para xml:lang="en">
+        ///         Sets the host surfaces on which one previously added entry's interactive controls are read-only.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">设置先前已添加条目的交互控件处于只读状态的宿主界面。</para>
         /// </summary>
         public ModSettingsSectionBuilder WithEntryReadOnlyOnHostSurfaces(string id,
             ModSettingsHostSurface surfaces)
@@ -1128,10 +1275,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Hides one entry while <paramref name="predicate" /> is false. This applies to every entry kind and is
-        ///     re-evaluated whenever the settings UI refreshes.
-        ///     当 <paramref name="predicate" /> 为 false 时隐藏某个条目。此方法适用于所有条目类型，并会在
-        ///     设置 UI 刷新时重新计算。
+        ///     <para xml:lang="en">
+        ///         Sets a visibility predicate for one previously added entry. It applies to every entry type and is
+        ///         re-evaluated on settings UI refresh.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为先前已添加的条目设置可见性谓词；该谓词适用于所有条目类型，并会在设置界面刷新时重新求值。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder WithEntryVisibleWhen(string id, Func<bool> predicate)
         {
@@ -1146,8 +1296,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Disables one entry (dimmed, non-interactive) while <paramref name="predicate" /> is false.
-        ///     当 <paramref name="predicate" /> 为 false 时禁用某个条目（变暗且不可交互）。
+        ///     <para xml:lang="en">
+        ///         Sets an enabled-state predicate for one previously added entry. A false result dims the row and
+        ///         disables interaction.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为先前已添加的条目设置启用状态谓词；结果为 false 时该行会变暗且不可交互。
+        ///     </para>
         /// </summary>
         public ModSettingsSectionBuilder WithEntryEnabledWhen(string id, Func<bool> predicate)
         {

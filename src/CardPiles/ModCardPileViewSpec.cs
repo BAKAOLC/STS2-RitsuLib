@@ -4,10 +4,8 @@ using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Optional capabilities for the default mod card-pile screen. Leave null on
-    ///     <see cref="ModCardPileSpec.View" /> to preserve legacy vanilla <c>NCardPileScreen</c> behavior.
-    ///     默认 mod 牌堆 screen 的可选能力。<see cref="ModCardPileSpec.View" /> 保持 null 时保留旧的
-    ///     原版 <c>NCardPileScreen</c> 行为。
+    ///     <para xml:lang="en">Configures optional capabilities and styling for the default pile screen.</para>
+    ///     <para xml:lang="zh-CN">配置默认牌堆界面的可选能力与样式。</para>
     /// </summary>
     public sealed record ModCardPileViewSpec
     {
@@ -20,8 +18,13 @@ namespace STS2RitsuLib.CardPiles
         ];
 
         /// <summary>
-        ///     Deck-like option set: card inspection, upgrade preview toggle, and obtained/type/cost/alphabet sorting.
-        ///     类似牌组查看的选项：卡牌检查、升级预览开关，以及获得顺序/类型/费用/字母排序。
+        ///     <para xml:lang="en">
+        ///         Gets a specification that enables card inspection, upgrade previews, and the standard
+        ///         deck-view sorting options.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取启用卡牌检查、升级预览与标准牌组查看排序选项的规范。
+        ///     </para>
         /// </summary>
         public static ModCardPileViewSpec DeckLike { get; } = new()
         {
@@ -31,108 +34,136 @@ namespace STS2RitsuLib.CardPiles
         };
 
         /// <summary>
-        ///     When true, clicking a grid card opens the vanilla card inspection screen.
-        ///     为 true 时，点击网格中的卡牌会打开原版卡牌检查界面。
+        ///     <para xml:lang="en">Gets whether clicking a grid card opens the vanilla inspection screen.</para>
+        ///     <para xml:lang="zh-CN">获取点击网格卡牌时是否打开原版卡牌检查界面。</para>
         /// </summary>
         public bool EnableCardInspect { get; init; }
 
         /// <summary>
-        ///     When true, adds a view-upgrades tickbox and forwards its state to <c>NCardGrid.IsShowingUpgrades</c>.
-        ///     为 true 时，添加查看升级版开关，并将状态转发给 <c>NCardGrid.IsShowingUpgrades</c>。
+        ///     <para xml:lang="en">Gets whether the screen includes an upgrade-preview toggle.</para>
+        ///     <para xml:lang="zh-CN">获取界面是否包含升级预览开关。</para>
         /// </summary>
         public bool EnableUpgradePreviewToggle { get; init; }
 
         /// <summary>
-        ///     When true, adds a deck-view-style sort bar. Sorting is visual only; it does not mutate pile order.
-        ///     为 true 时，添加类似牌组查看的排序栏。排序只影响显示，不改变牌堆顺序。
+        ///     <para xml:lang="en">
+        ///         Gets whether the screen includes a deck-view sort bar. Sorting does not change pile order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取界面是否包含牌组查看样式的排序栏。排序不会改变牌堆顺序。
+        ///     </para>
         /// </summary>
         public bool EnableSortBar { get; init; }
 
         /// <summary>
-        ///     Sort buttons shown when <see cref="EnableSortBar" /> is true. Null or empty uses the deck-like
-        ///     obtained/type/cost/alphabet set.
-        ///     <see cref="EnableSortBar" /> 为 true 时显示的排序按钮。null 或空集合使用类似牌组查看的
-        ///     获得顺序/类型/费用/字母集合。
+        ///     <para xml:lang="en">
+        ///         Gets the sort buttons shown by the sort bar. <see langword="null" /> or an empty list uses
+        ///         obtained, type, cost, and alphabetical sorting.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取排序栏显示的排序按钮。<see langword="null" /> 或空列表会使用获得顺序、类型、费用与
+        ///         字母顺序排序。
+        ///     </para>
         /// </summary>
         public IReadOnlyList<ModCardPileSortOption>? SortOptions { get; init; }
 
         /// <summary>
-        ///     Initial sorting priority used by the optional view. Null uses ascending pile order.
-        ///     可选查看界面的初始排序优先级。null 使用牌堆正序。
+        ///     <para xml:lang="en">
+        ///         Gets the initial sorting priorities. <see langword="null" /> or an empty list uses ascending
+        ///         pile order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取初始排序优先级。<see langword="null" /> 或空列表会使用牌堆正序。
+        ///     </para>
         /// </summary>
         public IReadOnlyList<SortingOrders>? DefaultSorting { get; init; }
 
         /// <summary>
-        ///     Optional texture path for the sort/upgrade toolbar background. Null uses the vanilla deck-view
-        ///     tab texture.
-        ///     排序/升级工具栏背景的可选贴图路径。null 使用原版牌组查看的 tab 贴图。
+        ///     <para xml:lang="en">
+        ///         Gets the optional toolbar background texture path. <see langword="null" /> uses the vanilla
+        ///         deck-view tab texture.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取工具栏背景的可选贴图路径。<see langword="null" /> 时使用原版牌组查看标签贴图。
+        ///     </para>
         /// </summary>
         public string? ToolbarBackgroundTexturePath { get; init; }
 
         /// <summary>
-        ///     Optional material applied to the toolbar background texture.
-        ///     应用到工具栏背景贴图上的可选材质。
+        ///     <para xml:lang="en">Gets the optional material applied to the toolbar background.</para>
+        ///     <para xml:lang="zh-CN">获取应用于工具栏背景的可选材质。</para>
         /// </summary>
         public Material? ToolbarBackgroundMaterial { get; init; }
 
         /// <summary>
-        ///     Optional runtime material provider for the toolbar background. When non-null, it takes
-        ///     precedence over <see cref="ToolbarBackgroundMaterial" />.
-        ///     工具栏背景的可选运行时材质 provider。非 null 时优先于 <see cref="ToolbarBackgroundMaterial" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional runtime provider for the toolbar background material. Its result takes
+        ///         precedence over <see cref="ToolbarBackgroundMaterial" /> when non-null.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取工具栏背景材质的可选运行时提供器。其结果非空时优先于
+        ///         <see cref="ToolbarBackgroundMaterial" />。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileViewStyleContext, Material?>? ToolbarBackgroundMaterialProvider { get; init; }
 
         /// <summary>
-        ///     Optional HSV shader material used to hue sort buttons, matching vanilla
-        ///     <c>NCardViewSortButton.SetHue</c> semantics.
-        ///     用于给排序按钮染色的可选 HSV shader 材质，语义与原版
-        ///     <c>NCardViewSortButton.SetHue</c> 一致。
+        ///     <para xml:lang="en">Gets the optional HSV shader material used to tint sort buttons.</para>
+        ///     <para xml:lang="zh-CN">获取用于为排序按钮着色的可选 HSV 着色器材质。</para>
         /// </summary>
         public ShaderMaterial? SortButtonHueMaterial { get; init; }
 
         /// <summary>
-        ///     Optional runtime provider for the sort-button hue material. When non-null, it takes
-        ///     precedence over <see cref="SortButtonHueMaterial" />.
-        ///     排序按钮 hue 材质的可选运行时 provider。非 null 时优先于
-        ///     <see cref="SortButtonHueMaterial" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional runtime provider for the sort-button tint material. Its result takes
+        ///         precedence over <see cref="SortButtonHueMaterial" /> when non-null.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取排序按钮着色材质的可选运行时提供器。其结果非空时优先于
+        ///         <see cref="SortButtonHueMaterial" />。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileViewStyleContext, ShaderMaterial?>? SortButtonHueMaterialProvider { get; init; }
 
         /// <summary>
-        ///     When true, the optional view will not call <c>NCardViewSortButton.SetHue</c> on sort buttons.
-        ///     为 true 时，可选查看界面不会对排序按钮调用 <c>NCardViewSortButton.SetHue</c>。
+        ///     <para xml:lang="en">Gets whether automatic sort-button hue assignment is disabled.</para>
+        ///     <para xml:lang="zh-CN">获取是否禁用排序按钮的自动色相设置。</para>
         /// </summary>
         public bool DisableSortButtonHue { get; init; }
 
         /// <summary>
-        ///     Optional texture path applied to each sort button's background image.
-        ///     应用到每个排序按钮背景图的可选贴图路径。
+        ///     <para xml:lang="en">Gets the optional background texture path for each sort button.</para>
+        ///     <para xml:lang="zh-CN">获取各排序按钮的可选背景贴图路径。</para>
         /// </summary>
         public string? SortButtonBackgroundTexturePath { get; init; }
 
         /// <summary>
-        ///     Optional material applied to each sort button's background image.
-        ///     应用到每个排序按钮背景图的可选材质。
+        ///     <para xml:lang="en">Gets the optional material applied to each sort-button background.</para>
+        ///     <para xml:lang="zh-CN">获取应用于各排序按钮背景的可选材质。</para>
         /// </summary>
         public Material? SortButtonBackgroundMaterial { get; init; }
 
         /// <summary>
-        ///     Optional runtime material provider for each sort button's background image. When non-null,
-        ///     it takes precedence over <see cref="SortButtonBackgroundMaterial" />.
-        ///     每个排序按钮背景图的可选运行时材质 provider。非 null 时优先于
-        ///     <see cref="SortButtonBackgroundMaterial" />。
+        ///     <para xml:lang="en">
+        ///         Gets the optional runtime provider for each sort-button background material. Its result
+        ///         takes precedence over <see cref="SortButtonBackgroundMaterial" /> when non-null.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取各排序按钮背景材质的可选运行时提供器。其结果非空时优先于
+        ///         <see cref="SortButtonBackgroundMaterial" />。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileViewStyleContext, Material?>? SortButtonBackgroundMaterialProvider { get; init; }
 
         /// <summary>
-        ///     Optional text color for the upgrade-preview toggle label.
-        ///     升级预览开关标签的可选文字颜色。
+        ///     <para xml:lang="en">Gets the optional text color of the upgrade-preview toggle label.</para>
+        ///     <para xml:lang="zh-CN">获取升级预览开关标签的可选文字颜色。</para>
         /// </summary>
         public Color? UpgradePreviewLabelColor { get; init; }
 
         /// <summary>
-        ///     Optional outline color for the upgrade-preview toggle label.
-        ///     升级预览开关标签的可选描边颜色。
+        ///     <para xml:lang="en">Gets the optional outline color of the upgrade-preview toggle label.</para>
+        ///     <para xml:lang="zh-CN">获取升级预览开关标签的可选描边颜色。</para>
         /// </summary>
         public Color? UpgradePreviewLabelOutlineColor { get; init; }
 

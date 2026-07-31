@@ -7,7 +7,6 @@ namespace STS2RitsuLib.Ui.Toast
     {
         private Label? _bodyLabel;
         private TextureRect? _image;
-        private bool _isExiting;
         private StyleBoxFlat? _panelHover;
         private StyleBoxFlat? _panelNormal;
         private ColorRect? _progressFill;
@@ -32,20 +31,16 @@ namespace STS2RitsuLib.Ui.Toast
             BuildTree();
         }
 
-        public bool IsEntering { get; private set; }
-
         public event Action<RitsuToastEntry>? Clicked;
         public event Action<RitsuToastEntry, bool>? HoverStateChanged;
 
         public void Configure(RitsuToastRequest request, RitsuToastVisualStyle style)
         {
-            MouseDefaultCursorShape = CursorShape.PointingHand;
             _progressVisible = false;
             _progressFraction = 1f;
             CustomMinimumSize = Vector2.Zero;
             Size = Vector2.Zero;
             UpdateRequest(request, style);
-            _isExiting = false;
             Modulate = new(Modulate.R, Modulate.G, Modulate.B, 0f);
             Scale = Vector2.One;
         }
@@ -53,6 +48,9 @@ namespace STS2RitsuLib.Ui.Toast
         public void UpdateRequest(RitsuToastRequest request, RitsuToastVisualStyle style)
         {
             _request = request;
+            MouseDefaultCursorShape = request.DismissOnClick || request.OnClick != null
+                ? CursorShape.PointingHand
+                : CursorShape.Arrow;
             ApplyContent();
             ApplyStyle(style);
             ResetSize();
@@ -61,7 +59,7 @@ namespace STS2RitsuLib.Ui.Toast
         public void SetProgress(bool visible, float fraction)
         {
             _progressVisible = visible;
-            _progressFraction = Mathf.Clamp(fraction, 0f, 1f);
+            _progressFraction = float.IsFinite(fraction) ? Mathf.Clamp(fraction, 0f, 1f) : 0f;
             ApplyProgressVisual();
         }
 
@@ -159,42 +157,8 @@ namespace STS2RitsuLib.Ui.Toast
             Position = target;
         }
 
-        public void PlayEnter(RitsuToastAnimationPreset preset, Vector2 axisHint, Vector2 targetPosition,
-            float duration,
-            float slideDistance,
-            float enterScale)
-        {
-            IsEntering = true;
-            Modulate = new(Modulate.R, Modulate.G, Modulate.B, 0f);
-            Scale = Vector2.One;
-            Position = targetPosition;
-
-            switch (preset)
-            {
-                case RitsuToastAnimationPreset.FadeScale:
-                    Scale = new(enterScale, enterScale);
-                    break;
-                case RitsuToastAnimationPreset.FadeSlide:
-                    Position = targetPosition + axisHint * slideDistance;
-                    break;
-            }
-        }
-
-        public void PlayExit(RitsuToastAnimationPreset preset, Vector2 axisHint, float duration, float slideDistance,
-            Action onDone)
-        {
-            if (_isExiting)
-                return;
-
-            _isExiting = true;
-            Modulate = new(Modulate.R, Modulate.G, Modulate.B, 0f);
-            onDone();
-        }
-
         public void ResetForPool()
         {
-            IsEntering = false;
-            _isExiting = false;
             Modulate = new(Modulate.R, Modulate.G, Modulate.B);
             Scale = Vector2.One;
             Position = Vector2.Zero;

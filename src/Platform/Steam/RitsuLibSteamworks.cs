@@ -5,6 +5,17 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Provides optional, reflection-based access to the game-loaded Steamworks assembly for remote-storage
+    ///         and lobby-member operations. Calls report unavailable bindings or invocation failures through their
+    ///         Boolean result instead of requiring a direct Steamworks.NET reference.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为远程存储和大厅成员操作提供对游戏已加载 Steamworks 程序集的可选反射访问。调用通过布尔结果报告绑定
+    ///         不可用或调用失败，而不要求直接引用 Steamworks.NET。
+    ///     </para>
+    /// </summary>
     internal static class RitsuLibSteamworks
     {
         private static readonly Lazy<Bindings?> LazyBindings = new(CreateBindings);

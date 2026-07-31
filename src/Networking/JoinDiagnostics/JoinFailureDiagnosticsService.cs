@@ -157,8 +157,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
                     new(T("row.modelDbHash", "ModelDb hash"), host.ModelDbHash.ToString(),
                         local.ModelDbHash.ToString()),
-                    ..BuildModelDbHashModeDetailRows(host, local),
-                    ..BuildSavedPropertyNetIdSortRows(host, local),
+                    .. BuildModelDbHashModeDetailRows(host, local),
+                    .. BuildSavedPropertyNetIdSortRows(host, local),
                 ]));
         }
 
@@ -212,10 +212,10 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             bool suppressOrderIssueForModelDbMismatch,
             bool deterministicModelDbHash)
         {
-            var hostByKey = hostMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
-            var localByKey = localMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
-            var missingOnLocal = hostMods.Where(m => !localByKey.ContainsKey(m.Key)).ToList();
-            var missingOnHost = localMods.Where(m => !hostByKey.ContainsKey(m.Key)).ToList();
+            var hostKeys = hostMods.Select(m => m.Key).ToHashSet(StringComparer.Ordinal);
+            var localKeys = localMods.Select(m => m.Key).ToHashSet(StringComparer.Ordinal);
+            var missingOnLocal = hostMods.Where(m => !localKeys.Contains(m.Key)).ToList();
+            var missingOnHost = localMods.Where(m => !hostKeys.Contains(m.Key)).ToList();
             var versionRows = ExtractVersionRows(missingOnLocal, missingOnHost);
 
             if (missingOnLocal.Count > 0 || missingOnHost.Count > 0 || versionRows.Count > 0)
@@ -364,8 +364,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     new(T("row.modelDbHashMode", "ModelDb hash mode"),
                         FormatModelDbHashMode(host.ModelDbHashUsesDeterministicCache),
                         FormatModelDbHashMode(local.ModelDbHashUsesDeterministicCache)),
-                    ..BuildModelDbHashModeDetailRows(host, local),
-                    ..BuildSavedPropertyNetIdSortRows(host, local),
+                    .. BuildModelDbHashModeDetailRows(host, local),
+                    .. BuildSavedPropertyNetIdSortRows(host, local),
                 ]));
         }
 
@@ -675,10 +675,10 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 return;
             }
 
-            var localByGameplayKey = local.GameplayMods.ToDictionary(m => m.Key, StringComparer.Ordinal);
+            var localGameplayKeys = local.GameplayMods.Select(m => m.Key).ToHashSet(StringComparer.Ordinal);
             foreach (var mod in host.GameplayMods)
             {
-                if (localByGameplayKey.ContainsKey(mod.Key) ||
+                if (localGameplayKeys.Contains(mod.Key) ||
                     mod.WorkshopItemId is not { } workshopItemId ||
                     !addedWorkshopItemIds.Add(workshopItemId))
                     continue;

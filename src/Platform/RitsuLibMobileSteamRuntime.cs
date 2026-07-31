@@ -1,18 +1,29 @@
 namespace STS2RitsuLib.Platform
 {
     /// <summary>
-    ///     Mobile launchers run the PC assembly with a no-op Steam native stub and patched platform init; the session may
-    ///     appear Steam-backed while Steamworks entry points are unsafe. RitsuLib must not call Steamworks.NET or register
-    ///     Steam transport sidecar hooks on these hosts.
-    ///     移动端启动器使用带无操作 Steam native stub 和已 patch 平台 init 的 PC 程序集；会话可能
-    ///     看起来由 Steam 支持，但 Steamworks 入口点并不安全。RitsuLib 不得在这些宿主上调用 Steamworks.NET 或注册
-    ///     Steam 传输 sidecar 钩子。
+    ///     <para xml:lang="en">
+    ///         Detects mobile launchers that run the PC assembly with a no-op Steam native stub and patched platform
+    ///         initialization. Such sessions can appear Steam-backed, but Steamworks.NET entry points and Steam
+    ///         transport Sidecar hooks are unsafe.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         检测使用无操作 Steam 原生桩和已修补平台初始化来运行 PC 程序集的移动端启动器。这类会话可能显示为
+    ///         Steam 支持，但 Steamworks.NET 入口点和 Steam 传输 Sidecar 钩子均不安全。
+    ///     </para>
     /// </summary>
     internal static class RitsuLibMobileSteamRuntime
     {
+        /// <summary>
+        ///     <para xml:lang="en">Gets whether native Steam integration must be suppressed for the current mobile host.</para>
+        ///     <para xml:lang="zh-CN">获取当前移动端宿主是否必须禁用原生 Steam 集成。</para>
+        /// </summary>
         internal static bool SuppressNativeSteamIntegration =>
             OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
+        /// <summary>
+        ///     <para xml:lang="en">Logs the mobile-host Steam restrictions once startup begins.</para>
+        ///     <para xml:lang="zh-CN">在启动阶段记录移动端宿主的 Steam 功能限制。</para>
+        /// </summary>
         internal static void LogSuppressedSteamFeaturesAtStartup()
         {
             if (!SuppressNativeSteamIntegration)

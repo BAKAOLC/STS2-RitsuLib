@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Utils.Persistence.Migration;
 
 namespace STS2RitsuLib.RunData
 {
@@ -56,7 +57,7 @@ namespace STS2RitsuLib.RunData
             {
                 ImportCore(runState, entry);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[RunSavedData] Failed to import '{ModId}'::{Key}: {ex.Message}");
@@ -110,9 +111,16 @@ namespace STS2RitsuLib.RunData
             if (bag.TryGet(SlotKey, out var value) && value is T typed)
                 return typed;
 
-            var created = _defaultFactory();
+            var created = CreateDefaultValue();
             bag.Set(SlotKey, created, false);
             return created;
+        }
+
+        internal T CreateDefaultValue()
+        {
+            return _defaultFactory() ??
+                   throw new InvalidOperationException(
+                       $"RunSavedData default factory returned null: {ModId}::{Key}");
         }
 
         public bool TryGet(RunState runState, out T value)
@@ -164,8 +172,7 @@ namespace STS2RitsuLib.RunData
         protected bool TryReadData(JsonObject entry, out T value)
         {
             value = null!;
-            var schema = entry[SchemaPropertyName]?.GetValue<int>() ?? 1;
-            if (!TryMigrate(entry, schema, out var migrated))
+            if (!TryPrepareEntry(entry, out var migrated))
                 return false;
 
             var dataNode = migrated[DataPropertyName];
@@ -210,28 +217,50 @@ namespace STS2RitsuLib.RunData
             return netId.ToString();
         }
 
-        private bool TryMigrate(JsonObject entry, int schema, out JsonObject migrated)
+        protected bool TryReadPlayers(JsonObject entry, out JsonObject players)
+        {
+            if (TryPrepareEntry(entry, out var migrated) &&
+                migrated[PlayersPropertyName] is JsonObject playerObject)
+            {
+                players = playerObject;
+                return true;
+            }
+
+            players = null!;
+            return false;
+        }
+
+        private bool TryPrepareEntry(JsonObject entry, out JsonObject migrated)
         {
             migrated = entry;
+            var schema = entry[SchemaPropertyName]?.GetValue<int>() ?? 1;
             if (schema == Options.SchemaVersion)
                 return true;
 
-            if (schema > Options.SchemaVersion)
+            if (schema < 0 || schema > Options.SchemaVersion)
                 return false;
 
             if (Options.Migrations == null || Options.Migrations.Count == 0)
                 return false;
 
             migrated = entry.DeepClone().AsObject();
-            var current = schema;
-            while (current != Options.SchemaVersion)
+            var migrations = Options.Migrations
+                .OrderBy(static migration => migration.FromVersion)
+                .ThenBy(static migration => migration.ToVersion)
+                .ToList();
+            if (!MigrationManager.TryBuildShortestMigrationPath(
+                    schema,
+                    Options.SchemaVersion,
+                    migrations,
+                    out var plan))
+                return false;
+
+            foreach (var migration in plan)
             {
-                var migration = Options.Migrations.FirstOrDefault(m => m.FromVersion == current);
-                if (migration == null || !migration.Migrate(migrated))
+                if (!migration.Migrate(migrated))
                     return false;
 
-                current = migration.ToVersion;
-                migrated[SchemaPropertyName] = current;
+                migrated[SchemaPropertyName] = migration.ToVersion;
             }
 
             return true;
@@ -245,7 +274,7 @@ namespace STS2RitsuLib.RunData
                 var right = JsonSerializer.SerializeToNode(_defaultFactory(), RunSavedDataJson.Options)?.ToJsonString();
                 return string.Equals(left, right, StringComparison.Ordinal);
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return false;
             }
@@ -339,9 +368,16 @@ namespace STS2RitsuLib.RunData
             if (values.TryGetValue(netId, out var value))
                 return value;
 
-            value = _defaultFactory();
+            value = CreatePlayerDefaultValue();
             values[netId] = value;
             return value;
+        }
+
+        internal T CreatePlayerDefaultValue()
+        {
+            return _defaultFactory() ??
+                   throw new InvalidOperationException(
+                       $"RunSavedData player default factory returned null: {ModId}::{Key}");
         }
 
         public bool TryGet(RunState runState, ulong netId, out T value)
@@ -404,7 +440,7 @@ namespace STS2RitsuLib.RunData
 
         protected override void ImportCore(RunState runState, JsonObject entry)
         {
-            if (entry["players"] is not JsonObject players)
+            if (!TryReadPlayers(entry, out var players))
                 return;
 
             var values = new Dictionary<ulong, T>();
@@ -437,7 +473,7 @@ namespace STS2RitsuLib.RunData
             bool isHostNetId,
             JsonObject entry)
         {
-            if (entry["players"] is not JsonObject players ||
+            if (!TryReadPlayers(entry, out var players) ||
                 !players.TryGetPropertyValue(PlayerKey(netId), out var node) ||
                 !TryReadPlayerValue(node, out var value))
                 return;

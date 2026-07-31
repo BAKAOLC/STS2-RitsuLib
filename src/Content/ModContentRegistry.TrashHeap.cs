@@ -5,8 +5,12 @@ namespace STS2RitsuLib.Content
     public sealed partial class ModContentRegistry
     {
         /// <summary>
-        ///     Registers <typeparamref name="TCard" /> as a candidate for the Trash Heap event's Grab option.
-        ///     将 <typeparamref name="TCard" /> 注册为垃圾堆事件“拿取”选项的候选卡牌。
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TCard" /> as a candidate for the Trash Heap event's Grab option.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <typeparamref name="TCard" /> 注册为“垃圾堆”事件“拿取”选项的候选卡牌。
+        ///     </para>
         /// </summary>
         public void RegisterTrashHeapCard<TCard>()
             where TCard : CardModel
@@ -15,8 +19,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers <paramref name="cardType" /> as a candidate for the Trash Heap event's Grab option.
-        ///     将 <paramref name="cardType" /> 注册为垃圾堆事件“拿取”选项的候选卡牌。
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="cardType" /> as a candidate for the Trash Heap event's Grab option.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="cardType" /> 注册为“垃圾堆”事件“拿取”选项的候选卡牌。
+        ///     </para>
         /// </summary>
         public void RegisterTrashHeapCard(Type cardType)
         {
@@ -34,8 +42,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers <typeparamref name="TRelic" /> as a candidate for the Trash Heap event's Dive In option.
-        ///     将 <typeparamref name="TRelic" /> 注册为垃圾堆事件“深入翻找”选项的候选遗物。
+        ///     <para xml:lang="en">
+        ///         Registers <typeparamref name="TRelic" /> as a candidate for the Trash Heap event's Dive In
+        ///         option.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <typeparamref name="TRelic" /> 注册为“垃圾堆”事件“深入翻找”选项的候选遗物。
+        ///     </para>
         /// </summary>
         public void RegisterTrashHeapRelic<TRelic>()
             where TRelic : RelicModel
@@ -44,8 +57,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers <paramref name="relicType" /> as a candidate for the Trash Heap event's Dive In option.
-        ///     将 <paramref name="relicType" /> 注册为垃圾堆事件“深入翻找”选项的候选遗物。
+        ///     <para xml:lang="en">
+        ///         Registers <paramref name="relicType" /> as a candidate for the Trash Heap event's Dive In
+        ///         option.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="relicType" /> 注册为“垃圾堆”事件“深入翻找”选项的候选遗物。
+        ///     </para>
         /// </summary>
         public void RegisterTrashHeapRelic(Type relicType)
         {

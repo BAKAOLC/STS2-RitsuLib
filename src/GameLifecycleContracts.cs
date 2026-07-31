@@ -5,64 +5,64 @@ using MegaCrit.Sts2.Core.Saves;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     Raised before essential (blocking) initialization work begins.
-    ///     在必要（阻塞）初始化工作开始前触发。
+    ///     <para xml:lang="en">Raised before essential blocking initialization begins.</para>
+    ///     <para xml:lang="zh-CN">在必要的阻塞初始化开始前引发。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct EssentialInitializationStartingEvent(
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Raised after essential initialization completed; replayed to new subscribers.
-    ///     在必要初始化完成后触发；会向新订阅者重放。
+    ///     <para xml:lang="en">Raised after essential initialization completes and replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">在必要初始化完成后引发，并向新订阅者重放。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct EssentialInitializationCompletedEvent(
         DateTimeOffset OccurredAtUtc
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Raised before deferred initialization starts.
-    ///     在延迟初始化开始前触发。
+    ///     <para xml:lang="en">Raised before deferred initialization starts.</para>
+    ///     <para xml:lang="zh-CN">在延迟初始化开始前引发。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct DeferredInitializationStartingEvent(
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Raised after deferred initialization finished; replayed to new subscribers.
-    ///     在延迟初始化完成后触发；会向新订阅者重放。
+    ///     <para xml:lang="en">Raised after deferred initialization finishes and replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">在延迟初始化完成后引发，并向新订阅者重放。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct DeferredInitializationCompletedEvent(
         DateTimeOffset OccurredAtUtc
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Content registration phase has closed (no further registrations expected).
-    ///     内容注册阶段已关闭（预期不会再有后续注册）。
+    ///     <para xml:lang="en">Raised when content registration closes and no further registrations are expected.</para>
+    ///     <para xml:lang="zh-CN">在内容注册关闭且预期不再接受后续注册时引发。</para>
     /// </summary>
     /// <param name="Reason">
-    ///     Human-readable or diagnostic reason token.
-    ///     人类可读或用于诊断的原因标记。
+    ///     <para xml:lang="en">Human-readable or diagnostic reason token.</para>
+    ///     <para xml:lang="zh-CN">供人阅读或用于诊断的原因标记。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct ContentRegistrationClosedEvent(
         string Reason,
@@ -70,28 +70,28 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Model registry is about to be populated.
-    ///     模型注册表即将开始填充。
+    ///     <para xml:lang="en">Raised before the model registry is populated.</para>
+    ///     <para xml:lang="zh-CN">在填充模型注册表前引发。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct ModelRegistryInitializingEvent(
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Model registry finished registering types; includes count for diagnostics.
-    ///     模型注册表已完成类型注册；包含用于诊断的数量。
+    ///     <para xml:lang="en">Raised after model-type registration completes, including its diagnostic count.</para>
+    ///     <para xml:lang="zh-CN">在模型类型注册完成后引发，并包含用于诊断的数量。</para>
     /// </summary>
     /// <param name="RegisteredModelTypeCount">
-    ///     Number of model types registered.
-    ///     已注册的模型类型数量。
+    ///     <para xml:lang="en">Number of registered model types.</para>
+    ///     <para xml:lang="zh-CN">已注册的模型类型数量。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct ModelRegistryInitializedEvent(
         int RegisteredModelTypeCount,
@@ -99,64 +99,64 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Model id assignment phase starting.
-    ///     模型 ID 分配阶段开始。
+    ///     <para xml:lang="en">Raised when the model-ID assignment phase starts.</para>
+    ///     <para xml:lang="zh-CN">在模型 ID 分配阶段开始时引发。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct ModelIdsInitializingEvent(
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Model ids have been assigned; replayed to new subscribers.
-    ///     模型 ID 已分配；会向新订阅者重放。
+    ///     <para xml:lang="en">Raised after model IDs are assigned and replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">在模型 ID 分配后引发，并向新订阅者重放。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct ModelIdsInitializedEvent(
         DateTimeOffset OccurredAtUtc
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Heavy model preloading is starting.
-    ///     重型模型预加载即将开始。
+    ///     <para xml:lang="en">Raised before heavy model preloading starts.</para>
+    ///     <para xml:lang="zh-CN">在耗时的模型预加载开始前引发。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct ModelPreloadingStartingEvent(
         DateTimeOffset OccurredAtUtc
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Model preloading finished; replayed to new subscribers.
-    ///     模型预加载已完成；会向新订阅者重放。
+    ///     <para xml:lang="en">Raised after model preloading finishes and replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">在模型预加载完成后引发，并向新订阅者重放。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct ModelPreloadingCompletedEvent(
         DateTimeOffset OccurredAtUtc
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Game node entered the scene tree.
-    ///     游戏节点已进入场景树。
+    ///     <para xml:lang="en">Raised after the root game node enters the scene tree.</para>
+    ///     <para xml:lang="zh-CN">在根游戏节点进入场景树后引发。</para>
     /// </summary>
     /// <param name="Game">
-    ///     Root game node instance.
-    ///     根游戏节点实例。
+    ///     <para xml:lang="en">Root game node instance.</para>
+    ///     <para xml:lang="zh-CN">根游戏节点实例。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct GameTreeEnteredEvent(
         NGame Game,
@@ -164,16 +164,16 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Game is ready for play logic; replayed to new subscribers.
-    ///     游戏已准备好运行玩法逻辑；会向新订阅者重放。
+    ///     <para xml:lang="en">Raised when the game is ready for gameplay logic and replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">在游戏准备好运行玩法逻辑时引发，并向新订阅者重放。</para>
     /// </summary>
     /// <param name="Game">
-    ///     Root game node instance.
-    ///     根游戏节点实例。
+    ///     <para xml:lang="en">Root game node instance.</para>
+    ///     <para xml:lang="zh-CN">根游戏节点实例。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct GameReadyEvent(
         NGame Game,
@@ -181,28 +181,28 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Main menu node finished its ready callback; replayed to new subscribers.
-    ///     主菜单节点已完成 ready 回调；会向新订阅者重放。
+    ///     <para xml:lang="en">Raised after the main-menu node finishes its ready callback and replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">在主菜单节点完成其就绪回调后引发，并向新订阅者重放。</para>
     /// </summary>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct MainMenuReadyEvent(
         DateTimeOffset OccurredAtUtc
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Startup telemetry facts have been sampled once and are ready to replay after consent.
-    ///     启动 telemetry 事实已完成一次性采样，可在授权后回放。
+    ///     <para xml:lang="en">Raised after startup telemetry facts are sampled once and ready to replay following consent.</para>
+    ///     <para xml:lang="zh-CN">在启动遥测信息完成一次采样且可在获得授权后重放时引发。</para>
     /// </summary>
     /// <param name="SnapshotAtUtc">
-    ///     When the persistent startup snapshot was captured.
-    ///     常驻启动快照的采样时间。
+    ///     <para xml:lang="en">Time when the persistent startup snapshot was captured.</para>
+    ///     <para xml:lang="zh-CN">持久启动快照的采样时间。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct TelemetryStartupSnapshotReadyEvent(
         DateTimeOffset SnapshotAtUtc,
@@ -210,24 +210,24 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     A new run has started.
-    ///     新跑局已开始。
+    ///     <para xml:lang="en">Raised when a new run starts.</para>
+    ///     <para xml:lang="zh-CN">在新的一局游戏开始时引发。</para>
     /// </summary>
     /// <param name="RunState">
-    ///     Active run state.
-    ///     当前活动跑局状态。
+    ///     <para xml:lang="en">Active run state.</para>
+    ///     <para xml:lang="zh-CN">当前活动的一局游戏状态。</para>
     /// </param>
     /// <param name="IsMultiplayer">
-    ///     Whether the run is multiplayer.
-    ///     跑局是否为多人模式。
+    ///     <para xml:lang="en">Whether the run is multiplayer.</para>
+    ///     <para xml:lang="zh-CN">跑局是否为多人模式。</para>
     /// </param>
     /// <param name="IsDaily">
-    ///     Whether the run is a daily challenge.
-    ///     跑局是否为每日挑战。
+    ///     <para xml:lang="en">Whether the run is a daily challenge.</para>
+    ///     <para xml:lang="zh-CN">跑局是否为每日挑战。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct RunStartedEvent(
         RunState RunState,
@@ -237,24 +237,24 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     An existing run was loaded from save.
-    ///     已从存档加载既有跑局。
+    ///     <para xml:lang="en">Raised after an existing run is loaded from a save.</para>
+    ///     <para xml:lang="zh-CN">在从存档加载既有的一局游戏后引发。</para>
     /// </summary>
     /// <param name="RunState">
-    ///     Active run state after load.
-    ///     加载后的当前活动跑局状态。
+    ///     <para xml:lang="en">Active run state after loading.</para>
+    ///     <para xml:lang="zh-CN">加载后的当前活动一局游戏状态。</para>
     /// </param>
     /// <param name="IsMultiplayer">
-    ///     Whether the run is multiplayer.
-    ///     跑局是否为多人模式。
+    ///     <para xml:lang="en">Whether the run is multiplayer.</para>
+    ///     <para xml:lang="zh-CN">跑局是否为多人模式。</para>
     /// </param>
     /// <param name="IsDaily">
-    ///     Whether the run is a daily challenge.
-    ///     跑局是否为每日挑战。
+    ///     <para xml:lang="en">Whether the run is a daily challenge.</para>
+    ///     <para xml:lang="zh-CN">跑局是否为每日挑战。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct RunLoadedEvent(
         RunState RunState,
@@ -264,24 +264,24 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Run finished (victory, defeat, or abandon).
-    ///     跑局已结束（胜利、失败或放弃）。
+    ///     <para xml:lang="en">Raised when a run ends through victory, defeat, or abandonment.</para>
+    ///     <para xml:lang="zh-CN">在一局游戏因胜利、失败或放弃而结束时引发。</para>
     /// </summary>
     /// <param name="Run">
-    ///     Serializable snapshot of the ended run.
-    ///     已结束跑局的可序列化快照。
+    ///     <para xml:lang="en">Serializable snapshot of the ended run.</para>
+    ///     <para xml:lang="zh-CN">已结束一局游戏的可序列化快照。</para>
     /// </param>
     /// <param name="IsVictory">
-    ///     True if the player won.
-    ///     如果玩家获胜则为 true。
+    ///     <para xml:lang="en"><see langword="true" /> if the player won.</para>
+    ///     <para xml:lang="zh-CN">玩家获胜时为 <see langword="true" />。</para>
     /// </param>
     /// <param name="IsAbandoned">
-    ///     True if the run was abandoned.
-    ///     如果跑局被放弃则为 true。
+    ///     <para xml:lang="en"><see langword="true" /> if the run was abandoned.</para>
+    ///     <para xml:lang="zh-CN">跑局被放弃时为 <see langword="true" />。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">Time when the event was raised.</para>
+    ///     <para xml:lang="zh-CN">引发事件的时间。</para>
     /// </param>
     public readonly record struct RunEndedEvent(
         SerializableRun Run,

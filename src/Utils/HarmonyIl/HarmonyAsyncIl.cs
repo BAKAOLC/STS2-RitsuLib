@@ -5,8 +5,8 @@ using HarmonyLib;
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     A compiler-generated await site found inside an async state machine <c>MoveNext</c>.
-    ///     在 async 状态机 <c>MoveNext</c> 中找到的编译器生成 await 点。
+    ///     <para xml:lang="en">A compiler-generated await site found inside an async state machine <c>MoveNext</c>.</para>
+    ///     <para xml:lang="zh-CN">在异步状态机 <c>MoveNext</c> 中找到的编译器生成等待点。</para>
     /// </summary>
     public sealed record HarmonyAsyncAwaitSite(
         int AwaitableProducerIndex,
@@ -27,8 +27,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         int? SuspendedState);
 
     /// <summary>
-    ///     Helpers for recognizing and safely rewriting async state-machine await sites.
-    ///     用于识别并安全改写 async 状态机 await 点的辅助工具。
+    ///     <para xml:lang="en">Helpers for recognizing and safely rewriting async state-machine await sites.</para>
+    ///     <para xml:lang="zh-CN">用于识别并安全改写异步状态机等待点的辅助工具。</para>
     /// </summary>
     public static class HarmonyAsyncIl
     {
@@ -36,8 +36,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         private const int MaxAwaitOnCompletedSearchDistance = 96;
 
         /// <summary>
-        ///     Finds all recognized await sites in a Harmony instruction list.
-        ///     在 Harmony 指令列表中查找所有可识别的 await 点。
+        ///     <para xml:lang="en">Finds all recognized await sites in a Harmony instruction list.</para>
+        ///     <para xml:lang="zh-CN">在 Harmony 指令列表中查找所有可识别的等待点。</para>
         /// </summary>
         public static IReadOnlyList<HarmonyAsyncAwaitSite> FindAwaitSites(IEnumerable<CodeInstruction> instructions)
         {
@@ -47,8 +47,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Finds all recognized await sites in a Harmony instruction list.
-        ///     在 Harmony 指令列表中查找所有可识别的 await 点。
+        ///     <para xml:lang="en">Finds all recognized await sites in a Harmony instruction list.</para>
+        ///     <para xml:lang="zh-CN">在 Harmony 指令列表中查找所有可识别的等待点。</para>
         /// </summary>
         public static IReadOnlyList<HarmonyAsyncAwaitSite> FindAwaitSites(IReadOnlyList<CodeInstruction> code)
         {
@@ -68,8 +68,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Finds await sites and returns assertion helpers.
-        ///     查找 await 点并返回断言辅助对象。
+        ///     <para xml:lang="en">Finds await sites and returns assertion helpers.</para>
+        ///     <para xml:lang="zh-CN">查找等待点并返回断言辅助对象。</para>
         /// </summary>
         public static HarmonyAsyncAwaitSites FindAwaitSiteMatches(
             IReadOnlyList<CodeInstruction> code,
@@ -79,8 +79,11 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction is a call/callvirt to a usable awaitable <c>GetAwaiter</c> method.
-        ///     当指令调用可用 awaitable <c>GetAwaiter</c> 方法时返回 true。
+        ///     <para xml:lang="en">
+        ///         Returns true when the instruction is a call/callvirt to a usable awaitable <c>GetAwaiter</c>
+        ///         method.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">当指令调用可用可等待对象的 <c>GetAwaiter</c> 方法时返回 true。</para>
         /// </summary>
         public static bool IsGetAwaiterCall(CodeInstruction instruction)
         {
@@ -88,8 +91,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns true when the instruction is a call/callvirt to an awaiter <c>GetResult</c> method.
-        ///     当指令调用 awaiter <c>GetResult</c> 方法时返回 true。
+        ///     <para xml:lang="en">Returns true when the instruction is a call/callvirt to an awaiter <c>GetResult</c> method.</para>
+        ///     <para xml:lang="zh-CN">当指令调用等待器的 <c>GetResult</c> 方法时返回 true。</para>
         /// </summary>
         public static bool IsGetResultCall(CodeInstruction instruction)
         {
@@ -99,8 +102,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Redirects calls that are immediately awaited by the state machine.
-        ///     重定向被状态机直接 await 的调用。
+        ///     <para xml:lang="en">Redirects calls that are immediately awaited by the state machine.</para>
+        ///     <para xml:lang="zh-CN">重定向被状态机直接等待的调用。</para>
         /// </summary>
         public static HarmonyIlRewriteReport RedirectAwaitedCalls(
             HarmonyIlRewriter rewriter,
@@ -119,8 +122,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Redirects calls that are immediately awaited by the state machine.
-        ///     重定向被状态机直接 await 的调用。
+        ///     <para xml:lang="en">Redirects calls that are immediately awaited by the state machine.</para>
+        ///     <para xml:lang="zh-CN">重定向被状态机直接等待的调用。</para>
         /// </summary>
         public static HarmonyIlRewriteReport RedirectAwaitedCalls(
             IList<CodeInstruction> code,
@@ -165,8 +168,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Replaces calls that are immediately awaited by the state machine.
-        ///     替换被状态机直接 await 的调用。
+        ///     <para xml:lang="en">Replaces calls that are immediately awaited by the state machine.</para>
+        ///     <para xml:lang="zh-CN">替换被状态机直接等待的调用。</para>
         /// </summary>
         public static HarmonyIlRewriteReport ReplaceAwaitedCalls(
             HarmonyIlRewriter rewriter,
@@ -185,8 +188,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Replaces calls that are immediately awaited by the state machine.
-        ///     替换被状态机直接 await 的调用。
+        ///     <para xml:lang="en">Replaces calls that are immediately awaited by the state machine.</para>
+        ///     <para xml:lang="zh-CN">替换被状态机直接等待的调用。</para>
         /// </summary>
         public static HarmonyIlRewriteReport ReplaceAwaitedCalls(
             IList<CodeInstruction> code,
@@ -236,8 +239,11 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Throws when <paramref name="toMethod" /> cannot replace <paramref name="fromMethod" /> at an await site.
-        ///     当 <paramref name="toMethod" /> 不能在 await 点替换 <paramref name="fromMethod" /> 时抛出异常。
+        ///     <para xml:lang="en">
+        ///         Throws when <paramref name="toMethod" /> cannot replace <paramref name="fromMethod" /> at an
+        ///         await site.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="toMethod" /> 不能在等待点替换 <paramref name="fromMethod" /> 时抛出异常。</para>
         /// </summary>
         public static void EnsureCompatibleAwaitedCallReplacement(MethodInfo fromMethod, MethodInfo toMethod)
         {
@@ -606,8 +612,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     A collection of async await-site matches with assertion helpers.
-    ///     带断言辅助方法的 async await 点匹配集合。
+    ///     <para xml:lang="en">A collection of async await-site matches with assertion helpers.</para>
+    ///     <para xml:lang="zh-CN">带断言辅助方法的异步等待点匹配集合。</para>
     /// </summary>
     public sealed class HarmonyAsyncAwaitSites
     {
@@ -620,32 +626,32 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Human-readable description used in assertion errors.
-        ///     断言错误中使用的可读描述。
+        ///     <para xml:lang="en">Human-readable description used in assertion errors.</para>
+        ///     <para xml:lang="zh-CN">断言错误中使用的可读描述。</para>
         /// </summary>
         public string Description { get; }
 
         /// <summary>
-        ///     Matched await sites.
-        ///     已匹配的 await 点。
+        ///     <para xml:lang="en">Matched await sites.</para>
+        ///     <para xml:lang="zh-CN">已匹配的等待点。</para>
         /// </summary>
         public IReadOnlyList<HarmonyAsyncAwaitSite> Items { get; }
 
         /// <summary>
-        ///     Number of matched await sites.
-        ///     匹配到的 await 点数量。
+        ///     <para xml:lang="en">Number of matched await sites.</para>
+        ///     <para xml:lang="zh-CN">匹配到的等待点数量。</para>
         /// </summary>
         public int Count => Items.Count;
 
         /// <summary>
-        ///     Returns true when at least one await site exists.
-        ///     存在至少一个 await 点时返回 true。
+        ///     <para xml:lang="en">Returns true when at least one await site exists.</para>
+        ///     <para xml:lang="zh-CN">存在至少一个等待点时返回 true。</para>
         /// </summary>
         public bool Any => Items.Count > 0;
 
         /// <summary>
-        ///     Requires exactly one await site and returns it.
-        ///     要求恰好一个 await 点并返回它。
+        ///     <para xml:lang="en">Requires exactly one await site and returns it.</para>
+        ///     <para xml:lang="zh-CN">要求恰好一个等待点并返回它。</para>
         /// </summary>
         public HarmonyAsyncAwaitSite RequireSingle()
         {
@@ -653,8 +659,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Requires an exact await-site count.
-        ///     要求精确 await 点数量。
+        ///     <para xml:lang="en">Requires an exact await-site count.</para>
+        ///     <para xml:lang="zh-CN">要求精确的等待点数量。</para>
         /// </summary>
         public HarmonyAsyncAwaitSites RequireExactly(int count)
         {
@@ -662,8 +668,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Requires at least <paramref name="count" /> await sites.
-        ///     要求至少 <paramref name="count" /> 个 await 点。
+        ///     <para xml:lang="en">Requires at least <paramref name="count" /> await sites.</para>
+        ///     <para xml:lang="zh-CN">要求至少 <paramref name="count" /> 个等待点。</para>
         /// </summary>
         public HarmonyAsyncAwaitSites RequireAtLeast(int count)
         {
@@ -671,8 +677,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Returns a compact diagnostic string.
-        ///     返回紧凑诊断字符串。
+        ///     <para xml:lang="en">Returns a compact diagnostic string.</para>
+        ///     <para xml:lang="zh-CN">返回紧凑诊断字符串。</para>
         /// </summary>
         public string Describe()
         {

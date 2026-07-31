@@ -5,18 +5,18 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Short-circuits <see cref="CardPile.Get" /> for mod-minted <see cref="PileType" /> values, returning
-    ///     the per-<see cref="Player" /> / per-combat instance resolved by <see cref="ModCardPileStorage" />.
-    ///     Non-mod values defer to vanilla (and any other Prefix, such as baselib's <c>GetCombatPile</c>).
-    ///     对 mod-minted <see cref="PileType" /> 值短路 <see cref="CardPile.Get" />，返回由
-    ///     <see cref="ModCardPileStorage" /> 解析出的 per-<see cref="Player" /> / per-combat 实例。
-    ///     非 mod 值交给原版（以及任何其它 Prefix，例如 baselib 的 <c>GetCombatPile</c>）。
+    ///     <para xml:lang="en">
+    ///         Routes <see cref="CardPile.Get" /> for registered dynamic pile types through
+    ///         <see cref="ModCardPileStorage" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将已注册动态牌堆类型的 <see cref="CardPile.Get" /> 调用交由
+    ///         <see cref="ModCardPileStorage" /> 处理。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Without this patch the vanilla switch falls through to <c>ArgumentOutOfRangeException</c> whenever a
-    ///     caller uses a mod-minted pile id, which is why this must run as a Prefix rather than a Postfix.
-    ///     没有此 patch 时，只要调用方使用 mod-minted pile id，原版 switch 就会落入
-    ///     <c>ArgumentOutOfRangeException</c>；因此它必须作为 Prefix 而不是 Postfix 运行。
+    ///     <para xml:lang="en">Unregistered values continue through the original implementation.</para>
+    ///     <para xml:lang="zh-CN">未注册的值继续交由原始实现处理。</para>
     /// </remarks>
     internal sealed class ModCardPileGetPatch : IPatchMethod
     {

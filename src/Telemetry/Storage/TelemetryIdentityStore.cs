@@ -28,13 +28,25 @@ namespace STS2RitsuLib.Telemetry
                 TelemetryPaths.IdentityPath,
                 TelemetryJson.Options,
                 "TelemetryIdentity");
-            _document = result is { Success: true, Data: not null } &&
-                        !string.IsNullOrWhiteSpace(result.Data.AnonymousInstallId)
-                ? result.Data
-                : new();
+            if (result is { Success: true, Data: not null } &&
+                Guid.TryParseExact(result.Data.AnonymousInstallId, "N", out var installId))
+            {
+                _document = new()
+                {
+                    SchemaVersion = 1,
+                    AnonymousInstallId = installId.ToString("N"),
+                };
+                return;
+            }
 
-            FileOperations.WriteJson(TelemetryPaths.IdentityPath, _document, TelemetryJson.Options,
+            var generated = new TelemetryIdentityDocument();
+            var write = FileOperations.WriteJson(TelemetryPaths.IdentityPath, generated, TelemetryJson.Options,
                 "TelemetryIdentity");
+            if (!write.Success)
+                throw new InvalidOperationException(
+                    $"Failed to persist telemetry identity: {write.ErrorMessage}");
+
+            _document = generated;
         }
     }
 }

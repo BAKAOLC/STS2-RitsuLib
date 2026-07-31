@@ -8,8 +8,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Patches <see cref="ActModel.GenerateBackgroundAssets" /> so mod acts can use a custom <c>res://</c> layers folder.
-    ///     补丁 <see cref="ActModel.GenerateBackgroundAssets" />，使 mod 章节可以使用自定义 <c>res://</c> layers 文件夹。
+    ///     <para xml:lang="en">
+    ///         Allows mod acts to generate background assets from a custom <c>res://</c> layer directory.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">允许模组章节从自定义 <c>res://</c> 图层目录生成背景资源。</para>
     /// </summary>
     internal class ActGenerateBackgroundAssetsPatch : IPatchMethod
     {
@@ -62,8 +64,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Appends all <c>.tscn</c> paths under the custom layers directory to <see cref="ActModel.AssetPaths" /> for preload.
-    ///     将自定义 layers 目录下的所有 <c>.tscn</c> 路径追加到 <see cref="ActModel.AssetPaths" />，用于预加载。
+    ///     <para xml:lang="en">
+    ///         Adds every <c>.tscn</c> file in the custom layer directory to <see cref="ActModel.AssetPaths" /> for
+    ///         preloading.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将自定义图层目录中的所有 <c>.tscn</c> 文件添加到 <see cref="ActModel.AssetPaths" />，以供预加载。
+    ///     </para>
     /// </summary>
     internal class ActAssetPathsBackgroundLayersPatch : IPatchMethod
     {

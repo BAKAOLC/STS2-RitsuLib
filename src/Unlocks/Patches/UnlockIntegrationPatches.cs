@@ -10,8 +10,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Filters locked mod characters out of <c>UnlockState.Characters</c>.
-    ///     从 <c>UnlockState.Characters</c> 中过滤掉已锁定的 mod 角色。
+    ///     <para xml:lang="en">Removes locked mod characters from <c>UnlockState.Characters</c>.</para>
+    ///     <para xml:lang="zh-CN">从 <c>UnlockState.Characters</c> 中移除已锁定的模组角色。</para>
     /// </summary>
     internal class CharacterUnlockFilterPatch : IPatchMethod
     {
@@ -31,8 +31,8 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Filters locked mod shared ancients out of <c>UnlockState.SharedAncients</c>.
-    ///     从 <c>UnlockState.SharedAncients</c> 中过滤掉已锁定的 mod 共享远古。
+    ///     <para xml:lang="en">Removes locked mod shared Ancients from <c>UnlockState.SharedAncients</c>.</para>
+    ///     <para xml:lang="zh-CN">从 <c>UnlockState.SharedAncients</c> 中移除已锁定的模组共享先古之民事件。</para>
     /// </summary>
     internal class SharedAncientUnlockFilterPatch : IPatchMethod
     {
@@ -52,8 +52,8 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Filters locked mod cards from <c>CardPoolModel.GetUnlockedCards</c> results.
-    ///     从 <c>CardPoolModel.GetUnlockedCards</c> 结果中过滤掉已锁定的 mod 卡牌。
+    ///     <para xml:lang="en">Removes locked mod cards from <c>CardPoolModel.GetUnlockedCards</c> results.</para>
+    ///     <para xml:lang="zh-CN">从 <c>CardPoolModel.GetUnlockedCards</c> 的结果中移除已锁定的模组卡牌。</para>
     /// </summary>
     internal class CardUnlockFilterPatch : IPatchMethod
     {
@@ -77,8 +77,8 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Filters locked mod relics from <c>RelicPoolModel.GetUnlockedRelics</c> results.
-    ///     从 <c>RelicPoolModel.GetUnlockedRelics</c> 结果中过滤掉已锁定的 mod 遗物。
+    ///     <para xml:lang="en">Removes locked mod relics from <c>RelicPoolModel.GetUnlockedRelics</c> results.</para>
+    ///     <para xml:lang="zh-CN">从 <c>RelicPoolModel.GetUnlockedRelics</c> 的结果中移除已锁定的模组遗物。</para>
     /// </summary>
     internal class RelicUnlockFilterPatch : IPatchMethod
     {
@@ -98,8 +98,8 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Filters locked mod potions from <c>PotionPoolModel.GetUnlockedPotions</c> results.
-    ///     从 <c>PotionPoolModel.GetUnlockedPotions</c> 结果中过滤掉已锁定的 mod 药水。
+    ///     <para xml:lang="en">Removes locked mod potions from <c>PotionPoolModel.GetUnlockedPotions</c> results.</para>
+    ///     <para xml:lang="zh-CN">从 <c>PotionPoolModel.GetUnlockedPotions</c> 的结果中移除已锁定的模组药水。</para>
     /// </summary>
     internal class PotionUnlockFilterPatch : IPatchMethod
     {
@@ -119,8 +119,10 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Removes locked mod room events from generated act room sets when safe to do so.
-    ///     在安全时从生成的章节房间集合中移除仍锁定的 mod 房间事件。
+    ///     <para xml:lang="en">
+    ///         Removes locked mod events from a generated act's room set when at least one event remains.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">生成章节房间集合后，在至少仍保留一个事件的前提下移除已锁定的模组事件。</para>
     /// </summary>
     internal class GeneratedRoomEventUnlockFilterPatch : IPatchMethod
     {

@@ -9,12 +9,15 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Applies optional card-pool deck-view style overrides after the vanilla deck screen initializes.
-    ///     在原版牌组查看界面初始化后应用可选的卡池样式覆盖。
+    ///     <para xml:lang="en">
+    ///         Applies optional card-pool style overrides after the base game's deck-view screen initializes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在原版游戏的牌组查看界面初始化后，应用可选的卡池样式覆盖。</para>
     /// </summary>
     internal sealed class CardPoolDeckViewStylePatch : IPatchMethod
     {
@@ -27,6 +30,10 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             typeof(CardPoolDeckViewStylePatch),
             nameof(ResolveVanillaDeckViewHueMaterial));
 
+        private static readonly MethodInfo CardPoolFrameMaterialGetter = AccessTools.PropertyGetter(
+            typeof(CardPoolModel),
+            nameof(CardPoolModel.FrameMaterial));
+
         public static string PatchId => "content_asset_override_card_pool_deck_view_style";
         public static string Description => "Allow card pools to style the vanilla deck-view screen";
         public static bool IsCritical => false;
@@ -38,27 +45,34 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var replaced = 0;
-            foreach (var instruction in instructions)
-            {
-                if (instruction.opcode == OpCodes.Castclass && instruction.operand is Type type &&
-                    type == typeof(ShaderMaterial))
-                {
-                    var loadScreen = new CodeInstruction(OpCodes.Ldarg_0);
-                    loadScreen.labels.AddRange(instruction.labels);
-                    instruction.labels.Clear();
-                    yield return loadScreen;
-                    yield return new(OpCodes.Call, ResolveVanillaDeckViewHueMaterialMethod);
-                    replaced++;
-                    continue;
-                }
+            var code = instructions.ToList();
+            var matches = new List<int>();
+            for (var i = 1; i < code.Count; i++)
+                if (code[i].opcode == OpCodes.Castclass &&
+                    code[i].operand is Type type &&
+                    type == typeof(ShaderMaterial) &&
+                    HarmonyIl.IsCallTo(code[i - 1], CardPoolFrameMaterialGetter))
+                    matches.Add(i);
 
-                yield return instruction;
+            if (matches.Count != 1)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Assets] Expected one NDeckViewScreen CardPool.FrameMaterial ShaderMaterial cast, but found {matches.Count}; safe hue fallback patch skipped.");
+                return code;
             }
 
-            if (replaced != 1)
-                RitsuLibFramework.Logger.Warn(
-                    $"[Assets] Expected to rewrite one NDeckViewScreen ShaderMaterial cast, but rewrote {replaced}.");
+            var match = matches[0];
+            var cast = code[match];
+            var loadScreen = new CodeInstruction(OpCodes.Ldarg_0);
+            loadScreen.labels.AddRange(cast.labels);
+            loadScreen.blocks.AddRange(cast.blocks);
+            code.RemoveAt(match);
+            code.InsertRange(match,
+            [
+                loadScreen,
+                new(OpCodes.Call, ResolveVanillaDeckViewHueMaterialMethod),
+            ]);
+            return code;
         }
 
         public static void Postfix(NDeckViewScreen __instance)
@@ -199,17 +213,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             CardPoolDeckViewStyleContext context)
         {
             if (style.ToolbarBackgroundMaterialProvider == null)
-                return style.ToolbarBackgroundMaterial;
+                return GetValidMaterial(
+                    cardPool,
+                    style.ToolbarBackgroundMaterial,
+                    nameof(CardPoolDeckViewStyle.ToolbarBackgroundMaterial));
 
             try
             {
-                return style.ToolbarBackgroundMaterialProvider(context) ?? style.ToolbarBackgroundMaterial;
+                return GetValidMaterial(
+                           cardPool,
+                           style.ToolbarBackgroundMaterialProvider(context),
+                           nameof(CardPoolDeckViewStyle.ToolbarBackgroundMaterialProvider)) ??
+                       GetValidMaterial(
+                           cardPool,
+                           style.ToolbarBackgroundMaterial,
+                           nameof(CardPoolDeckViewStyle.ToolbarBackgroundMaterial));
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Assets] Deck-view toolbar material provider failed for '{cardPool.GetType().Name}': {ex.Message}");
-                return style.ToolbarBackgroundMaterial;
+                return GetValidMaterial(
+                    cardPool,
+                    style.ToolbarBackgroundMaterial,
+                    nameof(CardPoolDeckViewStyle.ToolbarBackgroundMaterial));
             }
         }
 
@@ -219,17 +246,30 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             CardPoolDeckViewStyleContext context)
         {
             if (style.SortButtonHueMaterialProvider == null)
-                return style.SortButtonHueMaterial;
+                return GetValidMaterial(
+                    cardPool,
+                    style.SortButtonHueMaterial,
+                    nameof(CardPoolDeckViewStyle.SortButtonHueMaterial));
 
             try
             {
-                return style.SortButtonHueMaterialProvider(context) ?? style.SortButtonHueMaterial;
+                return GetValidMaterial(
+                           cardPool,
+                           style.SortButtonHueMaterialProvider(context),
+                           nameof(CardPoolDeckViewStyle.SortButtonHueMaterialProvider)) ??
+                       GetValidMaterial(
+                           cardPool,
+                           style.SortButtonHueMaterial,
+                           nameof(CardPoolDeckViewStyle.SortButtonHueMaterial));
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Assets] Deck-view sort-button hue provider failed for '{cardPool.GetType().Name}': {ex.Message}");
-                return style.SortButtonHueMaterial;
+                return GetValidMaterial(
+                    cardPool,
+                    style.SortButtonHueMaterial,
+                    nameof(CardPoolDeckViewStyle.SortButtonHueMaterial));
             }
         }
 
@@ -239,30 +279,44 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             CardPoolDeckViewStyleContext context)
         {
             if (style.SortButtonBackgroundMaterialProvider == null)
-                return style.SortButtonBackgroundMaterial;
+                return GetValidMaterial(
+                    cardPool,
+                    style.SortButtonBackgroundMaterial,
+                    nameof(CardPoolDeckViewStyle.SortButtonBackgroundMaterial));
 
             try
             {
-                return style.SortButtonBackgroundMaterialProvider(context) ?? style.SortButtonBackgroundMaterial;
+                return GetValidMaterial(
+                           cardPool,
+                           style.SortButtonBackgroundMaterialProvider(context),
+                           nameof(CardPoolDeckViewStyle.SortButtonBackgroundMaterialProvider)) ??
+                       GetValidMaterial(
+                           cardPool,
+                           style.SortButtonBackgroundMaterial,
+                           nameof(CardPoolDeckViewStyle.SortButtonBackgroundMaterial));
             }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Assets] Deck-view sort button background material provider failed for '{cardPool.GetType().Name}': {ex.Message}");
-                return style.SortButtonBackgroundMaterial;
+                return GetValidMaterial(
+                    cardPool,
+                    style.SortButtonBackgroundMaterial,
+                    nameof(CardPoolDeckViewStyle.SortButtonBackgroundMaterial));
             }
         }
 
         private static ShaderMaterial ResolveVanillaDeckViewHueMaterial(Material material, NDeckViewScreen screen)
         {
-            if (material is ShaderMaterial shaderMaterial)
+            if (material is ShaderMaterial shaderMaterial && GodotObject.IsInstanceValid(shaderMaterial))
                 return shaderMaterial;
 
             var player = PlayerRef(screen);
             var pool = player.Character.CardPool;
             try
             {
-                if (PreloadManager.Cache.GetMaterial(SafeHueFallbackMaterialPath) is ShaderMaterial fallback)
+                if (PreloadManager.Cache.GetMaterial(SafeHueFallbackMaterialPath) is ShaderMaterial fallback &&
+                    GodotObject.IsInstanceValid(fallback))
                     return fallback;
             }
             catch (Exception ex)
@@ -271,9 +325,29 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     $"[Assets] Could not load safe deck-view hue fallback for '{pool.GetType().Name}': {ex.Message}");
             }
 
+            var materialDescription = material == null || !GodotObject.IsInstanceValid(material)
+                ? "invalid"
+                : material.GetType().Name;
             RitsuLibFramework.Logger.Warn(
-                $"[Assets] Deck-view frame material for '{pool.GetType().Name}' is {material.GetType().Name}, not ShaderMaterial. Using an empty ShaderMaterial fallback.");
+                $"[Assets] Deck-view frame material for '{pool.GetType().Name}' is {materialDescription}, not a valid ShaderMaterial. Using an empty ShaderMaterial fallback.");
             return new();
+        }
+
+        private static TMaterial? GetValidMaterial<TMaterial>(
+            CardPoolModel cardPool,
+            TMaterial? material,
+            string memberName)
+            where TMaterial : Material
+        {
+            if (material == null)
+                return null;
+
+            if (GodotObject.IsInstanceValid(material))
+                return material;
+
+            RitsuLibFramework.Logger.Warn(
+                $"[Assets] Deck-view style {memberName} returned an invalid {typeof(TMaterial).Name} for '{cardPool.GetType().Name}'. Ignoring it.");
+            return null;
         }
     }
 }

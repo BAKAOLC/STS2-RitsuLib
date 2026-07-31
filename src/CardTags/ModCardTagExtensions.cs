@@ -4,29 +4,14 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.CardTags
 {
     /// <summary>
-    ///     Extension helpers for working with minted mod <see cref="CardTag" /> values on <see cref="CardModel" />.
-    ///     用于在 <see cref="CardModel" /> 上处理已生成 mod <see cref="CardTag" /> 值的扩展辅助方法。
+    ///     <para xml:lang="en">Provides helpers for using dynamic mod card tags with cards and tag IDs.</para>
+    ///     <para xml:lang="zh-CN">提供在卡牌与标签 ID 上使用动态模组卡牌标签的辅助方法。</para>
     /// </summary>
     public static class ModCardTagExtensions
     {
         /// <summary>
-        ///     Adds a minted mod tag resolved from <paramref name="tagId" /> into the card’s materialized tag set.
-        ///     将从 <paramref name="tagId" /> 解析出的已生成 mod 标签加入卡牌的实体化标签集合。
-        /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use AddModCardTag(CardTag).")]
-        public static void AddModCardTag(this CardModel card, string tagId)
-        {
-            ArgumentNullException.ThrowIfNull(card);
-            ArgumentException.ThrowIfNullOrWhiteSpace(tagId);
-
-            var value = ModCardTagRegistry.GetCardTag(tagId);
-            card.AddModCardTag(value);
-        }
-
-        /// <summary>
-        ///     Adds a pre-minted mod <see cref="CardTag" /> into the card’s materialized tag set.
-        ///     将预先生成的 mod <see cref="CardTag" /> 加入卡牌的实体化标签集合。
+        ///     <para xml:lang="en">Adds <paramref name="value" /> to the card's mutable tag set.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="value" /> 添加到卡牌的可变标签集合。</para>
         /// </summary>
         public static void AddModCardTag(this CardModel card, CardTag value)
         {
@@ -40,22 +25,8 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Removes a minted mod tag resolved from <paramref name="tagId" /> from the card’s tag set when present.
-        ///     如果存在，则从卡牌标签集合中移除从 <paramref name="tagId" /> 解析出的已生成 mod 标签。
-        /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use RemoveModCardTag(CardTag).")]
-        public static bool RemoveModCardTag(this CardModel card, string tagId)
-        {
-            ArgumentNullException.ThrowIfNull(card);
-            ArgumentException.ThrowIfNullOrWhiteSpace(tagId);
-
-            return ModCardTagRegistry.TryGetCardTag(tagId, out var value) && card.RemoveModCardTag(value);
-        }
-
-        /// <summary>
-        ///     Removes a pre-minted mod <see cref="CardTag" /> from the card’s tag set when present.
-        ///     如果存在，则从卡牌标签集合中移除预先生成的 mod <see cref="CardTag" />。
+        ///     <para xml:lang="en">Removes <paramref name="value" /> from the card's tag set.</para>
+        ///     <para xml:lang="zh-CN">从卡牌标签集合中移除 <paramref name="value" />。</para>
         /// </summary>
         public static bool RemoveModCardTag(this CardModel card, CardTag value)
         {
@@ -65,22 +36,39 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Whether the card’s tag set contains the minted value for <paramref name="tagId" />.
-        ///     判断卡牌标签集合是否包含 <paramref name="tagId" /> 对应的已生成值。
+        ///     <para xml:lang="en">
+        ///         Determines whether a card's tag set contains a registered dynamic mod <see cref="CardTag" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确定卡牌的标签集合是否包含已注册的动态模组 <see cref="CardTag" />。
+        ///     </para>
         /// </summary>
-        [Obsolete(
-            "Resolve the id once with ModCardTagRegistry.GetCardTag or string.GetModCardTag(), then use HasModCardTag(CardTag).")]
-        public static bool HasModCardTag(this CardModel card, string tagId)
+        /// <param name="card">
+        ///     <para xml:lang="en">The card to inspect.</para>
+        ///     <para xml:lang="zh-CN">要检查的卡牌。</para>
+        /// </param>
+        /// <param name="value">
+        ///     <para xml:lang="en">The registered dynamic tag value to find.</para>
+        ///     <para xml:lang="zh-CN">要查找的已注册动态标签值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en"><see langword="true" /> when the card contains the tag; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">卡牌包含该标签时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
+        public static bool HasModCardTag(this CardModel card, CardTag value)
         {
             ArgumentNullException.ThrowIfNull(card);
-            ArgumentException.ThrowIfNullOrWhiteSpace(tagId);
 
-            return ModCardTagRegistry.TryGetCardTag(tagId, out var value) && card.Tags.Contains(value);
+            return card.Tags.Contains(value);
         }
 
         /// <summary>
-        ///     Convenience: minted <see cref="CardTag" /> for <paramref name="qualifiedTagId" />.
-        ///     便捷方法：获取 <paramref name="qualifiedTagId" /> 对应的已生成 <see cref="CardTag" />。
+        ///     <para xml:lang="en">
+        ///         Gets the deterministic <see cref="CardTag" /> for <paramref name="qualifiedTagId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="qualifiedTagId" /> 对应的确定性 <see cref="CardTag" />。
+        ///     </para>
         /// </summary>
         public static CardTag GetModCardTag(this string qualifiedTagId)
         {
@@ -88,8 +76,12 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Tries to reverse-map a minted mod <see cref="CardTag" /> value to its registered string id.
-        ///     尝试将已生成的 mod <see cref="CardTag" /> 值反向映射到其注册字符串 ID。
+        ///     <para xml:lang="en">
+        ///         Tries to get the registered ID represented by <paramref name="value" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取 <paramref name="value" /> 所表示的已注册 ID。
+        ///     </para>
         /// </summary>
         public static bool TryGetModCardTagId(this CardTag value, out string id)
         {
@@ -97,8 +89,8 @@ namespace STS2RitsuLib.CardTags
         }
 
         /// <summary>
-        ///     Reverse-maps a minted mod <see cref="CardTag" /> value to its registered string id.
-        ///     将已生成的 mod <see cref="CardTag" /> 值反向映射到其注册字符串 ID。
+        ///     <para xml:lang="en">Gets the registered ID represented by <paramref name="value" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="value" /> 所表示的已注册 ID。</para>
         /// </summary>
         public static string GetModCardTagId(this CardTag value)
         {

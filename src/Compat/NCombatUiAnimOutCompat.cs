@@ -5,12 +5,11 @@ using MegaCrit.Sts2.Core.Rooms;
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
-    ///     <see cref="NCombatUi.AnimOut" /> gained a parameterless overload in newer builds; older builds used
-    ///     <c>AnimOut(CombatRoom)</c>.
-    ///     <c>AnimOut(CombatRoom)</c>。
-    ///     较新构建中的 <see cref="NCombatUi.AnimOut" /> 增加了无参数重载；较旧构建使用
-    ///     <c>AnimOut(CombatRoom)</c>。
-    ///     <c>AnimOut(CombatRoom)</c>。
+    ///     <para xml:lang="en">
+    ///         Calls the parameterless <see cref="NCombatUi.AnimOut" /> overload on newer game versions, or
+    ///         <c>AnimOut(CombatRoom)</c> on older versions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在较新游戏版本中调用无参数的 <see cref="NCombatUi.AnimOut" /> 重载；在较旧版本中调用 <c>AnimOut(CombatRoom)</c>。</para>
     /// </summary>
     internal static class NCombatUiAnimOutCompat
     {

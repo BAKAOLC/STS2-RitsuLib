@@ -10,8 +10,13 @@ using StsRng = MegaCrit.Sts2.Core.Random.Rng;
 namespace STS2RitsuLib.RunRngs
 {
     /// <summary>
-    ///     Provides independent per-run RNG streams for mods.
-    ///     为 Mod 提供独立的按跑局随机数流。
+    ///     <para xml:lang="en">
+    ///         Provides persistent independent random-number streams for mods, scoped either to a run or to a player
+    ///         within that run.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组提供可持久化的独立随机数流，作用域可以是整局游戏，也可以是该局中的单个玩家。
+    ///     </para>
     /// </summary>
     public static class ModRunRngRegistry
     {
@@ -27,8 +32,8 @@ namespace STS2RitsuLib.RunRngs
         private static readonly ConditionalWeakTable<RunState, RuntimeState> Runtimes = new();
 
         /// <summary>
-        ///     Gets an independent RNG stream for the given run, mod id, and stream id.
-        ///     按跑局、mod ID 和流 ID 获取一条独立 RNG 流。
+        ///     <para xml:lang="en">Gets a persistent independent RNG stream for the specified run, mod ID, and stream ID.</para>
+        ///     <para xml:lang="zh-CN">获取指定局内状态、模组 ID 和流 ID 的可持久化独立 RNG 流。</para>
         /// </summary>
         public static StsRng Get(RunState runState, string modId, string streamId)
         {
@@ -41,8 +46,8 @@ namespace STS2RitsuLib.RunRngs
         }
 
         /// <summary>
-        ///     Gets an independent RNG stream scoped to a player within the run.
-        ///     获取作用域为跑局中某个玩家的独立 RNG 流。
+        ///     <para xml:lang="en">Gets a persistent independent RNG stream scoped to <paramref name="player" /> within its run.</para>
+        ///     <para xml:lang="zh-CN">获取在 <paramref name="player" /> 所在局内以该玩家为作用域的可持久化独立 RNG 流。</para>
         /// </summary>
         public static StsRng Get(Player player, string modId, string streamId)
         {
@@ -170,34 +175,34 @@ namespace STS2RitsuLib.RunRngs
     }
 
     /// <summary>
-    ///     Saved counter state for mod RNG streams.
-    ///     Mod RNG 流的已保存 counter 状态。
+    ///     <para xml:lang="en">Persisted counter and state data for mod RNG streams.</para>
+    ///     <para xml:lang="zh-CN">模组 RNG 流的持久化计数器与状态数据。</para>
     /// </summary>
     public sealed class ModRunRngState
     {
         /// <summary>
-        ///     Counter values grouped by mod id and stream id.
-        ///     按 mod ID 和流 ID 分组的 counter 值。
+        ///     <para xml:lang="en">Counter values grouped by mod ID and stream ID.</para>
+        ///     <para xml:lang="zh-CN">按模组 ID 和流 ID 分组的计数器值。</para>
         /// </summary>
         public Dictionary<string, Dictionary<string, int>> Counters { get; set; } =
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Player-scoped counter values grouped by net id, mod id, and stream id.
-        ///     按 net id、mod ID 和流 ID 分组的玩家作用域 counter 值。
+        ///     <para xml:lang="en">Player-scoped counter values grouped by network ID, mod ID, and stream ID.</para>
+        ///     <para xml:lang="zh-CN">按网络 ID、模组 ID 和流 ID 分组的玩家作用域计数器值。</para>
         /// </summary>
         public Dictionary<ulong, Dictionary<string, Dictionary<string, int>>> PlayerCounters { get; set; } = [];
 
         /// <summary>
-        ///     Full RNG states grouped by mod id and stream id.
-        ///     按 mod ID 和流 ID 分组的完整 RNG 状态。
+        ///     <para xml:lang="en">Complete RNG states grouped by mod ID and stream ID.</para>
+        ///     <para xml:lang="zh-CN">按模组 ID 和流 ID 分组的完整 RNG 状态。</para>
         /// </summary>
         public Dictionary<string, Dictionary<string, ModRunRngSnapshot>> RngStates { get; set; } =
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Player-scoped full RNG states grouped by net id, mod id, and stream id.
-        ///     按 net id、mod ID 和流 ID 分组的玩家作用域完整 RNG 状态。
+        ///     <para xml:lang="en">Player-scoped complete RNG states grouped by network ID, mod ID, and stream ID.</para>
+        ///     <para xml:lang="zh-CN">按网络 ID、模组 ID 和流 ID 分组的玩家作用域完整 RNG 状态。</para>
         /// </summary>
         public Dictionary<ulong, Dictionary<string, Dictionary<string, ModRunRngSnapshot>>> PlayerRngStates
         {
@@ -228,7 +233,8 @@ namespace STS2RitsuLib.RunRngs
         internal bool TryGetRunRngState(string modId, string streamId, out ModRunRngSnapshot state)
         {
             if (RngStates.TryGetValue(modId, out var streams) &&
-                streams.TryGetValue(streamId, out var found))
+                streams.TryGetValue(streamId, out var found) &&
+                found is { IsValid: true })
             {
                 state = found;
                 return true;
@@ -246,7 +252,8 @@ namespace STS2RitsuLib.RunRngs
         {
             if (PlayerRngStates.TryGetValue(netId, out var mods) &&
                 mods.TryGetValue(modId, out var streams) &&
-                streams.TryGetValue(streamId, out var found))
+                streams.TryGetValue(streamId, out var found) &&
+                found is { IsValid: true })
             {
                 state = found;
                 return true;
@@ -318,40 +325,44 @@ namespace STS2RitsuLib.RunRngs
     }
 
     /// <summary>
-    ///     Serializable full state for a mod RNG stream.
-    ///     Mod RNG 流的可序列化完整状态。
+    ///     <para xml:lang="en">Serializable complete state of one mod RNG stream.</para>
+    ///     <para xml:lang="zh-CN">一个模组 RNG 流的可序列化完整状态。</para>
     /// </summary>
     public sealed class ModRunRngSnapshot
     {
         /// <summary>
-        ///     Gets or sets the number of values generated by the stream.
-        ///     获取或设置该随机数流已生成的值数量。
+        ///     <para xml:lang="en">Gets or sets the number of values generated by the stream.</para>
+        ///     <para xml:lang="zh-CN">获取或设置该随机数流已生成的值数量。</para>
         /// </summary>
         public int Counter { get; set; }
 
         /// <summary>
-        ///     Gets or sets the first word of the generator state.
-        ///     获取或设置生成器状态的第一个字。
+        ///     <para xml:lang="en">Gets or sets the first word of the generator state.</para>
+        ///     <para xml:lang="zh-CN">获取或设置生成器状态的第一个字。</para>
         /// </summary>
         public ulong State0 { get; set; }
 
         /// <summary>
-        ///     Gets or sets the second word of the generator state.
-        ///     获取或设置生成器状态的第二个字。
+        ///     <para xml:lang="en">Gets or sets the second word of the generator state.</para>
+        ///     <para xml:lang="zh-CN">获取或设置生成器状态的第二个字。</para>
         /// </summary>
         public ulong State1 { get; set; }
 
         /// <summary>
-        ///     Gets or sets the third word of the generator state.
-        ///     获取或设置生成器状态的第三个字。
+        ///     <para xml:lang="en">Gets or sets the third word of the generator state.</para>
+        ///     <para xml:lang="zh-CN">获取或设置生成器状态的第三个字。</para>
         /// </summary>
         public ulong State2 { get; set; }
 
         /// <summary>
-        ///     Gets or sets the fourth word of the generator state.
-        ///     获取或设置生成器状态的第四个字。
+        ///     <para xml:lang="en">Gets or sets the fourth word of the generator state.</para>
+        ///     <para xml:lang="zh-CN">获取或设置生成器状态的第四个字。</para>
         /// </summary>
         public ulong State3 { get; set; }
+
+        internal bool IsValid =>
+            Counter >= 0 &&
+            (State0 != 0 || State1 != 0 || State2 != 0 || State3 != 0);
 
 #if STS2_AT_LEAST_0_109_0
         internal static ModRunRngSnapshot From(StsRng rng)

@@ -4,8 +4,12 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Diagnostics.Logging
 {
     /// <summary>
-    ///     OpenTelemetry-shaped debug log event used by RitsuLib's local viewer pipeline.
-    ///     RitsuLib 本地查看器管道使用的 OpenTelemetry 风格调试日志事件。
+    ///     <para xml:lang="en">
+    ///         Represents an OpenTelemetry-shaped debug log event used by RitsuLib's local viewer pipeline.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示 RitsuLib 本地日志查看器管道使用的 OpenTelemetry 风格调试日志事件。
+    ///     </para>
     /// </summary>
     internal sealed record RitsuDebugLogRecord
     {

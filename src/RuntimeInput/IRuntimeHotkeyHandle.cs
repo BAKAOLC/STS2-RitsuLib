@@ -1,82 +1,100 @@
 namespace STS2RitsuLib.RuntimeInput
 {
     /// <summary>
-    ///     Represents a registered runtime hotkey that can be rebound or unregistered explicitly by the caller.
-    ///     表示一个已注册的运行时热键，可由调用方显式重新绑定或注销。
+    ///     <para xml:lang="en">Represents a runtime hotkey registration that can be rebound or unregistered.</para>
+    ///     <para xml:lang="zh-CN">表示可重新绑定或注销的运行时热键注册。</para>
     /// </summary>
     public interface IRuntimeHotkeyHandle : IDisposable
     {
         /// <summary>
-        ///     Gets the first current normalized binding string for this registration.
-        ///     获取此注册的第一个当前规范化绑定字符串。
+        ///     <para xml:lang="en">Gets the first normalized binding in this registration.</para>
+        ///     <para xml:lang="zh-CN">获取此注册中的第一个规范化绑定。</para>
         /// </summary>
         string CurrentBinding { get; }
 
         /// <summary>
-        ///     Gets all current normalized binding strings for this registration.
-        ///     获取此注册的所有当前规范化绑定字符串。
+        ///     <para xml:lang="en">Gets all normalized bindings in this registration.</para>
+        ///     <para xml:lang="zh-CN">获取此注册中的所有规范化绑定。</para>
         /// </summary>
         IReadOnlyList<string> CurrentBindings { get; }
 
         /// <summary>
-        ///     Gets whether this handle is still registered with the runtime hotkey router.
-        ///     获取此句柄是否仍注册在运行时热键路由器中。
+        ///     <para xml:lang="en">Gets whether this handle remains registered with the runtime hotkey router.</para>
+        ///     <para xml:lang="zh-CN">获取此句柄是否仍注册在运行时热键路由器中。</para>
         /// </summary>
         bool IsRegistered { get; }
 
         /// <summary>
-        ///     Replaces the binding with a newly persisted binding string.
-        ///     用新持久化的绑定字符串替换该绑定。
+        ///     <para xml:lang="en">Replaces the current bindings with one parsed binding.</para>
+        ///     <para xml:lang="zh-CN">使用一个解析后的绑定替换当前全部绑定。</para>
         /// </summary>
         /// <param name="bindingText">
-        ///     Binding text to parse and apply.
-        ///     要解析并应用的绑定文本。
+        ///     <para xml:lang="en">The binding text to parse and apply.</para>
+        ///     <para xml:lang="zh-CN">要解析并应用的绑定文本。</para>
         /// </param>
         /// <param name="normalizedBinding">
-        ///     The normalized binding string if parsing succeeded.
-        ///     解析成功时的规范化绑定字符串。
+        ///     <para xml:lang="en">Receives the normalized binding when parsing succeeds.</para>
+        ///     <para xml:lang="zh-CN">解析成功时接收规范化绑定。</para>
         /// </param>
         /// <returns>
-        ///     <c>true</c> when the new binding was parsed and applied.
-        ///     新绑定已解析并应用时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the binding was parsed and applied; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若绑定已成功解析并应用，则返回 <see langword="true" />；否则返回
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         bool TryRebind(string bindingText, out string normalizedBinding);
 
         /// <summary>
-        ///     Replaces all bindings with newly persisted binding strings.
-        ///     用新持久化的绑定字符串替换所有绑定。
+        ///     <para xml:lang="en">Replaces all current bindings with the parsed bindings.</para>
+        ///     <para xml:lang="zh-CN">使用解析后的绑定替换当前全部绑定。</para>
         /// </summary>
         /// <param name="bindingTexts">
-        ///     Binding texts to parse and apply.
-        ///     要解析并应用的绑定文本。
+        ///     <para xml:lang="en">The binding texts to parse and apply.</para>
+        ///     <para xml:lang="zh-CN">要解析并应用的绑定文本。</para>
         /// </param>
         /// <param name="normalizedBindings">
-        ///     Normalized binding strings if parsing succeeded.
-        ///     解析成功时的规范化绑定字符串。
+        ///     <para xml:lang="en">Receives the normalized bindings when parsing succeeds.</para>
+        ///     <para xml:lang="zh-CN">解析成功时接收规范化绑定。</para>
         /// </param>
         /// <returns>
-        ///     <c>true</c> when all bindings were parsed and applied.
-        ///     所有绑定均已解析并应用时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if every binding was parsed and applied; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若所有绑定均已成功解析并应用，则返回 <see langword="true" />；否则返回
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         bool TryRebind(IEnumerable<string> bindingTexts, out IReadOnlyList<string> normalizedBindings);
 
         /// <summary>
-        ///     Returns a read-only snapshot describing the current registration.
-        ///     返回描述当前注册的只读快照。
+        ///     <para xml:lang="en">Tries to obtain a read-only snapshot of the current registration.</para>
+        ///     <para xml:lang="zh-CN">尝试获取当前注册的只读快照。</para>
         /// </summary>
         /// <param name="registrationInfo">
-        ///     Registration snapshot when this handle is still active.
-        ///     此句柄仍处于活动状态时的注册快照。
+        ///     <para xml:lang="en">Receives the registration snapshot when this handle is active.</para>
+        ///     <para xml:lang="zh-CN">此句柄仍有效时接收注册快照。</para>
         /// </param>
         /// <returns>
-        ///     <c>true</c> when this handle is still registered.
-        ///     此句柄仍已注册时为 <c>true</c>。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if this handle remains registered; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若此句柄仍已注册，则返回 <see langword="true" />；否则返回
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         bool TryGetRegistrationInfo(out RuntimeHotkeyRegistrationInfo registrationInfo);
 
         /// <summary>
-        ///     Removes this registration from the runtime hotkey router.
-        ///     从运行时热键路由器中移除此注册。
+        ///     <para xml:lang="en">Removes this registration from the runtime hotkey router.</para>
+        ///     <para xml:lang="zh-CN">从运行时热键路由器中移除此注册。</para>
         /// </summary>
         void Unregister();
     }

@@ -13,10 +13,16 @@ using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Merchant character scenes without Spine use <see cref="ModCreatureVisualPlayback" /> for
-    ///     <see cref="NMerchantCharacter.PlayAnimation" /> (textures, AnimationPlayer, AnimatedSprite2D).
-    ///     没有 Spine 的商人角色场景使用 <see cref="ModCreatureVisualPlayback" /> 处理
-    ///     <see cref="NMerchantCharacter.PlayAnimation" />（纹理、AnimationPlayer、AnimatedSprite2D）。
+    ///     <para xml:lang="en">
+    ///         Routes <see cref="NMerchantCharacter.PlayAnimation" /> for registered non-Spine merchant visuals
+    ///         through a mod state machine or <see cref="ModCreatureVisualPlayback" />, including texture,
+    ///         <see cref="AnimationPlayer" />, and <see cref="AnimatedSprite2D" /> playback.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对已注册的非 Spine 商人形象，将 <see cref="NMerchantCharacter.PlayAnimation" /> 路由到模组状态机或
+    ///         <see cref="ModCreatureVisualPlayback" />，以支持纹理、<see cref="AnimationPlayer" /> 和
+    ///         <see cref="AnimatedSprite2D" /> 动画。
+    ///     </para>
     /// </summary>
     [HarmonyBefore(Const.BaseLibHarmonyId)]
     internal class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
@@ -117,8 +123,8 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 if (_built)
                     return;
 
-                _built = true;
                 StateMachine = factory.TryCreateMerchantAnimationStateMachine(root, character);
+                _built = true;
             }
         }
 
@@ -129,10 +135,15 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     }
 
     /// <summary>
-    ///     Skips vanilla <see cref="NMerchantCharacter._Ready" /> for non-Spine merchant visuals so the vanilla
-    ///     <see cref="MegaSprite" /> constructor does not reject procedural or Godot-animation roots.
-    ///     对非 Spine 商人视觉跳过原版 <see cref="NMerchantCharacter._Ready" />，避免原版 <see cref="MegaSprite" />
-    ///     构造函数拒绝程序化或 Godot 动画根节点。
+    ///     <para xml:lang="en">
+    ///         Skips the base <see cref="NMerchantCharacter._Ready" /> implementation for registered non-Spine
+    ///         merchant visuals so its <see cref="MegaSprite" /> construction does not reject procedural or
+    ///         Godot-animation roots.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对已注册的非 Spine 商人形象跳过游戏本体的 <see cref="NMerchantCharacter._Ready" /> 实现，避免其中的
+    ///         <see cref="MegaSprite" /> 创建过程拒绝程序化根节点或 Godot 动画根节点。
+    ///     </para>
     /// </summary>
     internal class ModMerchantCharacterReadyPlaybackPatch : IPatchMethod
     {

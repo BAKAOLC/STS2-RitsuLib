@@ -3,14 +3,21 @@ using MegaCrit.Sts2.Core.Helpers;
 namespace STS2RitsuLib.Scaffolding.Characters
 {
     /// <summary>
-    ///     Resolves vanilla-style resource paths for character UI, combat, and VFX from a character entry id.
-    ///     根据角色条目 id 解析原版风格的角色 UI、战斗和 VFX 资源路径。
+    ///     <para xml:lang="en">
+    ///         Builds vanilla-layout resource paths from a character model entry.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">根据角色模型条目构建符合原版布局的资源路径。</para>
     /// </summary>
     public static class CharacterAssetPathHelper
     {
         /// <summary>
-        ///     Energy icon path for <paramref name="energyColorName" /> via <see cref="EnergyIconHelper" />.
-        ///     通过 <see cref="EnergyIconHelper" /> 获取 <paramref name="energyColorName" /> 的能量图标路径。
+        ///     <para xml:lang="en">
+        ///         Gets the energy icon path for <paramref name="energyColorName" /> through
+        ///         <see cref="EnergyIconHelper" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过 <see cref="EnergyIconHelper" /> 获取 <paramref name="energyColorName" /> 的能量图标路径。
+        ///     </para>
         /// </summary>
         public static string GetEnergyIconPath(string energyColorName)
         {
@@ -18,8 +25,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Scene path for the combat energy counter widget.
-        ///     战斗能量计数器控件的场景路径。
+        ///     <para xml:lang="en">Gets the combat energy counter scene path.</para>
+        ///     <para xml:lang="zh-CN">获取战斗能量计数器的场景路径。</para>
         /// </summary>
         public static string GetEnergyCounterPath(string characterEntry)
         {
@@ -27,8 +34,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Scene path for in-combat creature visuals.
-        ///     战斗中生物视觉的场景路径。
+        ///     <para xml:lang="en">Gets the combat creature-visuals scene path.</para>
+        ///     <para xml:lang="zh-CN">获取战斗生物视觉节点的场景路径。</para>
         /// </summary>
         public static string GetVisualsPath(string characterEntry)
         {
@@ -36,8 +43,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Character select background scene path.
-        ///     角色选择背景场景路径。
+        ///     <para xml:lang="en">Gets the character-select background scene path.</para>
+        ///     <para xml:lang="zh-CN">获取角色选择背景的场景路径。</para>
         /// </summary>
         public static string GetCharacterSelectBackgroundPath(string characterEntry)
         {
@@ -45,8 +52,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Unlocked character select portrait texture path.
-        ///     已解锁角色选择肖像贴图路径。
+        ///     <para xml:lang="en">Gets the unlocked character-select portrait path.</para>
+        ///     <para xml:lang="zh-CN">获取已解锁角色选择肖像的路径。</para>
         /// </summary>
         public static string GetCharacterSelectIconPath(string characterEntry)
         {
@@ -54,8 +61,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Locked character select portrait texture path.
-        ///     未解锁角色选择肖像贴图路径。
+        ///     <para xml:lang="en">Gets the locked character-select portrait path.</para>
+        ///     <para xml:lang="zh-CN">获取未解锁角色选择肖像的路径。</para>
         /// </summary>
         public static string GetCharacterSelectLockedIconPath(string characterEntry)
         {
@@ -64,8 +71,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Run map marker icon path for the character.
-        ///     此角色的 run 地图标记图标路径。
+        ///     <para xml:lang="en">Gets the character's map marker path.</para>
+        ///     <para xml:lang="zh-CN">获取角色的地图标记路径。</para>
         /// </summary>
         public static string GetMapMarkerPath(string characterEntry)
         {
@@ -73,8 +80,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Card trail VFX scene path.
-        ///     卡牌轨迹 VFX 场景路径。
+        ///     <para xml:lang="en">Gets the character's card-trail VFX scene path.</para>
+        ///     <para xml:lang="zh-CN">获取角色卡牌轨迹特效的场景路径。</para>
         /// </summary>
         public static string GetTrailPath(string characterEntry)
         {
@@ -82,8 +89,12 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Default asset paths used when validating or copying a vanilla-style character layout.
-        ///     验证或复制原版风格角色布局时使用的默认资产路径。
+        ///     <para xml:lang="en">
+        ///         Enumerates the standard character asset paths derived from <paramref name="characterEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         枚举根据 <paramref name="characterEntry" /> 派生的标准角色资源路径。
+        ///     </para>
         /// </summary>
         public static IEnumerable<string> EnumerateDefaultCharacterAssets(string characterEntry)
         {

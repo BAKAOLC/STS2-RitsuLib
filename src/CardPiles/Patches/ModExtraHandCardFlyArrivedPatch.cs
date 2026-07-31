@@ -8,8 +8,10 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Routes completion of an exact vanilla card-fly visual to the corresponding extra-hand visual.
-    ///     将原版单张卡牌飞行视觉的完成事件路由到对应的额外手牌视觉。
+    ///     <para xml:lang="en">
+    ///         Notifies the destination extra-hand container when a card's fly-in visual completes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">卡牌飞入动画完成时通知目标额外手牌容器。</para>
     /// </summary>
     internal sealed class ModExtraHandCardFlyArrivedPatch : IPatchMethod
     {

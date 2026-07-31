@@ -9,6 +9,13 @@ using STS2RitsuLib.Utils.Persistence.Migration;
 
 namespace STS2RitsuLib.Utils.Persistence.Interop
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Discovers runtime mod-data interoperability providers and connects their data slots to RitsuLib
+    ///         persistence.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">发现运行时模组数据互操作提供程序，并将其数据槽接入 RitsuLib 持久化系统。</para>
+    /// </summary>
     internal static class RuntimeModDataInteropSource
     {
         private const string ProviderTypeMetadataKey = "RitsuLib.ModDataInterop.ProviderType";
@@ -54,7 +61,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
         private static readonly ConcurrentDictionary<Type, MethodInfo> ApplySyncTypedClosedByDataType = new();
 
-        private static readonly ConcurrentDictionary<string, Type?> ResolvedExternalTypeByName =
+        private static readonly ConcurrentDictionary<string, Type> ResolvedExternalTypeByName =
             new(StringComparer.Ordinal);
 
         private static MethodInfo GetModDataStoreRegisterWithCloudOpen()
@@ -239,8 +246,8 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                 if (_profileChangedHooked)
                     return;
 
-                _profileChangedHooked = true;
                 ProfileManager.Instance.ProfileChanged += OnProfileChangedSyncFromProviders;
+                _profileChangedHooked = true;
             }
         }
 
@@ -635,13 +642,17 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
         private static Type? ResolveExternalType(string typeName)
         {
-            return ResolvedExternalTypeByName.GetOrAdd(typeName,
-                static name =>
-                {
-                    return AppDomain.CurrentDomain.GetAssemblies()
-                        .Select(asm => asm.GetType(name, false))
-                        .OfType<Type>().FirstOrDefault();
-                });
+            if (ResolvedExternalTypeByName.TryGetValue(typeName, out var cached))
+                return cached;
+
+            var resolved = AppDomain.CurrentDomain.GetAssemblies()
+                .Select(asm => asm.GetType(typeName, false))
+                .OfType<Type>()
+                .FirstOrDefault();
+            if (resolved != null)
+                ResolvedExternalTypeByName.TryAdd(typeName, resolved);
+
+            return resolved;
         }
 
         private static SaveScope ParseScope(string? value)

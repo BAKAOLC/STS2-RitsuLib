@@ -4,29 +4,27 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 {
     /// <summary>
-    ///     <see cref="IAnimationBackend" /> driver for cue-based visuals backed by
-    ///     <see cref="VisualCueSet" /> (static textures and/or <see cref="VisualFrameSequence" />).
-    ///     用于 cue 视觉的 <see cref="IAnimationBackend" /> 驱动器，底层由
-    ///     <see cref="VisualCueSet" /> 支持（静态纹理和/或 <see cref="VisualFrameSequence" />）。
+    ///     <para xml:lang="en">Drives cue-based visuals from static textures and <see cref="VisualFrameSequence" /> data.</para>
+    ///     <para xml:lang="zh-CN">从静态纹理和 <see cref="VisualFrameSequence" /> 数据驱动基于视觉提示的效果。</para>
     /// </summary>
     /// <remarks>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         Animation ids map to cue keys in <see cref="VisualCueSet.FrameSequenceByCue" /> (preferred) or
     ///         <see cref="VisualCueSet.TexturePathByCue" /> (fallback static texture). Frame sequences are played
     ///         through <see cref="CueFrameSequencePlayer" />; its <c>Finished</c> signal is converted to
     ///         <see cref="Completed" />.
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="en">
     ///         Non-looping static cues raise <see cref="Completed" /> on the next idle frame so the state machine
     ///         can advance without re-entering the caller synchronously.
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="zh-CN">
     ///         动画 id 映射到 <see cref="VisualCueSet.FrameSequenceByCue" /> 中的 cue 键（优先）或
     ///         <see cref="VisualCueSet.TexturePathByCue" />（回退静态纹理）。帧序列通过
     ///         <see cref="CueFrameSequencePlayer" /> 播放；其 <c>Finished</c> 信号会转换为
     ///         <see cref="Completed" />。
     ///     </para>
-    ///     <para>
+    ///     <para xml:lang="zh-CN">
     ///         非循环静态 cue 会在下一次 idle 帧触发 <see cref="Completed" />，使状态机
     ///         可以继续推进，而不会同步重入调用方。
     ///     </para>
@@ -42,8 +40,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private CueFrameSequencePlayer? _subscribedPlayer;
 
         /// <summary>
-        ///     Binds cues <paramref name="cues" /> to sprite <paramref name="sprite" /> rooted at <paramref name="root" />.
-        ///     将 cue <paramref name="cues" /> 绑定到以 <paramref name="root" /> 为根的精灵 <paramref name="sprite" />。
+        ///     <para xml:lang="en">Binds <paramref name="cues" /> to <paramref name="sprite" /> under <paramref name="root" />.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="cues" /> 绑定到 <paramref name="root" /> 下的 <paramref name="sprite" />。</para>
         /// </summary>
         public CueAnimationBackend(Node root, Sprite2D sprite, VisualCueSet cues)
         {
@@ -87,7 +85,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         /// <inheritdoc />
         public void Play(string id, bool loop)
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (!HasAnimation(id))
                 return;
 
             if (_currentId != null)
@@ -97,16 +95,18 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             CueFrameSequencePlayer.StopUnder(OwnerNode);
 
             _queuedId = null;
-            _currentId = id;
+            _currentId = null;
 
             if (_cues.FrameSequenceByCue is { Count: > 0 } sequences &&
                 TryGetOrdinalIgnoreCase(sequences, id, out var sequence) &&
                 sequence is { Frames.Count: > 0 })
             {
                 var player = CueFrameSequencePlayer.EnsureUnder(OwnerNode);
-                if (!player.TryStart(_sprite, sequence))
+                var playbackSequence = sequence.Loop == loop ? sequence : sequence with { Loop = loop };
+                if (!player.TryStart(_sprite, playbackSequence))
                     return;
 
+                _currentId = id;
                 SubscribePlayer(player);
                 Started?.Invoke(id);
                 return;
@@ -119,6 +119,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             if (tex == null)
                 return;
 
+            _currentId = id;
             _sprite.Texture = tex;
             if (_cues.TextureStyleByCue is { Count: > 0 } styles &&
                 TryGetOrdinalIgnoreCase(styles, id, out var style))
@@ -175,12 +176,13 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         public bool TryGetCurrentAnimationRemaining(out float seconds)
         {
             seconds = 0f;
-            return _currentId != null && TryGetAnimationDuration(_currentId, out seconds);
+            return GodotObject.IsInstanceValid(_subscribedPlayer) &&
+                   _subscribedPlayer!.TryGetRemaining(out seconds);
         }
 
         /// <summary>
-        ///     Stops active playback and detaches the frame-sequence signal, if any.
-        ///     停止当前播放，并在存在时断开帧序列信号。
+        ///     <para xml:lang="en">Stops active playback and detaches any frame-sequence signal handler.</para>
+        ///     <para xml:lang="zh-CN">停止当前播放并断开所有帧序列信号处理程序。</para>
         /// </summary>
         public void Dispose()
         {

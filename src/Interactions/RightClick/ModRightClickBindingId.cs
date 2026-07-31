@@ -1,8 +1,8 @@
 namespace STS2RitsuLib.Interactions.RightClick
 {
     /// <summary>
-    ///     Stable identity for a registered right-click binding.
-    ///     已注册右键绑定的稳定身份。
+    ///     <para xml:lang="en">Identifies a registered right-click binding.</para>
+    ///     <para xml:lang="zh-CN">标识一个已注册的右键绑定。</para>
     /// </summary>
     public readonly record struct ModRightClickBindingId(string Id)
     {

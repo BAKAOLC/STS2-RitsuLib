@@ -3,9 +3,12 @@ using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 namespace STS2RitsuLib.RunData
 {
     /// <summary>
-    ///     Published while a start-run lobby is active so mods can read or write lobby staging data
-    ///     before the run snapshot is committed.
-    ///     开局大厅仍活跃时发布，供 mod 在跑局快照提交前读写大厅暂存数据。
+    ///     <para xml:lang="en">
+    ///         Notifies mods that start-run lobby staging data can be read or changed before it is committed to the run.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通知模组可在开局大厅暂存数据提交到一局游戏前读取或修改这些数据。
+    ///     </para>
     /// </summary>
     public sealed record RunSavedDataLobbyStagingEvent(
         StartRunLobby Lobby,

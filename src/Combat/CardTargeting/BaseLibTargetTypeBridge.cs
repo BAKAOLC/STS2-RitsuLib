@@ -7,7 +7,8 @@ using STS2RitsuLib.Compat;
 namespace STS2RitsuLib.Combat.CardTargeting
 {
     /// <summary>
-    ///     Optional bridge for BaseLib custom target predicates.
+    ///     <para xml:lang="en">Bridges BaseLib custom-target predicates when BaseLib is loaded.</para>
+    ///     <para xml:lang="zh-CN">在 BaseLib 已加载时桥接其自定义目标谓词。</para>
     /// </summary>
     internal static class BaseLibTargetTypeBridge
     {
@@ -15,19 +16,21 @@ namespace STS2RitsuLib.Combat.CardTargeting
 
         private static readonly Lock Gate = new();
 
-        private static IReadOnlyDictionary<TargetType, TargetPredicate>? _singleTargeting;
-        private static IReadOnlyDictionary<TargetType, TargetPredicate>? _multiTargeting;
+        private static ITargetPredicateMap? _singleTargeting;
+        private static ITargetPredicateMap? _multiTargeting;
         private static bool _loggedMissingType;
         private static bool _loggedMissingFields;
 
         internal static bool IsCustomSingleTargetType(TargetType targetType)
         {
-            return TryGetSingleTargeting(out var singleTargeting) && singleTargeting.ContainsKey(targetType);
+            return TryGetSingleTargeting(out var singleTargeting) &&
+                   singleTargeting.TryGetValue(targetType, out _);
         }
 
         internal static bool IsCustomMultiTargetType(TargetType targetType)
         {
-            return TryGetMultiTargeting(out var multiTargeting) && multiTargeting.ContainsKey(targetType);
+            return TryGetMultiTargeting(out var multiTargeting) &&
+                   multiTargeting.TryGetValue(targetType, out _);
         }
 
         internal static bool TryIsAllowedSingleTarget(
@@ -78,16 +81,14 @@ namespace STS2RitsuLib.Combat.CardTargeting
             }
         }
 
-        private static bool TryGetSingleTargeting(
-            out IReadOnlyDictionary<TargetType, TargetPredicate> singleTargeting)
+        private static bool TryGetSingleTargeting(out ITargetPredicateMap singleTargeting)
         {
             EnsureResolved();
             singleTargeting = _singleTargeting!;
             return singleTargeting != null;
         }
 
-        private static bool TryGetMultiTargeting(
-            out IReadOnlyDictionary<TargetType, TargetPredicate> multiTargeting)
+        private static bool TryGetMultiTargeting(out ITargetPredicateMap multiTargeting)
         {
             EnsureResolved();
             multiTargeting = _multiTargeting!;
@@ -153,7 +154,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
             return null;
         }
 
-        private static IReadOnlyDictionary<TargetType, TargetPredicate>? ReadPredicateMap(
+        private static ITargetPredicateMap? ReadPredicateMap(
             Type type,
             string fieldName)
         {
@@ -162,12 +163,49 @@ namespace STS2RitsuLib.Combat.CardTargeting
 
             return value switch
             {
-                IReadOnlyDictionary<TargetType, Func<Creature, Player, bool>> playerAware => playerAware.ToDictionary(
-                    pair => pair.Key, pair => (TargetPredicate)((creature, player) => pair.Value(creature, player))),
-                IReadOnlyDictionary<TargetType, Func<Creature, bool>> legacy => legacy.ToDictionary(pair => pair.Key,
-                    pair => (TargetPredicate)((creature, _) => pair.Value(creature))),
+                IReadOnlyDictionary<TargetType, Func<Creature, Player, bool>> playerAware =>
+                    new PlayerAwareTargetPredicateMap(playerAware),
+                IReadOnlyDictionary<TargetType, Func<Creature, bool>> legacy =>
+                    new LegacyTargetPredicateMap(legacy),
                 _ => null,
             };
+        }
+
+        private interface ITargetPredicateMap
+        {
+            bool TryGetValue(TargetType targetType, out TargetPredicate predicate);
+        }
+
+        private sealed class PlayerAwareTargetPredicateMap(
+            IReadOnlyDictionary<TargetType, Func<Creature, Player, bool>> predicates) : ITargetPredicateMap
+        {
+            public bool TryGetValue(TargetType targetType, out TargetPredicate predicate)
+            {
+                if (!predicates.TryGetValue(targetType, out var resolved))
+                {
+                    predicate = null!;
+                    return false;
+                }
+
+                predicate = resolved.Invoke;
+                return true;
+            }
+        }
+
+        private sealed class LegacyTargetPredicateMap(
+            IReadOnlyDictionary<TargetType, Func<Creature, bool>> predicates) : ITargetPredicateMap
+        {
+            public bool TryGetValue(TargetType targetType, out TargetPredicate predicate)
+            {
+                if (!predicates.TryGetValue(targetType, out var resolved))
+                {
+                    predicate = null!;
+                    return false;
+                }
+
+                predicate = (creature, _) => resolved(creature);
+                return true;
+            }
         }
 
         private delegate bool TargetPredicate(Creature creature, Player player);

@@ -1,8 +1,12 @@
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Progress while sending a chunked sidecar stream (one segment per step).
-    ///     发送分块 sidecar 流时的进度（每步一个 segment）。
+    ///     <para xml:lang="en">
+    ///         Describes progress after an attempted segment send in a chunked sidecar stream.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述 sidecar 分块流尝试发送一个分段后的进度。
+    ///     </para>
     /// </summary>
     public readonly record struct RitsuLibSidecarChunkStreamSendProgress(
         int SegmentIndexZeroBased,
@@ -11,8 +15,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         long TotalLogicalBytes);
 
     /// <summary>
-    ///     Progress while reassembling a chunked stream on the receive path.
-    ///     在接收路径重组分块流时的进度。
+    ///     <para xml:lang="en">
+    ///         Describes the receive-side progress of a chunked stream being reassembled.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述接收端重组 sidecar 分块流的进度。
+    ///     </para>
     /// </summary>
     public readonly record struct RitsuLibSidecarChunkReceiveProgress(
         ulong SenderNetId,

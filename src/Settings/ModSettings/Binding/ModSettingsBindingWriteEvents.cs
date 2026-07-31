@@ -3,32 +3,63 @@ using Godot;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Multicast notifications raised after <see cref="IModSettingsValueBinding{TValue}.Write" /> completes on built-in
-    ///     binding implementations. Subscribe from UI or tools that mirror settings elsewhere; use
-    ///     <see cref="SubscribeValueWrittenWhileNodeAlive" /> so subscriptions drop when a host node leaves the tree.
-    ///     内置绑定实现上的 <see cref="IModSettingsValueBinding{TValue}.Write" /> 完成后触发的多播通知。
-    ///     可从 UI 或将设置镜像到其它位置的工具订阅；使用
-    ///     <see cref="SubscribeValueWrittenWhileNodeAlive" />，使宿主节点离开树时自动取消订阅。
+    ///     <para xml:lang="en">
+    ///         Publishes notifications after built-in <see cref="IModSettingsValueBinding{TValue}" /> implementations
+    ///         finish writing their backing values. This supports settings UI refresh and external value mirrors.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在内置 <see cref="IModSettingsValueBinding{TValue}" /> 实现完成底层值写入后发布通知，
+    ///         用于设置界面刷新以及与外部值保持同步。
+    ///     </para>
     /// </summary>
     public static class ModSettingsBindingWriteEvents
     {
         /// <summary>
-        ///     Raised synchronously from binding <c>Write</c> bodies after the backing store has been updated.
-        ///     在后备存储更新后，由绑定 <c>Write</c> 方法体同步触发。
+        ///     <para xml:lang="en">
+        ///         Occurs synchronously after a binding updates its backing value. Subscriber failures are logged and do
+        ///         not prevent later subscribers from running.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在绑定更新底层值后同步发生。订阅者失败会被记录，且不会阻止后续订阅者运行。
+        ///     </para>
         /// </summary>
         public static event Action<IModSettingsBinding>? ValueWritten;
 
         internal static void NotifyValueWritten(IModSettingsBinding binding)
         {
-            ValueWritten?.Invoke(binding);
+            var handlers = ValueWritten?.GetInvocationList();
+            if (handlers == null)
+                return;
+
+            foreach (var handler in handlers)
+                try
+                {
+                    ((Action<IModSettingsBinding>)handler).Invoke(binding);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[ModSettings] ValueWritten callback failed for '{binding.GetType().FullName}': {ex}");
+                }
         }
 
         /// <summary>
-        ///     Subscribes while <paramref name="anchor" /> remains in the scene tree and unsubscribes automatically when it
-        ///     exits (same delegate identity used for removal).
-        ///     在 <paramref name="anchor" /> 留在场景树中期间订阅，并在它
-        ///     退出时自动取消订阅（移除时使用同一委托标识）。
+        ///     <para xml:lang="en">
+        ///         Subscribes a listener while a Godot node remains in the scene tree and automatically removes the same
+        ///         delegate when that node exits the tree.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在 Godot 节点留在场景树中期间订阅监听器，并在该节点退出场景树时自动移除同一委托。
+        ///     </para>
         /// </summary>
+        /// <param name="anchor">
+        ///     <para xml:lang="en">The node whose scene-tree lifetime controls the subscription.</para>
+        ///     <para xml:lang="zh-CN">以其场景树生命周期控制订阅的节点。</para>
+        /// </param>
+        /// <param name="listener">
+        ///     <para xml:lang="en">The listener invoked after a binding value is written.</para>
+        ///     <para xml:lang="zh-CN">绑定值写入后调用的监听器。</para>
+        /// </param>
         public static void SubscribeValueWrittenWhileNodeAlive(Node anchor, Action<IModSettingsBinding> listener)
         {
             ArgumentNullException.ThrowIfNull(anchor);
@@ -36,8 +67,17 @@ namespace STS2RitsuLib.Settings
 
             ValueWritten += Wrapped;
 
-            anchor.Connect(Node.SignalName.TreeExiting, Callable.From(() => ValueWritten -= Wrapped),
-                (uint)GodotObject.ConnectFlags.OneShot);
+            try
+            {
+                anchor.Connect(Node.SignalName.TreeExiting, Callable.From(() => ValueWritten -= Wrapped),
+                    (uint)GodotObject.ConnectFlags.OneShot);
+            }
+            catch
+            {
+                ValueWritten -= Wrapped;
+                throw;
+            }
+
             return;
 
             void Wrapped(IModSettingsBinding binding)

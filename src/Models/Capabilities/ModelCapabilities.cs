@@ -4,42 +4,46 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Entry point for model capability hosts.
-    ///     模型能力宿主的入口。
+    ///     <para xml:lang="en">Entry point for model capability hosts.</para>
+    ///     <para xml:lang="zh-CN">模型能力宿主的入口。</para>
     /// </summary>
     public static class ModelCapabilities
     {
         private const string SavedDataKey = "model_capabilities";
+        private static readonly Lock InitializationLock = new();
         private static readonly ModelSavedDataSlotKey SavedDataSlotKey = new(Const.ModId, SavedDataKey);
         private static readonly ConditionalWeakTable<AbstractModel, ModelCapabilitySet> Collections = [];
 
         internal static bool IsInitialized { get; private set; }
 
         /// <summary>
-        ///     Initializes the built-in persistence slot for model capabilities.
-        ///     初始化模型能力的内置持久化槽位。
+        ///     <para xml:lang="en">Initializes the built-in persistence slot for model capabilities.</para>
+        ///     <para xml:lang="zh-CN">初始化模型能力的内置持久化槽位。</para>
         /// </summary>
         public static void EnsureInitialized()
         {
-            if (IsInitialized)
-                return;
+            lock (InitializationLock)
+            {
+                if (IsInitialized)
+                    return;
 
-            IsInitialized = true;
-            ModelSavedDataStore.For(Const.ModId).RegisterComputed<AbstractModel, ModelCapabilitySaveDocument>(
-                SavedDataKey,
-                Export,
-                Import,
-                () => new(),
-                new()
-                {
-                    ClonePolicy = ModelSavedDataClonePolicy.Copy,
-                    WritePolicy = ModelSavedDataWritePolicy.AlwaysWhenPresent,
-                });
+                ModelSavedDataStore.For(Const.ModId).RegisterComputed<AbstractModel, ModelCapabilitySaveDocument>(
+                    SavedDataKey,
+                    Export,
+                    Import,
+                    () => new(),
+                    new()
+                    {
+                        ClonePolicy = ModelSavedDataClonePolicy.Copy,
+                        WritePolicy = ModelSavedDataWritePolicy.AlwaysWhenPresent,
+                    });
+                IsInitialized = true;
+            }
         }
 
         /// <summary>
-        ///     Gets the capability set for <paramref name="model" />.
-        ///     获取 <paramref name="model" /> 的能力集合。
+        ///     <para xml:lang="en">Gets the capability set for <paramref name="model" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="model" /> 的能力集合。</para>
         /// </summary>
         public static ModelCapabilitySet Get(AbstractModel model)
         {
@@ -48,8 +52,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Attempts to get an existing capability set without creating one.
-        ///     尝试获取已有能力集合，但不创建新集合。
+        ///     <para xml:lang="en">Attempts to get an existing capability set without creating one.</para>
+        ///     <para xml:lang="zh-CN">尝试获取已有能力集合，但不创建新集合。</para>
         /// </summary>
         public static bool TryGet(AbstractModel model, out ModelCapabilitySet collection)
         {
@@ -122,14 +126,14 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Convenience extension methods for model capabilities.
-    ///     模型能力的便捷扩展方法。
+    ///     <para xml:lang="en">Convenience extension methods for model capabilities.</para>
+    ///     <para xml:lang="zh-CN">模型能力的便捷扩展方法。</para>
     /// </summary>
     public static class ModelCapabilityExtensions
     {
         /// <summary>
-        ///     Gets the capability set for this model.
-        ///     获取此模型的能力集合。
+        ///     <para xml:lang="en">Gets the capability set for this model.</para>
+        ///     <para xml:lang="zh-CN">获取此模型的能力集合。</para>
         /// </summary>
         public static ModelCapabilitySet Capabilities(this AbstractModel model)
         {
@@ -137,8 +141,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets the first capability of type <typeparamref name="TCapability" /> on this model.
-        ///     获取此模型上的第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Gets the first capability of type <typeparamref name="TCapability" /> on this model.</para>
+        ///     <para xml:lang="zh-CN">获取此模型上的第一个 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public static TCapability? Capability<TCapability>(this AbstractModel model)
             where TCapability : class, IModelCapability
@@ -147,8 +151,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Attempts to get the first capability of type <typeparamref name="TCapability" /> on this model.
-        ///     尝试获取此模型上的第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Attempts to get the first capability of type <typeparamref name="TCapability" /> on this model.</para>
+        ///     <para xml:lang="zh-CN">尝试获取此模型上的第一个 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public static bool TryGetCapability<TCapability>(this AbstractModel model, out TCapability capability)
             where TCapability : class, IModelCapability
@@ -157,8 +161,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Applies <paramref name="capability" /> to this model, using the set merge rules.
-        ///     将 <paramref name="capability" /> 应用到此模型，并使用能力集合的合并规则。
+        ///     <para xml:lang="en">Applies <paramref name="capability" /> to this model, using the set merge rules.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="capability" /> 应用到此模型，并使用能力集合的合并规则。</para>
         /// </summary>
         public static TCapability? ApplyCapability<TCapability>(
             this AbstractModel model,
@@ -170,8 +174,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Adds <paramref name="capability" /> to this model.
-        ///     将 <paramref name="capability" /> 添加到此模型。
+        ///     <para xml:lang="en">Adds <paramref name="capability" /> to this model.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="capability" /> 添加到此模型。</para>
         /// </summary>
         public static TCapability? AddCapability<TCapability>(
             this AbstractModel model,
@@ -184,8 +188,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Applies <paramref name="capability" /> as a subtractive merge against this model.
-        ///     将 <paramref name="capability" /> 作为减法合并应用到此模型。
+        ///     <para xml:lang="en">Applies <paramref name="capability" /> as a subtractive merge against this model.</para>
+        ///     <para xml:lang="zh-CN">将 <paramref name="capability" /> 作为减法合并应用到此模型。</para>
         /// </summary>
         public static TCapability? SubtractCapability<TCapability>(
             this AbstractModel model,
@@ -197,8 +201,11 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets an existing capability, or applies a new capability created by <paramref name="factory" />.
-        ///     获取已有能力；不存在时应用由 <paramref name="factory" /> 创建的新能力。
+        ///     <para xml:lang="en">
+        ///         Gets an existing capability, or applies a new capability created by <paramref name="factory" />
+        ///         .
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取已有能力；不存在时应用由 <paramref name="factory" /> 创建的新能力。</para>
         /// </summary>
         public static TCapability GetOrAddCapability<TCapability>(
             this AbstractModel model,
@@ -210,8 +217,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets an existing capability, or creates one from <see cref="ModelCapabilityRegistry" />.
-        ///     获取已有能力；不存在时通过 <see cref="ModelCapabilityRegistry" /> 创建。
+        ///     <para xml:lang="en">Gets an existing capability, or creates one from <see cref="ModelCapabilityRegistry" />.</para>
+        ///     <para xml:lang="zh-CN">获取已有能力；不存在时通过 <see cref="ModelCapabilityRegistry" /> 创建。</para>
         /// </summary>
         public static TCapability GetOrCreateCapability<TCapability>(
             this AbstractModel model,
@@ -222,8 +229,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets an existing registered capability, or creates it as part of this model's upgrade.
-        ///     获取已有已注册能力；不存在时作为此模型升级的一部分创建。
+        ///     <para xml:lang="en">Gets an existing registered capability, or creates it as part of this model's upgrade.</para>
+        ///     <para xml:lang="zh-CN">获取已有已注册能力；不存在时作为此模型升级的一部分创建。</para>
         /// </summary>
         public static TCapability GetOrCreateUpgradeCapability<TCapability>(
             this AbstractModel model,
@@ -234,8 +241,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a registered capability and applies it as part of this model's upgrade.
-        ///     创建已注册能力，并作为此模型升级的一部分应用。
+        ///     <para xml:lang="en">Creates a registered capability and applies it as part of this model's upgrade.</para>
+        ///     <para xml:lang="zh-CN">创建已注册能力，并作为此模型升级的一部分应用。</para>
         /// </summary>
         public static TCapability? AddUpgradeCapability<TCapability>(
             this AbstractModel model,
@@ -246,8 +253,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes the first capability of type <typeparamref name="TCapability" /> from this model.
-        ///     从此模型移除第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Removes the first capability of type <typeparamref name="TCapability" /> from this model.</para>
+        ///     <para xml:lang="zh-CN">从此模型移除第一个 <typeparamref name="TCapability" /> 类型能力。</para>
         /// </summary>
         public static TCapability? RemoveCapability<TCapability>(this AbstractModel model)
             where TCapability : class, IModelCapability

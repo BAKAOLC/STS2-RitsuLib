@@ -4,6 +4,10 @@ using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">Persists the last-seen Workshop item update timestamps separately for each Steam update scope.</para>
+    ///     <para xml:lang="zh-CN">按每个 Steam 更新作用域分别持久化最后看到的创意工坊物品更新时间戳。</para>
+    /// </summary>
     internal static class SteamWorkshopUpdateSnapshotStore
     {
         private const string DataKey = "steam_workshop_update_snapshot";
@@ -123,9 +127,9 @@ namespace STS2RitsuLib.Platform.Steam
 
         private sealed class SteamWorkshopUpdateSnapshotEntry
         {
-            [JsonPropertyName("updated")] public uint Updated { get; set; }
+            [JsonPropertyName("updated")] public uint Updated { get; init; }
 
-            [JsonPropertyName("title")] public string? Title { get; set; }
+            [JsonPropertyName("title")] public string? Title { get; init; }
         }
     }
 

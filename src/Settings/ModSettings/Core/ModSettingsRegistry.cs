@@ -3,9 +3,11 @@ using System.Reflection;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Global registry of mod settings pages, optional per-mod display names, optional mod-group sidebar ordering,
-    ///     and optional per-page sort overrides.
-    ///     Mod 设置页的全局注册表，包含可选的每 Mod 显示名称、可选的 Mod 分组侧边栏排序，以及可选的逐页面排序覆盖。
+    ///     <para xml:lang="en">
+    ///         Stores mod settings pages together with optional mod display names, mod-group sidebar orders, and page
+    ///         sort-order overrides.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">存储模组设置页面，以及可选的模组显示名称、模组分组侧边栏排序和页面排序覆盖值。</para>
     /// </summary>
     public static class ModSettingsRegistry
     {
@@ -13,16 +15,17 @@ namespace STS2RitsuLib.Settings
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Optional sidebar group order per mod (lower appears earlier). Mods without an entry sort by display name
-        ///     among those sharing the same order value (default <c>0</c>).
-        ///     每个 Mod 可选的侧边栏分组排序（数值越小越靠前）。没有条目的 Mod 使用默认值 <c>0</c>，
-        ///     并在同排序值中按显示名称排序。
+        ///     <para xml:lang="en">
+        ///         Stores the optional sidebar group order for each mod. Lower values appear first; unregistered mods
+        ///         use zero.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">存储各模组可选的侧边栏分组排序；数值较小的分组排在前面，未注册的模组使用零。</para>
         /// </summary>
         private static readonly Dictionary<string, int> ModSidebarOrders = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Overrides <see cref="ModSettingsPage.SortOrder" /> for a page after registration (key: composite id).
-        ///     在注册后覆盖页面的 <see cref="ModSettingsPage.SortOrder" />（key：复合 id）。
+        ///     <para xml:lang="en">Stores page sort-order overrides by composite mod and page ID.</para>
+        ///     <para xml:lang="zh-CN">按模组 ID 与页面 ID 的复合键存储页面排序覆盖值。</para>
         /// </summary>
         private static readonly Dictionary<string, int> PageSortOverrides = new(StringComparer.OrdinalIgnoreCase);
 
@@ -32,19 +35,19 @@ namespace STS2RitsuLib.Settings
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Cached, fully ordered <see cref="GetPages" /> result. Invalidated whenever the page set or any
-        ///     ordering input changes (see <see cref="InvalidateOrderingCache" />). Rebuilding this is expensive
-        ///     (multi-key sort + per-page localization), and the settings UI calls <see cref="GetPages" /> many
-        ///     times per refresh, so the snapshot is reused until something actually changes.
-        ///     已缓存的、完全排序的 <see cref="GetPages" /> 结果。当页面集合或任意排序输入变化时失效（见
-        ///     <see cref="InvalidateOrderingCache" />）。重建开销很大（多键排序 + 逐页本地化），而设置 UI 每次刷新
-        ///     都会多次调用 <see cref="GetPages" />，因此在真正发生变化前复用该快照。
+        ///     <para xml:lang="en">
+        ///         Caches the fully ordered <see cref="GetPages" /> snapshot until page registration, display-name
+        ///         fallback, or an ordering input changes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         缓存完全排序后的 <see cref="GetPages" /> 快照，直至页面注册、显示名称回退或排序输入发生变化。
+        ///     </para>
         /// </summary>
         private static IReadOnlyList<ModSettingsPage>? _sortedPagesCache;
 
         /// <summary>
-        ///     True after at least one page has been registered.
-        ///     至少注册一个页面后为 true。
+        ///     <para xml:lang="en">Gets whether at least one page is currently registered.</para>
+        ///     <para xml:lang="zh-CN">获取当前是否至少注册了一个页面。</para>
         /// </summary>
         public static bool HasPages
         {
@@ -58,8 +61,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Registers a built <see cref="ModSettingsPage" /> (typically from <see cref="ModSettingsPageBuilder" />).
-        ///     注册已构建的 <see cref="ModSettingsPage" />（通常来自 <see cref="ModSettingsPageBuilder" />）。
+        ///     <para xml:lang="en">
+        ///         Adds or replaces a built page using its composite mod and page ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">按页面的模组 ID 与页面 ID 复合键添加或替换已构建页面。</para>
         /// </summary>
         public static void Register(ModSettingsPage page)
         {
@@ -73,11 +78,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Drops the cached <see cref="GetPages" /> ordering so the next call rebuilds it. Call this when an
-        ///     external ordering input changes that the registry cannot observe itself (e.g. the active locale,
-        ///     which participates in the mod display-name tie-break).
-        ///     丢弃缓存的 <see cref="GetPages" /> 排序，使下次调用重建。当注册表自身无法观察到的外部排序输入变化时
-        ///     调用此方法（例如当前语言，它参与 mod 显示名称的同序打破）。
+        ///     <para xml:lang="en">
+        ///         Invalidates the ordered page snapshot so the next <see cref="GetPages" /> call rebuilds it. Use this
+        ///         when an external display-name fallback or other ordering input changes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使有序页面快照失效，以便下一次 <see cref="GetPages" /> 调用重新构建；外部显示名称回退或其他排序输入变化时使用。
+        ///     </para>
         /// </summary>
         public static void InvalidateOrderingCache()
         {
@@ -88,8 +95,10 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Registers localized (or literal) text shown for <paramref name="modId" /> in the settings chrome.
-        ///     注册在设置 chrome 中为 <paramref name="modId" /> 显示的本地化（或字面）文本。
+        ///     <para xml:lang="en">
+        ///         Adds or replaces the localized or literal display text for <paramref name="modId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">添加或替换 <paramref name="modId" /> 的本地化或字面显示文本。</para>
         /// </summary>
         public static void RegisterModDisplayName(string modId, ModSettingsText displayName)
         {
@@ -104,8 +113,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Returns the display name for <paramref name="modId" />, if any.
-        ///     返回 <paramref name="modId" /> 的显示名称（如果有）。
+        ///     <para xml:lang="en">Gets the registered display text for <paramref name="modId" />, if any.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 已注册的显示文本（如有）。</para>
         /// </summary>
         public static ModSettingsText? GetModDisplayName(string modId)
         {
@@ -118,10 +127,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Registers ordering for this mod&apos;s group in the settings sidebar. Lower <paramref name="order" /> appears
-        ///     earlier. Mods without a registered order use <c>0</c> and sort by resolved display name among peers.
-        ///     注册此 mod 在设置侧边栏中分组的顺序。<paramref name="order" /> 越小越靠前。Mods
-        ///     未注册顺序时使用 <c>0</c>，并在同级之间按解析后的显示名称排序。
+        ///     <para xml:lang="en">
+        ///         Adds or replaces the sidebar group order for <paramref name="modId" />. Lower values appear first;
+        ///         unregistered mods use zero.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加或替换 <paramref name="modId" /> 的侧边栏分组排序值；数值较小的分组排在前面，未注册的模组使用零。
+        ///     </para>
         /// </summary>
         public static void RegisterModSidebarOrder(string modId, int order)
         {
@@ -135,10 +147,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Overrides the sort key for a page among siblings (same <see cref="ModSettingsPage.ModId" /> and
-        ///     <see cref="ModSettingsPage.ParentPageId" />). Lower appears earlier; ties break by page id.
-        ///     覆盖页面在兄弟页面（相同 <see cref="ModSettingsPage.ModId" /> 和
-        ///     <see cref="ModSettingsPage.ParentPageId" />）中的排序 key。值越小越靠前；相同则按 page id 打破平局。
+        ///     <para xml:lang="en">
+        ///         Adds or replaces a page sort-order override. The override may be registered before or after the page;
+        ///         lower values place sibling pages earlier.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加或替换页面排序覆盖值；可在页面注册前或注册后设置，数值较小的同级页面排在前面。
+        ///     </para>
         /// </summary>
         public static void RegisterPageSortOrder(string modId, string pageId, int sortOrder)
         {
@@ -153,22 +168,32 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets <paramref name="pageId" />&apos;s effective order to just after <paramref name="afterPageId" /> (same mod).
+        ///     <para xml:lang="en">
+        ///         Sets <paramref name="pageId" />'s effective order to the positive <paramref name="gap" /> immediately
+        ///         after <paramref name="afterPageId" /> in the same mod.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将同一模组中 <paramref name="pageId" /> 的有效排序设为紧随 <paramref name="afterPageId" />
+        ///         之后的正数 <paramref name="gap" />。
+        ///     </para>
         /// </summary>
-        /// 将
-        /// <paramref name="pageId" />
-        /// 的有效排序设置为刚好位于
-        /// <paramref name="afterPageId" />
-        /// 之后（同一 Mod）。
         /// <returns>
-        ///     <see langword="true" /> when <paramref name="afterPageId" /> exists.
-        ///     当 <paramref name="afterPageId" /> 存在时为 <see langword="true" />。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when <paramref name="afterPageId" /> is registered; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="afterPageId" /> 已注册时为 <see langword="true" />，否则为
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryRegisterPageSortOrderAfter(string modId, string pageId, string afterPageId, int gap = 1)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(pageId);
             ArgumentException.ThrowIfNullOrWhiteSpace(afterPageId);
+            if (gap <= 0)
+                throw new ArgumentOutOfRangeException(nameof(gap), "Page sort-order gap must be greater than zero.");
 
             lock (SyncRoot)
             {
@@ -177,29 +202,39 @@ namespace STS2RitsuLib.Settings
 
                 var baseOrder =
                     PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, afterPageId), after.SortOrder);
-                PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder + gap;
+                PageSortOverrides[CreateCompositeId(modId, pageId)] = checked(baseOrder + gap);
                 _sortedPagesCache = null;
                 return true;
             }
         }
 
         /// <summary>
-        ///     Sets <paramref name="pageId" />&apos;s effective order to just before <paramref name="beforePageId" /> (same mod).
+        ///     <para xml:lang="en">
+        ///         Sets <paramref name="pageId" />'s effective order to the positive <paramref name="gap" /> immediately
+        ///         before <paramref name="beforePageId" /> in the same mod.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将同一模组中 <paramref name="pageId" /> 的有效排序设为紧邻 <paramref name="beforePageId" />
+        ///         之前的正数 <paramref name="gap" />。
+        ///     </para>
         /// </summary>
-        /// 将
-        /// <paramref name="pageId" />
-        /// 的有效排序设置为刚好位于
-        /// <paramref name="beforePageId" />
-        /// 之前（同一 Mod）。
         /// <returns>
-        ///     <see langword="true" /> when <paramref name="beforePageId" /> exists.
-        ///     当 <paramref name="beforePageId" /> 存在时为 <see langword="true" />。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when <paramref name="beforePageId" /> is registered; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="beforePageId" /> 已注册时为 <see langword="true" />，否则为
+        ///         <see langword="false" />。
+        ///     </para>
         /// </returns>
         public static bool TryRegisterPageSortOrderBefore(string modId, string pageId, string beforePageId, int gap = 1)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(pageId);
             ArgumentException.ThrowIfNullOrWhiteSpace(beforePageId);
+            if (gap <= 0)
+                throw new ArgumentOutOfRangeException(nameof(gap), "Page sort-order gap must be greater than zero.");
 
             lock (SyncRoot)
             {
@@ -208,15 +243,15 @@ namespace STS2RitsuLib.Settings
 
                 var baseOrder = PageSortOverrides.GetValueOrDefault(CreateCompositeId(modId, beforePageId),
                     before.SortOrder);
-                PageSortOverrides[CreateCompositeId(modId, pageId)] = baseOrder - gap;
+                PageSortOverrides[CreateCompositeId(modId, pageId)] = checked(baseOrder - gap);
                 _sortedPagesCache = null;
                 return true;
             }
         }
 
         /// <summary>
-        ///     Sidebar group order for <paramref name="modId" />; <c>0</c> when unset.
-        ///     <paramref name="modId" /> 的侧边栏分组顺序；未设置时为 <c>0</c>。
+        ///     <para xml:lang="en">Gets the sidebar group order for <paramref name="modId" />, or zero when unset.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 的侧边栏分组排序值；未设置时为零。</para>
         /// </summary>
         public static int GetModSidebarOrder(string modId)
         {
@@ -229,8 +264,14 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Effective sort key for <paramref name="page" /> (override or <see cref="ModSettingsPage.SortOrder" />).
-        ///     <paramref name="page" /> 的有效排序 key（覆盖值或 <see cref="ModSettingsPage.SortOrder" />）。
+        ///     <para xml:lang="en">
+        ///         Gets the registered override for <paramref name="page" />, or its
+        ///         <see cref="ModSettingsPage.SortOrder" /> when no override exists.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="page" /> 已注册的排序覆盖值；没有覆盖值时返回
+        ///         <see cref="ModSettingsPage.SortOrder" />。
+        ///     </para>
         /// </summary>
         public static int GetEffectivePageSortOrder(ModSettingsPage page)
         {
@@ -243,8 +284,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Fluent helper: builds a page via <paramref name="configure" /> and registers it.
-        ///     流式 helper：通过 <paramref name="configure" /> 构建页面并注册。
+        ///     <para xml:lang="en">Builds a page through <paramref name="configure" /> and registers the result.</para>
+        ///     <para xml:lang="zh-CN">通过 <paramref name="configure" /> 构建页面并注册结果。</para>
         /// </summary>
         public static void Register(string modId, Action<ModSettingsPageBuilder> configure, string? pageId = null)
         {
@@ -269,8 +310,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Looks up a page by mod id and page id.
-        ///     通过 Mod id 和页面 id 查找页面。
+        ///     <para xml:lang="en">Looks up a page by mod ID and page ID, case-insensitively.</para>
+        ///     <para xml:lang="zh-CN">按模组 ID 与页面 ID 查找页面，不区分大小写。</para>
         /// </summary>
         public static bool TryGetPage(string modId, string pageId, out ModSettingsPage? page)
         {
@@ -284,25 +325,28 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     All registered pages, ordered for stable sidebar display: mod group order, then mod display name, then
-        ///     effective page order within the mod, then page id.
-        ///     所有已注册页面，按稳定侧边栏显示顺序排序：Mod 分组排序、Mod 显示名称、Mod 内有效页面排序、页面 id。
+        ///     <para xml:lang="en">
+        ///         Gets a cached immutable snapshot of all registered pages, ordered by mod-group order, mod display-name
+        ///         fallback, mod ID, effective page order, and page ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取所有已注册页面的缓存不可变快照，依次按模组分组排序、模组显示名称回退、模组 ID、页面有效排序及页面 ID 排列。
+        ///     </para>
         /// </summary>
         public static IReadOnlyList<ModSettingsPage> GetPages()
         {
             lock (SyncRoot)
             {
-                return _sortedPagesCache ??=
-                [
-                    .. PagesById.Values
+                return _sortedPagesCache ??= Array.AsReadOnly(
+                    PagesById.Values
                         .OrderBy(page => ModSidebarOrders.GetValueOrDefault(page.ModId, 0))
                         .ThenBy(page => ModSettingsLocalization.ResolveModNameFallback(page.ModId, page.ModId),
                             StringComparer.OrdinalIgnoreCase)
                         .ThenBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
                         .ThenBy(page => PageSortOverrides.GetValueOrDefault(CreateCompositeId(page.ModId, page.Id),
                             page.SortOrder))
-                        .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase),
-                ];
+                        .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
+                        .ToArray());
             }
         }
 

@@ -5,8 +5,8 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Godot
 {
     /// <summary>
-    ///     Non-generic factory entry point used by <see cref="RitsuGodotNodeFactoryRegistry" />.
-    ///     Non-generic 工厂 条目 point used by <see cref="RitsuGodotNodeFactoryRegistry" />。
+    ///     <para xml:lang="en">Defines the non-generic factory contract used by <see cref="RitsuGodotNodeFactoryRegistry" />.</para>
+    ///     <para xml:lang="zh-CN">定义 <see cref="RitsuGodotNodeFactoryRegistry" /> 使用的非泛型工厂契约。</para>
     /// </summary>
     internal abstract class RitsuGodotNodeFactory
     {
@@ -20,21 +20,41 @@ namespace STS2RitsuLib.Scaffolding.Godot
         }
 
         /// <summary>
-        ///     Builds a root node without running <c>CompleteBareRoot</c> (used for <c>Texture2D</c> → visuals).
-        ///     构建一个根节点，而不运行 <c>CompleteBareRoot</c>（用于 <c>Texture2D</c> → 视觉）。
+        ///     <para xml:lang="en">
+        ///         Builds a root node without running <see cref="CompleteBareRoot(Node)" />, for example when creating
+        ///         visuals from a <see cref="Texture2D" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建根节点，但不运行 <see cref="CompleteBareRoot(Node)" />；例如，从 <see cref="Texture2D" />
+        ///         创建视觉节点时会使用此方法。
+        ///     </para>
         /// </summary>
         public abstract Node CreateBareFromResource(object resource);
 
         public virtual Node CreateFromResource(object resource, VisualNodeStyle? style)
         {
             var bare = CreateBareFromResource(resource);
-            CompleteBareRoot(bare, style);
-            return bare;
+            try
+            {
+                CompleteBareRoot(bare, style);
+                return bare;
+            }
+            catch
+            {
+                if (GodotObject.IsInstanceValid(bare))
+                    bare.Free();
+                throw;
+            }
         }
 
         /// <summary>
-        ///     Fills unique slots / children for a bare root (same as <c>ConvertScene(target, null)</c>).
-        ///     为裸根节点填充唯一槽位 / 子节点（与 <c>ConvertScene(target, null)</c> 相同）。
+        ///     <para xml:lang="en">
+        ///         Fills the required named slots and children of a bare root, equivalent to
+        ///         <c>ConvertScene(target, null)</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         填充裸根节点所需的具名槽位和子节点，等同于调用 <c>ConvertScene(target, null)</c>。
+        ///     </para>
         /// </summary>
         public abstract void CompleteBareRoot(Node bare);
 
@@ -46,8 +66,13 @@ namespace STS2RitsuLib.Scaffolding.Godot
     }
 
     /// <summary>
-    ///     Describes a named child expected under a converted Godot scene root (unique <c>%Name</c> or path lookup).
-    ///     Describes a named child expected under a converted Godot 场景 根节点 (unique <c>%Name</c> or 路径 lookup)。
+    ///     <para xml:lang="en">
+    ///         Describes a named child expected beneath a converted Godot scene root, resolved by a unique
+    ///         <c>%Name</c> or a node path.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述转换后的 Godot 场景根节点下所需的具名子节点，可通过唯一名称 <c>%Name</c> 或节点路径解析。
+    ///     </para>
     /// </summary>
     internal interface IRitsuGodotNodeSlot
     {
@@ -61,8 +86,14 @@ namespace STS2RitsuLib.Scaffolding.Godot
     }
 
     /// <summary>
-    ///     Slot metadata for <see cref="RitsuGodotNodeFactory{T}" /> (mirrors baselib <c>NodeInfo&lt;T&gt;</c>).
-    ///     <see cref="RitsuGodotNodeFactory{T}" /> 的槽位元数据（对应 baselib 的 <c>NodeInfo&lt;T&gt;</c>）。
+    ///     <para xml:lang="en">
+    ///         Stores named-slot metadata for <see cref="RitsuGodotNodeFactory{T}" />, corresponding to BaseLib's
+    ///         <c>NodeInfo&lt;T&gt;</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         存储 <see cref="RitsuGodotNodeFactory{T}" /> 的具名槽位元数据，对应 BaseLib 的
+    ///         <c>NodeInfo&lt;T&gt;</c>。
+    ///     </para>
     /// </summary>
     internal sealed record RitsuGodotNodeSlot<TExpected>(string Path, bool MakeNameUnique = true) : IRitsuGodotNodeSlot
         where TExpected : Node
@@ -89,8 +120,8 @@ namespace STS2RitsuLib.Scaffolding.Godot
     }
 
     /// <summary>
-    ///     Base class for typed procedural / scene conversion factories.
-    ///     强类型程序化 / 场景转换工厂的基类。
+    ///     <para xml:lang="en">Provides a base class for typed procedural-node and scene-conversion factories.</para>
+    ///     <para xml:lang="zh-CN">提供强类型程序化节点及场景转换工厂的基类。</para>
     /// </summary>
     internal abstract class RitsuGodotNodeFactory<T> : RitsuGodotNodeFactory where T : Node, new()
     {
@@ -107,25 +138,45 @@ namespace STS2RitsuLib.Scaffolding.Godot
         public override Node CreateFromNode(Node source)
         {
             if (source is T typed)
+            {
+                CompleteBareRoot(typed);
                 return typed;
+            }
 
             var target = new T();
-            ConvertScene(target, source);
-            return target;
+            try
+            {
+                ConvertScene(target, source);
+                return target;
+            }
+            catch
+            {
+                FreeFailedConversion(target, source);
+                throw;
+            }
         }
 
         public override Node CreateFromNode(Node source, VisualNodeStyle? style)
         {
             if (source is T typed)
             {
+                CompleteBareRoot(typed);
                 ApplyStyle(typed, false, style);
                 return typed;
             }
 
             var target = new T();
-            ConvertScene(target, source);
-            ApplyStyle(target, false, style);
-            return target;
+            try
+            {
+                ConvertScene(target, source);
+                ApplyStyle(target, false, style);
+                return target;
+            }
+            catch
+            {
+                FreeFailedConversion(target, source);
+                throw;
+            }
         }
 
         public override Node CreateBareFromResource(object resource)
@@ -145,8 +196,13 @@ namespace STS2RitsuLib.Scaffolding.Godot
         }
 
         /// <summary>
-        ///     When <paramref name="resource" /> is unsupported, throw with a clear message.
-        ///     当 <paramref name="resource" /> 不受支持时，抛出清晰的消息。
+        ///     <para xml:lang="en">
+        ///         Creates a bare root from <paramref name="resource" />. Implementations should throw a descriptive exception
+        ///         for unsupported resource types.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从 <paramref name="resource" /> 创建裸根节点。实现应在资源类型不受支持时抛出说明明确的异常。
+        ///     </para>
         /// </summary>
         protected abstract T CreateBareFromResourceImpl(object resource);
 
@@ -220,7 +276,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
                     if (!named.IsValidType(node))
                     {
                         node.ReplaceBy(placeholder);
-                        node = ConvertNodeType(node, named.ExpectedNodeType);
+                        node = ConvertNodeTypeAndFreeUnusedSource(node, named.ExpectedNodeType);
                         placeholder.ReplaceBy(node);
                     }
 
@@ -256,7 +312,7 @@ namespace STS2RitsuLib.Scaffolding.Godot
                     if (!missing.IsValidType(node))
                     {
                         node.ReplaceBy(placeholder);
-                        node = ConvertNodeType(node, missing.ExpectedNodeType);
+                        node = ConvertNodeTypeAndFreeUnusedSource(node, missing.ExpectedNodeType);
                         placeholder.ReplaceBy(node);
                     }
 
@@ -271,6 +327,24 @@ namespace STS2RitsuLib.Scaffolding.Godot
             placeholder.QueueFree();
         }
 
+        private Node ConvertNodeTypeAndFreeUnusedSource(Node source, Type targetType)
+        {
+            var sourceType = source.GetType();
+            var sourceName = source.Name;
+            var converted = ConvertNodeType(source, targetType);
+            if (!GodotObject.IsInstanceValid(converted))
+                throw new InvalidOperationException(
+                    $"Factory for {typeof(T).Name} returned a null or invalid {targetType.Name} replacement for " +
+                    $"{sourceType.Name} '{sourceName}'.");
+
+            if (!ReferenceEquals(converted, source) &&
+                GodotObject.IsInstanceValid(source) &&
+                source.GetParent() == null)
+                source.Free();
+
+            return converted;
+        }
+
         protected virtual Node ConvertNodeType(Node node, Type targetType)
         {
             throw new InvalidOperationException(
@@ -279,13 +353,25 @@ namespace STS2RitsuLib.Scaffolding.Godot
 
         protected abstract void GenerateNode(T target, IRitsuGodotNodeSlot required);
 
+        private static void FreeFailedConversion(T target, Node source)
+        {
+            if (GodotObject.IsInstanceValid(target))
+                target.Free();
+            if (GodotObject.IsInstanceValid(source))
+                source.Free();
+        }
+
         /// <summary>
-        ///     Packed-scene children often still reference the old root as <see cref="Node.Owner" /> after
-        ///     <c>RemoveChild</c>. Godot warns and can break unique-name resolution if reparenting under a new root with
-        ///     the same scene name without clearing first (matches Godot log: inconsistent owner).
-        ///     packed scene 子节点在 <c>RemoveChild</c> 后通常仍以旧根节点作为 <see cref="Node.Owner" />。
-        ///     如果在未先清理的情况下重挂到具有相同场景名称的新根节点下，Godot 会警告并可能破坏唯一名称解析
-        ///     （匹配 Godot 日志：所有者不一致）。
+        ///     <para xml:lang="en">
+        ///         Clears owners before reparenting because packed-scene children can retain the old root as
+        ///         <see cref="Node.Owner" /> after <c>RemoveChild</c>. Leaving those owners in place can produce Godot
+        ///         “inconsistent owner” warnings and break unique-name resolution beneath the new root.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在重新设置父节点之前清除所有者，因为打包场景中的子节点在调用 <c>RemoveChild</c> 后仍可能以旧根节点
+        ///         作为 <see cref="Node.Owner" />。保留这些所有者会产生 Godot“所有者不一致”警告，并可能破坏新根节点下
+        ///         的唯一名称解析。
+        ///     </para>
         /// </summary>
         private static void ClearSubtreeOwnersForReparent(Node node)
         {

@@ -3,16 +3,18 @@ using STS2RitsuLib.Patching.Core;
 namespace STS2RitsuLib.Patching.Models
 {
     /// <summary>
-    ///     Interface for a class that contains patches for the mod.
-    ///     This is used to group patches together and make it easier to add them to the patcher.
-    ///     表示包含此 mod patch 的类的接口。
-    ///     用于将 patch 分组，并使它们更容易添加到 patcher。
+    ///     <para xml:lang="en">
+    ///         Defines a group of mod patches that can register themselves with a <see cref="ModPatcher" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义一组可自行注册到 <see cref="ModPatcher" /> 的模组补丁。
+    ///     </para>
     /// </summary>
     public interface IModPatches
     {
         /// <summary>
-        ///     Adds the patches to the patcher.
-        ///     将 patch 添加到 patcher。
+        ///     <para xml:lang="en">Adds the patches to <paramref name="patcher" />.</para>
+        ///     <para xml:lang="zh-CN">将补丁添加到 <paramref name="patcher" />。</para>
         /// </summary>
         static abstract void AddTo(ModPatcher patcher);
     }

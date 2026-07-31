@@ -6,13 +6,17 @@ using MegaCrit.Sts2.Core.Saves.Runs;
 namespace STS2RitsuLib.Combat.Rewards
 {
     /// <summary>
-    ///     Sideband storage for extended reward serialization data.
-    ///     Data is first attached to <see cref="SerializableReward" /> instances via
-    ///     <see cref="ConditionalWeakTable{TKey,TValue}" />, then persisted into
-    ///     <see cref="SerializableRoom.EncounterState" /> with keys prefixed by <see cref="KeyPrefix" />.
-    ///     扩展 reward 序列化数据的 sideband 存储。
-    ///     数据先通过 <see cref="ConditionalWeakTable{TKey,TValue}" /> 附加到 <see cref="SerializableReward" /> 实例，随后持久化到
-    ///     <see cref="SerializableRoom.EncounterState" />，键带有 <see cref="KeyPrefix" /> 前缀。
+    ///     <para xml:lang="en">
+    ///         Stores supplemental reward serialization data. Data is first associated with
+    ///         <see cref="SerializableReward" /> instances through a
+    ///         <see cref="ConditionalWeakTable{TKey,TValue}" />, then persisted in
+    ///         <see cref="SerializableRoom.EncounterState" /> under keys prefixed by <see cref="KeyPrefix" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         存储奖励的补充序列化数据。数据先通过 <see cref="ConditionalWeakTable{TKey,TValue}" />
+    ///         与 <see cref="SerializableReward" /> 实例关联，再以带有 <see cref="KeyPrefix" /> 前缀的键
+    ///         持久化到 <see cref="SerializableRoom.EncounterState" />。
+    ///     </para>
     /// </summary>
     internal static class RewardSerializationExt
     {

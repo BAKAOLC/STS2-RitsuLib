@@ -9,8 +9,8 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Base context for player-owned secondary resource operations.
-    ///     玩家所属次级资源操作的基础上下文。
+    ///     <para xml:lang="en">Provides shared data for operations on a player's secondary resource.</para>
+    ///     <para xml:lang="zh-CN">提供操作玩家次级资源时使用的共享数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceContext(
         CombatStateLike CombatState,
@@ -19,8 +19,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         AbstractModel? Source);
 
     /// <summary>
-    ///     Context for max-amount calculation.
-    ///     最大数量计算上下文。
+    ///     <para xml:lang="en">Provides data for maximum-amount calculation.</para>
+    ///     <para xml:lang="zh-CN">提供计算最大数量时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceMaxContext(
         CombatStateLike CombatState,
@@ -28,8 +28,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourceDefinition Definition);
 
     /// <summary>
-    ///     Context for amount changes.
-    ///     数量变化上下文。
+    ///     <para xml:lang="en">Describes a committed resource amount change.</para>
+    ///     <para xml:lang="zh-CN">描述已提交的资源数量变化。</para>
     /// </summary>
     public readonly record struct SecondaryResourceChangeContext(
         CombatStateLike CombatState,
@@ -42,8 +42,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         AbstractModel? Source);
 
     /// <summary>
-    ///     Context for resource spending.
-    ///     资源消耗上下文。
+    ///     <para xml:lang="en">Describes a proposed resource payment.</para>
+    ///     <para xml:lang="zh-CN">描述拟执行的资源支付。</para>
     /// </summary>
     public readonly record struct SecondaryResourceSpendContext(
         CombatStateLike CombatState,
@@ -54,8 +54,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         AbstractModel? Source);
 
     /// <summary>
-    ///     Context for dynamic insufficient-payment policy resolution.
-    ///     动态解析资源不足支付策略的上下文。
+    ///     <para xml:lang="en">Provides data for resolving the insufficient-payment policy.</para>
+    ///     <para xml:lang="zh-CN">提供解析资源不足支付策略时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceInsufficientPaymentContext(
         CombatStateLike CombatState,
@@ -71,8 +71,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         AbstractModel? Source);
 
     /// <summary>
-    ///     Context for pure shortfall-replacement planning.
-    ///     纯短缺替代规划上下文。
+    ///     <para xml:lang="en">Provides data for side-effect-free planning of a replacement payment.</para>
+    ///     <para xml:lang="zh-CN">提供无副作用地规划替代支付时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceShortfallResolutionContext(
         CombatStateLike CombatState,
@@ -88,8 +88,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         AbstractModel? Source);
 
     /// <summary>
-    ///     Context for a committed required-cost shortfall payment.
-    ///     已提交必需费用短缺支付的上下文。
+    ///     <para xml:lang="en">Describes a committed required payment that still has a shortfall.</para>
+    ///     <para xml:lang="zh-CN">描述已提交且仍有缺口的必需支付。</para>
     /// </summary>
     public readonly record struct SecondaryResourceShortfallContext(
         CombatStateLike CombatState,
@@ -108,8 +108,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourcePlayLedger Ledger);
 
     /// <summary>
-    ///     Context for resource cost modification.
-    ///     资源费用修正上下文。
+    ///     <para xml:lang="en">Provides data for global resource-cost modification.</para>
+    ///     <para xml:lang="zh-CN">提供全局修正资源费用时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceCostContext(
         CombatStateLike CombatState,
@@ -119,8 +119,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         decimal OriginalCost);
 
     /// <summary>
-    ///     Context for local card-attached secondary-resource cost modification.
-    ///     卡牌本地附加次级资源费用修正上下文。
+    ///     <para xml:lang="en">Provides data for a card-local secondary-resource cost modifier.</para>
+    ///     <para xml:lang="zh-CN">提供卡牌局部修正次级资源费用时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceCardCostContext(
         CardModel Card,
@@ -129,8 +129,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         decimal OriginalCost);
 
     /// <summary>
-    ///     Context for secondary X-value modification.
-    ///     次级 X 值修正上下文。
+    ///     <para xml:lang="en">Provides data for modifying a captured secondary X value.</para>
+    ///     <para xml:lang="zh-CN">提供修正已捕获次级 X 值时使用的数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceXContext(
         CombatStateLike CombatState,

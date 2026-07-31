@@ -10,8 +10,13 @@ using MegaCrit.Sts2.Core.Timeline;
 namespace STS2RitsuLib.Saves
 {
     /// <summary>
-    ///     Holds progress-save entries whose model IDs are unavailable in the current mod set so they can be written
-    ///     back without participating in runtime progress logic.
+    ///     <para xml:lang="en">
+    ///         Preserves progress-save entries whose model IDs are unavailable with the current set of mods, allowing the
+    ///         entries to be written back without exposing them to runtime progress logic.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         保留模型 ID 在当前模组集合中不可用的进度存档条目，使其不会参与运行时进度逻辑，但仍可在保存时写回。
+    ///     </para>
     /// </summary>
     public sealed class PreservedProgressRecords
     {
@@ -108,26 +113,17 @@ namespace STS2RitsuLib.Saves
                 records.MergeInto(save);
         }
 
-        internal static void MergeSerializableProgressRecords(SerializableProgress target, SerializableProgress source)
+        internal static bool MergeUnavailableRecords(SerializableProgress target, SerializableProgress source)
         {
             ArgumentNullException.ThrowIfNull(target);
             ArgumentNullException.ThrowIfNull(source);
 
-            MergeCharacterStats(target.CharStats, source.CharStats);
-            MergeCardStats(target.CardStats, source.CardStats);
-            MergeEncounterStats(target.EncounterStats, source.EncounterStats);
-            MergeEnemyStats(target.EnemyStats, source.EnemyStats);
-            MergeAncientStats(target.AncientStats, source.AncientStats);
-            AppendMissingIds(target.DiscoveredCards, source.DiscoveredCards);
-            AppendMissingIds(target.DiscoveredRelics, source.DiscoveredRelics);
-            AppendMissingIds(target.DiscoveredPotions, source.DiscoveredPotions);
-            AppendMissingIds(target.DiscoveredEvents, source.DiscoveredEvents);
-            AppendMissingIds(target.DiscoveredActs, source.DiscoveredActs);
-            MergeEpochs(target.Epochs, source.Epochs);
-            MergeAchievements(target.UnlockedAchievements, source.UnlockedAchievements);
+            var records = Capture(source);
+            if (records == null)
+                return false;
 
-            if (target.PendingCharacterUnlock == ModelId.none && IsSavableModelId(source.PendingCharacterUnlock))
-                target.PendingCharacterUnlock = source.PendingCharacterUnlock;
+            records.MergeInto(target);
+            return true;
         }
 
         private void CaptureCharacterStats(List<CharacterStats> source)
@@ -393,196 +389,6 @@ namespace STS2RitsuLib.Saves
             foreach (var id in source)
                 if (!target.Contains(id))
                     target.Add(id);
-        }
-
-        private static void MergeCharacterStats(List<CharacterStats> target, IEnumerable<CharacterStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (!IsSavableModelId(incoming.Id))
-                    continue;
-
-                var existing = target.FirstOrDefault(stats => stats.Id == incoming.Id);
-                if (existing == null)
-                {
-                    target.Add(Clone(incoming));
-                    continue;
-                }
-
-                existing.TotalWins = Math.Max(existing.TotalWins, incoming.TotalWins);
-                existing.TotalLosses = Math.Max(existing.TotalLosses, incoming.TotalLosses);
-                existing.Playtime = Math.Max(existing.Playtime, incoming.Playtime);
-                existing.MaxAscension = Math.Max(existing.MaxAscension, incoming.MaxAscension);
-                existing.PreferredAscension = Math.Max(existing.PreferredAscension, incoming.PreferredAscension);
-                existing.BestWinStreak = Math.Max(existing.BestWinStreak, incoming.BestWinStreak);
-                existing.CurrentWinStreak = Math.Max(existing.CurrentWinStreak, incoming.CurrentWinStreak);
-                existing.FastestWinTime = MergeFastestWinTime(existing.FastestWinTime, incoming.FastestWinTime);
-                MergeBadges(existing.Badges, incoming.Badges);
-            }
-        }
-
-        private static void MergeCardStats(List<CardStats> target, IEnumerable<CardStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (!IsSavableModelId(incoming.Id))
-                    continue;
-
-                var existing = target.FirstOrDefault(stats => stats.Id == incoming.Id);
-                if (existing == null)
-                {
-                    target.Add(Clone(incoming));
-                    continue;
-                }
-
-                existing.TimesPicked = Math.Max(existing.TimesPicked, incoming.TimesPicked);
-                existing.TimesSkipped = Math.Max(existing.TimesSkipped, incoming.TimesSkipped);
-                existing.TimesWon = Math.Max(existing.TimesWon, incoming.TimesWon);
-                existing.TimesLost = Math.Max(existing.TimesLost, incoming.TimesLost);
-            }
-        }
-
-        private static void MergeEncounterStats(List<EncounterStats> target, IEnumerable<EncounterStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (!IsSavableModelId(incoming.Id))
-                    continue;
-
-                var existing = target.FirstOrDefault(stats => stats.Id == incoming.Id);
-                if (existing == null)
-                    target.Add(Clone(incoming));
-                else
-                    MergeFightStats(existing.FightStats, incoming.FightStats);
-            }
-        }
-
-        private static void MergeEnemyStats(List<EnemyStats> target, IEnumerable<EnemyStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (!IsSavableModelId(incoming.Id))
-                    continue;
-
-                var existing = target.FirstOrDefault(stats => stats.Id == incoming.Id);
-                if (existing == null)
-                    target.Add(Clone(incoming));
-                else
-                    MergeFightStats(existing.FightStats, incoming.FightStats);
-            }
-        }
-
-        private static void MergeAncientStats(List<AncientStats> target, IEnumerable<AncientStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (!IsSavableModelId(incoming.Id))
-                    continue;
-
-                var existing = target.FirstOrDefault(stats => stats.Id == incoming.Id);
-                if (existing == null)
-                    target.Add(Clone(incoming));
-                else
-                    MergeAncientCharacterStats(existing.CharStats, incoming.CharStats);
-            }
-        }
-
-        private static void MergeFightStats(List<FightStats> target, IEnumerable<FightStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (!IsSavableModelId(incoming.Character))
-                    continue;
-
-                var existing = target.FirstOrDefault(stats => stats.Character == incoming.Character);
-                if (existing == null)
-                {
-                    target.Add(Clone(incoming));
-                    continue;
-                }
-
-                existing.Wins = Math.Max(existing.Wins, incoming.Wins);
-                existing.Losses = Math.Max(existing.Losses, incoming.Losses);
-            }
-        }
-
-        private static void MergeAncientCharacterStats(
-            List<AncientCharacterStats> target,
-            IEnumerable<AncientCharacterStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (!IsSavableModelId(incoming.Character))
-                    continue;
-
-                var existing = target.FirstOrDefault(stats => stats.Character == incoming.Character);
-                if (existing == null)
-                {
-                    target.Add(Clone(incoming));
-                    continue;
-                }
-
-                existing.Wins = Math.Max(existing.Wins, incoming.Wins);
-                existing.Losses = Math.Max(existing.Losses, incoming.Losses);
-            }
-        }
-
-        private static void MergeBadges(List<BadgeStats> target, IEnumerable<BadgeStats> source)
-        {
-            foreach (var incoming in source)
-            {
-                var existing = target.FirstOrDefault(stats =>
-                    string.Equals(stats.Id, incoming.Id, StringComparison.Ordinal) &&
-                    stats.Rarity == incoming.Rarity);
-                if (existing == null)
-                    target.Add(Clone(incoming));
-                else
-                    existing.Count = Math.Max(existing.Count, incoming.Count);
-            }
-        }
-
-        private static void MergeEpochs(List<SerializableEpoch> target, IEnumerable<SerializableEpoch> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (string.IsNullOrWhiteSpace(incoming.Id))
-                    continue;
-
-                var existing = target.FirstOrDefault(epoch => epoch.Id == incoming.Id);
-                if (existing == null)
-                {
-                    target.Add(Clone(incoming));
-                    continue;
-                }
-
-                if (incoming.State > existing.State)
-                    existing.State = incoming.State;
-                if (incoming.ObtainDate > 0 && (existing.ObtainDate == 0 || incoming.ObtainDate < existing.ObtainDate))
-                    existing.ObtainDate = incoming.ObtainDate;
-            }
-        }
-
-        private static void MergeAchievements(
-            List<SerializableUnlockedAchievement> target,
-            IEnumerable<SerializableUnlockedAchievement> source)
-        {
-            foreach (var incoming in source)
-            {
-                if (string.IsNullOrWhiteSpace(incoming.Achievement))
-                    continue;
-
-                var existing = target.FirstOrDefault(achievement =>
-                    string.Equals(achievement.Achievement, incoming.Achievement, StringComparison.Ordinal));
-                if (existing == null)
-                    target.Add(Clone(incoming));
-            }
-        }
-
-        private static long MergeFastestWinTime(long existing, long incoming)
-        {
-            if (existing == -1)
-                return incoming;
-            return incoming == -1 ? existing : Math.Min(existing, incoming);
         }
 
         private static void AppendMissingById<T, TKey>(

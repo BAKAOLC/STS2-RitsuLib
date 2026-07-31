@@ -7,6 +7,15 @@ using HttpClient = System.Net.Http.HttpClient;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Provides the Steam Workshop UI-facing facade for listing, searching, subscribing, and opening items,
+    ///         and caches successfully decoded preview textures.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供面向 Steam 创意工坊界面的外观，用于列出、搜索、订阅和打开物品，并缓存成功解码的预览纹理。
+    ///     </para>
+    /// </summary>
     internal sealed class SteamWorkshopManager
     {
         private static readonly HttpClient PreviewHttpClient = new()
@@ -113,11 +122,18 @@ namespace STS2RitsuLib.Platform.Steam
                     PreviewDownloadGate.Release();
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[SteamWorkshop] Failed to load Workshop preview '{key}': {ex.Message}");
             }
+
+            if (texture == null)
+                return null;
 
             lock (_previewTextureSyncRoot)
             {
@@ -142,8 +158,7 @@ namespace STS2RitsuLib.Platform.Steam
                 var pair = part.Split('=', 2);
                 if (pair.Length != 2 ||
                     !string.Equals(pair[0], "id", StringComparison.OrdinalIgnoreCase) ||
-                    !ulong.TryParse(Uri.UnescapeDataString(pair[1]), out itemId) ||
-                    itemId == 0)
+                    !TryParseEncodedItemId(pair[1], out itemId))
                     continue;
 
                 return true;
@@ -183,7 +198,7 @@ namespace STS2RitsuLib.Platform.Steam
             if (bytes.Length < 12)
                 return null;
 
-            var image = new Image();
+            using var image = new Image();
             var error = DetectImageFormat(bytes) switch
             {
                 PreviewImageFormat.Png => image.LoadPngFromBuffer(bytes),
@@ -240,7 +255,20 @@ namespace STS2RitsuLib.Platform.Steam
             if (end >= 0)
                 value = value[..end];
 
-            return ulong.TryParse(Uri.UnescapeDataString(value), out itemId) && itemId != 0;
+            return TryParseEncodedItemId(value, out itemId);
+        }
+
+        private static bool TryParseEncodedItemId(string value, out ulong itemId)
+        {
+            itemId = 0;
+            try
+            {
+                return ulong.TryParse(Uri.UnescapeDataString(value), out itemId) && itemId != 0;
+            }
+            catch (UriFormatException)
+            {
+                return false;
+            }
         }
 
         private static IEnumerable<ulong> EnumerateDigitRunItemIds(string text)

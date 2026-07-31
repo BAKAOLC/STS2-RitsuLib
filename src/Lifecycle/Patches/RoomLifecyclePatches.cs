@@ -8,8 +8,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Publishes room entering and entered lifecycle events from <see cref="Hook" /> before/after room entry.
-    ///     在进入房间前后通过 <see cref="Hook" /> 发布房间进入中和已进入生命周期事件。
+    ///     <para xml:lang="en">Publishes lifecycle events before and after a room's entry logic.</para>
+    ///     <para xml:lang="zh-CN">在房间进入逻辑执行前后发布生命周期事件。</para>
     /// </summary>
     internal sealed class BeforeRoomEnteredLifecyclePatch : IPatchMethod
     {
@@ -53,8 +53,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes an act-entered lifecycle event from <see cref="Hook.AfterActEntered" />.
-    ///     从 <see cref="Hook.AfterActEntered" /> 发布章节已进入生命周期事件。
+    ///     <para xml:lang="en">Publishes an Act-entered lifecycle event after <see cref="Hook.AfterActEntered" /> completes.</para>
+    ///     <para xml:lang="zh-CN">在 <see cref="Hook.AfterActEntered" /> 完成后发布章节已进入生命周期事件。</para>
     /// </summary>
     internal class ActHookLifecyclePatch : IPatchMethod
     {
@@ -71,8 +71,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
         }
 
         /// <summary>
-        ///     Harmony postfix: publishes <see cref="ActEnteredEvent" /> after the hook task completes.
-        ///     Harmony postfix：在 hook task 完成后发布 <see cref="ActEnteredEvent" />。
+        ///     <para xml:lang="en">Publishes <see cref="ActEnteredEvent" /> after the hook task completes.</para>
+        ///     <para xml:lang="zh-CN">在钩子任务完成后发布 <see cref="ActEnteredEvent" />。</para>
         /// </summary>
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(IRunState runState, ref Task __result)
@@ -88,8 +88,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes a room-exited lifecycle event when <see cref="RunManager" /> finishes exiting the current room.
-    ///     当 <see cref="RunManager" /> 完成退出当前房间时发布房间已退出生命周期事件。
+    ///     <para xml:lang="en">Publishes a room-exited lifecycle event after <see cref="RunManager" /> exits the current room.</para>
+    ///     <para xml:lang="zh-CN">在 <see cref="RunManager" /> 退出当前房间后发布房间已退出生命周期事件。</para>
     /// </summary>
     internal class RoomExitLifecyclePatch : IPatchMethod
     {
@@ -121,8 +121,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes act-entering and terminal-rewards-screen continuation lifecycle events on <see cref="RunManager" />.
-    ///     在 <see cref="RunManager" /> 上发布章节进入中和终端奖励界面继续生命周期事件。
+    ///     <para xml:lang="en">
+    ///         Publishes Act-entering and final Rewards-screen continuation events from
+    ///         <see cref="RunManager" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">从 <see cref="RunManager" /> 发布章节进入中事件以及最终奖励界面的继续事件。</para>
     /// </summary>
     internal sealed class ActEnteringLifecyclePatch : IPatchMethod
     {

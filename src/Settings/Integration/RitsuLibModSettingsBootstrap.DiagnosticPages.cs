@@ -13,7 +13,7 @@ namespace STS2RitsuLib.Settings
                     .WithSortOrder(-250)
                     .WithTitle(T("ritsulib.page.harmonyDump.title", "Harmony patch dump"))
                     .WithDescription(T("ritsulib.page.harmonyDump.description",
-                        "Export a text report of patched methods (prefix/postfix/transpiler/finalizer) for debugging mod interactions."))
+                        "Export a text report of Harmony-patched methods and their prefixes, postfixes, transpilers, and finalizers for diagnosing mod interactions."))
                     .AddSection("harmony_patch_dump", section => section
                         .AddString(
                             "harmony_patch_dump_output_path",

@@ -25,18 +25,14 @@ namespace STS2RitsuLib.Content
             AccessTools.FieldRefAccess<ActModel, List<AncientEventModel>?>("_sharedAncientSubset");
 
         /// <summary>
-        ///     True when any act-enter force or pool registration exists (cheap check before <see cref="RunManager" /> work).
-        ///     当存在任意章节进入强制或池注册时为 true（在 <see cref="RunManager" /> 工作前进行廉价检查）。
+        ///     <para xml:lang="en">Gets whether any act-entry force or pool rule has been registered.</para>
+        ///     <para xml:lang="zh-CN">获取是否已注册任意章节进入强制规则或牌池规则。</para>
         /// </summary>
         public static bool HasAnyActEnterRegistration => Volatile.Read(ref _actEnterRegistrationCount) > 0;
 
         /// <summary>
-        ///     When true, <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.SetMap" /> postfix should call
-        ///     <see cref="MapSelectionSynchronizer.BeforeMapGenerated" /> once so multiplayer map votes match the layout after
-        ///     act-enter replacement (same idea as custom-act transitions in community mods).
-        ///     为 true 时，<see cref="MegaCrit.Sts2.Core.Nodes.Screens.Map.NMapScreen.SetMap" /> 后置补丁应调用一次
-        ///     <see cref="MapSelectionSynchronizer.BeforeMapGenerated" />，使多人地图投票与
-        ///     章节进入替换后的布局匹配（思路与社区 mod 的自定义章节转换相同）。
+        ///     <para xml:lang="en">Requests one multiplayer map-selection synchronization after act replacement.</para>
+        ///     <para xml:lang="zh-CN">请求在替换章节后执行一次多人地图选择同步。</para>
         /// </summary>
         internal static void RequestActEnterPostMapUiMapSyncBump()
         {
@@ -58,13 +54,15 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     When <paramref name="eligibility" /> is true, forces <see cref="MegaCrit.Sts2.Core.Runs.RunState.Acts" />[
-        ///     <paramref name="slotIndex" />] to <typeparamref name="TAct" /> on <see cref="RunManager.EnterAct" />. Higher
-        ///     <paramref name="priority" /> wins; ties break by earlier registration.
-        ///     当 <paramref name="eligibility" /> 为 true 时，在 <see cref="RunManager.EnterAct" /> 时强制将
-        ///     <see cref="MegaCrit.Sts2.Core.Runs.RunState.Acts" />[
-        ///     <paramref name="slotIndex" />] 设为 <typeparamref name="TAct" />。较高
-        ///     <paramref name="priority" /> 胜出；并列时较早注册胜出。
+        ///     <para xml:lang="en">
+        ///         Registers a rule that replaces <paramref name="slotIndex" /> with
+        ///         <typeparamref name="TAct" /> when eligible. Higher priority wins, with earlier registration
+        ///         breaking ties.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一条在符合条件时将 <paramref name="slotIndex" /> 替换为
+        ///         <typeparamref name="TAct" /> 的规则。优先级较高者胜出，同优先级时先注册者胜出。
+        ///     </para>
         /// </summary>
         public void RegisterActEnterForce<TAct>(int slotIndex, int priority,
             Func<ActEnterResolveContext, bool> eligibility)
@@ -86,12 +84,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Declares a uniform pool for <paramref name="slotIndex" /> (required before uniform candidates). Baseline is the
-        ///     act already in that slot when entering; eligible <see cref="RegisterActEnterUniformPoolCandidate{TAct}" /> rows
-        ///     are unioned and deduped by id, then one act is drawn uniformly.
-        ///     为 <paramref name="slotIndex" /> 声明均匀池（必须先于均匀候选项）。基线是在进入时
-        ///     该槽位中已有的章节；合格的 <see cref="RegisterActEnterUniformPoolCandidate{TAct}" /> 行
-        ///     会按 id 取并集并去重，然后均匀抽取一个章节。
+        ///     <para xml:lang="en">
+        ///         Declares a uniform act-entry pool for <paramref name="slotIndex" />. Register this before
+        ///         adding candidates.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="slotIndex" /> 声明均匀章节进入池。必须先声明再添加候选章节。
+        ///     </para>
         /// </summary>
         public void RegisterActEnterUniformPool(int slotIndex)
         {
@@ -112,8 +111,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Adds a uniform-pool candidate for <paramref name="slotIndex" /> when <paramref name="eligibility" /> is true.
-        ///     当 <paramref name="eligibility" /> 为 true 时，为 <paramref name="slotIndex" /> 添加一个均匀池候选项。
+        ///     <para xml:lang="en">
+        ///         Adds an eligible candidate to the uniform pool for <paramref name="slotIndex" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="slotIndex" /> 的均匀池添加符合条件的候选章节。
+        ///     </para>
         /// </summary>
         public void RegisterActEnterUniformPoolCandidate<TAct>(int slotIndex,
             Func<ActEnterResolveContext, bool> eligibility)
@@ -135,12 +138,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Declares a weighted pool for <paramref name="slotIndex" />. Use
-        ///     <see cref="RegisterActEnterWeightedPoolCandidate{TAct}" /> and optionally
-        ///     <see cref="RegisterActEnterWeightedPoolBaseline" /> so the act already in the slot participates with a weight.
-        ///     为 <paramref name="slotIndex" /> 声明加权池。使用
-        ///     <see cref="RegisterActEnterWeightedPoolCandidate{TAct}" />，并可选使用
-        ///     <see cref="RegisterActEnterWeightedPoolBaseline" />，使槽位中已有的章节以某个权重参与。
+        ///     <para xml:lang="en">
+        ///         Declares a weighted act-entry pool for <paramref name="slotIndex" />. Register this before
+        ///         adding candidates or a baseline.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <paramref name="slotIndex" /> 声明加权章节进入池。必须先声明再添加候选章节或基线。
+        ///     </para>
         /// </summary>
         public void RegisterActEnterWeightedPool(int slotIndex)
         {
@@ -161,8 +165,10 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Adds a weighted-pool candidate; weight must be &gt; 0 when eligible for the row to participate.
-        ///     添加一个加权池候选；当该行符合条件时，权重必须 &gt; 0 才会参与。
+        ///     <para xml:lang="en">
+        ///         Adds an eligible candidate and its weight provider to a weighted act-entry pool.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">向加权章节进入池添加符合条件的候选章节及其权重提供器。</para>
         /// </summary>
         public void RegisterActEnterWeightedPoolCandidate<TAct>(int slotIndex,
             Func<ActEnterResolveContext, bool> eligibility, Func<ActEnterResolveContext, double> weight)
@@ -185,10 +191,13 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Gives the act currently in <paramref name="slotIndex" /> a weight in the weighted pool (explicit; no implicit
-        ///     baseline in weighted mode).
-        ///     为 <paramref name="slotIndex" /> 中当前的章节赋予加权池权重（显式设置；加权模式下没有隐式
-        ///     基线）。
+        ///     <para xml:lang="en">
+        ///         Registers the weight of the act already occupying <paramref name="slotIndex" />. Weighted
+        ///         pools have no implicit baseline.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册 <paramref name="slotIndex" /> 中已有章节的权重。加权池没有隐式基线。
+        ///     </para>
         /// </summary>
         public void RegisterActEnterWeightedPoolBaseline(int slotIndex,
             Func<ActEnterResolveContext, double> weight)
@@ -362,7 +371,7 @@ namespace STS2RitsuLib.Content
             if (weightedBaselines.TryGetValue(slotIndex, out var baselineWeightFn))
             {
                 var w = baselineWeightFn(ctx);
-                if (w > 0d)
+                if (double.IsFinite(w) && w > 0d)
                     weighted.Add((runState.Acts[slotIndex], w));
             }
 
@@ -375,7 +384,7 @@ namespace STS2RitsuLib.Content
                     continue;
 
                 var ww = c.Weight(ctx);
-                if (ww <= 0d)
+                if (!double.IsFinite(ww) || ww <= 0d)
                     continue;
 
                 var act = ModelDb.GetById<ActModel>(ModelDb.GetId(c.CandidateActType)).ToMutable();

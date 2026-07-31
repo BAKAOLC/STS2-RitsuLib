@@ -4,6 +4,10 @@ using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">Identifies the current Steam update snapshot scope by Steam beta branch and game-host version.</para>
+    ///     <para xml:lang="zh-CN">按 Steam 测试分支和游戏宿主版本标识当前 Steam 更新快照的作用域。</para>
+    /// </summary>
     internal readonly record struct SteamWorkshopUpdateScope(string Key, string DisplayName, string? BranchName)
     {
         internal static SteamWorkshopUpdateScope Current()

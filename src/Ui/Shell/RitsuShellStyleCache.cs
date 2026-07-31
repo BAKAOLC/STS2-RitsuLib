@@ -6,21 +6,21 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Ui.Shell
 {
     /// <summary>
-    ///     Flyweight cache for parameter-free (or small fixed-variant) <see cref="StyleBoxFlat" /> chrome.
-    ///     A <see cref="StyleBoxFlat" /> is an immutable-after-build Godot <see cref="Resource" /> that can be
-    ///     shared by any number of controls, so the settings UI does not need a fresh instance per node. Building
-    ///     a page would otherwise allocate hundreds of identical styleboxes (entry surface, field frames, toggle
-    ///     states, …). Entries are keyed by the immutable <see cref="RitsuShellTheme" /> snapshot and a style key,
-    ///     so the whole cache is dropped automatically when <see cref="RitsuShellTheme.Current" /> is replaced on
-    ///     a theme change.
-    ///     无参（或少量固定变体）<see cref="StyleBoxFlat" /> chrome 的享元缓存。<see cref="StyleBoxFlat" /> 是构建后不可变的
-    ///     Godot <see cref="Resource" />，可被任意数量的控件共享，因此设置 UI 无需为每个节点新建实例。否则构建一个页面会分配
-    ///     成百个完全相同的 stylebox（条目表面、字段边框、开关状态等）。缓存项以不可变 <see cref="RitsuShellTheme" /> 快照加
-    ///     样式键为键，故在主题变化导致 <see cref="RitsuShellTheme.Current" /> 被替换时整张缓存自动失效。
-    ///     <para>
+    ///     <para xml:lang="en">
+    ///         Caches parameter-free style boxes and a small number of fixed variants. Each cache is associated
+    ///         with an immutable <see cref="RitsuShellTheme" /> snapshot, so entries from a replaced theme become
+    ///         eligible for collection with that snapshot.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         缓存无参数样式框及少量固定变体。每份缓存都与一个不可变的 <see cref="RitsuShellTheme" /> 快照关联，
+    ///         因此主题被替换后，旧主题的缓存项会随对应快照一起进入可回收状态。
+    ///     </para>
+    ///     <para xml:lang="en">
     ///         Callers must treat the returned instance as read-only. Any factory whose result is subsequently
-    ///         mutated (e.g. a base style tweaked into a hover variant) must not be routed through this cache.
-    ///         调用方必须将返回实例视为只读。任何其结果随后会被修改的工厂（例如把基础样式改成悬停变体）都不得经由本缓存。
+    ///         modified, such as when deriving a hover variant, must not use this cache.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         调用方必须将返回的实例视为只读。若工厂的结果之后还会被修改（例如用于派生悬停变体），则不得使用此缓存。
     ///     </para>
     /// </summary>
     internal static class RitsuShellStyleCache
@@ -29,10 +29,27 @@ namespace STS2RitsuLib.Ui.Shell
             Cache = new();
 
         /// <summary>
-        ///     Returns the shared stylebox for <paramref name="key" /> under the current theme, building it once
-        ///     via <paramref name="build" /> on first use.
-        ///     返回当前主题下 <paramref name="key" /> 对应的共享 stylebox，首次使用时通过 <paramref name="build" /> 构建一次。
+        ///     <para xml:lang="en">
+        ///         Gets the shared style box identified by <paramref name="key" /> for the current theme, creating
+        ///         it with <paramref name="build" /> when necessary.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取当前主题中由 <paramref name="key" /> 标识的共享样式框，并在需要时通过
+        ///         <paramref name="build" /> 创建该样式框。
+        ///     </para>
         /// </summary>
+        /// <param name="key">
+        ///     <para xml:lang="en">The style key within the current theme snapshot.</para>
+        ///     <para xml:lang="zh-CN">当前主题快照内的样式键。</para>
+        /// </param>
+        /// <param name="build">
+        ///     <para xml:lang="en">The factory used when the key has no cached style box.</para>
+        ///     <para xml:lang="zh-CN">该键尚无缓存样式框时使用的工厂。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The shared, read-only style-box instance.</para>
+        ///     <para xml:lang="zh-CN">共享的只读样式框实例。</para>
+        /// </returns>
         internal static StyleBoxFlat GetOrBuild(string key, Func<StyleBoxFlat> build)
         {
             var map = Cache.GetValue(RitsuShellTheme.Current,

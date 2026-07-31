@@ -1,16 +1,18 @@
+using System.Collections.ObjectModel;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Mutable capability set attached to one model instance.
-    ///     附加到单个模型实例上的可变能力集合。
+    ///     <para xml:lang="en">Represents the mutable capability set attached to one model instance.</para>
+    ///     <para xml:lang="zh-CN">表示附加到单个模型实例的可变能力集合。</para>
     /// </summary>
     public sealed class ModelCapabilitySet
     {
         private const string LoadSurface = "model-capability-load";
         private readonly List<IModelCapability> _capabilities = [];
         private readonly HashSet<IModelCapability> _defaultCapabilities = new(ReferenceEqualityComparer.Instance);
+        private readonly ReadOnlyCollection<IModelCapability> _readOnlyCapabilities;
         private readonly List<ModelCapabilitySaveEntry> _unknownEntries = [];
         private IModelCapability[]? _attachedSnapshot;
         private IModelCapability[]? _ownerHookCandidateSnapshot;
@@ -18,31 +20,32 @@ namespace STS2RitsuLib.Models.Capabilities
         internal ModelCapabilitySet(AbstractModel owner)
         {
             Owner = owner;
+            _readOnlyCapabilities = _capabilities.AsReadOnly();
         }
 
         /// <summary>
-        ///     Owning model.
-        ///     所属模型。
+        ///     <para xml:lang="en">Gets the owning model.</para>
+        ///     <para xml:lang="zh-CN">获取所属模型。</para>
         /// </summary>
         public AbstractModel Owner { get; }
 
         /// <summary>
-        ///     All attached capabilities in execution order.
-        ///     按执行顺序排列的所有已附加能力。
+        ///     <para xml:lang="en">Gets all attached capabilities in execution order.</para>
+        ///     <para xml:lang="zh-CN">获取按执行顺序排列的所有已附加能力。</para>
         /// </summary>
-        public IReadOnlyList<IModelCapability> All => _capabilities;
+        public IReadOnlyList<IModelCapability> All => _readOnlyCapabilities;
 
         /// <summary>
-        ///     All attached capabilities in execution order.
-        ///     按执行顺序排列的所有已附加能力。
+        ///     <para xml:lang="en">Gets all attached capabilities in execution order.</para>
+        ///     <para xml:lang="zh-CN">获取按执行顺序排列的所有已附加能力。</para>
         /// </summary>
-        public IReadOnlyList<IModelCapability> Attached => _capabilities;
+        public IReadOnlyList<IModelCapability> Attached => _readOnlyCapabilities;
 
         internal bool IsDirty { get; private set; }
 
         /// <summary>
-        ///     Number of currently attached capabilities.
-        ///     当前附加能力数量。
+        ///     <para xml:lang="en">Gets the number of currently attached capabilities.</para>
+        ///     <para xml:lang="zh-CN">获取当前已附加能力的数量。</para>
         /// </summary>
         public int Count => _capabilities.Count;
 
@@ -61,8 +64,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Applies a capability, optionally merging it with an existing capability.
-        ///     应用能力，并可选择与已有能力合并。
+        ///     <para xml:lang="en">
+        ///         Applies a capability, optionally merging it with an existing capability.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         应用能力，并可选择将其与已有能力合并。
+        ///     </para>
         /// </summary>
         public IModelCapability? Apply(IModelCapability incoming, ApplyModelCapabilityOptions options = new())
         {
@@ -88,6 +95,9 @@ namespace STS2RitsuLib.Models.Capabilities
                         MarkDirty();
                         return existing;
                     }
+
+                    if (merged != null)
+                        EnsureCanAttach(merged);
 
                     var wasDefault = _defaultCapabilities.Remove(existing);
                     var defaultCapabilityId = wasDefault ? existing.CapabilityId : null;
@@ -115,6 +125,7 @@ namespace STS2RitsuLib.Models.Capabilities
             if (options.UseSubtractiveMerge)
                 return null;
 
+            EnsureCanAttach(incoming);
             _capabilities.Add(incoming);
             InvalidateAttachedSnapshot();
             incoming.Attach(Owner);
@@ -124,8 +135,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Applies a capability and returns the typed result.
-        ///     应用能力并返回类型化结果。
+        ///     <para xml:lang="en">Applies a capability and returns the typed result.</para>
+        ///     <para xml:lang="zh-CN">应用能力并返回类型化结果。</para>
         /// </summary>
         public TCapability? Apply<TCapability>(TCapability incoming, ApplyModelCapabilityOptions options = new())
             where TCapability : class, IModelCapability
@@ -134,25 +145,41 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Applies several capabilities in order.
-        ///     按顺序应用多个能力。
+        ///     <para xml:lang="en">
+        ///         Applies multiple capabilities in order. If a later operation throws, earlier applications remain.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按顺序应用多个能力。后续操作抛出异常时，先前已应用的能力会保留。
+        ///     </para>
         /// </summary>
         public IReadOnlyList<IModelCapability?> ApplyRange(
             IEnumerable<IModelCapability> capabilities,
             ApplyModelCapabilityOptions options = new())
         {
             ArgumentNullException.ThrowIfNull(capabilities);
+            var incoming = capabilities.ToArray();
+            if (incoming.Any(static capability => capability == null))
+                throw new ArgumentException("Capability collection cannot contain null entries.", nameof(capabilities));
+            if (incoming.Distinct(ReferenceEqualityComparer.Instance).Count() != incoming.Length)
+                throw new ArgumentException(
+                    "Capability collection cannot contain the same instance more than once.",
+                    nameof(capabilities));
 
-            return [.. capabilities.Select(capability => Apply(capability, options))];
+            return [.. incoming.Select(capability => Apply(capability, options))];
         }
 
         /// <summary>
-        ///     Inserts <paramref name="capability" /> at <paramref name="index" /> without merge behavior.
-        ///     在 <paramref name="index" /> 插入 <paramref name="capability" />，不执行合并。
+        ///     <para xml:lang="en">
+        ///         Inserts <paramref name="capability" /> at <paramref name="index" /> without merging.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在 <paramref name="index" /> 插入 <paramref name="capability" />，不执行合并。
+        ///     </para>
         /// </summary>
         public IModelCapability Insert(int index, IModelCapability capability)
         {
             ArgumentNullException.ThrowIfNull(capability);
+            EnsureCanAttach(capability);
             if (index < 0 || index > _capabilities.Count)
                 throw new ArgumentOutOfRangeException(nameof(index), index, "Index is outside the set bounds.");
 
@@ -164,9 +191,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Inserts <paramref name="capability" /> at <paramref name="index" /> without merge behavior and returns
-        ///     the typed capability.
-        ///     在 <paramref name="index" /> 插入 <paramref name="capability" />，不执行合并，并返回类型化能力。
+        ///     <para xml:lang="en">
+        ///         Inserts <paramref name="capability" /> at <paramref name="index" /> without merging and returns the
+        ///         typed capability.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在 <paramref name="index" /> 插入 <paramref name="capability" />，不执行合并，并返回类型化能力。
+        ///     </para>
         /// </summary>
         public TCapability Insert<TCapability>(int index, TCapability capability)
             where TCapability : class, IModelCapability
@@ -175,8 +206,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Inserts <paramref name="capability" /> before the first attached <typeparamref name="TExisting" />.
-        ///     将 <paramref name="capability" /> 插入到第一个已附加 <typeparamref name="TExisting" /> 之前。
+        ///     <para xml:lang="en">
+        ///         Inserts <paramref name="capability" /> before the first attached <typeparamref name="TExisting" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="capability" /> 插入到第一个已附加的 <typeparamref name="TExisting" /> 之前。
+        ///     </para>
         /// </summary>
         public IModelCapability? InsertBefore<TExisting>(
             IModelCapability capability,
@@ -187,8 +222,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Inserts <paramref name="capability" /> after the first attached <typeparamref name="TExisting" />.
-        ///     将 <paramref name="capability" /> 插入到第一个已附加 <typeparamref name="TExisting" /> 之后。
+        ///     <para xml:lang="en">
+        ///         Inserts <paramref name="capability" /> after the first attached <typeparamref name="TExisting" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="capability" /> 插入到第一个已附加的 <typeparamref name="TExisting" /> 之后。
+        ///     </para>
         /// </summary>
         public IModelCapability? InsertAfter<TExisting>(
             IModelCapability capability,
@@ -199,8 +238,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Shorthand for <see cref="InsertBefore{TExisting}" />.
-        ///     <see cref="InsertBefore{TExisting}" /> 的简写。
+        ///     <para xml:lang="en">Shorthand for <see cref="InsertBefore{TExisting}" />.</para>
+        ///     <para xml:lang="zh-CN"><see cref="InsertBefore{TExisting}" /> 的简写。</para>
         /// </summary>
         public IModelCapability? Before<TExisting>(
             IModelCapability capability,
@@ -211,8 +250,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Shorthand for <see cref="InsertAfter{TExisting}" />.
-        ///     <see cref="InsertAfter{TExisting}" /> 的简写。
+        ///     <para xml:lang="en">Shorthand for <see cref="InsertAfter{TExisting}" />.</para>
+        ///     <para xml:lang="zh-CN"><see cref="InsertAfter{TExisting}" /> 的简写。</para>
         /// </summary>
         public IModelCapability? After<TExisting>(
             IModelCapability capability,
@@ -223,8 +262,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Adds a capability without subtractive merge behavior.
-        ///     添加能力，不使用减法合并行为。
+        ///     <para xml:lang="en">Adds a capability without subtractive merging.</para>
+        ///     <para xml:lang="zh-CN">添加能力，不执行减法合并。</para>
         /// </summary>
         public IModelCapability? Add(IModelCapability capability, bool allowMerge = true, bool isUpgrade = false)
         {
@@ -232,8 +271,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Adds a capability as part of an owner upgrade.
-        ///     作为 owner 升级的一部分添加能力。
+        ///     <para xml:lang="en">Adds a capability as part of an owner upgrade.</para>
+        ///     <para xml:lang="zh-CN">添加能力，并将其视为所属模型升级的一部分。</para>
         /// </summary>
         public IModelCapability? AddForUpgrade(IModelCapability capability, bool allowMerge = true)
         {
@@ -241,8 +280,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Adds a capability and returns the typed result.
-        ///     添加能力并返回类型化结果。
+        ///     <para xml:lang="en">Adds a capability and returns the typed result.</para>
+        ///     <para xml:lang="zh-CN">添加能力并返回类型化结果。</para>
         /// </summary>
         public TCapability? Add<TCapability>(TCapability capability, bool allowMerge = true, bool isUpgrade = false)
             where TCapability : class, IModelCapability
@@ -251,8 +290,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Adds a capability as part of an owner upgrade and returns the typed result.
-        ///     作为 owner 升级的一部分添加能力并返回类型化结果。
+        ///     <para xml:lang="en">
+        ///         Adds a capability as part of an owner upgrade and returns the typed result.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         添加能力并将其视为所属模型升级的一部分，然后返回类型化结果。
+        ///     </para>
         /// </summary>
         public TCapability? AddForUpgrade<TCapability>(TCapability capability, bool allowMerge = true)
             where TCapability : class, IModelCapability
@@ -261,8 +304,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Creates a registered capability and applies it as part of an owner upgrade.
-        ///     创建已注册能力，并作为 owner 升级的一部分应用。
+        ///     <para xml:lang="en">
+        ///         Creates a registered capability and applies it as part of an owner upgrade.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建已注册能力，并将其作为所属模型升级的一部分应用。
+        ///     </para>
         /// </summary>
         public TCapability? AddUpgrade<TCapability>(bool allowMerge = true)
             where TCapability : class, IModelCapability
@@ -273,8 +320,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Subtracts a capability through merge handlers.
-        ///     通过合并处理器减去能力。
+        ///     <para xml:lang="en">Subtracts a capability through merge handlers.</para>
+        ///     <para xml:lang="zh-CN">通过合并处理程序减去能力。</para>
         /// </summary>
         public IModelCapability? Subtract(IModelCapability capability, bool isUpgrade = false)
         {
@@ -282,8 +329,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes the first capability of type <typeparamref name="TCapability" />.
-        ///     移除第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Removes the first capability of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">移除第一个 <typeparamref name="TCapability" /> 类型的能力。</para>
         /// </summary>
         public TCapability? Remove<TCapability>() where TCapability : class, IModelCapability
         {
@@ -301,8 +348,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes the first capability with <paramref name="capabilityId" />.
-        ///     移除第一个能力 ID 为 <paramref name="capabilityId" /> 的能力。
+        ///     <para xml:lang="en">Removes the first capability with <paramref name="capabilityId" />.</para>
+        ///     <para xml:lang="zh-CN">移除第一个 ID 为 <paramref name="capabilityId" /> 的能力。</para>
         /// </summary>
         public IModelCapability? Remove(string capabilityId)
         {
@@ -323,8 +370,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes this exact capability instance.
-        ///     移除此能力实例。
+        ///     <para xml:lang="en">Removes this exact capability instance.</para>
+        ///     <para xml:lang="zh-CN">移除这一特定能力实例。</para>
         /// </summary>
         public bool Remove(IModelCapability capability)
         {
@@ -342,8 +389,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes all capabilities of type <typeparamref name="TCapability" />.
-        ///     移除所有 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">
+        ///         Removes all capabilities of type <typeparamref name="TCapability" />. If a detach callback throws,
+        ///         capabilities processed earlier remain removed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除所有 <typeparamref name="TCapability" /> 类型的能力。分离回调抛出异常时，先前已处理的能力仍会
+        ///         保持移除状态。
+        ///     </para>
         /// </summary>
         public IReadOnlyList<TCapability> RemoveAll<TCapability>() where TCapability : class, IModelCapability
         {
@@ -369,8 +422,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Removes all capabilities with <paramref name="capabilityId" />.
-        ///     移除所有能力 ID 为 <paramref name="capabilityId" /> 的能力。
+        ///     <para xml:lang="en">
+        ///         Removes all capabilities with <paramref name="capabilityId" />. If a detach callback throws,
+        ///         capabilities processed earlier remain removed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除所有 ID 为 <paramref name="capabilityId" /> 的能力。分离回调抛出异常时，先前已处理的能力仍会
+        ///         保持移除状态。
+        ///     </para>
         /// </summary>
         public IReadOnlyList<IModelCapability> RemoveAll(string capabilityId)
         {
@@ -399,8 +458,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Clears known capabilities, optionally clearing unknown saved entries as well.
-        ///     清空已知能力，并可选择同时清空未知保存条目。
+        ///     <para xml:lang="en">
+        ///         Clears known capabilities and optionally clears unknown saved entries. If a detach callback throws,
+        ///         capabilities detached earlier remain present in the set until a later operation repairs the state.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         清除已知能力，并可选择同时清除未知的保存条目。分离回调抛出异常时，先前已完成分离的能力仍会
+        ///         留在集合中，直到后续操作修复该状态。
+        ///     </para>
         /// </summary>
         public void Clear(UnknownModelCapabilityPolicy unknownPolicy = UnknownModelCapabilityPolicy.Preserve)
         {
@@ -421,14 +486,29 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Replaces all known capabilities with <paramref name="capabilities" />.
-        ///     使用 <paramref name="capabilities" /> 替换所有已知能力。
+        ///     <para xml:lang="en">
+        ///         Replaces all known capabilities with <paramref name="capabilities" />. The operation is not
+        ///         transactional; a detach or attach callback failure can leave a partially replaced set.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="capabilities" /> 替换所有已知能力。此操作不具备事务性；分离或附加回调失败
+        ///         时，集合可能处于只完成部分替换的状态。
+        ///     </para>
         /// </summary>
         public void ReplaceAll(
             IEnumerable<IModelCapability> capabilities,
             UnknownModelCapabilityPolicy unknownPolicy = UnknownModelCapabilityPolicy.Preserve)
         {
             ArgumentNullException.ThrowIfNull(capabilities);
+            var replacements = capabilities.ToArray();
+            if (replacements.Any(static capability => capability == null))
+                throw new ArgumentException("Capability collection cannot contain null entries.", nameof(capabilities));
+            if (replacements.Distinct(ReferenceEqualityComparer.Instance).Count() != replacements.Length)
+                throw new ArgumentException(
+                    "Capability collection cannot contain the same instance more than once.",
+                    nameof(capabilities));
+            foreach (var capability in replacements)
+                EnsureCanAttach(capability, true);
 
             foreach (var capability in _capabilities)
                 capability.Detach();
@@ -439,7 +519,7 @@ namespace STS2RitsuLib.Models.Capabilities
             if (unknownPolicy == UnknownModelCapabilityPolicy.Remove)
                 _unknownEntries.Clear();
 
-            foreach (var capability in capabilities)
+            foreach (var capability in replacements)
             {
                 _capabilities.Add(capability);
                 InvalidateAttachedSnapshot();
@@ -450,8 +530,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets the first capability of type <typeparamref name="TCapability" />.
-        ///     获取第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Gets the first capability of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">获取第一个 <typeparamref name="TCapability" /> 类型的能力。</para>
         /// </summary>
         public TCapability? Get<TCapability>() where TCapability : class, IModelCapability
         {
@@ -459,8 +539,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Attempts to get the first capability of type <typeparamref name="TCapability" />.
-        ///     尝试获取第一个 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">
+        ///         Attempts to get the first capability of type <typeparamref name="TCapability" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试获取第一个 <typeparamref name="TCapability" /> 类型的能力。
+        ///     </para>
         /// </summary>
         public bool TryGet<TCapability>(out TCapability capability) where TCapability : class, IModelCapability
         {
@@ -469,8 +553,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets the first capability with <paramref name="capabilityId" />.
-        ///     获取第一个能力 ID 为 <paramref name="capabilityId" /> 的能力。
+        ///     <para xml:lang="en">Gets the first capability with <paramref name="capabilityId" />.</para>
+        ///     <para xml:lang="zh-CN">获取第一个 ID 为 <paramref name="capabilityId" /> 的能力。</para>
         /// </summary>
         public IModelCapability? Get(string capabilityId)
         {
@@ -481,8 +565,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns true when at least one capability of type <typeparamref name="TCapability" /> is attached.
-        ///     当至少附加了一个 <typeparamref name="TCapability" /> 类型能力时返回 true。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when at least one capability of type
+        ///         <typeparamref name="TCapability" /> is attached.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         至少附加一个 <typeparamref name="TCapability" /> 类型的能力时返回 <see langword="true" />。
+        ///     </para>
         /// </summary>
         public bool Contains<TCapability>() where TCapability : class, IModelCapability
         {
@@ -490,8 +579,13 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Returns true when at least one capability with <paramref name="capabilityId" /> is attached.
-        ///     当至少附加了一个能力 ID 为 <paramref name="capabilityId" /> 的能力时返回 true。
+        ///     <para xml:lang="en">
+        ///         Returns <see langword="true" /> when at least one capability with
+        ///         <paramref name="capabilityId" /> is attached.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         至少附加一个 ID 为 <paramref name="capabilityId" /> 的能力时返回 <see langword="true" />。
+        ///     </para>
         /// </summary>
         public bool Contains(string capabilityId)
         {
@@ -499,8 +593,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets all capabilities of type <typeparamref name="TCapability" />.
-        ///     获取所有 <typeparamref name="TCapability" /> 类型能力。
+        ///     <para xml:lang="en">Gets all capabilities of type <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">获取所有 <typeparamref name="TCapability" /> 类型的能力。</para>
         /// </summary>
         public IReadOnlyList<TCapability> GetAll<TCapability>() where TCapability : class, IModelCapability
         {
@@ -508,8 +602,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets all capabilities with <paramref name="capabilityId" />.
-        ///     获取所有能力 ID 为 <paramref name="capabilityId" /> 的能力。
+        ///     <para xml:lang="en">Gets all capabilities with <paramref name="capabilityId" />.</para>
+        ///     <para xml:lang="zh-CN">获取所有 ID 为 <paramref name="capabilityId" /> 的能力。</para>
         /// </summary>
         public IReadOnlyList<IModelCapability> GetAll(string capabilityId)
         {
@@ -524,9 +618,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets an existing capability of type <typeparamref name="TCapability" />, or applies a new capability
-        ///     created by <paramref name="factory" />.
-        ///     获取已有 <typeparamref name="TCapability" /> 能力；不存在时应用由 <paramref name="factory" /> 创建的新能力。
+        ///     <para xml:lang="en">
+        ///         Gets an existing capability of type <typeparamref name="TCapability" />, or applies a new capability
+        ///         created by <paramref name="factory" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已有的 <typeparamref name="TCapability" /> 能力；不存在时，应用由
+        ///         <paramref name="factory" /> 创建的新能力。
+        ///     </para>
         /// </summary>
         public TCapability GetOrAdd<TCapability>(
             Func<TCapability> factory,
@@ -545,9 +644,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets an existing capability of type <typeparamref name="TCapability" />, or creates one from
-        ///     <see cref="ModelCapabilityRegistry" />.
-        ///     获取已有 <typeparamref name="TCapability" /> 能力；不存在时通过 <see cref="ModelCapabilityRegistry" /> 创建。
+        ///     <para xml:lang="en">
+        ///         Gets an existing capability of type <typeparamref name="TCapability" />, or creates and applies one
+        ///         through <see cref="ModelCapabilityRegistry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已有的 <typeparamref name="TCapability" /> 能力；不存在时，通过
+        ///         <see cref="ModelCapabilityRegistry" /> 创建并应用一个新能力。
+        ///     </para>
         /// </summary>
         public TCapability GetOrCreate<TCapability>(ApplyModelCapabilityOptions options = new())
             where TCapability : class, IModelCapability
@@ -563,8 +667,12 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Gets an existing registered capability, or creates it as part of an owner upgrade.
-        ///     获取已有已注册能力；不存在时作为 owner 升级的一部分创建。
+        ///     <para xml:lang="en">
+        ///         Gets an existing registered capability, or creates it as part of an owner upgrade.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已有的已注册能力；不存在时，将新能力作为所属模型升级的一部分创建。
+        ///     </para>
         /// </summary>
         public TCapability GetOrCreateUpgrade<TCapability>(bool allowMerge = true)
             where TCapability : class, IModelCapability
@@ -573,8 +681,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Enumerates capabilities that implement a capability interface.
-        ///     枚举实现某个能力接口的能力。
+        ///     <para xml:lang="en">Enumerates capabilities assignable to <typeparamref name="TCapability" />.</para>
+        ///     <para xml:lang="zh-CN">枚举可赋值给 <typeparamref name="TCapability" /> 的能力。</para>
         /// </summary>
         public IEnumerable<TCapability> Capabilities<TCapability>() where TCapability : class
         {
@@ -582,8 +690,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Marks the collection dirty after a capability mutates itself in place.
-        ///     能力原地修改自身后，将 collection 标记为已变更。
+        ///     <para xml:lang="en">Marks the capability set dirty after an in-place capability mutation.</para>
+        ///     <para xml:lang="zh-CN">能力发生原地修改后，将能力集合标记为脏。</para>
         /// </summary>
         public void MarkDirty()
         {
@@ -650,6 +758,8 @@ namespace STS2RitsuLib.Models.Capabilities
                 capability.Attach(Owner, true);
                 NotifyCapabilityLoadedFromSave(capability);
             }
+
+            AddMissingDefaultCapabilities(defaultItems);
         }
 
         internal ModelCapabilitySaveDocument? Save()
@@ -826,6 +936,19 @@ namespace STS2RitsuLib.Models.Capabilities
                 Schema = entry.Schema,
                 Data = entry.Data?.DeepClone(),
             };
+        }
+
+        private void EnsureCanAttach(IModelCapability capability, bool allowCurrentAttachment = false)
+        {
+            if (capability.Owner == null)
+                return;
+            if (allowCurrentAttachment &&
+                ReferenceEquals(capability.Owner, Owner) &&
+                _capabilities.Any(existing => ReferenceEquals(existing, capability)))
+                return;
+
+            throw new InvalidOperationException(
+                $"Capability '{capability.CapabilityId}' is already attached to model '{capability.Owner.Id}'.");
         }
 
         private sealed class DefaultCapabilityLoadState

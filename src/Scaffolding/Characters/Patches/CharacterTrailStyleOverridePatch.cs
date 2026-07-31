@@ -9,10 +9,16 @@ using STS2RitsuLib.Scaffolding.Godot;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     After <see cref="NCardTrailVfx.Create" />, applies <see cref="IModCharacterAssetOverrides.CustomTrailStyle" />
-    ///     modulates and widths to line, particle, and sprite nodes when present.
-    ///     在 <see cref="NCardTrailVfx.Create" /> 之后，如果存在，则将 <see cref="IModCharacterAssetOverrides.CustomTrailStyle" /> 的
-    ///     modulate 和宽度应用到 line、particle 和 sprite 节点。
+    ///     <para xml:lang="en">
+    ///         Converts compatible card-trail scenes to <see cref="NCardTrailVfx" /> and, after creation, applies the
+    ///         colors, widths, and scales from <see cref="IModCharacterAssetOverrides.CustomTrailStyle" /> to
+    ///         recognized line, particle, and sprite nodes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将兼容的卡牌拖尾场景转换为 <see cref="NCardTrailVfx" />，并在创建后把
+    ///         <see cref="IModCharacterAssetOverrides.CustomTrailStyle" /> 中的颜色、宽度和缩放应用到可识别的线条、
+    ///         粒子及精灵节点。
+    ///     </para>
     /// </summary>
     internal class CharacterTrailStyleOverridePatch : IPatchMethod
     {

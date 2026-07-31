@@ -16,10 +16,10 @@ using STS2RitsuLib.Timeline;
 namespace STS2RitsuLib.Unlocks
 {
     /// <summary>
-    ///     Per-mod registration of epoch requirements and post-run / combat-derived unlock rules integrated via
-    ///     Harmony patches.
-    ///     按 mod 注册纪元要求，以及通过
-    ///     Harmony 补丁集成的跑局后 / 战斗衍生解锁规则。
+    ///     <para xml:lang="en">
+    ///         Registers a mod's epoch requirements and its post-run or combat-derived unlock rules.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">注册模组的纪元要求，以及一局游戏结束后或由战斗结果触发的解锁规则。</para>
     /// </summary>
     public sealed class ModUnlockRegistry
     {
@@ -47,20 +47,20 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Owning mod identifier for this registry instance.
-        ///     此注册表实例所属的 mod 标识符。
+        ///     <para xml:lang="en">Gets the ID of the mod that owns this registry.</para>
+        ///     <para xml:lang="zh-CN">获取拥有此注册表的模组 ID。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     True after the framework freezes further unlock rule registration.
-        ///     框架冻结后续解锁规则注册后为 true。
+        ///     <para xml:lang="en">Gets whether the framework has frozen further unlock-rule registration.</para>
+        ///     <para xml:lang="zh-CN">获取框架是否已冻结后续解锁规则注册。</para>
         /// </summary>
         public static bool IsFrozen { get; private set; }
 
         /// <summary>
-        ///     Returns the unlock registry singleton for <paramref name="modId" />.
-        ///     返回 <paramref name="modId" /> 的解锁注册表单例。
+        ///     <para xml:lang="en">Returns the unlock registry for <paramref name="modId" />.</para>
+        ///     <para xml:lang="zh-CN">返回 <paramref name="modId" /> 对应的解锁注册表。</para>
         /// </summary>
         public static ModUnlockRegistry For(string modId)
         {
@@ -78,14 +78,15 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     When <paramref name="ignored" /> is true, models registered by <paramref name="modId" /> skip
-        ///     <see cref="RequireEpoch(Type,string)" /> gating at runtime (cards/relics/characters appear as if every epoch were
-        ///     met).
-        ///     Ascension reveal rules tied to that character still consult this bypass via patch integration.
-        ///     当 <paramref name="ignored" /> 为 true 时，由 <paramref name="modId" /> 注册的模型会跳过
-        ///     运行时的 <see cref="RequireEpoch(Type,string)" /> 门控（卡牌 / 遗物 / 角色会表现得像已满足所有纪元
-        ///     要求）。
-        ///     与该角色绑定的进阶显示规则仍会通过补丁集成检查此旁路。
+        ///     <para xml:lang="en">
+        ///         Configures whether models owned by <paramref name="modId" /> bypass
+        ///         <see cref="RequireEpoch(Type,string)" /> requirements at runtime. Ascension reveal rules for those
+        ///         characters honor the same bypass.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         配置 <paramref name="modId" /> 所属模型是否在运行时跳过
+        ///         <see cref="RequireEpoch(Type,string)" /> 要求。相应角色的进阶显示规则也会遵循此设置。
+        ///     </para>
         /// </summary>
         public static void SetEpochRequirementsIgnoredForMod(string modId, bool ignored = true)
         {
@@ -126,8 +127,7 @@ namespace STS2RitsuLib.Unlocks
             return
             [
                 .. requirements
-                    .Where(entry => progress.IsEpochObtained(entry.Value) ||
-                                    IsEpochRequirementIgnoredForModelId(entry.Key))
+                    .Where(entry => progress.IsEpochObtained(entry.Value))
                     .Select(static entry => entry.Value)
                     .Distinct(StringComparer.Ordinal),
             ];
@@ -152,17 +152,13 @@ namespace STS2RitsuLib.Unlocks
                 : unlockState;
         }
 
-        private static bool IsEpochRequirementIgnoredForModelId(ModelId modelId)
-        {
-            var model = ModelDb.GetByIdOrNull<AbstractModel>(modelId);
-            return model != null && IsEpochRequirementIgnoredForModelType(model.GetType());
-        }
-
         /// <summary>
-        ///     Requires <typeparamref name="TModel" /> content to remain locked until <typeparamref name="TEpoch" />
-        ///     is obtained or revealed.
-        ///     要求 <typeparamref name="TModel" /> 内容保持锁定，直到 <typeparamref name="TEpoch" />
-        ///     被获得或显示。
+        ///     <para xml:lang="en">
+        ///         Keeps <typeparamref name="TModel" /> locked until <typeparamref name="TEpoch" /> is obtained or revealed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在获得或揭示 <typeparamref name="TEpoch" /> 前保持 <typeparamref name="TModel" /> 锁定。
+        ///     </para>
         /// </summary>
         public void RequireEpoch<TModel, TEpoch>()
             where TModel : AbstractModel
@@ -172,10 +168,12 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Requires <paramref name="modelType" /> content to remain locked until <paramref name="epochType" /> is
-        ///     obtained or revealed.
-        ///     要求 <paramref name="modelType" /> 内容保持锁定，直到 <paramref name="epochType" />
-        ///     被获得或显示。
+        ///     <para xml:lang="en">
+        ///         Keeps <paramref name="modelType" /> locked until <paramref name="epochType" /> is obtained or revealed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在获得或揭示 <paramref name="epochType" /> 前保持 <paramref name="modelType" /> 锁定。
+        ///     </para>
         /// </summary>
         public void RequireEpoch(Type modelType, Type epochType)
         {
@@ -183,10 +181,12 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Requires <paramref name="modelType" /> content to remain locked until <paramref name="epochId" /> is
-        ///     obtained or revealed.
-        ///     要求 <paramref name="modelType" /> 内容保持锁定，直到 <paramref name="epochId" />
-        ///     被获得或显示。
+        ///     <para xml:lang="en">
+        ///         Keeps <paramref name="modelType" /> locked until <paramref name="epochId" /> is obtained or revealed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在获得或揭示 <paramref name="epochId" /> 前保持 <paramref name="modelType" /> 锁定。
+        ///     </para>
         /// </summary>
         public void RequireEpoch(Type modelType, string epochId)
         {
@@ -200,9 +200,9 @@ namespace STS2RitsuLib.Unlocks
 
         private void RequireEpochCore(Type modelType, string epochId, bool overwrite)
         {
-            EnsureMutable($"register unlock requirement for '{modelType.Name}'");
             ArgumentNullException.ThrowIfNull(modelType);
             ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
+            EnsureMutable($"register unlock requirement for '{modelType.Name}'");
 
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
             var modelId = ModelDb.GetId(modelType);
@@ -217,10 +217,14 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after any completed run as
-        ///     <typeparamref name="TCharacter" />.
-        ///     注册一条规则：以
-        ///     <typeparamref name="TCharacter" /> 完成任意跑局后获得 <typeparamref name="TEpoch" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <typeparamref name="TEpoch" /> after any non-abandoned run as
+        ///         <typeparamref name="TCharacter" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <typeparamref name="TCharacter" /> 完成任何未放弃的一局游戏后获得
+        ///         <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -230,25 +234,34 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a rule that obtains <paramref name="epochType" /> after any completed run as
-        ///     <paramref name="characterType" />.
-        ///     注册一条规则：以
-        ///     <paramref name="characterType" /> 完成任意跑局后获得 <paramref name="epochType" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <paramref name="epochType" /> after any non-abandoned run as
+        ///         <paramref name="characterType" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <paramref name="characterType" /> 完成任何未放弃的一局游戏后获得
+        ///         <paramref name="epochType" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterRunAs(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
                     ModTimelineRegistry.GetEpochId(epochType),
                     $"Unlock {epochType.Name} after finishing a run as {characterType.Name}",
-                    context => context.CharacterId == ModelDb.GetId(characterType)));
+                    context => !context.IsAbandoned &&
+                               context.CharacterId == ModelDb.GetId(characterType)));
         }
 
         /// <summary>
-        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after a victorious run as
-        ///     <typeparamref name="TCharacter" />.
-        ///     注册一条规则：以
-        ///     <typeparamref name="TCharacter" /> 赢得跑局后获得 <typeparamref name="TEpoch" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <typeparamref name="TEpoch" /> after winning a run as <typeparamref name="TCharacter" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <typeparamref name="TCharacter" /> 赢得一局游戏后获得 <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterWinAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -258,13 +271,17 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a rule that obtains <paramref name="epochType" /> after a victorious run as
-        ///     <paramref name="characterType" />.
-        ///     注册一条规则：以
-        ///     <paramref name="characterType" /> 赢得跑局后获得 <paramref name="epochType" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <paramref name="epochType" /> after winning a run as <paramref name="characterType" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <paramref name="characterType" /> 赢得一局游戏后获得 <paramref name="epochType" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterWinAs(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
                     ModTimelineRegistry.GetEpochId(epochType),
@@ -273,10 +290,14 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after a win at or above
-        ///     <paramref name="ascensionLevel" /> as <typeparamref name="TCharacter" />.
-        ///     注册一条规则：以 <typeparamref name="TCharacter" /> 在指定进阶等级或更高等级获胜后获得
-        ///     <typeparamref name="TEpoch" />；等级由 <paramref name="ascensionLevel" /> 指定。
+        ///     <para xml:lang="en">
+        ///         Obtains <typeparamref name="TEpoch" /> after winning as <typeparamref name="TCharacter" /> at
+        ///         <paramref name="ascensionLevel" /> or higher.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <typeparamref name="TCharacter" /> 在 <paramref name="ascensionLevel" /> 或更高进阶等级获胜后获得
+        ///         <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterAscensionWin<TCharacter, TEpoch>(int ascensionLevel)
             where TCharacter : CharacterModel
@@ -286,13 +307,20 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a rule that obtains <paramref name="epochType" /> after a win at or above
-        ///     <paramref name="ascensionLevel" /> as <paramref name="characterType" />.
-        ///     注册一条规则：以 <paramref name="characterType" /> 在指定进阶等级或更高等级获胜后获得
-        ///     <paramref name="epochType" />；等级由 <paramref name="ascensionLevel" /> 指定。
+        ///     <para xml:lang="en">
+        ///         Obtains <paramref name="epochType" /> after winning as <paramref name="characterType" /> at
+        ///         <paramref name="ascensionLevel" /> or higher.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <paramref name="characterType" /> 在 <paramref name="ascensionLevel" /> 或更高进阶等级获胜后获得
+        ///         <paramref name="epochType" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterAscensionWin(Type characterType, Type epochType, int ascensionLevel)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
+            ArgumentOutOfRangeException.ThrowIfNegative(ascensionLevel);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
                     ModTimelineRegistry.GetEpochId(epochType),
@@ -303,29 +331,39 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a rule that obtains <typeparamref name="TEpoch" /> after <paramref name="requiredRuns" />
-        ///     runs, optionally requiring a win on each qualifying run.
-        ///     注册一条规则：在 <paramref name="requiredRuns" /> 次
-        ///     跑局后获得 <typeparamref name="TEpoch" />，并可要求每次计入条件的跑局都必须获胜。
+        ///     <para xml:lang="en">
+        ///         Obtains <typeparamref name="TEpoch" /> once the profile has recorded
+        ///         <paramref name="requiredRuns" /> runs. When <paramref name="requireVictory" /> is
+        ///         <see langword="true" />, the run that reaches or exceeds the threshold must be a victory.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         档案记录的游戏局数达到 <paramref name="requiredRuns" /> 后获得 <typeparamref name="TEpoch" />。
+        ///         <paramref name="requireVictory" /> 为 <see langword="true" /> 时，触发判断的当前一局必须获胜。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterRunCount<TEpoch>(int requiredRuns, bool requireVictory = false)
             where TEpoch : EpochModel, new()
         {
+            ArgumentOutOfRangeException.ThrowIfLessThan(requiredRuns, 1);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
-                    new TEpoch().Id,
+                    ModTimelineRegistry.GetEpochId(typeof(TEpoch)),
                     $"Unlock {typeof(TEpoch).Name} after {requiredRuns} run(s)",
-                    context => context.TotalRuns >= requiredRuns && (!requireVictory || context.IsVictory)));
+                    context => !context.IsAbandoned &&
+                               context.TotalRuns >= requiredRuns &&
+                               (!requireVictory || context.IsVictory)));
         }
 
         /// <summary>
-        ///     Registers a custom post-run epoch unlock rule.
-        ///     注册自定义跑局后纪元解锁规则。
+        ///     <para xml:lang="en">Registers a custom post-run epoch unlock rule.</para>
+        ///     <para xml:lang="zh-CN">注册自定义的一局游戏结束后纪元解锁规则。</para>
         /// </summary>
         public void RegisterPostRunRule(PostRunEpochUnlockRule rule)
         {
-            EnsureMutable($"register post-run epoch rule '{rule.Description}'");
             ArgumentNullException.ThrowIfNull(rule);
+            EnsureMutable($"register post-run epoch rule '{rule.Description}'");
+            ValidateRule(rule.EpochId, rule.Description);
+            ArgumentNullException.ThrowIfNull(rule.ShouldUnlock);
 
             lock (SyncRoot)
             {
@@ -334,10 +372,14 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers elite-win counting for <typeparamref name="TCharacter" /> toward obtaining
-        ///     <typeparamref name="TEpoch" />.
-        ///     注册 <typeparamref name="TCharacter" /> 的精英胜利计数，用于获得
-        ///     <typeparamref name="TEpoch" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <typeparamref name="TEpoch" /> after <typeparamref name="TCharacter" /> records the required
+        ///         number of elite victories.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <typeparamref name="TCharacter" /> 记录的精英战胜利数达到要求后获得
+        ///         <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterEliteVictories<TCharacter, TEpoch>(int requiredEliteWins = 15)
             where TCharacter : CharacterModel
@@ -347,13 +389,19 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers elite-win counting for <paramref name="characterType" /> toward obtaining
-        ///     <paramref name="epochType" />.
-        ///     注册 <paramref name="characterType" /> 的精英胜利计数，用于获得
-        ///     <paramref name="epochType" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <paramref name="epochType" /> after <paramref name="characterType" /> records the required
+        ///         number of elite victories.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="characterType" /> 记录的精英战胜利数达到要求后获得
+        ///         <paramref name="epochType" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterEliteVictories(Type characterType, Type epochType, int requiredEliteWins = 15)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterEliteEpochRule(
                 EliteEpochUnlockRule.Create(
                     ModelDb.GetId(characterType),
@@ -363,13 +411,15 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a custom elite-win epoch rule for a character.
-        ///     为角色注册自定义精英胜利纪元规则。
+        ///     <para xml:lang="en">Registers a custom elite-victory epoch rule for a character.</para>
+        ///     <para xml:lang="zh-CN">为角色注册自定义精英战胜利纪元规则。</para>
         /// </summary>
         public void RegisterEliteEpochRule(EliteEpochUnlockRule rule)
         {
-            EnsureMutable($"register elite epoch rule '{rule.Description}'");
             ArgumentNullException.ThrowIfNull(rule);
+            EnsureMutable($"register elite epoch rule '{rule.Description}'");
+            ValidateRule(rule.EpochId, rule.Description);
+            ArgumentOutOfRangeException.ThrowIfLessThan(rule.RequiredEliteWins, 1);
 
             lock (SyncRoot)
             {
@@ -378,10 +428,14 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers boss-win counting for <typeparamref name="TCharacter" /> toward obtaining
-        ///     <typeparamref name="TEpoch" />.
-        ///     注册 <typeparamref name="TCharacter" /> 的 Boss 胜利计数，用于获得
-        ///     <typeparamref name="TEpoch" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <typeparamref name="TEpoch" /> after <typeparamref name="TCharacter" /> records the required
+        ///         number of boss victories.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <typeparamref name="TCharacter" /> 记录的首领战胜利数达到要求后获得
+        ///         <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterBossVictories<TCharacter, TEpoch>(int requiredBossWins = 15)
             where TCharacter : CharacterModel
@@ -391,13 +445,19 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers boss-win counting for <paramref name="characterType" /> toward obtaining
-        ///     <paramref name="epochType" />.
-        ///     注册 <paramref name="characterType" /> 的 Boss 胜利计数，用于获得
-        ///     <paramref name="epochType" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <paramref name="epochType" /> after <paramref name="characterType" /> records the required
+        ///         number of boss victories.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="characterType" /> 记录的首领战胜利数达到要求后获得
+        ///         <paramref name="epochType" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterBossVictories(Type characterType, Type epochType, int requiredBossWins = 15)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterBossEpochRule(
                 CountedEpochUnlockRule.Create(
                     ModelDb.GetId(characterType),
@@ -407,13 +467,15 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers a custom boss-win epoch rule for a character.
-        ///     为角色注册自定义 Boss 胜利纪元规则。
+        ///     <para xml:lang="en">Registers a custom boss-victory epoch rule for a character.</para>
+        ///     <para xml:lang="zh-CN">为角色注册自定义首领战胜利纪元规则。</para>
         /// </summary>
         public void RegisterBossEpochRule(CountedEpochUnlockRule rule)
         {
-            EnsureMutable($"register boss epoch rule '{rule.Description}'");
             ArgumentNullException.ThrowIfNull(rule);
+            EnsureMutable($"register boss epoch rule '{rule.Description}'");
+            ValidateRule(rule.EpochId, rule.Description);
+            ArgumentOutOfRangeException.ThrowIfLessThan(rule.RequiredWins, 1);
 
             lock (SyncRoot)
             {
@@ -422,10 +484,13 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Maps ascension-level-one completion for <typeparamref name="TCharacter" /> to obtaining
-        ///     <typeparamref name="TEpoch" />.
-        ///     将 <typeparamref name="TCharacter" /> 的进阶等级一完成映射为获得
-        ///     <typeparamref name="TEpoch" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <typeparamref name="TEpoch" /> after an Ascension 1 victory as
+        ///         <typeparamref name="TCharacter" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <typeparamref name="TCharacter" /> 赢得进阶 1 后获得 <typeparamref name="TEpoch" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterAscensionOneWin<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -435,19 +500,26 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Maps ascension-level-one completion for <paramref name="characterType" /> to obtaining
-        ///     <paramref name="epochType" />.
-        ///     将 <paramref name="characterType" /> 的进阶等级一完成映射为获得
-        ///     <paramref name="epochType" />。
+        ///     <para xml:lang="en">
+        ///         Obtains <paramref name="epochType" /> after an Ascension 1 victory as
+        ///         <paramref name="characterType" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以 <paramref name="characterType" /> 赢得进阶 1 后获得 <paramref name="epochType" />。
+        ///     </para>
         /// </summary>
         public void UnlockEpochAfterAscensionOneWin(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterAscensionOneEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
 
         /// <summary>
-        ///     Registers which epoch is granted after an ascension-one win for <paramref name="characterId" />.
-        ///     注册 <paramref name="characterId" /> 在进阶一胜利后授予的纪元。
+        ///     <para xml:lang="en">
+        ///         Registers the epoch granted after an Ascension 1 victory by <paramref name="characterId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册 <paramref name="characterId" /> 赢得进阶 1 后授予的纪元。</para>
         /// </summary>
         public void RegisterAscensionOneEpoch(ModelId characterId, string epochId)
         {
@@ -461,10 +533,13 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Configures ascension UI reveal for <typeparamref name="TCharacter" /> to depend on
-        ///     <typeparamref name="TEpoch" /> being revealed.
-        ///     配置 <typeparamref name="TCharacter" /> 的进阶 UI 显示，使其依赖于
-        ///     <typeparamref name="TEpoch" /> 已显示。
+        ///     <para xml:lang="en">
+        ///         Reveals the Ascension UI for <typeparamref name="TCharacter" /> after
+        ///         <typeparamref name="TEpoch" /> is revealed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         揭示 <typeparamref name="TEpoch" /> 后显示 <typeparamref name="TCharacter" /> 的进阶界面。
+        ///     </para>
         /// </summary>
         public void RevealAscensionAfterEpoch<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -474,19 +549,29 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Configures ascension UI reveal for <paramref name="characterType" /> to depend on
-        ///     <paramref name="epochType" /> being revealed.
-        ///     配置 <paramref name="characterType" /> 的进阶 UI 显示，使其依赖于
-        ///     <paramref name="epochType" /> 已显示。
+        ///     <para xml:lang="en">
+        ///         Reveals the Ascension UI for <paramref name="characterType" /> after
+        ///         <paramref name="epochType" /> is revealed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         揭示 <paramref name="epochType" /> 后显示 <paramref name="characterType" /> 的进阶界面。
+        ///     </para>
         /// </summary>
         public void RevealAscensionAfterEpoch(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterAscensionRevealEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
 
         /// <summary>
-        ///     Registers which epoch must be revealed before ascension is shown for <paramref name="characterId" />.
-        ///     注册 <paramref name="characterId" /> 显示进阶前必须先显示的纪元。
+        ///     <para xml:lang="en">
+        ///         Registers the epoch that must be revealed before Ascension is shown for
+        ///         <paramref name="characterId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册 <paramref name="characterId" /> 显示进阶界面前必须先揭示的纪元。
+        ///     </para>
         /// </summary>
         public void RegisterAscensionRevealEpoch(ModelId characterId, string epochId)
         {
@@ -500,10 +585,13 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers the vanilla-style character-unlock epoch obtained after a run as
-        ///     <typeparamref name="TCharacter" />.
-        ///     注册以
-        ///     <typeparamref name="TCharacter" /> 完成跑局后获得的原版风格角色解锁纪元。
+        ///     <para xml:lang="en">
+        ///         Registers a base-game-style character-unlock epoch obtained after a run as
+        ///         <typeparamref name="TCharacter" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册以 <typeparamref name="TCharacter" /> 完成一局游戏后获得的游戏本体式角色解锁纪元。
+        ///     </para>
         /// </summary>
         public void UnlockCharacterAfterRunAs<TCharacter, TEpoch>()
             where TCharacter : CharacterModel
@@ -513,22 +601,30 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Registers the vanilla-style character-unlock epoch obtained after a run as
-        ///     <paramref name="characterType" />.
-        ///     注册以
-        ///     <paramref name="characterType" /> 完成跑局后获得的原版风格角色解锁纪元。
+        ///     <para xml:lang="en">
+        ///         Registers a base-game-style character-unlock epoch obtained after a run as
+        ///         <paramref name="characterType" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册以 <paramref name="characterType" /> 完成一局游戏后获得的游戏本体式角色解锁纪元。
+        ///     </para>
         /// </summary>
         public void UnlockCharacterAfterRunAs(Type characterType, Type epochType)
         {
+            ArgumentNullException.ThrowIfNull(characterType);
+            ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunCharacterUnlockEpoch(ModelDb.GetId(characterType),
                 ModTimelineRegistry.GetEpochId(epochType));
         }
 
         /// <summary>
-        ///     Registers which epoch is granted by the post-run character-unlock check for
-        ///     <paramref name="characterId" />.
-        ///     注册跑局后角色解锁检查为
-        ///     <paramref name="characterId" /> 授予的纪元。
+        ///     <para xml:lang="en">
+        ///         Registers an epoch granted by the post-run character-unlock check for
+        ///         <paramref name="characterId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一局游戏结束后角色解锁检查为 <paramref name="characterId" /> 授予的纪元。
+        ///     </para>
         /// </summary>
         public void RegisterPostRunCharacterUnlockEpoch(ModelId characterId, string epochId)
         {
@@ -615,16 +711,15 @@ namespace STS2RitsuLib.Unlocks
         }
 
         /// <summary>
-        ///     Whether <paramref name="model" /> passes epoch gating for <paramref name="unlockState" />.
-        ///     Content generation can run from multiplayer-merged <see cref="UnlockState" /> values, so this method must
-        ///     not read the local profile directly. <see cref="Patches.ModRequiredEpochUnlockStatePatch" /> projects
-        ///     obtained-but-not-revealed requirement epochs into the serialized unlock state before lobby sync.
-        ///     <see cref="RequireEpoch(Type,string)" />。
-        ///     <paramref name="model" /> 是否通过 <paramref name="unlockState" /> 的纪元门控。
-        ///     内容生成可能使用多人合并后的 <see cref="UnlockState" />，因此这里不能直接读取本机档案。
-        ///     <see cref="Patches.ModRequiredEpochUnlockStatePatch" /> 会在大厅同步前把已获得但未 reveal 的需求纪元投影进序列化
-        ///     unlock state。
-        ///     <see cref="RequireEpoch(Type,string)" />。
+        ///     <para xml:lang="en">
+        ///         Returns whether <paramref name="model" /> satisfies its epoch requirement in
+        ///         <paramref name="unlockState" />. Content generation may use a multiplayer-merged
+        ///         <see cref="UnlockState" />, so this check does not read the local profile.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="model" /> 是否满足 <paramref name="unlockState" /> 中的纪元要求。内容生成可能使用
+        ///         多人游戏合并后的 <see cref="UnlockState" />，因此此检查不会直接读取本机档案。
+        ///     </para>
         /// </summary>
         internal static bool IsUnlocked(AbstractModel model, UnlockState unlockState)
         {
@@ -728,7 +823,8 @@ namespace STS2RitsuLib.Unlocks
             if (rules.Length == 0)
                 return;
 
-            if (localPlayer.CharacterId == null) return;
+            if (localPlayer.CharacterId == null)
+                return;
             var context = new PostRunUnlockContext(
                 serializableRun,
                 localPlayer,
@@ -745,8 +841,17 @@ namespace STS2RitsuLib.Unlocks
                 if (SaveManager.Instance.Progress.IsEpochObtained(rule.EpochId))
                     continue;
 
-                if (!rule.ShouldUnlock(context))
+                try
+                {
+                    if (!rule.ShouldUnlock(context))
+                        continue;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Unlocks] Post-run rule '{rule.Description}' failed and was skipped: {ex}");
                     continue;
+                }
 
                 if (!EpochRuntimeCompatibility.CanUseEpochId(
                         rule.EpochId,
@@ -780,43 +885,49 @@ namespace STS2RitsuLib.Unlocks
                 $"Cannot {operation} after unlock registration has been frozen ({_freezeReason ?? "unknown"}). " +
                 "Register unlock rules from your mod initializer before model initialization.");
         }
+
+        private static void ValidateRule(string epochId, string description)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(description);
+        }
     }
 
     /// <summary>
-    ///     Snapshot of run and profile statistics passed to post-run unlock predicates.
-    ///     传递给跑局后解锁谓词的跑局和档案统计快照。
+    ///     <para xml:lang="en">Contains the run and profile statistics passed to post-run unlock predicates.</para>
+    ///     <para xml:lang="zh-CN">包含传给一局游戏结束后解锁谓词的本局与档案统计信息。</para>
     /// </summary>
     /// <param name="Run">
-    ///     Serializable run being finalized.
-    ///     正在完成结算的可序列化跑局。
+    ///     <para xml:lang="en">The serializable run being finalized.</para>
+    ///     <para xml:lang="zh-CN">正在完成结算的可序列化游戏局数据。</para>
     /// </param>
     /// <param name="LocalPlayer">
-    ///     Local player state from the run.
-    ///     跑局中的本地玩家状态。
+    ///     <para xml:lang="en">The local player's state in the run.</para>
+    ///     <para xml:lang="zh-CN">本局游戏中的本地玩家状态。</para>
     /// </param>
     /// <param name="IsVictory">
-    ///     True if the run ended in victory.
-    ///     如果跑局以胜利结束，则为 true。
+    ///     <para xml:lang="en">Whether the run ended in victory.</para>
+    ///     <para xml:lang="zh-CN">本局游戏是否以胜利结束。</para>
     /// </param>
     /// <param name="IsAbandoned">
-    ///     True if the run was abandoned.
-    ///     如果跑局被放弃，则为 true。
+    ///     <para xml:lang="en">Whether the run was abandoned.</para>
+    ///     <para xml:lang="zh-CN">本局游戏是否被放弃。</para>
     /// </param>
     /// <param name="TotalRuns">
-    ///     Total runs recorded in progress at evaluation time.
-    ///     评估时进度中记录的总跑局数。
+    ///     <para xml:lang="en">The total number of runs recorded in progression data at evaluation time.</para>
+    ///     <para xml:lang="zh-CN">判断时进度数据中记录的游戏总局数。</para>
     /// </param>
     /// <param name="TotalWins">
-    ///     Total wins recorded in progress at evaluation time.
-    ///     评估时进度中记录的总胜利数。
+    ///     <para xml:lang="en">The total number of wins recorded in progression data at evaluation time.</para>
+    ///     <para xml:lang="zh-CN">判断时进度数据中记录的总胜利数。</para>
     /// </param>
     /// <param name="CharacterId">
-    ///     Character played for this run.
-    ///     本次跑局使用的角色。
+    ///     <para xml:lang="en">The character played in this run.</para>
+    ///     <para xml:lang="zh-CN">本局游戏使用的角色。</para>
     /// </param>
     /// <param name="AscensionLevel">
-    ///     Ascension level of the run.
-    ///     本次跑局的进阶等级。
+    ///     <para xml:lang="en">The run's Ascension level.</para>
+    ///     <para xml:lang="zh-CN">本局游戏的进阶等级。</para>
     /// </param>
     public sealed record PostRunUnlockContext(
         SerializableRun Run,
@@ -829,20 +940,20 @@ namespace STS2RitsuLib.Unlocks
         int AscensionLevel);
 
     /// <summary>
-    ///     Describes an epoch granted when a post-run predicate returns true.
-    ///     描述跑局后谓词返回 true 时授予的纪元。
+    ///     <para xml:lang="en">Describes an epoch granted when a post-run predicate returns <see langword="true" />.</para>
+    ///     <para xml:lang="zh-CN">描述一局游戏结束后谓词返回 <see langword="true" /> 时授予的纪元。</para>
     /// </summary>
     /// <param name="EpochId">
-    ///     Epoch identifier to obtain.
-    ///     要获得的纪元标识符。
+    ///     <para xml:lang="en">The ID of the epoch to obtain.</para>
+    ///     <para xml:lang="zh-CN">要获得的纪元 ID。</para>
     /// </param>
     /// <param name="Description">
-    ///     Human-readable label used in logs.
-    ///     日志中使用的人类可读标签。
+    ///     <para xml:lang="en">A human-readable label used in logs.</para>
+    ///     <para xml:lang="zh-CN">日志中使用的可读标签。</para>
     /// </param>
     /// <param name="ShouldUnlock">
-    ///     Predicate evaluated after each run ends.
-    ///     每次跑局结束后评估的谓词。
+    ///     <para xml:lang="en">The predicate evaluated after each run ends.</para>
+    ///     <para xml:lang="zh-CN">每局游戏结束后判断的谓词。</para>
     /// </param>
     public sealed record PostRunEpochUnlockRule(
         string EpochId,
@@ -850,8 +961,8 @@ namespace STS2RitsuLib.Unlocks
         Func<PostRunUnlockContext, bool> ShouldUnlock)
     {
         /// <summary>
-        ///     Creates a <see cref="PostRunEpochUnlockRule" /> with validated inputs.
-        ///     使用已验证的输入创建 <see cref="PostRunEpochUnlockRule" />。
+        ///     <para xml:lang="en">Creates a rule after validating its inputs.</para>
+        ///     <para xml:lang="zh-CN">验证输入后创建规则。</para>
         /// </summary>
         public static PostRunEpochUnlockRule Create(string epochId, string description,
             Func<PostRunUnlockContext, bool> shouldUnlock)
@@ -864,24 +975,24 @@ namespace STS2RitsuLib.Unlocks
     }
 
     /// <summary>
-    ///     Elite-win counting rule that obtains an epoch after enough elite victories as a character.
-    ///     以某个角色取得足够精英胜利后获得纪元的计数规则。
+    ///     <para xml:lang="en">Describes an epoch obtained after a character records enough elite victories.</para>
+    ///     <para xml:lang="zh-CN">描述角色记录足够精英战胜利后获得的纪元。</para>
     /// </summary>
     /// <param name="CharacterId">
-    ///     Character whose elite wins are counted.
-    ///     要统计精英战胜利的角色。
+    ///     <para xml:lang="en">The ID of the character whose elite victories are counted.</para>
+    ///     <para xml:lang="zh-CN">要统计精英战胜利的角色 ID。</para>
     /// </param>
     /// <param name="EpochId">
-    ///     Epoch identifier to obtain.
-    ///     要获得的纪元标识符。
+    ///     <para xml:lang="en">The ID of the epoch to obtain.</para>
+    ///     <para xml:lang="zh-CN">要获得的纪元 ID。</para>
     /// </param>
     /// <param name="RequiredEliteWins">
-    ///     Minimum elite wins required.
-    ///     所需的最少精英战胜利数。
+    ///     <para xml:lang="en">The minimum number of elite victories required.</para>
+    ///     <para xml:lang="zh-CN">所需的最少精英战胜利数。</para>
     /// </param>
     /// <param name="Description">
-    ///     Human-readable label used in logs.
-    ///     日志中使用的人类可读标签。
+    ///     <para xml:lang="en">A human-readable label used in logs.</para>
+    ///     <para xml:lang="zh-CN">日志中使用的可读标签。</para>
     /// </param>
     public sealed record EliteEpochUnlockRule(
         ModelId CharacterId,
@@ -890,8 +1001,8 @@ namespace STS2RitsuLib.Unlocks
         string Description)
     {
         /// <summary>
-        ///     Creates an <see cref="EliteEpochUnlockRule" /> with validated inputs.
-        ///     使用已验证的输入创建 <see cref="EliteEpochUnlockRule" />。
+        ///     <para xml:lang="en">Creates a rule after validating its inputs.</para>
+        ///     <para xml:lang="zh-CN">验证输入后创建规则。</para>
         /// </summary>
         public static EliteEpochUnlockRule Create(
             ModelId characterId,
@@ -907,24 +1018,24 @@ namespace STS2RitsuLib.Unlocks
     }
 
     /// <summary>
-    ///     Generic counted encounter-win rule (used for boss epochs) for a character.
-    ///     角色的通用遭遇胜利计数规则（用于 Boss 纪元）。
+    ///     <para xml:lang="en">Describes a character-specific counted-victory rule, used for boss epochs.</para>
+    ///     <para xml:lang="zh-CN">描述按角色统计胜利次数的规则，用于首领纪元。</para>
     /// </summary>
     /// <param name="CharacterId">
-    ///     Character whose wins are counted.
-    ///     要统计胜利的角色。
+    ///     <para xml:lang="en">The ID of the character whose victories are counted.</para>
+    ///     <para xml:lang="zh-CN">要统计胜利次数的角色 ID。</para>
     /// </param>
     /// <param name="EpochId">
-    ///     Epoch identifier to obtain.
-    ///     要获得的纪元标识符。
+    ///     <para xml:lang="en">The ID of the epoch to obtain.</para>
+    ///     <para xml:lang="zh-CN">要获得的纪元 ID。</para>
     /// </param>
     /// <param name="RequiredWins">
-    ///     Minimum wins required.
-    ///     所需的最少胜利数。
+    ///     <para xml:lang="en">The minimum number of victories required.</para>
+    ///     <para xml:lang="zh-CN">所需的最少胜利次数。</para>
     /// </param>
     /// <param name="Description">
-    ///     Human-readable label used in logs.
-    ///     日志中使用的人类可读标签。
+    ///     <para xml:lang="en">A human-readable label used in logs.</para>
+    ///     <para xml:lang="zh-CN">日志中使用的可读标签。</para>
     /// </param>
     public sealed record CountedEpochUnlockRule(
         ModelId CharacterId,
@@ -933,8 +1044,8 @@ namespace STS2RitsuLib.Unlocks
         string Description)
     {
         /// <summary>
-        ///     Creates a <see cref="CountedEpochUnlockRule" /> with validated inputs.
-        ///     使用已验证的输入创建 <see cref="CountedEpochUnlockRule" />。
+        ///     <para xml:lang="en">Creates a rule after validating its inputs.</para>
+        ///     <para xml:lang="zh-CN">验证输入后创建规则。</para>
         /// </summary>
         public static CountedEpochUnlockRule Create(
             ModelId characterId,

@@ -9,17 +9,25 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Row injected into the vanilla <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Settings.NSettingsScreen" />
-    ///     General tab. Intentionally separate from <see cref="ModSettingsUiFactory" />, which builds only the
-    ///     RitsuLib mod settings submenu UI.
-    ///     注入到原版 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Settings.NSettingsScreen" /> General 标签页的行。刻意与
-    ///     <see cref="ModSettingsUiFactory" /> 分离，后者只构建 RitsuLib mod 设置子菜单 UI。
+    ///     <para xml:lang="en">
+    ///         Builds rows injected into the General tab of the native
+    ///         <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Settings.NSettingsScreen" />. This is separate from
+    ///         <see cref="ModSettingsUiFactory" />, which builds the RitsuLib mod settings submenu.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         构建注入原版 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Settings.NSettingsScreen" />“游戏设置”标签页的行。
+    ///         此处与 <see cref="ModSettingsUiFactory" /> 分离；后者用于构建 RitsuLib 模组设置子菜单。
+    ///     </para>
     /// </summary>
     public static class ModSettingsGameSettingsEntryLine
     {
         /// <summary>
-        ///     Builds the General-tab row; <paramref name="openAction" /> opens the RitsuLib mod settings submenu.
-        ///     构建 General 标签页行；<paramref name="openAction" /> 打开 RitsuLib mod 设置子菜单。
+        ///     <para xml:lang="en">
+        ///         Builds the General-tab row that opens the RitsuLib mod settings submenu.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建用于打开 RitsuLib 模组设置子菜单的“游戏设置”标签页行。
+        ///     </para>
         /// </summary>
         public static MarginContainer Create(Action openAction)
         {
@@ -27,11 +35,17 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Builds the General-tab row with an optional vanilla-style settings hover tip.
-        ///     构建 General 标签页行，并可选添加原版设置风格的 hover tip。
+        ///     <para xml:lang="en">
+        ///         Builds the General-tab row that opens the RitsuLib mod settings submenu, with an optional native-style
+        ///         settings hover tip.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建用于打开 RitsuLib 模组设置子菜单的“游戏设置”标签页行，并可附加原版设置样式的悬停提示。
+        ///     </para>
         /// </summary>
         public static MarginContainer Create(Action openAction, IHoverTip? hoverTip)
         {
+            ArgumentNullException.ThrowIfNull(openAction);
             var title = ModSettingsLocalization.Get("entry.title", "Mod Settings (RitsuLib)");
             return Create(
                 "RitsuLibModSettings",
@@ -43,8 +57,12 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Builds the General-tab row that opens the game log folder.
-        ///     构建 General 标签页中用于打开游戏日志文件夹的行。
+        ///     <para xml:lang="en">
+        ///         Builds the General-tab row that opens the game log folder.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建用于打开游戏日志文件夹的“游戏设置”标签页行。
+        ///     </para>
         /// </summary>
         public static MarginContainer CreateOpenLogs(Action openAction)
         {
@@ -52,11 +70,17 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Builds the General-tab row that opens the game log folder with an optional vanilla-style settings hover tip.
-        ///     构建 General 标签页中用于打开游戏日志文件夹的行，并可选添加原版设置风格的 hover tip。
+        ///     <para xml:lang="en">
+        ///         Builds the General-tab row that opens the game log folder, with an optional native-style settings
+        ///         hover tip.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建用于打开游戏日志文件夹的“游戏设置”标签页行，并可附加原版设置样式的悬停提示。
+        ///     </para>
         /// </summary>
         public static MarginContainer CreateOpenLogs(Action openAction, IHoverTip? hoverTip)
         {
+            ArgumentNullException.ThrowIfNull(openAction);
             var title = ModSettingsLocalization.Get("entry.openLogs.title", "Open Logs Folder");
             return Create(
                 "RitsuLibOpenLogs",
@@ -156,8 +180,14 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Same RichText setup as vanilla <c>settings_screen.tscn</c> SendFeedback row (not mod submenu styling).
-        ///     与原版 <c>settings_screen.tscn</c> SendFeedback 行使用相同的 RichText 设置（不是 mod 子菜单样式）。
+        ///     <para xml:lang="en">
+        ///         Creates the rich-text label using the same setup as the <c>SendFeedback</c> row in the native
+        ///         <c>settings_screen.tscn</c>, rather than the mod submenu style.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建富文本标签，并采用原版 <c>settings_screen.tscn</c> 中 <c>SendFeedback</c> 行的设置，
+        ///         而不是模组子菜单样式。
+        ///     </para>
         /// </summary>
         private static MegaRichTextLabel CreateVanillaGeneralSettingsRowLabel(string text)
         {
@@ -193,8 +223,13 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     NSettingsButton-styled control used only on the vanilla settings screen entry (not submenu rows).
-    ///     采用 NSettingsButton 样式的控件，仅用于原版设置界面入口（不是子菜单行）。
+    ///     <para xml:lang="en">
+    ///         Native <see cref="NSettingsButton" />-style control used by the main settings-screen entry, not by mod
+    ///         submenu rows.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         采用原版 <see cref="NSettingsButton" /> 样式的控件，仅用于主设置界面入口，不用于模组子菜单行。
+    ///     </para>
     /// </summary>
     internal sealed partial class ModSettingsGameSettingsEntryButton : NSettingsButton
     {

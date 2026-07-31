@@ -1,69 +1,58 @@
 namespace STS2RitsuLib.Content
 {
     /// <summary>
-    ///     Godot <c>%</c> unique names of all vanilla <c>NCardPoolFilter</c> pool toggles in the card-library
-    ///     compendium strip (see
-    ///     <c>library.GetNodeOrNull&lt;NCardPoolFilter&gt;(...)</c> in game <c>NCardLibrary</c>). Set
-    ///     <see cref="CardLibraryCompendiumPlacementRule.VanillaFilterAnchorUniqueName" /> to one of these
-    ///     constants with
-    ///     <see cref="CardLibraryCompendiumFilterInsertRelation" /> to place mod filter rows before or after
-    ///     the corresponding vanilla control. Order of constants below matches the in-scene layout from left
-    ///     to right in base game.
-    ///     卡牌库概要条中所有原版 <c>NCardPoolFilter</c> 池开关的 Godot <c>%</c> 唯一名称（参见
-    ///     游戏 <c>NCardLibrary</c> 中的 <c>library.GetNodeOrNull&lt;NCardPoolFilter&gt;(...)</c>）。将
-    ///     <see cref="CardLibraryCompendiumPlacementRule.VanillaFilterAnchorUniqueName" /> 设为其中一个
-    ///     常量，并配合
-    ///     <see cref="CardLibraryCompendiumFilterInsertRelation" /> 将 mod 筛选器行放在
-    ///     对应原版控件之前或之后。下面常量的顺序与基础游戏中场景布局从左
-    ///     到右一致。
+    ///     <para xml:lang="en">
+    ///         Provides the Godot unique node names of vanilla card-library compendium pool filters.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供原版卡牌库图鉴牌池筛选器的 Godot 唯一节点名称。</para>
     /// </summary>
     public static class CardLibraryCompendiumVanillaFilterNames
     {
         /// <summary>
-        ///     Ironclad (red) character pool filter.
-        ///     Ironclad（红色）角色池筛选器。
+        ///     <para xml:lang="en">The Ironclad character-pool filter.</para>
+        ///     <para xml:lang="zh-CN">铁甲战士角色牌池筛选器。</para>
         /// </summary>
         public const string IroncladPool = "%IroncladPool";
 
         /// <summary>
-        ///     Silent (green) character pool filter.
-        ///     Silent（绿色）角色池筛选器。
+        ///     <para xml:lang="en">The Silent character-pool filter.</para>
+        ///     <para xml:lang="zh-CN">静默猎手角色牌池筛选器。</para>
         /// </summary>
         public const string SilentPool = "%SilentPool";
 
         /// <summary>
-        ///     Defect (blue) character pool filter.
-        ///     Defect（蓝色）角色池筛选器。
+        ///     <para xml:lang="en">The Defect character-pool filter.</para>
+        ///     <para xml:lang="zh-CN">故障机器人角色牌池筛选器。</para>
         /// </summary>
         public const string DefectPool = "%DefectPool";
 
         /// <summary>
-        ///     Regent (purple) character pool filter.
-        ///     Regent（紫色）角色池筛选器。
+        ///     <para xml:lang="en">The Regent character-pool filter.</para>
+        ///     <para xml:lang="zh-CN">储君角色牌池筛选器。</para>
         /// </summary>
         public const string RegentPool = "%RegentPool";
 
         /// <summary>
-        ///     Necrobinder (orange) character pool filter.
-        ///     Necrobinder（橙色）角色池筛选器。
+        ///     <para xml:lang="en">The Necrobinder character-pool filter.</para>
+        ///     <para xml:lang="zh-CN">亡灵契约师角色牌池筛选器。</para>
         /// </summary>
         public const string NecrobinderPool = "%NecrobinderPool";
 
         /// <summary>
-        ///     Colorless pool filter.
-        ///     无色池筛选器。
+        ///     <para xml:lang="en">The Colorless card-pool filter.</para>
+        ///     <para xml:lang="zh-CN">无色牌池筛选器。</para>
         /// </summary>
         public const string ColorlessPool = "%ColorlessPool";
 
         /// <summary>
-        ///     Ancients pool filter.
-        ///     Ancients 池筛选器。
+        ///     <para xml:lang="en">The Ancients card-pool filter.</para>
+        ///     <para xml:lang="zh-CN">先古牌池筛选器。</para>
         /// </summary>
         public const string AncientsPool = "%AncientsPool";
 
         /// <summary>
-        ///     Misc (token) pool filter.
-        ///     Misc（衍生物）池筛选器。
+        ///     <para xml:lang="en">The Misc card-pool filter.</para>
+        ///     <para xml:lang="zh-CN">杂项牌池筛选器。</para>
         /// </summary>
         public const string MiscPool = "%MiscPool";
 
@@ -74,12 +63,12 @@ namespace STS2RitsuLib.Content
         ];
 
         /// <summary>
-        ///     The eight vanilla <c>%</c> unique names in compendium strip order (left to right, same as
-        ///     <c>NCardLibrary</c> field setup). For iteration when resolving anchors; prefer the
-        ///     <see cref="IroncladPool" />–<see cref="MiscPool" /> constants for single anchors.
-        ///     概要条顺序中的八个原版 <c>%</c> 唯一名称（从左到右，与
-        ///     <c>NCardLibrary</c> 字段设置相同）。用于解析锚点时迭代；单个锚点优先使用
-        ///     <see cref="IroncladPool" />–<see cref="MiscPool" /> 常量。
+        ///     <para xml:lang="en">
+        ///         Gets all vanilla filter names in their left-to-right compendium-strip order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取全部原版筛选器名称，并按其在图鉴筛选器条中的从左到右顺序排列。
+        ///     </para>
         /// </summary>
         public static ReadOnlySpan<string> AllInStripOrder => AllInStripOrderArray;
     }

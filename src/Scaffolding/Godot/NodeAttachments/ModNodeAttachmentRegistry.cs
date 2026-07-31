@@ -4,8 +4,12 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
 {
     /// <summary>
-    ///     Per-mod registration surface for attaching child nodes when a Godot parent becomes ready.
-    ///     当 Godot 父节点进入 ready 时挂载子节点的逐 mod 注册入口。
+    ///     <para xml:lang="en">
+    ///         Provides a per-mod registry for attaching child nodes when a Godot parent enters <c>_Ready</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供按模组划分的注册表，用于在 Godot 父节点进入 <c>_Ready</c> 时附加子节点。
+    ///     </para>
     /// </summary>
     public sealed class ModNodeAttachmentRegistry
     {
@@ -26,27 +30,32 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Returns the singleton registry for <paramref name="modId" />.
-        ///     返回 <paramref name="modId" /> 对应的单例注册表。
+        ///     <para xml:lang="en">Gets the singleton registry for <paramref name="modId" />.</para>
+        ///     <para xml:lang="zh-CN">获取 <paramref name="modId" /> 对应的单例注册表。</para>
         /// </summary>
         public static ModNodeAttachmentRegistry For(string modId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            var normalizedModId = modId.Trim();
 
             lock (SyncRoot)
             {
-                if (Registries.TryGetValue(modId, out var existing))
+                if (Registries.TryGetValue(normalizedModId, out var existing))
                     return existing;
 
-                var created = new ModNodeAttachmentRegistry(modId);
-                Registries[modId] = created;
+                var created = new ModNodeAttachmentRegistry(normalizedModId);
+                Registries[normalizedModId] = created;
                 return created;
             }
         }
 
         /// <summary>
-        ///     Registers a factory-created child for <typeparamref name="TParent" /> ready events.
-        ///     为 <typeparamref name="TParent" /> 的 ready 事件注册由工厂创建的子节点。
+        ///     <para xml:lang="en">
+        ///         Registers a factory-created child for <typeparamref name="TParent" /> <c>_Ready</c> callbacks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TParent" /> 的 <c>_Ready</c> 回调注册由工厂创建的子节点。
+        ///     </para>
         /// </summary>
         public NodeAttachmentDefinition RegisterReadyChild<TParent, TNode>(
             string localId,
@@ -59,8 +68,13 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Registers a factory-created child with setup for <typeparamref name="TParent" /> ready events.
-        ///     为 <typeparamref name="TParent" /> 的 ready 事件注册带 setup 的工厂创建子节点。
+        ///     <para xml:lang="en">
+        ///         Registers a factory-created child and optional setup callback for
+        ///         <typeparamref name="TParent" /> <c>_Ready</c> callbacks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TParent" /> 的 <c>_Ready</c> 回调注册由工厂创建的子节点及可选配置回调。
+        ///     </para>
         /// </summary>
         public NodeAttachmentDefinition RegisterReadyChild<TParent, TNode>(
             string localId,
@@ -81,8 +95,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Registers a child instantiated directly from a <see cref="PackedScene" /> path.
-        ///     注册直接从 <see cref="PackedScene" /> 路径实例化的子节点。
+        ///     <para xml:lang="en">Registers a child instantiated directly from a <see cref="PackedScene" /> path.</para>
+        ///     <para xml:lang="zh-CN">注册直接从 <see cref="PackedScene" /> 路径实例化的子节点。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterReadyChildFromScene<TParent, TNode>(
             string localId,
@@ -103,10 +117,13 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Registers a child created from a scene converted by
-        ///     <see cref="RitsuGodotNodeFactories.CreateFromScenePath{TNode}(string)" />.
-        ///     注册由 <see cref="RitsuGodotNodeFactories.CreateFromScenePath{TNode}(string)" />
-        ///     转换 scene 后创建的子节点。
+        ///     <para xml:lang="en">
+        ///         Registers a child created by converting a scene through
+        ///         <see cref="RitsuGodotNodeFactories.CreateFromScenePath{TNode}(string)" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册通过 <see cref="RitsuGodotNodeFactories.CreateFromScenePath{TNode}(string)" /> 转换场景后创建的子节点。
+        ///     </para>
         /// </summary>
         public NodeAttachmentDefinition RegisterReadyChildFromConvertedScene<TParent, TNode>(
             string localId,
@@ -127,8 +144,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Reads an attached node by this registry's local id without creating it.
-        ///     通过该注册表的本地 id 读取已挂载节点，不会创建节点。
+        ///     <para xml:lang="en">Gets an attached node by this registry's local ID without creating it.</para>
+        ///     <para xml:lang="zh-CN">按此注册表中的本地 ID 获取已附加节点，不会创建节点。</para>
         /// </summary>
         public bool TryGetAttached<TParent, TNode>(TParent parent, string localId, out TNode node)
             where TParent : Node
@@ -139,8 +156,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Reads an attached node by fully qualified attachment id without creating it.
-        ///     通过完整限定挂载 id 读取已挂载节点，不会创建节点。
+        ///     <para xml:lang="en">Gets an attached node by its fully qualified attachment ID without creating it.</para>
+        ///     <para xml:lang="zh-CN">按完全限定的附加项 ID 获取已附加节点，不会创建节点。</para>
         /// </summary>
         public static bool TryGetAttachedById<TParent, TNode>(TParent parent, string id, out TNode node)
             where TParent : Node
@@ -150,8 +167,12 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Ensures all ready-time attachments registered for <paramref name="parent" /> have been applied.
-        ///     确保已应用为 <paramref name="parent" /> 注册的所有 ready 阶段挂载项。
+        ///     <para xml:lang="en">
+        ///         Ensures that all <c>_Ready</c>-time attachments registered for <paramref name="parent" /> are applied.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确保为 <paramref name="parent" /> 注册的所有 <c>_Ready</c> 阶段附加项均已应用。
+        ///     </para>
         /// </summary>
         public static void EnsureReadyAttachments(Node parent)
         {
@@ -160,8 +181,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Returns every registered node attachment for diagnostics and audit UIs.
-        ///     返回所有已注册节点挂载项，供诊断和审计 UI 使用。
+        ///     <para xml:lang="en">Gets a snapshot of all registered node attachments for diagnostics and inspection UIs.</para>
+        ///     <para xml:lang="zh-CN">获取所有已注册节点附加项的快照，供诊断和检查界面使用。</para>
         /// </summary>
         public static NodeAttachmentDefinition[] GetDefinitionsSnapshot()
         {
@@ -178,8 +199,8 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         }
 
         /// <summary>
-        ///     Builds the stable public id for a mod-scoped node attachment.
-        ///     构建 mod 作用域节点挂载项的稳定公开 id。
+        ///     <para xml:lang="en">Builds the stable public ID for a mod-scoped node attachment.</para>
+        ///     <para xml:lang="zh-CN">构建模组作用域内节点附加项的稳定公开 ID。</para>
         /// </summary>
         public static string GetQualifiedNodeAttachmentId(string modId, string localId)
         {
@@ -298,8 +319,10 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             if (node is TNode typed)
                 return typed;
 
+            var actualNodeType = node.GetType();
+            node.Free();
             throw new InvalidOperationException(
-                $"Scene '{scenePath}' instantiated {node.GetType().FullName}, expected {typeof(TNode).FullName}. " +
+                $"Scene '{scenePath}' instantiated {actualNodeType.FullName}, expected {typeof(TNode).FullName}. " +
                 $"Use {nameof(RegisterReadyChildFromConvertedScene)} when the scene root must be converted by RitsuLib factories.");
         }
     }

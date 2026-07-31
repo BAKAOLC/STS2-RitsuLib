@@ -7,17 +7,26 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Audio.Patches
 {
     /// <summary>
-    ///     Container for Harmony prefixes on <see cref="NAudioManager" />: guids.txt-only <c>event:/…</c> paths (mod banks
-    ///     without strings.bank). Mirrors <c>audio_manager_proxy.gd</c> loop/music queues and routing through the same
-    ///     <see cref="NAudioManager" /> entry points as vanilla.
-    ///     <see cref="NAudioManager" /> 上 Harmony prefix 的容器：仅存在于 guids.txt 的 <c>event:/…</c> 路径（mod bank
-    ///     没有 strings.bank）。复现 <c>audio_manager_proxy.gd</c> 的 loop/music 队列，并通过与原版相同的
-    ///     <see cref="NAudioManager" /> 入口点路由。
+    ///     <para xml:lang="en">
+    ///         Patches <see cref="NAudioManager" /> so <c>event:/…</c> paths present in <c>guids.txt</c> and mod banks,
+    ///         but absent from a strings bank, follow the native one-shot, loop, and music entry points.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         修补 <see cref="NAudioManager" />，使存在于 <c>guids.txt</c> 和模组音频库、但不存在于 strings bank
+    ///         中的 <c>event:/…</c> 路径能够沿用原生的单次、循环和音乐入口。
+    ///     </para>
     /// </summary>
     internal static class NAudioManagerGuidMappedStudioEventsPatches
     {
         private static readonly Lock MissingStudioPathWarningGate = new();
         private static readonly HashSet<string> MissingStudioPathWarningLoggedKeys = new(StringComparer.Ordinal);
+
+        private static bool TryStopCustomMusic()
+        {
+            var mappedReleased = GuidMappedNaudioStudioProxy.ReleaseMappedMusic();
+            var virtualReleased = VirtualFmodEventRegistry.StopMusic();
+            return mappedReleased && virtualReleased;
+        }
 
         private static void LogMissingStudioPathOnce(string operation, string path)
         {
@@ -48,8 +57,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Intercepts mapped <see cref="NAudioManager.PlayOneShot(string, Dictionary{string, float}, float)" /> calls.
-        ///     拦截已映射的 <see cref="NAudioManager.PlayOneShot(string, Dictionary{string, float}, float)" /> 调用。
+        ///     <para xml:lang="en">Routes mapped and virtual one-shot paths before the native path table is consulted.</para>
+        ///     <para xml:lang="zh-CN">在查询原生路径表前路由已映射和虚拟的单次事件路径。</para>
         /// </summary>
         internal sealed class PlayOneShot : IPatchMethod
         {
@@ -80,7 +89,12 @@ namespace STS2RitsuLib.Audio.Patches
                     return false;
 
                 if (VirtualFmodEventRegistry.IsRegistered(path))
-                    return !VirtualFmodEventRegistry.TryPlayOneShot(path, volume, parameters);
+                {
+                    if (!VirtualFmodEventRegistry.TryPlayOneShot(path, volume, parameters))
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] Virtual FMOD event is not a playable one-shot: {path}");
+                    return false;
+                }
 
                 if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(path, out var mappedGuid))
                 {
@@ -100,8 +114,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Intercepts mapped <see cref="NAudioManager.PlayLoop(string, bool)" /> calls.
-        ///     拦截已映射的 <see cref="NAudioManager.PlayLoop(string, bool)" /> 调用。
+        ///     <para xml:lang="en">Routes mapped and virtual loop paths through their retained loop queues.</para>
+        ///     <para xml:lang="zh-CN">通过对应的保留循环队列路由已映射和虚拟的循环路径。</para>
         /// </summary>
         internal sealed class PlayLoop : IPatchMethod
         {
@@ -127,7 +141,12 @@ namespace STS2RitsuLib.Audio.Patches
                     return false;
 
                 if (VirtualFmodEventRegistry.IsRegistered(path))
-                    return !VirtualFmodEventRegistry.TryPlayLoop(path);
+                {
+                    if (!VirtualFmodEventRegistry.TryPlayLoop(path))
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] Virtual FMOD event is not a playable loop: {path}");
+                    return false;
+                }
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(path))
                 {
@@ -148,8 +167,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Intercepts <see cref="NAudioManager.StopLoop(string)" /> for paths owned by the mapped loop queue.
-        ///     为已映射 loop 队列拥有的路径拦截 <see cref="NAudioManager.StopLoop(string)" />。
+        ///     <para xml:lang="en">Stops the oldest retained mapped or virtual loop for a path.</para>
+        ///     <para xml:lang="zh-CN">停止路径下最早保留的映射或虚拟循环。</para>
         /// </summary>
         internal sealed class StopLoop : IPatchMethod
         {
@@ -171,16 +190,22 @@ namespace STS2RitsuLib.Audio.Patches
                 if (TestMode.IsOn)
                     return true;
 
-                if (string.IsNullOrEmpty(path) || !GuidMappedNaudioStudioProxy.IsMappedPath(path))
-                    return string.IsNullOrEmpty(path) || !VirtualFmodEventRegistry.TryStopLoop(path);
+                if (string.IsNullOrEmpty(path))
+                    return true;
 
-                return !GuidMappedNaudioStudioProxy.TryStopMappedLoop(path);
+                if (GuidMappedNaudioStudioProxy.IsMappedPath(path))
+                    return !GuidMappedNaudioStudioProxy.TryStopMappedLoop(path);
+
+                if (VirtualFmodEventRegistry.TryStopLoop(path))
+                    return false;
+
+                return !VirtualFmodEventRegistry.IsRegistered(path);
             }
         }
 
         /// <summary>
-        ///     Intercepts <see cref="NAudioManager.SetParam(string, string, float)" /> for mapped loop paths.
-        ///     为已映射 loop 路径拦截 <see cref="NAudioManager.SetParam(string, string, float)" />。
+        ///     <para xml:lang="en">Routes loop-parameter updates to the oldest mapped loop or consumes them for virtual events.</para>
+        ///     <para xml:lang="zh-CN">将循环参数更新路由到最早的映射循环，或由虚拟事件接收并忽略。</para>
         /// </summary>
         internal sealed class SetParam : IPatchMethod
         {
@@ -215,8 +240,11 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Clears mapped loop state when <see cref="NAudioManager.StopAllLoops" /> runs.
-        ///     <see cref="NAudioManager.StopAllLoops" /> 运行时清除已映射 loop 状态。
+        ///     <para xml:lang="en">
+        ///         Stops mapped and virtual loop queues alongside <see cref="NAudioManager.StopAllLoops" />,
+        ///         retaining failed cleanup.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">随 <see cref="NAudioManager.StopAllLoops" /> 一起停止映射和虚拟循环队列，并保留清理失败的实例。</para>
         /// </summary>
         internal sealed class StopAllLoops : IPatchMethod
         {
@@ -244,8 +272,11 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Intercepts mapped <see cref="NAudioManager.PlayMusic(string)" /> calls.
-        ///     拦截已映射的 <see cref="NAudioManager.PlayMusic(string)" /> 调用。
+        ///     <para xml:lang="en">
+        ///         Switches between native, mapped, and virtual music without leaving the previous custom instance
+        ///         active.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在原生、映射和虚拟音乐之间切换，并确保先前的自定义实例不再活动。</para>
         /// </summary>
         internal sealed class PlayMusic : IPatchMethod
         {
@@ -270,15 +301,27 @@ namespace STS2RitsuLib.Audio.Patches
 
                 if (VirtualFmodEventRegistry.IsRegistered(music))
                 {
+                    if (!TryStopCustomMusic())
+                        return false;
+
                     __instance.StopMusic();
-                    return !VirtualFmodEventRegistry.TryPlayMusic(music);
+                    if (!VirtualFmodEventRegistry.TryPlayMusic(music))
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Audio] Virtual FMOD event is not playable as music: {music}");
+                    return false;
                 }
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(music))
                 {
+                    if (!TryStopCustomMusic())
+                        return false;
+
                     LogMissingStudioPathOnce("PlayMusic", music);
                     return true;
                 }
+
+                if (!TryStopCustomMusic())
+                    return false;
 
                 __instance.StopMusic();
 
@@ -293,8 +336,11 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Releases the mapped music instance in parallel with vanilla <see cref="NAudioManager.StopMusic" />.
-        ///     与原版 <see cref="NAudioManager.StopMusic" /> 并行释放已映射音乐实例。
+        ///     <para xml:lang="en">
+        ///         Stops mapped and virtual music alongside the native <see cref="NAudioManager.StopMusic" />
+        ///         path.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">随原生 <see cref="NAudioManager.StopMusic" /> 路径一起停止映射和虚拟音乐。</para>
         /// </summary>
         internal sealed class StopMusic : IPatchMethod
         {
@@ -322,8 +368,11 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Routes <see cref="NAudioManager.UpdateMusicParameter(string, string)" /> to the active mapped music instance.
-        ///     将 <see cref="NAudioManager.UpdateMusicParameter(string, string)" /> 路由到活动的已映射音乐实例。
+        ///     <para xml:lang="en">
+        ///         Routes labeled music parameters to active virtual or mapped music before falling back to the
+        ///         native proxy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">优先将标签型音乐参数路由到活动的虚拟或映射音乐，否则回退到原生代理。</para>
         /// </summary>
         internal sealed class UpdateMusicParameter : IPatchMethod
         {

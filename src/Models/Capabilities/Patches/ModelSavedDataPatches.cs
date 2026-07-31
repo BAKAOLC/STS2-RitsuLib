@@ -6,14 +6,18 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Models.Capabilities.Patches
 {
     /// <summary>
-    ///     Bridges model-saved data through <see cref="SavedProperties" />.
-    ///     将模型保存数据桥接到 <see cref="SavedProperties" />。
+    ///     <para xml:lang="en">Bridges model-saved data through <see cref="SavedProperties" />.</para>
+    ///     <para xml:lang="zh-CN">通过 <see cref="SavedProperties" /> 传递模型保存数据。</para>
     /// </summary>
     internal static class ModelSavedDataPatches
     {
         /// <summary>
-        ///     Exports registered model-saved data after vanilla model properties are serialized.
-        ///     在原版模型属性序列化后导出已注册模型保存数据。
+        ///     <para xml:lang="en">
+        ///         Exports registered model-saved data after base-game model properties are serialized.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         游戏原版模型属性序列化后，导出已注册的模型保存数据。
+        ///     </para>
         /// </summary>
         internal sealed class SavedPropertiesFromInternalPatch : IPatchMethod
         {
@@ -52,8 +56,12 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         }
 
         /// <summary>
-        ///     Imports registered model-saved data after vanilla model properties are deserialized.
-        ///     在原版模型属性反序列化后导入已注册模型保存数据。
+        ///     <para xml:lang="en">
+        ///         Imports registered model-saved data after base-game model properties are deserialized.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         游戏原版模型属性反序列化后，导入已注册的模型保存数据。
+        ///     </para>
         /// </summary>
         internal sealed class SavedPropertiesFillInternalPatch : IPatchMethod
         {
@@ -77,11 +85,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 if (model is not AbstractModel abstractModel)
                     return;
 
-                if (SavedAttachedStateRegistry.TryGetFromProperties<string>(
-                        __instance,
-                        ModelSavedDataRuntime.SavedPropertiesName,
-                        out var json))
-                    ModelSavedDataRegistry.Import(abstractModel, json);
+                SavedAttachedStateRegistry.TryGetFromProperties<string>(
+                    __instance,
+                    ModelSavedDataRuntime.SavedPropertiesName,
+                    out var json);
+                ModelSavedDataRegistry.Import(abstractModel, json);
             }
         }
     }

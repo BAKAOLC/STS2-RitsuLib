@@ -1,75 +1,104 @@
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Reserved fixed opcodes for framework control-plane messages (0…
-    ///     <see cref="RitsuLibSidecarOpcodes.FixedProtocolOpcodeMaxInclusive" />).
-    ///     User <see cref="RitsuLibSidecarOpcodes.For" /> opcodes are always above that range.
-    ///     框架控制平面消息的保留固定 opcode（0…
-    ///     <see cref="RitsuLibSidecarOpcodes.FixedProtocolOpcodeMaxInclusive" />）。
-    ///     用户 <see cref="RitsuLibSidecarOpcodes.For" /> opcode 始终高于该范围。
+    ///     <para xml:lang="en">
+    ///         Defines fixed opcodes reserved for framework control messages. Opcodes returned by
+    ///         <see cref="RitsuLibSidecarOpcodes.For" /> are always outside the reserved range.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义为框架控制消息保留的固定操作码。<see cref="RitsuLibSidecarOpcodes.For" /> 返回的操作码始终位于
+    ///         保留范围之外。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarControlOpcodes
     {
         /// <summary>
-        ///     Optional framework keep-alive or latency probe (reserved).
-        ///     可选的框架 keep-alive 或延迟探测（保留）。
+        ///     <para xml:lang="en">
+        ///         Reserved for an optional framework keepalive or latency probe.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         保留用于可选的框架保活或延迟探测。
+        ///     </para>
         /// </summary>
         public const ulong FrameworkPing = RitsuLibSidecarControlOpcodeLayout.FrameworkPing;
 
         /// <summary>
-        ///     Capability advertisement and version negotiation (payload: <see cref="RitsuLibSidecarHandshakeBinary" />).
-        ///     能力宣告和版本协商（载荷：<see cref="RitsuLibSidecarHandshakeBinary" />）。
+        ///     <para xml:lang="en">
+        ///         Advertises capabilities and initiates wire-version negotiation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         声明功能并发起线路格式版本协商。
+        ///     </para>
         /// </summary>
         public const ulong Handshake =
             RitsuLibSidecarControlOpcodeLayout.ControlRangeStart + RitsuLibSidecarControlOpcodeLayout.HandshakeOffset;
 
         /// <summary>
-        ///     Response to <see cref="Handshake" /> (payload: <see cref="RitsuLibSidecarHandshakeBinary" /> ack layout).
-        ///     对 <see cref="Handshake" /> 的响应（载荷：<see cref="RitsuLibSidecarHandshakeBinary" /> ack 布局）。
+        ///     <para xml:lang="en">
+        ///         Acknowledges <see cref="Handshake" /> and reports the negotiated version and responder features.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确认 <see cref="Handshake" />，并报告协商后的版本和响应方功能。
+        ///     </para>
         /// </summary>
         public const ulong HandshakeAck = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
                                           RitsuLibSidecarControlOpcodeLayout.HandshakeAckOffset;
 
         /// <summary>
-        ///     One chunk of a large logical payload; see chunked stream reassembly.
-        ///     大型逻辑载荷的一个 chunk；见分块流重组。
-        ///     大型逻辑载荷的一个 chunk；见分块流重组。
+        ///     <para xml:lang="en">
+        ///         Carries one segment of a chunked logical payload.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         承载分块逻辑载荷中的一个分段。
+        ///     </para>
         /// </summary>
         public const ulong ChunkedFrame = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
                                           RitsuLibSidecarControlOpcodeLayout.ChunkedFrameOffset;
 
         /// <summary>
-        ///     Receiver → original chunk sender: missing part ranges (SACK / selective gap report; variable-length
-        ///     range list).
-        ///     接收方 → 原始 chunk 发送方：缺失部分范围（SACK / 选择性缺口报告；变长
-        ///     range 列表）。
+        ///     <para xml:lang="en">
+        ///         Reports variable-length ranges of missing segments to the original chunk-stream sender.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         向原分块流发送方报告缺失分段的变长范围列表。
+        ///     </para>
         /// </summary>
         public const ulong ChunkStreamSelectiveNack = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
                                                       RitsuLibSidecarControlOpcodeLayout.ChunkStreamSelectiveNackOffset;
 
         /// <summary>
-        ///     Receiver → original chunk sender: reassembly completed; sender may drop outbound buffers (8-byte
-        ///     <c>streamId</c>).
-        ///     接收方 → 原始 chunk 发送方：重组完成；发送方可丢弃出站缓冲区（8 字节
-        ///     <c>streamId</c>）。
+        ///     <para xml:lang="en">
+        ///         Confirms reassembly to the original chunk-stream sender so it can discard the retained outbound
+        ///         frames.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         向原分块流发送方确认重组完成，使其可以丢弃保留的待发送帧。
+        ///     </para>
         /// </summary>
         public const ulong ChunkStreamReassemblyDone = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
                                                        RitsuLibSidecarControlOpcodeLayout
                                                            .ChunkStreamReassemblyDoneOffset;
 
         /// <summary>
-        ///     Client → host: request a coordinated combat-state dump across all peers (host fans out
-        ///     <see cref="DiagnosticRelayDumpFanout" />).
-        ///     客户端 → 主机：请求在所有 peer 间执行一次协调的战斗状态 dump（主机会 fan out
-        ///     <see cref="DiagnosticRelayDumpFanout" />）。
+        ///     <para xml:lang="en">
+        ///         Requests that the host coordinate a combat-state diagnostic dump across all peers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求主机协调所有对等端生成战斗状态诊断转储。
+        ///     </para>
         /// </summary>
         public const ulong DiagnosticRelayDumpRequest = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
                                                         RitsuLibSidecarControlOpcodeLayout
                                                             .DiagnosticRelayDumpRequestOffset;
 
         /// <summary>
-        ///     Host → everyone: carry <see cref="RitsuLibSidecarDiagnosticPayload" /> so each peer logs local state.
-        ///     主机到所有人：携带 <see cref="RitsuLibSidecarDiagnosticPayload" />，使每个 peer 记录本地状态。
+        ///     <para xml:lang="en">
+        ///         Carries <see cref="RitsuLibSidecarDiagnosticPayload" /> from the host so each peer records its local
+        ///         state.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         由主机发送 <see cref="RitsuLibSidecarDiagnosticPayload" />，使每个对等端记录本地状态。
+        ///     </para>
         /// </summary>
         public const ulong DiagnosticRelayDumpFanout = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
                                                        RitsuLibSidecarControlOpcodeLayout

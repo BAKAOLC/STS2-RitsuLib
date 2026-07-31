@@ -13,34 +13,40 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.CardPiles.Nodes
 {
     /// <summary>
-    ///     Interactive extra-hand container for <see cref="ModCardPileUiStyle.ExtraHand" /> piles. Cards are
-    ///     hosted by vanilla <see cref="NHandCardHolder" /> nodes so focus, hover tips, controller navigation,
-    ///     playable glow, and card-play targeting behave consistently with the player hand.
-    ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆使用的交互式额外手牌容器。卡牌由原版
-    ///     <see cref="NHandCardHolder" /> 承载，使焦点、悬停提示、手柄导航、可打出发光与打牌目标选择
-    ///     与玩家手牌保持一致。
+    ///     <para xml:lang="en">
+    ///         Displays a <see cref="ModCardPileUiStyle.ExtraHand" /> pile with interactive vanilla hand-card
+    ///         holders.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用可交互的原版手牌容器显示 <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆。
+    ///     </para>
     /// </summary>
     public sealed partial class NModExtraHand : Control
     {
         internal const float DefaultChromeWidth = 600f;
         internal const float DefaultChromeHeight = 280f;
         internal static readonly Vector2 DefaultChromeSize = new(DefaultChromeWidth, DefaultChromeHeight);
+        private static readonly ModCardPileExtraHandSpec DefaultLayout = new();
 
         private readonly Dictionary<CardModel, NHandCardHolder> _holders = [];
         private NHandCardHolder? _focusedHolder;
+        private bool _invalidBuiltInLayoutWarningLogged;
+        private bool _invalidLayoutResolverWarningLogged;
         private ModCardPile? _pile;
         private Player? _player;
         private double _visualRefreshElapsed;
 
         /// <summary>
-        ///     Back-reference to the registry entry.
-        ///     指向 registry entry 的反向引用。
+        ///     <para xml:lang="en">Gets the registered definition represented by this container.</para>
+        ///     <para xml:lang="zh-CN">获取此容器所表示的已注册定义。</para>
         /// </summary>
-        public ModCardPileDefinition Definition { get; private set; } = null!;
+        public ModCardPileDefinition Definition { get; private init; } = null!;
 
         /// <summary>
-        ///     Builds a new extra-hand container for <paramref name="definition" />.
-        ///     为 <paramref name="definition" /> 构建新的额外手牌容器。
+        ///     <para xml:lang="en">
+        ///         Creates an extra-hand container for <paramref name="definition" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="definition" /> 创建额外手牌容器。</para>
         /// </summary>
         public static NModExtraHand Create(ModCardPileDefinition definition)
         {
@@ -58,8 +64,12 @@ namespace STS2RitsuLib.CardPiles.Nodes
         }
 
         /// <summary>
-        ///     Binds the container to <paramref name="player" /> and begins mirroring the underlying pile.
-        ///     将容器绑定到 <paramref name="player" />，并开始镜像底层牌堆。
+        ///     <para xml:lang="en">
+        ///         Binds the container to <paramref name="player" /> and starts mirroring its runtime pile.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将容器绑定到 <paramref name="player" />，并开始同步其运行时牌堆。
+        ///     </para>
         /// </summary>
         public void Initialize(Player player)
         {
@@ -69,8 +79,13 @@ namespace STS2RitsuLib.CardPiles.Nodes
         }
 
         /// <summary>
-        ///     Returns the displayed card node, or null when the card is not currently mounted.
-        ///     返回已显示的卡牌节点；卡牌当前未挂载时返回 null。
+        ///     <para xml:lang="en">
+        ///         Gets the displayed node for <paramref name="card" />, or <see langword="null" /> when it is
+        ///         not mounted.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="card" /> 的显示节点；该卡牌未挂载时返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public NCard? GetCard(CardModel card)
         {
@@ -78,8 +93,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
         }
 
         /// <summary>
-        ///     Returns the interactive holder for a displayed card.
-        ///     返回已显示卡牌的交互式 holder。
+        ///     <para xml:lang="en">
+        ///         Gets the interactive holder for <paramref name="card" />, or <see langword="null" /> when it
+        ///         is not mounted.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <paramref name="card" /> 的交互式卡牌容器；该卡牌未挂载时返回
+        ///         <see langword="null" />。
+        ///     </para>
         /// </summary>
         public NHandCardHolder? GetHolder(CardModel card)
         {
@@ -302,8 +323,30 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return;
 
             var extra = Definition.ExtraHand;
-            var totalSpan = extra.Spacing * (ordered.Length - 1);
+            var spacingIsFinite = float.IsFinite(extra.Spacing);
+            var cardScaleIsFinite = IsFiniteVector(extra.CardScale);
+            var hoverScaleIsFinite = IsFiniteVector(extra.HoverScale);
+            var spacing = spacingIsFinite ? extra.Spacing : DefaultLayout.Spacing;
+            var cardScale = cardScaleIsFinite ? extra.CardScale : DefaultLayout.CardScale;
+            var hoverScale = hoverScaleIsFinite ? extra.HoverScale : DefaultLayout.HoverScale;
+            var totalSpan = spacing * (ordered.Length - 1);
+            var totalSpanIsFinite = float.IsFinite(totalSpan);
+            if (!totalSpanIsFinite)
+                totalSpan = DefaultLayout.Spacing * (ordered.Length - 1);
+            if (extra.Direction != ModExtraHandLayoutDirection.VanillaHand
+                && (!spacingIsFinite || !cardScaleIsFinite || !hoverScaleIsFinite || !totalSpanIsFinite)
+                && !_invalidBuiltInLayoutWarningLogged)
+            {
+                _invalidBuiltInLayoutWarningLogged = true;
+                RitsuLibFramework.Logger.Warn(
+                    $"[CardPiles] Extra-hand layout settings for '{Definition.Id}' contain a non-finite value; "
+                    + "using built-in defaults for the affected values. "
+                    + $"Spacing={extra.Spacing}, CardScale={extra.CardScale}, HoverScale={extra.HoverScale}.");
+            }
+
             var center = Size * 0.5f;
+            if (!IsFiniteVector(center))
+                center = DefaultChromeSize * 0.5f;
             var focusedIndex = Array.FindIndex(ordered,
                 entry => ReferenceEquals(entry.Holder, _focusedHolder));
             for (var i = 0; i < ordered.Length; i++)
@@ -312,10 +355,26 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 var focused = ReferenceEquals(holder, _focusedHolder);
                 var defaultTransform = extra.Direction == ModExtraHandLayoutDirection.VanillaHand
                     ? ResolveVanillaTransform(holder, i, ordered.Length, focusedIndex, center)
-                    : ResolveLinearTransform(extra, i, focused, center, totalSpan);
+                    : ResolveLinearTransform(extra.Direction, spacing, cardScale, hoverScale, i, focused, center,
+                        totalSpan);
+                if (!IsFiniteTransform(defaultTransform))
+                    defaultTransform = new(center, focused ? DefaultLayout.HoverScale : DefaultLayout.CardScale, 0f,
+                        focused ? 1 : 0);
                 var context = new ModExtraHandCardContext(
                     Definition, this, card, holder, i, ordered.Length, focused, defaultTransform);
-                var transform = extra.LayoutResolver?.Invoke(context) ?? defaultTransform;
+                var resolvedTransform = extra.LayoutResolver?.Invoke(context);
+                var transform = resolvedTransform is { } resolved && IsFiniteTransform(resolved)
+                    ? resolved
+                    : defaultTransform;
+                if (resolvedTransform is { } invalid
+                    && !IsFiniteTransform(invalid)
+                    && !_invalidLayoutResolverWarningLogged)
+                {
+                    _invalidLayoutResolverWarningLogged = true;
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardPiles] LayoutResolver for '{Definition.Id}' returned a non-finite transform for "
+                        + $"card '{card.Id}'; using the built-in transform. Returned transform: {invalid}.");
+                }
 
                 holder.SetDeferred("z_index", transform.ZIndex);
                 if (extra.Direction == ModExtraHandLayoutDirection.VanillaHand
@@ -324,7 +383,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 {
                     holder.SetAngleInstantly(transform.RotationDegrees);
                     holder.SetScaleInstantly(transform.Scale);
-                    holder.Position = new(holder.Position.X, transform.Position.Y);
+                    var currentX = float.IsFinite(holder.Position.X) ? holder.Position.X : transform.Position.X;
+                    holder.Position = new(currentX, transform.Position.Y);
                 }
 
                 holder.SetTargetPosition(transform.Position);
@@ -375,20 +435,35 @@ namespace STS2RitsuLib.CardPiles.Nodes
             }
 
             static ModExtraHandCardTransform ResolveLinearTransform(
-                ModCardPileExtraHandSpec extra,
+                ModExtraHandLayoutDirection direction,
+                float spacing,
+                Vector2 cardScale,
+                Vector2 hoverScale,
                 int index,
                 bool focused,
                 Vector2 center,
                 float totalSpan)
             {
-                var position = extra.Direction == ModExtraHandLayoutDirection.Horizontal
-                    ? new Vector2(center.X - totalSpan * 0.5f + extra.Spacing * index, center.Y)
-                    : new Vector2(center.X, center.Y - totalSpan * 0.5f + extra.Spacing * index);
+                var position = direction == ModExtraHandLayoutDirection.Horizontal
+                    ? new Vector2(center.X - totalSpan * 0.5f + spacing * index, center.Y)
+                    : new Vector2(center.X, center.Y - totalSpan * 0.5f + spacing * index);
                 return new(
                     position,
-                    focused ? extra.HoverScale : extra.CardScale,
+                    focused ? hoverScale : cardScale,
                     0f,
                     focused ? 100 : 0);
+            }
+
+            static bool IsFiniteVector(Vector2 value)
+            {
+                return float.IsFinite(value.X) && float.IsFinite(value.Y);
+            }
+
+            static bool IsFiniteTransform(ModExtraHandCardTransform value)
+            {
+                return IsFiniteVector(value.Position)
+                       && IsFiniteVector(value.Scale)
+                       && float.IsFinite(value.RotationDegrees);
             }
         }
 

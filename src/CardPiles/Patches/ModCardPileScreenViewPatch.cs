@@ -3,6 +3,7 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
@@ -17,8 +18,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Adds opt-in deck-view affordances to the vanilla pile screen for registered RitsuLib piles.
-    ///     为已注册的 RitsuLib 牌堆给原版牌堆 screen 增加可选的牌组查看能力。
+    ///     <para xml:lang="en">
+    ///         Adds the capabilities selected by <see cref="ModCardPileViewSpec" /> to the vanilla pile screen.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="ModCardPileViewSpec" /> 选择的能力添加到原版牌堆界面。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileScreenViewPatch : IPatchMethod
     {
@@ -171,9 +176,10 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         private Control? CreateToolbarBackground()
         {
+            TextureRect? background = null;
             try
             {
-                return new TextureRect
+                background = new()
                 {
                     Name = $"RitsuLibCardPileViewToolbarBg_{definition.Id}",
                     Texture = PreloadManager.Cache.GetAsset<Texture2D>(
@@ -190,11 +196,13 @@ namespace STS2RitsuLib.CardPiles.Patches
                     OffsetRight = 620f,
                     OffsetBottom = 156f,
                 };
+                return background;
             }
             catch (Exception ex)
             {
+                background?.QueueFreeSafely();
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] Could not load mod pile toolbar background for '{definition.Id}': {ex.Message}");
+                    $"[CardPiles] Could not load mod pile toolbar background for '{definition.Id}': {ex}");
                 return null;
             }
         }
@@ -218,9 +226,10 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         private NCardViewSortButton? CreateSortButton(ModCardPileSortOption option)
         {
+            NCardViewSortButton? button = null;
             try
             {
-                var button = PreloadManager.Cache.GetScene(SortButtonScenePath)
+                button = PreloadManager.Cache.GetScene(SortButtonScenePath)
                     .Instantiate<NCardViewSortButton>();
                 button.Name = $"RitsuLibSort_{option}";
                 button.CustomMinimumSize = new(220f, 42f);
@@ -228,8 +237,9 @@ namespace STS2RitsuLib.CardPiles.Patches
             }
             catch (Exception ex)
             {
+                button?.QueueFreeSafely();
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] Could not create sort button '{option}' for '{definition.Id}': {ex.Message}");
+                    $"[CardPiles] Could not create sort button '{option}' for '{definition.Id}': {ex}");
                 return null;
             }
         }
@@ -285,7 +295,7 @@ namespace STS2RitsuLib.CardPiles.Patches
                     catch (Exception ex)
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[CardPiles] Could not load sort button background texture for '{definition.Id}': {ex.Message}");
+                            $"[CardPiles] Could not load sort button background texture for '{definition.Id}': {ex}");
                     }
 
                 var material = ResolveSortButtonBackgroundMaterial();
@@ -304,9 +314,10 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         private void InstallUpgradeToggle(HBoxContainer toolbar)
         {
+            NTickbox? toggle = null;
             try
             {
-                var toggle = new NTickbox
+                toggle = new()
                 {
                     Name = "RitsuLibViewUpgrades",
                     CustomMinimumSize = new(250f, 64f),
@@ -343,8 +354,9 @@ namespace STS2RitsuLib.CardPiles.Patches
             }
             catch (Exception ex)
             {
+                toggle?.QueueFreeSafely();
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] Could not create upgrade preview toggle for '{definition.Id}': {ex.Message}");
+                    $"[CardPiles] Could not create upgrade preview toggle for '{definition.Id}': {ex}");
             }
         }
 
@@ -375,7 +387,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] ToolbarBackgroundMaterialProvider for '{definition.Id}' threw: {ex.Message}");
+                    $"[CardPiles] ToolbarBackgroundMaterialProvider for '{definition.Id}' threw: {ex}");
                 return view.ToolbarBackgroundMaterial;
             }
         }
@@ -392,7 +404,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] SortButtonHueMaterialProvider for '{definition.Id}' threw: {ex.Message}");
+                    $"[CardPiles] SortButtonHueMaterialProvider for '{definition.Id}' threw: {ex}");
                 return view.SortButtonHueMaterial;
             }
         }
@@ -409,7 +421,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[CardPiles] SortButtonBackgroundMaterialProvider for '{definition.Id}' threw: {ex.Message}");
+                    $"[CardPiles] SortButtonBackgroundMaterialProvider for '{definition.Id}' threw: {ex}");
                 return view.SortButtonBackgroundMaterial;
             }
         }

@@ -5,10 +5,12 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 namespace STS2RitsuLib.CardTags.Serialization
 {
     /// <summary>
-    ///     JSON array converter for <see cref="HashSet{T}" /> of <see cref="CardTag" /> using
-    ///     <see cref="CardTagJsonConverter" /> rules per element.
-    ///     面向 <see cref="CardTag" /> 的 <see cref="HashSet{T}" /> JSON 数组转换器，
-    ///     每个元素使用 <see cref="CardTagJsonConverter" /> 规则。
+    ///     <para xml:lang="en">
+    ///         Converts <see cref="HashSet{T}" /> values of <see cref="CardTag" /> to and from JSON arrays.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="CardTag" /> 的 <see cref="HashSet{T}" /> 值与 JSON 数组之间进行转换。
+    ///     </para>
     /// </summary>
     public sealed class CardTagHashSetJsonConverter : JsonConverter<HashSet<CardTag>>
     {

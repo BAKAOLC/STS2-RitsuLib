@@ -5,52 +5,55 @@ using STS2RitsuLib.Keywords;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Optional image/outline paths for mod potions consumed by content asset patches.
-    ///     供内容资源补丁读取的 mod 药水可选图片/轮廓路径。
+    ///     <para xml:lang="en">Provides optional image and outline replacements for a mod potion.</para>
+    ///     <para xml:lang="zh-CN">提供模组药水可选的图像与轮廓替换。</para>
     /// </summary>
     public interface IModPotionAssetOverrides
     {
         /// <summary>
-        ///     Structured path bundle; <c>Custom*</c> properties typically mirror these fields.
-        ///     结构化路径集合；<c>Custom*</c> 属性通常镜像这些字段。
+        ///     <para xml:lang="en">Gets the structured potion asset profile.</para>
+        ///     <para xml:lang="zh-CN">获取结构化药水资源配置。</para>
         /// </summary>
         PotionAssetProfile AssetProfile { get; }
 
         /// <summary>
-        ///     Override path for <c>ImagePath</c> / bottle art.
-        ///     <c>ImagePath</c> / 瓶身美术的覆盖路径。
+        ///     <para xml:lang="en">Gets the potion-image replacement path.</para>
+        ///     <para xml:lang="zh-CN">获取药水图像替换路径。</para>
         /// </summary>
         string? CustomImagePath { get; }
 
         /// <summary>
-        ///     Override path for outline / silhouette art.
-        ///     轮廓 / 剪影美术的覆盖路径。
+        ///     <para xml:lang="en">Gets the potion-outline replacement path.</para>
+        ///     <para xml:lang="zh-CN">获取药水轮廓替换路径。</para>
         /// </summary>
         string? CustomOutlinePath { get; }
     }
 
     /// <summary>
-    ///     Base <see cref="PotionModel" /> for mods: keyword hover tips and <see cref="IModPotionAssetOverrides" />.
-    ///     Mod 药水的基础 <see cref="PotionModel" />：提供关键词悬浮提示和 <see cref="IModPotionAssetOverrides" />。
+    ///     <para xml:lang="en">
+    ///         Provides a base <see cref="PotionModel" /> for mods with keyword hover tips and potion asset overrides.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为模组提供基础 <see cref="PotionModel" />，支持关键词悬浮提示和药水资源替换。
+    ///     </para>
     /// </summary>
     public abstract class ModPotionTemplate : PotionModel, IModPotionAssetOverrides
     {
         /// <summary>
-        ///     Keyword ids surfaced on this potion's hover tips. <b>Display-only</b>: unlike
-        ///     <see cref="ModCardTemplate.RegisteredKeywordIds" />, this does <b>not</b> participate in any
-        ///     gameplay keyword set (vanilla <see cref="PotionModel" /> has no <c>Keywords</c>/<c>CardKeyword</c>
-        ///     storage) — each id is looked up in <see cref="ModKeywordRegistry" /> purely to render a hover tip
-        ///     via <c>ToHoverTips()</c>. Use it for visual documentation; gameplay behaviour must be implemented
-        ///     explicitly in the potion's own logic.
-        ///     要显示在此药水悬停提示上的关键词 id。<b>仅用于显示</b>：不同于 <see cref="ModCardTemplate.RegisteredKeywordIds" />，它<b>不会</b>参与任何游戏逻辑关键词集合（原版
-        ///     <see cref="PotionModel" /> 没有 <c>Keywords</c>/<c>CardKeyword</c> 存储）- 每个 id 只会通过 <see cref="ModKeywordRegistry" />
-        ///     查找，用来通过 <c>ToHoverTips()</c> 渲染悬停提示。请将它用于视觉说明；游戏行为必须在药水自身逻辑中显式实现。
+        ///     <para xml:lang="en">
+        ///         Gets display-only keyword IDs resolved through <see cref="ModKeywordRegistry" /> for hover tips.
+        ///         They do not add gameplay keyword behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取仅用于显示的关键词 ID；这些 ID 通过 <see cref="ModKeywordRegistry" /> 解析为悬浮提示，
+        ///         不会添加任何关键词游戏行为。
+        ///     </para>
         /// </summary>
         protected virtual IEnumerable<string> RegisteredKeywordIds => [];
 
         /// <summary>
-        ///     Additional hover tips after keyword expansion.
-        ///     关键词展开之后的额外悬浮提示。
+        ///     <para xml:lang="en">Gets additional hover tips.</para>
+        ///     <para xml:lang="zh-CN">获取额外悬浮提示。</para>
         /// </summary>
         protected virtual IEnumerable<IHoverTip> AdditionalHoverTips => [];
 

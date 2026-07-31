@@ -7,24 +7,24 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Combat;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
     /// <summary>
-    ///     Fixes <see cref="NControllerCardPlay.Start" /> for <see cref="TargetType.AnyPlayer" /> in multiplayer.
-    ///     Vanilla routes AnyPlayer to <c>MultiCreatureTargeting</c> (confirm-to-play, no arrow).
-    ///     This patch routes it to a custom single-creature targeting flow with the correct
-    ///     candidate list (all living players including self).
-    ///     修复多人模式下 <see cref="NControllerCardPlay.Start" /> 对 <see cref="TargetType.AnyPlayer" /> 的处理。
-    ///     原版将 AnyPlayer 路由到 <c>MultiCreatureTargeting</c>（确认后出牌，无箭头）。
-    ///     此补丁将其路由到自定义单生物目标流程，并使用正确的
-    ///     候选列表（包括自身在内的所有存活玩家）。
+    ///     <para xml:lang="en">
+    ///         Routes multiplayer <see cref="TargetType.AnyPlayer" /> cards from
+    ///         <see cref="NControllerCardPlay.Start" /> to single-creature selection.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将多人模式中的 <see cref="TargetType.AnyPlayer" /> 卡牌从
+    ///         <see cref="NControllerCardPlay.Start" /> 路由至单体选目标流程。
+    ///     </para>
     /// </summary>
     internal sealed class NControllerCardPlayStartAnyPlayerPatch : IPatchMethod
     {
@@ -100,14 +100,14 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
     }
 
     /// <summary>
-    ///     Fixes <see cref="NControllerCardPlay" />'s private <c>SingleCreatureTargeting</c> for
-    ///     <see cref="TargetType.AnyPlayer" />. Vanilla's switch only handles AnyEnemy and AnyAlly,
-    ///     leaving the candidate list empty for AnyPlayer (immediately cancels).
-    ///     This patch provides the correct list: all living player creatures.
-    ///     修复 <see cref="NControllerCardPlay" /> 的私有 <c>SingleCreatureTargeting</c> 对
-    ///     <see cref="TargetType.AnyPlayer" /> 的处理。原版 switch 只处理 AnyEnemy 和 AnyAlly，
-    ///     会让 AnyPlayer 的候选列表为空（立即取消）。
-    ///     此补丁提供正确列表：所有存活玩家生物。
+    ///     <para xml:lang="en">
+    ///         Supplies all living player creatures to <see cref="NControllerCardPlay" /> single-creature selection for
+    ///         <see cref="TargetType.AnyPlayer" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="NControllerCardPlay" /> 的 <see cref="TargetType.AnyPlayer" /> 单体选目标流程提供
+    ///         所有存活的玩家生物。
+    ///     </para>
     /// </summary>
     internal sealed class NControllerCardPlaySingleTargetingAnyPlayerPatch : IPatchMethod
     {
@@ -163,6 +163,12 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
 
             var targetManager = NTargetManager.Instance;
+            var room = NCombatRoom.Instance;
+            if (room == null)
+            {
+                instance.CancelPlayCard();
+                return;
+            }
 
             var list = card.CombatState!.PlayerCreatures
                 .Where(c => c is { IsAlive: true, IsPlayer: true })
@@ -175,7 +181,7 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
 
             var nodes = list
-                .Select(c => NCombatRoom.Instance!.GetCreatureNode(c))
+                .Select(room.GetCreatureNode)
                 .OfType<NCreature>()
                 .ToList();
 
@@ -195,11 +201,14 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                 targetManager.StartTargeting(
                     TargetType.AnyPlayer, cardNode, TargetMode.Controller,
                     () => !GodotObject.IsInstanceValid(instance)
-                          || !NControllerManager.Instance!.IsUsingController,
+                          || !Sts2InputCompat.IsUsingDirectionalNavigation,
                     null);
 
-                NCombatRoom.Instance!.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));
-                nodes.First().Hitbox.TryGrabFocus();
+                room.RestrictControllerNavigation(nodes.Select(n => n.Hitbox));
+                var initialNode = nodes.First();
+                if (room.LastTargetedCreature != null)
+                    initialNode = nodes.FirstOrDefault(node => node.Entity == room.LastTargetedCreature) ?? initialNode;
+                initialNode.Hitbox.TryGrabFocus();
 
                 var selected = (NCreature?)await targetManager.SelectionFinished();
 
@@ -213,6 +222,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             }
             finally
             {
+                room.EnableControllerNavigation();
+
                 if (targetManager.IsConnected(NTargetManager.SignalName.CreatureHovered, hoverCallable))
                     targetManager.Disconnect(NTargetManager.SignalName.CreatureHovered, hoverCallable);
 

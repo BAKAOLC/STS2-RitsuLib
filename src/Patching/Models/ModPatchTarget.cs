@@ -3,29 +3,31 @@ using HarmonyLib;
 namespace STS2RitsuLib.Patching.Models
 {
     /// <summary>
-    ///     Vanilla method identity used with <see cref="IPatchMethod.GetTargets" /> to build <see cref="ModPatchInfo" />.
-    ///     与 <see cref="IPatchMethod.GetTargets" /> 配合使用的原版方法标识，用于构建 <see cref="ModPatchInfo" />。
+    ///     <para xml:lang="en">
+    ///         Identifies a vanilla method used by <see cref="IPatchMethod.GetTargets" /> to build patch
+    ///         metadata.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">标识供 <see cref="IPatchMethod.GetTargets" /> 构建补丁元数据的原版方法。</para>
     /// </summary>
     /// <param name="TargetType">
-    ///     Declaring type.
-    ///     声明类型。
+    ///     <para xml:lang="en">Type that declares the target method.</para>
+    ///     <para xml:lang="zh-CN">声明目标方法的类型。</para>
     /// </param>
     /// <param name="MethodName">
-    ///     Method name.
-    ///     方法名。
+    ///     <para xml:lang="en">Target method name.</para>
+    ///     <para xml:lang="zh-CN">目标方法的名称。</para>
     /// </param>
     /// <param name="ParameterTypes">
-    ///     Overload parameter types, or null for name-only lookup.
-    ///     重载参数类型；为 null 时仅按名称查找。
+    ///     <para xml:lang="en">Overload parameter types, or <see langword="null" /> for name-only lookup.</para>
+    ///     <para xml:lang="zh-CN">重载的参数类型；为 <see langword="null" /> 时仅按名称查找。</para>
     /// </param>
     /// <param name="IgnoreIfMissing">
-    ///     Maps to <see cref="ModPatchInfo.IgnoreIfTargetMissing" />.
-    ///     映射到 <see cref="ModPatchInfo.IgnoreIfTargetMissing" />。
+    ///     <para xml:lang="en">Whether a missing target should be ignored.</para>
+    ///     <para xml:lang="zh-CN">是否忽略缺失的目标。</para>
     /// </param>
     /// <param name="HarmonyMethodType">
-    ///     Harmony <see cref="MethodType" /> for resolution (e.g. <see cref="MethodType.Async" /> for async state
-    ///     machines).
-    ///     用于解析的 Harmony <see cref="MethodType" />（例如用于 async 状态机的 <see cref="MethodType.Async" />）。
+    ///     <para xml:lang="en">Harmony <see cref="MethodType" /> used to resolve the target.</para>
+    ///     <para xml:lang="zh-CN">用于解析目标的 Harmony <see cref="MethodType" />。</para>
     /// </param>
     public record ModPatchTarget(
         Type TargetType,
@@ -35,24 +37,24 @@ namespace STS2RitsuLib.Patching.Models
         MethodType HarmonyMethodType)
     {
         /// <summary>
-        ///     Legacy four-argument constructor; sets <see cref="HarmonyMethodType" /> to <see cref="MethodType.Normal" />.
-        ///     旧版四参数构造函数；将 <see cref="HarmonyMethodType" /> 设置为 <see cref="MethodType.Normal" />。
+        ///     <para xml:lang="en">Creates a target with <see cref="HarmonyMethodType" /> set to <see cref="MethodType.Normal" />.</para>
+        ///     <para xml:lang="zh-CN">创建目标，并将 <see cref="HarmonyMethodType" /> 设为 <see cref="MethodType.Normal" />。</para>
         /// </summary>
         /// <param name="targetType">
-        ///     Declaring type.
-        ///     声明类型。
+        ///     <para xml:lang="en">Type that declares the target method.</para>
+        ///     <para xml:lang="zh-CN">声明目标方法的类型。</para>
         /// </param>
         /// <param name="methodName">
-        ///     Method name.
-        ///     方法名。
+        ///     <para xml:lang="en">Target method name.</para>
+        ///     <para xml:lang="zh-CN">目标方法的名称。</para>
         /// </param>
         /// <param name="parameterTypes">
-        ///     Overload parameter types.
-        ///     重载参数类型。
+        ///     <para xml:lang="en">Overload parameter types.</para>
+        ///     <para xml:lang="zh-CN">重载的参数类型。</para>
         /// </param>
         /// <param name="ignoreIfMissing">
-        ///     When true, missing method is non-fatal for optional patches.
-        ///     为 true 时，缺失方法对可选 patch 不是致命错误。
+        ///     <para xml:lang="en">Whether a missing target should be ignored.</para>
+        ///     <para xml:lang="zh-CN">是否忽略缺失的目标。</para>
         /// </param>
         public ModPatchTarget(Type targetType, string methodName, Type[]? parameterTypes, bool ignoreIfMissing)
             : this(targetType, methodName, parameterTypes, ignoreIfMissing, MethodType.Normal)
@@ -60,20 +62,20 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Target with optional overload signature; not ignored if missing.
-        ///     带可选重载签名的目标；缺失时不忽略。
+        ///     <para xml:lang="en">Creates a required target with an optional overload signature.</para>
+        ///     <para xml:lang="zh-CN">创建可指定重载签名的必需目标。</para>
         /// </summary>
         /// <param name="targetType">
-        ///     Declaring type.
-        ///     声明类型。
+        ///     <para xml:lang="en">Type that declares the target method.</para>
+        ///     <para xml:lang="zh-CN">声明目标方法的类型。</para>
         /// </param>
         /// <param name="methodName">
-        ///     Method name.
-        ///     方法名。
+        ///     <para xml:lang="en">Target method name.</para>
+        ///     <para xml:lang="zh-CN">目标方法的名称。</para>
         /// </param>
         /// <param name="parameterTypes">
-        ///     Overload parameter types.
-        ///     重载参数类型。
+        ///     <para xml:lang="en">Overload parameter types.</para>
+        ///     <para xml:lang="zh-CN">重载的参数类型。</para>
         /// </param>
         public ModPatchTarget(Type targetType, string methodName, Type[]? parameterTypes)
             : this(targetType, methodName, parameterTypes, false)
@@ -81,24 +83,24 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Target with overload signature and Harmony <see cref="MethodType" />.
-        ///     带重载签名和 Harmony <see cref="MethodType" /> 的目标。
+        ///     <para xml:lang="en">Creates a required target with an overload signature and Harmony method type.</para>
+        ///     <para xml:lang="zh-CN">创建带重载签名和 Harmony 方法类型的必需目标。</para>
         /// </summary>
         /// <param name="targetType">
-        ///     Declaring type.
-        ///     声明类型。
+        ///     <para xml:lang="en">Type that declares the target method.</para>
+        ///     <para xml:lang="zh-CN">声明目标方法的类型。</para>
         /// </param>
         /// <param name="methodName">
-        ///     Method name.
-        ///     方法名。
+        ///     <para xml:lang="en">Target method name.</para>
+        ///     <para xml:lang="zh-CN">目标方法的名称。</para>
         /// </param>
         /// <param name="parameterTypes">
-        ///     Overload parameter types.
-        ///     重载参数类型。
+        ///     <para xml:lang="en">Overload parameter types.</para>
+        ///     <para xml:lang="zh-CN">重载的参数类型。</para>
         /// </param>
         /// <param name="harmonyMethodType">
-        ///     Harmony method type (e.g. <see cref="MethodType.Async" />).
-        ///     Harmony 方法类型（例如 <see cref="MethodType.Async" />）。
+        ///     <para xml:lang="en">Harmony method type.</para>
+        ///     <para xml:lang="zh-CN">Harmony 方法类型。</para>
         /// </param>
         public ModPatchTarget(Type targetType, string methodName, Type[]? parameterTypes, MethodType harmonyMethodType)
             : this(targetType, methodName, parameterTypes, false, harmonyMethodType)
@@ -106,20 +108,20 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Target without overload disambiguation; optional ignore-if-missing flag.
-        ///     没有重载消歧的目标；可选的缺失时忽略标志。
+        ///     <para xml:lang="en">Creates a name-only target that may be ignored when missing.</para>
+        ///     <para xml:lang="zh-CN">创建仅按名称解析、可在缺失时忽略的目标。</para>
         /// </summary>
         /// <param name="targetType">
-        ///     Declaring type.
-        ///     声明类型。
+        ///     <para xml:lang="en">Type that declares the target method.</para>
+        ///     <para xml:lang="zh-CN">声明目标方法的类型。</para>
         /// </param>
         /// <param name="methodName">
-        ///     Method name.
-        ///     方法名。
+        ///     <para xml:lang="en">Target method name.</para>
+        ///     <para xml:lang="zh-CN">目标方法的名称。</para>
         /// </param>
         /// <param name="ignoreIfMissing">
-        ///     When true, missing method is non-fatal for optional patches.
-        ///     为 true 时，缺失方法对可选 patch 不是致命错误。
+        ///     <para xml:lang="en">Whether a missing target should be ignored.</para>
+        ///     <para xml:lang="zh-CN">是否忽略缺失的目标。</para>
         /// </param>
         public ModPatchTarget(Type targetType, string methodName, bool ignoreIfMissing)
             : this(targetType, methodName, null, ignoreIfMissing)
@@ -127,20 +129,20 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Target by name and Harmony <see cref="MethodType" /> only (no overload disambiguation).
-        ///     仅按名称和 Harmony <see cref="MethodType" /> 定位的目标（无重载消歧）。
+        ///     <para xml:lang="en">Creates a required target resolved by name and Harmony method type.</para>
+        ///     <para xml:lang="zh-CN">创建按名称和 Harmony 方法类型解析的必需目标。</para>
         /// </summary>
         /// <param name="targetType">
-        ///     Declaring type.
-        ///     声明类型。
+        ///     <para xml:lang="en">Type that declares the target method.</para>
+        ///     <para xml:lang="zh-CN">声明目标方法的类型。</para>
         /// </param>
         /// <param name="methodName">
-        ///     Method name.
-        ///     方法名。
+        ///     <para xml:lang="en">Target method name.</para>
+        ///     <para xml:lang="zh-CN">目标方法的名称。</para>
         /// </param>
         /// <param name="harmonyMethodType">
-        ///     Harmony method type (e.g. <see cref="MethodType.Async" />).
-        ///     Harmony 方法类型（例如 <see cref="MethodType.Async" />）。
+        ///     <para xml:lang="en">Harmony method type.</para>
+        ///     <para xml:lang="zh-CN">Harmony 方法类型。</para>
         /// </param>
         public ModPatchTarget(Type targetType, string methodName, MethodType harmonyMethodType)
             : this(targetType, methodName, null, false, harmonyMethodType)
@@ -148,16 +150,16 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Simple target: any overload with that name, fail if missing.
-        ///     简单目标：任意同名重载，缺失则失败。
+        ///     <para xml:lang="en">Creates a required target resolved by name only.</para>
+        ///     <para xml:lang="zh-CN">创建仅按名称解析的必需目标。</para>
         /// </summary>
         /// <param name="targetType">
-        ///     Declaring type.
-        ///     声明类型。
+        ///     <para xml:lang="en">Type that declares the target method.</para>
+        ///     <para xml:lang="zh-CN">声明目标方法的类型。</para>
         /// </param>
         /// <param name="methodName">
-        ///     Method name.
-        ///     方法名。
+        ///     <para xml:lang="en">Target method name.</para>
+        ///     <para xml:lang="zh-CN">目标方法的名称。</para>
         /// </param>
         public ModPatchTarget(Type targetType, string methodName)
             : this(targetType, methodName, null, false)

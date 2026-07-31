@@ -2,54 +2,59 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Audio;
-using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.TestSupport;
 using STS2RitsuLib.Audio.Internal;
 using STS2RitsuLib.Patching.Models;
-using GdArray = Godot.Collections.Array;
 
 namespace STS2RitsuLib.Audio.Patches
 {
     /// <summary>
-    ///     Harmony patches for run-scoped music and ambience paths that bypass <see cref="NAudioManager" />.
-    ///     处理绕过 <see cref="NAudioManager" /> 的 run 级音乐和 ambience 路径的 Harmony patch。
+    ///     <para xml:lang="en">
+    ///         Patches run-scoped music and ambience paths that call the run proxy instead of
+    ///         <see cref="NAudioManager" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">修补不经由 <see cref="NAudioManager" />、而是直接调用局内代理的音乐和环境音路径。</para>
     /// </summary>
     internal static class NRunMusicControllerGuidMappedStudioEventsPatches
     {
         private static readonly StringName StopMusicMethod = new("stop_music");
         private static readonly StringName StopAmbienceMethod = new("stop_ambience");
         private static readonly StringName SetGlobalParameterMethod = new("update_global_parameter");
-        private static readonly StringName LoadActBanksMethod = new("load_act_banks");
+
+        private static readonly Lock MappedActBankGate = new();
+        private static string? _ownedMappedActBankPath;
 
         private static bool ShouldUseVanilla()
         {
             return NonInteractiveMode.IsActive || TestMode.IsOn;
         }
 
-        private static void StopVanillaRunMusic(Node? proxy)
+        private static bool StopVanillaRunMusic(Node? proxy)
         {
-            TryCall(proxy, StopMusicMethod);
+            return TryCall(proxy, StopMusicMethod);
         }
 
-        private static void StopVanillaRunAmbience(Node? proxy)
+        private static bool StopVanillaRunAmbience(Node? proxy)
         {
-            TryCall(proxy, StopAmbienceMethod);
+            return TryCall(proxy, StopAmbienceMethod);
         }
 
-        private static void TryCall(Node? proxy, StringName method, params Variant[] args)
+        private static bool TryCall(Node? proxy, StringName method, params Variant[] args)
         {
             if (proxy is null)
-                return;
+                return false;
 
             try
             {
                 proxy.Call(method, args);
+                return true;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] run music proxy {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] run music proxy {method}: {ex}");
+                return false;
             }
         }
 
@@ -81,9 +86,58 @@ namespace STS2RitsuLib.Audio.Patches
             return false;
         }
 
+        private static bool TryEnsureMappedActBank(string bankPath, string eventPath)
+        {
+            if (!FmodStudioGuidPathTable.TryGetStudioGuidForEventPath(eventPath, out var eventGuid))
+                return false;
+
+            lock (MappedActBankGate)
+            {
+                if (FmodStudioServer.TryCheckEventGuid(eventGuid) == true)
+                    return true;
+
+                if (!ReleaseOwnedMappedActBankCore())
+                    return false;
+
+                if (!FmodStudioServer.TryLoadBank(bankPath))
+                    return false;
+
+                FmodStudioServer.TryWaitForAllLoads();
+                if (FmodStudioServer.TryCheckEventGuid(eventGuid) != true)
+                {
+                    if (!FmodStudioServer.TryUnloadBank(bankPath))
+                        _ownedMappedActBankPath = bankPath;
+                    return false;
+                }
+
+                _ownedMappedActBankPath = bankPath;
+                return true;
+            }
+        }
+
+        private static bool ReleaseOwnedMappedActBank()
+        {
+            lock (MappedActBankGate)
+            {
+                return ReleaseOwnedMappedActBankCore();
+            }
+        }
+
+        private static bool ReleaseOwnedMappedActBankCore()
+        {
+            if (_ownedMappedActBankPath is null)
+                return true;
+
+            if (!FmodStudioServer.TryUnloadBank(_ownedMappedActBankPath))
+                return false;
+
+            _ownedMappedActBankPath = null;
+            return true;
+        }
+
         /// <summary>
-        ///     Handles mapped act BGM before it reaches the vanilla run music proxy.
-        ///     在映射的 act BGM 进入原版 run music proxy 前接管它。
+        ///     <para xml:lang="en">Loads and starts mapped act music before it reaches the native run-music proxy.</para>
+        ///     <para xml:lang="zh-CN">在映射的章节音乐进入原生局内音乐代理前加载并启动它。</para>
         /// </summary>
         internal sealed class UpdateMusic : IPatchMethod
         {
@@ -99,41 +153,77 @@ namespace STS2RitsuLib.Audio.Patches
             }
 
             /// <summary>
-            ///     Mirrors vanilla track selection and bank loading, then skips the vanilla proxy for mapped tracks.
-            ///     复现原版曲目选择和 bank 加载，然后对映射曲目跳过原版 proxy。
+            ///     <para xml:lang="en">
+            ///         Mirrors native deterministic track selection and act-bank loading, then handles mapped tracks
+            ///         by GUID.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">复现原生的确定性曲目选择和章节音频库加载，并按 GUID 处理已映射曲目。</para>
             /// </summary>
             [HarmonyPriority(Priority.Last)]
             public static bool Prefix(
                 NRunMusicController __instance,
                 IRunState ____runState,
                 ref string ____currentTrack,
+#if STS2_AT_LEAST_0_108_0
+                ref string? ____failedTrack,
+#endif
                 Node ____proxy)
             {
                 if (ShouldUseVanilla())
                     return true;
 
-                var bgMusicOptions = ____runState.Act.BgMusicOptions;
-                var musicBankPaths = ____runState.Act.MusicBankPaths;
-                if (bgMusicOptions.Length == 0 || musicBankPaths.Length < bgMusicOptions.Length)
+                if (____runState.Act.BgMusicOptions.Length == 0)
                 {
-                    GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
-                    return true;
+                    var musicReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                    var bankReleased = ReleaseOwnedMappedActBank();
+                    return musicReleased && bankReleased;
                 }
 
-                var index = new Rng(____runState.Rng.Seed).NextInt(0, bgMusicOptions.Length);
-                var track = bgMusicOptions[index];
-                if (!GuidMappedNaudioStudioProxy.IsMappedPath(track))
-                {
-                    GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                var selection = NRunMusicController.ResolveMusic(
+                    ____currentTrack,
+                    ____runState.Act.BgMusicOptions,
+                    ____runState.Act.MusicBankPaths,
+                    ____runState.Rng.Seed);
+                if (selection is not { } music)
                     return true;
+
+                if (!GuidMappedNaudioStudioProxy.IsMappedPath(music.Track))
+                {
+                    var musicReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                    var bankReleased = ReleaseOwnedMappedActBank();
+                    return musicReleased && bankReleased;
                 }
 
-                var bankPaths = new GdArray { musicBankPaths[index] };
-                TryCall(____proxy, LoadActBanksMethod, bankPaths);
-                ____currentTrack = track;
-                StopVanillaRunMusic(____proxy);
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
-                TryStartMappedRunMusic("UpdateMusic", track);
+#if STS2_AT_LEAST_0_108_0
+                if (string.Equals(music.Track, ____failedTrack, StringComparison.Ordinal))
+                    return false;
+#endif
+
+                if (!TryEnsureMappedActBank(music.BankPath, music.Track))
+                {
+#if STS2_AT_LEAST_0_108_0
+                    ____failedTrack = music.Track;
+#endif
+                    return false;
+                }
+
+                var vanillaStopped = StopVanillaRunMusic(____proxy);
+                var mappedReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                if (!vanillaStopped || !mappedReleased)
+                    return false;
+
+                if (!TryStartMappedRunMusic("UpdateMusic", music.Track))
+                {
+#if STS2_AT_LEAST_0_108_0
+                    ____failedTrack = music.Track;
+#endif
+                    return false;
+                }
+
+#if STS2_AT_LEAST_0_108_0
+                ____failedTrack = null;
+#endif
+                ____currentTrack = music.Track;
                 TryCall(____proxy, SetGlobalParameterMethod, "Progress", 0);
                 __instance.UpdateAmbience();
                 return false;
@@ -141,8 +231,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Handles combat encounter CustomBgm, which calls the run music proxy directly.
-        ///     处理会直接调用 run music proxy 的战斗遭遇 CustomBgm。
+        ///     <para xml:lang="en">Handles mapped encounter music passed directly to the run-music proxy.</para>
+        ///     <para xml:lang="zh-CN">处理直接传给局内音乐代理的已映射遭遇音乐。</para>
         /// </summary>
         internal sealed class PlayCustomMusic : IPatchMethod
         {
@@ -165,19 +255,23 @@ namespace STS2RitsuLib.Audio.Patches
                 if (ShouldUseVanilla() || string.IsNullOrEmpty(customMusic))
                     return true;
 
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                if (!GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic())
+                    return false;
+
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(customMusic))
                     return true;
 
-                StopVanillaRunMusic(____proxy);
+                if (!StopVanillaRunMusic(____proxy))
+                    return false;
+
                 TryStartMappedRunMusic("PlayCustomMusic", customMusic);
                 return false;
             }
         }
 
         /// <summary>
-        ///     Restores mapped act music when leaving a custom-BGM combat.
-        ///     离开自定义 BGM 战斗时恢复映射的 act 音乐。
+        ///     <para xml:lang="en">Restores mapped act music when custom encounter music ends.</para>
+        ///     <para xml:lang="zh-CN">自定义遭遇音乐结束时恢复已映射的章节音乐。</para>
         /// </summary>
         internal sealed class StopCustomMusic : IPatchMethod
         {
@@ -199,12 +293,16 @@ namespace STS2RitsuLib.Audio.Patches
                 if (ShouldUseVanilla())
                     return true;
 
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
+                if (!GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic())
+                    return false;
+
                 if (string.IsNullOrEmpty(____currentTrack) ||
                     !GuidMappedNaudioStudioProxy.IsMappedPath(____currentTrack))
                     return true;
 
-                StopVanillaRunMusic(____proxy);
+                if (!StopVanillaRunMusic(____proxy))
+                    return false;
+
                 TryStartMappedRunMusic("StopCustomMusic", ____currentTrack);
                 TryCall(____proxy, SetGlobalParameterMethod, "Progress", 7f);
                 return false;
@@ -212,8 +310,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Releases mapped run music and ambience alongside the vanilla proxy.
-        ///     随原版 proxy 一起释放映射的 run music 和 ambience。
+        ///     <para xml:lang="en">Stops mapped run music and ambience and releases the retained mapped act bank.</para>
+        ///     <para xml:lang="zh-CN">停止已映射的局内音乐和环境音，并释放保留的映射章节音频库。</para>
         /// </summary>
         internal sealed class StopMusic : IPatchMethod
         {
@@ -237,12 +335,13 @@ namespace STS2RitsuLib.Audio.Patches
 
                 GuidMappedNaudioStudioProxy.ReleaseMappedRunMusic();
                 GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
+                ReleaseOwnedMappedActBank();
             }
         }
 
         /// <summary>
-        ///     Routes numeric music parameter updates used by boss BGM progression.
-        ///     路由 boss BGM 进度使用的数值音乐参数更新。
+        ///     <para xml:lang="en">Routes numeric progression parameters to active mapped run music.</para>
+        ///     <para xml:lang="zh-CN">将数值型进度参数路由到活动的已映射局内音乐。</para>
         /// </summary>
         internal sealed class UpdateMusicParameter : IPatchMethod
         {
@@ -273,8 +372,8 @@ namespace STS2RitsuLib.Audio.Patches
         }
 
         /// <summary>
-        ///     Handles mapped act or encounter ambience before it reaches the vanilla run music proxy.
-        ///     在映射的 act 或遭遇 ambience 进入原版 run music proxy 前接管它。
+        ///     <para xml:lang="en">Handles mapped act or encounter ambience before it reaches the native run-music proxy.</para>
+        ///     <para xml:lang="zh-CN">在映射的章节或遭遇环境音进入原生局内音乐代理前接管它。</para>
         /// </summary>
         internal sealed class UpdateAmbience : IPatchMethod
         {
@@ -305,25 +404,26 @@ namespace STS2RitsuLib.Audio.Patches
                     ambience = encounter.AmbientSfx;
 
                 if (!GuidMappedNaudioStudioProxy.IsMappedPath(ambience))
-                {
-                    GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
-                    return true;
-                }
+                    return GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
 
                 if (GuidMappedNaudioStudioProxy.HasActiveMappedRunAmbience(ambience))
                     return false;
 
+                var vanillaStopped = StopVanillaRunAmbience(____proxy);
+                var mappedReleased = GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
+                if (!vanillaStopped || !mappedReleased)
+                    return false;
+                if (!TryStartMappedRunAmbience("UpdateAmbience", ambience))
+                    return false;
+
                 ____currentAmbience = ambience;
-                StopVanillaRunAmbience(____proxy);
-                GuidMappedNaudioStudioProxy.ReleaseMappedRunAmbience();
-                TryStartMappedRunAmbience("UpdateAmbience", ambience);
                 return false;
             }
         }
 
         /// <summary>
-        ///     Mirrors campfire ambience parameter updates for mapped ambience events.
-        ///     为映射的 ambience 事件复现营火 ambience 参数更新。
+        ///     <para xml:lang="en">Applies the native campfire parameter transition to active mapped ambience.</para>
+        ///     <para xml:lang="zh-CN">将原生营火参数转换应用到活动的已映射环境音。</para>
         /// </summary>
         internal sealed class TriggerCampfireGoingOut : IPatchMethod
         {

@@ -1,14 +1,18 @@
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Adapter used when an applicant is registered but its backend is not configured.
-    ///     当申请方已注册但后端未配置时使用的 adapter。
+    ///     <para xml:lang="en">
+    ///         Represents a disabled telemetry destination for an applicant whose backend is not configured.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示遥测后端尚未配置时为申请方使用的禁用遥测目标。
+    ///     </para>
     /// </summary>
     public sealed class DisabledTelemetryAdapter : ITelemetryAdapter
     {
         /// <summary>
-        ///     Creates a disabled adapter with a user-visible reason.
-        ///     使用面向用户的原因创建禁用 adapter。
+        ///     <para xml:lang="en">Creates a disabled adapter with a user-visible reason.</para>
+        ///     <para xml:lang="zh-CN">创建禁用的适配器，并提供向用户显示的原因。</para>
         /// </summary>
         public DisabledTelemetryAdapter(string reason)
         {

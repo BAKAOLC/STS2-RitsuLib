@@ -1,9 +1,13 @@
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Reflection-bound static accessors for generic keyed data exchange (persistence, settings DOM tiers,
-    ///     networking payloads, …).
-    ///     用于通用 keyed 数据交换的反射绑定静态访问器（持久化、settings DOM 层、网络载荷等）。
+    ///     <para xml:lang="en">
+    ///         Reflection-bound static accessors for generic keyed data exchange, such as persistence,
+    ///         settings documents, and network payloads.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         用于通用键控数据交换的反射绑定静态访问器，可用于持久化、设置文档和网络载荷等场景。
+    ///     </para>
     /// </summary>
     public sealed class ReflectionStaticChannel
     {
@@ -20,26 +24,26 @@ namespace STS2RitsuLib.Interop
         }
 
         /// <summary>
-        ///     Provider type these delegates target.
-        ///     这些委托指向的提供方类型。
+        ///     <para xml:lang="en">Provider type targeted by the bound delegates.</para>
+        ///     <para xml:lang="zh-CN">已绑定委托所指向的提供方类型。</para>
         /// </summary>
         public Type ProviderType { get; }
 
         /// <summary>
-        ///     Compiled getter for the convention’s object read method: <c>key → object?</c>.
-        ///     convention 对象读取方法的已编译 getter：<c>key → object?</c>。
+        ///     <para xml:lang="en">Compiled object getter with the signature <c>key → object?</c>.</para>
+        ///     <para xml:lang="zh-CN">签名为 <c>key → object?</c> 的已编译对象读取器。</para>
         /// </summary>
         public Func<string, object?> GetObject { get; }
 
         /// <summary>
-        ///     Compiled setter for the convention’s object write method: <c>(key, value)</c>.
-        ///     convention 对象写入方法的已编译 setter：<c>(key, value)</c>。
+        ///     <para xml:lang="en">Compiled object setter with the signature <c>(key, value) → void</c>.</para>
+        ///     <para xml:lang="zh-CN">签名为 <c>(key, value) → void</c> 的已编译对象写入器。</para>
         /// </summary>
         public Action<string, object?> SetObject { get; }
 
         /// <summary>
-        ///     Optional JSON DOM tier delegates (merge, pointer, text, root object).
-        ///     可选 JSON DOM tier delegate（merge、pointer、text、root object）。
+        ///     <para xml:lang="en">Optional JSON document operations bound for this provider.</para>
+        ///     <para xml:lang="zh-CN">为此提供方绑定的可选 JSON 文档操作。</para>
         /// </summary>
         public JsonDomChannelDelegates Json { get; }
     }

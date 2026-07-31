@@ -7,7 +7,7 @@ namespace STS2RitsuLib.Content
     ///         Merges RitsuLib-registered run modifiers and exclusivity groups into <see cref="ModelDb" />
     ///         lists.
     ///     </para>
-    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的运行修饰符与互斥组合并到 <see cref="ModelDb" /> 列表中。</para>
+    ///     <para xml:lang="zh-CN">将 RitsuLib 注册的一局游戏修饰符与互斥组合并到 <see cref="ModelDb" /> 列表中。</para>
     /// </summary>
     internal static class ModifierContentMerge
     {
@@ -129,8 +129,8 @@ namespace STS2RitsuLib.Content
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Registration metadata for a mod run modifier list entry.</para>
-    ///     <para xml:lang="zh-CN">mod 运行修饰符列表条目的注册元数据。</para>
+    ///     <para xml:lang="en">Describes a registered mod run modifier and its list position.</para>
+    ///     <para xml:lang="zh-CN">描述已注册的模组局内修饰符及其列表位置。</para>
     /// </summary>
     /// <param name="ModifierType">
     ///     <para xml:lang="en">Concrete <see cref="ModifierModel" /> type.</para>

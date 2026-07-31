@@ -11,10 +11,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Networking.Sidecar.Patches
 {
     /// <summary>
-    ///     After lobby construction, updates session manager with the active net service so capability providers can
-    ///     decide peer reachability before any sidecar payload is sent.
-    ///     大厅构造后，用活动 net service 更新 session manager，使能力提供方能够
-    ///     在发送任何 sidecar 载荷前判断 peer 可达性。
+    ///     <para xml:lang="en">
+    ///         Binds the lobby's network service to the sidecar session and sends the client hello when the host is
+    ///         reachable.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将大厅的网络服务绑定到 sidecar 会话，并在主机可达时发送客户端握手消息。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuLibSidecarLobbyHelloPatch : IPatchMethod
     {
@@ -74,8 +77,12 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
     }
 
     /// <summary>
-    ///     Tracks newly connected host peers so reachability providers can evaluate sidecar support.
-    ///     跟踪新连接的主机 peer，使可达性提供方能评估 sidecar 支持。
+    ///     <para xml:lang="en">
+    ///         Tracks clients connected to the host so reachability providers can evaluate sidecar support.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         跟踪连接到主机的客户端，使可达性提供方能够判断其是否支持 sidecar。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuLibSidecarStartRunLobbyHostClientConnectedPatch : IPatchMethod
     {

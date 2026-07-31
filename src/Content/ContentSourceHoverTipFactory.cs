@@ -210,7 +210,7 @@ namespace STS2RitsuLib.Content
 
         internal readonly record struct ContentSourceInfo(string Id, string DisplayName)
         {
-            public static ContentSourceInfo Vanilla { get; } = new("Vanilla", "Slay The Spire2");
+            public static ContentSourceInfo Vanilla { get; } = new("Vanilla", "Slay the Spire 2");
             public static ContentSourceInfo BaseLib { get; } = new("BaseLib", "BaseLib");
             public static ContentSourceInfo Unknown { get; } = new("Unknown", "Unknown");
 

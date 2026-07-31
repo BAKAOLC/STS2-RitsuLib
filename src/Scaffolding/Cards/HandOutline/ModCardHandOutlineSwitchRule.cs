@@ -4,27 +4,30 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
 {
     /// <summary>
-    ///     Type-erased hand-card outline rule used by the registry storage layer. Prefer
-    ///     <see cref="ModCardHandOutlineSwitchRule{TCard}" /> at public registration call sites.
-    ///     注册表存储层使用的类型擦除手牌描边规则。公开注册调用点优先使用
-    ///     <see cref="ModCardHandOutlineSwitchRule{TCard}" />。
+    ///     <para xml:lang="en">Defines an untyped hand-card outline rule.</para>
+    ///     <para xml:lang="zh-CN">定义非泛型手牌描边规则。</para>
     /// </summary>
     /// <param name="ColorWhen">
-    ///     Returns a color when this rule should apply; returns <see langword="null" /> to skip the rule.
-    ///     规则应生效时返回颜色；返回 <see langword="null" /> 时跳过规则。
+    ///     <para xml:lang="en">
+    ///         Returns the outline color, or <see langword="null" /> when the rule does not match.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">返回描边颜色；规则不匹配时返回 <see langword="null" />。</para>
     /// </param>
     /// <param name="Priority">
-    ///     When several rules return a color, the highest <paramref name="Priority" /> wins; ties favor the most recently
-    ///     registered rule.
-    ///     多条规则返回颜色时，最高 <paramref name="Priority" /> 获胜；平手时优先最近注册的规则。
+    ///     <para xml:lang="en">
+    ///         Selection priority. Higher values win; ties favor the most recently registered rule.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">选择优先级；值较高者优先，相同时采用最近注册的规则。</para>
     /// </param>
     /// <param name="VisibleWhenUnplayable">
-    ///     If true, the highlight is forced visible with this color even when vanilla would not show one.
-    ///     如果为 true，即使原版不会显示高亮，也会强制以此颜色显示。
+    ///     <para xml:lang="en">
+    ///         Whether to show the outline during combat when the vanilla holder would hide its highlight.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">战斗中原版手牌容器会隐藏高亮时，是否仍显示描边。</para>
     /// </param>
     /// <param name="RefreshEveryFrame">
-    ///     If true, the resolver is polled while the holder is alive so dynamic colors can change without a card refresh.
-    ///     如果为 true，holder 存活期间会轮询解析器，使动态颜色无需卡牌刷新即可变化。
+    ///     <para xml:lang="en">Whether to evaluate and apply the rule every process frame.</para>
+    ///     <para xml:lang="zh-CN">是否在每个处理帧评估并应用规则。</para>
     /// </param>
     public readonly record struct ModCardHandOutlineSwitchRule(
         Func<CardModel, Color?> ColorWhen,
@@ -33,8 +36,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         bool RefreshEveryFrame = true)
     {
         /// <summary>
-        ///     Creates a rule from a color resolver, usually written as a switch expression.
-        ///     从颜色解析器创建规则，通常配合 switch expression 使用。
+        ///     <para xml:lang="en">Creates a rule from a color resolver.</para>
+        ///     <para xml:lang="zh-CN">使用颜色解析器创建规则。</para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule Switch(
             Func<CardModel, Color?> colorWhen,
@@ -47,8 +50,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Creates a typed rule from a color resolver for <typeparamref name="TCard" />.
-        ///     为 <typeparamref name="TCard" /> 从颜色解析器创建类型化规则。
+        ///     <para xml:lang="en">
+        ///         Creates a rule typed for <typeparamref name="TCard" /> from a color resolver.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用颜色解析器创建适用于 <typeparamref name="TCard" /> 的泛型规则。
+        ///     </para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule<TCard> Switch<TCard>(
             Func<TCard, Color?> colorWhen,
@@ -65,8 +72,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Creates a fixed-color rule guarded by a predicate.
-        ///     创建由谓词控制的固定颜色规则。
+        ///     <para xml:lang="en">Creates a fixed-color rule guarded by a predicate.</para>
+        ///     <para xml:lang="zh-CN">创建由谓词控制的固定颜色规则。</para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule Fixed(
             Func<CardModel, bool> when,
@@ -79,8 +86,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Creates a typed fixed-color rule guarded by a predicate for <typeparamref name="TCard" />.
-        ///     为 <typeparamref name="TCard" /> 创建类型化固定颜色规则。
+        ///     <para xml:lang="en">
+        ///         Creates a fixed-color rule typed for <typeparamref name="TCard" /> and guarded by a predicate.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TCard" /> 创建由谓词控制的泛型固定颜色规则。
+        ///     </para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule<TCard> Fixed<TCard>(
             Func<TCard, bool> when,
@@ -93,8 +104,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Creates a dynamic-color rule guarded by a predicate.
-        ///     创建由谓词控制的动态颜色规则。
+        ///     <para xml:lang="en">Creates a dynamic-color rule guarded by a predicate.</para>
+        ///     <para xml:lang="zh-CN">创建由谓词控制的动态颜色规则。</para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule Dynamic(
             Func<CardModel, bool> when,
@@ -108,8 +119,12 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Creates a typed dynamic-color rule guarded by a predicate for <typeparamref name="TCard" />.
-        ///     为 <typeparamref name="TCard" /> 创建类型化动态颜色规则。
+        ///     <para xml:lang="en">
+        ///         Creates a dynamic-color rule typed for <typeparamref name="TCard" /> and guarded by a predicate.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TCard" /> 创建由谓词控制的泛型动态颜色规则。
+        ///     </para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule<TCard> Dynamic<TCard>(
             Func<TCard, bool> when,
@@ -128,32 +143,36 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
     }
 
     /// <summary>
-    ///     A typed hand-card outline rule whose resolver returns the outline color to apply, or <see langword="null" />
-    ///     when the rule does not match the current card state. This shape is intended for switch expressions and dynamic
-    ///     colors.
-    ///     类型化手牌卡牌描边规则：解析器返回要应用的描边颜色，当前卡牌状态不匹配时返回 <see langword="null" />。
-    ///     此结构适合 switch expression 和动态颜色。
+    ///     <para xml:lang="en">
+    ///         Defines a hand-card outline rule typed for <typeparamref name="TCard" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">定义适用于 <typeparamref name="TCard" /> 的泛型手牌描边规则。</para>
     /// </summary>
     /// <typeparam name="TCard">
-    ///     Card model type this rule is registered for.
-    ///     此规则注册到的卡牌模型类型。
+    ///     <para xml:lang="en">Card model type accepted by the resolver.</para>
+    ///     <para xml:lang="zh-CN">解析器接受的卡牌模型类型。</para>
     /// </typeparam>
     /// <param name="ColorWhen">
-    ///     Returns a color when this rule should apply; returns <see langword="null" /> to skip the rule.
-    ///     规则应生效时返回颜色；返回 <see langword="null" /> 时跳过规则。
+    ///     <para xml:lang="en">
+    ///         Returns the outline color, or <see langword="null" /> when the rule does not match.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">返回描边颜色；规则不匹配时返回 <see langword="null" />。</para>
     /// </param>
     /// <param name="Priority">
-    ///     When several rules return a color, the highest <paramref name="Priority" /> wins; ties favor the most recently
-    ///     registered rule.
-    ///     多条规则返回颜色时，最高 <paramref name="Priority" /> 获胜；平手时优先最近注册的规则。
+    ///     <para xml:lang="en">
+    ///         Selection priority. Higher values win; ties favor the most recently registered rule.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">选择优先级；值较高者优先，相同时采用最近注册的规则。</para>
     /// </param>
     /// <param name="VisibleWhenUnplayable">
-    ///     If true, the highlight is forced visible with this color even when vanilla would not show one.
-    ///     如果为 true，即使原版不会显示高亮，也会强制以此颜色显示。
+    ///     <para xml:lang="en">
+    ///         Whether to show the outline during combat when the vanilla holder would hide its highlight.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">战斗中原版手牌容器会隐藏高亮时，是否仍显示描边。</para>
     /// </param>
     /// <param name="RefreshEveryFrame">
-    ///     If true, the resolver is polled while the holder is alive so dynamic colors can change without a card refresh.
-    ///     如果为 true，holder 存活期间会轮询解析器，使动态颜色无需卡牌刷新即可变化。
+    ///     <para xml:lang="en">Whether to evaluate and apply the rule every process frame.</para>
+    ///     <para xml:lang="zh-CN">是否在每个处理帧评估并应用规则。</para>
     /// </param>
     public readonly record struct ModCardHandOutlineSwitchRule<TCard>(
         Func<TCard, Color?> ColorWhen,
@@ -163,8 +182,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         where TCard : CardModel
     {
         /// <summary>
-        ///     Creates a rule from a typed color resolver, usually written as a switch expression.
-        ///     从类型化颜色解析器创建规则，通常配合 switch expression 使用。
+        ///     <para xml:lang="en">Creates a typed rule from a color resolver.</para>
+        ///     <para xml:lang="zh-CN">使用颜色解析器创建泛型规则。</para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule<TCard> Switch(
             Func<TCard, Color?> colorWhen,
@@ -177,8 +196,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Creates a fixed-color rule guarded by a typed predicate.
-        ///     创建由类型化谓词控制的固定颜色规则。
+        ///     <para xml:lang="en">Creates a fixed-color rule guarded by a typed predicate.</para>
+        ///     <para xml:lang="zh-CN">创建由泛型谓词控制的固定颜色规则。</para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule<TCard> Fixed(
             Func<TCard, bool> when,
@@ -191,8 +210,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Creates a dynamic-color rule guarded by a typed predicate.
-        ///     创建由类型化谓词控制的动态颜色规则。
+        ///     <para xml:lang="en">Creates a dynamic-color rule guarded by a typed predicate.</para>
+        ///     <para xml:lang="zh-CN">创建由泛型谓词控制的动态颜色规则。</para>
         /// </summary>
         public static ModCardHandOutlineSwitchRule<TCard> Dynamic(
             Func<TCard, bool> when,
@@ -206,8 +225,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
         }
 
         /// <summary>
-        ///     Converts a typed rule to the type-erased registry representation.
-        ///     将类型化规则转换为注册表使用的类型擦除表示。
+        ///     <para xml:lang="en">Converts a typed rule to the untyped registry representation.</para>
+        ///     <para xml:lang="zh-CN">将泛型规则转换为注册表使用的非泛型表示。</para>
         /// </summary>
         public static implicit operator ModCardHandOutlineSwitchRule(ModCardHandOutlineSwitchRule<TCard> rule)
         {

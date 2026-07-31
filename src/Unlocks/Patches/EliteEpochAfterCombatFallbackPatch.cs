@@ -7,14 +7,15 @@ using STS2RitsuLib.Scaffolding.Characters;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     When <c>CheckFifteenElitesDefeatedEpoch</c> is absent, elite logic may live only inside
-    ///     <c>MegaCrit.Sts2.Core.Saves.Managers.ProgressSaveManager.UpdateAfterCombatWon</c>. Postfix covers the
-    ///     non-throwing case; Finalizer recovers from vanilla <c>ArgumentOutOfRangeException</c> for unknown mod
-    ///     characters.
-    ///     当 <c>CheckFifteenElitesDefeatedEpoch</c> 不存在时，精英逻辑可能只存在于
-    ///     <c>MegaCrit.Sts2.Core.Saves.Managers.ProgressSaveManager.UpdateAfterCombatWon</c> 内。Postfix 覆盖
-    ///     未抛出异常的情况；Finalizer 则从未知 mod
-    ///     角色触发的原版 <c>ArgumentOutOfRangeException</c> 中恢复。
+    ///     <para xml:lang="en">
+    ///         Handles game versions whose elite-epoch check exists only inside
+    ///         <see cref="ProgressSaveManager.UpdateAfterCombatWon" />. The postfix handles normal completion without
+    ///         suppressing failures from a partially completed base-game update.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         兼容只在 <see cref="ProgressSaveManager.UpdateAfterCombatWon" /> 内执行精英纪元检查的游戏版本。后置补丁处理
+    ///         正常完成的情况，且不会吞掉游戏本体更新只完成一部分时产生的异常。
+    ///     </para>
     /// </summary>
     internal class EliteEpochAfterCombatFallbackPatch : IPatchMethod
     {
@@ -46,24 +47,6 @@ namespace STS2RitsuLib.Unlocks.Patches
                 return;
 
             EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);
-        }
-
-        public static Exception? Finalizer(
-            Exception? __exception,
-            ProgressSaveManager __instance,
-            Player localPlayer,
-            CombatRoom room)
-        {
-            if (__exception == null)
-                return null;
-
-            if (EliteEpochModHandling.HasDedicatedEliteEpochCheckMethod || room.RoomType != RoomType.Elite ||
-                !ModCharacterTimelinePolicy.IsOwnedOrUsesTimelinePolicy(localPlayer.Character) ||
-                __exception is not ArgumentOutOfRangeException { ParamName: "character" })
-                return __exception;
-
-            EliteEpochModHandling.TryHandleModEliteEpoch(__instance, localPlayer);
-            return null;
         }
     }
 }

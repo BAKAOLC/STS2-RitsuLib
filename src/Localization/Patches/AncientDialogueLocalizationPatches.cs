@@ -6,9 +6,11 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Localization.Patches
 {
     /// <summary>
-    ///     Harmony patch that injects mod-character ancient dialogues from localization before
-    ///     <c>AncientDialogueSet.PopulateLocKeys</c> runs.
-    ///     Harmony patch：在 <c>AncientDialogueSet.PopulateLocKeys</c> 运行前，从本地化中注入 mod 角色的 ancient dialogue。
+    ///     <para xml:lang="en">
+    ///         Adds localization-defined ancient-event dialogue for registered modded characters before
+    ///         <c>AncientDialogueSet.PopulateLocKeys</c> runs.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">在 <c>AncientDialogueSet.PopulateLocKeys</c> 运行前，为已注册的模组角色添加由本地化定义的先古之民事件对话。</para>
     /// </summary>
     internal class AncientDialoguePopulateLocKeysPatch : IPatchMethod
     {

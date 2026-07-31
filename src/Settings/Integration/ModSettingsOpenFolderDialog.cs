@@ -3,8 +3,14 @@ using Godot;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Reusable <see cref="FileDialog" /> in <c>OpenDir</c> mode for writing a folder path to a settings binding.
-    ///     可复用的 <c>OpenDir</c> 模式 <see cref="FileDialog" />，用于将文件夹路径写入设置绑定。
+    ///     <para xml:lang="en">
+    ///         Opens a reusable <see cref="FileDialog" /> in <c>OpenDir</c> mode, then writes and saves the selected
+    ///         folder path through a settings binding.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         以 <c>OpenDir</c> 模式打开可复用的 <see cref="FileDialog" />，然后通过设置绑定写入并保存
+    ///         所选文件夹路径。
+    ///     </para>
     /// </summary>
     internal static class ModSettingsOpenFolderDialog
     {

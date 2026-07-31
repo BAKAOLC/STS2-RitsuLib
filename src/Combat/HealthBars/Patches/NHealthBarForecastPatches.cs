@@ -10,9 +10,14 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.HealthBars.Patches
 {
     /// <summary>
-    ///     Standalone forecast overlay logic for <see cref="NHealthBar" /> when BaseLib interop is unavailable or has not
-    ///     taken over rendering.
-    ///     当 BaseLib interop 不可用或尚未接管渲染时，提供 <see cref="NHealthBar" /> 的独立 forecast 覆盖逻辑。
+    ///     <para xml:lang="en">
+    ///         Renders RitsuLib and imported legacy BaseLib forecasts on <see cref="NHealthBar" /> while BaseLib's
+    ///         current renderer has not taken ownership.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 BaseLib 当前版本的渲染器尚未接管时，于 <see cref="NHealthBar" /> 上渲染 RitsuLib 预测，
+    ///         以及从旧版 BaseLib 导入的预测。
+    ///     </para>
     /// </summary>
     internal static class NHealthBarForecastPatchHelper
     {
@@ -27,7 +32,10 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             BaseLibHealthBarForecastBridge.TryRegisterSecondary();
             BaseLibVisualGraftBridge.TryRegisterSecondary();
             if (BaseLibHealthBarForecastBridge.ShouldRitsuRendererStandDown())
+            {
+                HideAllCustomSegments(healthBar);
                 return;
+            }
 
             var suppressBaseLibRenderer = BaseLibHealthBarForecastBridge.ShouldSuppressBaseLibRenderer();
             var creature = healthBar._creature;
@@ -58,7 +66,8 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             EnsureOverlayOrder(healthBar, state);
 
             var graftAgg = HealthBarVisualGraftRegistry.Aggregate(creature);
-            var visualDenom = Math.Max(creature.MaxHp, creature.CurrentHp + Math.Max(0, graftAgg.GraftHp));
+            var graftHp = Math.Max(0, graftAgg.GraftHp);
+            var visualDenom = Math.Max(creature.MaxHp, SaturatingAddNonNegative(creature.CurrentHp, graftHp));
 
             var maxWidth = GetMaxFgWidth(healthBar);
             var hpForeground = healthBar._hpForeground;
@@ -73,7 +82,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 .ThenBy(segment => segment.SequenceOrder)
                 .ToArray();
 
-            var remainingHp = baseHp + Math.Max(0, graftAgg.GraftHp);
+            var remainingHp = SaturatingAddNonNegative(baseHp, graftHp);
             var rightForecastEdgeOffsetRight = hpForeground.OffsetRight;
             Color? lethalRightColor = null;
             var rightIndex = 0;
@@ -236,11 +245,19 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
 
         /// <summary>
-        ///     Repositions the middleground without animation after the bar container was resized; vanilla snapped it to
-        ///     the un-forecasted HP edge inside <c>SetHpBarContainerSizeWithOffsetsImmediately</c>.
-        ///     在血条容器尺寸变化后无动画地复位 middleground；原版在
-        ///     <c>SetHpBarContainerSizeWithOffsetsImmediately</c> 中把它对齐到了未应用 forecast 的 HP 边缘。
+        ///     <para xml:lang="en">
+        ///         Repositions the delayed-damage layer without animation after the bar container is resized. The base
+        ///         method aligns it to the HP edge before custom forecasts are applied.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         生命条容器调整尺寸后，无动画地重新定位延迟扣血层。原版方法会先将其对齐到应用自定义预测前的
+        ///         生命值边缘。
+        ///     </para>
         /// </summary>
+        /// <param name="healthBar">
+        ///     <para xml:lang="en">The health-bar node to update.</para>
+        ///     <para xml:lang="zh-CN">要更新的生命条节点。</para>
+        /// </param>
         public static void SnapMiddlegroundToForecast(NHealthBar healthBar)
         {
             if (BaseLibHealthBarForecastBridge.ShouldRitsuRendererStandDown())
@@ -309,7 +326,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     break;
 
                 var segmentStart = leftAccumulated;
-                leftAccumulated = Math.Min(remainingHp, leftAccumulated + segment.Amount);
+                leftAccumulated = Math.Min(remainingHp, SaturatingAddNonNegative(leftAccumulated, segment.Amount));
                 if (leftAccumulated <= segmentStart)
                     continue;
 
@@ -408,7 +425,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                     segment.Color,
                     segment.Direction,
                     segment.Order,
-                    BaseLibImportedSequenceOrderOffset + segment.SequenceOrder,
+                    OffsetBaseLibSequenceOrder(segment.SequenceOrder),
                     segment.OverlayMaterial,
                     segment.OverlaySelfModulate,
                     segment.LeftOriginLayout,
@@ -585,10 +602,14 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
 
         /// <summary>
-        ///     Applies segment material and <see cref="CanvasItem.SelfModulate" />; overlay uses
-        ///     <paramref name="overlaySelfModulate" /> when set, otherwise <paramref name="color" />.
-        ///     应用片段 material 和 <see cref="CanvasItem.SelfModulate" />；设置后覆盖层使用
-        ///     <paramref name="overlaySelfModulate" />，否则使用 <paramref name="color" />。
+        ///     <para xml:lang="en">
+        ///         Applies a segment's material and modulation color. The explicit
+        ///         <paramref name="overlaySelfModulate" /> takes precedence over <paramref name="color" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         应用片段的材质和调制色。显式指定的 <paramref name="overlaySelfModulate" /> 优先于
+        ///         <paramref name="color" />。
+        ///     </para>
         /// </summary>
         private static void ApplyForecastSegmentAppearance(
             NinePatchRect node,
@@ -692,12 +713,24 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             var accumulated = 0;
             foreach (var candidate in ordered)
             {
-                accumulated = Math.Min(remainingHp, accumulated + candidate.Amount);
+                accumulated = Math.Min(remainingHp, SaturatingAddNonNegative(accumulated, candidate.Amount));
                 if (accumulated >= remainingHp)
                     return candidate.Color;
             }
 
             return null;
+        }
+
+        private static int SaturatingAddNonNegative(int left, int right)
+        {
+            return (int)Math.Min(int.MaxValue, (long)Math.Max(0, left) + Math.Max(0, right));
+        }
+
+        private static long OffsetBaseLibSequenceOrder(long sequenceOrder)
+        {
+            return sequenceOrder > long.MaxValue - BaseLibImportedSequenceOrderOffset
+                ? long.MaxValue
+                : sequenceOrder + BaseLibImportedSequenceOrderOffset;
         }
 
         private readonly record struct LethalCandidate(
@@ -727,8 +760,12 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         }
 
         /// <summary>
-        ///     Snapshot of one registry segment plus render order for layout and lethal text resolution.
-        ///     一个注册表片段加渲染顺序的快照，用于布局和致命文本解析。
+        ///     <para xml:lang="en">
+        ///         Stores one registry segment and its stable render order for layout and lethal-label resolution.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         存储一个注册表片段及其稳定渲染顺序，用于布局和致命标签判定。
+        ///     </para>
         /// </summary>
         private readonly record struct CustomSegment(
             int Amount,
@@ -754,10 +791,14 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
     }
 
     /// <summary>
-    ///     Runs visual graft, forecast overlay, then graft touchup in one deterministic order with a reentrancy guard:
-    ///     the graft pass resizes the bar container, whose resize patch would otherwise re-enter this chain.
-    ///     以确定顺序运行 visual graft、forecast 覆盖层和 graft touchup，并带重入守卫：
-    ///     graft 阶段会调整血条容器尺寸，否则其 resize 补丁会重入此链。
+    ///     <para xml:lang="en">
+    ///         Runs visual extension, forecast, and post-forecast layout in a deterministic order. A reentrancy guard
+    ///         prevents the extension's container resize from entering the refresh chain again.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         以确定顺序执行视觉扩展、预测和预测后的布局调整。重入守卫会阻止视觉扩展调整容器尺寸时再次进入
+    ///         刷新调用链。
+    ///     </para>
     /// </summary>
     internal static class NHealthBarOverlayRefreshChain
     {

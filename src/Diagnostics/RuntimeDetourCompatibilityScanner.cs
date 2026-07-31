@@ -29,12 +29,18 @@ namespace STS2RitsuLib.Diagnostics
             "netstandard",
         ];
 
+        private static readonly Lock InitializeGate = new();
+        private static IDisposable? _lifecycleSubscription;
         private static int _scanIssuedForSession;
 
         internal static void Initialize()
         {
-            RitsuLibFramework.SubscribeLifecycleOnce<DeferredInitializationCompletedEvent>(_ =>
-                RitsuLibStartupAudit.Measure("runtimeDetourCompatibilityScan", ScanAndWarn));
+            lock (InitializeGate)
+            {
+                _lifecycleSubscription ??=
+                    RitsuLibFramework.SubscribeLifecycleOnce<DeferredInitializationCompletedEvent>(_ =>
+                        RitsuLibStartupAudit.Measure("runtimeDetourCompatibilityScan", ScanAndWarn));
+            }
         }
 
         private static void ScanAndWarn()
@@ -46,28 +52,38 @@ namespace STS2RitsuLib.Diagnostics
             if (riskMods.Count == 0)
                 return;
 
-            RitsuLibFramework.Logger.Warn(BuildRiskDependencyWarning(riskMods));
+            RitsuLibFramework.Logger.Info(BuildRuntimeDetourDependencyMessage(riskMods));
 
             var bridge = RuntimeDetourReflectionBridge.TryCreate();
             if (bridge == null)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"{Prefix} Risky hook dependency detected, but MonoMod.RuntimeDetour query API is not available. RuntimeDetour/Harmony overlap cannot be checked.");
+                    $"{Prefix} RuntimeDetour dependency detected, but its runtime query API is not available. RuntimeDetour/Harmony overlap cannot be checked.");
                 ShowCompatibilityToast(riskMods, [], true);
                 return;
             }
 
-            var conflicts = FindHarmonyRuntimeDetourConflicts(bridge);
+            var (conflicts, failedQueryCount) = FindHarmonyRuntimeDetourConflicts(bridge);
             if (conflicts.Count == 0)
             {
+                if (failedQueryCount > 0)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"{Prefix} RuntimeDetour hook lookup failed for {failedQueryCount} Harmony-patched method(s), so the overlap check is incomplete.");
+                    ShowCompatibilityToast(riskMods, [], true);
+                    return;
+                }
+
                 RitsuLibFramework.Logger.Info(
                     $"{Prefix} RuntimeDetour dependency detected, but no RuntimeDetour hook currently overlaps a Harmony-patched method.");
-                ShowCompatibilityToast(riskMods, conflicts, false);
                 return;
             }
 
             RitsuLibFramework.Logger.Warn(BuildConflictWarning(conflicts));
-            ShowCompatibilityToast(riskMods, conflicts, false);
+            if (failedQueryCount > 0)
+                RitsuLibFramework.Logger.Warn(
+                    $"{Prefix} RuntimeDetour hook lookup also failed for {failedQueryCount} Harmony-patched method(s); additional overlaps may exist.");
+            ShowCompatibilityToast(riskMods, conflicts, failedQueryCount > 0);
         }
 
         private static IReadOnlyList<RuntimeDetourRiskMod> FindRuntimeDetourRiskMods()
@@ -151,10 +167,11 @@ namespace STS2RitsuLib.Diagnostics
             }
         }
 
-        private static IReadOnlyList<RuntimeDetourHarmonyConflict> FindHarmonyRuntimeDetourConflicts(
+        private static RuntimeDetourScanResult FindHarmonyRuntimeDetourConflicts(
             RuntimeDetourReflectionBridge bridge)
         {
             var conflicts = new List<RuntimeDetourHarmonyConflict>();
+            var failedQueryCount = 0;
 
             foreach (var group in BuildHarmonyPatchIndex())
             {
@@ -165,6 +182,7 @@ namespace STS2RitsuLib.Diagnostics
                 }
                 catch (Exception ex)
                 {
+                    failedQueryCount++;
                     RitsuLibFramework.Logger.Warn(
                         $"{Prefix} Failed to query RuntimeDetour hooks for {FormatMethod(group.OriginalMethod)}: {ex.Message}");
                     continue;
@@ -174,12 +192,13 @@ namespace STS2RitsuLib.Diagnostics
                     conflicts.Add(new(group, hooks));
             }
 
-            return
-            [
-                .. conflicts
-                    .OrderBy(conflict => FormatMethod(conflict.HarmonyPatchGroup.OriginalMethod),
-                        StringComparer.Ordinal),
-            ];
+            return new(
+                [
+                    .. conflicts
+                        .OrderBy(conflict => FormatMethod(conflict.HarmonyPatchGroup.OriginalMethod),
+                            StringComparer.Ordinal),
+                ],
+                failedQueryCount);
         }
 
         private static IReadOnlyList<HarmonyPatchedMethodGroup> BuildHarmonyPatchIndex()
@@ -219,13 +238,13 @@ namespace STS2RitsuLib.Diagnostics
                     $"{kind} owner={patch.owner} priority={patch.priority} method={FormatMethod(patch.PatchMethod)}");
         }
 
-        private static string BuildRiskDependencyWarning(IReadOnlyList<RuntimeDetourRiskMod> riskMods)
+        private static string BuildRuntimeDetourDependencyMessage(IReadOnlyList<RuntimeDetourRiskMod> riskMods)
         {
             var text = new StringBuilder()
                 .AppendLine(
-                    $"{Prefix} Risky hook dependency detected: loaded mod assemblies reference MonoMod.RuntimeDetour.")
+                    $"{Prefix} Loaded mod assemblies reference MonoMod.RuntimeDetour.")
                 .AppendLine(
-                    "If a MonoMod.RuntimeDetour hook targets a Harmony-patched method, it redirects the call path and the Harmony patches on that method are expected to be skipped.")
+                    "RitsuLib will check whether active RuntimeDetour hooks and Harmony patches currently target the same methods.")
                 .AppendLine("Referencing mods:");
 
             foreach (var riskMod in riskMods.OrderBy(static mod => mod.Mod.Id, StringComparer.OrdinalIgnoreCase))
@@ -238,10 +257,10 @@ namespace STS2RitsuLib.Diagnostics
         private static string BuildConflictWarning(IReadOnlyList<RuntimeDetourHarmonyConflict> conflicts)
         {
             var text = new StringBuilder()
-                .AppendLine($"{Prefix} WARNING: RuntimeDetour hook overlaps Harmony patches.")
+                .AppendLine($"{Prefix} WARNING: RuntimeDetour hooks overlap Harmony-patched methods.")
                 .AppendLine(
-                    "These RuntimeDetour hooks redirect methods that already have Harmony patches, so the following Harmony patches are expected to be skipped instead of executing normally:")
-                .AppendLine($"Conflicts: {conflicts.Count}");
+                    "An overlap can make behavior depend on detour installation order and whether each hook invokes the next detour. It does not by itself prove that Harmony patches are skipped.")
+                .AppendLine($"Overlapping methods: {conflicts.Count}");
 
             foreach (var conflict in conflicts)
             {
@@ -262,22 +281,27 @@ namespace STS2RitsuLib.Diagnostics
         private static void ShowCompatibilityToast(
             IReadOnlyList<RuntimeDetourRiskMod> riskMods,
             IReadOnlyList<RuntimeDetourHarmonyConflict> conflicts,
-            bool queryUnavailable)
+            bool queryIncomplete)
         {
             try
             {
                 var title = conflicts.Count > 0
-                    ? T("ritsulib.runtimeDetourCompat.toast.conflictTitle", "RuntimeDetour/Harmony conflict")
-                    : T("ritsulib.runtimeDetourCompat.toast.riskTitle", "RuntimeDetour hook risk");
+                    ? T("ritsulib.runtimeDetourCompat.toast.conflictTitle", "RuntimeDetour/Harmony interaction")
+                    : T("ritsulib.runtimeDetourCompat.toast.riskTitle", "RuntimeDetour compatibility check");
                 var body = conflicts.Count > 0
-                    ? L(
-                        "ritsulib.runtimeDetourCompat.toast.conflictBody",
-                        "{0} Harmony-patched method(s) are overlapped by RuntimeDetour hooks. Click for details.",
-                        conflicts.Count)
-                    : queryUnavailable
+                    ? queryIncomplete
+                        ? L(
+                            "ritsulib.runtimeDetourCompat.toast.partialConflictBody",
+                            "{0} Harmony-patched method(s) also have active RuntimeDetour hooks, and some methods could not be checked. Click to review them.",
+                            conflicts.Count)
+                        : L(
+                            "ritsulib.runtimeDetourCompat.toast.conflictBody",
+                            "{0} Harmony-patched method(s) also have active RuntimeDetour hooks. Click to review them.",
+                            conflicts.Count)
+                    : queryIncomplete
                         ? T(
                             "ritsulib.runtimeDetourCompat.toast.queryUnavailableBody",
-                            "RuntimeDetour dependency detected, but hook overlap could not be checked. Click for details.")
+                            "RuntimeDetour dependency detected, but hook overlap could not be fully checked. Click for details.")
                         : T(
                             "ritsulib.runtimeDetourCompat.toast.noOverlapBody",
                             "RuntimeDetour dependency detected. No Harmony overlap is currently known. Click for details.");
@@ -286,7 +310,7 @@ namespace STS2RitsuLib.Diagnostics
                 var capturedConflicts = conflicts.ToArray();
                 RitsuToastService.Show(RitsuToastRequest.Warning(body, title)
                     .Persistent()
-                    .WithClick(() => ShowCompatibilityDialog(capturedRiskMods, capturedConflicts, queryUnavailable)));
+                    .WithClick(() => ShowCompatibilityDialog(capturedRiskMods, capturedConflicts, queryIncomplete)));
             }
             catch (Exception ex)
             {
@@ -297,7 +321,7 @@ namespace STS2RitsuLib.Diagnostics
         private static void ShowCompatibilityDialog(
             IReadOnlyList<RuntimeDetourRiskMod> riskMods,
             IReadOnlyList<RuntimeDetourHarmonyConflict> conflicts,
-            bool queryUnavailable)
+            bool queryIncomplete)
         {
             try
             {
@@ -308,7 +332,7 @@ namespace STS2RitsuLib.Diagnostics
                 NModalContainer.Instance.Add(new RuntimeDetourCompatibilityPanel(
                     [.. riskMods],
                     [.. conflicts],
-                    queryUnavailable));
+                    queryIncomplete));
             }
             catch (Exception ex)
             {
@@ -319,19 +343,25 @@ namespace STS2RitsuLib.Diagnostics
         private static string BuildDialogSummary(
             IReadOnlyList<RuntimeDetourRiskMod> riskMods,
             IReadOnlyList<RuntimeDetourHarmonyConflict> conflicts,
-            bool queryUnavailable)
+            bool queryIncomplete)
         {
             if (conflicts.Count > 0)
-                return L(
-                    "ritsulib.runtimeDetourCompat.dialog.summary.conflict",
-                    "{0} mod(s) reference MonoMod.RuntimeDetour. {1} Harmony-patched method(s) currently overlap RuntimeDetour hooks, so those Harmony patches are expected to be skipped instead of executing normally.",
-                    riskMods.Count,
-                    conflicts.Count);
+                return queryIncomplete
+                    ? L(
+                        "ritsulib.runtimeDetourCompat.dialog.summary.partialConflict",
+                        "{0} mod(s) reference MonoMod.RuntimeDetour. At least {1} Harmony-patched method(s) also have active RuntimeDetour hooks, and some methods could not be checked. Additional overlaps may exist. Review hook ordering and continuation behavior; overlap alone does not prove that Harmony patches are skipped.",
+                        riskMods.Count,
+                        conflicts.Count)
+                    : L(
+                        "ritsulib.runtimeDetourCompat.dialog.summary.conflict",
+                        "{0} mod(s) reference MonoMod.RuntimeDetour. {1} Harmony-patched method(s) also have active RuntimeDetour hooks. Review hook ordering and continuation behavior; overlap alone does not prove that Harmony patches are skipped.",
+                        riskMods.Count,
+                        conflicts.Count);
 
-            return queryUnavailable
+            return queryIncomplete
                 ? L(
                     "ritsulib.runtimeDetourCompat.dialog.summary.queryUnavailable",
-                    "{0} mod(s) reference MonoMod.RuntimeDetour, but the RuntimeDetour runtime query API was not available. Harmony overlap could not be checked.",
+                    "{0} mod(s) reference MonoMod.RuntimeDetour, but active hooks could not be fully queried. RuntimeDetour/Harmony overlap is unknown.",
                     riskMods.Count)
                 : L(
                     "ritsulib.runtimeDetourCompat.dialog.summary.noOverlap",
@@ -386,7 +416,7 @@ namespace STS2RitsuLib.Diagnostics
 
         private static Control BuildAffectedPatchesBody(
             IReadOnlyList<RuntimeDetourHarmonyConflict> conflicts,
-            bool queryUnavailable)
+            bool queryIncomplete)
         {
             var report = new VBoxContainer
             {
@@ -398,10 +428,10 @@ namespace STS2RitsuLib.Diagnostics
             if (conflicts.Count == 0)
             {
                 report.AddChild(CreateDialogLabel(
-                    queryUnavailable
+                    queryIncomplete
                         ? T(
                             "ritsulib.runtimeDetourCompat.dialog.affectedUnknown",
-                            "RuntimeDetour hooks could not be queried, so affected Harmony patches are unknown.")
+                            "RuntimeDetour hooks could not be fully queried, so overlapping Harmony patches are unknown.")
                         : T(
                             "ritsulib.runtimeDetourCompat.dialog.affectedNone",
                             "No RuntimeDetour hook currently overlaps a Harmony-patched method."),
@@ -409,6 +439,14 @@ namespace STS2RitsuLib.Diagnostics
                     RitsuShellTheme.Current.Text.RichSecondary));
                 return report;
             }
+
+            if (queryIncomplete)
+                report.AddChild(CreateDialogLabel(
+                    T(
+                        "ritsulib.runtimeDetourCompat.dialog.affectedPartial",
+                        "Some Harmony-patched methods could not be checked; additional overlaps may exist."),
+                    15,
+                    RitsuShellTheme.Current.Text.RichSecondary));
 
             foreach (var conflict in conflicts)
             {
@@ -422,7 +460,7 @@ namespace STS2RitsuLib.Diagnostics
 
                 body.AddChild(CreateDialogLabel(T(
                         "ritsulib.runtimeDetourCompat.dialog.harmonyPatchesSkipped",
-                        "Harmony patches expected to be skipped:"),
+                        "Harmony patches on this method:"),
                     14,
                     RitsuShellTheme.Current.Text.RichBody, true));
                 foreach (var patch in conflict.HarmonyPatchGroup.Patches)
@@ -567,18 +605,18 @@ namespace STS2RitsuLib.Diagnostics
             private const int ControllerScrollStep = 72;
 
             private readonly IReadOnlyList<RuntimeDetourHarmonyConflict> _conflicts;
-            private readonly bool _queryUnavailable;
+            private readonly bool _queryIncomplete;
             private readonly IReadOnlyList<RuntimeDetourRiskMod> _riskMods;
             private ScrollContainer? _mainScroll;
 
             internal RuntimeDetourCompatibilityPanel(
                 IReadOnlyList<RuntimeDetourRiskMod> riskMods,
                 IReadOnlyList<RuntimeDetourHarmonyConflict> conflicts,
-                bool queryUnavailable)
+                bool queryIncomplete)
             {
                 _riskMods = riskMods;
                 _conflicts = conflicts;
-                _queryUnavailable = queryUnavailable;
+                _queryIncomplete = queryIncomplete;
                 Name = "RitsuRuntimeDetourCompatibilityPanel";
                 MouseFilter = MouseFilterEnum.Stop;
             }
@@ -676,8 +714,9 @@ namespace STS2RitsuLib.Diagnostics
                 var title = CreateDialogLabel(
                     _conflicts.Count > 0
                         ? T("ritsulib.runtimeDetourCompat.dialog.conflictTitle",
-                            "RuntimeDetour/Harmony conflict")
-                        : T("ritsulib.runtimeDetourCompat.dialog.riskTitle", "RuntimeDetour hook risk"),
+                            "RuntimeDetour/Harmony interaction")
+                        : T("ritsulib.runtimeDetourCompat.dialog.riskTitle",
+                            "RuntimeDetour compatibility check"),
                     28,
                     RitsuShellTheme.Current.Text.RichTitle,
                     true);
@@ -735,7 +774,7 @@ namespace STS2RitsuLib.Diagnostics
                 box.AddThemeConstantOverride("separation", 12);
                 scrollMargin.AddChild(box);
 
-                var summary = BuildDialogSummary(_riskMods, _conflicts, _queryUnavailable);
+                var summary = BuildDialogSummary(_riskMods, _conflicts, _queryIncomplete);
                 box.AddChild(new ModSettingsCollapsibleSection(
                     T("ritsulib.runtimeDetourCompat.dialog.summary", "Summary"),
                     "runtime_detour_compat_summary",
@@ -744,18 +783,18 @@ namespace STS2RitsuLib.Diagnostics
                     [CreateInfoCard(summary, RitsuShellTheme.Current.Text.RichBody)]));
 
                 box.AddChild(new ModSettingsCollapsibleSection(
-                    T("ritsulib.runtimeDetourCompat.dialog.problemMods", "Problem mods"),
+                    T("ritsulib.runtimeDetourCompat.dialog.problemMods", "Mods using RuntimeDetour"),
                     "runtime_detour_compat_problem_mods",
                     null,
                     false,
                     [BuildProblemModsBody(_riskMods)]));
 
                 box.AddChild(new ModSettingsCollapsibleSection(
-                    T("ritsulib.runtimeDetourCompat.dialog.affectedPatches", "Affected Harmony patches"),
+                    T("ritsulib.runtimeDetourCompat.dialog.affectedPatches", "Overlapping Harmony patches"),
                     "runtime_detour_compat_affected_patches",
                     null,
                     _conflicts.Count == 0,
-                    [BuildAffectedPatchesBody(_conflicts, _queryUnavailable)]));
+                    [BuildAffectedPatchesBody(_conflicts, _queryIncomplete)]));
 
                 return scroll;
             }
@@ -770,7 +809,7 @@ namespace STS2RitsuLib.Diagnostics
                 row.AddThemeConstantOverride("separation", 10);
                 var label = CreateDialogLabel(
                     L("ritsulib.runtimeDetourCompat.dialog.footer",
-                        "RuntimeDetour mods: {0}  Overlapped Harmony methods: {1}",
+                        "RuntimeDetour mods: {0}  Methods using both systems: {1}",
                         _riskMods.Count,
                         _conflicts.Count),
                     14,
@@ -824,30 +863,37 @@ namespace STS2RitsuLib.Diagnostics
             {
                 var builder = new StringBuilder();
                 var title = _conflicts.Count > 0
-                    ? T("ritsulib.runtimeDetourCompat.dialog.conflictTitle", "RuntimeDetour/Harmony conflict")
-                    : T("ritsulib.runtimeDetourCompat.dialog.riskTitle", "RuntimeDetour hook risk");
+                    ? T("ritsulib.runtimeDetourCompat.dialog.conflictTitle", "RuntimeDetour/Harmony interaction")
+                    : T("ritsulib.runtimeDetourCompat.dialog.riskTitle",
+                        "RuntimeDetour compatibility check");
                 builder.AppendLine(title);
                 builder.AppendLine(new('=', title.Length));
                 builder.AppendLine();
-                builder.AppendLine(BuildDialogSummary(_riskMods, _conflicts, _queryUnavailable));
+                builder.AppendLine(BuildDialogSummary(_riskMods, _conflicts, _queryIncomplete));
                 builder.AppendLine();
-                builder.AppendLine(T("ritsulib.runtimeDetourCompat.dialog.problemMods", "Problem mods"));
+                builder.AppendLine(T("ritsulib.runtimeDetourCompat.dialog.problemMods",
+                    "Mods using RuntimeDetour"));
                 foreach (var riskMod in _riskMods)
                     builder.AppendLine(
                         $"- {FormatMod(riskMod.Mod)} references: {string.Join(", ", riskMod.ReferencingAssemblies)}");
 
                 builder.AppendLine();
                 builder.AppendLine(T("ritsulib.runtimeDetourCompat.dialog.affectedPatches",
-                    "Affected Harmony patches"));
+                    "Overlapping Harmony patches"));
                 if (_conflicts.Count == 0)
                 {
-                    builder.AppendLine(_queryUnavailable
+                    builder.AppendLine(_queryIncomplete
                         ? T("ritsulib.runtimeDetourCompat.dialog.affectedUnknown",
-                            "RuntimeDetour hooks could not be queried, so affected Harmony patches are unknown.")
+                            "RuntimeDetour hooks could not be fully queried, so overlapping Harmony patches are unknown.")
                         : T("ritsulib.runtimeDetourCompat.dialog.affectedNone",
                             "No RuntimeDetour hook currently overlaps a Harmony-patched method."));
                     return builder.ToString();
                 }
+
+                if (_queryIncomplete)
+                    builder.AppendLine(T(
+                        "ritsulib.runtimeDetourCompat.dialog.affectedPartial",
+                        "Some Harmony-patched methods could not be checked; additional overlaps may exist."));
 
                 foreach (var conflict in _conflicts)
                 {
@@ -1022,6 +1068,10 @@ namespace STS2RitsuLib.Diagnostics
             string Kind,
             string Target,
             string Config);
+
+        private sealed record RuntimeDetourScanResult(
+            IReadOnlyList<RuntimeDetourHarmonyConflict> Conflicts,
+            int FailedQueryCount);
 
         private sealed record RuntimeDetourHarmonyConflict(
             HarmonyPatchedMethodGroup HarmonyPatchGroup,

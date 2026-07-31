@@ -10,28 +10,32 @@ using STS2RitsuLib.CardPiles.Nodes;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Resolves fly-in target positions for mod card piles. Called from the
-    ///     <c>PileTypeExtensions.GetTargetPosition</c> prefix patch so vanilla's switch never sees mod-minted
-    ///     values.
-    ///     解析 mod 卡牌牌堆的飞入目标位置。由 <c>PileTypeExtensions.GetTargetPosition</c> prefix patch
-    ///     调用，因此原版 switch 永远不会看到 mod-minted 值。
+    ///     <para xml:lang="en">Resolves card-flight positions for registered mod card piles.</para>
+    ///     <para xml:lang="zh-CN">解析已注册模组卡牌牌堆的卡牌飞行动画位置。</para>
     /// </summary>
     internal static class ModCardPileLayout
     {
         /// <summary>
-        ///     Computes the screen-space target position cards should animate to when moved into
-        ///     <paramref name="definition" />. Falls back to a centered screen coordinate if the expected UI
-        ///     host node is not yet available (e.g. before combat starts or between scene transitions).
-        ///     计算卡牌移入 <paramref name="definition" /> 时应动画飞向的屏幕空间目标位置。如果预期 UI host
-        ///     node 尚不可用（例如战斗开始前或 scene transition 之间），则回退到屏幕中心坐标。
+        ///     <para xml:lang="en">
+        ///         Resolves the screen-space position toward which a card moves when entering
+        ///         <paramref name="definition" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析卡牌进入 <paramref name="definition" /> 时飞向的屏幕空间位置。
+        ///     </para>
         /// </summary>
         /// <param name="definition">
-        ///     Pile definition describing style / anchor.
-        ///     描述 style / anchor 的牌堆定义。
+        ///     <para xml:lang="en">The registered pile definition.</para>
+        ///     <para xml:lang="zh-CN">已注册的牌堆定义。</para>
         /// </param>
         /// <param name="node">
-        ///     The flying card's node, used to offset the target by the card's half-size.
-        ///     正在飞行的卡牌节点，用于按卡牌半尺寸偏移目标位置。
+        ///     <para xml:lang="en">
+        ///         The flying card node used to convert the resolved center to its top-left position, or
+        ///         <see langword="null" /> to return the center.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         用于将解析出的中心位置换算为左上角位置的飞行卡牌节点；为 <see langword="null" /> 时返回中心位置。
+        ///     </para>
         /// </param>
         public static Vector2 GetTargetPosition(ModCardPileDefinition definition, NCard? node)
         {
@@ -64,12 +68,11 @@ namespace STS2RitsuLib.CardPiles
 
             var button = ModCardPileButtonRegistry.TryGetButton(definition);
             if (button != null && button.IsInsideTree())
-                return ApplyCardNodeOffset(button.GlobalPosition + button.Size * 0.5f + definition.Anchor.Offset, node);
+                return ApplyCardNodeOffset(button.GlobalPosition + button.Size * 0.5f, node);
 
             var extraHand = ModCardPileButtonRegistry.TryGetExtraHand(definition);
             if (extraHand != null && extraHand.IsInsideTree())
-                return ApplyCardNodeOffset(extraHand.GlobalPosition + extraHand.Size * 0.5f + definition.Anchor.Offset,
-                    node);
+                return ApplyCardNodeOffset(extraHand.GlobalPosition + extraHand.Size * 0.5f, node);
 
             if (definition.Anchor.Kind == ModCardPileAnchorKind.Custom)
             {
@@ -109,12 +112,13 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Landing centre (global coords) aligned with <see cref="ModCardPileInjector" /> after resolving
-        ///     authored <see cref="ModCardPileAnchorKind.Custom" /> points through <see cref="ModCardPileCustomMountGeometry" />.
-        ///     landing centre（global coords）。
-        ///     landing centre（global coords），在通过 <see cref="ModCardPileCustomMountGeometry" /> 解析
-        ///     authored <see cref="ModCardPileAnchorKind.Custom" /> 点后与 <see cref="ModCardPileInjector" /> 对齐。
-        ///     landing centre（global coords）。
+        ///     <para xml:lang="en">
+        ///         Resolves the global center of a custom mount consistently with
+        ///         <see cref="ModCardPileInjector" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         以与 <see cref="ModCardPileInjector" /> 一致的方式解析自定义挂载位置的全局中心。
+        ///     </para>
         /// </summary>
         private static Vector2 ResolveCustomAnchorFallbackCenter(ModCardPileDefinition definition)
         {

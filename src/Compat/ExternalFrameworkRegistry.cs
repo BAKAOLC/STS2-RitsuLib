@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
-    ///     Stable framework ids used by runtime interop checks.
-    ///     运行时互操作检查使用的稳定框架 id。
+    ///     <para xml:lang="en">Defines stable framework IDs used by runtime interoperability checks.</para>
+    ///     <para xml:lang="zh-CN">定义运行时互操作检查使用的稳定框架 ID。</para>
     /// </summary>
     internal static class ExternalFrameworkIds
     {
@@ -15,15 +15,18 @@ namespace STS2RitsuLib.Compat
     }
 
     /// <summary>
-    ///     Central registry for external framework presence checks.
-    ///     Known frameworks are probe-based and can be extended with custom detectors.
-    ///     外部框架存在性检查的中央注册表。
-    ///     已知框架基于探测判断，并可通过自定义检测器扩展。
+    ///     <para xml:lang="en">
+    ///         Detects external frameworks through known type markers or registered custom detectors.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">通过已知类型标记或已注册的自定义检测器判断外部框架是否存在。</para>
     /// </summary>
     internal static class ExternalFrameworkRegistry
     {
         private static readonly Lock Gate = new();
-        private static readonly Dictionary<string, Func<bool>> CustomDetectors = [];
+
+        private static readonly Dictionary<string, Func<bool>> CustomDetectors =
+            new(StringComparer.OrdinalIgnoreCase);
+
         private static readonly ConcurrentDictionary<string, TypeResolution> TypeCache = new(StringComparer.Ordinal);
 
         private static readonly Dictionary<string, ProbeSpec> BuiltInProbes = new(StringComparer.OrdinalIgnoreCase)
@@ -45,8 +48,8 @@ namespace STS2RitsuLib.Compat
         private static readonly Dictionary<string, bool> PresenceCache = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Registers a custom framework detector. The latest detector with the same id wins.
-        ///     注册自定义框架检测器。相同 id 的最新检测器生效。
+        ///     <para xml:lang="en">Registers a custom detector, replacing any detector with the same framework ID.</para>
+        ///     <para xml:lang="zh-CN">注册自定义检测器，并替换框架 ID 相同的现有检测器。</para>
         /// </summary>
         public static void RegisterFrameworkDetector(string frameworkId, Func<bool> detector)
         {
@@ -61,8 +64,8 @@ namespace STS2RitsuLib.Compat
         }
 
         /// <summary>
-        ///     Returns whether the specified framework appears to be present.
-        ///     返回指定框架看起来是否存在。
+        ///     <para xml:lang="en">Returns whether the specified framework is detected.</para>
+        ///     <para xml:lang="zh-CN">返回是否检测到指定框架。</para>
         /// </summary>
         public static bool IsFrameworkPresent(string frameworkId)
         {
@@ -80,8 +83,8 @@ namespace STS2RitsuLib.Compat
         }
 
         /// <summary>
-        ///     Refreshes all known framework presence states.
-        ///     刷新所有已知框架的存在状态。
+        ///     <para xml:lang="en">Clears cached results and detects every known framework again.</para>
+        ///     <para xml:lang="zh-CN">清除缓存结果，并重新检测所有已知框架。</para>
         /// </summary>
         public static void RefreshKnownFrameworkPresence(string reason)
         {
@@ -99,8 +102,8 @@ namespace STS2RitsuLib.Compat
         }
 
         /// <summary>
-        ///     Resolves <paramref name="fullTypeName" /> from loaded assemblies.
-        ///     从已加载程序集中解析 <paramref name="fullTypeName" />。
+        ///     <para xml:lang="en">Resolves <paramref name="fullTypeName" /> from loaded assemblies.</para>
+        ///     <para xml:lang="zh-CN">从已加载的程序集中解析 <paramref name="fullTypeName" />。</para>
         /// </summary>
         public static Type? ResolveType(string fullTypeName)
         {

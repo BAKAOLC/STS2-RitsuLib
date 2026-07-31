@@ -6,28 +6,34 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Interactions.RightClick
 {
     /// <summary>
-    ///     Context passed when a synced right-click action reaches the action queue.
-    ///     当同步右键动作到达动作队列时传递的上下文。
+    ///     <para xml:lang="en">
+    ///         Describes a synchronized right-click action when it reaches the action queue.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">描述同步的右键操作进入行动队列时的执行状态。</para>
     /// </summary>
     /// <param name="Player">
-    ///     Player that owns the queued right-click action.
-    ///     拥有此队列化右键动作的玩家。
+    ///     <para xml:lang="en">The player who owns the queued right-click action.</para>
+    ///     <para xml:lang="zh-CN">拥有队列中右键操作的玩家。</para>
     /// </param>
     /// <param name="Model">
-    ///     Model resolved at execution time.
-    ///     执行时解析到的模型。
+    ///     <para xml:lang="en">The model resolved at execution time.</para>
+    ///     <para xml:lang="zh-CN">执行时解析出的模型。</para>
     /// </param>
     /// <param name="Trigger">
-    ///     Input metadata.
-    ///     输入元数据。
+    ///     <para xml:lang="en">Metadata about the input that triggered the action.</para>
+    ///     <para xml:lang="zh-CN">触发该操作的输入元数据。</para>
     /// </param>
     /// <param name="PlayerChoiceContext">
-    ///     Queue-backed choice context for command APIs that require <c>PlayerChoiceContext</c>.
-    ///     供需要 <c>PlayerChoiceContext</c> 的命令 API 使用的队列上下文。
+    ///     <para xml:lang="en">
+    ///         The queue-backed choice context available to command APIs that require <c>PlayerChoiceContext</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         由队列提供的选择上下文，可供需要 <c>PlayerChoiceContext</c> 的命令 API 使用。
+    ///     </para>
     /// </param>
     /// <param name="Action">
-    ///     Underlying vanilla queue action used for ordering.
-    ///     用于队列排序的底层原版队列 action。
+    ///     <para xml:lang="en">The underlying base-game action used for queue ordering.</para>
+    ///     <para xml:lang="zh-CN">用于队列排序的底层原版行动。</para>
     /// </param>
     public readonly record struct ModRightClickExecutionContext(
         Player Player,

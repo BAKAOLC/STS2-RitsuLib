@@ -7,76 +7,121 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Content.Visuals
 {
     /// <summary>
-    ///     Builds the runtime <see cref="Control" /> tree for an <see cref="AncientEventStageProceduralVisualSet" />:
-    ///     an optional looping <see cref="VideoStreamPlayer" /> background and cue-driven <see cref="Sprite2D" /> layers.
-    ///     为 <see cref="AncientEventStageProceduralVisualSet" /> 构建运行时 <see cref="Control" /> 树：
-    ///     可选的循环 <see cref="VideoStreamPlayer" /> 背景，以及由 cue 驱动的 <see cref="Sprite2D" /> 图层。
+    ///     <para xml:lang="en">
+    ///         Builds the runtime <see cref="Control" /> tree for an <see cref="AncientEventStageProceduralVisualSet" />,
+    ///         including an optional looping <see cref="VideoStreamPlayer" /> background and cue-driven
+    ///         <see cref="Sprite2D" /> layers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="AncientEventStageProceduralVisualSet" /> 构建运行时 <see cref="Control" /> 节点树，
+    ///         其中可包含循环播放的 <see cref="VideoStreamPlayer" /> 背景和由视觉提示驱动的 <see cref="Sprite2D" /> 图层。
+    ///     </para>
     /// </summary>
     public static class AncientStageProceduralRootFactory
     {
         private static PackedScene? _placeholderBackgroundPackedScene;
 
         /// <summary>
-        ///     Empty scene used as a placeholder so <c>EventModel.CreateBackgroundScene</c> can complete before the
-        ///     layout patch mounts the procedural layers.
-        ///     空场景占位符，使 <c>EventModel.CreateBackgroundScene</c> 可以在
-        ///     布局补丁挂载程序化图层之前完成。
+        ///     <para xml:lang="en">
+        ///         Gets the empty placeholder scene that allows <c>EventModel.CreateBackgroundScene</c> to complete before
+        ///         the layout patch mounts the procedural layers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取空白占位场景，使 <c>EventModel.CreateBackgroundScene</c> 能在布局补丁挂载程序化图层之前完成。
+        ///     </para>
         /// </summary>
         public static PackedScene PlaceholderBackgroundPackedScene
         {
             get
             {
-                if (_placeholderBackgroundPackedScene != null)
+                if (_placeholderBackgroundPackedScene != null &&
+                    GodotObject.IsInstanceValid(_placeholderBackgroundPackedScene))
                     return _placeholderBackgroundPackedScene;
 
                 var placeholder = new Control { Name = "RitsuAncientStagePlaceholder" };
-                _placeholderBackgroundPackedScene = new();
-                _placeholderBackgroundPackedScene.Pack(placeholder);
-                return _placeholderBackgroundPackedScene;
+                var packedScene = new PackedScene();
+                var error = packedScene.Pack(placeholder);
+                placeholder.Free();
+                if (error != Error.Ok)
+                {
+                    packedScene.Dispose();
+                    throw new InvalidOperationException(
+                        $"Could not pack the Ancient-stage placeholder scene: {error}.");
+                }
+
+                _placeholderBackgroundPackedScene = packedScene;
+                return packedScene;
             }
         }
 
         /// <summary>
-        ///     Creates the procedural layer root, attaches it to <paramref name="host" />, and starts configured playback.
-        ///     创建程序化图层根节点，将其附加到 <paramref name="host" />，并启动已配置的播放。
+        ///     <para xml:lang="en">
+        ///         Creates the procedural layer root, attaches it to <paramref name="host" />, and starts configured playback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建程序化图层的根节点，将其附加到 <paramref name="host" />，并按配置开始播放。
+        ///     </para>
         /// </summary>
         public static Control BuildAndMount(NAncientBgContainer host, AncientEventStageProceduralVisualSet stage)
         {
             ArgumentNullException.ThrowIfNull(host);
             ArgumentNullException.ThrowIfNull(stage);
+            // Preserve the public-facing object name in the exception.
+#pragma warning disable CA1513
+            if (!GodotObject.IsInstanceValid(host))
+                throw new ObjectDisposedException(nameof(host));
+#pragma warning restore CA1513
 
             var outer = new Control { Name = "RitsuAncientStageProcedural" };
-            outer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-            outer.OffsetLeft = 0;
-            outer.OffsetTop = 0;
-            outer.OffsetRight = 0;
-            outer.OffsetBottom = 0;
-            outer.MouseFilter = Control.MouseFilterEnum.Ignore;
-
-            if (!string.IsNullOrWhiteSpace(stage.BackgroundVideoPath))
-                MountBackgroundVideo(outer, stage.BackgroundVideoPath.Trim());
-            else if (stage.BackgroundCueSet != null)
-                MountBackgroundCues(outer, stage);
-            else
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    "[AncientStage] StageProcedural has neither BackgroundVideoPath nor BackgroundCueSet.");
-
-            Control? fgLayer = null;
-            if (stage.ForegroundCueSet != null)
+            try
             {
-                fgLayer = CreateSpriteLayer("RitsuAncientStageFg", stage.ForegroundLayerStyle);
-                outer.AddChild(fgLayer);
-            }
+                outer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+                outer.OffsetLeft = 0;
+                outer.OffsetTop = 0;
+                outer.OffsetRight = 0;
+                outer.OffsetBottom = 0;
+                outer.MouseFilter = Control.MouseFilterEnum.Ignore;
 
-            host.AddChildSafely(outer);
+                if (!string.IsNullOrWhiteSpace(stage.BackgroundVideoPath))
+                    MountBackgroundVideo(outer, stage.BackgroundVideoPath.Trim());
+                else if (stage.BackgroundCueSet != null)
+                    MountBackgroundCues(outer, stage);
+                else
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        "[AncientStage] StageProcedural has neither BackgroundVideoPath nor BackgroundCueSet.");
 
-            if (stage.ForegroundCueSet == null || fgLayer == null)
+                Control? fgLayer = null;
+                if (stage.ForegroundCueSet != null)
+                {
+                    fgLayer = CreateSpriteLayer("RitsuAncientStageFg", stage.ForegroundLayerStyle);
+                    outer.AddChild(fgLayer);
+                }
+
+                host.AddChildSafely(outer);
+
+                if (stage.ForegroundCueSet == null || fgLayer == null)
+                    return outer;
+
+                var fgCue = string.IsNullOrWhiteSpace(stage.ForegroundLoopCueName)
+                    ? "loop"
+                    : stage.ForegroundLoopCueName!;
+                ModCreatureVisualPlayback.TryPlayOnVisualRoot(fgLayer, null, fgCue, true, stage.ForegroundCueSet);
+
                 return outer;
+            }
+            catch
+            {
+                // Keep cleanup conditional while preserving a single rethrow point.
+                // ReSharper disable once InvertIf
+                if (GodotObject.IsInstanceValid(outer))
+                {
+                    if (outer.GetParent() is { } parent && GodotObject.IsInstanceValid(parent))
+                        parent.RemoveChildSafely(outer);
+                    outer.QueueFreeSafely();
+                }
 
-            var fgCue = string.IsNullOrWhiteSpace(stage.ForegroundLoopCueName) ? "loop" : stage.ForegroundLoopCueName!;
-            ModCreatureVisualPlayback.TryPlayOnVisualRoot(fgLayer, null, fgCue, true, stage.ForegroundCueSet);
-
-            return outer;
+                throw;
+            }
         }
 
         private static void MountBackgroundVideo(Control outer, string path)
@@ -99,7 +144,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Visuals
             }
 
             var stream = ResourceLoader.Load<VideoStream>(path);
-            if (stream == null)
+            if (stream == null || !GodotObject.IsInstanceValid(stream))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace($"[AncientStage] Could not load VideoStream: '{path}'");
                 outer.AddChild(video);

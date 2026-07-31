@@ -134,7 +134,7 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(Player), nameof(Player.RemoveRelicInternal), [typeof(RelicModel), typeof(bool)], true)];
         }
 
-        public static void Prefix(RelicModel relic)
+        public static void Postfix(RelicModel relic)
         {
             ModModelIdentityRegistry.Unregister(relic);
         }
@@ -173,7 +173,7 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(Player), "RemovePotionInternal", [typeof(PotionModel)], true)];
         }
 
-        public static void Prefix(PotionModel potion)
+        public static void Postfix(PotionModel potion)
         {
             ModModelIdentityRegistry.Unregister(potion);
         }
@@ -212,7 +212,7 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(PowerModel), nameof(PowerModel.RemoveInternal), [], true)];
         }
 
-        public static void Prefix(PowerModel __instance)
+        public static void Postfix(PowerModel __instance)
         {
             ModModelIdentityRegistry.Unregister(__instance);
         }
@@ -290,9 +290,14 @@ namespace STS2RitsuLib.Models.Identity.Patches
             return [new(typeof(OrbQueue), nameof(OrbQueue.Clear), [], true)];
         }
 
-        public static void Prefix(OrbQueue __instance)
+        public static void Prefix(OrbQueue __instance, out OrbModel[] __state)
         {
-            foreach (var orb in __instance.Orbs)
+            __state = [.. __instance.Orbs];
+        }
+
+        public static void Postfix(OrbModel[] __state)
+        {
+            foreach (var orb in __state)
                 ModModelIdentityRegistry.Unregister(orb);
         }
     }
@@ -366,9 +371,15 @@ namespace STS2RitsuLib.Models.Identity.Patches
             ];
         }
 
-        public static void Prefix(Creature creature)
+        public static void Prefix(CombatState __instance, Creature creature, out bool __state)
         {
-            ModModelIdentityRegistry.Unregister(creature.Monster);
+            __state = ReferenceEquals(creature.CombatState, __instance) && __instance.ContainsCreature(creature);
+        }
+
+        public static void Postfix(Creature creature, bool __state)
+        {
+            if (__state)
+                ModModelIdentityRegistry.Unregister(creature.Monster);
         }
     }
 

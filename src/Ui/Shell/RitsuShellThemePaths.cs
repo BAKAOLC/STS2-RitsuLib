@@ -4,15 +4,27 @@ using STS2RitsuLib.Utils.Persistence;
 namespace STS2RitsuLib.Ui.Shell
 {
     /// <summary>
-    ///     Paths for the shell themes folder under global mod data.
-    ///     全局 mod 数据下 shell 主题文件夹的路径。
+    ///     <para xml:lang="en">
+    ///         Provides paths to the shell-theme directory within global mod data.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供全局模组数据中 Shell 主题目录的路径。
+    ///     </para>
     /// </summary>
     public static class RitsuShellThemePaths
     {
         /// <summary>
-        ///     Virtual <c>user://</c> path to the shell themes directory.
-        ///     指向 shell 主题目录的虚拟 <c>user://</c> 路径。
+        ///     <para xml:lang="en">
+        ///         Gets the virtual <c>user://</c> path to the shell-theme directory.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 Shell 主题目录的虚拟 <c>user://</c> 路径。
+        ///     </para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The virtual path to the shell-theme directory.</para>
+        ///     <para xml:lang="zh-CN">Shell 主题目录的虚拟路径。</para>
+        /// </returns>
         public static string GetShellThemesDirectoryVirtual()
         {
             var basePath = ProfileManager.GetBasePath(SaveScope.Global, 0);
@@ -20,9 +32,30 @@ namespace STS2RitsuLib.Ui.Shell
         }
 
         /// <summary>
-        ///     Creates the shell themes directory if needed; returns the globalized absolute path.
-        ///     需要时创建 shell 主题目录；返回全局化后的绝对路径。
+        ///     <para xml:lang="en">
+        ///         Resolves the shell-theme directory to an absolute path and creates the directory when necessary.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 Shell 主题目录解析为绝对路径，并在需要时创建该目录。
+        ///     </para>
         /// </summary>
+        /// <param name="absolutePath">
+        ///     <para xml:lang="en">
+        ///         Receives the resolved absolute path. The value may contain the attempted path when the method
+        ///         returns <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         接收解析后的绝对路径。方法返回 <see langword="false" /> 时，该值仍可能包含尝试使用的路径。
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the directory is available; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若目录可用，则为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool TryEnsureShellThemesDirectory(out string absolutePath)
         {
             absolutePath = "";

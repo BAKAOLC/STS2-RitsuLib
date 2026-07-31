@@ -7,10 +7,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Patches <see cref="RestSiteOption.Icon" /> to load a custom texture when the option implements
-    ///     <see cref="IModRestSiteOptionAssetOverrides" />.
-    ///     修补 <see cref="RestSiteOption.Icon" />，当选项实现
-    ///     <see cref="IModRestSiteOptionAssetOverrides" /> 时加载自定义纹理。
+    ///     <para xml:lang="en">
+    ///         Patches <see cref="RestSiteOption.Icon" /> to load a custom texture when the option implements
+    ///         <see cref="IModRestSiteOptionAssetOverrides" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         修补 <see cref="RestSiteOption.Icon" />，使实现 <see cref="IModRestSiteOptionAssetOverrides" /> 的选项
+    ///         能够加载自定义纹理。
+    ///     </para>
     /// </summary>
     internal class RestSiteOptionIconPatch : IPatchMethod
     {
@@ -34,12 +38,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     Patches <see cref="RestSiteOption.Title" /> to return a custom <see cref="LocString" /> when the option
-    ///     implements <see cref="IModRestSiteOptionCustomTitle" />.
-    ///     implements <c>IModRestSiteOptionCustomTitle</c>.
-    ///     修补 <see cref="RestSiteOption.Title" />，当选项
-    ///     实现 <see cref="IModRestSiteOptionCustomTitle" /> 时返回自定义 <see cref="LocString" />。
-    ///     实现 <c>IModRestSiteOptionCustomTitle</c>。
+    ///     <para xml:lang="en">
+    ///         Patches <see cref="RestSiteOption.Title" /> so options implementing
+    ///         <see cref="IModRestSiteOptionCustomTitle" /> can return a custom <see cref="LocString" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         修补 <see cref="RestSiteOption.Title" />，使实现 <see cref="IModRestSiteOptionCustomTitle" /> 的选项
+    ///         能够返回自定义 <see cref="LocString" />。
+    ///     </para>
     /// </summary>
     internal class RestSiteOptionTitlePatch : IPatchMethod
     {

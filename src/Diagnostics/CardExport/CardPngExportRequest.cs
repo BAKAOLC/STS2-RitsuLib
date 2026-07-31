@@ -1,70 +1,93 @@
 namespace STS2RitsuLib.Diagnostics.CardExport
 {
     /// <summary>
-    ///     Parameters for a batch PNG export of <see cref="MegaCrit.Sts2.Core.Models.CardModel" /> instances.
-    ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel" /> 实例批量 PNG 导出的参数。
+    ///     <para xml:lang="en">
+    ///         Specifies options for exporting <see cref="MegaCrit.Sts2.Core.Models.CardModel" /> instances to PNG.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         指定将 <see cref="MegaCrit.Sts2.Core.Models.CardModel" /> 实例批量导出为 PNG 的选项。
+    ///     </para>
     /// </summary>
     public readonly struct CardPngExportRequest
     {
         /// <summary>
-        ///     Absolute or Godot <c>user://</c> / <c>res://</c> output directory. Invalid path characters in card ids are
-        ///     stripped from file names.
-        ///     绝对路径或 Godot <c>user://</c> / <c>res://</c> 输出目录。卡牌 id 中的无效路径字符会
-        ///     从文件名中剔除。
+        ///     <para xml:lang="en">
+        ///         The absolute or Godot <c>user://</c> or <c>res://</c> output directory. Invalid filename characters
+        ///         in card IDs are replaced.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         绝对路径或 Godot <c>user://</c>、<c>res://</c> 输出目录。卡牌 ID 中不适用于文件名的字符会被替换。
+        ///     </para>
         /// </summary>
         public string OutputDirectory { get; init; }
 
         /// <summary>
-        ///     Uniform scale applied to the card (and panel layout). Values below 1 shrink; above 1 enlarge (e.g. 2 for
-        ///     higher-resolution exports).
-        ///     应用到卡牌（和面板布局）的统一缩放。小于 1 会缩小，大于 1 会放大（例如 2 用于
-        ///     更高分辨率导出）。
+        ///     <para xml:lang="en">
+        ///         The uniform scale applied to the card and surrounding layout. Values below <c>1</c> shrink the
+        ///         output; values above <c>1</c> enlarge it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         应用于卡牌及周边布局的统一缩放比例。小于 <c>1</c> 时缩小，大于 <c>1</c> 时放大。
+        ///     </para>
         /// </summary>
         public float Scale { get; init; }
 
         /// <summary>
-        ///     Rasterization mode.
-        ///     栅格化模式。
+        ///     <para xml:lang="en">The capture mode.</para>
+        ///     <para xml:lang="zh-CN">捕获模式。</para>
         /// </summary>
         public CardPngExportCaptureMode CaptureMode { get; init; }
 
         /// <summary>
-        ///     When true, also exports one <c>_upgraded</c> PNG for cards where
-        ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel.IsUpgradable" /> is true.
-        ///     为 true 时，还会为
-        ///     <see cref="MegaCrit.Sts2.Core.Models.CardModel.IsUpgradable" /> 为 true 的卡牌导出一个 <c>_upgraded</c> PNG。
+        ///     <para xml:lang="en">
+        ///         Whether to export an additional <c>_upgraded</c> PNG for each upgradable card.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         是否为每张可升级卡牌额外导出一个 <c>_upgraded</c> PNG。
+        ///     </para>
         /// </summary>
         public bool IncludeUpgradedVariants { get; init; }
 
         /// <summary>
-        ///     When set, only cards whose <see cref="MegaCrit.Sts2.Core.Models.ModelId.Entry" /> contains this substring
-        ///     (ordinal ignore-case) are exported.
-        ///     设置后，仅导出 <see cref="MegaCrit.Sts2.Core.Models.ModelId.Entry" /> 包含此子串的卡牌
-        ///     （ordinal ignore-case）。
+        ///     <para xml:lang="en">
+        ///         An optional case-insensitive substring filter applied to
+        ///         <see cref="MegaCrit.Sts2.Core.Models.ModelId.Entry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的忽略大小写子字符串筛选条件，应用于
+        ///         <see cref="MegaCrit.Sts2.Core.Models.ModelId.Entry" />。
+        ///     </para>
         /// </summary>
         public string? IdFilterSubstring { get; init; }
 
         /// <summary>
-        ///     When positive, stops after this many <em>base</em> cards (upgraded variants do not count toward the cap).
-        ///     为正数时，在导出这么多张 <em>基础</em>卡牌后停止（升级变体不计入上限）。
+        ///     <para xml:lang="en">
+        ///         The maximum number of base cards to export when positive. Upgraded variants do not count toward this
+        ///         limit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为正数时表示最多导出的基础卡牌数；升级版本不计入此限制。
+        ///     </para>
         /// </summary>
         public int MaxBaseCards { get; init; }
 
         /// <summary>
-        ///     When false (default), only exports cards that appear in the in-game card library
-        ///     (<see cref="MegaCrit.Sts2.Core.Models.CardModel.ShouldShowInCardLibrary" />), matching the compendium set.
-        ///     When true, also includes registered cards that are hidden from the library.
-        ///     为 false（默认）时，只导出游戏内卡牌库中出现的卡牌
-        ///     （<see cref="MegaCrit.Sts2.Core.Models.CardModel.ShouldShowInCardLibrary" />），与概要集合匹配。
-        ///     为 true 时，还会包含已注册但从库中隐藏的卡牌。
+        ///     <para xml:lang="en">
+        ///         Whether to include registered cards hidden from the in-game card library.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         是否包含未显示在游戏内卡牌图鉴中的已注册卡牌。
+        ///     </para>
         /// </summary>
         public bool IncludeCardsHiddenFromLibrary { get; init; }
 
         /// <summary>
-        ///     Defaults: <see cref="Scale" /> = 1, <see cref="CaptureMode" /> = <see cref="CardPngExportCaptureMode.CardOnly" />,
-        ///     <see cref="IncludeUpgradedVariants" /> = true.
-        ///     默认值：<see cref="Scale" /> = 1，<see cref="CaptureMode" /> = <see cref="CardPngExportCaptureMode.CardOnly" />，
-        ///     <see cref="IncludeUpgradedVariants" /> = true。
+        ///     <para xml:lang="en">
+        ///         Creates a request with scale <c>1</c>, card-only capture, and upgraded variants enabled.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建缩放比例为 <c>1</c>、仅捕获卡牌且包含升级版本的请求。
+        ///     </para>
         /// </summary>
         public static CardPngExportRequest CreateDefault(string outputDirectory)
         {

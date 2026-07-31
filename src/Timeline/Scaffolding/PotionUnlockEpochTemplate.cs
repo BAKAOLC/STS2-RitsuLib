@@ -6,44 +6,55 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     <see cref="EpochModel" /> base that unlocks potions from declared CLR types and optional timeline expansions.
+    ///     <para xml:lang="en">
+    ///         Provides an <see cref="EpochModel" /> base that unlocks potions declared by CLR type and optionally expands
+    ///         the timeline.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供按 CLR 类型声明并解锁药水的 <see cref="EpochModel" /> 基类，也可选择扩展时间线。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Pool visibility still depends on <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> for each
-    ///     potion type. Register those bindings from a pack using <see cref="TimelineColumnPackEntry{TStory}" /> with
-    ///     <c>EpochSlotBuilder&lt;TEpoch&gt;</c> callbacks (<c>RequireAllPotionsInPool&lt;TPool&gt;()</c>,
-    ///     <c>Potions(IReadOnlyList&lt;Type&gt;)</c>), or enqueue equivalent <c>RequireEpoch</c> steps from
-    ///     <see cref="ModContentPackBuilder" />.
-    ///     池可见性仍取决于每种
-    ///     药水类型的 <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" />。使用
-    ///     <see cref="TimelineColumnPackEntry{TStory}" /> 搭配
-    ///     <c>EpochSlotBuilder&lt;TEpoch&gt;</c> 回调（<c>RequireAllPotionsInPool&lt;TPool&gt;()</c>、
-    ///     <c>Potions(IReadOnlyList&lt;Type&gt;)</c>），或从 <see cref="ModContentPackBuilder" /> 入队等效的 <c>RequireEpoch</c> 步骤。
+    ///     <para xml:lang="en">
+    ///         Potion-pool visibility still requires <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" /> for
+    ///         each potion type. A content pack can add these requirements through
+    ///         <see cref="TimelineColumnPackEntry{TStory}" /> callbacks or equivalent
+    ///         <see cref="ModContentPackBuilder" /> steps.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         药水池可见性仍要求为每种药水类型调用
+    ///         <see cref="Unlocks.ModUnlockRegistry.RequireEpoch(Type,string)" />。内容包可通过
+    ///         <see cref="TimelineColumnPackEntry{TStory}" /> 回调或等效的 <see cref="ModContentPackBuilder" /> 步骤添加要求。
+    ///     </para>
     /// </remarks>
     public abstract class PotionUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
-        ///     Resolved <see cref="PotionModel" /> instances for <see cref="PotionTypes" />.
-        ///     解析出的 <see cref="PotionModel" /> 实例，用于 <see cref="PotionTypes" />。
+        ///     <para xml:lang="en">
+        ///         Gets the <see cref="PotionModel" /> instances resolved from <see cref="PotionTypes" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取从 <see cref="PotionTypes" /> 解析出的 <see cref="PotionModel" /> 实例。</para>
         /// </summary>
-        public IReadOnlyList<PotionModel> Potions =>
-        [
-            .. PotionTypes
-                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type))),
-        ];
+        public IReadOnlyList<PotionModel> Potions => RequireUnlockPresentationItems(
+            PotionTypes
+                .Select(type => ModelDb.GetById<PotionModel>(ModelDb.GetId(type)))
+                .ToArray(),
+            nameof(PotionTypes));
 
         /// <inheritdoc />
         public override string UnlockText => CreatePotionUnlockText([.. Potions]);
 
         /// <summary>
-        ///     CLR types of potions to unlock; each must be registered in <see cref="ModelDb" />.
-        ///     要解锁的药水 CLR 类型; 每个都必须注册到 <see cref="ModelDb" />。
+        ///     <para xml:lang="en">
+        ///         Gets the CLR types of potions to unlock; each must be registered in <see cref="ModelDb" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取要解锁的药水 CLR 类型；每种类型都必须已注册到 <see cref="ModelDb" />。</para>
         /// </summary>
         protected abstract IEnumerable<Type> PotionTypes { get; }
 
         /// <summary>
-        ///     Additional epoch types to append when this epoch unlocks; default none.
-        ///     要追加的额外纪元类型 当此纪元解锁时; 默认为无。
+        ///     <para xml:lang="en">Gets additional epoch types appended when this epoch unlocks.</para>
+        ///     <para xml:lang="zh-CN">获取此纪元解锁时追加的其他纪元类型。</para>
         /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 
@@ -56,7 +67,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            NTimelineScreen.Instance.QueuePotionUnlock([.. Potions]);
+            var potions = Potions;
+            NTimelineScreen.Instance.QueuePotionUnlock([.. potions]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

@@ -19,21 +19,38 @@ using Timer = Godot.Timer;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Full-screen mod settings browser: sidebar (mods, pages, sections) and content pane.
-    ///     全屏 mod 设置浏览器：侧边栏（mod、页面、section）和内容窗格。
+    ///     <para xml:lang="en">
+    ///         Displays the full-screen mod settings browser, including its mod, page, and section sidebar and its
+    ///         settings content pane.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         显示全屏模组设置浏览器，包括模组、页面与节侧边栏以及设置内容窗格。
+    ///     </para>
     /// </summary>
     public partial class RitsuModSettingsSubmenu : NSubmenu
     {
         /// <summary>
-        ///     Deferred <see cref="FlushDirtyBindings" /> interval after the last binding write.
-        ///     最后一次 binding 写入后的延迟 <see cref="FlushDirtyBindings" /> 间隔。
+        ///     <para xml:lang="en">
+        ///         Delay between the most recent binding write and the deferred
+        ///         <see cref="FlushDirtyBindings" /> call.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         最近一次绑定写入与延迟调用 <see cref="FlushDirtyBindings" /> 之间的间隔。
+        ///     </para>
         /// </summary>
         private const double AutosaveDelaySeconds = 0.35;
 
         /// <summary>
-        ///     Debounced mirror paragraph / static refresh. Must be greater than <see cref="AutosaveDelaySeconds" /> so the
-        ///     first flush sees persisted and callback <c>Save()</c> effects without an extra refresh pass.
-        ///     防抖的镜像段落 / 静态刷新。必须大于 <see cref="AutosaveDelaySeconds" />，使第一次 flush 能看到持久化和回调 <c>Save()</c> 效果，而不需要额外刷新遍历。
+        ///     <para xml:lang="en">
+        ///         Debounce interval for refreshing mirrored and other dynamic display content. It remains longer than
+        ///         <see cref="AutosaveDelaySeconds" /> so the refresh observes persistence and custom
+        ///         <see cref="IModSettingsBinding.Save" /> side effects from the same edit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         刷新镜像内容及其他动态显示内容的防抖间隔。该值保持大于 <see cref="AutosaveDelaySeconds" />，
+        ///         使刷新能够观察到同一次编辑所产生的持久化结果与自定义
+        ///         <see cref="IModSettingsBinding.Save" /> 副作用。
+        ///     </para>
         /// </summary>
         private const double RefreshDebounceSeconds = AutosaveDelaySeconds + 0.04;
 
@@ -124,8 +141,13 @@ namespace STS2RitsuLib.Settings
         private bool _viewportSizeSignalConnected;
 
         /// <summary>
-        ///     Builds layout (header, sidebar, scrollable content) and wires initial structure.
-        ///     构建布局（标题、侧边栏、可滚动内容）并连接初始结构。
+        ///     <para xml:lang="en">
+        ///         Creates the header, sidebar, and scrollable content layout and initializes their structural
+        ///         connections.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建标题、侧边栏与可滚动内容布局，并初始化其结构连接。
+        ///     </para>
         /// </summary>
         public RitsuModSettingsSubmenu()
         {
@@ -339,24 +361,37 @@ namespace STS2RitsuLib.Settings
             if (!RitsuShellThemePaths.TryEnsureShellThemesDirectory(out var themesAbs))
                 return;
 
+            FileSystemWatcher? watcher = null;
             try
             {
-                var watcher = new FileSystemWatcher(themesAbs, "*.theme.json")
+                watcher = new(themesAbs, "*.theme.json")
                 {
                     IncludeSubdirectories = false,
                     NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
-                    EnableRaisingEvents = true,
                 };
                 watcher.Changed += OnShellThemeFileChanged;
                 watcher.Created += OnShellThemeFileChanged;
                 watcher.Deleted += OnShellThemeFileChanged;
                 watcher.Renamed += OnShellThemeFileRenamed;
+                watcher.EnableRaisingEvents = true;
                 _shellThemeWatcher = watcher;
             }
-            catch
+            catch (Exception ex)
             {
-                // Best-effort: live theme reload is optional.
-                _shellThemeWatcher = null;
+                try
+                {
+                    watcher?.Dispose();
+                    _shellThemeWatcher = null;
+                }
+                catch (Exception cleanupEx)
+                {
+                    _shellThemeWatcher = watcher;
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Settings] Failed to dispose the inactive shell-theme watcher: {cleanupEx}");
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Live shell-theme reload is unavailable: {ex}");
             }
         }
 
@@ -374,9 +409,11 @@ namespace STS2RitsuLib.Settings
                 _shellThemeWatcher.Renamed -= OnShellThemeFileRenamed;
                 _shellThemeWatcher.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                RitsuLibFramework.Logger.Warn(
+                    $"[Settings] Failed to stop the live shell-theme watcher: {ex}");
+                return;
             }
 
             _shellThemeWatcher = null;
@@ -444,8 +481,9 @@ namespace STS2RitsuLib.Settings
 
         internal void MarkDirty(IModSettingsBinding binding)
         {
-            MarkDirtyRecursive(binding, []);
+            ArgumentNullException.ThrowIfNull(binding);
             _saveTimer = AutosaveDelaySeconds;
+            MarkDirtyRecursive(binding, []);
         }
 
         private void MarkDirtyRecursive(IModSettingsBinding binding, HashSet<IModSettingsBinding> visited)
@@ -478,6 +516,7 @@ namespace STS2RitsuLib.Settings
 
         internal void RegisterRefreshAction(Action action, ModSettingsUiRefreshSpec spec, string? pageScopeId = null)
         {
+            ArgumentNullException.ThrowIfNull(action);
             if (spec.IsStaticDisplay)
                 return;
 
@@ -644,6 +683,7 @@ namespace STS2RitsuLib.Settings
 
         private void CallDeferredIfAlive(Action action)
         {
+            ArgumentNullException.ThrowIfNull(action);
             var owner = this;
             Callable.From(() =>
             {
@@ -747,7 +787,7 @@ namespace STS2RitsuLib.Settings
                 return;
 
             if ((!ReferenceEquals(node, this) && !IsAncestorOf(node)) ||
-                NControllerManager.Instance?.IsUsingController != true)
+                !Sts2InputCompat.IsUsingDirectionalNavigation)
                 return;
 
             if (_suppressScrollSync)
@@ -762,9 +802,22 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Selects a mod in the sidebar, optionally opening <paramref name="pageId" />, and rebuilds the UI.
-        ///     在侧边栏中选择一个 mod，可选打开 <paramref name="pageId" />，并重建 UI。
+        ///     <para xml:lang="en">
+        ///         Selects and exclusively expands a mod in the sidebar, optionally selects one of its pages, and
+        ///         refreshes the UI.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在侧边栏中选择并仅展开指定模组，可选择其中一个页面，然后刷新界面。
+        ///     </para>
         /// </summary>
+        /// <param name="modId">
+        ///     <para xml:lang="en">The ID of the mod to select.</para>
+        ///     <para xml:lang="zh-CN">要选择的模组 ID。</para>
+        /// </param>
+        /// <param name="pageId">
+        ///     <para xml:lang="en">The optional ID of the page to select.</para>
+        ///     <para xml:lang="zh-CN">要选择的可选页面 ID。</para>
+        /// </param>
         public void SelectMod(string modId, string? pageId = null)
         {
             _selectedModId = modId;
@@ -778,9 +831,18 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Switches to <paramref name="pageId" /> within the currently selected mod.
-        ///     在当前选中的 mod 内切换到 <paramref name="pageId" />。
+        ///     <para xml:lang="en">
+        ///         Selects a page within the current mod and refreshes the UI. The request is ignored when no mod is
+        ///         selected.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在当前模组中选择页面并刷新界面；未选择模组时忽略该请求。
+        ///     </para>
         /// </summary>
+        /// <param name="pageId">
+        ///     <para xml:lang="en">The ID of the page to select.</para>
+        ///     <para xml:lang="zh-CN">要选择的页面 ID。</para>
+        /// </param>
         public void NavigateToPage(string pageId)
         {
             if (string.IsNullOrWhiteSpace(_selectedModId))
@@ -795,9 +857,23 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Opens <paramref name="pageId" /> and scrolls/focuses <paramref name="sectionId" />.
-        ///     打开 <paramref name="pageId" /> 并滚动/聚焦 <paramref name="sectionId" />。
+        ///     <para xml:lang="en">
+        ///         Selects a page and section within the current mod, then scrolls the selected section into view and
+        ///         updates focus navigation. The request is ignored when no mod is selected.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在当前模组中选择页面与节，然后将所选节滚动到可见区域并更新焦点导航；
+        ///         未选择模组时忽略该请求。
+        ///     </para>
         /// </summary>
+        /// <param name="pageId">
+        ///     <para xml:lang="en">The ID of the page that contains the section.</para>
+        ///     <para xml:lang="zh-CN">节所在页面的 ID。</para>
+        /// </param>
+        /// <param name="sectionId">
+        ///     <para xml:lang="en">The ID of the section to reveal.</para>
+        ///     <para xml:lang="zh-CN">要显示的节 ID。</para>
+        /// </param>
         public void NavigateToSection(string pageId, string sectionId)
         {
             if (string.IsNullOrWhiteSpace(_selectedModId))
@@ -838,6 +914,8 @@ namespace STS2RitsuLib.Settings
         internal async Task<ModSettingsOpenResult> OpenToAsync(ModSettingsLocation location,
             ModSettingsOpenOptions options)
         {
+            ArgumentNullException.ThrowIfNull(location);
+            ArgumentNullException.ThrowIfNull(options);
             if (!IsInstanceValid(this))
                 return ModSettingsOpenResult.Error("ui-not-available", "The mod settings UI is not available.",
                     location);
@@ -1022,7 +1100,7 @@ namespace STS2RitsuLib.Settings
             if (_paneHotkeyHintRow == null)
                 return;
 
-            var usingController = NControllerManager.Instance?.IsUsingController ?? false;
+            var usingController = Sts2InputCompat.IsUsingController;
             _paneHotkeyHintRow.Visible = usingController && Visible;
             if (!usingController)
                 return;
@@ -2019,11 +2097,14 @@ namespace STS2RitsuLib.Settings
                     VisibleOnHostSurfaces: ModSettingsHostSurface.All,
                     SidebarVisibleOnlyWhenActive: false,
                     VisibleWhen: null,
+                    Sections.Count: > 0,
                 } &&
-                page.Sections.Count > 0 &&
-                page.Sections.All(section => section.VisibleWhen == null &&
-                                             section.VisibleOnHostSurfaces == ModSettingsHostSurface.All &&
-                                             section.Entries.Count > 0 &&
+                page.Sections.All(section => section is
+                                             {
+                                                 VisibleWhen: null,
+                                                 VisibleOnHostSurfaces: ModSettingsHostSurface.All,
+                                                 Entries.Count: > 0,
+                                             } &&
                                              section.Entries.All(entry =>
                                                  !ModSettingsVisibility.RequiresDynamicEvaluation(entry))))
                 return null;
@@ -2233,19 +2314,12 @@ namespace STS2RitsuLib.Settings
 
             if (page.EnabledWhen != null)
             {
-                ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, page.EnabledWhen());
-                ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, page.EnabledWhen());
-                bool enabled;
+                var initiallyEnabled = ModSettingsPredicate.Evaluate(page.EnabledWhen);
+                ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, initiallyEnabled);
+                ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, initiallyEnabled);
                 RegisterRefreshAction(() =>
                 {
-                    try
-                    {
-                        enabled = page.EnabledWhen();
-                    }
-                    catch
-                    {
-                        enabled = true;
-                    }
+                    var enabled = ModSettingsPredicate.Evaluate(page.EnabledWhen);
 
                     ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, enabled);
                     ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, enabled);
@@ -2870,14 +2944,14 @@ namespace STS2RitsuLib.Settings
             var focusLost = owner == null || !IsInstanceValid(owner) || !IsAncestorOf(owner);
             if (focusLost)
                 GrabControlDeferred(_initialFocusedControl,
-                    _initialFocusedControl is ModSettingsSidebarList && IsControllerInputActive());
+                    _initialFocusedControl is ModSettingsSidebarList && IsDirectionalNavigationActive());
             else
                 _initialFocusedControl?.TryGrabFocus();
         }
 
-        private static bool IsControllerInputActive()
+        private static bool IsDirectionalNavigationActive()
         {
-            return NControllerManager.Instance?.IsUsingController ?? false;
+            return Sts2InputCompat.IsUsingDirectionalNavigation;
         }
 
         private void GrabControlDeferred(Control? target, bool showSidebarFocusTooltip = false)
@@ -3128,7 +3202,7 @@ namespace STS2RitsuLib.Settings
                    @event.IsActionPressed(MegaInput.left) ||
                    @event.IsActionPressed(MegaInput.right) ||
                    @event.IsActionPressed(MegaInput.select) ||
-                   @event.IsActionPressed(MegaInput.accept) ||
+                   @event.IsActionPressed(Sts2InputCompat.ConfirmAction) ||
                    @event.IsActionPressed(MegaInput.cancel) ||
                    @event.IsActionPressed(MegaInput.pauseAndBack) ||
                    @event.IsActionPressed(PaneSidebarHotkey) ||
@@ -3172,7 +3246,9 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            var roots = ModSettingsBindingFlushPlanner.SelectEffectiveSaveRoots(_dirtyBindings);
+            var pending = _dirtyBindings.ToHashSet();
+            var roots = ModSettingsBindingFlushPlanner.SelectEffectiveSaveRoots(pending);
+            _dirtyBindings.ExceptWith(pending);
             foreach (var binding in roots)
                 try
                 {
@@ -3180,12 +3256,13 @@ namespace STS2RitsuLib.Settings
                 }
                 catch (Exception ex)
                 {
+                    _dirtyBindings.Add(binding);
+                    var bindingType = binding.GetType();
                     RitsuLibFramework.Logger.Warn(
-                        $"[Settings] Failed to save '{binding.ModId}:{binding.DataKey}': {ex.Message}");
+                        $"[Settings] Failed to save '{bindingType.FullName ?? bindingType.Name}': {ex}");
                 }
 
-            _dirtyBindings.Clear();
-            _saveTimer = -1;
+            _saveTimer = _dirtyBindings.Count > 0 ? AutosaveDelaySeconds : -1;
         }
 
         private void SubscribeLocaleChanges()
@@ -3193,15 +3270,8 @@ namespace STS2RitsuLib.Settings
             if (_localeSubscribed)
                 return;
 
-            try
-            {
-                LocManager.Instance.SubscribeToLocaleChange(OnLocaleChanged);
-                _localeSubscribed = true;
-            }
-            catch
-            {
-                // ignored
-            }
+            LocManager.Instance.SubscribeToLocaleChange(OnLocaleChanged);
+            _localeSubscribed = true;
         }
 
         private void UnsubscribeLocaleChanges()
@@ -3209,15 +3279,7 @@ namespace STS2RitsuLib.Settings
             if (!_localeSubscribed)
                 return;
 
-            try
-            {
-                LocManager.Instance.UnsubscribeToLocaleChange(OnLocaleChanged);
-            }
-            catch
-            {
-                // ignored
-            }
-
+            LocManager.Instance.UnsubscribeToLocaleChange(OnLocaleChanged);
             _localeSubscribed = false;
         }
 
@@ -3691,7 +3753,8 @@ namespace STS2RitsuLib.Settings
                 }
 
                 if (!@event.IsEcho() &&
-                    (@event.IsActionPressed(MegaInput.select) || @event.IsActionPressed(MegaInput.accept) ||
+                    (@event.IsActionPressed(MegaInput.select) ||
+                     @event.IsActionPressed(Sts2InputCompat.ConfirmAction) ||
                      @event.IsActionPressed("ui_accept")))
                 {
                     ActivateCurrent();
@@ -4412,8 +4475,8 @@ namespace STS2RitsuLib.Settings
             public required int BuildVersion { get; set; }
             public CancellationTokenSource? BuildCancellation { get; set; }
             public Task? BuildTask { get; set; }
-            public required Control HeaderHost { get; set; }
-            public required Control ContentHost { get; set; }
+            public required Control HeaderHost { get; init; }
+            public required Control ContentHost { get; init; }
             public required string PageId { get; init; }
             public required string PageKey { get; init; }
             public required Control Root { get; init; }

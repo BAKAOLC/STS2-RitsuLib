@@ -4,6 +4,7 @@ using Godot.Collections;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Ui.Shell;
@@ -18,11 +19,11 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Implemented by entry controls that consume directional (up/down) input while in an active mode — an
-    ///     open dropdown/actions menu, or a key-binding control recording input. The submenu's live focus
-    ///     navigator skips controls whose ancestor claims directional input so the control's own handling wins.
-    ///     由那些在激活模式下消费方向(上/下)输入的条目控件实现——展开的下拉/操作菜单,或正在录制输入的按键绑定控件。子菜单的
-    ///     实时焦点导航器会跳过其祖先声明占用方向输入的控件,让该控件自身的处理生效。
+    ///     <para xml:lang="en">
+    ///         Identifies controls that temporarily claim directional input, such as open dropdowns or active
+    ///         key-capture editors.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">标识会临时占用方向输入的控件，例如已展开的下拉列表或正在捕获按键的编辑器。</para>
     /// </summary>
     internal interface IModSettingsDirectionalInputClaimant
     {
@@ -30,8 +31,8 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Standard On/Off toggle control used by mod settings entries.
-    ///     mod 设置条目使用的标准 On/Off 切换控件。
+    ///     <para xml:lang="en">A themed on/off toggle used by settings entries.</para>
+    ///     <para xml:lang="zh-CN">设置条目使用的主题开关控件。</para>
     /// </summary>
     public sealed partial class ModSettingsToggleControl : ModSettingsGamepadCompatibleButton
     {
@@ -40,16 +41,16 @@ namespace STS2RitsuLib.Settings
         private Action<bool>? _onChanged;
 
         /// <summary>
-        ///     Creates a toggle control with an initial value and change callback.
-        ///     创建带初始值和变更回调的切换控件。
+        ///     <para xml:lang="en">Creates a toggle with an initial value and an optional user-change callback.</para>
+        ///     <para xml:lang="zh-CN">创建带初始值和可选用户变更回调的开关控件。</para>
         /// </summary>
         /// <param name="initialValue">
-        ///     Whether the toggle starts enabled.
-        ///     切换控件初始是否启用。
+        ///     <para xml:lang="en">Whether the toggle initially displays the on state.</para>
+        ///     <para xml:lang="zh-CN">开关初始是否显示为开启状态。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Callback invoked after the value changes.
-        ///     值变化后调用的回调。
+        ///     <para xml:lang="en">The optional callback invoked after the user toggles the value.</para>
+        ///     <para xml:lang="zh-CN">用户切换值后调用的可选回调。</para>
         /// </param>
         public ModSettingsToggleControl(bool initialValue, Action<bool>? onChanged)
         {
@@ -75,8 +76,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the toggle control for Godot scene instantiation.
-        ///     创建用于 Godot 场景实例化的切换控件。
+        ///     <para xml:lang="en">Initializes an unconfigured toggle for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的开关控件。</para>
         /// </summary>
         public ModSettingsToggleControl()
         {
@@ -99,8 +100,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Initializes the visual state after the control enters the scene tree.
-        ///     控件进入场景树后初始化视觉状态。
+        ///     <para xml:lang="en">Applies the configured initial value when the control becomes ready.</para>
+        ///     <para xml:lang="zh-CN">控件就绪时应用已配置的初始值。</para>
         /// </summary>
         public override void _Ready()
         {
@@ -109,12 +110,12 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Sets the current toggle value without recreating the control.
-        ///     设置当前切换值而不重新创建控件。
+        ///     <para xml:lang="en">Updates the displayed value without invoking the user-change callback.</para>
+        ///     <para xml:lang="zh-CN">更新显示值而不调用用户变更回调。</para>
         /// </summary>
         /// <param name="value">
-        ///     The value to display.
-        ///     要显示的值。
+        ///     <para xml:lang="en">The value to display.</para>
+        ///     <para xml:lang="zh-CN">要显示的值。</para>
         /// </param>
         public void SetValue(bool value)
         {
@@ -126,22 +127,12 @@ namespace STS2RitsuLib.Settings
         {
             _isOn = !_isOn;
             ApplyVisualState();
-            InvokeOnChangedSafely(_isOn);
+            InvokeOnChanged(_isOn);
         }
 
-        private void InvokeOnChangedSafely(bool value)
+        private void InvokeOnChanged(bool value)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(value);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsToggleControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(value);
         }
 
         private void ApplyVisualState()
@@ -404,7 +395,7 @@ namespace STS2RitsuLib.Settings
             if (_slider == null)
                 return;
 
-            var blockMouse = NControllerManager.Instance?.IsUsingController == true;
+            var blockMouse = Sts2InputCompat.IsUsingDirectionalNavigation;
             _slider.MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Pass;
         }
 
@@ -440,7 +431,7 @@ namespace STS2RitsuLib.Settings
             if (_suppressCallbacks)
                 return;
             RefreshValueLabel(value);
-            InvokeOnChangedSafely(value);
+            InvokeOnChanged(value);
         }
 
         public void SetValue(double value)
@@ -453,10 +444,16 @@ namespace STS2RitsuLib.Settings
             var normalized = NormalizeSliderValue(value, min, max, _slider.Step);
 
             _suppressCallbacks = true;
-            _slider.Value = normalized;
-            var actual = _slider.Value;
-            RefreshValueLabel(actual);
-            _suppressCallbacks = false;
+            try
+            {
+                _slider.Value = normalized;
+                var actual = _slider.Value;
+                RefreshValueLabel(actual);
+            }
+            finally
+            {
+                _suppressCallbacks = false;
+            }
         }
 
         private static double NormalizeSliderValue(double value, double minValue, double maxValue, double step)
@@ -467,19 +464,9 @@ namespace STS2RitsuLib.Settings
             return v;
         }
 
-        private void InvokeOnChangedSafely(double value)
+        private void InvokeOnChanged(double value)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(value);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsSliderControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(value);
         }
 
         private void SyncBindingToCanonicalSliderValue(double bindingClaimed)
@@ -498,8 +485,10 @@ namespace STS2RitsuLib.Settings
             {
                 _valueEdit.Text = _formatter(value);
             }
-            catch
+            catch (Exception ex)
             {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModSettingsSliderControl] Formatter failed for value '{value}'; using invariant fallback: {ex}");
                 _valueEdit.Text = value.ToString("0.##", CultureInfo.InvariantCulture);
             }
         }
@@ -570,12 +559,11 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Legacy <see cref="float" /> slider row: Godot <see cref="HSlider" /> still uses <see cref="double" /> values,
-    ///     but comparisons and binding I/O stay in <see cref="float" /> space to match obsolete
-    ///     <c>AddSlider(..., IModSettingsValueBinding&lt;float&gt;, ...)</c> mods without double bridges.
-    ///     旧版 <see cref="float" /> 滑块行：Godot <see cref="HSlider" /> 仍使用 <see cref="double" /> 值，
-    ///     但比较和 binding I/O 保持在 <see cref="float" /> 空间，以匹配不带 double 桥接的过时
-    ///     <c>AddSlider(..., IModSettingsValueBinding&lt;float&gt;, ...)</c> mod。
+    ///     <para xml:lang="en">
+    ///         Compatibility slider for the obsolete float-binding overload; Godot renders double values while
+    ///         normalization and callbacks remain in <see cref="float" /> space.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">用于已弃用浮点绑定重载的兼容滑块；Godot 以双精度值呈现，但规范化和回调仍使用 <see cref="float" />。</para>
     /// </summary>
     public sealed partial class ModSettingsFloatSliderControl : Control
     {
@@ -588,32 +576,32 @@ namespace STS2RitsuLib.Settings
         private LineEdit? _valueEdit;
 
         /// <summary>
-        ///     Creates a float-backed slider editor.
-        ///     创建以 float 支持的滑块编辑器。
+        ///     <para xml:lang="en">Creates a float-backed slider with an editable formatted value field.</para>
+        ///     <para xml:lang="zh-CN">创建带可编辑格式化数值字段的单精度浮点滑块。</para>
         /// </summary>
         /// <param name="initialValue">
-        ///     The starting value shown by the slider.
-        ///     滑块显示的起始值。
+        ///     <para xml:lang="en">The initial value, normalized to the configured range and step.</para>
+        ///     <para xml:lang="zh-CN">初始值；会按配置的范围和步长进行规范化。</para>
         /// </param>
         /// <param name="minValue">
-        ///     The minimum allowed value.
-        ///     允许的最小值。
+        ///     <para xml:lang="en">The inclusive minimum value.</para>
+        ///     <para xml:lang="zh-CN">允许的最小值（含该值）。</para>
         /// </param>
         /// <param name="maxValue">
-        ///     The maximum allowed value.
-        ///     允许的最大值。
+        ///     <para xml:lang="en">The inclusive maximum value.</para>
+        ///     <para xml:lang="zh-CN">允许的最大值（含该值）。</para>
         /// </param>
         /// <param name="step">
-        ///     The slider increment.
-        ///     滑块增量。
+        ///     <para xml:lang="en">The positive increment used to snap values.</para>
+        ///     <para xml:lang="zh-CN">用于吸附数值的正数步长。</para>
         /// </param>
         /// <param name="formatter">
-        ///     Formats committed values for the text field.
-        ///     为文本字段格式化已提交值。
+        ///     <para xml:lang="en">Formats effective slider values for the text field.</para>
+        ///     <para xml:lang="zh-CN">用于将滑块的实际值格式化到文本字段。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Invoked when the effective value changes.
-        ///     有效值变化时调用。
+        ///     <para xml:lang="en">The callback invoked when user input changes the effective value.</para>
+        ///     <para xml:lang="zh-CN">用户输入改变实际值时调用的回调。</para>
         /// </param>
         public ModSettingsFloatSliderControl(
             float initialValue,
@@ -678,8 +666,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured slider for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的滑块。</para>
         /// </summary>
         public ModSettingsFloatSliderControl()
         {
@@ -766,7 +754,7 @@ namespace STS2RitsuLib.Settings
             if (_slider == null)
                 return;
 
-            var blockMouse = NControllerManager.Instance?.IsUsingController == true;
+            var blockMouse = Sts2InputCompat.IsUsingDirectionalNavigation;
             _slider.MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Pass;
         }
 
@@ -803,16 +791,16 @@ namespace STS2RitsuLib.Settings
                 return;
             var f = (float)value;
             RefreshValueLabel(f);
-            InvokeOnChangedSafely(f);
+            InvokeOnChanged(f);
         }
 
         /// <summary>
-        ///     Replaces the current slider value without leaving stale formatted text behind.
-        ///     替换当前滑块值，且不留下过时的格式化文本。
+        ///     <para xml:lang="en">Normalizes and displays a value without invoking the change callback.</para>
+        ///     <para xml:lang="zh-CN">规范化并显示一个值，而不调用变更回调。</para>
         /// </summary>
         /// <param name="value">
-        ///     The value to apply.
-        ///     要应用的值。
+        ///     <para xml:lang="en">The value to normalize and display.</para>
+        ///     <para xml:lang="zh-CN">要规范化并显示的值。</para>
         /// </param>
         public void SetValue(float value)
         {
@@ -825,10 +813,16 @@ namespace STS2RitsuLib.Settings
             var normalized = NormalizeSliderValue(value, min, max, step);
 
             _suppressCallbacks = true;
-            _slider.Value = normalized;
-            var actual = (float)_slider.Value;
-            RefreshValueLabel(actual);
-            _suppressCallbacks = false;
+            try
+            {
+                _slider.Value = normalized;
+                var actual = (float)_slider.Value;
+                RefreshValueLabel(actual);
+            }
+            finally
+            {
+                _suppressCallbacks = false;
+            }
         }
 
         private static float NormalizeSliderValue(float value, float minValue, float maxValue, float step)
@@ -839,19 +833,9 @@ namespace STS2RitsuLib.Settings
             return v;
         }
 
-        private void InvokeOnChangedSafely(float value)
+        private void InvokeOnChanged(float value)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(value);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsFloatSliderControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(value);
         }
 
         private void SyncBindingToCanonicalSliderValue(float bindingClaimed)
@@ -870,8 +854,10 @@ namespace STS2RitsuLib.Settings
             {
                 _valueEdit.Text = _formatter(value);
             }
-            catch
+            catch (Exception ex)
             {
+                RitsuLibFramework.Logger.Warn(
+                    $"[ModSettingsFloatSliderControl] Formatter failed for value '{value}'; using invariant fallback: {ex}");
                 _valueEdit.Text = value.ToString("0.##", CultureInfo.InvariantCulture);
             }
         }
@@ -943,12 +929,12 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Stepper-style choice editor that cycles through labeled values.
-    ///     在带标签值之间循环的步进式选项编辑器。
+    ///     <para xml:lang="en">A stepper choice editor that cycles through labeled values with previous and next buttons.</para>
+    ///     <para xml:lang="zh-CN">通过上一个和下一个按钮循环选择带标签值的步进式选项编辑器。</para>
     /// </summary>
     /// <typeparam name="TValue">
-    ///     The stored option value type.
-    ///     存储的选项值类型。
+    ///     <para xml:lang="en">The stored option-value type.</para>
+    ///     <para xml:lang="zh-CN">所存储选项值的类型。</para>
     /// </typeparam>
     public sealed partial class ModSettingsChoiceControl<TValue> : Control
     {
@@ -963,20 +949,20 @@ namespace STS2RitsuLib.Settings
         private bool _suppressCallbacks;
 
         /// <summary>
-        ///     Creates a stepper-style choice editor.
-        ///     创建步进式选项编辑器。
+        ///     <para xml:lang="en">Creates a stepper from labeled values and an initial selection.</para>
+        ///     <para xml:lang="zh-CN">根据带标签值和初始选中值创建步进式选项编辑器。</para>
         /// </summary>
         /// <param name="options">
-        ///     The labeled values available to the editor.
-        ///     编辑器可用的带标签值。
+        ///     <para xml:lang="en">The labeled values available to the editor.</para>
+        ///     <para xml:lang="zh-CN">编辑器可用的带标签值。</para>
         /// </param>
         /// <param name="currentValue">
-        ///     The value selected initially.
-        ///     初始选中的值。
+        ///     <para xml:lang="en">The initial value; the first option is used when no value matches.</para>
+        ///     <para xml:lang="zh-CN">初始值；没有匹配项时使用第一个选项。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Invoked after the user picks a different value.
-        ///     用户选择不同值后调用。
+        ///     <para xml:lang="en">The callback invoked after the user steps to another value.</para>
+        ///     <para xml:lang="zh-CN">用户切换到其他值后调用的回调。</para>
         /// </param>
         public ModSettingsChoiceControl(
             IReadOnlyList<(TValue Value, string Label)> options,
@@ -1034,8 +1020,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured stepper for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的步进控件。</para>
         /// </summary>
         public ModSettingsChoiceControl()
         {
@@ -1106,31 +1092,24 @@ namespace STS2RitsuLib.Settings
             _currentIndex = (_currentIndex + delta + _optionsWithValues.Length) % _optionsWithValues.Length;
             RefreshCurrentLabel();
             if (!_suppressCallbacks)
-                InvokeOnChangedSafely(_optionsWithValues[_currentIndex].Value);
+                InvokeOnChanged(_optionsWithValues[_currentIndex].Value);
         }
 
-        private void InvokeOnChangedSafely(TValue value)
+        private void InvokeOnChanged(TValue value)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(value);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsChoiceControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(value);
         }
 
         /// <summary>
-        ///     Selects the matching option without triggering the external change callback.
-        ///     选择匹配选项而不触发外部变更回调。
+        ///     <para xml:lang="en">
+        ///         Selects a matching option without invoking the change callback; unmatched values leave the
+        ///         selection unchanged.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">选择匹配项而不调用变更回调；值不匹配时保持当前选项不变。</para>
         /// </summary>
         /// <param name="value">
-        ///     The value to select.
-        ///     要选择的值。
+        ///     <para xml:lang="en">The value to select.</para>
+        ///     <para xml:lang="zh-CN">要选择的值。</para>
         /// </param>
         public void SetValue(TValue value)
         {
@@ -1141,15 +1120,32 @@ namespace STS2RitsuLib.Settings
             if (index < 0)
                 return;
             _suppressCallbacks = true;
-            _currentIndex = index;
-            RefreshCurrentLabel();
-            _suppressCallbacks = false;
+            try
+            {
+                _currentIndex = index;
+                RefreshCurrentLabel();
+            }
+            finally
+            {
+                _suppressCallbacks = false;
+            }
         }
 
         /// <summary>
-        ///     Replaces all choices and updates the selected value without invoking callbacks.
-        ///     替换所有选项并更新选中值，且不调用回调。
+        ///     <para xml:lang="en">
+        ///         Replaces every option and selects the matching value, or the first option, without invoking the
+        ///         callback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">替换全部选项，并在不调用回调的情况下选择匹配值；没有匹配项时选择第一个选项。</para>
         /// </summary>
+        /// <param name="options">
+        ///     <para xml:lang="en">The replacement labeled values; an empty list disables the stepper.</para>
+        ///     <para xml:lang="zh-CN">用于替换的带标签值；空列表会禁用步进控件。</para>
+        /// </param>
+        /// <param name="selectedValue">
+        ///     <para xml:lang="en">The value to select after replacement.</para>
+        ///     <para xml:lang="zh-CN">替换后要选择的值。</para>
+        /// </param>
         public void SetOptions(IReadOnlyList<(TValue Value, string Label)> options, TValue selectedValue)
         {
             _optionsWithValues = [.. options];
@@ -1253,12 +1249,12 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Dropdown-style choice editor for labeled values.
-    ///     用于带标签值的下拉式选项编辑器。
+    ///     <para xml:lang="en">A virtualized dropdown editor for choosing among labeled values.</para>
+    ///     <para xml:lang="zh-CN">用于从带标签值中选择一项的虚拟化下拉编辑器。</para>
     /// </summary>
     /// <typeparam name="TValue">
-    ///     The stored option value type.
-    ///     存储的选项值类型。
+    ///     <para xml:lang="en">The stored option-value type.</para>
+    ///     <para xml:lang="zh-CN">所存储选项值的类型。</para>
     /// </typeparam>
     public sealed partial class ModSettingsDropdownChoiceControl<TValue> : HBoxContainer,
         IModSettingsTransientPopupOwner, IModSettingsDirectionalInputClaimant
@@ -1291,20 +1287,20 @@ namespace STS2RitsuLib.Settings
         private Control? _virtualContent;
 
         /// <summary>
-        ///     Creates a dropdown-style choice editor.
-        ///     创建下拉式选项编辑器。
+        ///     <para xml:lang="en">Creates a dropdown from labeled values and an initial selection.</para>
+        ///     <para xml:lang="zh-CN">根据带标签值和初始选中值创建下拉选项编辑器。</para>
         /// </summary>
         /// <param name="options">
-        ///     The labeled values available to the editor.
-        ///     编辑器可用的带标签值。
+        ///     <para xml:lang="en">The labeled values available to the editor.</para>
+        ///     <para xml:lang="zh-CN">编辑器可用的带标签值。</para>
         /// </param>
         /// <param name="currentValue">
-        ///     The value selected initially.
-        ///     初始选中的值。
+        ///     <para xml:lang="en">The initial value; the first option is used when no value matches.</para>
+        ///     <para xml:lang="zh-CN">初始值；没有匹配项时使用第一个选项。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Invoked after the user picks a different value.
-        ///     用户选择不同值后调用。
+        ///     <para xml:lang="en">The callback invoked after the user chooses a value.</para>
+        ///     <para xml:lang="zh-CN">用户选择值后调用的回调。</para>
         /// </param>
         public ModSettingsDropdownChoiceControl(
             IReadOnlyList<(TValue Value, string Label)> options,
@@ -1361,8 +1357,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured dropdown for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的下拉控件。</para>
         /// </summary>
         public ModSettingsDropdownChoiceControl()
         {
@@ -1376,8 +1372,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Raised immediately before the dropdown opens so callers can refresh its options on demand.
-        ///     在下拉列表展开前立即触发，调用方可据此按需刷新选项。
+        ///     <para xml:lang="en">Occurs immediately before opening so callers can replace options on demand.</para>
+        ///     <para xml:lang="zh-CN">在下拉列表展开前立即发生，调用方可按需替换选项。</para>
         /// </summary>
         public event Action? Opening
         {
@@ -1494,12 +1490,15 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Selects the matching option without reopening the dropdown or firing the external callback.
-        ///     选择匹配选项而不重新打开下拉菜单，也不触发外部回调。
+        ///     <para xml:lang="en">
+        ///         Selects a matching option without opening the dropdown or invoking the change callback;
+        ///         unmatched values leave the selection unchanged.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">选择匹配项而不展开下拉列表或调用变更回调；值不匹配时保持当前选项不变。</para>
         /// </summary>
         /// <param name="value">
-        ///     The value to select.
-        ///     要选择的值。
+        ///     <para xml:lang="en">The value to select.</para>
+        ///     <para xml:lang="zh-CN">要选择的值。</para>
         /// </param>
         public void SetValue(TValue value)
         {
@@ -1512,21 +1511,39 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _suppressCallbacks = true;
-            _selectedIndex = idx;
-            RefreshFaceLabel();
-            if (_dropOpen)
+            try
             {
-                SyncVirtualDropdownRows();
-                WireRowFocusNeighbors();
+                _selectedIndex = idx;
+                RefreshFaceLabel();
+                // Keep the dropdown-only refresh grouped without returning from inside the try/finally.
+                // ReSharper disable once InvertIf
+                if (_dropOpen)
+                {
+                    SyncVirtualDropdownRows();
+                    WireRowFocusNeighbors();
+                }
             }
-
-            _suppressCallbacks = false;
+            finally
+            {
+                _suppressCallbacks = false;
+            }
         }
 
         /// <summary>
-        ///     Replaces all dropdown options and updates the selected value without firing callbacks.
-        ///     替换所有下拉选项并更新选中值，且不触发回调。
+        ///     <para xml:lang="en">
+        ///         Replaces every option and selects the matching value, or the first option, without invoking the
+        ///         callback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">替换全部选项，并在不调用回调的情况下选择匹配值；没有匹配项时选择第一个选项。</para>
         /// </summary>
+        /// <param name="options">
+        ///     <para xml:lang="en">The replacement labeled values.</para>
+        ///     <para xml:lang="zh-CN">用于替换的带标签值。</para>
+        /// </param>
+        /// <param name="selectedValue">
+        ///     <para xml:lang="en">The value to select after replacement.</para>
+        ///     <para xml:lang="zh-CN">替换后要选择的值。</para>
+        /// </param>
         public void SetOptions(IReadOnlyList<(TValue Value, string Label)> options, TValue selectedValue)
         {
             _optionsWithValues = [.. options];
@@ -2140,23 +2157,13 @@ namespace STS2RitsuLib.Settings
 
             _selectedIndex = index;
             RefreshFaceLabel();
-            InvokeOnChangedSafely(_optionsWithValues[index].Value);
+            InvokeOnChanged(_optionsWithValues[index].Value);
             CloseDropdown();
         }
 
-        private void InvokeOnChangedSafely(TValue value)
+        private void InvokeOnChanged(TValue value)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(value);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsDropdownChoiceControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(value);
         }
 
         private void ApplyFaceDropdownChrome()
@@ -2445,8 +2452,8 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Color editor with a visible swatch picker and editable hex value.
-    ///     带可见色块选择器和可编辑十六进制值的颜色编辑器。
+    ///     <para xml:lang="en">A color editor with a swatch picker and an editable serialized value field.</para>
+    ///     <para xml:lang="zh-CN">带色样选择器和可编辑序列化值字段的颜色编辑器。</para>
     /// </summary>
     public sealed partial class ModSettingsColorControl : HBoxContainer, IModSettingsTransientPopupOwner
     {
@@ -2459,37 +2466,33 @@ namespace STS2RitsuLib.Settings
         private Color _unsetPreviewColor = RitsuShellTheme.Current.Color.UnsetPreview;
 
         /// <summary>
-        ///     Creates a color editor. 保留旧版两参数构造函数以维持 ABI 兼容。
-        /// </summary>
-        /// <param name="initialValue">The initial color string (hex, HTML, or BaseLib <c>[r,g,b,a]</c>), or null/empty.</param>
-        /// <param name="onChanged">Callback invoked after the committed color value changes.</param>
-        public ModSettingsColorControl(string? initialValue, Action<string?> onChanged)
-            : this(initialValue, onChanged, true, false)
-        {
-        }
-
-        /// <summary>
-        ///     Creates a color editor with picker options.
-        ///     创建带选择器选项的颜色编辑器。
+        ///     <para xml:lang="en">Creates a color editor with configurable alpha and HDR intensity editing.</para>
+        ///     <para xml:lang="zh-CN">创建可配置 Alpha 和 HDR 强度编辑的颜色编辑器。</para>
         /// </summary>
         /// <param name="initialValue">
-        ///     The initial color string (hex, HTML, or BaseLib <c>[r,g,b,a]</c>), or null/empty.
-        ///     指定 initial color string (hex, HTML, or BaseLib <c>[r,g,b,a]</c>), or null/empty。
+        ///     <para xml:lang="en">
+        ///         The initial hex, Godot HTML, or BaseLib-compatible component string; null or empty leaves the
+        ///         value unset.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始十六进制、Godot HTML 或 BaseLib 兼容分量字符串；为 <see langword="null" /> 或空时保持未设置状态。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Callback invoked after the committed color value changes.
-        ///     已提交颜色值变化后调用的回调。
+        ///     <para xml:lang="en">The callback invoked after the user commits a color or clears the value.</para>
+        ///     <para xml:lang="zh-CN">用户提交颜色或清除值后调用的回调。</para>
         /// </param>
         /// <param name="editAlpha">
-        ///     Whether the swatch popup exposes alpha editing.
-        ///     色块弹窗是否公开 alpha 编辑。
+        ///     <para xml:lang="en">Whether the picker allows editing the alpha channel.</para>
+        ///     <para xml:lang="zh-CN">颜色选择器是否允许编辑 Alpha 通道。</para>
         /// </param>
         /// <param name="editIntensity">
-        ///     Whether the popup exposes intensity (HDR) editing.
-        ///     弹窗是否公开强度（HDR）编辑。
+        ///     <para xml:lang="en">Whether the picker allows HDR intensity values outside the standard color range.</para>
+        ///     <para xml:lang="zh-CN">颜色选择器是否允许使用超出标准颜色范围的 HDR 强度值。</para>
         /// </param>
-        public ModSettingsColorControl(string? initialValue, Action<string?> onChanged, bool editAlpha,
-            bool editIntensity)
+        public ModSettingsColorControl(
+            string? initialValue,
+            Action<string?> onChanged,
+            bool editAlpha = true,
+            bool editIntensity = false)
         {
             _onChanged = onChanged;
 
@@ -2548,16 +2551,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the color editor for Godot scene instantiation.
-        ///     创建用于 Godot 场景实例化的颜色编辑器。
+        ///     <para xml:lang="en">Initializes an unconfigured color editor for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的颜色编辑器。</para>
         /// </summary>
         public ModSettingsColorControl()
         {
         }
 
         /// <summary>
-        ///     Current hex text shown by the editor, or an empty string when the color is unset.
-        ///     编辑器当前显示的 hex 文本；颜色未设置时为空字符串。
+        ///     <para xml:lang="en">Gets the serialized value shown by the editor, or an empty string while unset.</para>
+        ///     <para xml:lang="zh-CN">获取编辑器显示的序列化值；未设置时为空字符串。</para>
         /// </summary>
         public string ValueText => _hexEdit?.Text ?? _lastCommitted;
 
@@ -2569,18 +2572,48 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Serializes <paramref name="color" /> as an 8-digit hex string for settings storage / display.
-        ///     将 <paramref name="color" /> 序列化为 8 位十六进制字符串，用于设置存储 / 显示。
+        ///     <para xml:lang="en">
+        ///         Serializes a standard-range color as <c>#RRGGBBAA</c>, or an HDR color as a BaseLib-compatible
+        ///         invariant component list.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将标准范围颜色序列化为 <c>#RRGGBBAA</c>，将 HDR 颜色序列化为 BaseLib 兼容的固定区域性分量列表。</para>
         /// </summary>
+        /// <param name="color">
+        ///     <para xml:lang="en">The finite color to serialize.</para>
+        ///     <para xml:lang="zh-CN">要序列化的有限颜色值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The settings-storage representation.</para>
+        ///     <para xml:lang="zh-CN">用于设置存储的字符串表示。</para>
+        /// </returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">Thrown when any color component is not finite.</para>
+        ///     <para xml:lang="zh-CN">任一颜色分量不是有限值时抛出。</para>
+        /// </exception>
         public static string FormatStoredColorString(Color color)
         {
             return FormatColorValue(color);
         }
 
         /// <summary>
-        ///     Parses hex, Godot HTML, or BaseLib-style <c>[r, g, b, a]</c> component lists (invariant floats).
-        ///     解析 hex、Godot HTML 或 BaseLib 风格的 <c>[r, g, b, a]</c> 分量列表（固定区域性的浮点数）。
+        ///     <para xml:lang="en">Tries to parse hex, Godot HTML, or a BaseLib-compatible invariant four-component color string.</para>
+        ///     <para xml:lang="zh-CN">尝试解析十六进制、Godot HTML 或 BaseLib 兼容的固定区域性四分量颜色字符串。</para>
         /// </summary>
+        /// <param name="text">
+        ///     <para xml:lang="en">The serialized color text.</para>
+        ///     <para xml:lang="zh-CN">序列化的颜色文本。</para>
+        /// </param>
+        /// <param name="color">
+        ///     <para xml:lang="en">Receives the parsed finite color on success.</para>
+        ///     <para xml:lang="zh-CN">成功时接收解析得到的有限颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the text contains a supported finite color; otherwise
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">文本包含受支持的有限颜色时为 <see langword="true" />；否则为 <see langword="false" />。</para>
+        /// </returns>
         public static bool TryDeserializeColorForSettings(string? text, out Color color)
         {
             color = default;
@@ -2591,22 +2624,16 @@ namespace STS2RitsuLib.Settings
             if (TryParseHexColorString(trimmed, out color))
                 return true;
 
-            try
-            {
-                color = Color.FromHtml(trimmed);
-                return true;
-            }
-            catch
-            {
-                // ignored
-            }
+            if (!Color.HtmlIsValid(trimmed))
+                return TryParseBracketRgbaColor(trimmed, out color);
 
-            return TryParseBracketRgbaColor(trimmed, out color);
+            color = Color.FromHtml(trimmed);
+            return true;
         }
 
         /// <summary>
-        ///     Wires editor events after the control enters the scene tree.
-        ///     控件进入场景树后连接编辑器事件。
+        ///     <para xml:lang="en">Connects text and picker events when the control becomes ready.</para>
+        ///     <para xml:lang="zh-CN">控件就绪时连接文本字段和颜色选择器事件。</para>
         /// </summary>
         public override void _Ready()
         {
@@ -2628,12 +2655,15 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Updates the displayed value without recreating the control.
-        ///     更新显示值而不重新创建控件。
+        ///     <para xml:lang="en">
+        ///         Parses and displays a value without invoking the change callback; invalid text restores the
+        ///         current presentation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">解析并显示一个值而不调用变更回调；文本无效时恢复当前显示。</para>
         /// </summary>
         /// <param name="value">
-        ///     The hex color to display, or null/empty to leave the field unset.
-        ///     要显示的 hex 颜色；为 null/空时保持字段未设置。
+        ///     <para xml:lang="en">The supported serialized color, or null or empty to display the unset state.</para>
+        ///     <para xml:lang="zh-CN">受支持的序列化颜色；为 <see langword="null" /> 或空时显示未设置状态。</para>
         /// </param>
         public void SetValue(string? value)
         {
@@ -2664,13 +2694,20 @@ namespace STS2RitsuLib.Settings
                 return;
 
             _suppressCallbacks = true;
-            _hexEdit?.Set("text", string.Empty);
-            _pickerButton?.Set("color", _unsetPreviewColor);
-            _suppressCallbacks = false;
+            try
+            {
+                _hexEdit?.Set("text", string.Empty);
+                _pickerButton?.Set("color", _unsetPreviewColor);
+            }
+            finally
+            {
+                _suppressCallbacks = false;
+            }
+
             _lastCommitted = string.Empty;
 
             if (notify)
-                InvokeOnChangedSafely(null);
+                InvokeOnChanged(null);
         }
 
         private void ApplyColor(Color color, bool notify)
@@ -2680,14 +2717,21 @@ namespace STS2RitsuLib.Settings
 
             var formatted = FormatColorValue(color);
             _suppressCallbacks = true;
-            _pickerButton?.Set("color", color);
-            _hexEdit?.Set("text", formatted);
-            _suppressCallbacks = false;
+            try
+            {
+                _pickerButton?.Set("color", color);
+                _hexEdit?.Set("text", formatted);
+            }
+            finally
+            {
+                _suppressCallbacks = false;
+            }
+
             _lastCommitted = formatted;
             _unsetPreviewColor = color;
 
             if (notify)
-                InvokeOnChangedSafely(formatted);
+                InvokeOnChanged(formatted);
         }
 
         private void RestoreCurrentPresentation()
@@ -2699,22 +2743,12 @@ namespace STS2RitsuLib.Settings
         {
             _pickerChangedWhileOpen = true;
             ApplyColor(color, false);
-            InvokeOnChangedSafely(FormatColorValue(color));
+            InvokeOnChanged(FormatColorValue(color));
         }
 
-        private void InvokeOnChangedSafely(string? value)
+        private void InvokeOnChanged(string? value)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(value);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsColorControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(value);
         }
 
         private void OnPickerPopupClosed()
@@ -2772,20 +2806,35 @@ namespace STS2RitsuLib.Settings
                 !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var g) ||
                 !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var b) ||
                 !float.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var a)) return false;
+            if (!float.IsFinite(r) || !float.IsFinite(g) || !float.IsFinite(b) || !float.IsFinite(a))
+                return false;
             color = new(r, g, b, a);
             return true;
         }
 
         private static string FormatColorValue(Color color)
         {
+            if (!float.IsFinite(color.R) || !float.IsFinite(color.G) ||
+                !float.IsFinite(color.B) || !float.IsFinite(color.A))
+                throw new ArgumentOutOfRangeException(nameof(color), color,
+                    "Color components must be finite.");
+
+            if (color.R is < 0f or > 1f || color.G is < 0f or > 1f ||
+                color.B is < 0f or > 1f || color.A is < 0f or > 1f)
+                return string.Create(CultureInfo.InvariantCulture,
+                    $"[{color.R:R}, {color.G:R}, {color.B:R}, {color.A:R}]");
+
             return
                 $"#{Mathf.RoundToInt(color.R * 255f):X2}{Mathf.RoundToInt(color.G * 255f):X2}{Mathf.RoundToInt(color.B * 255f):X2}{Mathf.RoundToInt(color.A * 255f):X2}";
         }
     }
 
     /// <summary>
-    ///     Keybinding capture editor used by settings pages and custom editors.
-    ///     设置页面和自定义编辑器使用的按键绑定捕获编辑器。
+    ///     <para xml:lang="en">
+    ///         A single-binding editor that captures keyboard combinations and, when enabled, Godot input
+    ///         actions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">捕获键盘组合，并可按配置捕获 Godot 输入动作的单绑定编辑器。</para>
     /// </summary>
     public sealed partial class ModSettingsKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
@@ -2801,28 +2850,28 @@ namespace STS2RitsuLib.Settings
         private Label? _hintLabel;
 
         /// <summary>
-        ///     Creates a keybinding capture editor.
-        ///     创建按键绑定捕获编辑器。
+        ///     <para xml:lang="en">Creates a keyboard-binding editor with the requested modifier-capture rules.</para>
+        ///     <para xml:lang="zh-CN">创建采用指定修饰键捕获规则的键盘绑定编辑器。</para>
         /// </summary>
         /// <param name="initialValue">
-        ///     The binding shown initially.
-        ///     初始显示的绑定。
+        ///     <para xml:lang="en">The binding text shown initially; this overload does not normalize it.</para>
+        ///     <para xml:lang="zh-CN">初始显示的绑定文本；此重载不会将其规范化。</para>
         /// </param>
         /// <param name="allowModifierCombos">
-        ///     Whether modifier combinations are allowed.
-        ///     是否允许修饰键组合。
+        ///     <para xml:lang="en">Whether pending modifier keys are included when a non-modifier key is captured.</para>
+        ///     <para xml:lang="zh-CN">捕获非修饰键时是否包含此前按下的修饰键。</para>
         /// </param>
         /// <param name="allowModifierOnly">
-        ///     Whether modifier-only bindings are allowed.
-        ///     是否允许仅修饰键的绑定。
+        ///     <para xml:lang="en">Whether releasing a captured modifier may commit a modifier-only binding.</para>
+        ///     <para xml:lang="zh-CN">释放已捕获的修饰键时是否可以提交仅含修饰键的绑定。</para>
         /// </param>
         /// <param name="distinguishModifierSides">
-        ///     Whether left and right modifier keys are recorded separately.
-        ///     是否分别记录左、右修饰键。
+        ///     <para xml:lang="en">Whether captured modifiers are qualified as left- or right-side tokens.</para>
+        ///     <para xml:lang="zh-CN">是否将捕获的修饰键记录为带左侧或右侧限定的标记。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Invoked after the binding changes.
-        ///     绑定变化后调用。
+        ///     <para xml:lang="en">The callback invoked after the user captures or clears the binding.</para>
+        ///     <para xml:lang="zh-CN">用户捕获或清除绑定后调用的回调。</para>
         /// </param>
         public ModSettingsKeyBindingControl(string initialValue, bool allowModifierCombos, bool allowModifierOnly,
             bool distinguishModifierSides, Action<string> onChanged)
@@ -2831,9 +2880,33 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a keyboard/action binding capture editor.
-        ///     创建键盘/action 绑定捕获编辑器。
+        ///     <para xml:lang="en">Creates a single-binding editor with optional Godot input-action capture.</para>
+        ///     <para xml:lang="zh-CN">创建可选择启用 Godot 输入动作捕获的单绑定编辑器。</para>
         /// </summary>
+        /// <param name="initialValue">
+        ///     <para xml:lang="en">The binding text shown initially; this constructor does not normalize it.</para>
+        ///     <para xml:lang="zh-CN">初始显示的绑定文本；此构造函数不会将其规范化。</para>
+        /// </param>
+        /// <param name="allowModifierCombos">
+        ///     <para xml:lang="en">Whether pending modifier keys are included when a non-modifier key is captured.</para>
+        ///     <para xml:lang="zh-CN">捕获非修饰键时是否包含此前按下的修饰键。</para>
+        /// </param>
+        /// <param name="allowModifierOnly">
+        ///     <para xml:lang="en">Whether releasing a captured modifier may commit a modifier-only binding.</para>
+        ///     <para xml:lang="zh-CN">释放已捕获的修饰键时是否可以提交仅含修饰键的绑定。</para>
+        /// </param>
+        /// <param name="distinguishModifierSides">
+        ///     <para xml:lang="en">Whether captured modifiers are qualified as left- or right-side tokens.</para>
+        ///     <para xml:lang="zh-CN">是否将捕获的修饰键记录为带左侧或右侧限定的标记。</para>
+        /// </param>
+        /// <param name="onChanged">
+        ///     <para xml:lang="en">The callback invoked after the user captures or clears the binding.</para>
+        ///     <para xml:lang="zh-CN">用户捕获或清除绑定后调用的回调。</para>
+        /// </param>
+        /// <param name="allowActionBindings">
+        ///     <para xml:lang="en">Whether pressed Godot input actions can be captured as <c>action:&lt;name&gt;</c> tokens.</para>
+        ///     <para xml:lang="zh-CN">是否可将按下的 Godot 输入动作捕获为 <c>action:&lt;名称&gt;</c> 标记。</para>
+        /// </param>
         public ModSettingsKeyBindingControl(string initialValue, bool allowModifierCombos, bool allowModifierOnly,
             bool distinguishModifierSides, Action<string> onChanged, bool allowActionBindings)
         {
@@ -2915,8 +2988,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured editor for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的编辑器。</para>
         /// </summary>
         public ModSettingsKeyBindingControl()
         {
@@ -2932,12 +3005,15 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Replaces the captured binding without starting capture mode.
-        ///     替换捕获的绑定而不启动捕获模式。
+        ///     <para xml:lang="en">
+        ///         Replaces the displayed binding without normalizing it, entering capture mode, or invoking the
+        ///         change callback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">替换显示的绑定，但不将其规范化、不进入捕获模式，也不调用变更回调。</para>
         /// </summary>
         /// <param name="value">
-        ///     The binding to display.
-        ///     要显示的绑定。
+        ///     <para xml:lang="en">The binding text to display.</para>
+        ///     <para xml:lang="zh-CN">要显示的绑定文本。</para>
         /// </param>
         public void SetValue(string value)
         {
@@ -3032,22 +3108,12 @@ namespace STS2RitsuLib.Settings
             _currentValue = value;
             RefreshText();
             if (notify)
-                InvokeOnChangedSafely(value);
+                InvokeOnChanged(value);
         }
 
-        private void InvokeOnChangedSafely(string value)
+        private void InvokeOnChanged(string value)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(value);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsKeyBindingControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(value);
         }
 
         private void RefreshText()
@@ -3099,13 +3165,41 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Uses <see cref="InputEventKey.PhysicalKeycode" /> when <paramref name="distinguishModifierSides" /> is true
-        ///     so Left Ctrl / Right Shift etc. are distinguished; otherwise uses the logical <see cref="InputEventKey.Keycode" />.
-        ///     当 <paramref name="distinguishModifierSides" /> 为 true 时使用 <see cref="InputEventKey.PhysicalKeycode" />，以区分 Left
-        ///     Ctrl / Right Shift 等；否则使用逻辑 <see cref="InputEventKey.Keycode" />。
+        ///     <para xml:lang="en">
+        ///         Converts a captured key event to a binding token, using <see cref="InputEventKey.Location" /> to
+        ///         qualify left- and right-side modifier keys when requested.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将捕获的按键事件转换为绑定标记，并在需要时根据 <see cref="InputEventKey.Location" /> 标明修饰键的左、右侧。
+        ///     </para>
         /// </summary>
+        /// <param name="keyEvent">
+        ///     <para xml:lang="en">The captured keyboard event.</para>
+        ///     <para xml:lang="zh-CN">捕获的键盘事件。</para>
+        /// </param>
+        /// <param name="distinguishModifierSides">
+        ///     <para xml:lang="en">Whether modifier locations should be preserved in the returned token.</para>
+        ///     <para xml:lang="zh-CN">返回标记中是否应保留修饰键侧别。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A key token accepted by the runtime hotkey parser.</para>
+        ///     <para xml:lang="zh-CN">运行时热键解析器可接受的按键标记。</para>
+        /// </returns>
         internal static string GetRecordedKeyName(InputEventKey keyEvent, bool distinguishModifierSides)
         {
+            if (distinguishModifierSides)
+            {
+                var modifierKind = RuntimeHotkeyParser.GetModifierKindForKeyEvent(keyEvent);
+                if (modifierKind != ModifierKind.None)
+                    switch (keyEvent.Location)
+                    {
+                        case KeyLocation.Left:
+                            return $"Left{modifierKind}";
+                        case KeyLocation.Right:
+                            return $"Right{modifierKind}";
+                    }
+            }
+
             var code = distinguishModifierSides ? keyEvent.PhysicalKeycode : keyEvent.Keycode;
             if (code == Key.None)
                 code = keyEvent.Keycode;
@@ -3153,11 +3247,13 @@ namespace STS2RitsuLib.Settings
         private readonly Action? _afterAction;
         private bool _dropOpen;
         private bool _hovered;
+        private IReadOnlyList<ModSettingsMenuAction>? _openActions;
         private Vector2I? _preferredPopupPosition;
 
         public ModSettingsActionsButton(IReadOnlyList<ModSettingsMenuAction> actions, Action? afterAction = null)
         {
-            _actions = actions;
+            ArgumentNullException.ThrowIfNull(actions);
+            _actions = [.. actions];
             _afterAction = afterAction;
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
@@ -3180,7 +3276,7 @@ namespace STS2RitsuLib.Settings
             Action? afterAction = null)
             : this([], afterAction)
         {
-            _actionsProvider = actionsProvider;
+            _actionsProvider = actionsProvider ?? throw new ArgumentNullException(nameof(actionsProvider));
         }
 
         public ModSettingsActionsButton()
@@ -3297,10 +3393,22 @@ namespace STS2RitsuLib.Settings
 
         private void OpenDropdown()
         {
-            if (GetActions().Count == 0)
+            _openActions = GetActions();
+            if (_openActions.Count == 0)
+            {
+                _openActions = null;
                 return;
+            }
 
-            SharedDropdown.Open(this);
+            try
+            {
+                SharedDropdown.Open(this);
+            }
+            finally
+            {
+                if (!_dropOpen)
+                    _openActions = null;
+            }
         }
 
         private void CloseDropdown()
@@ -3326,6 +3434,7 @@ namespace STS2RitsuLib.Settings
             SetProcessInput(false);
             SetProcessUnhandledInput(false);
             _preferredPopupPosition = null;
+            _openActions = null;
 
             if (restoreFocus && IsInstanceValid(this) && IsVisibleInTree())
                 GrabFocus();
@@ -3333,7 +3442,36 @@ namespace STS2RitsuLib.Settings
 
         private IReadOnlyList<ModSettingsMenuAction> GetActions()
         {
-            return _actionsProvider?.Invoke() ?? _actions;
+            if (_actionsProvider == null)
+                return FilterActions(_actions);
+
+            try
+            {
+                return FilterActions(_actionsProvider());
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] actionsProvider failed: {ex}");
+                return FilterActions(_actions);
+            }
+        }
+
+        private static IReadOnlyList<ModSettingsMenuAction> FilterActions(
+            IReadOnlyList<ModSettingsMenuAction>? actions)
+        {
+            // Mod-provided action lists may violate their declared nullable contracts at runtime.
+            // ReSharper disable RedundantAlwaysMatchSubpattern
+            var filtered = actions?
+                               .Where(static action => action is
+                               {
+                                   Label: not null,
+                                   IsEnabled: not null,
+                                   Action: not null,
+                               })
+                               .ToArray()
+                           ?? [];
+            // ReSharper restore RedundantAlwaysMatchSubpattern
+            return filtered;
         }
 
         private static StyleBoxFlat CreateActionsRowStyle(bool highlighted)
@@ -3529,34 +3667,36 @@ namespace STS2RitsuLib.Settings
 
         private void ActivateRow(int index)
         {
-            var actions = GetActions();
+            var actions = _openActions ?? GetActions();
             if (index < 0 || index >= actions.Count)
                 return;
 
             var def = actions[index];
-            if (!def.IsEnabled())
+            if (!IsActionEnabled(def))
                 return;
 
             try
             {
                 def.Action();
+                _afterAction?.Invoke();
+            }
+            finally
+            {
+                CloseDropdown();
+            }
+        }
+
+        private static bool IsActionEnabled(ModSettingsMenuAction action)
+        {
+            try
+            {
+                return action.IsEnabled();
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] action failed: {ex.Message}");
+                RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] IsEnabled failed: {ex}");
+                return false;
             }
-
-            if (_afterAction != null)
-                try
-                {
-                    _afterAction();
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn($"[ModSettingsActionsButton] afterAction failed: {ex.Message}");
-                }
-
-            CloseDropdown();
         }
 
         private sealed class SharedActionsDropdown
@@ -3724,7 +3864,7 @@ namespace STS2RitsuLib.Settings
                 if (_dropList == null)
                     return;
 
-                var actions = owner.GetActions();
+                var actions = owner._openActions ?? owner.GetActions();
                 _rowButtons.Clear();
                 var liveIndexes = Enumerable.Range(0, actions.Count).ToHashSet();
                 foreach (var staleIndex in _rowButtonCache.Keys.Where(index => !liveIndexes.Contains(index)).ToArray())
@@ -3762,7 +3902,7 @@ namespace STS2RitsuLib.Settings
                     row.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                         "components.dropdown.layout.actionsRow.minSize",
                         new(DropMinWidth - rowPadX, RowHeight));
-                    row.Disabled = !def.IsEnabled();
+                    row.Disabled = !IsActionEnabled(def);
                     row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
                     row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
                     row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
@@ -3807,8 +3947,8 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Multi-keybinding capture editor used by native settings pages.
-    ///     原生设置页面使用的多按键绑定捕获编辑器。
+    ///     <para xml:lang="en">A native settings editor for adding, replacing, and removing multiple keyboard bindings.</para>
+    ///     <para xml:lang="zh-CN">用于添加、替换和移除多个键盘绑定的原生设置编辑器。</para>
     /// </summary>
     public sealed partial class ModSettingsMultiKeyBindingControl : VBoxContainer, IModSettingsDirectionalInputClaimant
     {
@@ -3825,28 +3965,28 @@ namespace STS2RitsuLib.Settings
         private List<string> _values = [];
 
         /// <summary>
-        ///     Creates a native multi-binding capture editor.
-        ///     创建原生多绑定捕获编辑器。
+        ///     <para xml:lang="en">Creates a multi-binding editor with the requested modifier-capture rules.</para>
+        ///     <para xml:lang="zh-CN">创建采用指定修饰键捕获规则的多绑定编辑器。</para>
         /// </summary>
         /// <param name="initialValues">
-        ///     Initial bindings shown by the control.
-        ///     控件初始显示的绑定。
+        ///     <para xml:lang="en">The initial bindings; invalid values and later duplicates are discarded after normalization.</para>
+        ///     <para xml:lang="zh-CN">初始绑定；规范化后无效值和后续重复项会被丢弃。</para>
         /// </param>
         /// <param name="allowModifierCombos">
-        ///     Whether modifier combinations are allowed.
-        ///     是否允许修饰键组合。
+        ///     <para xml:lang="en">Whether pending modifier keys are included when a non-modifier key is captured.</para>
+        ///     <para xml:lang="zh-CN">捕获非修饰键时是否包含此前按下的修饰键。</para>
         /// </param>
         /// <param name="allowModifierOnly">
-        ///     Whether modifier-only bindings are allowed.
-        ///     是否允许仅修饰键的绑定。
+        ///     <para xml:lang="en">Whether releasing a captured modifier may commit a modifier-only binding.</para>
+        ///     <para xml:lang="zh-CN">释放已捕获的修饰键时是否可以提交仅含修饰键的绑定。</para>
         /// </param>
         /// <param name="distinguishModifierSides">
-        ///     Whether left/right modifier keys are recorded separately.
-        ///     是否分别记录左/右修饰键。
+        ///     <para xml:lang="en">Whether captured modifiers are qualified as left- or right-side tokens.</para>
+        ///     <para xml:lang="zh-CN">是否将捕获的修饰键记录为带左侧或右侧限定的标记。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Invoked after the normalized binding list changes.
-        ///     规范化后的绑定列表变化后调用。
+        ///     <para xml:lang="en">The callback invoked with a new normalized list after the user changes the bindings.</para>
+        ///     <para xml:lang="zh-CN">用户更改绑定后，以新的规范化列表调用的回调。</para>
         /// </param>
         public ModSettingsMultiKeyBindingControl(IEnumerable<string>? initialValues, bool allowModifierCombos,
             bool allowModifierOnly, bool distinguishModifierSides, Action<List<string>> onChanged)
@@ -3889,8 +4029,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured editor for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的编辑器。</para>
         /// </summary>
         public ModSettingsMultiKeyBindingControl()
         {
@@ -3904,12 +4044,15 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Replaces the displayed binding list without starting capture mode.
-        ///     替换显示的绑定列表而不启动捕获模式。
+        ///     <para xml:lang="en">
+        ///         Normalizes and replaces the displayed bindings without entering capture mode or invoking the
+        ///         change callback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">规范化并替换显示的绑定，但不进入捕获模式，也不调用变更回调。</para>
         /// </summary>
         /// <param name="values">
-        ///     The bindings to display.
-        ///     要显示的绑定。
+        ///     <para xml:lang="en">The replacement bindings; invalid values and later duplicates are discarded.</para>
+        ///     <para xml:lang="zh-CN">用于替换的绑定；无效值和后续重复项会被丢弃。</para>
         /// </param>
         public void SetValue(IEnumerable<string>? values)
         {
@@ -4076,22 +4219,12 @@ namespace STS2RitsuLib.Settings
             _values = NormalizeBindings(values);
             RefreshPresentation();
             if (notify)
-                InvokeOnChangedSafely([.. _values]);
+                InvokeOnChanged([.. _values]);
         }
 
-        private void InvokeOnChangedSafely(List<string> values)
+        private void InvokeOnChanged(List<string> values)
         {
-            if (_onChanged == null)
-                return;
-
-            try
-            {
-                _onChanged(values);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsMultiKeyBindingControl] onChanged failed: {ex.Message}");
-            }
+            _onChanged?.Invoke(values);
         }
 
         private void RefreshPresentation()
@@ -4240,22 +4373,22 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Compact button used by stepper controls, dropdown rows, and other dense settings editors.
-    ///     步进控件、下拉行和其他密集设置编辑器使用的紧凑按钮。
+    ///     <para xml:lang="en">A compact themed button for dense settings controls such as steppers and binding rows.</para>
+    ///     <para xml:lang="zh-CN">供步进控件、绑定行等紧凑设置控件使用的主题化小型按钮。</para>
     /// </summary>
     public sealed partial class ModSettingsMiniButton : ModSettingsGamepadCompatibleButton
     {
         /// <summary>
-        ///     Creates a compact button with the standard mini-button chrome.
-        ///     创建带标准迷你按钮外观的紧凑按钮。
+        ///     <para xml:lang="en">Creates a compact button and attaches its pressed action.</para>
+        ///     <para xml:lang="zh-CN">创建紧凑按钮并连接其按下动作。</para>
         /// </summary>
         /// <param name="text">
-        ///     The button label.
-        ///     按钮标签。
+        ///     <para xml:lang="en">The button label.</para>
+        ///     <para xml:lang="zh-CN">按钮标签。</para>
         /// </param>
         /// <param name="action">
-        ///     Invoked when the button is pressed.
-        ///     按钮按下时调用。
+        ///     <para xml:lang="en">The action invoked when the button is pressed.</para>
+        ///     <para xml:lang="zh-CN">按钮按下时调用的动作。</para>
         /// </param>
         public ModSettingsMiniButton(string text, Action action)
         {
@@ -4278,17 +4411,29 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured button for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的按钮。</para>
         /// </summary>
         public ModSettingsMiniButton()
         {
         }
 
         /// <summary>
-        ///     Creates the standard mini-button surface for normal, hover, focus, and disabled states.
-        ///     为正常、悬停、焦点和禁用状态创建标准迷你按钮表面。
+        ///     <para xml:lang="en">Gets the shared mini-button surface for the requested highlight and disabled state.</para>
+        ///     <para xml:lang="zh-CN">获取指定高亮与禁用状态对应的共享小型按钮表面样式。</para>
         /// </summary>
+        /// <param name="highlighted">
+        ///     <para xml:lang="en">Whether to use the highlighted surface colors.</para>
+        ///     <para xml:lang="zh-CN">是否使用高亮表面颜色。</para>
+        /// </param>
+        /// <param name="disabled">
+        ///     <para xml:lang="en">Whether to use the disabled surface colors.</para>
+        ///     <para xml:lang="zh-CN">是否使用禁用表面颜色。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The cached style instance; callers must not mutate it.</para>
+        ///     <para xml:lang="zh-CN">缓存的样式实例；调用方不得修改。</para>
+        /// </returns>
         public static StyleBoxFlat CreateStyle(bool highlighted, bool disabled = false)
         {
             var key = disabled
@@ -4338,18 +4483,26 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the pressed-state style for mini buttons.
-        ///     创建迷你按钮的按下状态样式。
+        ///     <para xml:lang="en">Gets the shared highlighted surface used for a pressed mini button.</para>
+        ///     <para xml:lang="zh-CN">获取小型按钮按下状态使用的共享高亮表面样式。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The cached highlighted style instance; callers must not mutate it.</para>
+        ///     <para xml:lang="zh-CN">缓存的高亮样式实例；调用方不得修改。</para>
+        /// </returns>
         public static StyleBoxFlat CreatePressedStyle()
         {
             return CreateStyle(true);
         }
 
         /// <summary>
-        ///     Creates the focus-state style for mini buttons.
-        ///     创建迷你按钮的焦点状态样式。
+        ///     <para xml:lang="en">Gets the shared focused mini-button surface.</para>
+        ///     <para xml:lang="zh-CN">获取共享的小型按钮焦点表面样式。</para>
         /// </summary>
+        /// <returns>
+        ///     <para xml:lang="en">The cached focus style instance; callers must not mutate it.</para>
+        ///     <para xml:lang="zh-CN">缓存的焦点样式实例；调用方不得修改。</para>
+        /// </returns>
         public static StyleBoxFlat CreateFocusStyle()
         {
             return RitsuShellStyleCache.GetOrBuild("settings.miniButton.focus", BuildFocusStyle);
@@ -4495,14 +4648,14 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyDragHandleMousePolicy()
         {
-            var blockMouse = NControllerManager.Instance?.IsUsingController == true;
+            var blockMouse = Sts2InputCompat.IsUsingDirectionalNavigation;
             MouseFilter = blockMouse ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
             FocusMode = FocusModeEnum.All;
         }
 
         public override Variant _GetDragData(Vector2 atPosition)
         {
-            if (NControllerManager.Instance?.IsUsingController == true)
+            if (Sts2InputCompat.IsUsingDirectionalNavigation)
                 return default;
 
             if (_dragDataProvider == null)
@@ -5082,7 +5235,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsListControl] ItemLabel failed for '{_entry.Id}': {ex.Message}");
+                    $"[ModSettingsListControl] ItemLabel failed for '{_entry.Id}': {ex}");
                 return ModSettingsText.Literal(_entry.Id);
             }
         }
@@ -5099,7 +5252,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsListControl] ItemDescription failed for '{_entry.Id}': {ex.Message}");
+                    $"[ModSettingsListControl] ItemDescription failed for '{_entry.Id}': {ex}");
                 return null;
             }
         }
@@ -5116,7 +5269,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsListControl] ItemEditorFactory failed for '{_entry.Id}': {ex.Message}");
+                    $"[ModSettingsListControl] ItemEditorFactory failed for '{_entry.Id}': {ex}");
                 return null;
             }
         }
@@ -5133,7 +5286,7 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ModSettingsListControl] ItemHeaderAccessoryFactory failed for '{_entry.Id}': {ex.Message}");
+                    $"[ModSettingsListControl] ItemHeaderAccessoryFactory failed for '{_entry.Id}': {ex}");
                 return null;
             }
         }
@@ -5349,8 +5502,8 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyDropSlotInputPolicy()
         {
-            var controller = NControllerManager.Instance?.IsUsingController == true;
-            MouseFilter = controller ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
+            var directionalNavigation = Sts2InputCompat.IsUsingDirectionalNavigation;
+            MouseFilter = directionalNavigation ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
         }
 
         public override bool _CanDropData(Vector2 atPosition, Variant data)
@@ -5614,7 +5767,6 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class ModSettingsCollapsibleHeaderButton : ModSettingsGamepadCompatibleButton
     {
-        private readonly Action? _action;
         private bool _applyingSelectedState;
         private Label? _arrowLabel;
         private bool _contentEnabled = true;
@@ -5635,8 +5787,6 @@ namespace STS2RitsuLib.Settings
         {
             _title = title;
             _subtitle = subtitle;
-            _action = action;
-
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
@@ -5712,21 +5862,7 @@ namespace STS2RitsuLib.Settings
             AddChild(subtitleLabel);
             _subtitleLabel = subtitleLabel;
 
-            Pressed += () =>
-            {
-                if (_action == null)
-                    return;
-
-                try
-                {
-                    _action();
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsCollapsibleHeaderButton] action failed: {ex.Message}");
-                }
-            };
+            Pressed += action;
         }
 
         public ModSettingsCollapsibleHeaderButton()
@@ -5995,16 +6131,9 @@ namespace STS2RitsuLib.Settings
 
         private static float ResolveDisabledOpacityFactor()
         {
-            try
-            {
-                var v = (float)RitsuShellTheme.Current.GetDimensionDouble("semantic.state.disabled.opacity");
-                if (v is > 0.05f and <= 1.0f)
-                    return v;
-            }
-            catch
-            {
-                // ignored
-            }
+            if (RitsuShellTheme.Current.TryGetNumber("semantic.state.disabled.opacity", out var rawValue) &&
+                (float)rawValue is > 0.05f and <= 1.0f and var value)
+                return value;
 
             return 0.78f;
         }
@@ -6386,39 +6515,39 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Semantic role for a settings sidebar item.
-    ///     设置侧栏项的语义角色。
+    ///     <para xml:lang="en">Identifies the semantic role and visual hierarchy of a settings-sidebar row.</para>
+    ///     <para xml:lang="zh-CN">标识设置侧栏行的语义角色和视觉层级。</para>
     /// </summary>
     public enum ModSettingsSidebarItemKind
     {
         /// <summary>
-        ///     Top-level mod group row.
-        ///     顶层 Mod 分组行。
+        ///     <para xml:lang="en">A top-level row representing a mod.</para>
+        ///     <para xml:lang="zh-CN">代表一个模组的顶层行。</para>
         /// </summary>
         ModGroup,
 
         /// <summary>
-        ///     Settings page row.
-        ///     设置页面行。
+        ///     <para xml:lang="en">A settings-page navigation row.</para>
+        ///     <para xml:lang="zh-CN">设置页面导航行。</para>
         /// </summary>
         Page,
 
         /// <summary>
-        ///     Section row inside a page.
-        ///     页面内的小节行。
+        ///     <para xml:lang="en">A navigation row for a section within a settings page.</para>
+        ///     <para xml:lang="zh-CN">设置页面内节的导航行。</para>
         /// </summary>
         Section,
 
         /// <summary>
-        ///     Utility or secondary action row.
-        ///     工具或次级操作行。
+        ///     <para xml:lang="en">A utility or secondary-action row.</para>
+        ///     <para xml:lang="zh-CN">工具或次级操作行。</para>
         /// </summary>
         Utility,
     }
 
     /// <summary>
-    ///     Themed sidebar navigation button used by the RitsuLib settings UI.
-    ///     RitsuLib 设置 UI 使用的主题化侧栏导航按钮。
+    ///     <para xml:lang="en">A themed navigation button for mod, page, section, and utility rows in the settings sidebar.</para>
+    ///     <para xml:lang="zh-CN">设置侧栏中模组、页面、节和工具行使用的主题化导航按钮。</para>
     /// </summary>
     public sealed partial class ModSettingsSidebarButton : ModSettingsGamepadCompatibleButton
     {
@@ -6429,9 +6558,29 @@ namespace STS2RitsuLib.Settings
         private bool _selected;
 
         /// <summary>
-        ///     Creates a themed sidebar navigation button.
-        ///     创建主题化侧栏导航按钮。
+        ///     <para xml:lang="en">Creates a sidebar row with role-specific styling and an optional pressed action.</para>
+        ///     <para xml:lang="zh-CN">创建采用角色特定样式并可带按下动作的侧栏行。</para>
         /// </summary>
+        /// <param name="text">
+        ///     <para xml:lang="en">The row label and tooltip text.</para>
+        ///     <para xml:lang="zh-CN">行标签和工具提示文本。</para>
+        /// </param>
+        /// <param name="action">
+        ///     <para xml:lang="en">The optional action invoked when the row is pressed.</para>
+        ///     <para xml:lang="zh-CN">按下该行时调用的可选动作。</para>
+        /// </param>
+        /// <param name="kind">
+        ///     <para xml:lang="en">The semantic role that selects the row's typography and surface styling.</para>
+        ///     <para xml:lang="zh-CN">用于选择行字体和表面样式的语义角色。</para>
+        /// </param>
+        /// <param name="prefix">
+        ///     <para xml:lang="en">Optional text displayed before the row label.</para>
+        ///     <para xml:lang="zh-CN">显示在行标签之前的可选文本。</para>
+        /// </param>
+        /// <param name="indentLevel">
+        ///     <para xml:lang="en">The non-negative visual nesting level; negative values are treated as zero.</para>
+        ///     <para xml:lang="zh-CN">非负的视觉嵌套层级；负值按零处理。</para>
+        /// </param>
         public ModSettingsSidebarButton(string text, Action? action,
             ModSettingsSidebarItemKind kind = ModSettingsSidebarItemKind.Page,
             string? prefix = null,
@@ -6488,21 +6637,13 @@ namespace STS2RitsuLib.Settings
             {
                 if (action == null)
                     return;
-
-                try
-                {
-                    action();
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.Warn($"[ModSettingsSidebarButton] action failed: {ex.Message}");
-                }
+                action();
             };
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured sidebar button for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的侧栏按钮。</para>
         /// </summary>
         public ModSettingsSidebarButton()
         {
@@ -6516,9 +6657,13 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Updates the selected visual state.
-        ///     更新选中视觉状态。
+        ///     <para xml:lang="en">Updates the selected surface styling without invoking the pressed action.</para>
+        ///     <para xml:lang="zh-CN">更新选中表面样式，但不调用按下动作。</para>
         /// </summary>
+        /// <param name="selected">
+        ///     <para xml:lang="en">Whether the row should render as selected.</para>
+        ///     <para xml:lang="zh-CN">该行是否应呈现为选中状态。</para>
+        /// </param>
         public void SetSelected(bool selected)
         {
             _selected = selected;
@@ -6699,8 +6844,8 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Textured action button using the standard settings button chrome.
-    ///     使用标准设置按钮外观的纹理动作按钮。
+    ///     <para xml:lang="en">A themed text action button with selectable visual tones and selected-state styling.</para>
+    ///     <para xml:lang="zh-CN">支持视觉色调和选中状态样式的主题化文本动作按钮。</para>
     /// </summary>
     public partial class ModSettingsTextButton : ModSettingsGamepadCompatibleButton
     {
@@ -6711,20 +6856,20 @@ namespace STS2RitsuLib.Settings
         private ModSettingsButtonTone _tone;
 
         /// <summary>
-        ///     Creates a standard settings action button.
-        ///     创建标准设置动作按钮。
+        ///     <para xml:lang="en">Creates a themed text button with an optional pressed action.</para>
+        ///     <para xml:lang="zh-CN">创建带可选按下动作的主题化文本按钮。</para>
         /// </summary>
         /// <param name="text">
-        ///     The button label.
-        ///     按钮标签。
+        ///     <para xml:lang="en">The button label.</para>
+        ///     <para xml:lang="zh-CN">按钮标签。</para>
         /// </param>
         /// <param name="tone">
-        ///     The visual tone applied to the button.
-        ///     应用到按钮的视觉色调。
+        ///     <para xml:lang="en">The visual tone used for the button's foreground and surfaces.</para>
+        ///     <para xml:lang="zh-CN">用于按钮前景和表面样式的视觉色调。</para>
         /// </param>
         /// <param name="action">
-        ///     Invoked when the button is pressed.
-        ///     按钮按下时调用。
+        ///     <para xml:lang="en">The optional action invoked when the button is pressed.</para>
+        ///     <para xml:lang="zh-CN">按钮按下时调用的可选动作。</para>
         /// </param>
         public ModSettingsTextButton(string text, ModSettingsButtonTone tone, Action? action)
         {
@@ -6733,8 +6878,8 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Godot serialization constructor.
-        ///     Godot 序列化构造函数。
+        ///     <para xml:lang="en">Initializes an unconfigured text button for Godot scene deserialization.</para>
+        ///     <para xml:lang="zh-CN">为 Godot 场景反序列化初始化尚未配置的文本按钮。</para>
         /// </summary>
         public ModSettingsTextButton()
         {
@@ -6788,12 +6933,15 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Updates the selected visual state used by segmented button groups and previews.
-        ///     更新分段按钮组和预览使用的选中视觉状态。
+        ///     <para xml:lang="en">
+        ///         Updates the selected styling used by segmented groups and previews without invoking the pressed
+        ///         action.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">更新分段组和预览使用的选中样式，但不调用按下动作。</para>
         /// </summary>
         /// <param name="selected">
-        ///     Whether the button should render as selected.
-        ///     按钮是否应渲染为选中状态。
+        ///     <para xml:lang="en">Whether the button should render as selected.</para>
+        ///     <para xml:lang="zh-CN">按钮是否应呈现为选中状态。</para>
         /// </param>
         public void SetSelected(bool selected)
         {
@@ -6805,23 +6953,13 @@ namespace STS2RitsuLib.Settings
         {
             if (_pressedHandlerAttached)
                 return;
-            Pressed += InvokeActionSafely;
+            Pressed += InvokeAction;
             _pressedHandlerAttached = true;
         }
 
-        private void InvokeActionSafely()
+        private void InvokeAction()
         {
-            if (_action == null)
-                return;
-
-            try
-            {
-                _action();
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[ModSettingsTextButton] action failed: {ex.Message}");
-            }
+            _action?.Invoke();
         }
 
         private void ApplyVisualState()

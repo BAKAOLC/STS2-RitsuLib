@@ -226,8 +226,8 @@ namespace STS2RitsuLib.Diagnostics
             lines.AddRange(RitsuLibBuildInfo.Metadata.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
                 .Select(pair => $"- {pair.Key}: {SanitizeForReport(pair.Value)}"));
 
-            TryWriteTextFile(target, string.Join(Environment.NewLine, lines) + Environment.NewLine, warnings);
-            artifacts.Add(CreateArtifact("diagnostics/runtime_environment.txt", target, "diagnostic", null));
+            if (TryWriteTextFile(target, string.Join(Environment.NewLine, lines) + Environment.NewLine, warnings))
+                artifacts.Add(CreateArtifact("diagnostics/runtime_environment.txt", target, "diagnostic", null));
         }
 
         private static void WriteModInventory(
@@ -248,8 +248,8 @@ namespace STS2RitsuLib.Diagnostics
                          .OrderBy(x => x.Id, StringComparer.OrdinalIgnoreCase))
                 AppendModInventoryLine(sb, "registered", mod);
 
-            TryWriteTextFile(target, sb.ToString(), warnings);
-            artifacts.Add(CreateArtifact("diagnostics/mod_inventory.tsv", target, "diagnostic", null));
+            if (TryWriteTextFile(target, sb.ToString(), warnings))
+                artifacts.Add(CreateArtifact("diagnostics/mod_inventory.tsv", target, "diagnostic", null));
         }
 
         private static void WriteLoadedAssemblyInventory(
@@ -280,8 +280,8 @@ namespace STS2RitsuLib.Diagnostics
                     warnings.Add($"failed to inspect loaded assembly: {ex.Message}");
                 }
 
-            TryWriteTextFile(target, sb.ToString(), warnings);
-            artifacts.Add(CreateArtifact("diagnostics/loaded_assemblies.tsv", target, "diagnostic", null));
+            if (TryWriteTextFile(target, sb.ToString(), warnings))
+                artifacts.Add(CreateArtifact("diagnostics/loaded_assemblies.tsv", target, "diagnostic", null));
         }
 
         private static void TryCollectLinuxCoreDump(
@@ -303,8 +303,8 @@ namespace STS2RitsuLib.Diagnostics
             {
                 const string entryName = "crashes/coredump_info.txt";
                 var target = GetBundlePath(bundleDir, entryName);
-                TryWriteTextFile(target, SanitizeForReport(infoText), warnings);
-                artifacts.Add(CreateArtifact(entryName, target, "crash", "coredumpctl info"));
+                if (TryWriteTextFile(target, SanitizeForReport(infoText), warnings))
+                    artifacts.Add(CreateArtifact(entryName, target, "crash", "coredumpctl info"));
             }
 
             var tempCorePath = Path.Combine(Path.GetTempPath(), $"sts2_coredump_{Guid.NewGuid():N}.core");
@@ -395,7 +395,7 @@ namespace STS2RitsuLib.Diagnostics
                 if (sanitize)
                     text = SanitizeForReport(text);
                 File.WriteAllText(target, text, Utf8NoBom);
-                artifacts.Add(CreateArtifact(entryName, source, kind,
+                artifacts.Add(CreateCopiedArtifact(entryName, source, target, kind,
                     maxBytes > 0 && stream.Length > maxBytes ? $"tail {FormatByteCount(maxBytes)}" : null));
             }
             catch (Exception ex)
@@ -418,7 +418,7 @@ namespace STS2RitsuLib.Diagnostics
                 using var input = new FileStream(source, FileMode.Open, IOFileAccess.Read, FileShare.ReadWrite);
                 using var output = new FileStream(target, FileMode.Create, IOFileAccess.Write, FileShare.None);
                 input.CopyTo(output);
-                artifacts.Add(CreateArtifact(entryName, source, kind, null));
+                artifacts.Add(CreateCopiedArtifact(entryName, source, target, kind, null));
             }
             catch (Exception ex)
             {
@@ -499,16 +499,18 @@ namespace STS2RitsuLib.Diagnostics
             }
         }
 
-        private static void TryWriteTextFile(string target, string text, ICollection<string> warnings)
+        private static bool TryWriteTextFile(string target, string text, ICollection<string> warnings)
         {
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 File.WriteAllText(target, text, Utf8NoBom);
+                return true;
             }
             catch (Exception ex)
             {
                 warnings.Add($"failed to write {NormalizeEntryName(target)}: {ex.Message}");
+                return false;
             }
         }
 
@@ -563,7 +565,7 @@ namespace STS2RitsuLib.Diagnostics
             }
             catch
             {
-                return text;
+                return "<redaction failed>";
             }
         }
 
@@ -573,6 +575,21 @@ namespace STS2RitsuLib.Diagnostics
                 NormalizeEntryName(entryName),
                 SanitizeForReport(sourcePath),
                 TryGetFileSize(sourcePath),
+                kind,
+                note ?? "");
+        }
+
+        private static ArtifactEntry CreateCopiedArtifact(
+            string entryName,
+            string sourcePath,
+            string storedPath,
+            string kind,
+            string? note)
+        {
+            return new(
+                NormalizeEntryName(entryName),
+                SanitizeForReport(sourcePath),
+                TryGetFileSize(storedPath),
                 kind,
                 note ?? "");
         }

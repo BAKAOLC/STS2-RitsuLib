@@ -94,7 +94,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             {
                 lock (Gate)
                 {
-                    Pending.Remove(key);
+                    if (Pending.TryGetValue(key, out var current) && ReferenceEquals(current, e))
+                        Pending.Remove(key);
                 }
             }
         }

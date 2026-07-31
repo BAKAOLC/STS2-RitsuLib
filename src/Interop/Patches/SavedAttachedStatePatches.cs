@@ -6,10 +6,14 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Interop.Patches
 {
     /// <summary>
-    ///     Bridges <see cref="SavedAttachedState{TKey,TValue}" /> instances into <see cref="SavedProperties" />
-    ///     serialization and deserialization.
-    ///     将 <see cref="SavedAttachedState{TKey,TValue}" /> 实例桥接到 <see cref="SavedProperties" />
-    ///     序列化和反序列化。
+    ///     <para xml:lang="en">
+    ///         Integrates <see cref="SavedAttachedState{TKey,TValue}" /> instances with
+    ///         <see cref="SavedProperties" /> serialization and deserialization.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="SavedAttachedState{TKey,TValue}" /> 实例接入
+    ///         <see cref="SavedProperties" /> 的序列化与反序列化流程。
+    ///     </para>
     /// </summary>
     internal static class SavedAttachedStatePatches
     {
@@ -36,8 +40,10 @@ namespace STS2RitsuLib.Interop.Patches
         }
 
         /// <summary>
-        ///     Exports registered saved attached states after vanilla model properties are serialized.
-        ///     在原版模型属性序列化后导出已注册的已保存附加状态。
+        ///     <para xml:lang="en">
+        ///         Exports registered saved attached states after vanilla model properties are serialized.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在原版模型属性序列化后导出已注册的持久化附加状态。</para>
         /// </summary>
         internal sealed class SavedPropertiesFromInternalPatch : IPatchMethod
         {
@@ -64,8 +70,10 @@ namespace STS2RitsuLib.Interop.Patches
         }
 
         /// <summary>
-        ///     Imports registered saved attached states after vanilla model properties are deserialized.
-        ///     在原版模型属性反序列化后导入已注册的已保存附加状态。
+        ///     <para xml:lang="en">
+        ///         Imports registered saved attached states after vanilla model properties are deserialized.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在原版模型属性反序列化后导入已注册的持久化附加状态。</para>
         /// </summary>
         internal sealed class SavedPropertiesFillInternalPatch : IPatchMethod
         {

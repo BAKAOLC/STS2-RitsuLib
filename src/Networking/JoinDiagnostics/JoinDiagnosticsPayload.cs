@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,7 +8,9 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Interop.Patches;
+using STS2RitsuLib.Networking.ManagedActions;
 using STS2RitsuLib.Networking.MessageExtensions;
+using STS2RitsuLib.Networking.Sidecar;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
 {
@@ -60,6 +61,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
         private const int PayloadVersion = 5;
+        private const int MaxCompressedPayloadBytes = RitsuLibManagedNetActions.MaxPayloadBytes;
+        private const int MaxDecompressedPayloadBytes = (int)RitsuLibSidecarWire.MaxPayloadBytes;
+        private static readonly Lock RegistrationLock = new();
         private static int _registered;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -71,14 +75,21 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         public static void EnsureRegistered()
         {
-            if (Interlocked.Exchange(ref _registered, 1) == 1)
+            if (Volatile.Read(ref _registered) != 0)
                 return;
 
-            RitsuNetMessageTailExtensions.RegisterBytes<InitialGameInfoMessage>(
-                ExtensionId,
-                PayloadVersion,
-                SerializePayload,
-                ReadPayload);
+            lock (RegistrationLock)
+            {
+                if (_registered != 0)
+                    return;
+
+                RitsuNetMessageTailExtensions.RegisterBytes<InitialGameInfoMessage>(
+                    ExtensionId,
+                    PayloadVersion,
+                    SerializePayload,
+                    ReadPayload);
+                Volatile.Write(ref _registered, 1);
+            }
         }
 
         public static void Write(PacketWriter writer, InitialGameInfoMessage message)
@@ -99,8 +110,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             {
                 var cacheStatus = ModelIdSerializationCacheDynamicContentPatch.GetDeterministicCacheStatus();
                 var payload = new JoinDiagnosticsPayloadV5(
-                    message.version,
-                    message.idDatabaseHash,
+                    GetGameVersion(message),
+                    GetModelDbHash(message),
                     message.gameMode.ToString(),
                     message.sessionState.ToString(),
                     CreateLocalModEntries(),
@@ -110,7 +121,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable);
                 return EncodeCompressed(payload);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Failed to create payload: {ex.Message}");
                 return null;
@@ -143,7 +154,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                     : JsonSerializer.Deserialize<JoinDiagnosticsPayload>(json, JsonOptions);
                 JoinFailureDiagnosticsService.ObserveHostPayload(parsed);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[JoinDiagnostics] Failed to read payload: {ex.Message}");
             }
@@ -152,7 +163,17 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static byte[] EncodeCompressed(JoinDiagnosticsPayloadV5 payload)
         {
             var json = JsonSerializer.Serialize(payload, JsonOptions);
-            return Brotli(Encoding.UTF8.GetBytes(json));
+            var data = Encoding.UTF8.GetBytes(json);
+            if (data.Length > MaxDecompressedPayloadBytes)
+                throw new InvalidDataException(
+                    $"Join diagnostics payload exceeds {MaxDecompressedPayloadBytes} uncompressed bytes.");
+
+            var compressed = RitsuLibSidecarCompression.BrotliCompress(data);
+            if (compressed.Length > MaxCompressedPayloadBytes)
+                throw new InvalidDataException(
+                    $"Join diagnostics payload exceeds {MaxCompressedPayloadBytes} compressed bytes.");
+
+            return compressed;
         }
 
         private static JoinDiagnosticsPayload? FromWirePayload(JoinDiagnosticsPayloadV5? payload)
@@ -177,24 +198,13 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return Encoding.UTF8.GetString(Unbrotli(compressed));
         }
 
-        private static byte[] Brotli(byte[] data)
-        {
-            using var output = new MemoryStream();
-            using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, true))
-            {
-                brotli.Write(data, 0, data.Length);
-            }
-
-            return output.ToArray();
-        }
-
         private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream([.. data], false);
-            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            brotli.CopyTo(output);
-            return output.ToArray();
+            if (!RitsuLibSidecarCompression.TryBrotliDecompress(data, out var decompressed))
+                throw new InvalidDataException(
+                    $"Join diagnostics Brotli data is invalid or exceeds {MaxDecompressedPayloadBytes} decompressed bytes.");
+
+            return decompressed;
         }
 
         public static JoinPeerSnapshot CreateLocalSnapshot()
@@ -219,8 +229,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         {
             var contentMods = CreateHostContentModEntries(message, payload, out var hasProcessedContentMods);
             return new(
-                message.version,
-                message.idDatabaseHash,
+                GetGameVersion(message),
+                GetModelDbHash(message),
                 message.gameMode.ToString(),
                 message.sessionState.ToString(),
                 payload?.GameplayMods.Count > 0
@@ -278,7 +288,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static IReadOnlyList<string>? GetFallbackGameplayModKeys(InitialGameInfoMessage message)
         {
 #if STS2_AT_LEAST_0_107_1
-            return message.gameplayAffectingMods;
+            return GetGameplayAffectingMods(message);
 #else
             return message.mods;
 #endif
@@ -287,9 +297,45 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static IReadOnlyList<string>? GetFallbackContentModKeys(InitialGameInfoMessage message)
         {
 #if STS2_AT_LEAST_0_107_1
-            return MergeModKeys(message.gameplayAffectingMods, message.otherMods);
+            return MergeModKeys(GetGameplayAffectingMods(message), GetOtherMods(message));
 #else
             return message.mods;
+#endif
+        }
+
+        private static string GetGameVersion(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.version;
+#else
+            return message.version;
+#endif
+        }
+
+        private static uint GetModelDbHash(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.idDatabaseHash;
+#else
+            return message.idDatabaseHash;
+#endif
+        }
+
+        private static IReadOnlyList<string>? GetGameplayAffectingMods(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.gameplayAffectingMods;
+#else
+            return message.gameplayAffectingMods;
+#endif
+        }
+
+        private static IReadOnlyList<string>? GetOtherMods(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_110_0
+            return message.versionInfo.otherMods;
+#else
+            return message.otherMods;
 #endif
         }
 

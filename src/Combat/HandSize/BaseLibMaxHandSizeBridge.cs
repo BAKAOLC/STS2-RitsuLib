@@ -13,14 +13,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Combat.HandSize
 {
     /// <summary>
-    ///     Bridge for BaseLib max-hand-size capability:
-    ///     1) detect whether BaseLib hand-size patches are active;
-    ///     2) patch BaseLib calculator postfix so both libraries share modifier data;
-    ///     3) resolve BaseLib value as authoritative source when available.
-    ///     BaseLib 最大手牌数能力的桥接：
-    ///     1) 检测 BaseLib 手牌数补丁是否处于活动状态；
-    ///     2) 为 BaseLib 计算器 postfix 打补丁，使两个库共享 modifier 数据；
-    ///     3) 可用时将 BaseLib 值解析为权威来源。
+    ///     <para xml:lang="en">
+    ///         Bridges BaseLib's maximum-hand-size support by detecting its active patches, extending its calculator
+    ///         with RitsuLib modifiers, and using its result as the base value when available.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         桥接 BaseLib 的手牌上限支持：检测其生效中的补丁，将 RitsuLib 修正接入其计算器，并在可用时以
+    ///         BaseLib 的结果为基础值。
+    ///     </para>
     /// </summary>
     internal static class BaseLibMaxHandSizeBridge
     {
@@ -47,10 +47,20 @@ namespace STS2RitsuLib.Combat.HandSize
 
             return IsPatchedByBaseLib(new(typeof(CardPileCmd),
                        nameof(CardPileCmd.CheckIfDrawIsPossibleAndShowThoughtBubbleIfNot), [typeof(Player)]))
-                   || IsPatchedByBaseLib(new(typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
-                       [typeof(Player), typeof(HookPlayerChoiceContext)]))
+                   || IsSetupPlayerTurnPatchedByBaseLib()
                    || IsPatchedByBaseLib(new(typeof(CardConsoleCmd), nameof(CardConsoleCmd.Process),
                        [typeof(Player), typeof(string[])]));
+        }
+
+        private static bool IsSetupPlayerTurnPatchedByBaseLib()
+        {
+#if STS2_AT_LEAST_0_110_0
+            return IsPatchedByBaseLib(new(typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
+                [typeof(CombatTurnState), typeof(Player), typeof(HookPlayerChoiceContext)], MethodType.Async));
+#else
+            return IsPatchedByBaseLib(new(typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
+                [typeof(Player), typeof(HookPlayerChoiceContext)]));
+#endif
         }
 
         internal static bool IsBaseLibBaseAmountConsumer(CodeInstruction instruction)

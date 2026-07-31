@@ -3,14 +3,24 @@ using STS2RitsuLib.Content;
 namespace STS2RitsuLib.Keywords
 {
     /// <summary>
-    ///     Declarative keyword row for content packs: register with a <see cref="ModKeywordRegistry" /> in one call.
-    ///     content pack 使用的声明式 keyword 行：一次调用即可通过 <see cref="ModKeywordRegistry" /> 注册。
+    ///     <para xml:lang="en">
+    ///         Represents a declarative content-pack keyword entry that can be applied to a
+    ///         <see cref="ModKeywordRegistry" /> in one call.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示内容包使用的声明式关键词条目，可通过一次调用应用到
+    ///         <see cref="ModKeywordRegistry" />。
+    ///     </para>
     /// </summary>
     public sealed record KeywordRegistrationEntry
     {
         /// <summary>
-        ///     Full constructor including placement and hover-tip flags.
-        ///     包含 placement 与 hover-tip flag 的完整构造函数。
+        ///     <para xml:lang="en">
+        ///         Initializes an entry with card-description placement and hover-tip inclusion behavior.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用卡牌描述插入位置和悬停提示包含行为初始化条目。
+        ///     </para>
         /// </summary>
         public KeywordRegistrationEntry(
             string Id,
@@ -18,9 +28,9 @@ namespace STS2RitsuLib.Keywords
             string TitleKey,
             string DescriptionTable,
             string DescriptionKey,
-            string? IconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
+            string? IconPath = null,
+            ModKeywordCardDescriptionPlacement cardDescriptionPlacement = ModKeywordCardDescriptionPlacement.None,
+            bool includeInCardHoverTip = true)
         {
             this.Id = Id;
             this.TitleTable = TitleTable;
@@ -33,80 +43,93 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     Legacy constructor signature (six CLR parameters) preserved for older mods.
-        ///     为旧 mod 保留的 legacy 构造函数签名（六个 CLR 参数）。
-        /// </summary>
-        public KeywordRegistrationEntry(
-            string Id,
-            string TitleTable,
-            string TitleKey,
-            string DescriptionTable,
-            string DescriptionKey,
-            string? IconPath = null)
-            : this(
-                Id,
-                TitleTable,
-                TitleKey,
-                DescriptionTable,
-                DescriptionKey,
-                IconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true)
-        {
-        }
-
-        /// <summary>
-        ///     Keyword id (normalized on register).
-        ///     keyword id（注册时 normalized）。
+        ///     <para xml:lang="en">
+        ///         Gets the keyword ID, which is trimmed during registration and compared case-insensitively.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取关键词 ID。注册时会移除其首尾空白，比较时不区分大小写。
+        ///     </para>
         /// </summary>
         public string Id { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Title localization table.
-        ///     title 本地化 table。
+        ///     <para xml:lang="en">
+        ///         Gets the title localization table.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取标题所在的本地化表。
+        ///     </para>
         /// </summary>
         public string TitleTable { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Title localization key.
-        ///     标题本地化键。
+        ///     <para xml:lang="en">
+        ///         Gets the title localization key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取标题本地化键。
+        ///     </para>
         /// </summary>
         public string TitleKey { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Description localization table.
-        ///     description 本地化 table。
+        ///     <para xml:lang="en">
+        ///         Gets the description localization table.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取描述所在的本地化表。
+        ///     </para>
         /// </summary>
         public string DescriptionTable { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Description localization key.
-        ///     描述本地化键。
+        ///     <para xml:lang="en">
+        ///         Gets the description localization key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取描述本地化键。
+        ///     </para>
         /// </summary>
         public string DescriptionKey { get; init; } = string.Empty;
 
         /// <summary>
-        ///     Optional icon resource path.
-        ///     可选图标ResourcePath。
+        ///     <para xml:lang="en">
+        ///         Gets the optional icon resource path.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取可选的图标资源路径。
+        ///     </para>
         /// </summary>
         public string? IconPath { get; init; }
 
         /// <summary>
-        ///     Inline card-description injection placement.
-        ///     内联卡牌描述注入位置。
+        ///     <para xml:lang="en">
+        ///         Gets the inline keyword text's placement in card descriptions.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取内联关键词文本在卡牌描述中的插入位置。
+        ///     </para>
         /// </summary>
         public ModKeywordCardDescriptionPlacement CardDescriptionPlacement { get; init; } =
             ModKeywordCardDescriptionPlacement.None;
 
         /// <summary>
-        ///     Whether this id participates in template keyword hover-tip expansion.
-        ///     此 id 是否参与 template keyword hover-tip 扩展。
+        ///     <para xml:lang="en">
+        ///         Gets whether card and template hover-tip helpers include this keyword.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取卡牌和模板的悬停提示辅助方法是否包含此关键词。
+        ///     </para>
         /// </summary>
         public bool IncludeInCardHoverTip { get; init; }
 
         /// <summary>
-        ///     Registers this entry on <paramref name="registry" />.
-        ///     将此条目注册到 <paramref name="registry" />。
+        ///     <para xml:lang="en">
+        ///         Registers this entry with <paramref name="registry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将此条目注册到 <paramref name="registry" />。
+        ///     </para>
         /// </summary>
         public void Register(ModKeywordRegistry registry)
         {
@@ -122,10 +145,14 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     <c>card_keywords</c> row: id and loc stem both from <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
-        ///     <see cref="ModContentRegistry.GetQualifiedKeywordId" />。
-        ///     <c>card_keywords</c> 行：id 与本地化词干都来自 <see cref="ModContentRegistry.GetQualifiedKeywordId" />。
-        ///     <see cref="ModContentRegistry.GetQualifiedKeywordId" />。
+        ///     <para xml:lang="en">
+        ///         Creates a <c>card_keywords</c> entry whose ID and localization-key stem are both produced by
+        ///         <see cref="ModContentRegistry.GetQualifiedKeywordId" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建 <c>card_keywords</c> 条目，其 ID 和本地化键前缀均由
+        ///         <see cref="ModContentRegistry.GetQualifiedKeywordId" /> 生成。
+        ///     </para>
         /// </summary>
         public static KeywordRegistrationEntry OwnedCardByLocNamespace(
             string modId,
@@ -148,8 +175,12 @@ namespace STS2RitsuLib.Keywords
         }
 
         /// <summary>
-        ///     <c>OwnedCardByLocNamespace</c> overload with legacy hover defaults.
-        ///     使用 legacy hover 默认值的 <c>OwnedCardByLocNamespace</c> 重载。
+        ///     <para xml:lang="en">
+        ///         Creates an owned <c>card_keywords</c> entry using the legacy hover-tip defaults.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用旧版悬停提示默认值创建归属当前模组的 <c>card_keywords</c> 条目。
+        ///     </para>
         /// </summary>
         public static KeywordRegistrationEntry OwnedCardByLocNamespace(
             string modId,
@@ -164,44 +195,5 @@ namespace STS2RitsuLib.Keywords
                 true);
         }
 
-        /// <summary>
-        ///     Builds a <c>card_keywords</c> entry (full factory signature).
-        ///     构建 <c>card_keywords</c> 条目（完整工厂签名）。
-        /// </summary>
-        [Obsolete(
-            "Prefer OwnedCardByLocNamespace(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
-        public static KeywordRegistrationEntry Card(
-            string id,
-            string entryStem,
-            string? iconPath,
-            ModKeywordCardDescriptionPlacement cardDescriptionPlacement,
-            bool includeInCardHoverTip)
-        {
-            return new(
-                id,
-                "card_keywords",
-                $"{entryStem}.title",
-                "card_keywords",
-                $"{entryStem}.description",
-                iconPath,
-                cardDescriptionPlacement,
-                includeInCardHoverTip);
-        }
-
-        /// <summary>
-        ///     Legacy <c>Card</c> factory signature preserved for older mods.
-        ///     为旧 mod 保留的 legacy <c>Card</c> 工厂签名。
-        /// </summary>
-        [Obsolete(
-            "Prefer OwnedCardByLocNamespace(modId, localKeywordStem, ...) so the keyword id is mod-qualified like fixed model entries; flat ids collide globally.")]
-        public static KeywordRegistrationEntry Card(string id, string entryStem, string? iconPath = null)
-        {
-            return Card(
-                id,
-                entryStem,
-                iconPath,
-                ModKeywordCardDescriptionPlacement.None,
-                true);
-        }
     }
 }

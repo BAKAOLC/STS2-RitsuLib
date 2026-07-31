@@ -2,12 +2,20 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Utils
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Centralizes resource-path existence checks and startup-scoped deduplication of missing-path
+    ///         diagnostics for mod assets.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">集中处理模组资源路径的存在性检查，并在启动阶段对缺失路径诊断去重。</para>
+    /// </summary>
     internal static class AssetPathDiagnostics
     {
         private static readonly Lock StartupMissingPathCacheGate = new();
         private static readonly HashSet<string> StartupMissingPathCache = [];
         private static bool _startupMissingPathCacheEnabled = true;
         private static bool _startupMissingPathCacheShutdownRegistered;
+        private static bool _startupMissingPathCacheShutdownRegistering;
 
         internal static bool Exists(string path, object owner, string memberName)
         {
@@ -27,10 +35,11 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Logs every time a mod character asset profile supplies a non-empty path that does not resolve
-        ///     (empty overrides are ignored by callers).
-        ///     每当 mod 角色资源档案提供了无法解析的非空路径时都记录日志
-        ///     （空覆盖值会被调用方忽略）。
+        ///     <para xml:lang="en">
+        ///         Logs an unresolved, non-empty path supplied by a mod character asset profile, with duplicate
+        ///         diagnostics suppressed during startup.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">记录模组角色资源档案中无法解析的非空路径，并在启动阶段抑制重复诊断。</para>
         /// </summary>
         internal static void WarnModCharacterAssetOverrideMissing(object owner, string memberName, string path)
         {
@@ -95,13 +104,28 @@ namespace STS2RitsuLib.Utils
 
             lock (StartupMissingPathCacheGate)
             {
-                if (_startupMissingPathCacheShutdownRegistered)
+                if (_startupMissingPathCacheShutdownRegistered ||
+                    _startupMissingPathCacheShutdownRegistering)
                     return;
 
-                _startupMissingPathCacheShutdownRegistered = true;
+                _startupMissingPathCacheShutdownRegistering = true;
             }
 
-            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => DisableStartupMissingPathCache());
+            try
+            {
+                RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => DisableStartupMissingPathCache());
+                lock (StartupMissingPathCacheGate)
+                {
+                    _startupMissingPathCacheShutdownRegistered = true;
+                }
+            }
+            finally
+            {
+                lock (StartupMissingPathCacheGate)
+                {
+                    _startupMissingPathCacheShutdownRegistering = false;
+                }
+            }
         }
 
         private static void DisableStartupMissingPathCache()
@@ -125,7 +149,7 @@ namespace STS2RitsuLib.Utils
                 if (owner is AbstractModel model && !string.IsNullOrWhiteSpace(model.Id.Entry))
                     return $"{owner.GetType().Name}<{model.Id.Entry}>";
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 // Ignore model identity lookup failures and fall back to the CLR type name.
             }

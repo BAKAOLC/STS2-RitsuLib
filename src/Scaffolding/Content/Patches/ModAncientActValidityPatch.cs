@@ -6,8 +6,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Removes mod shared ancients from an act's <c>_sharedAncientSubset</c> when
-    ///     <see cref="IModAncientActValidity.IsValidForAct" /> returns false for that act.
+    ///     <para xml:lang="en">
+    ///         Removes shared mod Ancient events from an act when
+    ///         <see cref="IModAncientActValidity.IsValidForAct" /> rejects them.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从章节中移除被 <see cref="IModAncientActValidity.IsValidForAct" /> 判定为无效的共享模组先古事件。
+    ///     </para>
     /// </summary>
     internal class ModAncientActValidityPatch : IPatchMethod
     {

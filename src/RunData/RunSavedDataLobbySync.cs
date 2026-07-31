@@ -7,16 +7,21 @@ using STS2RitsuLib.RunData.Patches;
 namespace STS2RitsuLib.RunData
 {
     /// <summary>
-    ///     Lobby contribution sync via vanilla message trailers (no custom INetMessage or sidecar envelopes).
-    ///     通过原版消息尾部扩展同步大厅贡献（无自定义 INetMessage 或 sidecar 包）。
+    ///     <para xml:lang="en">
+    ///         Synchronizes lobby contributions through trailers appended to base-game messages, without custom network
+    ///         messages or sidecar envelopes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过附加到原版游戏消息的尾部数据同步大厅贡献，不使用自定义网络消息或 Sidecar 信封。
+    ///     </para>
     /// </summary>
     internal static class RunSavedDataLobbySync
     {
         private static readonly AsyncLocal<Stack<string?>?> OutboundPayloads = new();
 
         /// <summary>
-        ///     Pushes the local lobby staging contribution to the authoritative host session.
-        ///     将本地大厅暂存贡献推送到权威主机会话。
+        ///     <para xml:lang="en">Pushes the local staged contribution to the authoritative host lobby session.</para>
+        ///     <para xml:lang="zh-CN">将本地暂存贡献推送到作为权威端的主机大厅会话。</para>
         /// </summary>
         public static bool TryPushContribution(StartRunLobby lobby)
         {
@@ -95,7 +100,7 @@ namespace STS2RitsuLib.RunData
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to push lobby contribution: {ex.Message}");
                 return false;
@@ -130,8 +135,14 @@ namespace STS2RitsuLib.RunData
 
         private sealed class OutboundPayloadScope(Stack<string?> stack) : IDisposable
         {
+            private bool _disposed;
+
             public void Dispose()
             {
+                if (_disposed)
+                    return;
+
+                _disposed = true;
                 if (stack.Count > 0)
                     stack.Pop();
             }

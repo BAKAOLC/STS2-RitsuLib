@@ -3,7 +3,6 @@ using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
 using STS2RitsuLib.Cards.Patches;
 using STS2RitsuLib.Cards.Transforms.Patches;
-using STS2RitsuLib.CardTags.Patches;
 using STS2RitsuLib.Combat.AttackHits.Patches;
 using STS2RitsuLib.Combat.CardTargeting.Patches;
 using STS2RitsuLib.Combat.Healing.Patches;
@@ -162,7 +161,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NContinueRunInfoShowInfoModelNotFoundPatch>();
             patcher.RegisterPatch<NRunHistoryRefreshAndSelectRunSuppressRethrowPatch>();
             patcher.RegisterPatch<SentryDiagnosticsTelemetryPatch>();
-#if STS2_AT_LEAST_0_107_1
+#if STS2_AT_LEAST_0_107_1 && !STS2_AT_LEAST_0_110_0
             patcher.RegisterPatch<SentryGdExtensionShutdown1071WorkaroundPatch>();
 #endif
             patcher.RegisterPatch<RunHistoryMissingModelDbGetByIdTranspilerPatch>();
@@ -255,9 +254,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AfterCardDiscardedLifecyclePatch>();
             patcher.RegisterPatch<AfterCardExhaustedLifecyclePatch>();
             patcher.RegisterPatch<BeforeFlushLifecyclePatch>();
-#if !STS2_AT_LEAST_0_105_0
-            patcher.RegisterPatch<AfterCardRetainedLifecyclePatch>();
-#else
+#if STS2_AT_LEAST_0_105_0
             patcher.RegisterPatch<AfterFlushLifecyclePatch>();
 #endif
             patcher.RegisterPatch<BeforeDeathLifecyclePatch>();
@@ -382,9 +379,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NPotionPopupCustomTargetLabelPatch>();
             patcher.RegisterPatch<NPotionHolderUsePotionCustomSingleTargetPatch>();
             patcher.RegisterPatch<PotionModelOnUseWrapperCustomMultiTargetVfxPatch>();
+            patcher.RegisterPatch<CardKeywordGetTitleModRoutePatch>();
+            patcher.RegisterPatch<CardKeywordGetDescriptionModRoutePatch>();
+            patcher.RegisterPatch<CardKeywordGetCardTextModRoutePatch>();
             patcher.RegisterPatch<HoverTipFactoryFromKeywordPatch>();
-            patcher.RegisterPatch<CardModelKeywordsModSeedPatch>();
-            patcher.RegisterPatch<CardModelTagsModSeedPatch>();
             patcher.RegisterPatch<CardModelHoverTipsModKeywordPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.RunStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.CombatStateHookListenersPatch>();

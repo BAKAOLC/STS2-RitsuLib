@@ -14,39 +14,39 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Lifetime for temporary secondary-resource card costs.
-    ///     临时次级资源卡牌费用的生命周期。
+    ///     <para xml:lang="en">Specifies how long an attached secondary-resource card cost remains active.</para>
+    ///     <para xml:lang="zh-CN">指定卡牌附加的次级资源费用保持生效的时长。</para>
     /// </summary>
     public enum SecondaryResourceCostDuration
     {
         /// <summary>
-        ///     Canonical or manually persistent attached cost.
-        ///     固有费用或手动持久附加费用。
+        ///     <para xml:lang="en">Persists until explicitly replaced or cleared.</para>
+        ///     <para xml:lang="zh-CN">持续生效，直至被显式替换或清除。</para>
         /// </summary>
         Permanent,
 
         /// <summary>
-        ///     Clears after the next successful play.
-        ///     下一次成功打出后清除。
+        ///     <para xml:lang="en">Clears after the card is next played successfully.</para>
+        ///     <para xml:lang="zh-CN">在卡牌下一次成功打出后清除。</para>
         /// </summary>
         UntilPlayed,
 
         /// <summary>
-        ///     Clears at end of turn.
-        ///     回合结束时清除。
+        ///     <para xml:lang="en">Clears at the end of the current turn.</para>
+        ///     <para xml:lang="zh-CN">在当前回合结束时清除。</para>
         /// </summary>
         ThisTurn,
 
         /// <summary>
-        ///     Clears at combat end with the card object.
-        ///     随卡牌对象在战斗结束时清除。
+        ///     <para xml:lang="en">Lasts for the lifetime of the card's current combat instance.</para>
+        ///     <para xml:lang="zh-CN">在卡牌当前战斗实例的生命周期内持续生效。</para>
         /// </summary>
         ThisCombat,
     }
 
     /// <summary>
-    ///     Secondary-resource cost descriptor for a single resource.
-    ///     单个次级资源的费用描述。
+    ///     <para xml:lang="en">Describes a fixed or X cost paid with one secondary resource.</para>
+    ///     <para xml:lang="zh-CN">描述使用一种次级资源支付的固定费用或 X 费用。</para>
     /// </summary>
     public sealed record SecondaryResourceCost(
         int Amount,
@@ -54,20 +54,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         int XMultiplier = 1)
     {
         /// <summary>
-        ///     Zero fixed cost.
-        ///     固定零费用。
+        ///     <para xml:lang="en">Gets a fixed cost of zero.</para>
+        ///     <para xml:lang="zh-CN">获取数值为零的固定费用。</para>
         /// </summary>
         public static SecondaryResourceCost Free { get; } = new(0);
 
         /// <summary>
-        ///     Returns true when this cost can require payment.
-        ///     当该费用可能需要支付时返回 true。
+        ///     <para xml:lang="en">Gets whether the descriptor represents a payment-bearing cost.</para>
+        ///     <para xml:lang="zh-CN">获取该描述是否表示一项需要支付的费用。</para>
         /// </summary>
         public bool IsMaterial => CostsX || Amount > 0;
 
         /// <summary>
-        ///     Creates an X cost descriptor.
-        ///     创建一个 X 费用描述。
+        ///     <para xml:lang="en">Creates an X-cost descriptor with the specified value multiplier.</para>
+        ///     <para xml:lang="zh-CN">创建一项使用指定数值倍率的 X 费用描述。</para>
         /// </summary>
         public static SecondaryResourceCost X(int multiplier = 1)
         {
@@ -77,8 +77,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Attached cost set for one card.
-    ///     单张卡牌的附加费用集合。
+    ///     <para xml:lang="en">Stores layered secondary-resource costs attached to one card.</para>
+    ///     <para xml:lang="zh-CN">存储附加到一张卡牌上的分层次级资源费用。</para>
     /// </summary>
     public sealed class SecondaryResourceCostSet
     {
@@ -86,15 +86,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     True when at least one material cost is attached.
-        ///     至少附加了一个实际费用时为 true。
+        ///     <para xml:lang="en">Gets whether at least one active cost can require payment.</para>
+        ///     <para xml:lang="zh-CN">获取是否至少有一项当前费用可能需要支付。</para>
         /// </summary>
         public bool HasCosts =>
             _costs.Values.SelectMany(static layers => layers).Any(static layer => layer.Cost.IsMaterial);
 
         /// <summary>
-        ///     Returns resource ids that currently have attached layers.
-        ///     返回当前具有附加层的资源 id。
+        ///     <para xml:lang="en">Gets the resource identifiers that currently have attached cost layers.</para>
+        ///     <para xml:lang="zh-CN">获取当前存在附加费用层的资源标识符。</para>
         /// </summary>
         public IReadOnlyList<string> ResourceIds =>
             [.. _costs.Keys.OrderBy(static id => id, StringComparer.Ordinal)];
@@ -107,14 +107,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 .Any(static layer => layer.Duration == SecondaryResourceCostDuration.Permanent);
 
         /// <summary>
-        ///     Raised after attached secondary costs change.
-        ///     在附加次级费用变化后触发。
+        ///     <para xml:lang="en">Occurs after the attached costs change.</para>
+        ///     <para xml:lang="zh-CN">在附加费用发生变化后触发。</para>
         /// </summary>
         public event Action? Changed;
 
         /// <summary>
-        ///     Sets the permanent fixed cost for one resource.
-        ///     设置单个资源的永久固定费用。
+        ///     <para xml:lang="en">Sets a persistent fixed cost for one resource.</para>
+        ///     <para xml:lang="zh-CN">为一种资源设置持续生效的固定费用。</para>
         /// </summary>
         public SecondaryResourceCostSet Set(string resourceId, int amount)
         {
@@ -122,8 +122,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a permanent cost descriptor for one resource.
-        ///     设置单个资源的永久费用描述。
+        ///     <para xml:lang="en">Sets a persistent cost descriptor for one resource.</para>
+        ///     <para xml:lang="zh-CN">为一种资源设置持续生效的费用描述。</para>
         /// </summary>
         public SecondaryResourceCostSet Set(string resourceId, SecondaryResourceCost cost)
         {
@@ -131,8 +131,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a cost descriptor for one resource and duration.
-        ///     为单个资源和持续时间设置费用描述。
+        ///     <para xml:lang="en">Sets a cost descriptor for one resource at the specified duration.</para>
+        ///     <para xml:lang="zh-CN">为一种资源设置具有指定持续时间的费用描述。</para>
         /// </summary>
         public SecondaryResourceCostSet Set(
             string resourceId,
@@ -143,8 +143,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a permanent fixed cost that can still be played with a shortfall.
-        ///     设置资源不足时仍可打出的永久固定费用。
+        ///     <para xml:lang="en">Sets a persistent fixed cost whose shortfall does not prevent card play.</para>
+        ///     <para xml:lang="zh-CN">设置一项持续生效且费用缺口不会阻止出牌的固定费用。</para>
         /// </summary>
         public SecondaryResourceCostSet SetAllowingShortfall(
             string resourceId,
@@ -162,8 +162,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a cost that can still be played with a shortfall.
-        ///     设置资源不足时仍可打出的费用。
+        ///     <para xml:lang="en">Sets a cost whose shortfall does not prevent card play.</para>
+        ///     <para xml:lang="zh-CN">设置一项费用缺口不会阻止出牌的费用。</para>
         /// </summary>
         public SecondaryResourceCostSet SetAllowingShortfall(
             string resourceId,
@@ -181,8 +181,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Sets a cost descriptor for one resource and duration with an explicit shortfall policy.
-        ///     为单个资源和持续时间设置带显式短缺策略的费用描述。
+        ///     <para xml:lang="en">
+        ///         Sets a cost descriptor for one resource with the specified duration and insufficient-payment
+        ///         policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为一种资源设置具有指定持续时间及资源不足支付策略的费用描述。</para>
         /// </summary>
         public SecondaryResourceCostSet Set(
             string resourceId,
@@ -192,6 +195,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             ArgumentNullException.ThrowIfNull(cost);
+            ValidateCost(cost);
 
             var layers = GetLayers(resourceId);
             layers.RemoveAll(layer => layer.Duration == duration);
@@ -201,8 +205,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Clears all layers for one resource.
-        ///     清除单个资源的所有费用层。
+        ///     <para xml:lang="en">Clears every cost layer for one resource.</para>
+        ///     <para xml:lang="zh-CN">清除一种资源的所有费用层。</para>
         /// </summary>
         public bool Clear(string resourceId)
         {
@@ -215,8 +219,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Clears layers for the specified duration.
-        ///     清除指定持续时间的费用层。
+        ///     <para xml:lang="en">Clears every cost layer with the specified duration.</para>
+        ///     <para xml:lang="zh-CN">清除所有具有指定持续时间的费用层。</para>
         /// </summary>
         public bool ClearDuration(SecondaryResourceCostDuration duration)
         {
@@ -235,8 +239,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Gets the active cost descriptor for a resource.
-        ///     获取某个资源当前生效的费用描述。
+        ///     <para xml:lang="en">Gets the active cost descriptor for one resource.</para>
+        ///     <para xml:lang="zh-CN">获取一种资源当前生效的费用描述。</para>
         /// </summary>
         public SecondaryResourceCost Get(string resourceId)
         {
@@ -248,8 +252,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns active costs in deterministic order.
-        ///     按确定性顺序返回当前生效费用。
+        ///     <para xml:lang="en">Returns the active payment-bearing costs in deterministic resource order.</para>
+        ///     <para xml:lang="zh-CN">按确定的资源顺序返回当前需要支付的费用。</para>
         /// </summary>
         public IReadOnlyDictionary<string, SecondaryResourceCost> Snapshot()
         {
@@ -331,25 +335,35 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private List<SecondaryResourceCostLayer> GetLayers(string resourceId)
         {
             var id = resourceId.Trim();
-            if (_costs.TryGetValue(id, out var layers)) return layers;
+            if (_costs.TryGetValue(id, out var layers))
+                return layers;
+
             layers = [];
             _costs[id] = layers;
 
             return layers;
         }
+
+        private static void ValidateCost(SecondaryResourceCost cost)
+        {
+            if (cost is { CostsX: true, XMultiplier: <= 0 })
+                throw new ArgumentOutOfRangeException(
+                    nameof(cost),
+                    "An X secondary-resource cost must have a positive multiplier.");
+        }
     }
 
     /// <summary>
-    ///     Extension helpers for card-attached secondary costs.
-    ///     卡牌附加次级费用的扩展辅助工具。
+    ///     <para xml:lang="en">Provides access to secondary-resource costs attached to cards.</para>
+    ///     <para xml:lang="zh-CN">提供对卡牌附加次级资源费用的访问。</para>
     /// </summary>
     public static partial class SecondaryResourceCardExtensions
     {
         private static readonly AttachedState<CardModel, SecondaryResourceCostSet> CostSets = new(() => new());
 
         /// <summary>
-        ///     Gets this card's secondary-resource cost set.
-        ///     获取此卡牌的次级资源费用集合。
+        ///     <para xml:lang="en">Gets or creates the secondary-resource cost set attached to this card.</para>
+        ///     <para xml:lang="zh-CN">获取或创建附加到此卡牌的次级资源费用集合。</para>
         /// </summary>
         public static SecondaryResourceCostSet SecondaryCosts(this CardModel card)
         {
@@ -358,8 +372,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to read existing secondary costs without creating a cost set.
-        ///     尝试读取已有次级费用，不会创建费用集合。
+        ///     <para xml:lang="en">Tries to get the attached cost set without creating one.</para>
+        ///     <para xml:lang="zh-CN">尝试获取已附加的费用集合，且不会创建新集合。</para>
         /// </summary>
         public static bool TryGetSecondaryCosts(this CardModel card, out SecondaryResourceCostSet costs)
         {
@@ -368,8 +382,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Clears until-played secondary costs.
-        ///     清除持续到打出为止的次级费用。
+        ///     <para xml:lang="en">Clears costs that last until the card is played.</para>
+        ///     <para xml:lang="zh-CN">清除持续到卡牌打出为止的费用。</para>
         /// </summary>
         public static bool ClearSecondaryCostsUntilPlayed(this CardModel card)
         {
@@ -379,8 +393,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Clears this-turn secondary costs.
-        ///     清除本回合次级费用。
+        ///     <para xml:lang="en">Clears costs that last for the current turn.</para>
+        ///     <para xml:lang="zh-CN">清除仅在当前回合生效的费用。</para>
         /// </summary>
         public static bool ClearSecondaryCostsThisTurn(this CardModel card)
         {
@@ -446,9 +460,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (_initialized)
                 return;
 
-            _initialized = true;
             ModelCloneRegistry.For(Const.ModId)
                 .Register<CardModel>("secondary_resource_costs", CopySecondaryCosts);
+            _initialized = true;
         }
 
         private static void CopySecondaryCosts(CardModel prototype, CardModel clone)
@@ -464,8 +478,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         SecondaryResourceInsufficientPayment? InsufficientPayment = null);
 
     /// <summary>
-    ///     Resolved payment line for a single resource.
-    ///     单个资源的已解析支付行。
+    ///     <para xml:lang="en">Describes one resolved secondary-resource payment entry in a card-play plan.</para>
+    ///     <para xml:lang="zh-CN">描述出牌计划中一项已解析的次级资源支付条目。</para>
     /// </summary>
     public sealed record SecondaryResourcePaymentLine(
         string ResourceId,
@@ -478,69 +492,71 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         bool IsFree)
     {
         /// <summary>
-        ///     True when the player has enough resource for this line.
-        ///     玩家拥有足够资源支付该行时为 true。
+        ///     <para xml:lang="en">Gets whether the entry is a preview, is free, or has enough primary resource.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否为预览、免费，或拥有足够的主要支付资源。</para>
         /// </summary>
         public bool IsAffordable => IsPreview || IsFree || AmountAvailable >= Cost;
 
         /// <summary>
-        ///     Unpaid amount for this line after applying the selected spend behavior.
-        ///     应用所选消耗行为后该行未支付的数量。
+        ///     <para xml:lang="en">Gets the shortfall remaining after planned replacement payments.</para>
+        ///     <para xml:lang="zh-CN">获取规划的替代支付完成后仍剩余的费用缺口。</para>
         /// </summary>
         public int Shortfall { get; init; }
 
         /// <summary>
-        ///     Shortfall before replacement payments cover any part of it.
-        ///     替代支付覆盖前的原始短缺数量。
+        ///     <para xml:lang="en">Gets the shortfall before any replacement payment is applied.</para>
+        ///     <para xml:lang="zh-CN">获取应用任何替代支付前的原始费用缺口。</para>
         /// </summary>
         public int OriginalShortfall { get; init; }
 
         /// <summary>
-        ///     Shortfall amount covered by a replacement payment.
-        ///     由替代支付覆盖的短缺数量。
+        ///     <para xml:lang="en">Gets the amount of the original shortfall covered by replacement payments.</para>
+        ///     <para xml:lang="zh-CN">获取替代支付在原始费用缺口中补足的数量。</para>
         /// </summary>
         public int CoveredShortfall { get; init; }
 
         /// <summary>
-        ///     Shortfall policy resolved for this line.
-        ///     该行解析出的短缺策略。
+        ///     <para xml:lang="en">Gets the insufficient-payment policy selected for this entry.</para>
+        ///     <para xml:lang="zh-CN">获取为该条目选定的资源不足支付策略。</para>
         /// </summary>
         public SecondaryResourceInsufficientPayment InsufficientPayment { get; init; } =
             SecondaryResourceInsufficientPayment.BlockPlay;
 
         /// <summary>
-        ///     True when spend hooks allow this line to spend its resource.
-        ///     spend hook 允许该行消耗资源时为 true。
+        ///     <para xml:lang="en">Gets whether the resource-payment hooks permit this entry's planned spend.</para>
+        ///     <para xml:lang="zh-CN">获取资源支付钩子是否允许该条目的规划消耗。</para>
         /// </summary>
         public bool SpendAllowed { get; init; } = true;
 
         /// <summary>
-        ///     True when this line can execute its resource spend.
-        ///     该行可以执行资源消耗时为 true。
+        ///     <para xml:lang="en">Gets whether this entry can execute its planned resource spend.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否可以执行规划的资源消耗。</para>
         /// </summary>
         public bool CanSpend => IsPreview || IsFree || AmountToSpend <= 0 || SpendAllowed;
 
         /// <summary>
-        ///     True when this line cannot block card play.
-        ///     该行不会阻止卡牌打出时为 true。
+        ///     <para xml:lang="en">Gets whether this entry cannot by itself prevent the card from being played.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否不会单独阻止卡牌打出。</para>
         /// </summary>
         public bool IsOptional => !BlocksPlay;
 
         /// <summary>
-        ///     True when this line is a repeatable extra spend.
-        ///     该行为可重复额外支付时为 true。
+        ///     <para xml:lang="en">Gets whether this entry is a repeatable extra payment.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否为可重复的额外支付。</para>
         /// </summary>
         public bool IsExtraSpend => Kind == SecondaryResourceUseKind.ExtraSpend;
 
         /// <summary>
-        ///     True when this line allows the card play to proceed.
-        ///     该行允许卡牌继续打出时为 true。
+        ///     <para xml:lang="en">Gets whether this entry permits the card play to proceed.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否允许继续打出卡牌。</para>
         /// </summary>
         public bool CanPlay => !BlocksPlay || ((IsAffordable || IsShortfallPlayable || IsShortfallCovered) && CanSpend);
 
         /// <summary>
-        ///     True when this required line is short on resource but its policy allows the play.
-        ///     必需行资源不足但策略允许出牌时为 true。
+        ///     <para xml:lang="en">
+        ///         Gets whether this required entry has a resource shortfall that its policy permits.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取该必需条目是否存在其支付策略所允许的资源缺口。</para>
         /// </summary>
         public bool IsShortfallPlayable =>
             BlocksPlay &&
@@ -549,8 +565,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             InsufficientPayment.AllowsPlay;
 
         /// <summary>
-        ///     True when a replacement payment fully covered the resource shortfall.
-        ///     替代支付已完全覆盖资源短缺时为 true。
+        ///     <para xml:lang="en">Gets whether replacement payments cover the entire original shortfall.</para>
+        ///     <para xml:lang="zh-CN">获取替代支付是否已补足全部原始费用缺口。</para>
         /// </summary>
         public bool IsShortfallCovered =>
             BlocksPlay &&
@@ -559,76 +575,76 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             CoveredShortfall >= OriginalShortfall;
 
         /// <summary>
-        ///     Replacement-payment resolution chosen for this line.
-        ///     该行选中的替代支付解析结果。
+        ///     <para xml:lang="en">Gets the replacement-payment plan selected for this entry.</para>
+        ///     <para xml:lang="zh-CN">获取为该条目选定的替代支付方案。</para>
         /// </summary>
         public SecondaryResourceShortfallResolution ShortfallResolution { get; init; } =
             SecondaryResourceShortfallResolution.None;
 
         /// <summary>
-        ///     Number of full extra-spend stacks paid by this line.
-        ///     该行支付的完整额外消耗层数。
+        ///     <para xml:lang="en">Gets the number of complete extra-payment units bought by this entry.</para>
+        ///     <para xml:lang="zh-CN">获取该条目购买的完整额外支付单位数。</para>
         /// </summary>
         public int ExtraStacks { get; init; }
 
         /// <summary>
-        ///     Amount spent as repeatable extra payment by this line.
-        ///     该行作为可重复额外支付消耗的数量。
+        ///     <para xml:lang="en">Gets the total resource amount spent on repeatable extra payments.</para>
+        ///     <para xml:lang="zh-CN">获取用于可重复额外支付的资源总量。</para>
         /// </summary>
         public int ExtraAmountToSpend { get; init; }
 
         /// <summary>
-        ///     Stable play-use id for this line.
-        ///     该行的稳定出牌条款 id。
+        ///     <para xml:lang="en">Gets the stable payment-use identifier represented by this entry.</para>
+        ///     <para xml:lang="zh-CN">获取该条目所表示的稳定支付条款标识符。</para>
         /// </summary>
         public string UseId { get; init; } = ResourceId;
 
         /// <summary>
-        ///     Semantic role for this line.
-        ///     该行的语义角色。
+        ///     <para xml:lang="en">Gets the payment role of this entry.</para>
+        ///     <para xml:lang="zh-CN">获取该条目的支付用途。</para>
         /// </summary>
         public SecondaryResourceUseKind Kind { get; init; } = SecondaryResourceUseKind.RequiredCost;
 
         /// <summary>
-        ///     True when this line can block card play if it cannot be paid.
-        ///     该行无法支付时会阻止卡牌打出。
+        ///     <para xml:lang="en">Gets whether failure to pay this entry can prevent the card from being played.</para>
+        ///     <para xml:lang="zh-CN">获取该条目无法支付时是否可能阻止卡牌打出。</para>
         /// </summary>
         public bool BlocksPlay { get; init; } = true;
 
         /// <summary>
-        ///     True when this line is active for the current play plan.
-        ///     该行在当前出牌计划中已激活。
+        ///     <para xml:lang="en">Gets whether this entry is active in the current card-play plan.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否已在当前出牌计划中激活。</para>
         /// </summary>
         public bool Activated { get; init; }
 
         /// <summary>
-        ///     True when the line was resolved without a player/combat owner and is only suitable for display.
-        ///     没有玩家/战斗 owner 时解析出的展示用行；只适合用于 UI 展示。
+        ///     <para xml:lang="en">Gets whether this entry was resolved without an owning player for display only.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否在没有所属玩家的情况下解析，仅供显示使用。</para>
         /// </summary>
         public bool IsPreview { get; init; }
 
         /// <summary>
-        ///     Current unmodified fixed cost used for card-cost color comparison.
-        ///     用于卡牌费用颜色比较的当前未修改固定费用。
+        ///     <para xml:lang="en">Gets the current unmodified fixed cost used for display-color comparison.</para>
+        ///     <para xml:lang="zh-CN">获取用于比较显示颜色的当前未修正固定费用。</para>
         /// </summary>
         public int BaseCost { get; init; } = Cost;
 
         /// <summary>
-        ///     Fixed cost before the current upgrade preview, when this line is being shown as an upgrade preview.
-        ///     当前行作为升级预览显示时，升级前的固定费用。
+        ///     <para xml:lang="en">Gets the fixed cost before the upgrade currently being previewed, if known.</para>
+        ///     <para xml:lang="zh-CN">获取当前预览的升级生效前的固定费用（如果已知）。</para>
         /// </summary>
         public int? UpgradePreviewBaseCost { get; init; }
 
         /// <summary>
-        ///     True when this line's displayed fixed cost differs because of a runtime cost effect.
-        ///     该行显示的固定费用因运行时费用效果而变化时为 true。
+        ///     <para xml:lang="en">Gets whether a runtime effect participates in this entry's displayed fixed cost.</para>
+        ///     <para xml:lang="zh-CN">获取运行时效果是否参与计算该条目的显示固定费用。</para>
         /// </summary>
         public bool HasRuntimeCostModifier { get; init; }
     }
 
     /// <summary>
-    ///     Resolved secondary-resource payment plan for a card play.
-    ///     一次出牌的已解析次级资源支付计划。
+    ///     <para xml:lang="en">Describes the resolved secondary-resource payment plan for one card play.</para>
+    ///     <para xml:lang="zh-CN">描述一次出牌所采用的已解析次级资源支付计划。</para>
     /// </summary>
     public sealed record SecondaryResourcePaymentPlan(
         CardModel Card,
@@ -637,26 +653,26 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         IReadOnlyList<SecondaryResourcePaymentLine> Lines)
     {
         /// <summary>
-        ///     True when every line can be paid.
-        ///     每一行都可支付时为 true。
+        ///     <para xml:lang="en">Gets whether every payment entry permits the card to be played.</para>
+        ///     <para xml:lang="zh-CN">获取每项支付条目是否都允许打出卡牌。</para>
         /// </summary>
         public bool IsAffordable => Lines.All(static line => line.CanPlay);
 
         /// <summary>
-        ///     True when at least one resource line exists.
-        ///     至少存在一个资源行时为 true。
+        ///     <para xml:lang="en">Gets whether the plan contains at least one payment entry.</para>
+        ///     <para xml:lang="zh-CN">获取该计划是否至少包含一项支付条目。</para>
         /// </summary>
         public bool HasLines => Lines.Count > 0;
 
         /// <summary>
-        ///     True when the plan was resolved without a player/combat owner and must not be committed.
-        ///     没有玩家/战斗 owner 时解析出的展示用计划；不能提交消耗。
+        ///     <para xml:lang="en">Gets whether the plan was resolved without an owning player and cannot be committed.</para>
+        ///     <para xml:lang="zh-CN">获取该计划是否在没有所属玩家的情况下解析，因而无法提交。</para>
         /// </summary>
         public bool IsPreview => Player == null;
 
         /// <summary>
-        ///     Empty plan with no secondary-resource work.
-        ///     没有次级资源工作的空计划。
+        ///     <para xml:lang="en">Creates a payment plan with no secondary-resource entries.</para>
+        ///     <para xml:lang="zh-CN">创建一项不包含次级资源支付条目的计划。</para>
         /// </summary>
         public static SecondaryResourcePaymentPlan Empty(CardModel card, Player? player, bool isFree = false)
         {
@@ -686,17 +702,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Builds and commits secondary-resource card payment plans.
-    ///     构建并提交卡牌的次级资源支付计划。
+    ///     <para xml:lang="en">Builds and commits secondary-resource payment plans for card plays.</para>
+    ///     <para xml:lang="zh-CN">构建并提交出牌所需的次级资源支付计划。</para>
     /// </summary>
     public static class SecondaryResourcePaymentResolver
     {
-        private const string CardUseContributorSurface = "secondary-resource/card-uses";
-        private const string CardCostContributorSurface = "secondary-resource/card-cost";
-
         /// <summary>
-        ///     Resolves secondary-resource costs for a card.
-        ///     解析卡牌的次级资源费用。
+        ///     <para xml:lang="en">Resolves the card's secondary-resource payment plan.</para>
+        ///     <para xml:lang="zh-CN">解析该卡牌的次级资源支付计划。</para>
         /// </summary>
         public static SecondaryResourcePaymentPlan Plan(
             CardModel card,
@@ -775,8 +788,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns whether a card can pay all secondary-resource costs.
-        ///     返回卡牌是否可以支付所有次级资源费用。
+        ///     <para xml:lang="en">Returns whether every secondary-resource payment permits the card to be played.</para>
+        ///     <para xml:lang="zh-CN">返回每项次级资源支付是否都允许打出该卡牌。</para>
         /// </summary>
         public static bool CanPay(CardModel card)
         {
@@ -784,14 +797,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Commits spending for a resolved plan and returns its ledger.
-        ///     提交已解析计划的消耗，并返回 ledger。
+        ///     <para xml:lang="en">Commits a still-valid resolved payment plan and returns its play ledger.</para>
+        ///     <para xml:lang="zh-CN">提交一项仍然有效的已解析支付计划，并返回本次出牌的支付记录。</para>
         /// </summary>
         public static async Task<SecondaryResourcePlayLedger> Commit(
             SecondaryResourcePaymentPlan plan,
             AbstractModel? source = null)
         {
             ArgumentNullException.ThrowIfNull(plan);
+            ValidateCommitPlan(plan);
 
             if (plan.Player == null)
             {
@@ -807,10 +821,6 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var builder = new SecondaryResourcePlayLedgerBuilder(plan.Card, plan.Player, plan.IsFree);
             foreach (var line in plan.Lines)
             {
-                if (!line.CanPlay)
-                    throw new InvalidOperationException(
-                        $"Cannot commit unplayable secondary resource payment for {line.ResourceId} on {plan.Card.Id.Entry}.");
-
                 if (line is { IsFree: false, AmountToSpend: > 0 })
                 {
                     var spent = await SecondaryResourceCmd.SpendResolvedCardPayment(
@@ -831,6 +841,34 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourcePlayLedgerRuntime.SetPending(plan.Card, ledger);
             await RunShortfallPayments(plan, ledger, source ?? plan.Card);
             return ledger;
+        }
+
+        private static void ValidateCommitPlan(SecondaryResourcePaymentPlan plan)
+        {
+            var duplicateUse = plan.Lines
+                .GroupBy(static line => line.UseId, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(static group => group.Count() > 1);
+            if (duplicateUse != null)
+                throw new InvalidOperationException(
+                    $"Secondary resource payment plan for {plan.Card.Id.Entry} contains duplicate use id '{duplicateUse.Key}'.");
+
+            var unplayableLine = plan.Lines.FirstOrDefault(static line => !line.CanPlay);
+            if (unplayableLine != null)
+                throw new InvalidOperationException(
+                    $"Cannot commit unplayable secondary resource payment for {unplayableLine.ResourceId} on {plan.Card.Id.Entry}.");
+
+            if (plan.Player == null)
+                return;
+
+            foreach (var group in plan.Lines
+                         .Where(static line => line is { IsFree: false, AmountToSpend: > 0 })
+                         .GroupBy(static line => line.ResourceId, StringComparer.OrdinalIgnoreCase))
+            {
+                var required = group.Aggregate(0L, static (sum, line) => sum + line.AmountToSpend);
+                if (required > SecondaryResourceCmd.Get(plan.Player, group.Key))
+                    throw new InvalidOperationException(
+                        $"Secondary resource payment plan for {plan.Card.Id.Entry} no longer has enough '{group.Key}'.");
+            }
         }
 
         private static async Task RunShortfallPayments(
@@ -876,8 +914,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates and queues a free-play ledger without mutating resource amounts.
-        ///     创建并排队免费打出的 ledger，不修改资源数量。
+        ///     <para xml:lang="en">Creates and queues a free-play ledger without changing resource amounts.</para>
+        ///     <para xml:lang="zh-CN">创建并排队等待绑定一份免费出牌支付记录，不改变资源数量。</para>
         /// </summary>
         public static SecondaryResourcePlayLedger CommitFree(SecondaryResourcePaymentPlan plan)
         {
@@ -931,6 +969,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 {
                     IsFree = true,
                     AmountToSpend = 0,
+                    Value = line is { CostsX: false, Kind: SecondaryResourceUseKind.OptionalSpend }
+                        ? 0
+                        : line.Value,
                     OriginalShortfall = 0,
                     CoveredShortfall = 0,
                     Shortfall = 0,
@@ -957,18 +998,25 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             uses.AddRange(GetCapabilityUses(card));
 
-            return
-            [
-                .. uses
-                    .Where(static use => use.IsMaterial)
-                    .OrderBy(static use => use.Kind switch
-                    {
-                        SecondaryResourceUseKind.RequiredCost => 0,
-                        SecondaryResourceUseKind.ExtraSpend => 1,
-                        _ => 2,
-                    })
-                    .ThenBy(static use => use.Id, StringComparer.Ordinal),
-            ];
+            var result = uses
+                .Where(static use => use.IsMaterial)
+                .OrderBy(static use => use.Kind switch
+                {
+                    SecondaryResourceUseKind.RequiredCost => 0,
+                    SecondaryResourceUseKind.ExtraSpend => 1,
+                    _ => 2,
+                })
+                .ThenBy(static use => use.Id, StringComparer.Ordinal)
+                .ToArray();
+
+            var duplicateUse = result
+                .GroupBy(static use => use.Id, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(static group => group.Count() > 1);
+            if (duplicateUse != null)
+                throw new InvalidOperationException(
+                    $"Card {card.Id.Entry} has duplicate secondary-resource use id '{duplicateUse.Key}'.");
+
+            return result;
         }
 
         internal static IReadOnlyList<SecondaryResourcePlayUse> SnapshotUsesForUpgradePreview(CardModel card)
@@ -1005,7 +1053,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var localCost = ModifyLocalCost(card, definition, use, cost.Amount);
             var baseCost = Math.Max(0, use.BaseCost.Amount);
             var upgradePreviewBaseCost = SecondaryResourceUpgradePreviewCosts.GetBaseCost(card, use);
-            var fixedCost = Math.Max(0, (int)Math.Ceiling(localCost));
+            var fixedCost = SecondaryResourceAmountMath.CeilingAndClamp(localCost, 0, int.MaxValue);
             var displayCost = isFree ? 0 : fixedCost;
             var insufficientPayment = use.InsufficientPayment ?? definition.DefaultInsufficientPayment;
             var hasRuntimeCostModifier = use.Duration != SecondaryResourceCostDuration.Permanent ||
@@ -1057,7 +1105,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var modifiedCost = SecondaryResourceHook.ModifyCost(
                 new(combatState, player, card, definition, localCost),
                 localCost);
-            var fixedCost = Math.Max(0, (int)Math.Ceiling(modifiedCost));
+            var fixedCost = SecondaryResourceAmountMath.CeilingAndClamp(modifiedCost, 0, int.MaxValue);
             var displayCost = isFree ? 0 : fixedCost;
             var hasRuntimeCostModifier = use.Duration != SecondaryResourceCostDuration.Permanent ||
                                          localCost != cost.Amount ||
@@ -1179,9 +1227,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             var xValue = SecondaryResourceHook.ModifyXValue(
                 new(combatState, player, card, definition, xBase),
                 nativeXValue);
-            xValue = Math.Max(0, xValue) * cost.XMultiplier;
+            if (cost.XMultiplier <= 0)
+                throw new InvalidOperationException(
+                    $"Secondary-resource X cost '{use.Id}' on {card.Id.Entry} must have a positive multiplier.");
+
+            xValue = SecondaryResourceAmountMath.MultiplyNonNegativeSaturating(xValue, cost.XMultiplier);
             var xActivated = isRequired || isFree || available > 0;
-            var amountToSpendForX = isFree || !xActivated ? 0 : available;
+            var amountToSpendForX = isFree || !xActivated ? 0 : xBase;
             var xSpendAllowed = CanSpend(combatState, player, card, definition, amountToSpendForX, source);
             // ReSharper disable once InvertIf
             if (!isRequired && !xSpendAllowed)
@@ -1319,17 +1371,46 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceUseContributor>(card))
             {
-                IEnumerable<SecondaryResourcePlayUse> uses = [];
-                ModelCapabilityHost.TryRun(
-                    (IModelCapability)capability,
-                    card,
-                    CardUseContributorSurface,
-                    () => uses = capability.GetSecondaryResourceUses(card) ?? []);
+                var contributed = capability.GetSecondaryResourceUses(card)?.ToArray() ??
+                                  throw new InvalidOperationException(
+                                      $"Secondary-resource use contributor '{capability.GetType().FullName}' returned null.");
+                foreach (var use in contributed)
+                    ValidateCapabilityUse(use);
 
-                foreach (var use in uses)
+                foreach (var use in contributed.Select(static use => use with
+                         {
+                             Id = use.Id.Trim(),
+                             ResourceId = use.ResourceId.Trim(),
+                         }))
                     if (use.IsMaterial)
                         yield return use;
             }
+        }
+
+        private static void ValidateCapabilityUse(SecondaryResourcePlayUse? use)
+        {
+            if (use == null)
+                throw new InvalidOperationException("A secondary-resource use contributor returned a null use.");
+            if (string.IsNullOrWhiteSpace(use.Id))
+                throw new InvalidOperationException(
+                    "A secondary-resource use contributor returned a use without an id.");
+            if (string.IsNullOrWhiteSpace(use.ResourceId))
+                throw new InvalidOperationException(
+                    $"Secondary-resource use '{use.Id}' does not specify a resource id.");
+            // Ordered validation guards produce field-specific diagnostics.
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (use.Cost == null)
+                throw new InvalidOperationException(
+                    $"Secondary-resource use '{use.Id}' does not specify a cost.");
+            if (use.Cost is { CostsX: true, XMultiplier: <= 0 })
+                throw new InvalidOperationException(
+                    $"Secondary-resource X use '{use.Id}' must have a positive multiplier.");
+            if (use.MaxExtraStacks is < 0)
+                throw new InvalidOperationException(
+                    $"Secondary-resource use '{use.Id}' has a negative maximum stack count.");
+            if (use is { Kind: SecondaryResourceUseKind.ExtraSpend, Cost.CostsX: true })
+                throw new InvalidOperationException(
+                    $"Repeatable extra secondary-resource use '{use.Id}' cannot have an X cost.");
         }
 
         private static decimal ModifyLocalCost(
@@ -1340,12 +1421,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             var result = cost;
             var context = new SecondaryResourceCardCostContext(card, definition, use, cost);
+            // Contributor order is significant and each result feeds the next contributor.
+            // ReSharper disable once LoopCanBeConvertedToQuery
             foreach (var capability in ModelCapabilityHost.GetCapabilities<ICardSecondaryResourceCostContributor>(card))
-                ModelCapabilityHost.TryRun(
-                    (IModelCapability)capability,
-                    card,
-                    CardCostContributorSurface,
-                    () => result = capability.ModifySecondaryResourceCost(context, result));
+                result = capability.ModifySecondaryResourceCost(context, result);
 
             return result;
         }

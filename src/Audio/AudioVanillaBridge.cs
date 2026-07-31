@@ -4,14 +4,17 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Audio
 {
     /// <summary>
-    ///     Small helper for restoring or refreshing the game's native run music controller state.
-    ///     用于恢复或刷新游戏原生跑局音乐控制器状态的小型 helper。
+    ///     <para xml:lang="en">Provides guarded entry points for refreshing the game's native run-music controller.</para>
+    ///     <para xml:lang="zh-CN">提供带状态检查的游戏原生跑局音乐控制器刷新入口。</para>
     /// </summary>
     public static class AudioVanillaBridge
     {
         /// <summary>
-        ///     Rebuilds vanilla run music, track state, and ambience.
-        ///     重建原版跑局音乐、曲目状态和环境音。
+        ///     <para xml:lang="en">
+        ///         Requests native updates for act music selection, room-progress track state, and ambience while
+        ///         a run is active.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">跑局进行中时，请求原生控制器更新章节音乐选择、房间进度曲目状态和环境音。</para>
         /// </summary>
         public static void RefreshRunMusic()
         {
@@ -25,8 +28,11 @@ namespace STS2RitsuLib.Audio
         }
 
         /// <summary>
-        ///     Refreshes vanilla track progression and ambience without rebuilding the act music selection.
-        ///     刷新原版曲目推进和环境音，而不重建章节音乐选择。
+        ///     <para xml:lang="en">
+        ///         Requests native updates for room-progress track state and ambience without reevaluating act
+        ///         music selection.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">请求原生控制器更新房间进度曲目状态和环境音，但不重新评估章节音乐选择。</para>
         /// </summary>
         public static void RefreshTrackAndAmbience()
         {

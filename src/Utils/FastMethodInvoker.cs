@@ -4,6 +4,13 @@ using System.Reflection;
 
 namespace STS2RitsuLib.Utils
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Builds and caches expression-based delegates for fast reflective method calls, constructor
+    ///         calls, and instance-member reads.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">构建并缓存基于表达式的委托，以快速执行反射方法调用、构造函数调用和实例成员读取。</para>
+    /// </summary>
     internal static class FastMethodInvoker
     {
         private static readonly ConcurrentDictionary<MethodInfo, Func<object?, object?>> Invoke0Cache = new();

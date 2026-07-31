@@ -4,10 +4,14 @@ using MegaCrit.Sts2.Core.Nodes.Vfx;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
     /// <summary>
-    ///     Converts ordinary trail scenes into <see cref="NCardTrailVfx" /> roots. Image resources are intentionally not
-    ///     supported; card trails are scene-only because vanilla expects a <c>Sprites</c> node with particle children.
-    ///     将普通 trail 场景转换为 <see cref="NCardTrailVfx" /> 根节点。这里有意不支持图片资源；卡牌 trail 仅支持场景，
-    ///     因为原版期望存在包含粒子子节点的 <c>Sprites</c> 节点。
+    ///     <para xml:lang="en">
+    ///         Converts ordinary trail scenes into <see cref="NCardTrailVfx" /> roots. Image resources are intentionally
+    ///         unsupported because card trails require a scene containing a <c>Sprites</c> node with particle children.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将普通拖尾场景转换为 <see cref="NCardTrailVfx" /> 根节点。卡牌拖尾需要包含 <c>Sprites</c>
+    ///         节点及粒子子节点的场景，因此有意不支持图片资源。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuNCardTrailVfxNodeFactory() : RitsuGodotNodeFactory<NCardTrailVfx>([])
     {

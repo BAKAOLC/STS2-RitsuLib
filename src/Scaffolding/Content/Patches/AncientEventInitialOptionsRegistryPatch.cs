@@ -9,8 +9,13 @@ using STS2RitsuLib.Scaffolding.Ancients.Options;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Appends registered mod rules into <see cref="AncientEventModel" /> initial options after vanilla generation.
-    ///     原版生成后，将已注册 mod 规则追加到 <see cref="AncientEventModel" /> 初始选项中。
+    ///     <para xml:lang="en">
+    ///         Appends registered mod options to an <see cref="AncientEventModel" /> after the base game generates its
+    ///         initial options.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在原版游戏生成 <see cref="AncientEventModel" /> 的初始选项后，追加已注册的模组选项。
+    ///     </para>
     /// </summary>
     internal class AncientEventInitialOptionsRegistryPatch : IPatchMethod
     {

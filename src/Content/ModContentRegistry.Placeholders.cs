@@ -5,10 +5,12 @@ namespace STS2RitsuLib.Content
     public sealed partial class ModContentRegistry
     {
         /// <summary>
-        ///     Registers a generated placeholder card: no mod-authored CLR type, stable entry from
-        ///     <paramref name="stableEntryStem" />.
-        ///     注册生成的占位卡牌：没有 mod 作者提供的 CLR 类型，稳定条目来自
-        ///     <paramref name="stableEntryStem" />。
+        ///     <para xml:lang="en">
+        ///         Generates and registers a placeholder card using <paramref name="stableEntryStem" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="stableEntryStem" /> 生成并注册占位卡牌。
+        ///     </para>
         /// </summary>
         public void RegisterPlaceholderCard<TPool>(string stableEntryStem,
             PlaceholderCardDescriptor descriptor = default)
@@ -18,8 +20,8 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers a generated placeholder card with an explicit public entry option.
-        ///     注册带有显式公共条目选项的生成占位卡牌。
+        ///     <para xml:lang="en">Generates and registers a placeholder card with an explicit public entry.</para>
+        ///     <para xml:lang="zh-CN">使用显式公共条目生成并注册占位卡牌。</para>
         /// </summary>
         public void RegisterPlaceholderCard<TPool>(ModelPublicEntryOptions publicEntry,
             PlaceholderCardDescriptor descriptor)
@@ -30,10 +32,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers a generated placeholder relic from <paramref name="stableEntryStem" /> and
-        ///     <paramref name="descriptor" />.
-        ///     根据 <paramref name="stableEntryStem" /> 和
-        ///     <paramref name="descriptor" /> 注册生成的占位遗物。
+        ///     <para xml:lang="en">
+        ///         Generates and registers a placeholder relic using <paramref name="stableEntryStem" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="stableEntryStem" /> 生成并注册占位遗物。
+        ///     </para>
         /// </summary>
         public void RegisterPlaceholderRelic<TPool>(string stableEntryStem,
             PlaceholderRelicDescriptor descriptor = default)
@@ -43,8 +47,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers a generated placeholder relic with explicit <paramref name="publicEntry" />.
-        ///     注册带有显式 <paramref name="publicEntry" /> 的生成占位遗物。
+        ///     <para xml:lang="en">
+        ///         Generates and registers a placeholder relic with <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" /> 生成并注册占位遗物。
+        ///     </para>
         /// </summary>
         public void RegisterPlaceholderRelic<TPool>(ModelPublicEntryOptions publicEntry,
             PlaceholderRelicDescriptor descriptor)
@@ -55,10 +63,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers a generated placeholder potion from <paramref name="stableEntryStem" /> and
-        ///     <paramref name="descriptor" />.
-        ///     根据 <paramref name="stableEntryStem" /> 和
-        ///     <paramref name="descriptor" /> 注册生成的占位药水。
+        ///     <para xml:lang="en">
+        ///         Generates and registers a placeholder potion using <paramref name="stableEntryStem" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="stableEntryStem" /> 生成并注册占位药水。
+        ///     </para>
         /// </summary>
         public void RegisterPlaceholderPotion<TPool>(string stableEntryStem,
             PlaceholderPotionDescriptor descriptor = default)
@@ -68,8 +78,12 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     Registers a generated placeholder potion with explicit <paramref name="publicEntry" />.
-        ///     注册带有显式 <paramref name="publicEntry" /> 的生成占位药水。
+        ///     <para xml:lang="en">
+        ///         Generates and registers a placeholder potion with <paramref name="publicEntry" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <paramref name="publicEntry" /> 生成并注册占位药水。
+        ///     </para>
         /// </summary>
         public void RegisterPlaceholderPotion<TPool>(ModelPublicEntryOptions publicEntry,
             PlaceholderPotionDescriptor descriptor)

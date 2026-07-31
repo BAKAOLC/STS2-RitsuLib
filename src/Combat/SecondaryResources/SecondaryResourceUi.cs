@@ -14,8 +14,8 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Combat UI update context for a secondary-resource attachment.
-    ///     次级资源挂载节点的战斗 UI 更新上下文。
+    ///     <para xml:lang="en">Provides update data for a secondary-resource node attached to combat UI.</para>
+    ///     <para xml:lang="zh-CN">提供附加到战斗界面的次级资源节点所需的更新数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceCombatUiContext<TParent, TNode>(
         TParent Parent,
@@ -27,8 +27,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         where TNode : Node;
 
     /// <summary>
-    ///     Combat UI change-response context for a secondary-resource attachment.
-    ///     次级资源挂载节点的战斗 UI 变更响应上下文。
+    ///     <para xml:lang="en">
+    ///         Provides resource-change data for a secondary-resource node attached to combat UI.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供附加到战斗界面的次级资源节点所需的资源变化数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceCombatUiChangeContext<TParent, TNode>(
         TParent Parent,
@@ -40,51 +42,51 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         where TNode : Node
     {
         /// <summary>
-        ///     Player whose secondary resource changed.
-        ///     次级资源发生变化的玩家。
+        ///     <para xml:lang="en">Gets the player whose secondary resource changed.</para>
+        ///     <para xml:lang="zh-CN">获取次级资源发生变化的玩家。</para>
         /// </summary>
         public Player Player => Change.Player;
 
         /// <summary>
-        ///     Resource definition whose amount changed.
-        ///     数量发生变化的资源定义。
+        ///     <para xml:lang="en">Gets the resource definition whose amount changed.</para>
+        ///     <para xml:lang="zh-CN">获取数量发生变化的资源定义。</para>
         /// </summary>
         public SecondaryResourceDefinition Definition => Change.Definition;
 
         /// <summary>
-        ///     Previous amount.
-        ///     变化前数量。
+        ///     <para xml:lang="en">Gets the amount before the change.</para>
+        ///     <para xml:lang="zh-CN">获取变化前的数量。</para>
         /// </summary>
         public int OldAmount => Change.OldAmount;
 
         /// <summary>
-        ///     New amount.
-        ///     变化后数量。
+        ///     <para xml:lang="en">Gets the amount after the change.</para>
+        ///     <para xml:lang="zh-CN">获取变化后的数量。</para>
         /// </summary>
         public int NewAmount => Change.NewAmount;
 
         /// <summary>
-        ///     Signed delta from old to new amount.
-        ///     从旧数量到新数量的带符号差值。
+        ///     <para xml:lang="en">Gets the signed difference from the old amount to the new amount.</para>
+        ///     <para xml:lang="zh-CN">获取从旧数量到新数量的带符号差值。</para>
         /// </summary>
         public int Delta => Change.Delta;
 
         /// <summary>
-        ///     Reason attached to the amount mutation.
-        ///     附加在数量变更上的原因。
+        ///     <para xml:lang="en">Gets the reason assigned to the amount change.</para>
+        ///     <para xml:lang="zh-CN">获取为本次数量变化指定的原因。</para>
         /// </summary>
         public SecondaryResourceChangeReason Reason => Change.Reason;
 
         /// <summary>
-        ///     Optional source model supplied by the mutating command.
-        ///     变更命令提供的可选来源模型。
+        ///     <para xml:lang="en">Gets the model that caused the change, if one was supplied.</para>
+        ///     <para xml:lang="zh-CN">获取引发本次变化的模型（如有）。</para>
         /// </summary>
         public AbstractModel? Source => Change.Source;
     }
 
     /// <summary>
-    ///     Handles secondary-resource amount changes for a combat UI attachment.
-    ///     为战斗 UI 挂载节点处理次级资源数量变化。
+    ///     <para xml:lang="en">Handles an amount change for a secondary-resource node attached to combat UI.</para>
+    ///     <para xml:lang="zh-CN">处理附加到战斗界面的次级资源节点收到的数量变化。</para>
     /// </summary>
     public delegate void SecondaryResourceCombatUiChangedHandler<TParent, TNode>(
         SecondaryResourceCombatUiChangeContext<TParent, TNode> context)
@@ -92,8 +94,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         where TNode : Node;
 
     /// <summary>
-    ///     Card UI update context for a secondary-resource attachment.
-    ///     次级资源挂载节点的卡牌 UI 更新上下文。
+    ///     <para xml:lang="en">Provides update data for a secondary-resource node attached to card UI.</para>
+    ///     <para xml:lang="zh-CN">提供附加到卡牌界面的次级资源节点所需的更新数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceCardUiContext<TParent, TNode>(
         TParent Parent,
@@ -108,8 +110,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         where TNode : Node;
 
     /// <summary>
-    ///     Multiplayer player-state UI update context for a secondary-resource attachment.
-    ///     次级资源挂载节点的多人玩家状态 UI 更新上下文。
+    ///     <para xml:lang="en">
+    ///         Provides update data for a secondary-resource node attached to a multiplayer player-state display.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供附加到多人玩家状态栏的次级资源节点所需的更新数据。</para>
     /// </summary>
     public readonly record struct SecondaryResourceMultiplayerPlayerStateUiContext<TNode>(
         NMultiplayerPlayerState Parent,
@@ -120,11 +124,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         where TNode : Node;
 
     /// <summary>
-    ///     Runtime update routing for secondary-resource UI node attachments.
-    ///     次级资源 UI 节点挂载项的运行时更新路由。
+    ///     <para xml:lang="en">
+    ///         Routes runtime updates to attached secondary-resource UI nodes and isolates failures in their
+    ///         display-only callbacks.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将运行时更新分发到已挂载的次级资源界面节点，并隔离其纯显示回调中的错误。</para>
     /// </summary>
     public static class SecondaryResourceUiRuntime
     {
+        private static readonly Lock CallbackFailureSync = new();
+        private static readonly HashSet<Delegate> LoggedCallbackFailures = [];
+
         private static readonly AttachedState<Node, List<Action<Player?>>> CombatUpdaters = new(() => []);
 
         private static readonly AttachedState<Node, List<Action<SecondaryResourceChangeContext>>> CombatChangeHandlers =
@@ -140,8 +150,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static readonly AttachedState<NMultiplayerPlayerState, bool> MultiplayerPlayerStateCombatActive = new();
 
         /// <summary>
-        ///     Updates all secondary-resource combat UI attachments for a parent node.
-        ///     更新父节点上的所有次级资源战斗 UI 挂载项。
+        ///     <para xml:lang="en">Updates every secondary-resource combat UI attachment under a parent node.</para>
+        ///     <para xml:lang="zh-CN">更新一个父节点下的所有次级资源战斗界面挂载项。</para>
         /// </summary>
         public static void UpdateCombatUi(Node parent, Player? player)
         {
@@ -182,8 +192,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Notifies all secondary-resource combat UI attachments for a parent node after an amount changes.
-        ///     在数量变化后通知父节点上的所有次级资源战斗 UI 挂载项。
+        ///     <para xml:lang="en">
+        ///         Notifies every secondary-resource combat UI attachment under a parent after an amount changes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">数量变化后通知一个父节点下的所有次级资源战斗界面挂载项。</para>
         /// </summary>
         public static void NotifyCombatUiChanged(Node parent, SecondaryResourceChangeContext change)
         {
@@ -197,8 +209,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Hides all secondary-resource combat UI attachments for a parent node.
-        ///     隐藏父节点上的所有次级资源战斗 UI 挂载项。
+        ///     <para xml:lang="en">Hides every secondary-resource combat UI attachment under a parent node.</para>
+        ///     <para xml:lang="zh-CN">隐藏一个父节点下的所有次级资源战斗界面挂载项。</para>
         /// </summary>
         public static void HideCombatUi(Node parent)
         {
@@ -211,8 +223,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Updates all secondary-resource card UI attachments for a parent node.
-        ///     更新父节点上的所有次级资源卡牌 UI 挂载项。
+        ///     <para xml:lang="en">
+        ///         Updates every secondary-resource card UI attachment under a parent using the default visual context.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用默认视觉上下文更新一个父节点下的所有次级资源卡牌界面挂载项。</para>
         /// </summary>
         public static void UpdateCardUi(Node parent, CardModel card)
         {
@@ -220,8 +234,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Updates all secondary-resource card UI attachments for a parent node.
-        ///     更新父节点上的所有次级资源卡牌 UI 挂载项。
+        ///     <para xml:lang="en">
+        ///         Updates every secondary-resource card UI attachment under a parent using the supplied visual
+        ///         context.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用提供的视觉上下文更新一个父节点下的所有次级资源卡牌界面挂载项。</para>
         /// </summary>
         public static void UpdateCardUi(
             Node parent,
@@ -241,8 +258,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Updates all secondary-resource UI attachments for one multiplayer player-state row.
-        ///     更新一个多人玩家状态行上的所有次级资源 UI 挂载项。
+        ///     <para xml:lang="en">
+        ///         Updates every secondary-resource UI attachment on one multiplayer player-state display.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">更新一个多人玩家状态栏上的所有次级资源界面挂载项。</para>
         /// </summary>
         public static void UpdateMultiplayerPlayerStateUi(NMultiplayerPlayerState parent)
         {
@@ -262,8 +281,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Marks a multiplayer player-state row as being inside or outside combat resource display.
-        ///     标记多人玩家状态行是否处于战斗资源显示阶段。
+        ///     <para xml:lang="en">
+        ///         Marks whether a multiplayer player-state display is currently showing combat resources.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">标记多人玩家状态栏当前是否应显示战斗资源。</para>
         /// </summary>
         public static void SetMultiplayerPlayerStateCombatActive(NMultiplayerPlayerState parent, bool active)
         {
@@ -274,8 +295,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Hides all secondary-resource UI attachments for one multiplayer player-state row.
-        ///     隐藏一个多人玩家状态行上的所有次级资源 UI 挂载项。
+        ///     <para xml:lang="en">
+        ///         Hides every secondary-resource UI attachment on one multiplayer player-state display.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">隐藏一个多人玩家状态栏上的所有次级资源界面挂载项。</para>
         /// </summary>
         public static void HideMultiplayerPlayerStateUi(NMultiplayerPlayerState parent)
         {
@@ -298,13 +321,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             CombatHiders.GetOrCreate(parent).Add(() => HideNode(node));
             CombatUpdaters.GetOrCreate(parent).Add(player =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                update(new(
+                var context = new SecondaryResourceCombatUiContext<TParent, TNode>(
                     parent,
                     node,
                     player,
                     definitions,
-                    SecondaryResourceVisibility.GetCombatUiDefinitions(player, true)));
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(player, true));
+                InvokeCallback(update, "combat UI update", () => update(context));
             });
 
             if (changed == null)
@@ -312,13 +339,17 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             CombatChangeHandlers.GetOrCreate(parent).Add(change =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                changed(new(
+                var context = new SecondaryResourceCombatUiChangeContext<TParent, TNode>(
                     parent,
                     node,
                     change,
                     definitions,
-                    SecondaryResourceVisibility.GetCombatUiDefinitions(change.Player, true)));
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(change.Player, true));
+                InvokeCallback(changed, "combat UI change", () => changed(context));
             });
         }
 
@@ -331,12 +362,15 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             CardUpdaters.GetOrCreate(parent).Add((card, pileType, previewMode) =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var plan = SecondaryResourcePaymentResolver.Plan(
                     card,
                     SecondaryResourcePaymentFreeMode.FromCardCostScope(
                         FreePlayBindingRegistry.ResolveCardCostScopeForUpcomingPlay(card)));
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                update(new(
+                var context = new SecondaryResourceCardUiContext<TParent, TNode>(
                     parent,
                     node,
                     card,
@@ -344,7 +378,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     pileType,
                     previewMode,
                     definitions,
-                    SecondaryResourceVisibility.GetCardUiDefinitions(card, plan)));
+                    SecondaryResourceVisibility.GetCardUiDefinitions(card, plan));
+                InvokeCallback(update, "card UI update", () => update(context));
             });
         }
 
@@ -357,20 +392,43 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             MultiplayerPlayerStateHiders.GetOrCreate(parent).Add(() => HideNode(node));
             MultiplayerPlayerStateUpdaters.GetOrCreate(parent).Add(() =>
             {
+                if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
+                    return;
+
                 var definitions = ModSecondaryResourceRegistry.GetDefinitionsSnapshot();
-                update(new(
+                var context = new SecondaryResourceMultiplayerPlayerStateUiContext<TNode>(
                     parent,
                     node,
                     parent.Player,
                     definitions,
-                    SecondaryResourceVisibility.GetCombatUiDefinitions(parent.Player)));
+                    SecondaryResourceVisibility.GetCombatUiDefinitions(parent.Player));
+                InvokeCallback(update, "multiplayer player-state UI update", () => update(context));
             });
         }
 
         private static void HideNode(Node node)
         {
-            if (node is CanvasItem canvasItem)
+            if (GodotObject.IsInstanceValid(node) && node is CanvasItem canvasItem)
                 canvasItem.Visible = false;
+        }
+
+        private static void InvokeCallback(Delegate callback, string surface, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                lock (CallbackFailureSync)
+                {
+                    if (!LoggedCallbackFailures.Add(callback))
+                        return;
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[SecondaryResource] Registered {surface} callback failed: {ex}");
+            }
         }
     }
 
@@ -378,8 +436,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     public sealed partial class ModSecondaryResourceRegistry
     {
         /// <summary>
-        ///     Registers a NodeAttachment-backed combat UI node and update route on <see cref="NCombatUi" />.
-        ///     在 <see cref="NCombatUi" /> 上注册一个基于 NodeAttachment 的战斗 UI 节点及其更新路由。
+        ///     <para xml:lang="en">
+        ///         Registers a combat UI child and its update route on <see cref="NCombatUi" /> through node
+        ///         attachments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">通过节点挂载机制，在 <see cref="NCombatUi" /> 上注册战斗界面子节点及其更新路径。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterCombatUi<TNode>(
             string localId,
@@ -392,8 +453,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers a NodeAttachment-backed combat UI node with a change-response route on <see cref="NCombatUi" />.
-        ///     在 <see cref="NCombatUi" /> 上注册一个基于 NodeAttachment 的战斗 UI 节点及其变更响应路由。
+        ///     <para xml:lang="en">
+        ///         Registers a combat UI child with update and amount-change routes on <see cref="NCombatUi" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">在 <see cref="NCombatUi" /> 上注册带更新及数量变化处理路径的战斗界面子节点。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterCombatUi<TNode>(
             string localId,
@@ -407,8 +470,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers a NodeAttachment-backed combat UI node and update route.
-        ///     注册一个基于 NodeAttachment 的战斗 UI 节点及其更新路由。
+        ///     <para xml:lang="en">Registers a combat UI child and its update route through node attachments.</para>
+        ///     <para xml:lang="zh-CN">通过节点挂载机制注册战斗界面子节点及其更新路径。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterCombatUi<TParent, TNode>(
             string localId,
@@ -433,8 +496,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers a NodeAttachment-backed combat UI node with update and change-response routes.
-        ///     注册一个基于 NodeAttachment 的战斗 UI 节点及其更新和变更响应路由。
+        ///     <para xml:lang="en">
+        ///         Registers a combat UI child with update and amount-change routes through node attachments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">通过节点挂载机制注册带更新及数量变化处理路径的战斗界面子节点。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterCombatUi<TParent, TNode>(
             string localId,
@@ -461,8 +526,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers a NodeAttachment-backed card UI node and update route on <see cref="NCard" />.
-        ///     在 <see cref="NCard" /> 上注册一个基于 NodeAttachment 的卡牌 UI 节点及其更新路由。
+        ///     <para xml:lang="en">
+        ///         Registers a card UI child and its update route on <see cref="NCard" /> through node attachments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">通过节点挂载机制，在 <see cref="NCard" /> 上注册卡牌界面子节点及其更新路径。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterCardUi<TNode>(
             string localId,
@@ -475,8 +542,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers a NodeAttachment-backed card UI node and update route.
-        ///     注册一个基于 NodeAttachment 的卡牌 UI 节点及其更新路由。
+        ///     <para xml:lang="en">Registers a card UI child and its update route through node attachments.</para>
+        ///     <para xml:lang="zh-CN">通过节点挂载机制注册卡牌界面子节点及其更新路径。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterCardUi<TParent, TNode>(
             string localId,
@@ -498,8 +565,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers a NodeAttachment-backed UI node for each multiplayer player-state row.
-        ///     为每个多人玩家状态行注册一个基于 NodeAttachment 的 UI 节点。
+        ///     <para xml:lang="en">Registers a secondary-resource UI child for each multiplayer player-state display.</para>
+        ///     <para xml:lang="zh-CN">为每个多人玩家状态栏注册次级资源界面子节点。</para>
         /// </summary>
         public NodeAttachmentDefinition RegisterMultiplayerPlayerStateUi<TNode>(
             string localId,

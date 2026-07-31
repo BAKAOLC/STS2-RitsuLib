@@ -4,7 +4,12 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Maps model entry IDs to localized display titles for dev-console autocomplete.
+    ///     <para xml:lang="en">
+    ///         Maps model entry IDs to localized display titles for developer-console autocomplete.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将模型条目 ID 映射到开发者控制台自动补全所用的本地化显示标题。
+    ///     </para>
     /// </summary>
     internal static class DevConsoleModelIdAutocompleteCatalog
     {
@@ -13,7 +18,13 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static string? _builtForLanguage;
 
         /// <summary>
-        ///     Returns the localized title for <paramref name="entryId" />, or null when unknown or empty.
+        ///     <para xml:lang="en">
+        ///         Returns the localized title for <paramref name="entryId" />, or <see langword="null" /> when it is
+        ///         unknown or empty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="entryId" /> 的本地化标题；标题未知或为空时返回 <see langword="null" />。
+        ///     </para>
         /// </summary>
         public static string? TryGetLocalizedTitle(string entryId)
         {
@@ -21,11 +32,17 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 return null;
 
             EnsureBuilt();
-            return _titlesByEntry!.GetValueOrDefault(entryId.Trim());
+            return _titlesByEntry?.GetValueOrDefault(entryId.Trim());
         }
 
         /// <summary>
-        ///     Returns whether <paramref name="partial" /> matches the localized title of <paramref name="entryId" />.
+        ///     <para xml:lang="en">
+        ///         Returns whether <paramref name="partial" /> occurs in the localized title of
+        ///         <paramref name="entryId" />, ignoring case.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="entryId" /> 的本地化标题是否包含 <paramref name="partial" />，忽略大小写。
+        ///     </para>
         /// </summary>
         public static bool MatchesLocalizedTitle(string entryId, string partial)
         {
@@ -46,7 +63,15 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                     string.Equals(_builtForLanguage, language, StringComparison.OrdinalIgnoreCase))
                     return;
 
-                _titlesByEntry = BuildTitles();
+                var titles = BuildTitles();
+                if (titles.Count == 0)
+                {
+                    _titlesByEntry = null;
+                    _builtForLanguage = null;
+                    return;
+                }
+
+                _titlesByEntry = titles;
                 _builtForLanguage = language;
             }
         }

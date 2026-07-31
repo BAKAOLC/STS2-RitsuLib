@@ -5,9 +5,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Publishes profile initialization, switching, progress save, and profile deletion lifecycle events around
-    ///     <see cref="SaveManager" /> APIs.
-    ///     围绕 <see cref="SaveManager" /> API 发布档案初始化、切换、进度保存和档案删除生命周期事件。
+    ///     <para xml:lang="en">
+    ///         Publishes lifecycle events around <see cref="SaveManager" /> profile initialization, switching, progress
+    ///         saving, and profile deletion.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         围绕 <see cref="SaveManager" /> 的档案初始化、切换、进度保存和档案删除操作发布生命周期事件。
+    ///     </para>
     /// </summary>
     internal static class SaveLifecycleProfileId
     {
@@ -54,23 +58,24 @@ namespace STS2RitsuLib.Lifecycle.Patches
             return [new(typeof(SaveManager), nameof(SaveManager.SwitchProfileId), [typeof(int)])];
         }
 
-        public static void Prefix(SaveManager __instance, int __0)
+        public static void Prefix(SaveManager __instance, int __0, out int? __state)
         {
+            __state = SaveLifecycleProfileId.TryGetCurrentProfileId(__instance);
             RitsuLibFramework.PublishLifecycleEvent(
                 new ProfileSwitchingEvent(
                     __instance,
-                    SaveLifecycleProfileId.TryGetCurrentProfileId(__instance),
+                    __state,
                     __0,
                     DateTimeOffset.UtcNow),
                 nameof(ProfileSwitchingEvent));
         }
 
-        public static void Postfix(SaveManager __instance, int __0)
+        public static void Postfix(SaveManager __instance, int? __state)
         {
             RitsuLibFramework.PublishLifecycleEvent(
                 new ProfileSwitchedEvent(
                     __instance,
-                    SaveLifecycleProfileId.TryGetCurrentProfileId(__instance) == __0 ? null : __0,
+                    __state,
                     __instance.CurrentProfileId,
                     DateTimeOffset.UtcNow),
                 nameof(ProfileSwitchedEvent));
@@ -136,8 +141,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes lifecycle events when a run is saved through <see cref="SaveManager.SaveRun" />.
-    ///     当通过 <see cref="SaveManager.SaveRun" /> 保存跑局时发布生命周期事件。
+    ///     <para xml:lang="en">Publishes lifecycle events when <see cref="SaveManager.SaveRun" /> saves the current run.</para>
+    ///     <para xml:lang="zh-CN">当 <see cref="SaveManager.SaveRun" /> 保存当前一局游戏时发布生命周期事件。</para>
     /// </summary>
     internal class RunSavingLifecyclePatch : IPatchMethod
     {

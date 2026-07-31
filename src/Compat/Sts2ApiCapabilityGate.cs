@@ -1,11 +1,8 @@
 namespace STS2RitsuLib.Compat
 {
     /// <summary>
-    ///     Chooses which STS2 API shape to assume: version thresholds when <see cref="Sts2HostVersion.Numeric" /> is
-    ///     known, otherwise reflection on the loaded assembly.
-    ///     选择要假定的 STS2 API 形态：当 <see cref="Sts2HostVersion.Numeric" /> 已知时使用版本阈值，
-    ///     否则对已加载程序集进行反射。
-    ///     已知时使用版本阈值，否则对已加载程序集进行反射。
+    ///     <para xml:lang="en">Reserved for centralized game API capability checks.</para>
+    ///     <para xml:lang="zh-CN">预留用于集中管理游戏 API 能力检查。</para>
     /// </summary>
     internal static class Sts2ApiCapabilityGate;
 }

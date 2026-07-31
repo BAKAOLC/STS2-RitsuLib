@@ -6,7 +6,8 @@ using STS2RitsuLib.Models;
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
     /// <summary>
-    ///     Mirrors vanilla dev-console candidate pools for catalog building.
+    ///     <para xml:lang="en">Provides candidate sets corresponding to the game's developer-console commands.</para>
+    ///     <para xml:lang="zh-CN">提供与游戏开发者控制台命令对应的候选项集合。</para>
     /// </summary>
     internal static class DevConsoleAutocompleteCandidateSources
     {
@@ -46,7 +47,8 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         }
 
         /// <summary>
-        ///     Same pool as the vanilla <c>power</c> command autocomplete.
+        ///     <para xml:lang="en">Returns the same model set used by the game's <c>power</c> command autocomplete.</para>
+        ///     <para xml:lang="zh-CN">返回游戏 <c>power</c> 命令自动补全所使用的同一模型集合。</para>
         /// </summary>
         public static IEnumerable<string> GetPowerEntryIds()
         {

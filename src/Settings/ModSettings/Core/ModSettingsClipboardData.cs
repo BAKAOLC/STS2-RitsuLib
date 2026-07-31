@@ -18,15 +18,19 @@ namespace STS2RitsuLib.Settings
             new();
 
         /// <summary>
-        ///     CLR full names for numeric primitives that may appear in <see cref="ModSettingsClipboardEnvelope.TypeName" />.
-        ///     可能出现在 <see cref="ModSettingsClipboardEnvelope.TypeName" /> 中的数值基元 CLR 全名。
+        ///     <para xml:lang="en">
+        ///         Maps CLR full names accepted as numeric source types in
+        ///         <see cref="ModSettingsClipboardEnvelope.TypeName" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         映射 <see cref="ModSettingsClipboardEnvelope.TypeName" /> 中可作为数值源类型接受的 CLR 全名。
+        ///     </para>
         /// </summary>
-        private static readonly FrozenSet<string> NumericEnvelopeTypeFullNames = new[]
+        private static readonly FrozenDictionary<string, Type> NumericEnvelopeTypes = new[]
         {
-            typeof(byte).FullName!, typeof(sbyte).FullName!, typeof(short).FullName!, typeof(ushort).FullName!,
-            typeof(int).FullName!, typeof(uint).FullName!, typeof(long).FullName!, typeof(ulong).FullName!,
-            typeof(float).FullName!, typeof(double).FullName!, typeof(decimal).FullName!,
-        }.ToFrozenSet(StringComparer.Ordinal);
+            typeof(byte), typeof(sbyte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long),
+            typeof(ulong), typeof(float), typeof(double), typeof(decimal),
+        }.ToFrozenDictionary(type => type.FullName!, StringComparer.Ordinal);
 
         public static void CopyValue<TValue>(IModSettingsBinding binding, ModSettingsClipboardScope scope,
             IStructuredModSettingsValueAdapter<TValue> adapter, TValue value)
@@ -58,10 +62,15 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies a value captured in <see cref="ModSettingsChromeBindingSnapshot" /> onto <paramref name="binding" />
-        ///     (same compatibility rules as a value clipboard envelope with no source-binding match requirement).
-        ///     将 <see cref="ModSettingsChromeBindingSnapshot" /> 中捕获的值应用到 <paramref name="binding" /> 上
-        ///     （兼容性规则与值剪贴板信封相同，但不要求匹配源绑定）。
+        ///     <para xml:lang="en">
+        ///         Reads a value captured in <see cref="ModSettingsChromeBindingSnapshot" /> for the target binding,
+        ///         applying the single-value clipboard compatibility rules without requiring a matching source-binding
+        ///         signature.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为目标绑定读取 <see cref="ModSettingsChromeBindingSnapshot" /> 中捕获的值，
+        ///         采用单值剪贴板兼容规则，但不要求源绑定签名匹配。
+        ///     </para>
         /// </summary>
         internal static bool TryApplySerializedValueToBinding<TValue>(
             IModSettingsValueBinding<TValue> binding,
@@ -143,21 +152,23 @@ namespace STS2RitsuLib.Settings
             try
             {
                 envelope = JsonSerializer.Deserialize<ModSettingsClipboardEnvelope>(clipboard);
-                return envelope is { Kind.Length: > 0 };
+                // Deserialization can violate nullable annotations when required JSON members are missing or null.
+                // ReSharper disable RedundantAlwaysMatchSubpattern
+                return envelope is
+                {
+                    Kind.Length: > 0,
+                    TypeName: not null,
+                    TargetSignature: not null,
+                    SchemaSignature: not null,
+                    Payload: not null,
+                };
+                // ReSharper restore RedundantAlwaysMatchSubpattern
             }
-            catch
+            catch (JsonException)
             {
                 envelope = null;
                 return false;
             }
-        }
-
-        private static bool TryParseEnvelope(string clipboard, out ModSettingsClipboardEnvelope? envelope)
-        {
-            if (!TryDeserializeEnvelope(clipboard, out envelope) || envelope == null)
-                return false;
-
-            return string.Equals(envelope.Kind, ClipboardKind, StringComparison.Ordinal);
         }
 
         internal static bool TryReadEnvelopePayloadForTarget<TValue>(IModSettingsBinding binding,
@@ -179,17 +190,8 @@ namespace STS2RitsuLib.Settings
             if (!string.Equals(envelope.SchemaSignature, GetSchemaSignature(typeof(TValue)), StringComparison.Ordinal))
                 return false;
 
-            if (!MatchesJsonShape(typeof(TValue), envelope.Payload))
-                return false;
-
             payload = envelope.Payload;
             return true;
-        }
-
-        private static bool TryReadEnvelopePayload<TValue>(IModSettingsBinding binding,
-            ModSettingsClipboardEnvelope? envelope, out string payload)
-        {
-            return TryReadEnvelopePayloadForTarget<TValue>(binding, envelope, true, out payload);
         }
 
         private static string CreateTargetSignature(IModSettingsBinding binding)
@@ -265,7 +267,7 @@ namespace STS2RitsuLib.Settings
                 using var document = JsonDocument.Parse(json);
                 return MatchesElement(type, document.RootElement);
             }
-            catch
+            catch (JsonException)
             {
                 return false;
             }
@@ -296,8 +298,12 @@ namespace STS2RitsuLib.Settings
             if (members.Length == 0)
                 return false;
 
-            var properties = element.EnumerateObject()
-                .ToDictionary(property => property.Name, property => property.Value, StringComparer.Ordinal);
+            var properties = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
+            // Preserve JsonElement's concrete enumerator and fail immediately on duplicate members.
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var property in element.EnumerateObject())
+                if (!properties.TryAdd(property.Name, property.Value))
+                    return false;
 
             foreach (var member in members)
             {
@@ -395,14 +401,21 @@ namespace STS2RitsuLib.Settings
                 return false;
 
             return CanCoerceClipboardEnvelopeScalarTo(typeof(TValue), envelope.TypeName) &&
+                   IsEnvelopeScalarPayloadValid(envelope.TypeName, envelope.Payload) &&
                    TryCoerceJsonPayloadToValue(envelope.Payload, out value);
         }
 
         /// <summary>
-        ///     Loose scalar coercion is only for same declared CLR type (e.g. schema/shape mismatch) or safe numeric widening;
-        ///     it must not turn unrelated copies (e.g. slider <see cref="double" />) into <see cref="string" /> choice keys.
-        ///     宽松标量强制转换仅用于相同声明 CLR 类型（例如 schema / shape 不匹配）或安全数值加宽；
-        ///     不得将无关的复制内容（例如 slider <see cref="double" />）转为 <see cref="string" /> choice key。
+        ///     <para xml:lang="en">
+        ///         Allows scalar fallback for the same declared CLR type, lossless numeric widening, and supported
+        ///         numeric-to-enum or numeric-to-Boolean conversions. It deliberately rejects unrelated values such as a
+        ///         copied <see cref="double" /> slider value becoming a <see cref="string" /> choice key.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         允许相同 CLR 声明类型、无损数值拓宽，以及受支持的数值到枚举或布尔值转换作为标量回退。
+        ///         此规则会明确拒绝无关值，例如不会把复制的 <see cref="double" /> 滑块值转换成
+        ///         <see cref="string" /> 选项键。
+        ///     </para>
         /// </summary>
         private static bool CanCoerceClipboardEnvelopeScalarTo(Type targetValueType, string envelopeTypeName)
         {
@@ -417,24 +430,72 @@ namespace STS2RitsuLib.Settings
             if (ut == typeof(string))
                 return false;
 
-            if (IsNumericType(ut) && NumericEnvelopeTypeFullNames.Contains(envelopeTypeName))
-                return true;
+            if (IsNumericType(ut) && NumericEnvelopeTypes.TryGetValue(envelopeTypeName, out var sourceNumericType))
+                return CanWidenNumericWithoutLoss(sourceNumericType, ut);
 
             if (ut.IsEnum)
-                return NumericEnvelopeTypeFullNames.Contains(envelopeTypeName) ||
+                return NumericEnvelopeTypes.ContainsKey(envelopeTypeName) ||
                        string.Equals(envelopeTypeName, ut.FullName ?? ut.Name, StringComparison.Ordinal);
 
             if (ut == typeof(bool))
-                return NumericEnvelopeTypeFullNames.Contains(envelopeTypeName) ||
+                return NumericEnvelopeTypes.ContainsKey(envelopeTypeName) ||
                        string.Equals(envelopeTypeName, typeof(bool).FullName, StringComparison.Ordinal);
 
             return false;
+        }
+
+        private static bool CanWidenNumericWithoutLoss(Type sourceType, Type targetType)
+        {
+            if (sourceType == targetType)
+                return true;
+
+            return Type.GetTypeCode(sourceType) switch
+            {
+                TypeCode.SByte => targetType == typeof(short) || targetType == typeof(int) ||
+                                  targetType == typeof(long) || targetType == typeof(float) ||
+                                  targetType == typeof(double) || targetType == typeof(decimal),
+                TypeCode.Byte => targetType == typeof(short) || targetType == typeof(ushort) ||
+                                 targetType == typeof(int) || targetType == typeof(uint) ||
+                                 targetType == typeof(long) || targetType == typeof(ulong) ||
+                                 targetType == typeof(float) || targetType == typeof(double) ||
+                                 targetType == typeof(decimal),
+                TypeCode.Int16 => targetType == typeof(int) || targetType == typeof(long) ||
+                                  targetType == typeof(float) || targetType == typeof(double) ||
+                                  targetType == typeof(decimal),
+                TypeCode.UInt16 => targetType == typeof(int) || targetType == typeof(uint) ||
+                                   targetType == typeof(long) || targetType == typeof(ulong) ||
+                                   targetType == typeof(float) || targetType == typeof(double) ||
+                                   targetType == typeof(decimal),
+                TypeCode.Int32 => targetType == typeof(long) || targetType == typeof(double) ||
+                                  targetType == typeof(decimal),
+                TypeCode.UInt32 => targetType == typeof(long) || targetType == typeof(ulong) ||
+                                   targetType == typeof(double) || targetType == typeof(decimal),
+                TypeCode.Int64 or TypeCode.UInt64 => targetType == typeof(decimal),
+                TypeCode.Single => targetType == typeof(double),
+                _ => false,
+            };
         }
 
         private static bool IsCoercibleScalarTarget(Type type)
         {
             var ut = Nullable.GetUnderlyingType(type) ?? type;
             return ut == typeof(string) || ut == typeof(bool) || ut.IsEnum || IsNumericType(ut);
+        }
+
+        private static bool IsEnvelopeScalarPayloadValid(string envelopeTypeName, string json)
+        {
+            if (!NumericEnvelopeTypes.TryGetValue(envelopeTypeName, out var numericType))
+                return true;
+
+            try
+            {
+                using var document = JsonDocument.Parse(json);
+                return TryConvertNumericElement(document.RootElement, numericType, out _);
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
 
         private static bool TryCoerceJsonPayloadToValue<TValue>(string json, out TValue value)
@@ -445,7 +506,7 @@ namespace STS2RitsuLib.Settings
                 using var doc = JsonDocument.Parse(json);
                 return TryCoerceJsonElement(doc.RootElement, out value);
             }
-            catch
+            catch (JsonException)
             {
                 return false;
             }
@@ -499,10 +560,9 @@ namespace STS2RitsuLib.Settings
 
                 if (IsNumericType(ut))
                 {
-                    if (!TryGetNumericDouble(element, out var d))
+                    if (!TryConvertNumericElement(element, ut, out var converted))
                         return false;
 
-                    var converted = Convert.ChangeType(d, ut, CultureInfo.InvariantCulture);
                     value = (TValue)converted;
                     return true;
                 }
@@ -532,22 +592,62 @@ namespace STS2RitsuLib.Settings
                         return false;
                 }
             }
-            catch
+            catch (InvalidCastException)
+            {
+                return false;
+            }
+            catch (OverflowException)
             {
                 return false;
             }
         }
 
-        private static bool TryGetNumericDouble(JsonElement element, out double d)
+        private static bool TryConvertNumericElement(JsonElement element, Type targetType, out object converted)
         {
-            d = 0;
-            return element.ValueKind switch
+            converted = null!;
+            try
             {
-                JsonValueKind.Number => element.TryGetDouble(out d),
-                JsonValueKind.String when double.TryParse(element.GetString(), NumberStyles.Float,
-                    CultureInfo.InvariantCulture, out d) => true,
-                _ => false,
-            };
+                switch (element.ValueKind)
+                {
+                    case JsonValueKind.Number:
+                        converted = JsonSerializer.Deserialize(element.GetRawText(), targetType)!;
+                        return converted != null;
+                    case JsonValueKind.String:
+                        var text = element.GetString();
+                        if (string.IsNullOrWhiteSpace(text))
+                            return false;
+
+                        converted = Convert.ChangeType(text, targetType, CultureInfo.InvariantCulture);
+                        return converted switch
+                        {
+                            float single => float.IsFinite(single),
+                            double @double => double.IsFinite(@double),
+                            _ => true,
+                        };
+                    default:
+                        return false;
+                }
+            }
+            catch (JsonException)
+            {
+                converted = null!;
+                return false;
+            }
+            catch (FormatException)
+            {
+                converted = null!;
+                return false;
+            }
+            catch (InvalidCastException)
+            {
+                converted = null!;
+                return false;
+            }
+            catch (OverflowException)
+            {
+                converted = null!;
+                return false;
+            }
         }
 
         private sealed record ClipboardSerializableMember(string JsonName, Type ValueType);

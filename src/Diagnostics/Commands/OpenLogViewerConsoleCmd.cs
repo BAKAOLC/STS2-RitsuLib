@@ -6,8 +6,12 @@ using STS2RitsuLib.Diagnostics.Logging;
 namespace STS2RitsuLib.Diagnostics.Commands
 {
     /// <summary>
-    ///     Opens the local RitsuLib debug log viewer in the system browser.
-    ///     在系统浏览器中打开本机 RitsuLib 调试日志查看器。
+    ///     <para xml:lang="en">
+    ///         Implements the command that opens the local RitsuLib debug-log viewer in the system browser.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         实现在系统浏览器中打开本地 RitsuLib 调试日志查看器的命令。
+    ///     </para>
     /// </summary>
     public sealed class OpenLogViewerConsoleCmd : AbstractConsoleCmd
     {

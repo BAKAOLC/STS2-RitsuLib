@@ -1,26 +1,34 @@
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Sends authorized telemetry events for one applicant to that applicant's fixed backend.
-    ///     将某个申请方已授权的 telemetry 事件发送到该申请方固定的后端。
+    ///     <para xml:lang="en">
+    ///         Sends one applicant's authorized telemetry events to that applicant's fixed backend.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将一个申请方已获授权的遥测事件发送到该申请方的固定后端。
+    ///     </para>
     /// </summary>
     public interface ITelemetryAdapter
     {
         /// <summary>
-        ///     Stable adapter id, such as <c>http_json</c> or <c>posthog</c>.
-        ///     稳定 adapter ID，例如 <c>http_json</c> 或 <c>posthog</c>。
+        ///     <para xml:lang="en">
+        ///         Gets the stable adapter ID, such as <c>http_json</c> or <c>posthog</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取稳定的适配器 ID，例如 <c>http_json</c> 或 <c>posthog</c>。
+        ///     </para>
         /// </summary>
         string AdapterId { get; }
 
         /// <summary>
-        ///     Human-readable endpoint description shown in settings.
-        ///     设置界面中显示的可读 endpoint 说明。
+        ///     <para xml:lang="en">Gets the human-readable endpoint description shown in settings.</para>
+        ///     <para xml:lang="zh-CN">获取设置界面中显示的端点说明。</para>
         /// </summary>
         string EndpointDescription { get; }
 
         /// <summary>
-        ///     Sends one batch of events for <paramref name="applicant" />.
-        ///     为 <paramref name="applicant" /> 发送一批事件。
+        ///     <para xml:lang="en">Sends one event batch for <paramref name="applicant" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="applicant" /> 发送一个事件批次。</para>
         /// </summary>
         ValueTask<TelemetrySendResult> SendAsync(
             TelemetryApplicant applicant,
@@ -29,14 +37,14 @@ namespace STS2RitsuLib.Telemetry
     }
 
     /// <summary>
-    ///     Result returned by a telemetry adapter send attempt.
-    ///     telemetry adapter 发送尝试的结果。
+    ///     <para xml:lang="en">Represents the result of a telemetry adapter's send attempt.</para>
+    ///     <para xml:lang="zh-CN">表示遥测适配器一次发送尝试的结果。</para>
     /// </summary>
     public readonly record struct TelemetrySendResult
     {
         /// <summary>
-        ///     Initializes a send result.
-        ///     初始化发送结果。
+        ///     <para xml:lang="en">Initializes a send result.</para>
+        ///     <para xml:lang="zh-CN">初始化发送结果。</para>
         /// </summary>
         public TelemetrySendResult(bool success, string? errorMessage = null)
         {
@@ -45,20 +53,24 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Whether the adapter accepted the batch.
-        ///     adapter 是否接受了该批次。
+        ///     <para xml:lang="en">Gets whether the adapter accepted the batch.</para>
+        ///     <para xml:lang="zh-CN">获取适配器是否接受了该批次。</para>
         /// </summary>
         public bool Success { get; }
 
         /// <summary>
-        ///     Error message when <see cref="Success" /> is false.
-        ///     <see cref="Success" /> 为 false 时的错误信息。
+        ///     <para xml:lang="en">
+        ///         Gets the error message when <see cref="Success" /> is <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="Success" /> 为 <see langword="false" /> 时的错误信息。
+        ///     </para>
         /// </summary>
         public string? ErrorMessage { get; }
 
         /// <summary>
-        ///     Creates a successful send result.
-        ///     创建成功发送结果。
+        ///     <para xml:lang="en">Creates a successful send result.</para>
+        ///     <para xml:lang="zh-CN">创建表示发送成功的结果。</para>
         /// </summary>
         public static TelemetrySendResult Ok()
         {
@@ -66,8 +78,8 @@ namespace STS2RitsuLib.Telemetry
         }
 
         /// <summary>
-        ///     Creates a failed send result with an error message.
-        ///     创建带错误信息的失败发送结果。
+        ///     <para xml:lang="en">Creates a failed send result with an error message.</para>
+        ///     <para xml:lang="zh-CN">创建带错误信息的发送失败结果。</para>
         /// </summary>
         public static TelemetrySendResult Fail(string errorMessage)
         {

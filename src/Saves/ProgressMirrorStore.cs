@@ -26,8 +26,9 @@ namespace STS2RitsuLib.Saves
                 return;
             }
 
-            PreservedProgressRecords.MergeSerializableProgressRecords(save, mirror);
-            RitsuLibFramework.Logger.Info("[Saves] Progress mirror merged into loaded progress");
+            if (PreservedProgressRecords.MergeUnavailableRecords(save, mirror))
+                RitsuLibFramework.Logger.Info(
+                    "[Saves] Unavailable progress records restored from progress mirror");
         }
 
         internal static void RefreshFromProgress(ProgressState progress)
@@ -40,7 +41,7 @@ namespace STS2RitsuLib.Saves
                 _isRefreshingFromProgress = true;
                 _ = progress.ToSerializable();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[Saves] Failed to refresh progress mirror from progress: {ex.Message}");
             }
@@ -64,7 +65,7 @@ namespace STS2RitsuLib.Saves
                     RitsuLibFramework.Logger.Warn(
                         $"[Saves] Failed to write progress mirror: {result.ErrorMessage ?? "unknown error"}");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[Saves] Failed to write progress mirror: {ex.Message}");
             }

@@ -1,5 +1,12 @@
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Summarizes a Steam Workshop update check, including download candidates, changed items, and any
+    ///         unavailable or failure message.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">汇总 Steam 创意工坊更新检查，包括下载候选项、已变更物品以及不可用或失败消息。</para>
+    /// </summary>
     internal sealed record RitsuSteamWorkshopUpdateResult(
         bool Available,
         int InspectedCount,
@@ -52,8 +59,10 @@ namespace STS2RitsuLib.Platform.Steam
         uint PageSize,
         uint? TotalMatchingResults)
     {
-        internal uint? TotalPages => TotalMatchingResults is { } total
-            ? Math.Max(1u, (total + PageSize - 1) / PageSize)
+        internal uint? TotalPages => TotalMatchingResults is { } total && PageSize > 0
+            ? total == 0
+                ? 1
+                : 1 + (total - 1) / PageSize
             : null;
 
         internal bool HasPreviousPage => Page > 1;

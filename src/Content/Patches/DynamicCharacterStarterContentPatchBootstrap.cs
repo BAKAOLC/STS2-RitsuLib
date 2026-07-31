@@ -4,11 +4,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Content.Patches
 {
     /// <summary>
-    ///     Applies dynamic Harmony postfixes so <see cref="ModContentRegistry" /> character-starter registrations merge
-    ///     into every concrete <see cref="CharacterModel" /> (vanilla and mod) before <see cref="ModelDb.Init" /> caches
-    ///     content.
-    ///     应用动态 Harmony 后置补丁，使 <see cref="ModContentRegistry" /> 角色初始内容注册在
-    ///     <see cref="ModelDb.Init" /> 缓存内容前合并进每个具体 <see cref="CharacterModel" />（原版和 mod）。
+    ///     <para xml:lang="en">
+    ///         Applies starter-content patches to all loaded character types before
+    ///         <see cref="ModelDb" /> initializes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="ModelDb" /> 初始化前向所有已加载角色类型应用初始内容补丁。
+    ///     </para>
     /// </summary>
     internal sealed class DynamicCharacterStarterContentPatchBootstrap : IPatchMethod
     {

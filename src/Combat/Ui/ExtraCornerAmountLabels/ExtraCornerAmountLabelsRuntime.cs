@@ -146,36 +146,63 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
         private static ExtraIconAmountLabelSpec[] SnapshotPowerSpecs(PowerModel model)
         {
-            if (model is IPowerExtraIconAmountLabelSpecsProvider specsProvider)
-                return SnapshotSpecs(specsProvider.GetPowerExtraIconAmountLabelSpecs());
+            try
+            {
+                if (model is IPowerExtraIconAmountLabelSpecsProvider specsProvider)
+                    return SnapshotSpecs(specsProvider.GetPowerExtraIconAmountLabelSpecs());
 
-            return model is IPowerExtraIconAmountLabelsProvider slotsProvider
-                ? SnapshotSlotsAsSpecs(slotsProvider.GetPowerExtraIconAmountLabelSlots())
-                : [];
+                return model is IPowerExtraIconAmountLabelsProvider slotsProvider
+                    ? SnapshotSlotsAsSpecs(slotsProvider.GetPowerExtraIconAmountLabelSlots())
+                    : [];
+            }
+            catch (Exception ex)
+            {
+                ReportProviderFailureOnce(model, nameof(SnapshotPowerSpecs), ex);
+                return [];
+            }
         }
 
         private static ExtraIconAmountLabelSpec[] SnapshotRelicSpecs(RelicModel model)
         {
-            if (model is IRelicExtraIconAmountLabelSpecsProvider specsProvider)
-                return SnapshotSpecs(specsProvider.GetRelicExtraIconAmountLabelSpecs());
+            try
+            {
+                if (model is IRelicExtraIconAmountLabelSpecsProvider specsProvider)
+                    return SnapshotSpecs(specsProvider.GetRelicExtraIconAmountLabelSpecs());
 
-            return model is IRelicExtraIconAmountLabelsProvider slotsProvider
-                ? SnapshotSlotsAsSpecs(slotsProvider.GetRelicExtraIconAmountLabelSlots())
-                : [];
+                return model is IRelicExtraIconAmountLabelsProvider slotsProvider
+                    ? SnapshotSlotsAsSpecs(slotsProvider.GetRelicExtraIconAmountLabelSlots())
+                    : [];
+            }
+            catch (Exception ex)
+            {
+                ReportProviderFailureOnce(model, nameof(SnapshotRelicSpecs), ex);
+                return [];
+            }
         }
 
         private static ExtraIconAmountLabelSpec[] SnapshotIntentSpecs(AbstractIntent intent)
         {
-            if (intent is IIntentExtraCornerAmountLabelSpecsProvider specsProvider)
-                return SnapshotSpecs(specsProvider.GetIntentExtraCornerAmountLabelSpecs());
+            try
+            {
+                if (intent is IIntentExtraCornerAmountLabelSpecsProvider specsProvider)
+                    return SnapshotSpecs(specsProvider.GetIntentExtraCornerAmountLabelSpecs());
 
-            return intent is IIntentExtraCornerAmountLabelsProvider slotsProvider
-                ? SnapshotSlotsAsSpecs(slotsProvider.GetIntentExtraCornerAmountLabelSlots())
-                : [];
+                return intent is IIntentExtraCornerAmountLabelsProvider slotsProvider
+                    ? SnapshotSlotsAsSpecs(slotsProvider.GetIntentExtraCornerAmountLabelSlots())
+                    : [];
+            }
+            catch (Exception ex)
+            {
+                ReportProviderFailureOnce(intent, nameof(SnapshotIntentSpecs), ex);
+                return [];
+            }
         }
 
-        private static ExtraIconAmountLabelSpec[] SnapshotSpecs(IReadOnlyList<ExtraIconAmountLabelSpec> specs)
+        private static ExtraIconAmountLabelSpec[] SnapshotSpecs(IReadOnlyList<ExtraIconAmountLabelSpec>? specs)
         {
+            if (specs == null)
+                throw new InvalidOperationException("Extra badge specification provider returned null.");
+
             if (specs.Count == 0)
                 return [];
 
@@ -189,8 +216,12 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             return copy;
         }
 
-        private static ExtraIconAmountLabelSpec[] SnapshotSlotsAsSpecs(IReadOnlyList<ExtraIconAmountLabelSlot> slots)
+        private static ExtraIconAmountLabelSpec[] SnapshotSlotsAsSpecs(
+            IReadOnlyList<ExtraIconAmountLabelSlot>? slots)
         {
+            if (slots == null)
+                throw new InvalidOperationException("Extra badge slot provider returned null.");
+
             if (slots.Count == 0)
                 return [];
 
@@ -217,6 +248,12 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 if (string.IsNullOrWhiteSpace(slot.Text))
                     continue;
 
+                if (!Enum.IsDefined(slot.Corner))
+                {
+                    ReportSlotRejectedOnce(host, hostKind, in slot, "corner value is not defined");
+                    continue;
+                }
+
                 if (slot.Corner == ExtraIconAmountLabelCorner.Custom &&
                     (slot.CustomRect.Size.X <= 0f || slot.CustomRect.Size.Y <= 0f))
                     continue;
@@ -224,7 +261,11 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                 if (slot.Corner != ExtraIconAmountLabelCorner.Custom)
                     if (!occupied.Add(slot.Corner))
                     {
-                        ReportCornerRejectedOnce(host, hostKind, in slot);
+                        ReportSlotRejectedOnce(
+                            host,
+                            hostKind,
+                            in slot,
+                            "requested preset corner is already occupied by another extra badge");
                         continue;
                     }
 
@@ -239,6 +280,7 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                     writeIndex,
                     slot.TextMode,
                     applyHostStyle);
+                ClearSlotColorOverrides(live, slot.TextMode);
                 applyHostStyle(live);
                 ApplySlotColorOverrides(live, in slot);
 
@@ -327,6 +369,18 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
                     outlineColor);
         }
 
+        private static void ClearSlotColorOverrides(Control label, ExtraIconAmountLabelTextMode textMode)
+        {
+            label.RemoveThemeColorOverride(
+                textMode == ExtraIconAmountLabelTextMode.RichText
+                    ? ThemeConstants.RichTextLabel.DefaultColor
+                    : ThemeConstants.Label.FontColor);
+            label.RemoveThemeColorOverride(
+                textMode == ExtraIconAmountLabelTextMode.RichText
+                    ? ThemeConstants.RichTextLabel.FontOutlineColor
+                    : ThemeConstants.Label.FontOutlineColor);
+        }
+
         private static void SetSlotText(Control label, in ExtraIconAmountLabelSpec slot)
         {
             var text = slot.Text.Trim();
@@ -352,14 +406,14 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
             };
         }
 
-        private static void ReportCornerRejectedOnce(
+        private static void ReportSlotRejectedOnce(
             Control host,
             ExtraCornerHostKind hostKind,
-            in ExtraIconAmountLabelSpec slot)
+            in ExtraIconAmountLabelSpec slot,
+            string reason)
         {
             var hostId = host.GetInstanceId();
             var text = slot.Text.Trim();
-            const string reason = "requested corner is already occupied by another extra badge";
             var hostKey = GetHostLogKey(host, hostKind);
 
             var key = $"{hostKind}:{hostKey}:{slot.Corner}:{reason}";
@@ -371,6 +425,21 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 
             RitsuLibFramework.Logger.Warn(
                 $"[ExtraCornerAmountLabels] Rejected badge slot on {hostKind} host ({hostKey}, nodeId={hostId}): corner={slot.Corner}, text='{text}', reason={reason}.");
+        }
+
+        private static void ReportProviderFailureOnce(object provider, string operation, Exception exception)
+        {
+            var providerType = provider.GetType().FullName ?? provider.GetType().Name;
+            var key = $"provider:{providerType}:{operation}";
+            lock (CornerErrorSync)
+            {
+                if (!CornerErrorOnceKeys.Add(key))
+                    return;
+            }
+
+            RitsuLibFramework.Logger.ErrorNoTrace(
+                $"[ExtraCornerAmountLabels] {providerType} failed while supplying extra badge slots during {operation}. " +
+                $"Its extra badges will be hidden for this refresh. {exception}");
         }
 
         private static string GetHostLogKey(Control host, ExtraCornerHostKind hostKind)

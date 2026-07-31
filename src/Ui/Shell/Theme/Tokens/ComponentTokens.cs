@@ -3,83 +3,84 @@ using Godot;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Component tokens grouped by component, then variant/state.
-    ///     按组件再按变体/状态分组的组件令牌。
+    ///     <para xml:lang="en">Groups shell-theme colors by component, variant, and interaction state.</para>
+    ///     <para xml:lang="zh-CN">按组件、变体及交互状态分类定义 Shell 主题颜色。</para>
     /// </summary>
     /// <param name="SidebarCard">
-    ///     Sidebar mod cards (default and selected).
-    ///     侧边栏 mod 卡片 (默认和选中)。
+    ///     <para xml:lang="en">The default and selected sidebar mod-card states.</para>
+    ///     <para xml:lang="zh-CN">侧边栏模组卡片的默认及选中状态。</para>
     /// </param>
     /// <param name="ChromeMenu">
-    ///     Compact action / menu chrome.
-    ///     紧凑动作/菜单 chrome。
+    ///     <para xml:lang="en">The compact action-menu states.</para>
+    ///     <para xml:lang="zh-CN">紧凑操作菜单的状态。</para>
     /// </param>
     /// <param name="PageToolbarTray">
-    ///     Tray behind per-page toolbar controls.
-    ///     Tray behind 每页工具栏控件。
+    ///     <para xml:lang="en">The tray behind page-level toolbar controls.</para>
+    ///     <para xml:lang="zh-CN">页面级工具栏控件后方的托盘。</para>
     /// </param>
     /// <param name="ListShell">
-    ///     Outer container for scrollable lists.
-    ///     可滚动列表的外层容器。
+    ///     <para xml:lang="en">The outer container of scrollable lists.</para>
+    ///     <para xml:lang="zh-CN">可滚动列表的外层容器。</para>
     /// </param>
     /// <param name="ListItem">
-    ///     List item card variants.
-    ///     列表项卡片变体。
+    ///     <para xml:lang="en">The list-item card variants.</para>
+    ///     <para xml:lang="zh-CN">列表项卡片的变体。</para>
     /// </param>
     /// <param name="ListEditor">
-    ///     Inline list-editor surface.
-    ///     内联列表编辑器表面。
+    ///     <para xml:lang="en">The inline list-editor panel.</para>
+    ///     <para xml:lang="zh-CN">内联列表编辑器面板。</para>
     /// </param>
     /// <param name="Pill">
-    ///     Pill-shaped controls (tags, compact buttons).
+    ///     <para xml:lang="en">The states of pill-shaped tags and compact buttons.</para>
+    ///     <para xml:lang="zh-CN">胶囊形标签及紧凑按钮的状态。</para>
     /// </param>
     /// <param name="Toggle">
-    ///     Settings toggle states.
-    ///     设置 toggle 状态。
+    ///     <para xml:lang="en">The settings-toggle states.</para>
+    ///     <para xml:lang="zh-CN">设置开关的状态。</para>
     /// </param>
     /// <param name="Slider">
-    ///     Slider grab thumb tones.
-    ///     滑块抓取拇指色调。
+    ///     <para xml:lang="en">The slider thumb highlight and shadow colors.</para>
+    ///     <para xml:lang="zh-CN">滑块柄的高光及阴影颜色。</para>
     /// </param>
     /// <param name="Dropdown">
-    ///     Dropdown faces and rows.
-    ///     下拉框正面和行。
+    ///     <para xml:lang="en">The drop-down face interaction states.</para>
+    ///     <para xml:lang="zh-CN">下拉框正面的交互状态。</para>
     /// </param>
     /// <param name="Stepper">
-    ///     Stepper face states.
-    ///     步进器正面状态。
+    ///     <para xml:lang="en">The stepper face states.</para>
+    ///     <para xml:lang="zh-CN">步进器正面的状态。</para>
     /// </param>
     /// <param name="DragHandle">
-    ///     Drag handles for reorderable lists.
-    ///     可重排序列表的拖拽句柄。
+    ///     <para xml:lang="en">The drag-handle states of reorderable lists.</para>
+    ///     <para xml:lang="zh-CN">可重新排序列表中拖动手柄的状态。</para>
     /// </param>
     /// <param name="Collapsible">
-    ///     Collapsible section headers.
-    ///     可折叠分区标题。
+    ///     <para xml:lang="en">The collapsible section-header states.</para>
+    ///     <para xml:lang="zh-CN">可折叠分区标题栏的状态。</para>
     /// </param>
     /// <param name="SidebarBtn">
-    ///     Sidebar tree buttons (page / section / mod / utility / depth variations).
-    ///     Sidebar 树按钮 (页面 / 分区 / mod / 工具 / 深度变体)。
+    ///     <para xml:lang="en">The sidebar tree-row kinds, depths, and interaction states.</para>
+    ///     <para xml:lang="zh-CN">侧边栏树状行的类型、深度及交互状态。</para>
     /// </param>
     /// <param name="SidebarRail">
-    ///     Section rail background.
-    ///     分区轨道背景。
+    ///     <para xml:lang="en">The section-navigation rail colors.</para>
+    ///     <para xml:lang="zh-CN">分区导航轨道的颜色。</para>
     /// </param>
     /// <param name="TextButton">
-    ///     Inline text-button tones (accent / danger / neutral).
-    ///     内联文本按钮色调 (强调 / 危险 / 中性)。
+    ///     <para xml:lang="en">The accent, danger, and neutral inline text-button tones.</para>
+    ///     <para xml:lang="zh-CN">内联文本按钮的强调、危险及中性色调。</para>
     /// </param>
     /// <param name="StringValidation">
-    ///     String editor validation chrome (neutral / invalid).
-    ///     字符串编辑器校验 chrome (中性 / invalid)。
+    ///     <para xml:lang="en">The neutral and invalid string-editor validation states.</para>
+    ///     <para xml:lang="zh-CN">字符串编辑器验证边框的中性及无效状态。</para>
     /// </param>
     /// <param name="OverlayPanel">
-    ///     Floating overlay panel chrome.
-    ///     浮动覆盖面板 chrome。
+    ///     <para xml:lang="en">The floating-overlay panel colors.</para>
+    ///     <para xml:lang="zh-CN">浮动层面板的颜色。</para>
     /// </param>
     /// <param name="ChoiceCenter">
-    ///     Choice-center label highlight gradient.
-    ///     choice-center 标签高亮渐变。
+    ///     <para xml:lang="en">The highlight gradient of a choice control's center label.</para>
+    ///     <para xml:lang="zh-CN">选择控件中央标签的高亮渐变。</para>
     /// </param>
     public sealed record ComponentTokens(
         SidebarCardTokens SidebarCard,
@@ -103,137 +104,142 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         ChoiceCenterTokens ChoiceCenter);
 
     /// <summary>
-    ///     Sidebar mod card tokens.
-    ///     侧边栏 mod 卡牌令牌。
+    ///     <para xml:lang="en">Groups sidebar mod-card colors.</para>
+    ///     <para xml:lang="zh-CN">集中定义侧边栏模组卡片的颜色。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Default state (background + border).
-    ///     默认状态 (背景 + 边框)。
+    ///     <para xml:lang="en">The default background and border.</para>
+    ///     <para xml:lang="zh-CN">默认状态的背景及边框。</para>
     /// </param>
     /// <param name="Selected">
-    ///     Selected state.
-    ///     选中状态。
+    ///     <para xml:lang="en">The selected-state background and border.</para>
+    ///     <para xml:lang="zh-CN">选中状态的背景及边框。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Drop shadow tint shared by both states.
-    ///     投影色调 共享于 both st位于es。
+    ///     <para xml:lang="en">The drop-shadow color shared by both states.</para>
+    ///     <para xml:lang="zh-CN">两种状态共享的投影颜色。</para>
     /// </param>
     public sealed record SidebarCardTokens(BgBorder Default, BgBorder Selected, Color Shadow);
 
     /// <summary>
-    ///     Chrome action menu tokens (hover toggles between two states).
+    ///     <para xml:lang="en">Groups compact action-menu colors.</para>
+    ///     <para xml:lang="zh-CN">集中定义紧凑操作菜单的颜色。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Resting state.
-    ///     静止状态。
+    ///     <para xml:lang="en">The resting background and border.</para>
+    ///     <para xml:lang="zh-CN">静止状态的背景及边框。</para>
     /// </param>
     /// <param name="Hover">
-    ///     Hover state.
-    ///     悬停状态。
+    ///     <para xml:lang="en">The hover-state background and border.</para>
+    ///     <para xml:lang="zh-CN">悬停状态的背景及边框。</para>
     /// </param>
     public sealed record ChromeMenuTokens(BgBorder Default, BgBorder Hover);
 
     /// <summary>
-    ///     Page toolbar tray tokens.
-    ///     页面工具栏托盘令牌。
+    ///     <para xml:lang="en">Groups page-toolbar tray colors.</para>
+    ///     <para xml:lang="zh-CN">集中定义页面工具栏托盘的颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Toolbar tray background.
-    ///     工具栏托盘背景。
+    ///     <para xml:lang="en">The tray background color.</para>
+    ///     <para xml:lang="zh-CN">托盘背景颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Toolbar tray border.
-    ///     工具栏托盘边框。
+    ///     <para xml:lang="en">The tray border color.</para>
+    ///     <para xml:lang="zh-CN">托盘边框颜色。</para>
     /// </param>
     public sealed record PageToolbarTrayTokens(Color Bg, Color Border);
 
     /// <summary>
-    ///     List shell (outer) tokens.
-    ///     列表外壳（外层）令牌。
+    ///     <para xml:lang="en">Groups colors used by a list's outer container.</para>
+    ///     <para xml:lang="zh-CN">集中定义列表外层容器使用的颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Shell background.
-    ///     外壳背景。
+    ///     <para xml:lang="en">The outer-container background color.</para>
+    ///     <para xml:lang="zh-CN">外层容器的背景颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Shell border.
-    ///     外壳边框。
+    ///     <para xml:lang="en">The outer-container border color.</para>
+    ///     <para xml:lang="zh-CN">外层容器的边框颜色。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Shell drop shadow.
-    ///     外壳投影。
+    ///     <para xml:lang="en">The outer-container drop-shadow color.</para>
+    ///     <para xml:lang="zh-CN">外层容器的投影颜色。</para>
     /// </param>
     public sealed record ListShellTokens(Color Bg, Color Border, Color Shadow);
 
     /// <summary>
-    ///     List item card tokens (default vs accent emphasis).
-    ///     列表项卡牌令牌（默认与强调重点）。
+    ///     <para xml:lang="en">Groups default and accent list-item card colors.</para>
+    ///     <para xml:lang="zh-CN">集中定义列表项卡片的默认及强调颜色。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Resting state.
-    ///     静止状态。
+    ///     <para xml:lang="en">The resting background and border.</para>
+    ///     <para xml:lang="zh-CN">静止状态的背景及边框。</para>
     /// </param>
     /// <param name="Accent">
-    ///     Accent / selected emphasis.
-    ///     强调/选中重点。
+    ///     <para xml:lang="en">The accent or selected-state background and border.</para>
+    ///     <para xml:lang="zh-CN">强调或选中状态的背景及边框。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Card drop shadow tint.
-    ///     卡片投影色调。
+    ///     <para xml:lang="en">The card drop-shadow color.</para>
+    ///     <para xml:lang="zh-CN">卡片投影颜色。</para>
     /// </param>
     public sealed record ListItemTokens(BgBorder Default, BgBorder Accent, Color Shadow);
 
     /// <summary>
-    ///     Inline list editor surface tokens.
-    ///     内联列表编辑器表面令牌。
+    ///     <para xml:lang="en">Groups inline list-editor panel colors.</para>
+    ///     <para xml:lang="zh-CN">集中定义内联列表编辑器面板的颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Editor background.
-    ///     编辑器背景。
+    ///     <para xml:lang="en">The editor background color.</para>
+    ///     <para xml:lang="zh-CN">编辑器背景颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Editor border.
-    ///     编辑器边框。
+    ///     <para xml:lang="en">The editor border color.</para>
+    ///     <para xml:lang="zh-CN">编辑器边框颜色。</para>
     /// </param>
     public sealed record ListEditorTokens(Color Bg, Color Border);
 
     /// <summary>
-    ///     Pill / tag tokens.
-    ///     胶囊/标签令牌。
+    ///     <para xml:lang="en">Groups colors used by pill-shaped tags and compact buttons.</para>
+    ///     <para xml:lang="zh-CN">集中定义胶囊形标签及紧凑按钮使用的颜色。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Resting state.
-    ///     静止状态。
+    ///     <para xml:lang="en">The resting background and border.</para>
+    ///     <para xml:lang="zh-CN">静止状态的背景及边框。</para>
     /// </param>
     /// <param name="Hover">
-    ///     Hover state.
-    ///     悬停状态。
+    ///     <para xml:lang="en">The hover-state background and border.</para>
+    ///     <para xml:lang="zh-CN">悬停状态的背景及边框。</para>
     /// </param>
     public sealed record PillTokens(BgBorder Default, BgBorder Hover);
 
     /// <summary>
-    ///     Toggle tokens. Borders inherit if a state omits them.
-    ///     开关令牌。如果某个状态省略边框，则会继承边框。
+    ///     <para xml:lang="en">Groups toggle-state colors and the shared resting shadow.</para>
+    ///     <para xml:lang="zh-CN">集中定义开关各状态的颜色及共享的静止阴影。</para>
     /// </summary>
     /// <param name="On">
-    ///     Pressed/on state.
-    ///     按下/开启状态。
+    ///     <para xml:lang="en">The enabled-state background and border.</para>
+    ///     <para xml:lang="zh-CN">开启状态的背景及边框。</para>
     /// </param>
     /// <param name="Off">
-    ///     Off state.
-    ///     关闭状态。
+    ///     <para xml:lang="en">The disabled-value background and border.</para>
+    ///     <para xml:lang="zh-CN">关闭值状态的背景及边框。</para>
     /// </param>
     /// <param name="OffHover">
-    ///     Off + hover state (border falls back to <see cref="Off" />).
-    ///     关闭 + 悬停状态 (边框回退到 <see cref="Off" />)。
+    ///     <para xml:lang="en">
+    ///         The hovered off-state colors. Its border falls back to <see cref="Off" /> when omitted.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         关闭值悬停状态的颜色；省略边框时回退到 <see cref="Off" />。
+    ///     </para>
     /// </param>
     /// <param name="Disabled">
-    ///     Disabled state.
-    ///     禁用状态。
+    ///     <para xml:lang="en">The non-interactive background and border.</para>
+    ///     <para xml:lang="zh-CN">不可交互状态的背景及边框。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Neutral (non-hover) shadow tint.
-    ///     中性（非悬停）阴影色调。
+    ///     <para xml:lang="en">The resting, non-hover shadow color.</para>
+    ///     <para xml:lang="zh-CN">静止且未悬停状态的阴影颜色。</para>
     /// </param>
     public sealed record ToggleTokens(
         BgBorder On,
@@ -243,37 +249,46 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         Color Shadow);
 
     /// <summary>
-    ///     Slider grab tokens.
-    ///     滑块抓取令牌。
+    ///     <para xml:lang="en">Groups the highlight and shadow colors of a slider thumb.</para>
+    ///     <para xml:lang="zh-CN">集中定义滑块柄的高光及阴影颜色。</para>
     /// </summary>
     /// <param name="GrabHighlight">
-    ///     Outer highlight tint.
-    ///     外层高亮色调。
+    ///     <para xml:lang="en">The outer highlight color.</para>
+    ///     <para xml:lang="zh-CN">外层高光颜色。</para>
     /// </param>
     /// <param name="GrabShadow">
-    ///     Inner shadow tint.
-    ///     内层阴影色调。
+    ///     <para xml:lang="en">The inner shadow color.</para>
+    ///     <para xml:lang="zh-CN">内层阴影颜色。</para>
     /// </param>
     public sealed record SliderTokens(Color GrabHighlight, Color GrabShadow);
 
     /// <summary>
-    ///     Dropdown face tokens covering the four interaction states.
+    ///     <para xml:lang="en">Groups the base, hover, pressed, and focus colors of drop-down faces.</para>
+    ///     <para xml:lang="zh-CN">集中定义下拉框正面的基础、悬停、按下及聚焦颜色。</para>
     /// </summary>
     /// <param name="Open">
-    ///     Default open state (face + border).
-    ///     默认打开状态 (正面 + 边框)。
+    ///     <para xml:lang="en">The base face background and border.</para>
+    ///     <para xml:lang="zh-CN">默认正面状态的背景及边框。</para>
     /// </param>
     /// <param name="Hover">
-    ///     Hover state. Border falls back to <see cref="Open" />.
-    ///     悬停状态. Border 回退到 <see cref="Open" />。
+    ///     <para xml:lang="en">
+    ///         The hover-state colors. Its border falls back to <see cref="Open" /> when omitted.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         悬停状态的颜色；省略边框时回退到 <see cref="Open" />。
+    ///     </para>
     /// </param>
     /// <param name="Pressed">
-    ///     Pressed state. Border falls back to <see cref="Open" />.
-    ///     按下状态. Border 回退到 <see cref="Open" />。
+    ///     <para xml:lang="en">
+    ///         The pressed-state colors. Its border falls back to <see cref="Open" /> when omitted.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按下状态的颜色；省略边框时回退到 <see cref="Open" />。
+    ///     </para>
     /// </param>
     /// <param name="Focus">
-    ///     Focus state (own border).
-    ///     聚焦状态 (自有边框)。
+    ///     <para xml:lang="en">The focus-state background and border.</para>
+    ///     <para xml:lang="zh-CN">聚焦状态的背景及边框。</para>
     /// </param>
     public sealed record DropdownTokens(
         BgBorder Open,
@@ -282,122 +297,131 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         BgBorder Focus);
 
     /// <summary>
-    ///     Stepper face tokens.
-    ///     步进器表面令牌。
+    ///     <para xml:lang="en">Groups stepper-face colors by interaction state.</para>
+    ///     <para xml:lang="zh-CN">按交互状态分类定义步进器正面的颜色。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Default state (background + border).
-    ///     默认状态 (背景 + 边框)。
+    ///     <para xml:lang="en">The default background and border.</para>
+    ///     <para xml:lang="zh-CN">默认状态的背景及边框。</para>
     /// </param>
     /// <param name="Hover">
-    ///     Hover state.
-    ///     悬停状态。
+    ///     <para xml:lang="en">The hover-state background and border.</para>
+    ///     <para xml:lang="zh-CN">悬停状态的背景及边框。</para>
     /// </param>
     /// <param name="Neutral">
-    ///     Hidden / neutral state used when the face has no visible affordance.
-    ///     表面没有可见操作提示时使用的隐藏/中性状态。
+    ///     <para xml:lang="en">The neutral colors used when the face has no visible affordance.</para>
+    ///     <para xml:lang="zh-CN">正面没有可见操作提示时使用的中性颜色。</para>
     /// </param>
     public sealed record StepperTokens(BgBorder Default, BgBorder Hover, BgBorder Neutral);
 
     /// <summary>
-    ///     Drag handle tokens.
-    ///     拖拽句柄令牌。
+    ///     <para xml:lang="en">Groups drag-handle colors by selection state.</para>
+    ///     <para xml:lang="zh-CN">按选中状态分类定义拖动手柄的颜色。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Resting state.
-    ///     静止状态。
+    ///     <para xml:lang="en">The resting background and border.</para>
+    ///     <para xml:lang="zh-CN">静止状态的背景及边框。</para>
     /// </param>
     /// <param name="Selected">
-    ///     Selected (active) state.
-    ///     Selected (active) state.
+    ///     <para xml:lang="en">The selected background and border.</para>
+    ///     <para xml:lang="zh-CN">选中状态的背景及边框。</para>
     /// </param>
     public sealed record DragHandleTokens(BgBorder Default, BgBorder Selected);
 
     /// <summary>
-    ///     Collapsible section header tokens.
-    ///     可折叠分区标题令牌。
+    ///     <para xml:lang="en">Groups collapsible section-header colors by interaction state.</para>
+    ///     <para xml:lang="zh-CN">按交互状态分类定义可折叠分区标题栏的颜色。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Resting state.
-    ///     静止状态。
+    ///     <para xml:lang="en">The resting background and border.</para>
+    ///     <para xml:lang="zh-CN">静止状态的背景及边框。</para>
     /// </param>
     /// <param name="Hover">
-    ///     Hover state.
-    ///     悬停状态。
+    ///     <para xml:lang="en">The hover-state background and border.</para>
+    ///     <para xml:lang="zh-CN">悬停状态的背景及边框。</para>
     /// </param>
     /// <param name="Selected">
-    ///     Selected (expanded) state.
-    ///     选中（展开）状态。
+    ///     <para xml:lang="en">The selected or expanded background and border.</para>
+    ///     <para xml:lang="zh-CN">选中或展开状态的背景及边框。</para>
     /// </param>
     /// <param name="Disabled">
-    ///     Disabled state (content unavailable, but header may remain interactive).
-    ///     禁用状态 (内容不可用, but 标题可能仍可交互)。
+    ///     <para xml:lang="en">
+    ///         The state used when the section content is unavailable, even if the header remains interactive.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         分区内容不可用时使用的状态，即使标题栏本身仍可交互。
+    ///     </para>
     /// </param>
     public sealed record CollapsibleTokens(BgBorder Default, BgBorder Hover, BgBorder Selected, BgBorder Disabled);
 
     /// <summary>
-    ///     Sidebar tree button tokens. Each variant covers a distinct depth or kind of row.
-    ///     侧边栏树按钮令牌。每个变体覆盖不同深度或不同类型的行。
+    ///     <para xml:lang="en">
+    ///         Groups the legacy color slots used to compose mod-group, page, section, and utility rows in the
+    ///         current sidebar.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         集中定义当前侧边栏用于组合模组组、页面、分区及工具条目的旧版颜色槽位。
+    ///     </para>
     /// </summary>
     /// <param name="Default">
-    ///     Default page row.
-    ///     默认页面行。
+    ///     <para xml:lang="en">The hovered section-row background and resting section-row border.</para>
+    ///     <para xml:lang="zh-CN">悬停分区行的背景及静止分区行的边框。</para>
     /// </param>
     /// <param name="Hover">
-    ///     Default page hover.
-    ///     默认页面悬停。
+    ///     <para xml:lang="en">The selected section-row background and border.</para>
+    ///     <para xml:lang="zh-CN">选中分区行的背景及边框。</para>
     /// </param>
     /// <param name="Selected">
-    ///     Selected default page row.
-    ///     选中的默认页面行。
+    ///     <para xml:lang="en">The hovered mod-group background and resting mod-group border.</para>
+    ///     <para xml:lang="zh-CN">悬停模组组行的背景及静止模组组行的边框。</para>
     /// </param>
     /// <param name="SelectedHover">
-    ///     Selected default page hover.
-    ///     选中的默认页面悬停。
+    ///     <para xml:lang="en">The selected mod-group background and border.</para>
+    ///     <para xml:lang="zh-CN">选中模组组行的背景及边框。</para>
     /// </param>
     /// <param name="UtilitySelected">
-    ///     Selected utility row (only background tinted).
-    ///     选中的工具行 (仅背景着色)。
+    ///     <para xml:lang="en">The selected utility-row background.</para>
+    ///     <para xml:lang="zh-CN">选中工具行的背景。</para>
     /// </param>
     /// <param name="IdleDeep">
-    ///     Idle page at deeper depth.
-    ///     更深层级的空闲页面。
+    ///     <para xml:lang="en">The resting background of section and utility rows.</para>
+    ///     <para xml:lang="zh-CN">静止分区行及工具行的背景。</para>
     /// </param>
     /// <param name="IdleDeepHover">
-    ///     Idle deep + hover.
-    ///     深层空闲 + 悬停。
+    ///     <para xml:lang="en">The hovered utility-row background.</para>
+    ///     <para xml:lang="zh-CN">悬停工具行的背景。</para>
     /// </param>
     /// <param name="IdleDeeper">
-    ///     Idle page at the deepest tracked depth.
-    ///     已跟踪最深层级的空闲页面。
+    ///     <para xml:lang="en">A reserved resting background for deeper sidebar rows.</para>
+    ///     <para xml:lang="zh-CN">为更深层级侧边栏行保留的静止背景。</para>
     /// </param>
     /// <param name="IdleDeeperHover">
-    ///     Idle deeper + hover.
-    ///     更深层空闲 + 悬停。
+    ///     <para xml:lang="en">A reserved hover background for deeper sidebar rows.</para>
+    ///     <para xml:lang="zh-CN">为更深层级侧边栏行保留的悬停背景。</para>
     /// </param>
     /// <param name="Mod">
-    ///     Mod row.
-    ///     Mod 行。
+    ///     <para xml:lang="en">The resting mod-group and hovered page-row background.</para>
+    ///     <para xml:lang="zh-CN">静止模组组行及悬停页面行的背景。</para>
     /// </param>
     /// <param name="ModHover">
-    ///     Mod row hover.
-    ///     Mod 行悬停。
+    ///     <para xml:lang="en">The selected page-row background.</para>
+    ///     <para xml:lang="zh-CN">选中页面行的背景。</para>
     /// </param>
     /// <param name="ModDeep">
-    ///     Mod row at deeper depth.
-    ///     更深层级的 mod 行。
+    ///     <para xml:lang="en">The resting page-row background.</para>
+    ///     <para xml:lang="zh-CN">静止页面行的背景。</para>
     /// </param>
     /// <param name="DeepBorder">
-    ///     Border tint shared by deeper rows.
-    ///     边框色调 共享于 较深层级行。
+    ///     <para xml:lang="en">The resting border color of page and utility rows.</para>
+    ///     <para xml:lang="zh-CN">静止页面行及工具行的边框颜色。</para>
     /// </param>
     /// <param name="DeepBorderHover">
-    ///     Hover border tint for deeper rows.
-    ///     较深层级行的悬停边框色调。
+    ///     <para xml:lang="en">The selected border color of page and utility rows.</para>
+    ///     <para xml:lang="zh-CN">选中页面行及工具行的边框颜色。</para>
     /// </param>
     /// <param name="Shadow">
-    ///     Drop shadow tint.
-    ///     投影色调。
+    ///     <para xml:lang="en">The drop-shadow color shared by sidebar rows.</para>
+    ///     <para xml:lang="zh-CN">侧边栏行共享的投影颜色。</para>
     /// </param>
     public sealed record SidebarBtnTokens(
         BgBorder Default,
@@ -417,34 +441,34 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         Color Shadow);
 
     /// <summary>
-    ///     Sidebar section rail (background + outline).
-    ///     侧边栏分区轨道 (背景 + 轮廓)。
+    ///     <para xml:lang="en">Groups the background and border colors of the sidebar section rail.</para>
+    ///     <para xml:lang="zh-CN">集中定义侧边栏分区轨道的背景及边框颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Rail background.
-    ///     轨道背景。
+    ///     <para xml:lang="en">The rail background color.</para>
+    ///     <para xml:lang="zh-CN">轨道背景颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Rail outline.
-    ///     轨道轮廓。
+    ///     <para xml:lang="en">The rail border color.</para>
+    ///     <para xml:lang="zh-CN">轨道边框颜色。</para>
     /// </param>
     public sealed record SidebarRailTokens(Color Bg, Color Border);
 
     /// <summary>
-    ///     Inline text button tokens, organised by tone.
-    ///     按色调组织的内联文本按钮令牌。
+    ///     <para xml:lang="en">Groups inline text-button colors by semantic tone.</para>
+    ///     <para xml:lang="zh-CN">按语义色调分类定义内联文本按钮的颜色。</para>
     /// </summary>
     /// <param name="Accent">
-    ///     Accent (highlighted) tone.
-    ///     强调（高亮）色调。
+    ///     <para xml:lang="en">The accent tone.</para>
+    ///     <para xml:lang="zh-CN">强调色调。</para>
     /// </param>
     /// <param name="Danger">
-    ///     Danger tone.
-    ///     危险色调。
+    ///     <para xml:lang="en">The danger tone.</para>
+    ///     <para xml:lang="zh-CN">危险色调。</para>
     /// </param>
     /// <param name="Neutral">
-    ///     Neutral tone.
-    ///     中性色调。
+    ///     <para xml:lang="en">The neutral tone.</para>
+    ///     <para xml:lang="zh-CN">中性色调。</para>
     /// </param>
     public sealed record TextButtonTokens(
         TextButtonToneTokens Accent,
@@ -452,76 +476,76 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         TextButtonToneTokens Neutral);
 
     /// <summary>
-    ///     Per-tone foreground + background pair for inline text buttons.
-    ///     内联文本按钮按色调区分的前景 + 背景配对。
+    ///     <para xml:lang="en">Groups the foreground and state backgrounds of one inline text-button tone.</para>
+    ///     <para xml:lang="zh-CN">集中定义一种内联文本按钮色调的前景及状态背景颜色。</para>
     /// </summary>
     /// <param name="Fg">
-    ///     Foreground (label) color.
-    ///     前景（标签）颜色。
+    ///     <para xml:lang="en">The label foreground color.</para>
+    ///     <para xml:lang="zh-CN">标签前景色。</para>
     /// </param>
     /// <param name="Bg">
-    ///     Default tinted background (used for selected/hovered rows).
-    ///     默认着色背景（用于选中/悬停行）。
+    ///     <para xml:lang="en">The tinted background used for the base emphasized state.</para>
+    ///     <para xml:lang="zh-CN">基础强调状态使用的着色背景。</para>
     /// </param>
     /// <param name="BgHover">
-    ///     Hover variation of the tinted background.
-    ///     着色背景的悬停变体。
+    ///     <para xml:lang="en">The hover variant of the tinted background.</para>
+    ///     <para xml:lang="zh-CN">着色背景的悬停变体。</para>
     /// </param>
     public sealed record TextButtonToneTokens(Color Fg, Color Bg, Color BgHover);
 
     /// <summary>
-    ///     String editor validation chrome (background + border for neutral / invalid states).
-    ///     字符串编辑器校验 chrome（中性/无效状态的背景 + 边框）。
+    ///     <para xml:lang="en">Groups neutral and invalid validation-frame colors for string editors.</para>
+    ///     <para xml:lang="zh-CN">集中定义字符串编辑器验证边框的中性及无效状态颜色。</para>
     /// </summary>
     /// <param name="Neutral">
-    ///     Neutral state.
-    ///     中性状态。
+    ///     <para xml:lang="en">The neutral background and border.</para>
+    ///     <para xml:lang="zh-CN">中性状态的背景及边框。</para>
     /// </param>
     /// <param name="Invalid">
-    ///     Invalid state.
-    ///     无效状态。
+    ///     <para xml:lang="en">The invalid-state background and border.</para>
+    ///     <para xml:lang="zh-CN">无效状态的背景及边框。</para>
     /// </param>
     public sealed record StringValidationTokens(BgBorder Neutral, BgBorder Invalid);
 
     /// <summary>
-    ///     Floating overlay panel chrome.
-    ///     浮动覆盖面板 chrome。
+    ///     <para xml:lang="en">Groups floating-overlay panel colors.</para>
+    ///     <para xml:lang="zh-CN">集中定义浮动层面板的颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Panel background.
-    ///     面板背景。
+    ///     <para xml:lang="en">The panel background color.</para>
+    ///     <para xml:lang="zh-CN">面板背景颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Panel border.
-    ///     面板边框。
+    ///     <para xml:lang="en">The panel border color.</para>
+    ///     <para xml:lang="zh-CN">面板边框颜色。</para>
     /// </param>
     public sealed record OverlayPanelTokens(Color Bg, Color Border);
 
     /// <summary>
-    ///     Highlight tones used by the choice-center widget.
-    ///     choice-center 小部件使用的高亮色调。
+    ///     <para xml:lang="en">Groups the two-color highlight gradient of a choice control's center label.</para>
+    ///     <para xml:lang="zh-CN">集中定义选择控件中央标签的双色高亮渐变。</para>
     /// </summary>
     /// <param name="HighlightTop">
-    ///     Top of the gradient.
-    ///     渐变顶部。
+    ///     <para xml:lang="en">The color at the top of the gradient.</para>
+    ///     <para xml:lang="zh-CN">渐变顶部的颜色。</para>
     /// </param>
     /// <param name="HighlightBottom">
-    ///     Bottom of the gradient.
-    ///     渐变底部。
+    ///     <para xml:lang="en">The color at the bottom of the gradient.</para>
+    ///     <para xml:lang="zh-CN">渐变底部的颜色。</para>
     /// </param>
     public sealed record ChoiceCenterTokens(Color HighlightTop, Color HighlightBottom);
 
     /// <summary>
-    ///     Common (background + border) pair shared by many component states.
-    ///     通用 (背景 + 边框) pair 共享于 多个组件状态。
+    ///     <para xml:lang="en">Stores the background and border colors shared by many component states.</para>
+    ///     <para xml:lang="zh-CN">存储多个组件状态共用的背景及边框颜色。</para>
     /// </summary>
     /// <param name="Bg">
-    ///     Background fill.
-    ///     背景填充。
+    ///     <para xml:lang="en">The background fill color.</para>
+    ///     <para xml:lang="zh-CN">背景填充颜色。</para>
     /// </param>
     /// <param name="Border">
-    ///     Border tint.
-    ///     边框色调。
+    ///     <para xml:lang="en">The border color.</para>
+    ///     <para xml:lang="zh-CN">边框颜色。</para>
     /// </param>
     public sealed record BgBorder(Color Bg, Color Border);
 }

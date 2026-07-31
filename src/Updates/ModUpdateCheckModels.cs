@@ -4,101 +4,116 @@ using System.Text.Json.Serialization;
 namespace STS2RitsuLib.Updates
 {
     /// <summary>
-    ///     Options for a non-blocking mod update check.
-    ///     非阻塞 Mod 更新检查的选项。
+    ///     <para xml:lang="en">Configures a non-blocking mod update check.</para>
+    ///     <para xml:lang="zh-CN">配置非阻塞的模组更新检查。</para>
     /// </summary>
     public sealed record ModUpdateCheckOptions
     {
         /// <summary>
-        ///     Stable mod identifier used for diagnostics and one-check-per-session de-duplication.
-        ///     用于诊断和单会话去重的稳定 Mod 标识符。
+        ///     <para xml:lang="en">Stable mod ID used for diagnostics and one-check-per-session de-duplication.</para>
+        ///     <para xml:lang="zh-CN">用于诊断和每会话单次检查去重的稳定模组 ID。</para>
         /// </summary>
         public required string ModId { get; init; }
 
         /// <summary>
-        ///     Display name shown in the default update toast.
-        ///     默认更新 toast 中显示的名称。
+        ///     <para xml:lang="en">Display name shown in the default update notification.</para>
+        ///     <para xml:lang="zh-CN">默认更新通知中显示的名称。</para>
         /// </summary>
         public required string DisplayName { get; init; }
 
         /// <summary>
-        ///     Current installed version, for example <c>1.2.3</c> or <c>v1.2.3-beta.1</c>.
-        ///     当前安装版本，例如 <c>1.2.3</c> 或 <c>v1.2.3-beta.1</c>。
+        ///     <para xml:lang="en">Currently installed version, for example <c>1.2.3</c> or <c>v1.2.3-beta.1</c>.</para>
+        ///     <para xml:lang="zh-CN">当前安装的版本，例如 <c>1.2.3</c> 或 <c>v1.2.3-beta.1</c>。</para>
         /// </summary>
         public required string CurrentVersion { get; init; }
 
         /// <summary>
-        ///     Absolute URL for the small JSON update manifest. Prefer a mirror or self-hosted endpoint when broad
-        ///     player reachability matters.
-        ///     小型 JSON 更新 manifest 的绝对 URL。若需要照顾更广泛的玩家连接可达性，建议使用镜像或自托管端点。
+        ///     <para xml:lang="en">
+        ///         Absolute URL of the compact JSON update manifest. Use a mirror or self-hosted endpoint when
+        ///         broad player reachability matters.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">精简 JSON 更新清单的绝对 URL。需要覆盖更广泛的玩家网络环境时，应使用镜像或自托管端点。</para>
         /// </summary>
         public required Uri ManifestUri { get; init; }
 
         /// <summary>
-        ///     Fallback release page opened when the toast is clicked. The manifest can override this per release.
-        ///     点击 toast 时打开的备用发布页；manifest 可为单次发布覆盖它。
+        ///     <para xml:lang="en">
+        ///         Fallback release page opened when the update notification is selected; the manifest can
+        ///         override it per release.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">选中更新通知时打开的回退发布页；清单可按发布版本覆盖此页。</para>
         /// </summary>
         public Uri? ReleasePageUri { get; init; }
 
         /// <summary>
-        ///     Optional request headers for mirrors or self-hosted endpoints.
-        ///     用于镜像或自托管端点的可选请求头。
+        ///     <para xml:lang="en">Optional request headers for mirrors or self-hosted endpoints.</para>
+        ///     <para xml:lang="zh-CN">镜像或自托管端点使用的可选请求头。</para>
         /// </summary>
         public IReadOnlyDictionary<string, string>? Headers { get; init; }
 
         /// <summary>
-        ///     Network timeout. Defaults to eight seconds.
-        ///     网络超时。默认八秒。
+        ///     <para xml:lang="en">Network timeout; defaults to eight seconds.</para>
+        ///     <para xml:lang="zh-CN">网络超时时间；默认八秒。</para>
         /// </summary>
         public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(8d);
 
         /// <summary>
-        ///     Optional toast duration override in seconds. Leave null to use the normal RitsuLib toast duration.
-        ///     可选 toast 显示时长覆盖值，单位秒。留空时使用 RitsuLib 的普通 toast 时长。
+        ///     <para xml:lang="en">
+        ///         Optional notification duration override in seconds. Leave null to use RitsuLib's default
+        ///         duration.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">可选通知显示时长覆盖值，单位秒；为 null 时使用 RitsuLib 默认时长。</para>
         /// </summary>
         public double? ToastDurationSeconds { get; init; }
 
         /// <summary>
-        ///     Optional title override. Leave null to use the manifest title or a default title.
-        ///     可选标题覆盖。留空时使用 manifest 标题或默认标题。
+        ///     <para xml:lang="en">Optional title override. Leave null to use the manifest title or the default title.</para>
+        ///     <para xml:lang="zh-CN">可选标题覆盖值；为 null 时使用清单标题或默认标题。</para>
         /// </summary>
         public string? ToastTitle { get; init; }
 
         /// <summary>
-        ///     Optional body override. Leave null to use the manifest message or a default body.
-        ///     可选正文覆盖。留空时使用 manifest 消息或默认正文。
+        ///     <para xml:lang="en">Optional body override. Leave null to use the manifest message or the default body.</para>
+        ///     <para xml:lang="zh-CN">可选正文覆盖值；为 null 时使用清单消息或默认正文。</para>
         /// </summary>
         public string? ToastBody { get; init; }
 
         /// <summary>
-        ///     When true, skips the external manifest check if the configured install source is loaded from Steam Workshop.
-        ///     为 true 时，如果配置的安装来源来自 Steam Workshop，则跳过外部 manifest 检查。
+        ///     <para xml:lang="en">
+        ///         When true, skips the external manifest check when the configured installation source came from
+        ///         Steam Workshop.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">为 true 时，若配置的安装来源来自 Steam Workshop，则跳过外部清单检查。</para>
         /// </summary>
         public bool SkipWhenLoadedFromSteamWorkshop { get; init; }
 
         /// <summary>
-        ///     Steam Workshop item id that owns this update check. When set, Workshop skip logic only applies when the
-        ///     install source path belongs to this exact item.
-        ///     此更新检查对应的 Steam Workshop item id。设置后，仅当安装来源路径属于该 item 时才跳过外部检查。
+        ///     <para xml:lang="en">
+        ///         Steam Workshop item ID that owns this update check. When set, Workshop skipping applies only
+        ///         when the installation source path belongs to this item.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">拥有此更新检查的 Steam Workshop 条目 ID。设置后，仅当安装来源路径属于该条目时才跳过外部检查。</para>
         /// </summary>
         public ulong? SteamWorkshopItemId { get; init; }
 
         /// <summary>
-        ///     Optional assembly used to detect whether this mod was loaded from Steam Workshop.
-        ///     用于检测此 Mod 是否从 Steam Workshop 加载的可选程序集。
+        ///     <para xml:lang="en">Optional assembly used to determine whether this mod was loaded from Steam Workshop.</para>
+        ///     <para xml:lang="zh-CN">用于确定此模组是否从 Steam Workshop 加载的可选程序集。</para>
         /// </summary>
         public Assembly? InstallSourceAssembly { get; init; }
 
         /// <summary>
-        ///     Optional path used to detect whether this mod was loaded from Steam Workshop. When set, this takes
-        ///     precedence over <see cref="InstallSourceAssembly" />.
-        ///     用于检测此 Mod 是否从 Steam Workshop 加载的可选路径。设置后优先于 <see cref="InstallSourceAssembly" />。
+        ///     <para xml:lang="en">
+        ///         Optional path used to determine whether this mod was loaded from Steam Workshop. When set, it
+        ///         takes precedence over <see cref="InstallSourceAssembly" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">用于确定此模组是否从 Steam Workshop 加载的可选路径。设置后优先于 <see cref="InstallSourceAssembly" />。</para>
         /// </summary>
         public string? InstallSourcePath { get; init; }
 
         /// <summary>
-        ///     Creates update-check options from string URLs for the common call path.
-        ///     使用字符串 URL 创建常见更新检查选项。
+        ///     <para xml:lang="en">Creates update-check options from string URLs for the common call path.</para>
+        ///     <para xml:lang="zh-CN">从字符串 URL 创建常用调用路径所需的更新检查选项。</para>
         /// </summary>
         public static ModUpdateCheckOptions Create(
             string modId,
@@ -119,8 +134,8 @@ namespace STS2RitsuLib.Updates
         }
 
         /// <summary>
-        ///     Creates update-check options for the common call path.
-        ///     创建常见更新检查选项。
+        ///     <para xml:lang="en">Creates update-check options for the common call path.</para>
+        ///     <para xml:lang="zh-CN">创建常用调用路径所需的更新检查选项。</para>
         /// </summary>
         public static ModUpdateCheckOptions Create(
             string modId,
@@ -141,124 +156,128 @@ namespace STS2RitsuLib.Updates
     }
 
     /// <summary>
-    ///     JSON shape served by a mod update manifest endpoint.
-    ///     Mod 更新 manifest 端点提供的 JSON 形状。
+    ///     <para xml:lang="en">Describes the JSON payload served by a mod update-manifest endpoint.</para>
+    ///     <para xml:lang="zh-CN">描述模组更新清单端点提供的 JSON 负载。</para>
     /// </summary>
     public sealed record ModUpdateCheckManifest
     {
         /// <summary>
-        ///     Optional JSON Schema URL for editors and manifest validation tools.
-        ///     可选 JSON Schema URL，用于编辑器和 manifest 校验工具。
+        ///     <para xml:lang="en">Optional JSON Schema URL for editors and manifest validation tools.</para>
+        ///     <para xml:lang="zh-CN">供编辑器和清单校验工具使用的可选 JSON Schema URL。</para>
         /// </summary>
         [JsonPropertyName("$schema")]
         public string? JsonSchema { get; init; }
 
         /// <summary>
-        ///     Optional schema marker. When present, use <c>ritsulib.update.v1</c>.
-        ///     可选 schema 标记。存在时请使用 <c>ritsulib.update.v1</c>。
+        ///     <para xml:lang="en">Optional schema marker. When present, it must be <c>ritsulib.update.v1</c>.</para>
+        ///     <para xml:lang="zh-CN">可选架构标记；存在时必须为 <c>ritsulib.update.v1</c>。</para>
         /// </summary>
         [JsonPropertyName("schema")]
         public string? Schema { get; init; }
 
         /// <summary>
-        ///     Latest published version.
-        ///     最新发布版本。
+        ///     <para xml:lang="en">Latest published version.</para>
+        ///     <para xml:lang="zh-CN">最新发布的版本。</para>
         /// </summary>
         [JsonPropertyName("latest_version")]
         public string? LatestVersion { get; init; }
 
         /// <summary>
-        ///     Optional release page URL opened when the update toast is clicked.
-        ///     点击更新 toast 时打开的可选发布页 URL。
+        ///     <para xml:lang="en">Optional release page URL opened when the update notification is selected.</para>
+        ///     <para xml:lang="zh-CN">选中更新通知时打开的可选发布页 URL。</para>
         /// </summary>
         [JsonPropertyName("release_page_url")]
         public string? ReleasePageUrl { get; init; }
 
         /// <summary>
-        ///     Optional fallback toast title.
-        ///     可选 fallback toast 标题。
+        ///     <para xml:lang="en">Optional fallback notification title.</para>
+        ///     <para xml:lang="zh-CN">可选的回退通知标题。</para>
         /// </summary>
         [JsonPropertyName("title")]
         public string? Title { get; init; }
 
         /// <summary>
-        ///     Optional fallback toast body.
-        ///     可选 fallback toast 正文。
+        ///     <para xml:lang="en">Optional fallback notification body.</para>
+        ///     <para xml:lang="zh-CN">可选的回退通知正文。</para>
         /// </summary>
         [JsonPropertyName("message")]
         public string? Message { get; init; }
 
         /// <summary>
-        ///     Optional localized toast title/body keyed by locale code, for example <c>eng</c>, <c>zhs</c>,
-        ///     <c>en</c>, or <c>zh-CN</c>.
-        ///     可选本地化 toast 标题/正文，按语言代码索引，例如 <c>eng</c>、<c>zhs</c>、
-        ///     <c>en</c> 或 <c>zh-CN</c>。
+        ///     <para xml:lang="en">
+        ///         Optional localized notification title and body keyed by locale code, for example <c>eng</c>,
+        ///         <c>zhs</c>, <c>en</c>, or <c>zh-CN</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">按语言代码索引的可选本地化通知标题和正文，例如 <c>eng</c>、<c>zhs</c>、<c>en</c> 或 <c>zh-CN</c>。</para>
         /// </summary>
         [JsonPropertyName("localized")]
         public Dictionary<string, ModUpdateCheckLocalizedText>? Localized { get; init; }
     }
 
     /// <summary>
-    ///     Localized update-check toast text.
-    ///     更新检查 toast 的本地化文本。
+    ///     <para xml:lang="en">Provides localized update-notification title and message text.</para>
+    ///     <para xml:lang="zh-CN">提供本地化的更新通知标题和消息文本。</para>
     /// </summary>
     public sealed record ModUpdateCheckLocalizedText
     {
         /// <summary>
-        ///     Optional localized toast title.
-        ///     可选本地化 toast 标题。
+        ///     <para xml:lang="en">Optional localized notification title.</para>
+        ///     <para xml:lang="zh-CN">可选的本地化通知标题。</para>
         /// </summary>
         [JsonPropertyName("title")]
         public string? Title { get; init; }
 
         /// <summary>
-        ///     Optional localized toast body.
-        ///     可选本地化 toast 正文。
+        ///     <para xml:lang="en">Optional localized notification body.</para>
+        ///     <para xml:lang="zh-CN">可选的本地化通知正文。</para>
         /// </summary>
         [JsonPropertyName("message")]
         public string? Message { get; init; }
     }
 
     /// <summary>
-    ///     Result category for a completed update check.
-    ///     已完成更新检查的结果类别。
+    ///     <para xml:lang="en">Identifies the outcome category of a completed update check.</para>
+    ///     <para xml:lang="zh-CN">标识已完成更新检查的结果类别。</para>
     /// </summary>
     public enum ModUpdateCheckStatus
     {
         /// <summary>
-        ///     The manifest reports a newer version than the installed version.
-        ///     manifest 报告了比当前安装版本更新的版本。
+        ///     <para xml:lang="en">The manifest reports a version newer than the installed version.</para>
+        ///     <para xml:lang="zh-CN">清单报告的版本比当前安装版本更新。</para>
         /// </summary>
         UpdateAvailable,
 
         /// <summary>
-        ///     The installed version is current.
-        ///     当前安装版本已是最新。
+        ///     <para xml:lang="en">The installed version is current.</para>
+        ///     <para xml:lang="zh-CN">当前安装的版本已是最新。</para>
         /// </summary>
         UpToDate,
 
         /// <summary>
-        ///     The check could not run because options or manifest data were invalid.
-        ///     因选项或 manifest 数据无效，检查无法运行。
+        ///     <para xml:lang="en">The check could not run because the options or manifest data were invalid.</para>
+        ///     <para xml:lang="zh-CN">因选项或清单数据无效，无法执行检查。</para>
         /// </summary>
         InvalidData,
 
         /// <summary>
-        ///     The endpoint could not be reached or returned an unsuccessful response.
-        ///     端点无法连接或返回了非成功响应。
+        ///     <para xml:lang="en">The endpoint could not be reached or returned an unsuccessful response.</para>
+        ///     <para xml:lang="zh-CN">无法访问端点，或端点返回了失败响应。</para>
         /// </summary>
         RequestFailed,
 
         /// <summary>
-        ///     The check was intentionally skipped, for example because Steam Workshop manages the installed copy.
-        ///     检查被有意跳过，例如当前安装副本由 Steam Workshop 管理。
+        ///     <para xml:lang="en">
+        ///         The check was intentionally skipped, for example because Steam Workshop manages the installed
+        ///         copy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">检查被有意跳过，例如 Steam Workshop 正在管理当前安装副本。</para>
         /// </summary>
         Skipped,
     }
 
     /// <summary>
-    ///     Completed update check result.
-    ///     已完成的更新检查结果。
+    ///     <para xml:lang="en">Contains the outcome and optional release details of a completed update check.</para>
+    ///     <para xml:lang="zh-CN">包含已完成更新检查的结果及可选发布详情。</para>
     /// </summary>
     public sealed record ModUpdateCheckResult(
         ModUpdateCheckStatus Status,

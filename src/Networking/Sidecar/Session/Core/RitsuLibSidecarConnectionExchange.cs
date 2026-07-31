@@ -5,8 +5,13 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Initiates sidecar capability negotiation over <see cref="RitsuLibSidecarControlOpcodes.Handshake" />.
-    ///     通过 <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> 发起 sidecar 能力协商。
+    ///     <para xml:lang="en">
+    ///         Manages sidecar capability negotiation through
+    ///         <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> messages.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> 消息管理 sidecar 功能协商。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarConnectionExchange
     {
@@ -29,18 +34,26 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static readonly Lock ExchangeGate = new();
 
         /// <remarks>
-        ///     Cleared when <see cref="RitsuLibSidecarSessionManager.Epoch" /> changes; successful negotiation marks the
-        ///     peer completed until disconnect or epoch rollover; negotiation failure removes the peer entry for retry.
-        ///     当 <see cref="RitsuLibSidecarSessionManager.Epoch" /> 变化时清除；成功协商会将
-        ///     peer 标记为已完成，直到断开连接或纪元滚动；协商失败会移除 peer 条目以便重试。
+        ///     <para xml:lang="en">
+        ///         State is cleared when <see cref="RitsuLibSidecarSessionManager.Epoch" /> changes. Successful
+        ///         negotiation remains complete until disconnection or the next epoch.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <see cref="RitsuLibSidecarSessionManager.Epoch" /> 变化时会清除状态。协商成功后，该对等端在断开连接
+        ///         或进入下一纪元前保持完成状态。
+        ///     </para>
         /// </remarks>
         private static readonly Dictionary<ulong, HelloOutboundNegotiationState> NegotiationByPeer = [];
 
         private static long _negotiationAlignedEpoch;
 
         /// <summary>
-        ///     Drops outbound handshake pacing / ack bookkeeping for one peer (e.g. multiplayer disconnect hooks).
-        ///     丢弃某个 peer 的出站握手 pacing / ack 记账（例如多人断开 hook）。
+        ///     <para xml:lang="en">
+        ///         Removes outbound handshake pacing and acknowledgement state for a peer.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除指定对等端的出站握手节流和确认状态。
+        ///     </para>
         /// </summary>
         public static void RemoveNegotiationStateForPeer(ulong peerNetId)
         {
@@ -51,8 +64,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Correlates a received handshake ack against the outbound attempt started by this assembly.
-        ///     将收到的 handshake ack 与此程序集启动的出站尝试进行关联。
+        ///     <para xml:lang="en">
+        ///         Applies a received handshake acknowledgement to the matching outbound negotiation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将收到的握手确认应用到对应的出站协商。
+        ///     </para>
         /// </summary>
         public static void NotifyOutboundHandshakeAck(ulong responderNetId, bool negotiationOk)
         {
@@ -80,10 +97,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Drops all outbound handshake bookkeeping immediately after multiplayer session teardown (paired with epoch
-        ///     advancement from <see cref="RitsuLibSidecarSessionManager.ObserveNetService" />(<see langword="null" />)).
-        ///     多人会话拆除后立即丢弃所有出站握手记账（与来自 <see cref="RitsuLibSidecarSessionManager.ObserveNetService" />(<see langword="null" />) 的纪元
-        ///     推进配对）。
+        ///     <para xml:lang="en">
+        ///         Removes all outbound handshake state after a multiplayer session ends.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         多人会话结束后移除所有出站握手状态。
+        ///     </para>
         /// </summary>
         public static void DiscardNegotiationStateAfterSessionEnds()
         {
@@ -96,8 +115,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Expires outbound handshake ack waits when the transport delivers no ack before the deadline.
-        ///     当传输层在截止时间前未投递 ack 时，使出站 handshake ack 等待过期。
+        ///     <para xml:lang="en">
+        ///         Processes acknowledgement timeouts for pending outbound handshakes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         处理待定出站握手的确认超时。
+        ///     </para>
         /// </summary>
         public static void TickHandshakeNegotiation()
         {
@@ -128,12 +151,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Same as <see cref="TrySendClientHelloIfReachable" /> using <see cref="RunManager.Instance" />’s
-        ///     <see cref="RunManager.NetService" /> (non-null only after run setup; use lobby ctor patches for
-        ///     <see cref="MegaCrit.Sts2.Core.Multiplayer.Game.Lobby.StartRunLobby" /> phase).
-        ///     与 <see cref="TrySendClientHelloIfReachable" /> 相同，但使用 <see cref="RunManager.Instance" /> 的
-        ///     <see cref="RunManager.NetService" />（仅在跑局设置后非 null；在
-        ///     <see cref="MegaCrit.Sts2.Core.Multiplayer.Game.Lobby.StartRunLobby" /> 阶段请使用 lobby ctor patch）。
+        ///     <para xml:lang="en">
+        ///         Attempts a client handshake using the network service from <see cref="RunManager.Instance" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         使用 <see cref="RunManager.Instance" /> 中的网络服务尝试客户端握手。
+        ///     </para>
         /// </summary>
         public static void TrySendLocalClientHello()
         {
@@ -141,10 +164,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Attempts sidecar handshake only for peers already resolved as
-        ///     <see cref="RitsuLibSidecarPeerReachability.Supported" />.
-        ///     仅对已解析为
-        ///     <see cref="RitsuLibSidecarPeerReachability.Supported" /> 的 peer 尝试 sidecar 握手。
+        ///     <para xml:lang="en">
+        ///         Attempts a sidecar handshake with peers already marked
+        ///         <see cref="RitsuLibSidecarPeerReachability.Supported" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         仅对已标记为 <see cref="RitsuLibSidecarPeerReachability.Supported" /> 的对等端尝试 sidecar 握手。
+        ///     </para>
         /// </summary>
         public static void TrySendClientHelloIfReachable(INetGameService? netService)
         {

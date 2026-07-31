@@ -5,8 +5,8 @@ using STS2RitsuLib.Utils.Persistence;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
-    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    ///     <para xml:lang="en">Creates the reusable layout, page chrome, and controls used by RitsuLib settings pages.</para>
+    ///     <para xml:lang="zh-CN">创建 RitsuLib 设置页面使用的可复用布局、页面框架与控件。</para>
     /// </summary>
     public static partial class ModSettingsUiFactory
     {
@@ -171,8 +171,11 @@ namespace STS2RitsuLib.Settings
 
             void CloseDialog()
             {
+                // The handler is installed before CloseDialog can be invoked and cleared only during teardown.
+                // ReSharper disable AccessToModifiedClosure
                 if (GodotObject.IsInstanceValid(viewport) && viewportSizedHandler != null)
                     viewport.SizeChanged -= viewportSizedHandler;
+                // ReSharper restore AccessToModifiedClosure
                 if (GodotObject.IsInstanceValid(canvasLayer))
                     canvasLayer.QueueFree();
                 RestorePreviousFocus();
@@ -183,8 +186,14 @@ namespace STS2RitsuLib.Settings
                 if (chosen)
                     return;
                 chosen = true;
-                onChosen(scope);
-                CloseDialog();
+                try
+                {
+                    onChosen(scope);
+                }
+                finally
+                {
+                    CloseDialog();
+                }
             }
 
             void RestorePreviousFocus()

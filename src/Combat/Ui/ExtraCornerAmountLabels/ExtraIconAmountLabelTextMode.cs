@@ -1,20 +1,20 @@
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     Rendering mode for <see cref="ExtraIconAmountLabelSlot.Text" />.
-    ///     <see cref="ExtraIconAmountLabelSlot.Text" /> 的渲染模式。
+    ///     <para xml:lang="en">Defines how extra badge text is rendered.</para>
+    ///     <para xml:lang="zh-CN">定义额外角标文本的渲染方式。</para>
     /// </summary>
     public enum ExtraIconAmountLabelTextMode
     {
         /// <summary>
-        ///     Render with <c>MegaLabel</c>; text is shown literally.
-        ///     使用 <c>MegaLabel</c> 渲染；文本按字面显示。
+        ///     <para xml:lang="en">Renders the text literally with <c>MegaLabel</c>.</para>
+        ///     <para xml:lang="zh-CN">使用 <c>MegaLabel</c> 按字面渲染文本。</para>
         /// </summary>
         Plain,
 
         /// <summary>
-        ///     Render with <c>MegaRichTextLabel</c>; text is parsed as Godot/Mega rich text.
-        ///     使用 <c>MegaRichTextLabel</c> 渲染；文本按 Godot/Mega 富文本解析。
+        ///     <para xml:lang="en">Parses and renders the text as Godot/Mega rich text.</para>
+        ///     <para xml:lang="zh-CN">将文本作为 Godot/Mega 富文本解析并渲染。</para>
         /// </summary>
         RichText,
     }

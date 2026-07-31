@@ -6,18 +6,22 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Keywords.Patches
 {
     /// <summary>
-    ///     Strips hover tips for mod keywords whose <see cref="ModKeywordDefinition.IncludeInCardHoverTip" /> is
-    ///     <c>false</c> from the vanilla <see cref="CardModel.HoverTips" /> enumeration. Mod keywords now live
-    ///     inside vanilla <c>CardModel.Keywords</c> as minted <c>CardKeyword</c> values, so vanilla already
-    ///     iterates them and calls <see cref="HoverTipFactory.FromKeyword" /> on each; the Registry routing
-    ///     patch (<see cref="HoverTipFactoryFromKeywordPatch" />) returns a real hover tip for every mod
-    ///     keyword. This postfix is only required to honor the opt-out flag.
-    ///     从原版 <see cref="CardModel.HoverTips" /> 枚举中剥离 <see cref="ModKeywordDefinition.IncludeInCardHoverTip" /> 为
-    ///     <c>false</c> 的 mod 关键词悬停提示。mod 关键词现在以铸造的 <c>CardKeyword</c> 值存在于
-    ///     原版 <c>CardModel.Keywords</c> 内，因此原版已经会
-    ///     遍历它们并对每个调用 <see cref="HoverTipFactory.FromKeyword" />；注册表路由
-    ///     补丁（<see cref="HoverTipFactoryFromKeywordPatch" />）会为每个 mod
-    ///     关键词返回真实悬停提示。此 postfix 只用于遵守退出标记。
+    ///     <para xml:lang="en">
+    ///         Removes hover tips for mod keywords whose
+    ///         <see cref="ModKeywordDefinition.IncludeInCardHoverTip" /> is <see langword="false" /> from the native
+    ///         <see cref="CardModel.HoverTips" /> sequence. Minted mod keywords live in
+    ///         <c>CardModel.Keywords</c>, so the native getter already enumerates them and calls
+    ///         <see cref="HoverTipFactory.FromKeyword" />; <see cref="HoverTipFactoryFromKeywordPatch" /> supplies the
+    ///         registered tip. This postfix only implements the explicit opt-out.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从原版 <see cref="CardModel.HoverTips" /> 结果中移除
+    ///         <see cref="ModKeywordDefinition.IncludeInCardHoverTip" /> 为
+    ///         <see langword="false" /> 的模组关键词悬停提示。动态生成的模组关键词存放在
+    ///         <c>CardModel.Keywords</c> 中，因此原版属性已会逐一调用
+    ///         <see cref="HoverTipFactory.FromKeyword" />，并由
+    ///         <see cref="HoverTipFactoryFromKeywordPatch" /> 提供注册的提示；此后置补丁仅实现显式排除功能。
+    ///     </para>
     /// </summary>
     internal sealed class CardModelHoverTipsModKeywordPatch : IPatchMethod
     {

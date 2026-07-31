@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -44,7 +45,9 @@ namespace STS2RitsuLib.Diagnostics
             try
             {
                 Directory.CreateDirectory(outputDirectory);
-                var runId = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
+                var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+                var runId = $"{timestamp}_{uniqueSuffix}";
                 bundleDir = Path.Combine(outputDirectory, $"ritsulib_self_check_{runId}");
                 Directory.CreateDirectory(bundleDir);
 
@@ -87,9 +90,10 @@ namespace STS2RitsuLib.Diagnostics
                     {
                         Directory.Delete(bundleDir, true);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // ignored
+                        RitsuLibFramework.Logger.Warn(
+                            $"[SelfCheck] Failed to remove temporary bundle directory '{SanitizeForReport(bundleDir)}': {ex.Message}");
                     }
             }
         }

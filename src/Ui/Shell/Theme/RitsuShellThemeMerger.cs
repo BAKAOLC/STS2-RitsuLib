@@ -3,30 +3,46 @@ using System.Text.Json;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Deep-merges DTFM token trees while preserving leaf semantics.
-    ///     深度合并 DTFM 令牌树，同时保留叶节点语义。
+    ///     <para xml:lang="en">
+    ///         Deep-merges Design Tokens Format Module token trees while preserving leaf-token boundaries.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         深度合并设计令牌格式模块令牌树，同时保留叶令牌边界。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     Group nodes (objects without <c>$value</c>) are merged recursively; leaf nodes (objects carrying
-    ///     <c>$value</c>) are replaced wholesale. Arrays and scalars are replaced wholesale.
-    ///     分组节点 (没有的对象 <c>$value</c>) are 递归合并; leaf 节点 (携带的对象
-    ///     <c>$value</c>) are 整体替换. 数组和标量 are 整体替换。
+    ///     <para xml:lang="en">
+    ///         Group objects without <c>$value</c> are merged recursively. Leaf objects containing
+    ///         <c>$value</c>, arrays, and scalar values replace the corresponding base value as a unit.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         不含 <c>$value</c> 的分组对象会递归合并；含 <c>$value</c> 的叶对象、数组及标量值会整体替换
+    ///         基础树中的对应值。
+    ///     </para>
     /// </remarks>
     internal static class RitsuShellThemeMerger
     {
         /// <summary>
-        ///     Merges <paramref name="overlay" /> on top of <paramref name="baseTree" /> in-place. New keys are added,
-        ///     overlapping keys recurse for groups and replace for leaves.
-        ///     将 <paramref name="overlay" /> 原地合并到 <paramref name="baseTree" /> 之上。新键会被添加，
-        ///     重叠键在分组中递归合并，在叶节点中替换。
+        ///     <para xml:lang="en">
+        ///         Merges <paramref name="overlay" /> over <paramref name="baseTree" /> in place. New keys are
+        ///         added; overlapping groups are merged recursively, while leaves and other values are replaced.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将 <paramref name="overlay" /> 原地叠加到 <paramref name="baseTree" />。新键会被添加；
+        ///         重叠的分组会递归合并，叶令牌及其他值则会被替换。
+        ///     </para>
         /// </summary>
         /// <param name="baseTree">
-        ///     The mutable base dictionary (modified in place).
-        ///     可变基准字典（原地修改）。
+        ///     <para xml:lang="en">The mutable base tree to update.</para>
+        ///     <para xml:lang="zh-CN">要更新的可变基础树。</para>
         /// </param>
         /// <param name="overlay">
-        ///     The overlay JSON element (must be an object).
-        ///     覆盖用 JSON 元素（必须是对象）。
+        ///     <para xml:lang="en">
+        ///         The overlay JSON object. A non-object value leaves <paramref name="baseTree" /> unchanged.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         用作覆盖的 JSON 对象；若不是对象，则不会更改 <paramref name="baseTree" />。
+        ///     </para>
         /// </param>
         public static void MergeInto(Dictionary<string, object?> baseTree, JsonElement overlay)
         {
@@ -64,9 +80,25 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Determines whether a JSON object is a DTFM leaf token (<c>$value</c> present).
-        ///     判断 JSON 对象是否为 DTFM 叶令牌（存在 <c>$value</c>）。
+        ///     <para xml:lang="en">
+        ///         Determines whether <paramref name="element" /> is an object containing <c>$value</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         确定 <paramref name="element" /> 是否为包含 <c>$value</c> 的对象。
+        ///     </para>
         /// </summary>
+        /// <param name="element">
+        ///     <para xml:lang="en">The JSON element to inspect.</para>
+        ///     <para xml:lang="zh-CN">要检查的 JSON 元素。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the element is a leaf token; otherwise, <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若该元素为叶令牌，则为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool IsLeafToken(JsonElement element)
         {
             return element.ValueKind == JsonValueKind.Object && element.TryGetProperty("$value", out _);
@@ -114,26 +146,39 @@ namespace STS2RitsuLib.Ui.Shell.Theme
     }
 
     /// <summary>
-    ///     Cloned representation of a DTFM leaf token after merging. Holds the raw <c>$value</c> as a CLR primitive
-    ///     (string, long, double, bool) and the <c>$type</c> hint.
-    ///     合并后 DTFM 叶令牌的克隆表示。将原始 <c>$value</c> 保存为 CLR 基元
-    ///     （string、long、double、bool）以及 <c>$type</c> 提示。
+    ///     <para xml:lang="en">
+    ///         Represents a cloned leaf token after merging. Scalar <c>$value</c> properties are stored as CLR
+    ///         values, while composite values and extension data retain independent <see cref="JsonElement" />
+    ///         clones.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示合并后克隆的叶令牌。标量 <c>$value</c> 属性存储为 CLR 值，复合值及扩展数据则保留为独立的
+    ///         <see cref="JsonElement" /> 克隆。
+    ///     </para>
     /// </summary>
     /// <param name="Value">
-    ///     Raw value (string with optional <c>{ref}</c>, number, or boolean).
-    ///     原始值 (string 与 可选 <c>{ref}</c>, 数字, or 布尔值)。
+    ///     <para xml:lang="en">
+    ///         The raw token value: a string, number, Boolean, <see langword="null" />, or cloned composite JSON.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         原始令牌值：字符串、数值、布尔值、<see langword="null" /> 或克隆后的复合 JSON。
+    ///     </para>
     /// </param>
     /// <param name="Type">
-    ///     Token type hint (e.g. <c>color</c>, <c>dimension</c>, <c>fontFamily</c>).
-    ///     令牌类型提示（例如 <c>color</c>、<c>dimension</c>、<c>fontFamily</c>）。
+    ///     <para xml:lang="en">
+    ///         The optional token type, such as <c>color</c>, <c>dimension</c>, or <c>fontFamily</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的令牌类型，例如 <c>color</c>、<c>dimension</c> 或 <c>fontFamily</c>。
+    ///     </para>
     /// </param>
     /// <param name="Description">
-    ///     Optional human description.
-    ///     可选的人类可读描述。
+    ///     <para xml:lang="en">The optional human-readable description.</para>
+    ///     <para xml:lang="zh-CN">可选的易读说明。</para>
     /// </param>
     /// <param name="Extensions">
-    ///     Optional <c>$extensions</c> blob (vendor metadata).
-    ///     可选 <c>$extensions</c> blob（供应商元数据）。
+    ///     <para xml:lang="en">The optional cloned <c>$extensions</c> vendor metadata.</para>
+    ///     <para xml:lang="zh-CN">可选的已克隆 <c>$extensions</c> 供应方元数据。</para>
     /// </param>
     internal sealed record LeafToken(object? Value, string? Type, string? Description, JsonElement? Extensions);
 }

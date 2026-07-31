@@ -5,28 +5,28 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Mutable per-player secondary-resource amounts for a combat.
-    ///     每名玩家在一场战斗中的可变次级资源数量。
+    ///     <para xml:lang="en">Stores one player's mutable secondary-resource amounts for a combat.</para>
+    ///     <para xml:lang="zh-CN">存储一名玩家在一场战斗中的可变次级资源数量。</para>
     /// </summary>
     public sealed class SecondaryResourceState
     {
         private readonly Dictionary<string, int> _amounts = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
-        ///     Returns true when this state has a material value.
-        ///     当该状态中存在实际存储值时返回 true。
+        ///     <para xml:lang="en">Gets whether at least one amount has been stored explicitly.</para>
+        ///     <para xml:lang="zh-CN">获取是否至少显式存储了一个资源数量。</para>
         /// </summary>
         public bool HasValues => _amounts.Count > 0;
 
         /// <summary>
-        ///     Raised after a resource amount changes.
-        ///     在资源数量变化后触发。
+        ///     <para xml:lang="en">Occurs after a resource's effective amount changes.</para>
+        ///     <para xml:lang="zh-CN">在资源的实际数量变化后发生。</para>
         /// </summary>
         public event Action<SecondaryResourceChangedEvent>? Changed;
 
         /// <summary>
-        ///     Reads the current amount without creating state for unknown resources.
-        ///     读取当前数量；不会为未知资源创建状态。
+        ///     <para xml:lang="en">Gets the current amount without creating state for an unknown resource.</para>
+        ///     <para xml:lang="zh-CN">获取当前数量，且不会为未知资源创建状态。</para>
         /// </summary>
         public int Get(string resourceId)
         {
@@ -41,8 +41,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns a deterministic snapshot of stored amounts.
-        ///     返回已存储数量的确定性快照。
+        ///     <para xml:lang="en">Returns a key-sorted snapshot of explicitly stored amounts.</para>
+        ///     <para xml:lang="zh-CN">返回按键排序的显式存储数量快照。</para>
         /// </summary>
         public IReadOnlyDictionary<string, int> Snapshot()
         {
@@ -64,8 +64,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var oldAmount = Get(definition.Id);
             var newAmount = Clamp(definition, amount);
-            if (oldAmount == newAmount && _amounts.ContainsKey(definition.Id))
+            if (oldAmount == newAmount)
+            {
+                _amounts.TryAdd(definition.Id, newAmount);
                 return newAmount;
+            }
 
             _amounts[definition.Id] = newAmount;
             if (emit)
@@ -87,8 +90,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Secondary-resource amount change notification.
-    ///     次级资源数量变化通知。
+    ///     <para xml:lang="en">Describes a secondary-resource amount change notification.</para>
+    ///     <para xml:lang="zh-CN">描述次级资源数量变化通知。</para>
     /// </summary>
     public sealed record SecondaryResourceChangedEvent(
         Player Player,
@@ -99,23 +102,27 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         AbstractModel? Source)
     {
         /// <summary>
-        ///     Signed delta from old to new amount.
-        ///     从旧数量到新数量的带符号差值。
+        ///     <para xml:lang="en">Gets the saturating signed difference from the old amount to the new amount.</para>
+        ///     <para xml:lang="zh-CN">获取从旧数量到新数量的饱和带符号差值。</para>
         /// </summary>
-        public int Delta => NewAmount - OldAmount;
+        public int Delta => SecondaryResourceAmountMath.SubtractSaturating(NewAmount, OldAmount);
     }
 
     /// <summary>
-    ///     Storage helper for per-player secondary-resource combat state.
-    ///     按玩家存储次级资源战斗状态的辅助工具。
+    ///     <para xml:lang="en">Provides per-player storage for secondary-resource combat state.</para>
+    ///     <para xml:lang="zh-CN">提供按玩家划分的次级资源战斗状态存储。</para>
     /// </summary>
     public static class SecondaryResourceStateStore
     {
         private static readonly AttachedState<PlayerCombatState, SecondaryResourceState> States = new(() => new());
 
         /// <summary>
-        ///     Gets state for <paramref name="player" />, creating it only when resources are registered.
-        ///     获取 <paramref name="player" /> 的状态；仅在已有资源注册时创建。
+        ///     <para xml:lang="en">
+        ///         Gets or creates state for <paramref name="player" /> when at least one resource is registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         至少注册了一个资源时，获取或创建 <paramref name="player" /> 的状态。
+        ///     </para>
         /// </summary>
         public static SecondaryResourceState Get(Player player)
         {
@@ -127,8 +134,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to get existing state without creating it.
-        ///     尝试获取已有状态，不会创建新状态。
+        ///     <para xml:lang="en">Attempts to get existing state without creating it.</para>
+        ///     <para xml:lang="zh-CN">尝试获取现有状态，且不会创建状态。</para>
         /// </summary>
         public static bool TryGet(Player player, out SecondaryResourceState state)
         {
@@ -141,8 +148,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Reads a current amount without creating state.
-        ///     读取当前数量，不会创建状态。
+        ///     <para xml:lang="en">Gets a current amount without creating player state.</para>
+        ///     <para xml:lang="zh-CN">获取当前数量，且不会创建玩家状态。</para>
         /// </summary>
         public static int GetAmount(Player player, string resourceId)
         {
@@ -161,8 +168,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Calculates the current max amount for a registered resource.
-        ///     计算已注册资源的当前最大数量。
+        ///     <para xml:lang="en">Calculates the current maximum for a registered resource.</para>
+        ///     <para xml:lang="zh-CN">计算已注册资源的当前最大数量。</para>
         /// </summary>
         public static int? GetMaxAmount(Player player, string resourceId)
         {
@@ -179,7 +186,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var context = new SecondaryResourceMaxContext(combatState, player, definition);
             var modified = SecondaryResourceHook.ModifyMaxAmount(context, definition.BaseMaxAmount.Value);
-            return Math.Clamp((int)Math.Floor(modified), definition.MinAmount, definition.HardMaxAmount);
+            return SecondaryResourceAmountMath.FloorAndClamp(
+                modified,
+                definition.MinAmount,
+                definition.HardMaxAmount);
         }
 
         internal static void SetFromPersistence(Player player, string resourceId, int amount)
@@ -194,6 +204,44 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             return player.PlayerCombatState ??
                    throw new InvalidOperationException("Player does not have a combat state.");
+        }
+    }
+
+    internal static class SecondaryResourceAmountMath
+    {
+        public static int AddSaturating(int left, int right)
+        {
+            return (int)Math.Clamp((long)left + right, int.MinValue, int.MaxValue);
+        }
+
+        public static int SubtractSaturating(int left, int right)
+        {
+            return (int)Math.Clamp((long)left - right, int.MinValue, int.MaxValue);
+        }
+
+        public static int FloorAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Floor(value), min, max);
+        }
+
+        public static int CeilingAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Ceiling(value), min, max);
+        }
+
+        public static int MultiplyNonNegativeSaturating(int left, int right)
+        {
+            return (int)Math.Min(int.MaxValue, (long)Math.Max(0, left) * Math.Max(0, right));
+        }
+
+        public static int RoundAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Round(value, 0, MidpointRounding.ToEven), min, max);
+        }
+
+        public static int TruncateAndClamp(decimal value, int min, int max)
+        {
+            return (int)Math.Clamp(decimal.Truncate(value), min, max);
         }
     }
 }

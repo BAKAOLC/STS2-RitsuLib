@@ -6,8 +6,12 @@ using STS2RitsuLib.Telemetry.RunHistory;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     Bootstraps RitsuLib's built-in telemetry applicant and runtime hooks.
-    ///     启动 RitsuLib 内置 telemetry 申请方和运行时钩子。
+    ///     <para xml:lang="en">
+    ///         Bootstraps RitsuLib's built-in telemetry applicant and runtime hooks.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         引导初始化 RitsuLib 内置的遥测申请方和运行时钩子。
+    ///     </para>
     /// </summary>
     internal static class RitsuLibTelemetryBootstrap
     {
@@ -15,18 +19,36 @@ namespace STS2RitsuLib.Telemetry
         private static bool _mainMenuInitialized;
 
         /// <summary>
-        ///     Hooks telemetry runtime callbacks; user-facing applicant registration is deferred until the first main menu.
-        ///     挂接 telemetry 运行时回调；面向用户的申请方注册延后到首次主菜单。
+        ///     <para xml:lang="en">
+        ///         Attaches telemetry runtime callbacks. Registration of the user-visible applicant is deferred until
+        ///         the first main menu.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         挂接遥测运行时回调。向用户显示的申请方会延迟到首次进入主菜单时注册。
+        ///     </para>
         /// </summary>
         internal static void Initialize()
         {
             if (_initialized)
                 return;
 
-            _initialized = true;
             DiagnosticsTelemetryCollector.InitializeGlobalExceptionHandlers();
-            RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(RunHistoryTelemetryCollector.CaptureEndedRun);
-            RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => InitializeMainMenuTelemetry());
+            IDisposable? runEndedSubscription = null;
+            IDisposable? mainMenuSubscription = null;
+            try
+            {
+                runEndedSubscription =
+                    RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(RunHistoryTelemetryCollector.CaptureEndedRun);
+                mainMenuSubscription =
+                    RitsuLibFramework.SubscribeLifecycleOnce<MainMenuReadyEvent>(_ => InitializeMainMenuTelemetry());
+                _initialized = true;
+            }
+            catch
+            {
+                mainMenuSubscription?.Dispose();
+                runEndedSubscription?.Dispose();
+                throw;
+            }
         }
 
         private static void InitializeMainMenuTelemetry()
@@ -70,7 +92,7 @@ namespace STS2RitsuLib.Telemetry
                     TelemetryRequest.BasicUsage(
                         T(
                             "ritsulib.telemetry.request.basicUsage.description",
-                            "Session start, framework/game versions, build channel, platform, language, and anonymous install id.")),
+                            "Session start time, framework and game versions, build channel, platform, language, and anonymous install ID.")),
                     TelemetryRequest.ModInventory(T(
                         "ritsulib.telemetry.request.modInventory.description",
                         "Registered mod inventory, load states, versions, and gameplay flags for compatibility analysis.")),

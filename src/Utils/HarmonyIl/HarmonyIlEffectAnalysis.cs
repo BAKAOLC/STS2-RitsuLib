@@ -3,16 +3,16 @@ using System.Reflection;
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     Named terminal method predicate used by <see cref="HarmonyIlEffectAnalyzer" />.
-    ///     <see cref="HarmonyIlEffectAnalyzer" /> 使用的具名终点方法谓词。
+    ///     <para xml:lang="en">Named terminal method predicate used by <see cref="HarmonyIlEffectAnalyzer" />.</para>
+    ///     <para xml:lang="zh-CN"><see cref="HarmonyIlEffectAnalyzer" /> 使用的具名终点方法谓词。</para>
     /// </summary>
     public sealed record HarmonyIlEffectSink(
         string Id,
         Func<MethodInfo, bool> IsMatch)
     {
         /// <summary>
-        ///     Creates a sink that matches one exact method.
-        ///     创建匹配一个确切方法的效果终点。
+        ///     <para xml:lang="en">Creates a sink that matches one exact method.</para>
+        ///     <para xml:lang="zh-CN">创建匹配一个确切方法的效果终点。</para>
         /// </summary>
         public static HarmonyIlEffectSink ForMethod(string id, MethodInfo method)
         {
@@ -23,64 +23,64 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     Limits and traversal policy for an IL effect analysis.
-    ///     IL 效果分析的限制与遍历策略。
+    ///     <para xml:lang="en">Limits and traversal policy for an IL effect analysis.</para>
+    ///     <para xml:lang="zh-CN">IL 效果分析的限制与遍历策略。</para>
     /// </summary>
     public sealed record HarmonyIlEffectAnalysisOptions
     {
         /// <summary>
-        ///     Maximum number of traversed calls from a root.
-        ///     从根方法开始允许下钻的最大调用层数。
+        ///     <para xml:lang="en">Maximum number of traversed calls from a root.</para>
+        ///     <para xml:lang="zh-CN">从根方法开始允许下钻的最大调用层数。</para>
         /// </summary>
         public int MaxDepth { get; init; } = 16;
 
         /// <summary>
-        ///     Maximum number of distinct logical methods inspected.
-        ///     允许检查的最大不同逻辑方法数量。
+        ///     <para xml:lang="en">Maximum number of distinct logical methods inspected.</para>
+        ///     <para xml:lang="zh-CN">允许检查的最大不同逻辑方法数量。</para>
         /// </summary>
         public int MaxMethods { get; init; } = 4096;
 
         /// <summary>
-        ///     Resolve async logical methods to compiler-generated <c>MoveNext</c> bodies.
-        ///     将 async 逻辑方法解析到编译器生成的 <c>MoveNext</c> 方法体。
+        ///     <para xml:lang="en">Resolve async logical methods to compiler-generated <c>MoveNext</c> bodies.</para>
+        ///     <para xml:lang="zh-CN">将异步逻辑方法解析到编译器生成的 <c>MoveNext</c> 方法体。</para>
         /// </summary>
         public bool ResolveAsync { get; init; } = true;
 
         /// <summary>
-        ///     Selects non-sink calls whose bodies may be inspected. Null keeps analysis direct-call-only.
-        ///     选择允许继续检查方法体的非终点调用；为 null 时仅分析直接调用。
+        ///     <para xml:lang="en">Selects non-sink calls whose bodies may be inspected. Null keeps analysis direct-call-only.</para>
+        ///     <para xml:lang="zh-CN">选择允许继续检查方法体的非终点调用；为 null 时仅分析直接调用。</para>
         /// </summary>
         public Func<MethodInfo, bool>? ShouldTraverse { get; init; }
     }
 
     /// <summary>
-    ///     Severity of an IL effect-analysis diagnostic.
-    ///     IL 效果分析诊断的严重程度。
+    ///     <para xml:lang="en">Severity of an IL effect-analysis diagnostic.</para>
+    ///     <para xml:lang="zh-CN">IL 效果分析诊断的严重程度。</para>
     /// </summary>
     public enum HarmonyIlEffectDiagnosticSeverity
     {
         /// <summary>
-        ///     Informational analysis detail.
-        ///     信息性分析详情。
+        ///     <para xml:lang="en">Informational analysis detail.</para>
+        ///     <para xml:lang="zh-CN">信息性分析详情。</para>
         /// </summary>
         Information,
 
         /// <summary>
-        ///     Recoverable condition that may reduce completeness.
-        ///     可能降低完整性的可恢复状况。
+        ///     <para xml:lang="en">Recoverable condition that may reduce completeness.</para>
+        ///     <para xml:lang="zh-CN">可能降低完整性的可恢复状况。</para>
         /// </summary>
         Warning,
 
         /// <summary>
-        ///     Condition that prevents complete analysis.
-        ///     阻止完整分析的错误状况。
+        ///     <para xml:lang="en">Condition that prevents complete analysis.</para>
+        ///     <para xml:lang="zh-CN">阻止完整分析的错误状况。</para>
         /// </summary>
         Error,
     }
 
     /// <summary>
-    ///     One diagnostic emitted by <see cref="HarmonyIlEffectAnalyzer" />.
-    ///     <see cref="HarmonyIlEffectAnalyzer" /> 产生的一条诊断。
+    ///     <para xml:lang="en">One diagnostic emitted by <see cref="HarmonyIlEffectAnalyzer" />.</para>
+    ///     <para xml:lang="zh-CN"><see cref="HarmonyIlEffectAnalyzer" /> 产生的一条诊断。</para>
     /// </summary>
     public sealed record HarmonyIlEffectDiagnostic(
         HarmonyIlEffectDiagnosticSeverity Severity,
@@ -88,8 +88,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         string Message);
 
     /// <summary>
-    ///     A call site that directly reaches a sink or another effect-relevant method.
-    ///     直接到达效果终点或另一个效果相关方法的调用点。
+    ///     <para xml:lang="en">A call site that directly reaches a sink or another effect-relevant method.</para>
+    ///     <para xml:lang="zh-CN">直接到达效果终点或另一个效果相关方法的调用点。</para>
     /// </summary>
     public sealed record HarmonyIlEffectCallSite(
         int InstructionIndex,
@@ -98,15 +98,15 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         bool ReachesRelevantMethod)
     {
         /// <summary>
-        ///     True when this call directly matches a configured sink.
-        ///     此调用直接匹配已配置效果终点时为 true。
+        ///     <para xml:lang="en">True when this call directly matches a configured sink.</para>
+        ///     <para xml:lang="zh-CN">此调用直接匹配已配置效果终点时为 true。</para>
         /// </summary>
         public bool IsDirectSink => SinkId != null;
     }
 
     /// <summary>
-    ///     Conservative control-flow slice for one effect-relevant logical method.
-    ///     一个效果相关逻辑方法的保守控制流切片。
+    ///     <para xml:lang="en">Conservative control-flow slice for one effect-relevant logical method.</para>
+    ///     <para xml:lang="zh-CN">一个效果相关逻辑方法的保守控制流切片。</para>
     /// </summary>
     public sealed class HarmonyIlEffectMethodSlice
     {
@@ -125,44 +125,47 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Logical method represented by this slice.
-        ///     此切片所表示的逻辑方法。
+        ///     <para xml:lang="en">Logical method represented by this slice.</para>
+        ///     <para xml:lang="zh-CN">此切片所表示的逻辑方法。</para>
         /// </summary>
         public MethodBase Method { get; }
 
         /// <summary>
-        ///     Resolved original IL body.
-        ///     解析后的原始 IL 方法体。
+        ///     <para xml:lang="en">Resolved original IL body.</para>
+        ///     <para xml:lang="zh-CN">解析后的原始 IL 方法体。</para>
         /// </summary>
         public HarmonyIlMethodBody Body { get; }
 
         /// <summary>
-        ///     Full basic-block graph of <see cref="Body" />.
-        ///     <see cref="Body" /> 的完整基本块图。
+        ///     <para xml:lang="en">Full basic-block graph of <see cref="Body" />.</para>
+        ///     <para xml:lang="zh-CN"><see cref="Body" /> 的完整基本块图。</para>
         /// </summary>
         public HarmonyIlControlFlowGraph ControlFlow { get; }
 
         /// <summary>
-        ///     Effect-relevant calls in instruction order.
-        ///     按指令顺序排列的效果相关调用。
+        ///     <para xml:lang="en">Effect-relevant calls in instruction order.</para>
+        ///     <para xml:lang="zh-CN">按指令顺序排列的效果相关调用。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlEffectCallSite> EffectCallSites { get; }
 
         /// <summary>
-        ///     Blocks that can reach an effect call through normal control flow.
-        ///     可通过普通控制流到达效果调用的基本块。
+        ///     <para xml:lang="en">Blocks that can reach an effect call through normal control flow.</para>
+        ///     <para xml:lang="zh-CN">可通过普通控制流到达效果调用的基本块。</para>
         /// </summary>
         public IReadOnlySet<int> RetainedBlockIndexes { get; }
 
         /// <summary>
-        ///     Returns true when an instruction belongs to a retained block.
-        ///     指令属于保留基本块时返回 true。
+        ///     <para xml:lang="en">Returns true when an instruction belongs to a retained block.</para>
+        ///     <para xml:lang="zh-CN">指令属于保留基本块时返回 true。</para>
         /// </summary>
         public bool RetainsInstruction(int instructionIndex)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(instructionIndex);
+            // Preserve the established exception construction and message.
+#pragma warning disable CA1512
             if (instructionIndex >= ControlFlow.InstructionBlockIndexes.Count)
                 throw new ArgumentOutOfRangeException(nameof(instructionIndex));
+#pragma warning restore CA1512
 
             return RetainedBlockIndexes.Contains(
                 ControlFlow.InstructionBlockIndexes[instructionIndex]);
@@ -170,8 +173,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     Result of an interprocedural effect reachability and control-flow slicing pass.
-    ///     跨方法效果可达性与控制流切片分析结果。
+    ///     <para xml:lang="en">Result of an interprocedural effect reachability and control-flow slicing pass.</para>
+    ///     <para xml:lang="zh-CN">跨方法效果可达性与控制流切片分析结果。</para>
     /// </summary>
     public sealed class HarmonyIlEffectAnalysisResult
     {
@@ -186,26 +189,26 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Logical root methods supplied to the analysis.
-        ///     提供给分析器的逻辑根方法。
+        ///     <para xml:lang="en">Logical root methods supplied to the analysis.</para>
+        ///     <para xml:lang="zh-CN">提供给分析器的逻辑根方法。</para>
         /// </summary>
         public IReadOnlyList<MethodBase> Roots { get; }
 
         /// <summary>
-        ///     Effect-relevant method slices keyed by logical method.
-        ///     以逻辑方法为键的效果相关方法切片。
+        ///     <para xml:lang="en">Effect-relevant method slices keyed by logical method.</para>
+        ///     <para xml:lang="zh-CN">以逻辑方法为键的效果相关方法切片。</para>
         /// </summary>
         public IReadOnlyDictionary<MethodBase, HarmonyIlEffectMethodSlice> Slices { get; }
 
         /// <summary>
-        ///     Analysis diagnostics.
-        ///     分析诊断。
+        ///     <para xml:lang="en">Analysis diagnostics.</para>
+        ///     <para xml:lang="zh-CN">分析诊断。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlEffectDiagnostic> Diagnostics { get; }
 
         /// <summary>
-        ///     True when analysis completed without error diagnostics or incomplete control-flow graphs.
-        ///     分析未产生错误诊断且所有控制流图完整时为 true。
+        ///     <para xml:lang="en">True when analysis completed without error diagnostics or incomplete control-flow graphs.</para>
+        ///     <para xml:lang="zh-CN">分析未产生错误诊断且所有控制流图完整时为 true。</para>
         /// </summary>
         public bool IsComplete =>
             Diagnostics.All(static diagnostic =>
@@ -214,14 +217,17 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     Discovers calls that can reach configured effect sinks and creates conservative per-method control slices.
-    ///     发现可到达已配置效果终点的调用，并为每个相关方法创建保守控制切片。
+    ///     <para xml:lang="en">
+    ///         Discovers calls that can reach configured effect sinks and creates conservative per-method
+    ///         control slices.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">发现可到达已配置效果终点的调用，并为每个相关方法创建保守控制切片。</para>
     /// </summary>
     public static class HarmonyIlEffectAnalyzer
     {
         /// <summary>
-        ///     Analyzes logical root methods against named effect sinks.
-        ///     按具名效果终点分析逻辑根方法。
+        ///     <para xml:lang="en">Analyzes logical root methods against named effect sinks.</para>
+        ///     <para xml:lang="zh-CN">按具名效果终点分析逻辑根方法。</para>
         /// </summary>
         public static HarmonyIlEffectAnalysisResult Analyze(
             IEnumerable<MethodBase> roots,

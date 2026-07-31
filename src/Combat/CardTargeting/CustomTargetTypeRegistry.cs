@@ -5,30 +5,22 @@ using MegaCrit.Sts2.Core.Entities.Players;
 namespace STS2RitsuLib.Combat.CardTargeting
 {
     /// <summary>
-    ///     Central registry for custom target types and their selection predicates.
-    ///     自定义目标类型及其筛选谓词的中心注册表。
+    ///     <para xml:lang="en">Stores RitsuLib custom target types and their selection predicates.</para>
+    ///     <para xml:lang="zh-CN">存储 RitsuLib 自定义目标类型及其选择谓词。</para>
     /// </summary>
     internal static class CustomTargetTypeRegistry
     {
         private static readonly Lock SyncRoot = new();
 
-        /// <summary>
-        ///     Predicate map for custom single-target types.
-        ///     自定义单体目标类型的谓词映射。
-        /// </summary>
         private static readonly Dictionary<TargetType, Func<CustomTargetContext, bool>> SingleTargetPredicates = [];
 
-        /// <summary>
-        ///     Predicate map for custom multi-target types.
-        ///     自定义群体目标类型的谓词映射。
-        /// </summary>
         private static readonly Dictionary<TargetType, Func<Creature, Player, bool>> MultiTargetPredicates = [];
 
         private static readonly Dictionary<TargetType, CustomTargetTypeRegistration> Registrations = [];
 
         /// <summary>
-        ///     Returns whether <paramref name="type" /> belongs to any registered custom target category.
-        ///     返回 <paramref name="type" /> 是否属于任一已注册的自定义目标类别。
+        ///     <para xml:lang="en">Determines whether RitsuLib registered <paramref name="type" />.</para>
+        ///     <para xml:lang="zh-CN">判断 RitsuLib 是否注册了 <paramref name="type" />。</para>
         /// </summary>
         internal static bool IsRitsuCustom(TargetType type)
         {
@@ -39,8 +31,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Returns whether <paramref name="type" /> is registered as a custom single-target type.
-        ///     返回 <paramref name="type" /> 是否被注册为自定义单体目标类型。
+        ///     <para xml:lang="en">Determines whether <paramref name="type" /> has a single-target predicate.</para>
+        ///     <para xml:lang="zh-CN">判断 <paramref name="type" /> 是否具有单体目标谓词。</para>
         /// </summary>
         internal static bool IsCustomSingleTargetType(TargetType type)
         {
@@ -51,8 +43,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Returns whether <paramref name="type" /> is registered as a custom multi-target type.
-        ///     返回 <paramref name="type" /> 是否被注册为自定义群体目标类型。
+        ///     <para xml:lang="en">Determines whether <paramref name="type" /> has a multi-target predicate.</para>
+        ///     <para xml:lang="zh-CN">判断 <paramref name="type" /> 是否具有群体目标谓词。</para>
         /// </summary>
         internal static bool IsCustomMultiTargetType(TargetType type)
         {
@@ -63,8 +55,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Resolves and evaluates the predicate for a custom single-target type.
-        ///     解析并执行自定义单体目标类型对应的筛选谓词。
+        ///     <para xml:lang="en">Finds and evaluates a single-target predicate without source-model context.</para>
+        ///     <para xml:lang="zh-CN">查找并执行不含来源模型上下文的单体目标谓词。</para>
         /// </summary>
         internal static bool TryIsAllowedSingleTarget(
             TargetType type,
@@ -76,8 +68,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Resolves and evaluates the predicate for a custom single-target type.
-        ///     解析并执行自定义单体目标类型对应的筛选谓词。
+        ///     <para xml:lang="en">Finds and evaluates a single-target predicate with full source context.</para>
+        ///     <para xml:lang="zh-CN">查找并使用完整来源上下文执行单体目标谓词。</para>
         /// </summary>
         internal static bool TryIsAllowedSingleTarget(
             TargetType type,
@@ -101,8 +93,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Resolves and evaluates the predicate for a custom multi-target type.
-        ///     解析并执行自定义群体目标类型对应的筛选谓词。
+        ///     <para xml:lang="en">Finds and evaluates a multi-target predicate.</para>
+        ///     <para xml:lang="zh-CN">查找并执行群体目标谓词。</para>
         /// </summary>
         internal static bool TryShouldIncludeMultiTarget(TargetType type, Creature creature, Player player,
             out bool include)
@@ -124,8 +116,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a custom single-target predicate.
-        ///     注册或替换一个自定义单体目标谓词。
+        ///     <para xml:lang="en">Registers or replaces a creature-only single-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册或替换仅接收生物的单体目标谓词。</para>
         /// </summary>
         internal static void RegisterSingleTargetType(TargetType type, Func<Creature, bool> predicate)
         {
@@ -134,8 +126,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a player-aware custom single-target predicate.
-        ///     注册或替换一个感知出牌玩家的自定义单体目标谓词。
+        ///     <para xml:lang="en">Registers or replaces a player-aware single-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册或替换可接收玩家的单体目标谓词。</para>
         /// </summary>
         internal static void RegisterSingleTargetType(TargetType type, Func<Creature, Player, bool> predicate)
         {
@@ -144,8 +136,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a source-aware custom single-target predicate.
-        ///     注册或替换一个感知来源上下文的自定义单体目标谓词。
+        ///     <para xml:lang="en">Registers or replaces a source-aware single-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册或替换可接收来源上下文的单体目标谓词。</para>
         /// </summary>
         internal static void RegisterSingleTargetTypeWithContext(
             TargetType type,
@@ -155,8 +147,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a custom single-target predicate with a diagnostic id.
-        ///     使用诊断 ID 注册或替换一个自定义单体目标谓词。
+        ///     <para xml:lang="en">Registers a named creature-only single-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册具名且仅接收生物的单体目标谓词。</para>
         /// </summary>
         internal static void RegisterSingleTargetType(TargetType type, string id, Func<Creature, bool> predicate)
         {
@@ -166,8 +158,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a player-aware custom single-target predicate with a diagnostic id.
-        ///     使用诊断 ID 注册或替换一个感知出牌玩家的自定义单体目标谓词。
+        ///     <para xml:lang="en">Registers a named, player-aware single-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册具名且可接收玩家的单体目标谓词。</para>
         /// </summary>
         internal static void RegisterSingleTargetType(
             TargetType type,
@@ -181,8 +173,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a source-aware custom single-target predicate with a diagnostic id.
-        ///     使用诊断 ID 注册或替换一个感知来源上下文的自定义单体目标谓词。
+        ///     <para xml:lang="en">Registers a named, source-aware single-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册具名且可接收来源上下文的单体目标谓词。</para>
         /// </summary>
         internal static void RegisterSingleTargetTypeWithContext(
             TargetType type,
@@ -194,8 +186,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a custom multi-target predicate.
-        ///     注册或替换一个自定义群体目标谓词。
+        ///     <para xml:lang="en">Registers or replaces a creature-only multi-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册或替换仅接收生物的群体目标谓词。</para>
         /// </summary>
         internal static void RegisterMultiTargetType(TargetType type, Func<Creature, bool> predicate)
         {
@@ -204,8 +196,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a player-aware custom multi-target predicate.
-        ///     注册或替换一个感知出牌玩家的自定义群体目标谓词。
+        ///     <para xml:lang="en">Registers or replaces a player-aware multi-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册或替换可接收玩家的群体目标谓词。</para>
         /// </summary>
         internal static void RegisterMultiTargetType(TargetType type, Func<Creature, Player, bool> predicate)
         {
@@ -213,8 +205,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a custom multi-target predicate with a diagnostic id.
-        ///     使用诊断 ID 注册或替换一个自定义群体目标谓词。
+        ///     <para xml:lang="en">Registers a named creature-only multi-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册具名且仅接收生物的群体目标谓词。</para>
         /// </summary>
         internal static void RegisterMultiTargetType(TargetType type, string id, Func<Creature, bool> predicate)
         {
@@ -224,8 +216,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers or replaces a player-aware custom multi-target predicate with a diagnostic id.
-        ///     使用诊断 ID 注册或替换一个感知出牌玩家的自定义群体目标谓词。
+        ///     <para xml:lang="en">Registers a named, player-aware multi-target predicate.</para>
+        ///     <para xml:lang="zh-CN">注册具名且可接收玩家的群体目标谓词。</para>
         /// </summary>
         internal static void RegisterMultiTargetType(
             TargetType type,
@@ -237,8 +229,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Registers all built-in custom target definitions while preserving mod-registered predicates.
-        ///     注册全部内置自定义目标定义，同时保留 mod 注册的谓词。
+        ///     <para xml:lang="en">Registers the built-in target definitions without clearing mod registrations.</para>
+        ///     <para xml:lang="zh-CN">注册内置目标定义，且不清除模组注册项。</para>
         /// </summary>
         internal static void RegisterBuiltIns()
         {
@@ -282,8 +274,13 @@ namespace STS2RitsuLib.Combat.CardTargeting
         }
 
         /// <summary>
-        ///     Checks whether <paramref name="target" /> is at the lowest/highest alive enemy HP.
-        ///     检查 <paramref name="target" /> 是否处于存活敌人的最低/最高生命值档位。
+        ///     <para xml:lang="en">
+        ///         Determines whether <paramref name="target" /> is tied for the lowest or highest current HP among
+        ///         living enemies.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         判断 <paramref name="target" /> 的当前生命值是否在存活敌人中并列最低或最高。
+        ///     </para>
         /// </summary>
         private static bool IsEnemyHpExtremum(Creature target, bool lowest)
         {

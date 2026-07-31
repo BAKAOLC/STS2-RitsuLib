@@ -5,11 +5,22 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 namespace STS2RitsuLib.CardTags.Serialization
 {
     /// <summary>
-    ///     Serializes <see cref="CardTag" /> as the qualified string id for ritsulib-minted values, otherwise as the
-    ///     vanilla enum name. Accepts string ids, enum names, or raw 32-bit integers on deserialize.
-    ///     将 ritsulib 生成的 <see cref="CardTag" /> 序列化为限定字符串 ID，其他值则序列化为原版枚举名。
-    ///     反序列化时接受字符串 ID、枚举名或原始 32 位整数。
+    ///     <para xml:lang="en">
+    ///         Converts card tags between JSON strings or integers and <see cref="CardTag" /> values.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 JSON 字符串或整数与 <see cref="CardTag" /> 值之间转换卡牌标签。
+    ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         Registered mod tags are written as their IDs. Named vanilla values are written as enum names,
+    ///         and unnamed values are written as 32-bit integers.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         已注册的模组标签写为其 ID；有名称的原版值写为枚举名，未命名值写为 32 位整数。
+    ///     </para>
+    /// </remarks>
     public sealed class CardTagJsonConverter : JsonConverter<CardTag>
     {
         /// <inheritdoc />

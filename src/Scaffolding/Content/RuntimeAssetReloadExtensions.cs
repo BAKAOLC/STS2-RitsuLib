@@ -4,14 +4,14 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Public model-oriented helpers for runtime visual reload requests.
-    ///     面向公共模型的运行时视觉重载请求辅助方法。
+    ///     <para xml:lang="en">Provides model extension methods for requesting runtime visual reloads.</para>
+    ///     <para xml:lang="zh-CN">提供用于请求运行时视觉重载的模型扩展方法。</para>
     /// </summary>
     public static class RuntimeAssetReloadExtensions
     {
         /// <summary>
-        ///     Requests card-node reloads for this card instance (reference or id match).
-        ///     为此卡牌实例请求卡牌节点重载（按引用或 id 匹配）。
+        ///     <para xml:lang="en">Requests card-node reloads matching this card by reference or ID.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载引用或 ID 与此卡牌匹配的卡牌节点。</para>
         /// </summary>
         public static void RequestVisualReload(this CardModel model)
         {
@@ -21,8 +21,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Requests relic-node reloads for this relic instance (reference or id match).
-        ///     为此遗物实例请求遗物节点重载（按引用或 id 匹配）。
+        ///     <para xml:lang="en">Requests relic-node reloads matching this relic by reference or ID.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载引用或 ID 与此遗物匹配的遗物节点。</para>
         /// </summary>
         public static void RequestVisualReload(this RelicModel model)
         {
@@ -32,8 +32,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Requests potion-node reloads for this potion instance (reference or id match).
-        ///     为此药水实例请求药水节点重载（按引用或 id 匹配）。
+        ///     <para xml:lang="en">Requests potion-node reloads matching this potion by reference or ID.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载引用或 ID 与此药水匹配的药水节点。</para>
         /// </summary>
         public static void RequestVisualReload(this PotionModel model)
         {
@@ -43,8 +43,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Requests power-node reloads for this power instance (reference or id match).
-        ///     为此能力实例请求能力节点重载（按引用或 id 匹配）。
+        ///     <para xml:lang="en">Requests power-node reloads matching this power by reference or ID.</para>
+        ///     <para xml:lang="zh-CN">请求重新加载引用或 ID 与此能力匹配的能力节点。</para>
         /// </summary>
         public static void RequestVisualReload(this PowerModel model)
         {
@@ -54,8 +54,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
-        ///     Requests orb-node visual updates for this orb instance (reference or id match).
-        ///     为此充能球实例请求充能球节点视觉更新（按引用或 id 匹配）。
+        ///     <para xml:lang="en">Requests visual updates for orb nodes matching this orb by reference or ID.</para>
+        ///     <para xml:lang="zh-CN">请求更新引用或 ID 与此充能球匹配的充能球节点视觉效果。</para>
         /// </summary>
         public static void RequestVisualReload(this OrbModel model)
         {

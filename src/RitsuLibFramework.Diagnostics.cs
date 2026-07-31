@@ -85,9 +85,16 @@ namespace STS2RitsuLib
                     patchInfo.ParameterTypes,
                     null);
 
-            return patchInfo.TargetType.GetMethod(
-                patchInfo.MethodName,
-                BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            try
+            {
+                return patchInfo.TargetType.GetMethod(
+                    patchInfo.MethodName,
+                    BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            }
+            catch (AmbiguousMatchException)
+            {
+                return null;
+            }
         }
 
         private static MethodInfo[] ResolvePatchMethods(Type patchType)

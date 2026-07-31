@@ -7,23 +7,28 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Patching.Core
 {
     /// <summary>
-    ///     Owns one Harmony instance: registers static and dynamic patches, applies them, and can roll back.
-    ///     持有一个 Harmony 实例：注册静态和动态补丁、应用补丁，并可回滚。
+    ///     <para xml:lang="en">
+    ///         Owns one Harmony instance and manages the registration, application, and removal of static and dynamic patches.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         持有一个 Harmony 实例，并管理静态和动态补丁的注册、应用与移除。
+    ///     </para>
     /// </summary>
     /// <param name="patcherId">
-    ///     Harmony id (must be unique per logical patcher).
-    ///     Harmony id（每个逻辑补丁器必须唯一）。
+    ///     <para xml:lang="en">Harmony ID, which must be unique for each logical patcher.</para>
+    ///     <para xml:lang="zh-CN">Harmony ID；每个逻辑补丁器必须使用唯一值。</para>
     /// </param>
     /// <param name="logger">
-    ///     Logger used for patch diagnostics.
-    ///     用于补丁诊断的日志器。
+    ///     <para xml:lang="en">Logger used for patch diagnostics.</para>
+    ///     <para xml:lang="zh-CN">用于记录补丁诊断信息的日志器。</para>
     /// </param>
     /// <param name="patcherName">
-    ///     Optional display name included in log prefix.
-    ///     可选显示名称，会包含在日志前缀中。
+    ///     <para xml:lang="en">Optional display name included in the log prefix.</para>
+    ///     <para xml:lang="zh-CN">包含在日志前缀中的可选显示名称。</para>
     /// </param>
     public class ModPatcher(string patcherId, Logger logger, string patcherName = "")
     {
+        private readonly Dictionary<string, IDisposable> _dynamicPatchLifetimeLeases = [];
         private readonly Harmony _harmony = new(patcherId);
 
         private readonly string _logPrefix =
@@ -34,56 +39,62 @@ namespace STS2RitsuLib.Patching.Core
         private readonly List<ModPatchInfo> _registeredPatches = [];
 
         /// <summary>
-        ///     Harmony instance id passed to the constructor.
-        ///     传入构造函数的 Harmony 实例 id。
+        ///     <para xml:lang="en">Gets the Harmony ID supplied to the constructor.</para>
+        ///     <para xml:lang="zh-CN">获取传入构造函数的 Harmony ID。</para>
         /// </summary>
         public string PatcherId => patcherId;
 
         /// <summary>
-        ///     Human-readable patcher label for logs.
-        ///     用于日志的人类可读补丁器标签。
+        ///     <para xml:lang="en">Gets the patcher's display name.</para>
+        ///     <para xml:lang="zh-CN">获取补丁器的显示名称。</para>
         /// </summary>
         public string PatcherName => patcherName;
 
         /// <summary>
-        ///     Logger associated with this patcher.
-        ///     与此补丁器关联的日志器。
+        ///     <para xml:lang="en">Gets the logger associated with this patcher.</para>
+        ///     <para xml:lang="zh-CN">获取与此补丁器关联的日志器。</para>
         /// </summary>
         public Logger Logger => logger;
 
         /// <summary>
-        ///     Count of registered static <see cref="ModPatchInfo" /> entries.
-        ///     已注册静态 <see cref="ModPatchInfo" /> 条目的数量。
+        ///     <para xml:lang="en">Gets the number of registered static patches.</para>
+        ///     <para xml:lang="zh-CN">获取已注册静态补丁的数量。</para>
         /// </summary>
         public int RegisteredPatchCount => _registeredPatches.Count;
 
         /// <summary>
-        ///     Count of registered <see cref="DynamicPatchInfo" /> entries.
-        ///     已注册 <see cref="DynamicPatchInfo" /> 条目的数量。
+        ///     <para xml:lang="en">Gets the number of registered dynamic patches.</para>
+        ///     <para xml:lang="zh-CN">获取已注册动态补丁的数量。</para>
         /// </summary>
         public int RegisteredDynamicPatchCount => _registeredDynamicPatches.Count;
 
         /// <summary>
-        ///     Number of patches currently marked applied in internal state.
-        ///     内部状态中当前标记为已应用的补丁数量。
+        ///     <para xml:lang="en">Gets the number of patches currently marked as applied.</para>
+        ///     <para xml:lang="zh-CN">获取当前标记为已应用的补丁数量。</para>
         /// </summary>
         public int AppliedPatchCount => _patchedStatus.Count(kvp => kvp.Value);
 
         /// <summary>
-        ///     Snapshot of static patch registrations.
-        ///     静态补丁注册的快照。
+        ///     <para xml:lang="en">Gets the registered static patches.</para>
+        ///     <para xml:lang="zh-CN">获取已注册的静态补丁。</para>
         /// </summary>
         public IReadOnlyList<ModPatchInfo> RegisteredPatches => _registeredPatches;
 
         /// <summary>
-        ///     True after <see cref="PatchAll" /> succeeds without rolling back.
-        ///     <see cref="PatchAll" /> 成功且未回滚后为 True。
+        ///     <para xml:lang="en">Gets whether <see cref="PatchAll" /> completed without a critical failure.</para>
+        ///     <para xml:lang="zh-CN">获取 <see cref="PatchAll" /> 是否已完成且未发生严重失败。</para>
         /// </summary>
         public bool IsApplied { get; private set; }
 
         /// <summary>
-        ///     Queues a static patch; throws if <see cref="IsApplied" /> is already true.
-        ///     将静态 patch 加入队列；如果 <see cref="IsApplied" /> 已为 true，则抛出异常。
+        ///     <para xml:lang="en">
+        ///         Registers a static patch. Duplicate IDs are skipped; registration after <see cref="PatchAll" />
+        ///         succeeds throws <see cref="InvalidOperationException" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册静态补丁。重复的 ID 会被跳过；在 <see cref="PatchAll" /> 成功后注册会抛出
+        ///         <see cref="InvalidOperationException" />。
+        ///     </para>
         /// </summary>
         public void RegisterPatch(ModPatchInfo modPatchInfo)
         {
@@ -108,8 +119,8 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Calls <see cref="RegisterPatch" /> for each entry in <paramref name="patches" />.
-        ///     调用 <see cref="RegisterPatch" />，针对 <paramref name="patches" /> 中的每个条目。
+        ///     <para xml:lang="en">Registers each patch in <paramref name="patches" />.</para>
+        ///     <para xml:lang="zh-CN">注册 <paramref name="patches" /> 中的每个补丁。</para>
         /// </summary>
         public void RegisterPatches(params ReadOnlySpan<ModPatchInfo> patches)
         {
@@ -117,10 +128,16 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Queues a dynamic patch (resolved <see cref="MethodBase" /> + Harmony methods).
-        ///     将动态 patch（已解析的 <see cref="MethodBase" /> + Harmony 方法）加入队列。
+        ///     <para xml:lang="en">Registers a dynamic patch. Duplicate IDs are skipped.</para>
+        ///     <para xml:lang="zh-CN">注册动态补丁。重复的 ID 会被跳过。</para>
         /// </summary>
         public void RegisterDynamicPatch(DynamicPatchInfo dynamicPatchInfo)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicPatchInfo);
+            TryRegisterDynamicPatch(dynamicPatchInfo);
+        }
+
+        private bool TryRegisterDynamicPatch(DynamicPatchInfo dynamicPatchInfo)
         {
             ArgumentNullException.ThrowIfNull(dynamicPatchInfo);
 
@@ -128,17 +145,18 @@ namespace STS2RitsuLib.Patching.Core
             {
                 logger.Warn(
                     $"{_logPrefix}Dynamic patch '{dynamicPatchInfo.Id}' already registered, skipping duplicate");
-                return;
+                return false;
             }
 
             _registeredDynamicPatches.Add(dynamicPatchInfo);
             logger.Debug(
                 $"{_logPrefix}Registered dynamic patch: {dynamicPatchInfo.Id} - {dynamicPatchInfo.Description}");
+            return true;
         }
 
         /// <summary>
-        ///     Calls <see cref="RegisterDynamicPatch" /> for each entry.
-        ///     对每个条目调用 <see cref="RegisterDynamicPatch" />。
+        ///     <para xml:lang="en">Registers each patch in <paramref name="dynamicPatches" />.</para>
+        ///     <para xml:lang="zh-CN">注册 <paramref name="dynamicPatches" /> 中的每个补丁。</para>
         /// </summary>
         public void RegisterDynamicPatches(params ReadOnlySpan<DynamicPatchInfo> dynamicPatches)
         {
@@ -146,24 +164,33 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Registers and immediately applies dynamic patches; optionally rolls back all Harmony patches on critical
-        ///     failure.
-        ///     注册并立即应用动态补丁；可选地在关键失败时回滚所有 Harmony 补丁。
+        ///     <para xml:lang="en">
+        ///         Registers and immediately applies previously unregistered dynamic patch IDs. Duplicate IDs are
+        ///         skipped. When a critical patch fails and <paramref name="rollbackOnCriticalFailure" /> is
+        ///         <see langword="true" />, attempts to remove all patches owned by this patcher.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册并立即应用此前未注册 ID 的动态补丁，重复 ID 会被跳过。严重补丁失败且
+        ///         <paramref name="rollbackOnCriticalFailure" /> 为 <see langword="true" /> 时，尝试移除此
+        ///         补丁器拥有的所有补丁。
+        ///     </para>
         /// </summary>
         /// <returns>
-        ///     False when any critical patch fails and rollback was requested or needed.
-        ///     当任何关键补丁失败且请求或需要回滚时返回 false。
+        ///     <para xml:lang="en"><see langword="false" /> when any critical patch fails; otherwise <see langword="true" />.</para>
+        ///     <para xml:lang="zh-CN">任何严重补丁失败时为 <see langword="false" />；否则为 <see langword="true" />。</para>
         /// </returns>
         public bool ApplyDynamicPatches(IEnumerable<DynamicPatchInfo> dynamicPatches,
             bool rollbackOnCriticalFailure = false)
         {
             ArgumentNullException.ThrowIfNull(dynamicPatches);
 
-            var patches = dynamicPatches.ToArray();
-            if (patches.Length == 0)
+            var candidates = dynamicPatches.ToArray();
+            if (candidates.Length == 0)
                 return true;
 
-            RegisterDynamicPatches(patches);
+            var patches = candidates.Where(TryRegisterDynamicPatch).ToArray();
+            if (patches.Length == 0)
+                return true;
 
             logger.Info($"{_logPrefix}Applying {patches.Length} dynamic patch(es)...");
 
@@ -217,12 +244,16 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Applies all registered static patches once; on critical failure calls <see cref="UnpatchAll" />.
-        ///     应用所有已注册静态 patch 一次；发生关键失败时调用 <see cref="UnpatchAll" />。
+        ///     <para xml:lang="en">
+        ///         Applies all registered static patches once. If a critical patch fails, calls <see cref="UnpatchAll" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         应用所有已注册的静态补丁一次。严重补丁失败时调用 <see cref="UnpatchAll" />。
+        ///     </para>
         /// </summary>
         /// <returns>
-        ///     True when no critical patch failed.
-        ///     没有关键补丁失败时返回 true。
+        ///     <para xml:lang="en"><see langword="true" /> when no critical patch fails; otherwise <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">没有严重补丁失败时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public bool PatchAll()
         {
@@ -263,10 +294,14 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Applies additional static patches after <see cref="PatchAll" /> (e.g. Android hosts that must wait until
-        ///     <c>ModelDb.Init</c> completes). Failures are logged; optional patches do not throw.
-        ///     在 <see cref="PatchAll" /> 之后应用额外静态 patch（例如必须等到
-        ///     <c>ModelDb.Init</c> 完成的 Android 主机）。失败会记录日志；可选 patch 不会抛出。
+        ///     <para xml:lang="en">
+        ///         Applies additional static patches after <see cref="PatchAll" />, such as patches that must wait for
+        ///         <c>ModelDb.Init</c> on Android. Individual failures are logged.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在 <see cref="PatchAll" /> 之后应用额外的静态补丁，例如 Android 上必须等待
+        ///         <c>ModelDb.Init</c> 的补丁。单个补丁的失败会记录到日志。
+        ///     </para>
         /// </summary>
         public void ApplyLateStaticPatches(ReadOnlySpan<ModPatchInfo> patches)
         {
@@ -290,35 +325,37 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Removes Harmony patches owned by another Harmony id from a resolved target method. This is intended for narrow
-        ///     compatibility fixes where a dependency's patch is unsafe on the current game version and the caller replaces it
-        ///     with a safe patch through this patcher.
-        ///     从已解析的目标方法上移除另一个 Harmony id 拥有的 Harmony patch。用于依赖 mod 的 patch 在当前游戏版本
-        ///     不安全、调用方需要用本 patcher 的安全 patch 替换它的窄范围兼容修复。
+        ///     <para xml:lang="en">
+        ///         Removes matching Harmony patches owned by another Harmony ID from
+        ///         <paramref name="originalMethod" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从 <paramref name="originalMethod" /> 移除由另一个 Harmony ID 拥有且符合条件的补丁。
+        ///     </para>
         /// </summary>
         /// <param name="originalMethod">
-        ///     Original method whose patch list should be inspected.
-        ///     要检查 patch 列表的原始方法。
+        ///     <para xml:lang="en">Original method whose patch list is inspected.</para>
+        ///     <para xml:lang="zh-CN">要检查补丁列表的原始方法。</para>
         /// </param>
         /// <param name="owner">
-        ///     Harmony owner id to remove.
-        ///     要移除的 Harmony owner id。
+        ///     <para xml:lang="en">Harmony owner ID to remove.</para>
+        ///     <para xml:lang="zh-CN">要移除的 Harmony 所有者 ID。</para>
         /// </param>
         /// <param name="patchDeclaringType">
-        ///     Optional declaring type filter for the patch method.
-        ///     可选的 patch 方法声明类型过滤器。
+        ///     <para xml:lang="en">Optional declaring-type filter for patch methods.</para>
+        ///     <para xml:lang="zh-CN">可选的补丁方法声明类型筛选条件。</para>
         /// </param>
         /// <param name="patchMethodName">
-        ///     Optional patch method name filter.
-        ///     可选的 patch 方法名过滤器。
+        ///     <para xml:lang="en">Optional patch-method name filter.</para>
+        ///     <para xml:lang="zh-CN">可选的补丁方法名称筛选条件。</para>
         /// </param>
         /// <param name="patchType">
-        ///     Harmony patch kind to inspect; <see cref="HarmonyPatchType.All" /> checks every kind.
-        ///     要检查的 Harmony patch 类型；<see cref="HarmonyPatchType.All" /> 会检查所有类型。
+        ///     <para xml:lang="en">Harmony patch kind to inspect; <see cref="HarmonyPatchType.All" /> inspects every kind.</para>
+        ///     <para xml:lang="zh-CN">要检查的 Harmony 补丁类型；<see cref="HarmonyPatchType.All" /> 表示检查所有类型。</para>
         /// </param>
         /// <returns>
-        ///     Number of patch methods removed.
-        ///     已移除的 patch 方法数量。
+        ///     <para xml:lang="en">The number of patch methods removed.</para>
+        ///     <para xml:lang="zh-CN">已移除的补丁方法数量。</para>
         /// </returns>
         public int UnpatchExternalPatches(
             MethodBase originalMethod,
@@ -349,9 +386,13 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Resolves <paramref name="target" /> and removes matching external Harmony patches. Missing targets can be
-        ///     ignored for optional compatibility paths.
-        ///     解析 <paramref name="target" /> 并移除匹配的外部 Harmony patch。可选兼容路径可以忽略缺失目标。
+        ///     <para xml:lang="en">
+        ///         Resolves <paramref name="target" /> and removes matching external Harmony patches. A missing target
+        ///         can be ignored.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析 <paramref name="target" /> 并移除符合条件的外部 Harmony 补丁。缺失的目标可被忽略。
+        ///     </para>
         /// </summary>
         public int UnpatchExternalPatches(
             ModPatchTarget target,
@@ -380,8 +421,14 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Removes all applied patches tracked by this instance from the underlying Harmony id.
-        ///     从底层 Harmony id 移除此实例跟踪的所有已应用补丁。
+        ///     <para xml:lang="en">
+        ///         Attempts to remove every applied patch tracked by this instance from its Harmony ID. Failed
+        ///         removals remain marked as applied so a later call can retry them.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试从此实例的 Harmony ID 移除其跟踪的所有已应用补丁。移除失败的补丁会继续标记为已应用，
+        ///         以便之后再次调用时重试。
+        ///     </para>
         /// </summary>
         public void UnpatchAll()
         {
@@ -403,20 +450,30 @@ namespace STS2RitsuLib.Patching.Core
             }
 
             logger.Info($"{_logPrefix}Removing {appliedCount} applied patches...");
+            var preserveAppliedStateOnFailure = IsApplied;
+            var failureCount = 0;
 
             foreach (var patchInfo in _registeredPatches.Where(patchInfo =>
                          _patchedStatus.GetValueOrDefault(patchInfo.Id, false)))
                 try
                 {
                     var originalMethod = GetOriginalMethod(patchInfo);
-                    if (originalMethod == null) continue;
+                    if (originalMethod == null)
+                    {
+                        failureCount++;
+                        logger.ErrorNoTrace(
+                            $"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - original method unavailable");
+                        continue;
+                    }
+
                     _harmony.Unpatch(originalMethod, HarmonyPatchType.All, _harmony.Id);
                     _patchedStatus[patchInfo.Id] = false;
                     logger.Debug($"{_logPrefix}✓ Removed patch: {patchInfo.Id}");
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
-                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - {ex.Message}");
+                    failureCount++;
+                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove patch: {patchInfo.Id} - {ex}");
                 }
 
             foreach (var patchInfo in _registeredDynamicPatches.Where(patchInfo =>
@@ -424,16 +481,22 @@ namespace STS2RitsuLib.Patching.Core
                 try
                 {
                     _harmony.Unpatch(patchInfo.OriginalMethod, HarmonyPatchType.All, _harmony.Id);
+                    ReleaseDynamicPatchLifetime(patchInfo.Id);
                     _patchedStatus[patchInfo.Id] = false;
                     logger.Debug($"{_logPrefix}✓ Removed dynamic patch: {patchInfo.Id}");
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
-                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove dynamic patch: {patchInfo.Id} - {ex.Message}");
+                    failureCount++;
+                    logger.ErrorNoTrace($"{_logPrefix}✗ Failed to remove dynamic patch: {patchInfo.Id} - {ex}");
                 }
 
-            IsApplied = false;
-            logger.Info($"{_logPrefix}All patches removed");
+            IsApplied = failureCount > 0 && preserveAppliedStateOnFailure;
+            if (failureCount == 0)
+                logger.Info($"{_logPrefix}All patches removed");
+            else
+                logger.ErrorNoTrace(
+                    $"{_logPrefix}Patch removal incomplete: {failureCount} patch(es) remain available for retry");
         }
 
         private ModPatchResult ApplyPatch(ModPatchInfo modPatchInfo)
@@ -484,7 +547,7 @@ namespace STS2RitsuLib.Patching.Core
                     $"{_logPrefix}[{(modPatchInfo.IsCritical ? "Critical" : "Optional")}] {modPatchInfo.Id} - Success ✓");
                 return ModPatchResult.CreateSuccess(modPatchInfo);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 _patchedStatus[modPatchInfo.Id] = false;
                 return ModPatchResult.CreateFailure(modPatchInfo, ex.Message, ex);
@@ -494,6 +557,8 @@ namespace STS2RitsuLib.Patching.Core
         private (bool Success, string ErrorMessage, Exception? Exception) ApplyDynamicPatch(
             DynamicPatchInfo dynamicPatchInfo)
         {
+            IDisposable? lifetimeLease = null;
+            var lifetimeStored = false;
             try
             {
                 if (!dynamicPatchInfo.HasPatchMethods)
@@ -502,23 +567,42 @@ namespace STS2RitsuLib.Patching.Core
                     return (false, $"No valid patch methods found for dynamic patch '{dynamicPatchInfo.Id}'", null);
                 }
 
+                lifetimeLease = dynamicPatchInfo.AcquireLifetimeLease();
+                if (lifetimeLease != null)
+                {
+                    _dynamicPatchLifetimeLeases.Add(dynamicPatchInfo.Id, lifetimeLease);
+                    lifetimeStored = true;
+                }
+
                 _harmony.Patch(
                     dynamicPatchInfo.OriginalMethod,
                     dynamicPatchInfo.Prefix,
                     dynamicPatchInfo.Postfix,
                     dynamicPatchInfo.Transpiler,
                     dynamicPatchInfo.Finalizer);
-
-                _patchedStatus[dynamicPatchInfo.Id] = true;
-                logger.Debug(
-                    $"{_logPrefix}[{(dynamicPatchInfo.IsCritical ? "Critical" : "Optional")}] {dynamicPatchInfo.Id} - Success ✓");
-                return (true, string.Empty, null);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
+                if (lifetimeStored &&
+                    _dynamicPatchLifetimeLeases.Remove(dynamicPatchInfo.Id, out var storedLifetimeLease))
+                    storedLifetimeLease.Dispose();
+                else
+                    lifetimeLease?.Dispose();
+
                 _patchedStatus[dynamicPatchInfo.Id] = false;
                 return (false, ex.Message, ex);
             }
+
+            _patchedStatus[dynamicPatchInfo.Id] = true;
+            logger.Debug(
+                $"{_logPrefix}[{(dynamicPatchInfo.IsCritical ? "Critical" : "Optional")}] {dynamicPatchInfo.Id} - Success ✓");
+            return (true, string.Empty, null);
+        }
+
+        private void ReleaseDynamicPatchLifetime(string patchId)
+        {
+            if (_dynamicPatchLifetimeLeases.Remove(patchId, out var lifetimeLease))
+                lifetimeLease.Dispose();
         }
 
         private bool ProcessPatchResults(ReadOnlySpan<ModPatchResult> results)
@@ -629,8 +713,8 @@ namespace STS2RitsuLib.Patching.Core
         }
 
         /// <summary>
-        ///     Validate that patch type implements IPatchMethod interface (optional but recommended)
-        ///     验证 patch 类型是否实现 IPatchMethod 接口（可选但推荐）
+        ///     <para xml:lang="en">Warns when a patch type does not implement <see cref="IPatchMethod" />.</para>
+        ///     <para xml:lang="zh-CN">补丁类型未实现 <see cref="IPatchMethod" /> 时记录警告。</para>
         /// </summary>
         private void ValidatePatchType(ModPatchInfo modPatchInfo)
         {

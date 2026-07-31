@@ -8,8 +8,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Cards.FreePlay.Patches
 {
     /// <summary>
-    ///     Binds engine-level SetToFree calls into <see cref="FreePlayBindingRegistry" /> markers.
-    ///     将引擎级 SetToFree 调用绑定到 <see cref="FreePlayBindingRegistry" /> 标记。
+    ///     <para xml:lang="en">Records game-level <c>SetToFree</c> calls in <see cref="FreePlayBindingRegistry" />.</para>
+    ///     <para xml:lang="zh-CN">将游戏层的 <c>SetToFree</c> 调用记录到 <see cref="FreePlayBindingRegistry" />。</para>
     /// </summary>
     internal sealed class CardModelSetToFreeThisTurnBindingPatch : IPatchMethod
     {
@@ -81,9 +81,15 @@ namespace STS2RitsuLib.Cards.FreePlay.Patches
 
         private static async Task After(CardModel card, Task original)
         {
-            await original;
-            if (FreePlayBindingRegistry.ClearCardFreeAfterPlayed(card))
-                FreePlayCardVisuals.Refresh(card);
+            try
+            {
+                await original;
+            }
+            finally
+            {
+                if (FreePlayBindingRegistry.ClearCardFreeAfterPlayed(card))
+                    FreePlayCardVisuals.Refresh(card);
+            }
         }
     }
 

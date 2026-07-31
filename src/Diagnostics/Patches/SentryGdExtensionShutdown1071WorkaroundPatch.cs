@@ -1,5 +1,4 @@
-#if STS2_AT_LEAST_0_107_1
-
+#if STS2_AT_LEAST_0_107_1 && !STS2_AT_LEAST_0_110_0
 using System.Reflection;
 using Godot;
 using HarmonyLib;
@@ -12,8 +11,13 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Diagnostics.Patches
 {
     /// <summary>
-    ///     Temporary workaround for STS2 0.107.1+ native crashes when modded startup shuts down Sentry's
-    ///     GDExtension before process exit. Remove this patch after the host game fixes the shutdown path.
+    ///     <para xml:lang="en">
+    ///         Works around native crashes in STS2 0.107.1–0.109.x by skipping Sentry's GDExtension shutdown while
+    ///         preserving its managed shutdown.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 STS2 0.107.1–0.109.x 中跳过 Sentry 的 GDExtension 关闭流程并保留其托管关闭流程，以规避原生崩溃。
+    ///     </para>
     /// </summary>
     internal sealed class SentryGdExtensionShutdown1071WorkaroundPatch : IPatchMethod
     {
@@ -32,7 +36,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
         public static string PatchId => "sentry_gdextension_shutdown_01071_workaround";
 
         public static string Description =>
-            "Skip STS2 0.107.1+ native Sentry GDExtension shutdown while preserving .NET Sentry shutdown";
+            "Skip STS2 0.107.1-0.109.x native Sentry GDExtension shutdown while preserving .NET Sentry shutdown";
 
         public static bool IsCritical => false;
 
@@ -91,7 +95,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
                 return default;
 
             PatchLog.For<SentryGdExtensionShutdown1071WorkaroundPatch>().Info(
-                "[SentryCompat] Skipped native Sentry GDExtension shutdown for STS2 0.107.1+ workaround.");
+                "[SentryCompat] Skipped native Sentry GDExtension shutdown for STS2 0.107.1-0.109.x workaround.");
             return default;
         }
     }

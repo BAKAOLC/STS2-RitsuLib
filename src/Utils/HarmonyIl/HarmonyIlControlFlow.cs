@@ -4,39 +4,39 @@ using HarmonyLib;
 namespace STS2RitsuLib.Utils.HarmonyIl
 {
     /// <summary>
-    ///     Kind of a directed edge in a Harmony IL control-flow graph.
-    ///     Harmony IL 控制流图中的有向边类型。
+    ///     <para xml:lang="en">Kind of a directed edge in a Harmony IL control-flow graph.</para>
+    ///     <para xml:lang="zh-CN">Harmony IL 控制流图中的有向边类型。</para>
     /// </summary>
     public enum HarmonyIlFlowEdgeKind
     {
         /// <summary>
-        ///     Sequential flow into the next basic block.
-        ///     顺序进入下一个基本块。
+        ///     <para xml:lang="en">Sequential flow into the next basic block.</para>
+        ///     <para xml:lang="zh-CN">顺序进入下一个基本块。</para>
         /// </summary>
         FallThrough,
 
         /// <summary>
-        ///     Conditional or unconditional branch flow.
-        ///     条件或无条件分支流。
+        ///     <para xml:lang="en">Conditional or unconditional branch flow.</para>
+        ///     <para xml:lang="zh-CN">条件或无条件分支流。</para>
         /// </summary>
         Branch,
 
         /// <summary>
-        ///     One target of a switch instruction.
-        ///     switch 指令的一个目标分支。
+        ///     <para xml:lang="en">One target of a switch instruction.</para>
+        ///     <para xml:lang="zh-CN">switch 指令的一个目标分支。</para>
         /// </summary>
         Switch,
 
         /// <summary>
-        ///     Flow leaving a protected exception region.
-        ///     离开受保护异常区域的控制流。
+        ///     <para xml:lang="en">Flow leaving a protected exception region.</para>
+        ///     <para xml:lang="zh-CN">离开受保护异常区域的控制流。</para>
         /// </summary>
         Leave,
     }
 
     /// <summary>
-    ///     A directed edge between two basic blocks.
-    ///     两个基本块之间的有向边。
+    ///     <para xml:lang="en">A directed edge between two basic blocks.</para>
+    ///     <para xml:lang="zh-CN">两个基本块之间的有向边。</para>
     /// </summary>
     public sealed record HarmonyIlFlowEdge(
         int SourceBlockIndex,
@@ -44,16 +44,16 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         HarmonyIlFlowEdgeKind Kind);
 
     /// <summary>
-    ///     One diagnostic produced while constructing a control-flow graph.
-    ///     构建控制流图时产生的一条诊断。
+    ///     <para xml:lang="en">One diagnostic produced while constructing a control-flow graph.</para>
+    ///     <para xml:lang="zh-CN">构建控制流图时产生的一条诊断。</para>
     /// </summary>
     public sealed record HarmonyIlControlFlowDiagnostic(
         int InstructionIndex,
         string Message);
 
     /// <summary>
-    ///     A contiguous basic block in a <see cref="HarmonyIlControlFlowGraph" />.
-    ///     <see cref="HarmonyIlControlFlowGraph" /> 中连续的基本块。
+    ///     <para xml:lang="en">A contiguous basic block in a <see cref="HarmonyIlControlFlowGraph" />.</para>
+    ///     <para xml:lang="zh-CN"><see cref="HarmonyIlControlFlowGraph" /> 中连续的基本块。</para>
     /// </summary>
     public sealed class HarmonyIlBasicBlock
     {
@@ -71,38 +71,38 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     Stable zero-based index of this block in its graph.
-        ///     此基本块在所属图中的稳定零基索引。
+        ///     <para xml:lang="en">Stable zero-based index of this block in its graph.</para>
+        ///     <para xml:lang="zh-CN">此基本块在所属图中的稳定零基索引。</para>
         /// </summary>
         public int Index { get; }
 
         /// <summary>
-        ///     Index of the first instruction in this block.
-        ///     此基本块第一条指令的索引。
+        ///     <para xml:lang="en">Index of the first instruction in this block.</para>
+        ///     <para xml:lang="zh-CN">此基本块第一条指令的索引。</para>
         /// </summary>
         public int StartInstructionIndex { get; }
 
         /// <summary>
-        ///     Exclusive index immediately after the last instruction in this block.
-        ///     此基本块最后一条指令之后的排他索引。
+        ///     <para xml:lang="en">Exclusive index immediately after the last instruction in this block.</para>
+        ///     <para xml:lang="zh-CN">此基本块最后一条指令之后的排他索引。</para>
         /// </summary>
         public int EndInstructionIndexExclusive { get; }
 
         /// <summary>
-        ///     Number of instructions in this block.
-        ///     此基本块中的指令数量。
+        ///     <para xml:lang="en">Number of instructions in this block.</para>
+        ///     <para xml:lang="zh-CN">此基本块中的指令数量。</para>
         /// </summary>
         public int InstructionCount => EndInstructionIndexExclusive - StartInstructionIndex;
 
         /// <summary>
-        ///     Incoming control-flow edges.
-        ///     传入此基本块的控制流边。
+        ///     <para xml:lang="en">Incoming control-flow edges.</para>
+        ///     <para xml:lang="zh-CN">传入此基本块的控制流边。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlFlowEdge> IncomingEdges => _incomingEdges;
 
         /// <summary>
-        ///     Outgoing control-flow edges.
-        ///     从此基本块传出的控制流边。
+        ///     <para xml:lang="en">Outgoing control-flow edges.</para>
+        ///     <para xml:lang="zh-CN">从此基本块传出的控制流边。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlFlowEdge> OutgoingEdges => _outgoingEdges;
 
@@ -118,8 +118,8 @@ namespace STS2RitsuLib.Utils.HarmonyIl
     }
 
     /// <summary>
-    ///     Basic-block control-flow graph built from a <see cref="HarmonyIlMethodBody" />.
-    ///     从 <see cref="HarmonyIlMethodBody" /> 构建的基本块控制流图。
+    ///     <para xml:lang="en">Basic-block control-flow graph built from a <see cref="HarmonyIlMethodBody" />.</para>
+    ///     <para xml:lang="zh-CN">从 <see cref="HarmonyIlMethodBody" /> 构建的基本块控制流图。</para>
     /// </summary>
     public sealed class HarmonyIlControlFlowGraph
     {
@@ -138,44 +138,44 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
-        ///     IL body represented by this graph.
-        ///     此图所表示的 IL 方法体。
+        ///     <para xml:lang="en">IL body represented by this graph.</para>
+        ///     <para xml:lang="zh-CN">此图所表示的 IL 方法体。</para>
         /// </summary>
         public HarmonyIlMethodBody MethodBody { get; }
 
         /// <summary>
-        ///     Basic blocks in instruction order.
-        ///     按指令顺序排列的基本块。
+        ///     <para xml:lang="en">Basic blocks in instruction order.</para>
+        ///     <para xml:lang="zh-CN">按指令顺序排列的基本块。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlBasicBlock> Blocks { get; }
 
         /// <summary>
-        ///     Directed control-flow edges.
-        ///     有向控制流边。
+        ///     <para xml:lang="en">Directed control-flow edges.</para>
+        ///     <para xml:lang="zh-CN">有向控制流边。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlFlowEdge> Edges { get; }
 
         /// <summary>
-        ///     Non-fatal construction diagnostics.
-        ///     构建过程中产生的非致命诊断。
+        ///     <para xml:lang="en">Non-fatal construction diagnostics.</para>
+        ///     <para xml:lang="zh-CN">构建过程中产生的非致命诊断。</para>
         /// </summary>
         public IReadOnlyList<HarmonyIlControlFlowDiagnostic> Diagnostics { get; }
 
         /// <summary>
-        ///     Basic-block index for every instruction index.
-        ///     每个指令索引对应的基本块索引。
+        ///     <para xml:lang="en">Basic-block index for every instruction index.</para>
+        ///     <para xml:lang="zh-CN">每个指令索引对应的基本块索引。</para>
         /// </summary>
         public IReadOnlyList<int> InstructionBlockIndexes { get; }
 
         /// <summary>
-        ///     True when all branch targets were resolved.
-        ///     所有分支目标均已解析时为 true。
+        ///     <para xml:lang="en">True when all branch targets were resolved.</para>
+        ///     <para xml:lang="zh-CN">所有分支目标均已解析时为 true。</para>
         /// </summary>
         public bool IsComplete => Diagnostics.Count == 0;
 
         /// <summary>
-        ///     Builds a basic-block control-flow graph from original Harmony instructions.
-        ///     从原始 Harmony 指令构建基本块控制流图。
+        ///     <para xml:lang="en">Builds a basic-block control-flow graph from original Harmony instructions.</para>
+        ///     <para xml:lang="zh-CN">从原始 Harmony 指令构建基本块控制流图。</para>
         /// </summary>
         public static HarmonyIlControlFlowGraph Build(HarmonyIlMethodBody methodBody)
         {

@@ -8,8 +8,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Cards.Patches
 {
     /// <summary>
-    ///     Harmony postfix on <see cref="CardModel.HoverTips" /> to append registered dynamic-var tooltips.
-    ///     <see cref="CardModel.HoverTips" /> 的 Harmony postfix，用于追加已注册的动态变量工具提示。
+    ///     <para xml:lang="en">Appends registered dynamic-variable tooltips to <see cref="CardModel.HoverTips" />.</para>
+    ///     <para xml:lang="zh-CN">将已注册的动态变量工具提示追加到 <see cref="CardModel.HoverTips" />。</para>
     /// </summary>
     internal class CardDynamicVarTooltipPatch : IPatchMethod
     {
@@ -40,8 +40,8 @@ namespace STS2RitsuLib.Cards.Patches
     }
 
     /// <summary>
-    ///     Harmony postfix on <see cref="DynamicVar.Clone()" /> so tooltip registration survives cloning.
-    ///     <see cref="DynamicVar.Clone()" /> 的 Harmony postfix，使工具提示注册在克隆后仍保留。
+    ///     <para xml:lang="en">Preserves tooltip registration when <see cref="DynamicVar.Clone()" /> clones a variable.</para>
+    ///     <para xml:lang="zh-CN">在 <see cref="DynamicVar.Clone()" /> 克隆变量时保留工具提示注册信息。</para>
     /// </summary>
     internal class DynamicVarTooltipClonePatch : IPatchMethod
     {

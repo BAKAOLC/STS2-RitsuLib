@@ -1,5 +1,4 @@
 using MegaCrit.Sts2.Core.Context;
-using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.CardPiles.Nodes;
@@ -9,10 +8,13 @@ using STS2RitsuLib.TopBar;
 namespace STS2RitsuLib.CardPiles.Patches
 {
     /// <summary>
-    ///     Injects <see cref="ModCardPileUiStyle.TopBarDeck" /> style buttons into <see cref="NTopBar" />
-    ///     after its vanilla <c>_Ready</c> has resolved the built-in <c>%Deck</c> / <c>%Map</c> references.
-    ///     在原版 <c>_Ready</c> 解析内置 <c>%Deck</c> / <c>%Map</c> 引用后，将
-    ///     <see cref="ModCardPileUiStyle.TopBarDeck" /> 样式按钮注入 <see cref="NTopBar" />。
+    ///     <para xml:lang="en">
+    ///         Injects <see cref="ModCardPileUiStyle.TopBarDeck" /> pile buttons after
+    ///         <see cref="NTopBar" /> becomes ready.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="NTopBar" /> 就绪后注入 <see cref="ModCardPileUiStyle.TopBarDeck" /> 牌堆按钮。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileTopBarReadyPatch : IPatchMethod
     {
@@ -32,10 +34,13 @@ namespace STS2RitsuLib.CardPiles.Patches
     }
 
     /// <summary>
-    ///     Forwards <see cref="NTopBar.Initialize" /> so mod TopBarDeck buttons bind to the local
-    ///     <see cref="Player" /> alongside vanilla <c>Deck.Initialize(player)</c>.
-    ///     转发 <see cref="NTopBar.Initialize" />，使 mod TopBarDeck 按钮与原版
-    ///     <c>Deck.Initialize(player)</c> 一起绑定到本地 <see cref="Player" />。
+    ///     <para xml:lang="en">
+    ///         Binds injected top-bar pile buttons to the local player during
+    ///         <see cref="NTopBar.Initialize" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 <see cref="NTopBar.Initialize" /> 期间将已注入的顶部栏牌堆按钮绑定到本地玩家。
+    ///     </para>
     /// </summary>
     internal sealed class ModCardPileTopBarInitializePatch : IPatchMethod
     {

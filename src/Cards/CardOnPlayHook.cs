@@ -12,17 +12,8 @@ using STS2RitsuLib.Models.Capabilities;
 namespace STS2RitsuLib.Cards
 {
     /// <summary>
-    ///     Context for hooks that run after a card's own OnPlay body completes inside CardModel.OnPlayWrapper.
-    ///     在 CardModel.OnPlayWrapper 内、卡牌自身 OnPlay 主体完成后运行的 hook 上下文。
-    /// </summary>
-    public readonly record struct CardOnPlayCompletedContext(
-        CombatStateLike CombatState,
-        PlayerChoiceContext ChoiceContext,
-        CardPlay CardPlay);
-
-    /// <summary>
-    ///     Context for hooks that run before a card's own OnPlay body inside CardModel.OnPlayWrapper.
-    ///     在 CardModel.OnPlayWrapper 内、卡牌自身 OnPlay 主体前运行的 hook 上下文。
+    ///     <para xml:lang="en">Context for hooks that run before a card's own <c>OnPlay</c> method.</para>
+    ///     <para xml:lang="zh-CN">卡牌自身的 <c>OnPlay</c> 方法执行前，钩子所使用的上下文。</para>
     /// </summary>
     public readonly record struct BeforeCardOnPlayContext(
         CombatStateLike CombatState,
@@ -30,8 +21,10 @@ namespace STS2RitsuLib.Cards
         CardPlay CardPlay);
 
     /// <summary>
-    ///     Context for hooks that run after a card's own OnPlay body point inside CardModel.OnPlayWrapper.
-    ///     在 CardModel.OnPlayWrapper 内、卡牌自身 OnPlay 主体位置后运行的 hook 上下文。
+    ///     <para xml:lang="en">
+    ///         Provides after-play context, including whether the card's own <c>OnPlay</c> method ran.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供卡牌打出后的上下文，其中包括其自身的 <c>OnPlay</c> 方法是否已执行。</para>
     /// </summary>
     public readonly record struct AfterCardOnPlayContext(
         CombatStateLike CombatState,
@@ -40,16 +33,20 @@ namespace STS2RitsuLib.Cards
         bool OriginalOnPlayRan);
 
     /// <summary>
-    ///     Optional listener for card OnPlay before and after hooks.
-    ///     卡牌 OnPlay 前置和后置 hook 的可选监听器。
+    ///     <para xml:lang="en">Receives hooks immediately before and after a card's own <c>OnPlay</c> method.</para>
+    ///     <para xml:lang="zh-CN">接收紧邻卡牌自身 <c>OnPlay</c> 方法前后的钩子。</para>
     /// </summary>
     public interface ICardOnPlayHookListener
     {
         /// <summary>
-        ///     Runs before the card's own OnPlay body. Return true to suppress the original OnPlay body while keeping
-        ///     the rest of CardModel.OnPlayWrapper intact.
-        ///     在卡牌自身 OnPlay 主体前运行。返回 true 可阻止原始 OnPlay 主体，同时保留
-        ///     CardModel.OnPlayWrapper 的其他流程。
+        ///     <para xml:lang="en">
+        ///         Runs before the card's own <c>OnPlay</c> method. Return <see langword="true" /> to skip that method
+        ///         without skipping the remaining <c>CardModel.OnPlayWrapper</c> flow.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在卡牌自身的 <c>OnPlay</c> 方法前运行。返回 <see langword="true" /> 可跳过该方法，但不会跳过
+        ///         <c>CardModel.OnPlayWrapper</c> 的其余流程。
+        ///     </para>
         /// </summary>
         Task<bool> BeforeCardOnPlay(BeforeCardOnPlayContext context)
         {
@@ -57,34 +54,26 @@ namespace STS2RitsuLib.Cards
         }
 
         /// <summary>
-        ///     Runs after the card's own OnPlay body point and before enchantment, affliction, and
-        ///     Hook.AfterCardPlayed processing.
-        ///     在卡牌自身 OnPlay 主体位置后、附魔/苦痛和 Hook.AfterCardPlayed 处理前运行。
+        ///     <para xml:lang="en">
+        ///         Runs after the card's own <c>OnPlay</c> point and before enchantments, afflictions, and
+        ///         <c>Hook.AfterCardPlayed</c> are processed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在卡牌自身的 <c>OnPlay</c> 执行点之后，以及附魔、侵蚀和 <c>Hook.AfterCardPlayed</c> 处理之前运行。
+        ///     </para>
         /// </summary>
         Task AfterCardOnPlay(AfterCardOnPlayContext context)
-        {
-#pragma warning disable CS0618
-            return context.OriginalOnPlayRan
-                ? AfterCardOnPlayCompleted(new(context.CombatState, context.ChoiceContext, context.CardPlay))
-                : Task.CompletedTask;
-#pragma warning restore CS0618
-        }
-
-        /// <summary>
-        ///     Runs after the card's own OnPlay body or replacement point completes and before enchantment,
-        ///     affliction, and Hook.AfterCardPlayed processing.
-        ///     在卡牌自身 OnPlay 主体或替代位置完成后、附魔/苦痛和 Hook.AfterCardPlayed 处理前运行。
-        /// </summary>
-        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
-        Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
         {
             return Task.CompletedTask;
         }
     }
 
     /// <summary>
-    ///     Dispatches card OnPlay hooks to model, capability, and registered global listeners.
-    ///     将卡牌 OnPlay hook 分发给模型、capability 和已注册的全局监听器。
+    ///     <para xml:lang="en">
+    ///         Dispatches card-play hooks to listeners implemented by models or capabilities and to registered global
+    ///         listeners.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">向模型、模型能力及已注册的全局监听器分发卡牌打出钩子。</para>
     /// </summary>
     public static class CardOnPlayHook
     {
@@ -92,9 +81,13 @@ namespace STS2RitsuLib.Cards
         private static readonly CardOnPlayDelegate CardOnPlay = CreateCardOnPlayDelegate();
 
         /// <summary>
-        ///     Registers a process-wide listener. Model-owned effects should usually implement
-        ///     <see cref="ICardOnPlayHookListener" /> directly.
-        ///     注册一个进程级监听器。模型所属效果通常应直接实现 <see cref="ICardOnPlayHookListener" />。
+        ///     <para xml:lang="en">
+        ///         Registers a process-wide listener. Effects owned by a model should normally implement
+        ///         <see cref="ICardOnPlayHookListener" /> directly.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一个进程级监听器。由模型持有的效果通常应直接实现 <see cref="ICardOnPlayHookListener" />。
+        ///     </para>
         /// </summary>
         public static void RegisterGlobalListener(ICardOnPlayHookListener listener)
         {
@@ -102,14 +95,22 @@ namespace STS2RitsuLib.Cards
         }
 
         /// <summary>
-        ///     Runs before hooks, the card's original OnPlay body when not suppressed, and after hooks.
-        ///     运行前置 hook、未被阻止时的卡牌原始 OnPlay 主体，以及后置 hook。
+        ///     <para xml:lang="en">
+        ///         Runs the before hooks, the card's own <c>OnPlay</c> method unless skipped, and then the after hooks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         依次运行前置钩子、未被跳过时卡牌自身的 <c>OnPlay</c> 方法，以及后置钩子。
+        ///     </para>
         /// </summary>
         public static async Task RunCardOnPlayHooks(
             CardModel card,
             PlayerChoiceContext choiceContext,
             CardPlay cardPlay)
         {
+            ArgumentNullException.ThrowIfNull(card);
+            ArgumentNullException.ThrowIfNull(choiceContext);
+            ArgumentNullException.ThrowIfNull(cardPlay);
+
             var combatState = card.CombatState;
             var suppressOriginal = combatState != null &&
                                    await BeforeCardOnPlay(new(combatState, choiceContext, cardPlay));
@@ -128,21 +129,12 @@ namespace STS2RitsuLib.Cards
         }
 
         /// <summary>
-        ///     Compatibility wrapper for the original RitsuLib card OnPlay hook injection method.
-        ///     RitsuLib 原卡牌 OnPlay hook 注入方法的兼容包装。
-        /// </summary>
-        [Obsolete("Use RunCardOnPlayHooks(CardModel, PlayerChoiceContext, CardPlay) instead.")]
-        public static Task RunOnPlayAndAfterCardOnPlayCompleted(
-            CardModel card,
-            PlayerChoiceContext choiceContext,
-            CardPlay cardPlay)
-        {
-            return RunCardOnPlayHooks(card, choiceContext, cardPlay);
-        }
-
-        /// <summary>
-        ///     Runs card OnPlay before hooks and returns true when the original OnPlay body should be suppressed.
-        ///     运行卡牌 OnPlay 前置 hook，并在应阻止原始 OnPlay 主体时返回 true。
+        ///     <para xml:lang="en">
+        ///         Runs the before-play hooks and returns whether the card's own <c>OnPlay</c> method should be skipped.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         运行打出前置钩子，并返回是否应跳过卡牌自身的 <c>OnPlay</c> 方法。
+        ///     </para>
         /// </summary>
         public static async Task<bool> BeforeCardOnPlay(BeforeCardOnPlayContext context)
         {
@@ -173,8 +165,8 @@ namespace STS2RitsuLib.Cards
         }
 
         /// <summary>
-        ///     Runs OnPlay after hooks.
-        ///     运行 OnPlay 后置 hook。
+        ///     <para xml:lang="en">Runs the after-play hooks.</para>
+        ///     <para xml:lang="zh-CN">运行打出后置钩子。</para>
         /// </summary>
         public static async Task AfterCardOnPlay(AfterCardOnPlayContext context)
         {
@@ -190,38 +182,6 @@ namespace STS2RitsuLib.Cards
                 try
                 {
                     await entry.Listener.AfterCardOnPlay(context);
-                    entry.Model.InvokeExecutionFinished();
-                }
-                finally
-                {
-                    context.ChoiceContext.PopModel(entry.Model);
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Runs the original OnPlay completion hooks.
-        ///     运行原有 OnPlay 完成 hook。
-        /// </summary>
-        [Obsolete("Use AfterCardOnPlay(AfterCardOnPlayContext) instead.")]
-        public static async Task AfterCardOnPlayCompleted(CardOnPlayCompletedContext context)
-        {
-            foreach (var entry in IterateListeners(context.CombatState))
-            {
-                if (entry.Model == null)
-                {
-#pragma warning disable CS0618
-                    await entry.Listener.AfterCardOnPlayCompleted(context);
-#pragma warning restore CS0618
-                    continue;
-                }
-
-                context.ChoiceContext.PushModel(entry.Model);
-                try
-                {
-#pragma warning disable CS0618
-                    await entry.Listener.AfterCardOnPlayCompleted(context);
-#pragma warning restore CS0618
                     entry.Model.InvokeExecutionFinished();
                 }
                 finally

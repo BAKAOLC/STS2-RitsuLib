@@ -7,11 +7,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interactions.RightClick.Patches
 {
     /// <summary>
-    ///     Connects right-click dispatch to power nodes.
-    ///     将右键分发接入能力节点。
+    ///     <para xml:lang="en">Connects right-click dispatch to combat power nodes.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入战斗中的能力节点。</para>
     /// </summary>
     internal sealed class ModRightClickPowerPatch : IPatchMethod
     {
+        private const string ConnectedMeta = "ritsulib_right_click_power_connected";
+
         public static string PatchId => "ritsulib_right_click_power";
         public static bool IsCritical => false;
         public static string Description => "Connect RitsuLib model right-click dispatch to powers";
@@ -23,6 +25,10 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
 
         public static void Postfix(NPower __instance)
         {
+            if (__instance.HasMeta(ConnectedMeta))
+                return;
+
+            __instance.SetMeta(ConnectedMeta, true);
             __instance.Connect(Control.SignalName.GuiInput,
                 Callable.From<InputEvent>(inputEvent => OnGuiInput(__instance, inputEvent)));
         }

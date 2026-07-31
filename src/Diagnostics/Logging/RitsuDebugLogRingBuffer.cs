@@ -1,16 +1,11 @@
 namespace STS2RitsuLib.Diagnostics.Logging
 {
-    internal sealed class RitsuDebugLogRingBuffer
+    internal sealed class RitsuDebugLogRingBuffer(int capacity)
     {
-        private readonly RitsuDebugLogRecord[] _items;
+        private readonly RitsuDebugLogRecord[] _items = new RitsuDebugLogRecord[Math.Max(128, capacity)];
         private readonly Lock _lock = new();
         private int _count;
         private int _next;
-
-        public RitsuDebugLogRingBuffer(int capacity)
-        {
-            _items = new RitsuDebugLogRecord[Math.Max(128, capacity)];
-        }
 
         public int Capacity => _items.Length;
 

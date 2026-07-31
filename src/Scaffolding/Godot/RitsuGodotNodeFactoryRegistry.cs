@@ -7,32 +7,28 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Godot
 {
     /// <summary>
-    ///     Internal factory lookup for <see cref="RitsuGodotNodeFactories" />. Conversion runs only when you call
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
-    ///     or <c>CreateFromResource</c> — there is no global
-    ///     <c>PackedScene.Instantiate</c> postfix, so other libraries (e.g. baselib) and vanilla loads are unaffected.
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
-    ///     <see cref="RitsuGodotNodeFactories" /> 的内部工厂查找。只有在调用
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
-    ///     或 <c>CreateFromResource</c> 时才会运行转换；没有全局
-    ///     <c>PackedScene.Instantiate</c> postfix，因此其他库（如 baselib）和原版加载不受影响。
-    ///     <see>
-    ///         <cref>CreateFromScene{TNode}</cref>
-    ///     </see>
+    ///     <para xml:lang="en">
+    ///         Provides internal factory lookup for <see cref="RitsuGodotNodeFactories" />. Conversion runs only through
+    ///         explicit factory calls; no global <c>PackedScene.Instantiate</c> postfix is installed, so BaseLib and
+    ///         base-game scene loading are unaffected.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="RitsuGodotNodeFactories" /> 提供内部工厂查找。转换仅在显式调用工厂 API 时运行；
+    ///         此注册表不会安装全局 <c>PackedScene.Instantiate</c> 后缀，因此不会影响 BaseLib 和游戏的场景加载。
+    ///     </para>
     /// </summary>
     internal static class RitsuGodotNodeFactoryRegistry
     {
         private static readonly ConcurrentDictionary<Type, RitsuGodotNodeFactory> Factories = new();
 
         /// <summary>
-        ///     Registers a factory instance for <typeparamref name="TNode" /> (typically done once from the factory ctor).
-        ///     为 <typeparamref name="TNode" /> 注册一个工厂实例（通常从工厂构造函数中执行一次）。
+        ///     <para xml:lang="en">
+        ///         Registers a factory instance for <typeparamref name="TNode" />, normally from the factory constructor.
+        ///         Existing registrations are replaced.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TNode" /> 注册工厂实例，通常由工厂构造函数调用。已有注册会被替换。
+        ///     </para>
         /// </summary>
         public static void RegisterFactory<TNode>(RitsuGodotNodeFactory factory) where TNode : Node
         {
@@ -87,7 +83,26 @@ namespace STS2RitsuLib.Scaffolding.Godot
                 throw new InvalidOperationException($"No node factory registered for {typeof(TNode).Name}");
 
             var root = editState is { } state ? scene.Instantiate(state) : scene.Instantiate();
-            return (TNode)factory.CreateFromNode(root!, style);
+            if (root == null)
+                throw new InvalidOperationException(
+                    $"PackedScene.Instantiate returned null for '{scene.ResourcePath}'.");
+
+            try
+            {
+                var created = factory.CreateFromNode(root, style);
+                if (!GodotObject.IsInstanceValid(created))
+                    throw new InvalidOperationException(
+                        $"Factory for {typeof(TNode).FullName} returned a null or invalid Godot node.");
+
+                FreeUnusedSceneRoot(root, created);
+                return (TNode)created;
+            }
+            catch
+            {
+                if (GodotObject.IsInstanceValid(root))
+                    root.Free();
+                throw;
+            }
         }
 
         internal static TNode CreateFromScenePath<TNode>(string scenePath) where TNode : Node, new()
@@ -123,6 +138,10 @@ namespace STS2RitsuLib.Scaffolding.Godot
             where TNode : Node, new()
         {
             ArgumentNullException.ThrowIfNull(resource);
+            if (resource is GodotObject godotResource && !GodotObject.IsInstanceValid(godotResource))
+                throw new ArgumentException(
+                    "The supplied Godot resource native instance is invalid (freed).",
+                    nameof(resource));
 
             RequireMainThread(nameof(CreateFromResource));
             if (!Factories.TryGetValue(typeof(TNode), out var factory))
@@ -137,7 +156,23 @@ namespace STS2RitsuLib.Scaffolding.Godot
             }
 
             RitsuLibFramework.Logger.Debug($"[Godot] Creating {typeof(TNode).Name} from {resource.GetType().Name}");
-            return (TNode)factory.CreateFromResource(resource, style);
+            var created = factory.CreateFromResource(resource, style);
+            if (!GodotObject.IsInstanceValid(created))
+                throw new InvalidOperationException(
+                    $"Factory for {typeof(TNode).FullName} returned a null or invalid Godot node.");
+
+            return (TNode)created;
+        }
+
+        private static void FreeUnusedSceneRoot(Node root, Node created)
+        {
+            if (!GodotObject.IsInstanceValid(root) ||
+                root.GetInstanceId() == created.GetInstanceId() ||
+                root.IsAncestorOf(created) ||
+                root.GetParent() != null)
+                return;
+
+            root.Free();
         }
 
         private static void RequireMainThread(string operation)

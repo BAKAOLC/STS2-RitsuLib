@@ -6,24 +6,24 @@ using STS2RitsuLib.Scaffolding.Visuals.Definition;
 namespace STS2RitsuLib.Scaffolding.Characters
 {
     /// <summary>
-    ///     Scene paths for combat visuals, energy counter, merchant, and rest site animations.
-    ///     战斗视觉、能量计数器、商人和休息点动画的场景路径。
+    ///     <para xml:lang="en">Groups character scene paths used in combat and world rooms.</para>
+    ///     <para xml:lang="zh-CN">组合角色在战斗与世界房间中使用的场景路径。</para>
     /// </summary>
     /// <param name="VisualsPath">
-    ///     Creature visuals scene.
-    ///     生物视觉场景。
+    ///     <para xml:lang="en">Combat creature-visuals scene path.</para>
+    ///     <para xml:lang="zh-CN">战斗生物视觉节点的场景路径。</para>
     /// </param>
     /// <param name="EnergyCounterPath">
-    ///     Energy counter scene.
-    ///     能量计数器场景。
+    ///     <para xml:lang="en">Combat energy counter scene path.</para>
+    ///     <para xml:lang="zh-CN">战斗能量计数器的场景路径。</para>
     /// </param>
     /// <param name="MerchantAnimPath">
-    ///     Merchant character scene.
-    ///     商人角色场景。
+    ///     <para xml:lang="en">Merchant-room character scene path.</para>
+    ///     <para xml:lang="zh-CN">商店房间角色场景的路径。</para>
     /// </param>
     /// <param name="RestSiteAnimPath">
-    ///     Rest site character scene.
-    ///     休息点角色场景。
+    ///     <para xml:lang="en">Rest-site character scene path.</para>
+    ///     <para xml:lang="zh-CN">休息处角色场景的路径。</para>
     /// </param>
     public sealed record CharacterSceneAssetSet(
         string? VisualsPath = null,
@@ -32,40 +32,40 @@ namespace STS2RitsuLib.Scaffolding.Characters
         string? RestSiteAnimPath = null);
 
     /// <summary>
-    ///     UI textures and scenes: HUD icon, character select, map marker, transitions.
-    ///     UI 贴图和场景：HUD 图标、角色选择、地图标记和转场。
+    ///     <para xml:lang="en">Groups character UI texture, scene, and material paths.</para>
+    ///     <para xml:lang="zh-CN">组合角色界面使用的贴图、场景与材质路径。</para>
     /// </summary>
     /// <param name="IconTexturePath">
-    ///     Top-panel icon texture.
-    ///     顶部面板图标贴图。
+    ///     <para xml:lang="en">Top-panel icon texture path.</para>
+    ///     <para xml:lang="zh-CN">顶部面板图标贴图的路径。</para>
     /// </param>
     /// <param name="IconOutlineTexturePath">
-    ///     Outlined variant for HUD.
-    ///     HUD 使用的描边变体。
+    ///     <para xml:lang="en">Top-panel icon outline texture path.</para>
+    ///     <para xml:lang="zh-CN">顶部面板图标描边贴图的路径。</para>
     /// </param>
     /// <param name="IconPath">
-    ///     Optional icon scene.
-    ///     可选图标场景。
+    ///     <para xml:lang="en">Optional character icon scene path.</para>
+    ///     <para xml:lang="zh-CN">可选的角色图标场景路径。</para>
     /// </param>
     /// <param name="CharacterSelectBgPath">
-    ///     Character select background scene.
-    ///     角色选择背景场景。
+    ///     <para xml:lang="en">Character-select background scene path.</para>
+    ///     <para xml:lang="zh-CN">角色选择背景的场景路径。</para>
     /// </param>
     /// <param name="CharacterSelectIconPath">
-    ///     Portrait when unlocked.
-    ///     解锁时的肖像。
+    ///     <para xml:lang="en">Unlocked character-select portrait path.</para>
+    ///     <para xml:lang="zh-CN">已解锁角色选择肖像的路径。</para>
     /// </param>
     /// <param name="CharacterSelectLockedIconPath">
-    ///     Portrait when locked.
-    ///     未解锁时的肖像。
+    ///     <para xml:lang="en">Locked character-select portrait path.</para>
+    ///     <para xml:lang="zh-CN">未解锁角色选择肖像的路径。</para>
     /// </param>
     /// <param name="CharacterSelectTransitionPath">
-    ///     Transition material resource.
-    ///     转场材质资源。
+    ///     <para xml:lang="en">Character-select transition material path.</para>
+    ///     <para xml:lang="zh-CN">角色选择转场材质的路径。</para>
     /// </param>
     /// <param name="MapMarkerPath">
-    ///     Run map marker texture.
-    ///     Run 地图标记贴图。
+    ///     <para xml:lang="en">Run-map marker texture path.</para>
+    ///     <para xml:lang="zh-CN">游戏地图标记贴图的路径。</para>
     /// </param>
     public sealed record CharacterUiAssetSet(
         string? IconTexturePath = null,
@@ -78,64 +78,64 @@ namespace STS2RitsuLib.Scaffolding.Characters
         string? MapMarkerPath = null);
 
     /// <summary>
-    ///     Card trail scene and optional style overrides.
-    ///     卡牌轨迹场景和可选样式覆盖。
+    ///     <para xml:lang="en">Groups the card-trail scene path and optional style overrides.</para>
+    ///     <para xml:lang="zh-CN">组合卡牌轨迹场景路径与可选样式覆盖。</para>
     /// </summary>
     /// <param name="TrailPath">
-    ///     Trail VFX scene path.
-    ///     轨迹 VFX 场景路径。
+    ///     <para xml:lang="en">Card-trail VFX scene path.</para>
+    ///     <para xml:lang="zh-CN">卡牌轨迹特效的场景路径。</para>
     /// </param>
     /// <param name="TrailStyle">
-    ///     Trail color/width tuning.
-    ///     轨迹颜色 / 宽度调节。
+    ///     <para xml:lang="en">Optional card-trail style overrides.</para>
+    ///     <para xml:lang="zh-CN">可选的卡牌轨迹样式覆盖。</para>
     /// </param>
     public sealed record CharacterVfxAssetSet(
         string? TrailPath = null,
         CharacterTrailStyle? TrailStyle = null);
 
     /// <summary>
-    ///     Tunable trail / sparkle parameters applied by trail override patches.
-    ///     由轨迹覆盖补丁应用的可调轨迹 / 火花参数。
+    ///     <para xml:lang="en">Defines optional card-trail ribbon, spark, and sprite overrides.</para>
+    ///     <para xml:lang="zh-CN">定义可选的卡牌轨迹带、火花与精灵覆盖。</para>
     /// </summary>
     /// <param name="OuterTrailModulate">
-    ///     Outer ribbon tint.
-    ///     外侧缎带染色。
+    ///     <para xml:lang="en">Outer trail ribbon modulation.</para>
+    ///     <para xml:lang="zh-CN">外侧轨迹带的调制颜色。</para>
     /// </param>
     /// <param name="OuterTrailWidth">
-    ///     Outer ribbon width scale.
-    ///     外侧缎带宽度缩放。
+    ///     <para xml:lang="en">Outer trail ribbon width scale.</para>
+    ///     <para xml:lang="zh-CN">外侧轨迹带的宽度缩放。</para>
     /// </param>
     /// <param name="InnerTrailModulate">
-    ///     Inner ribbon tint.
-    ///     内侧缎带染色。
+    ///     <para xml:lang="en">Inner trail ribbon modulation.</para>
+    ///     <para xml:lang="zh-CN">内侧轨迹带的调制颜色。</para>
     /// </param>
     /// <param name="InnerTrailWidth">
-    ///     Inner ribbon width scale.
-    ///     内侧缎带宽度缩放。
+    ///     <para xml:lang="en">Inner trail ribbon width scale.</para>
+    ///     <para xml:lang="zh-CN">内侧轨迹带的宽度缩放。</para>
     /// </param>
     /// <param name="BigSparksColor">
-    ///     Large spark color.
-    ///     大火花颜色。
+    ///     <para xml:lang="en">Large-spark color.</para>
+    ///     <para xml:lang="zh-CN">大火花的颜色。</para>
     /// </param>
     /// <param name="LittleSparksColor">
-    ///     Small spark color.
-    ///     小火花颜色。
+    ///     <para xml:lang="en">Small-spark color.</para>
+    ///     <para xml:lang="zh-CN">小火花的颜色。</para>
     /// </param>
     /// <param name="PrimarySpriteModulate">
-    ///     Primary trail sprite tint.
-    ///     主 trail 精灵色调。
+    ///     <para xml:lang="en">Primary trail sprite modulation.</para>
+    ///     <para xml:lang="zh-CN">主轨迹精灵的调制颜色。</para>
     /// </param>
     /// <param name="PrimarySpriteScale">
-    ///     Primary trail sprite scale.
-    ///     主 trail 精灵缩放。
+    ///     <para xml:lang="en">Primary trail sprite scale.</para>
+    ///     <para xml:lang="zh-CN">主轨迹精灵的缩放。</para>
     /// </param>
     /// <param name="SecondarySpriteModulate">
-    ///     Secondary trail sprite tint.
-    ///     副 trail 精灵色调。
+    ///     <para xml:lang="en">Secondary trail sprite modulation.</para>
+    ///     <para xml:lang="zh-CN">副轨迹精灵的调制颜色。</para>
     /// </param>
     /// <param name="SecondarySpriteScale">
-    ///     Secondary trail sprite scale.
-    ///     副 trail 精灵缩放。
+    ///     <para xml:lang="en">Secondary trail sprite scale.</para>
+    ///     <para xml:lang="zh-CN">副轨迹精灵的缩放。</para>
     /// </param>
     public sealed record CharacterTrailStyle(
         Color? OuterTrailModulate = null,
@@ -150,39 +150,39 @@ namespace STS2RitsuLib.Scaffolding.Characters
         Vector2? SecondarySpriteScale = null);
 
     /// <summary>
-    ///     Spine skeleton data used in combat.
-    ///     战斗中使用的 Spine skeleton 数据。
+    ///     <para xml:lang="en">Groups Spine resources used by a character in combat.</para>
+    ///     <para xml:lang="zh-CN">组合角色在战斗中使用的 Spine 资源。</para>
     /// </summary>
     /// <param name="CombatSkeletonDataPath">
-    ///     Spine skeleton resource path.
-    ///     Spine skeleton ResourcePath。
+    ///     <para xml:lang="en">Combat Spine skeleton-data resource path.</para>
+    ///     <para xml:lang="zh-CN">战斗 Spine 骨骼数据的资源路径。</para>
     /// </param>
     public sealed record CharacterSpineAssetSet(
         string? CombatSkeletonDataPath = null);
 
     /// <summary>
-    ///     FMOD-style event paths for character feedback audio.
-    ///     角色反馈音频的 FMOD 风格事件路径。
+    ///     <para xml:lang="en">Groups FMOD Studio event paths for character feedback sounds.</para>
+    ///     <para xml:lang="zh-CN">组合角色反馈音效使用的 FMOD Studio 事件路径。</para>
     /// </summary>
     /// <param name="CharacterSelectSfx">
-    ///     Select / confirm on character screen.
-    ///     角色界面选择 / 确认音效。
+    ///     <para xml:lang="en">Character-select confirmation event path.</para>
+    ///     <para xml:lang="zh-CN">角色选择确认音效的事件路径。</para>
     /// </param>
     /// <param name="CharacterTransitionSfx">
-    ///     Screen transition sting.
-    ///     界面转场短音效。
+    ///     <para xml:lang="en">Character transition event path.</para>
+    ///     <para xml:lang="zh-CN">角色转场音效的事件路径。</para>
     /// </param>
     /// <param name="AttackSfx">
-    ///     Basic attack cue.
-    ///     基础攻击 cue。
+    ///     <para xml:lang="en">Default attack event path.</para>
+    ///     <para xml:lang="zh-CN">默认攻击音效的事件路径。</para>
     /// </param>
     /// <param name="CastSfx">
-    ///     Card cast cue.
-    ///     卡牌施放 cue。
+    ///     <para xml:lang="en">Default card-cast event path.</para>
+    ///     <para xml:lang="zh-CN">默认卡牌施放音效的事件路径。</para>
     /// </param>
     /// <param name="DeathSfx">
-    ///     Player death cue.
-    ///     玩家死亡 cue。
+    ///     <para xml:lang="en">Player-death event path.</para>
+    ///     <para xml:lang="zh-CN">玩家死亡音效的事件路径。</para>
     /// </param>
     public sealed record CharacterAudioAssetSet(
         string? CharacterSelectSfx = null,
@@ -192,24 +192,24 @@ namespace STS2RitsuLib.Scaffolding.Characters
         string? DeathSfx = null);
 
     /// <summary>
-    ///     RPS hand textures for multiplayer UI.
-    ///     多人 UI 的石头剪刀布手势贴图。
+    ///     <para xml:lang="en">Groups multiplayer pointing and rock-paper-scissors hand textures.</para>
+    ///     <para xml:lang="zh-CN">组合多人游戏使用的指向与石头剪刀布手势贴图。</para>
     /// </summary>
     /// <param name="ArmPointingTexturePath">
-    ///     Pointing hand.
-    ///     指向手势。
+    ///     <para xml:lang="en">Pointing-hand texture path.</para>
+    ///     <para xml:lang="zh-CN">指向手势贴图的路径。</para>
     /// </param>
     /// <param name="ArmRockTexturePath">
-    ///     Rock hand.
-    ///     石头手势。
+    ///     <para xml:lang="en">Rock-hand texture path.</para>
+    ///     <para xml:lang="zh-CN">石头手势贴图的路径。</para>
     /// </param>
     /// <param name="ArmPaperTexturePath">
-    ///     Paper hand.
-    ///     布手势。
+    ///     <para xml:lang="en">Paper-hand texture path.</para>
+    ///     <para xml:lang="zh-CN">布手势贴图的路径。</para>
     /// </param>
     /// <param name="ArmScissorsTexturePath">
-    ///     Scissors hand.
-    ///     剪刀手势。
+    ///     <para xml:lang="en">Scissors-hand texture path.</para>
+    ///     <para xml:lang="zh-CN">剪刀手势贴图的路径。</para>
     /// </param>
     public sealed record CharacterMultiplayerAssetSet(
         string? ArmPointingTexturePath = null,
@@ -218,131 +218,113 @@ namespace STS2RitsuLib.Scaffolding.Characters
         string? ArmScissorsTexturePath = null);
 
     /// <summary>
-    ///     One entry in <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" />: when this mod character owns a
-    ///     relic whose <c>ModelId.Entry</c> equals <paramref name="RelicModelIdEntry" /> (ordinal ignore-case), use
-    ///     <paramref name="Assets" /> for icon paths.
-    ///     <see cref="CharacterAssetProfile.VanillaRelicVisualOverrides" /> 中的一个条目：当此 mod 角色拥有
-    ///     <c>ModelId.Entry</c> 等于 <paramref name="RelicModelIdEntry" />（ordinal ignore-case）的遗物时，使用
-    ///     <paramref name="Assets" /> 作为图标路径。
+    ///     <para xml:lang="en">
+    ///         Defines character-specific visuals for a base-game relic.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">定义某件原版遗物的角色专属视觉资源。</para>
     /// </summary>
     /// <param name="RelicModelIdEntry">
-    ///     Stable relic id (same string as <c>RelicModel.Id.Entry</c>).
-    ///     稳定遗物 id（与 <c>RelicModel.Id.Entry</c> 相同的字符串）。
+    ///     <para xml:lang="en">Relic <c>ModelId.Entry</c>, matched without regard to case.</para>
+    ///     <para xml:lang="zh-CN">遗物的 <c>ModelId.Entry</c>；匹配时不区分大小写。</para>
     /// </param>
     /// <param name="Assets">
-    ///     Packed icon, outline, and large art paths (same shape as mod relic
-    ///     <see cref="RelicAssetProfile" />).
-    ///     打包后的图标、描边和大图路径（与 mod 遗物 <see cref="RelicAssetProfile" /> 形态相同）。
+    ///     <para xml:lang="en">Replacement relic asset profile.</para>
+    ///     <para xml:lang="zh-CN">替换用遗物资源配置。</para>
     /// </param>
     public sealed record CharacterVanillaRelicVisualOverride(string RelicModelIdEntry, RelicAssetProfile Assets);
 
     /// <summary>
-    ///     One entry in <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" />: when this mod character
-    ///     encounters or holds a potion whose <c>ModelId.Entry</c> equals <paramref name="PotionModelIdEntry" />
-    ///     (ordinal ignore-case), use <paramref name="Assets" /> for image/outline paths.
-    ///     <see cref="CharacterAssetProfile.VanillaPotionVisualOverrides" /> 中的一个条目：当此 mod 角色
-    ///     遇到或持有 <c>ModelId.Entry</c> 等于 <paramref name="PotionModelIdEntry" />
-    ///     （ordinal ignore-case）的药水时，使用 <paramref name="Assets" /> 作为图像/描边路径。
+    ///     <para xml:lang="en">
+    ///         Defines character-specific visuals for a base-game potion.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">定义某瓶原版药水的角色专属视觉资源。</para>
     /// </summary>
     /// <param name="PotionModelIdEntry">
-    ///     Stable potion id (same string as <c>PotionModel.Id.Entry</c>).
-    ///     稳定药水 id（与 <c>PotionModel.Id.Entry</c> 相同的字符串）。
+    ///     <para xml:lang="en">Potion <c>ModelId.Entry</c>, matched without regard to case.</para>
+    ///     <para xml:lang="zh-CN">药水的 <c>ModelId.Entry</c>；匹配时不区分大小写。</para>
     /// </param>
     /// <param name="Assets">
-    ///     Bottle and outline paths (same shape as mod potion <see cref="PotionAssetProfile" />).
-    ///     瓶身和描边路径（与 mod 药水 <see cref="PotionAssetProfile" /> 形态相同）。
+    ///     <para xml:lang="en">Replacement potion asset profile.</para>
+    ///     <para xml:lang="zh-CN">替换用药水资源配置。</para>
     /// </param>
     public sealed record CharacterVanillaPotionVisualOverride(string PotionModelIdEntry, PotionAssetProfile Assets);
 
     /// <summary>
-    ///     One entry in <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" />: when this mod character
-    ///     encounters or holds a card whose <c>ModelId.Entry</c> equals <paramref name="CardModelIdEntry" />
-    ///     (ordinal ignore-case), use <paramref name="Assets" /> for portrait/frame/banner/overlay paths and materials.
-    ///     <see cref="CharacterAssetProfile.VanillaCardVisualOverrides" /> 中的一个条目：当此 mod 角色
-    ///     遇到或持有 <c>ModelId.Entry</c> 等于 <paramref name="CardModelIdEntry" />
-    ///     （ordinal ignore-case）的卡牌时，使用 <paramref name="Assets" /> 作为肖像/边框/banner/覆盖层路径和材质。
+    ///     <para xml:lang="en">
+    ///         Defines character-specific visuals for a base-game card.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">定义某张原版卡牌的角色专属视觉资源。</para>
     /// </summary>
     /// <param name="CardModelIdEntry">
-    ///     Stable card id (same string as <c>CardModel.Id.Entry</c>).
-    ///     稳定卡牌 id（与 <c>CardModel.Id.Entry</c> 相同的字符串）。
+    ///     <para xml:lang="en">Card <c>ModelId.Entry</c>, matched without regard to case.</para>
+    ///     <para xml:lang="zh-CN">卡牌的 <c>ModelId.Entry</c>；匹配时不区分大小写。</para>
     /// </param>
     /// <param name="Assets">
-    ///     Card portrait and frame/border/material/overlay/banner path and material bundle (same shape as
-    ///     mod card <see cref="CardAssetProfile" />).
-    ///     卡牌肖像和框/边框/材质/覆盖层/banner 路径和材质包（与
-    ///     mod 卡牌 <see cref="CardAssetProfile" /> 形态相同）。
+    ///     <para xml:lang="en">Replacement card asset profile.</para>
+    ///     <para xml:lang="zh-CN">替换用卡牌资源配置。</para>
     /// </param>
     public sealed record CharacterVanillaCardVisualOverride(string CardModelIdEntry, CardAssetProfile Assets);
 
     /// <summary>
-    ///     Well-known <see cref="CharacterVanillaRelicVisualOverride.RelicModelIdEntry" /> values for base-game relics
-    ///     that commonly need per-character art.
-    ///     基础游戏遗物中常需要逐角色美术的知名 <see cref="CharacterVanillaRelicVisualOverride.RelicModelIdEntry" /> 值。
+    ///     <para xml:lang="en">Provides well-known base-game relic entry names used by character-specific art.</para>
+    ///     <para xml:lang="zh-CN">提供角色专属美术常用的原版遗物条目名。</para>
     /// </summary>
     public static class CharacterOwnedVanillaRelicModelId
     {
         /// <summary>
-        ///     Canonical entry id for the vanilla <c>YummyCookie</c> relic (uppercase); live
-        ///     <c>RelicModel.Id.Entry</c> is still matched ordinal-ignore-case.
-        ///     原版 <c>YummyCookie</c> 遗物的规范条目 id（大写）；实时
-        ///     <c>RelicModel.Id.Entry</c> 仍按 ordinal-ignore-case 匹配。
+        ///     <para xml:lang="en">Entry name of the base-game <c>YummyCookie</c> relic.</para>
+        ///     <para xml:lang="zh-CN">原版 <c>YummyCookie</c> 遗物的条目名。</para>
         /// </summary>
         public const string YummyCookie = "YUMMY_COOKIE";
     }
 
     /// <summary>
-    ///     Bundles optional path sets for scaffolding a mod character alongside vanilla layout conventions.
-    ///     按原版布局约定打包用于搭建 mod 角色的可选路径集合。
+    ///     <para xml:lang="en">Groups optional assets and visual overrides for a mod character.</para>
+    ///     <para xml:lang="zh-CN">组合模组角色的可选资源与视觉覆盖。</para>
     /// </summary>
     /// <param name="Scenes">
-    ///     Combat / world scenes.
-    ///     战斗 / 世界场景。
+    ///     <para xml:lang="en">Combat and world-room scenes.</para>
+    ///     <para xml:lang="zh-CN">战斗与世界房间场景。</para>
     /// </param>
     /// <param name="Ui">
-    ///     HUD and character select assets.
-    ///     HUD 和角色选择资源。
+    ///     <para xml:lang="en">HUD, character-select, and map UI assets.</para>
+    ///     <para xml:lang="zh-CN">HUD、角色选择与地图界面资源。</para>
     /// </param>
     /// <param name="Vfx">
-    ///     Trails and similar.
-    ///     轨迹和类似 VFX。
+    ///     <para xml:lang="en">Card-trail assets and style.</para>
+    ///     <para xml:lang="zh-CN">卡牌轨迹资源与样式。</para>
     /// </param>
     /// <param name="Spine">
-    ///     Spine data.
-    ///     Spine 数据。
+    ///     <para xml:lang="en">Combat Spine resources.</para>
+    ///     <para xml:lang="zh-CN">战斗 Spine 资源。</para>
     /// </param>
     /// <param name="Audio">
-    ///     FMOD event ids or paths.
-    ///     FMOD 事件 id 或路径。
+    ///     <para xml:lang="en">Character FMOD Studio event paths.</para>
+    ///     <para xml:lang="zh-CN">角色 FMOD Studio 事件路径。</para>
     /// </param>
     /// <param name="Multiplayer">
-    ///     Multiplayer hand art.
-    ///     多人手势美术。
+    ///     <para xml:lang="en">Multiplayer hand textures.</para>
+    ///     <para xml:lang="zh-CN">多人游戏手势贴图。</para>
     /// </param>
     /// <param name="VisualCues">
-    ///     Per-cue textures / frame sequences (combat, game-over, and other consumers).
-    ///     逐 cue 贴图 / 帧序列（战斗、游戏结束和其它消费者）。
+    ///     <para xml:lang="en">Named visual cues used by combat, game-over, and other character displays.</para>
+    ///     <para xml:lang="zh-CN">战斗、游戏结束等角色显示场景使用的具名视觉提示。</para>
     /// </param>
     /// <param name="WorldProceduralVisuals">
-    ///     Merchant / rest-site shells without custom character <c>tscn</c> scenes.
-    ///     没有自定义角色 <c>tscn</c> 场景的商人/营火 shell。
+    ///     <para xml:lang="en">Procedural merchant and rest-site visuals.</para>
+    ///     <para xml:lang="zh-CN">程序化生成的商店与休息处视觉资源。</para>
     /// </param>
     /// <param name="VanillaRelicVisualOverrides">
-    ///     Per–relic-id icon overrides when this character is the relic owner (see
-    ///     <see cref="CharacterVanillaRelicVisualOverride" />).
-    ///     当此角色是遗物拥有者时，按遗物 id 应用的图标覆盖（见
-    ///     <see cref="CharacterVanillaRelicVisualOverride" />）。
+    ///     <para xml:lang="en">Character-specific visual overrides for base-game relics.</para>
+    ///     <para xml:lang="zh-CN">原版遗物的角色专属视觉覆盖。</para>
     /// </param>
     /// <param name="VanillaPotionVisualOverrides">
-    ///     Per–potion-id image/outline overrides when this character encounters or holds that potion (see
-    ///     <see cref="CharacterVanillaPotionVisualOverride" />).
-    ///     当此角色遇到或持有该药水时，按药水 id 应用的图片 / 轮廓覆盖（见
-    ///     <see cref="CharacterVanillaPotionVisualOverride" />）。
+    ///     <para xml:lang="en">Character-specific visual overrides for base-game potions.</para>
+    ///     <para xml:lang="zh-CN">原版药水的角色专属视觉覆盖。</para>
     /// </param>
     /// <param name="VanillaCardVisualOverrides">
-    ///     Per–card-id portrait/frame/banner/overlay overrides when this character encounters or holds that card (see
-    ///     <see cref="CharacterVanillaCardVisualOverride" />).
-    ///     当此角色遇到或持有该卡牌时，按卡牌 id 应用的肖像 / 边框 / 横幅 / 覆盖层覆盖（见
-    ///     <see cref="CharacterVanillaCardVisualOverride" />）。
+    ///     <para xml:lang="en">Character-specific visual overrides for base-game cards.</para>
+    ///     <para xml:lang="zh-CN">原版卡牌的角色专属视觉覆盖。</para>
     /// </param>
     public sealed record CharacterAssetProfile(
         CharacterSceneAssetSet? Scenes = null,
@@ -358,9 +340,10 @@ namespace STS2RitsuLib.Scaffolding.Characters
         CharacterVanillaCardVisualOverride[]? VanillaCardVisualOverrides = null)
     {
         /// <summary>
-        ///     Binary compatibility constructor for assemblies compiled before
-        ///     <see cref="VanillaRelicVisualOverrides" /> was added (legacy eight-parameter <c>.ctor</c>).
-        ///     为在添加 <see cref="VanillaRelicVisualOverrides" /> 之前编译的程序集提供二进制兼容构造函数（旧版八参数 <c>.ctor</c>）。
+        ///     <para xml:lang="en">
+        ///         Preserves the legacy eight-parameter constructor for binary compatibility.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">保留旧版八参数构造函数以维持二进制兼容性。</para>
         /// </summary>
         public CharacterAssetProfile(
             CharacterSceneAssetSet? scenes,
@@ -385,8 +368,8 @@ namespace STS2RitsuLib.Scaffolding.Characters
         }
 
         /// <summary>
-        ///     Profile with all components null (merge / fill helpers treat null as “missing”).
-        ///     所有组件均为 null 的 profile（merge/fill helper 将 null 视为“缺失”）。
+        ///     <para xml:lang="en">Profile whose optional components are all <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">所有可选组件均为 <see langword="null" /> 的配置。</para>
         /// </summary>
         public static CharacterAssetProfile Empty { get; } = new();
     }

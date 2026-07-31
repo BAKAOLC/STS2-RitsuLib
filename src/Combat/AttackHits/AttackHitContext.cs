@@ -13,8 +13,8 @@ using MegaCrit.Sts2.Core.ValueProps;
 namespace STS2RitsuLib.Combat.AttackHits
 {
     /// <summary>
-    ///     Mutable context for a single <see cref="AttackCommand" /> hit.
-    ///     单次 <see cref="AttackCommand" /> 命中的可变上下文。
+    ///     <para xml:lang="en">Provides mutable context for one hit of an <see cref="AttackCommand" />.</para>
+    ///     <para xml:lang="zh-CN">提供 <see cref="AttackCommand" /> 单次命中的可变上下文。</para>
     /// </summary>
     public sealed class AttackHitContext
     {
@@ -53,81 +53,76 @@ namespace STS2RitsuLib.Combat.AttackHits
         }
 
         /// <summary>
-        ///     Combat state that owns the attack.
-        ///     攻击所属战斗状态。
+        ///     <para xml:lang="en">Gets the combat state that owns the attack.</para>
+        ///     <para xml:lang="zh-CN">获取攻击所属的战斗状态。</para>
         /// </summary>
         public CombatStateLike CombatState { get; }
 
         /// <summary>
-        ///     Choice context passed to the damage command.
-        ///     传给伤害命令的选择上下文。
+        ///     <para xml:lang="en">Gets the choice context passed to the damage command.</para>
+        ///     <para xml:lang="zh-CN">获取传给伤害命令的选择上下文。</para>
         /// </summary>
         public PlayerChoiceContext ChoiceContext { get; }
 
         /// <summary>
-        ///     Attack command currently resolving.
-        ///     当前正在结算的攻击命令。
+        ///     <para xml:lang="en">Gets the attack command currently resolving.</para>
+        ///     <para xml:lang="zh-CN">获取当前正在结算的攻击命令。</para>
         /// </summary>
         public AttackCommand Attack { get; }
 
         /// <summary>
-        ///     Zero-based hit index.
-        ///     从零开始的命中序号。
+        ///     <para xml:lang="en">Gets the zero-based hit index.</para>
+        ///     <para xml:lang="zh-CN">获取从零开始的命中索引。</para>
         /// </summary>
         public int HitIndex { get; }
 
         /// <summary>
-        ///     One-based hit number.
-        ///     从一开始的命中编号。
+        ///     <para xml:lang="en">Gets the one-based hit number.</para>
+        ///     <para xml:lang="zh-CN">获取从一开始的命中编号。</para>
         /// </summary>
         public int HitNumber => HitIndex + 1;
 
         /// <summary>
-        ///     Total hit count currently used by the running attack loop.
-        ///     当前攻击循环使用的总段数。
+        ///     <para xml:lang="en">Gets the total hit count used by the current attack loop.</para>
+        ///     <para xml:lang="zh-CN">获取当前攻击循环使用的总命中次数。</para>
         /// </summary>
         public decimal TotalHitCount { get; }
 
         /// <summary>
-        ///     Damage amount passed to <c>CreatureCmd.Damage</c> for this hit.
-        ///     本段传给 <c>CreatureCmd.Damage</c> 的伤害值。
+        ///     <para xml:lang="en">Gets or sets the damage passed to <c>CreatureCmd.Damage</c> for this hit.</para>
+        ///     <para xml:lang="zh-CN">获取或设置此次命中传给 <c>CreatureCmd.Damage</c> 的伤害值。</para>
         /// </summary>
         public decimal Damage { get; set; }
 
         /// <summary>
-        ///     Damage properties used for this hit.
-        ///     Mutate this to change flags such as <see cref="ValueProp.Unblockable" /> for only this hit.
-        ///     本段使用的伤害属性。可修改此值，只影响本段，例如添加 <see cref="ValueProp.Unblockable" />。
+        ///     <para xml:lang="en">Gets or sets the damage properties used for this hit.</para>
+        ///     <para xml:lang="zh-CN">获取或设置此次命中使用的伤害属性。</para>
         /// </summary>
         public ValueProp DamageProps { get; set; }
 
         /// <summary>
-        ///     Dealer passed to the damage command.
-        ///     Mutate this to change the damage dealer seen by damage hooks for only this hit.
-        ///     传给伤害命令的伤害来源生物。可修改此值，只影响本段伤害 hook 看到的来源。
+        ///     <para xml:lang="en">Gets or sets the damage dealer passed to the damage command for this hit.</para>
+        ///     <para xml:lang="zh-CN">获取或设置此次命中传给伤害命令的伤害来源生物。</para>
         /// </summary>
         public Creature? Dealer { get; set; }
 
         /// <summary>
-        ///     Card source passed to the damage command, when any.
-        ///     Mutate this to change the card source seen by damage hooks for only this hit.
-        ///     传给伤害命令的卡牌来源（如果存在）。可修改此值，只影响本段伤害 hook 看到的卡牌来源。
+        ///     <para xml:lang="en">Gets or sets the card source passed to the damage command for this hit.</para>
+        ///     <para xml:lang="zh-CN">获取或设置此次命中传给伤害命令的来源卡牌。</para>
         /// </summary>
         public CardModel? CardSource { get; set; }
 
 #if STS2_AT_LEAST_0_108_0
         /// <summary>
-        ///     Card play passed to the damage command, when any.
-        ///     Mutate this to change the card play seen by damage hooks for only this hit.
-        ///     传给伤害命令的卡牌打出上下文（如果存在）。可修改此值，只影响本段伤害 hook 看到的卡牌打出上下文。
+        ///     <para xml:lang="en">Gets or sets the card play passed to the damage command for this hit.</para>
+        ///     <para xml:lang="zh-CN">获取或设置此次命中传给伤害命令的卡牌打出上下文。</para>
         /// </summary>
         public CardPlay? CardPlay { get; set; }
 #endif
 
         /// <summary>
-        ///     Targets passed to the damage command for this hit.
-        ///     Mutate this to retarget only this hit.
-        ///     本段传给伤害命令的目标列表。可修改此值，只重定向本段。
+        ///     <para xml:lang="en">Gets or sets the targets passed to the damage command for this hit.</para>
+        ///     <para xml:lang="zh-CN">获取或设置此次命中传给伤害命令的目标列表。</para>
         /// </summary>
         public IReadOnlyList<Creature> Targets
         {
@@ -142,14 +137,14 @@ namespace STS2RitsuLib.Combat.AttackHits
         }
 
         /// <summary>
-        ///     Single target for this hit when exactly one target is being damaged.
-        ///     当本段只伤害一个目标时的单体目标。
+        ///     <para xml:lang="en">Gets the target when this hit damages exactly one creature; otherwise <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN">此次命中只伤害一个生物时获取该目标；否则为 <see langword="null" />。</para>
         /// </summary>
         public Creature? SingleTarget => Targets.Count == 1 ? Targets[0] : null;
 
         /// <summary>
-        ///     Damage results after this hit has resolved. Empty before after-hit hooks run.
-        ///     本段结算后的伤害结果。在后置 hook 运行前为空。
+        ///     <para xml:lang="en">Gets the damage results after this hit resolves. Empty before after-hit hooks run.</para>
+        ///     <para xml:lang="zh-CN">获取此次命中结算后的伤害结果；后置命中钩子运行前为空。</para>
         /// </summary>
         public IReadOnlyList<DamageResult> Results { get; private set; } = [];
 

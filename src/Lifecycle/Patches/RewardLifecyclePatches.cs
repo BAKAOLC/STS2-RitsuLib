@@ -16,8 +16,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Publishes gold gain, potion procure/discard, and reward-taken lifecycle events via <see cref="Hook" />.
-    ///     通过 <see cref="Hook" /> 发布金币获得、药水获取/丢弃以及奖励领取生命周期事件。
+    ///     <para xml:lang="en">Publishes lifecycle events for Gold gains, potion acquisition or removal, and claimed rewards.</para>
+    ///     <para xml:lang="zh-CN">发布获得金币、获取或移除药水以及领取奖励的生命周期事件。</para>
     /// </summary>
     internal sealed class AfterGoldGainedLifecyclePatch : IPatchMethod
     {
@@ -115,8 +115,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes a lifecycle event when the player loses gold through <see cref="PlayerCmd.LoseGold" />.
-    ///     当玩家通过 <see cref="PlayerCmd.LoseGold" /> 失去金币时发布生命周期事件。
+    ///     <para xml:lang="en">Publishes a lifecycle event when a player loses Gold through <see cref="PlayerCmd.LoseGold" />.</para>
+    ///     <para xml:lang="zh-CN">当一名玩家通过 <see cref="PlayerCmd.LoseGold" /> 失去金币时发布生命周期事件。</para>
     /// </summary>
     internal class GoldLossLifecyclePatch : IPatchMethod
     {
@@ -143,8 +143,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes a lifecycle event when a relic is obtained via <see cref="RelicCmd.Obtain" />.
-    ///     当通过 <see cref="RelicCmd.Obtain" /> 获得遗物时发布生命周期事件。
+    ///     <para xml:lang="en">Publishes a lifecycle event when a relic is obtained through <see cref="RelicCmd.Obtain" />.</para>
+    ///     <para xml:lang="zh-CN">当通过 <see cref="RelicCmd.Obtain" /> 获得遗物时发布生命周期事件。</para>
     /// </summary>
     internal class RelicObtainedLifecyclePatch : IPatchMethod
     {
@@ -171,8 +171,8 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Publishes a lifecycle event when a relic is removed via <see cref="RelicCmd.Remove" />.
-    ///     当通过 <see cref="RelicCmd.Remove" /> 移除遗物时发布生命周期事件。
+    ///     <para xml:lang="en">Publishes a lifecycle event when a relic is removed through <see cref="RelicCmd.Remove" />.</para>
+    ///     <para xml:lang="zh-CN">当通过 <see cref="RelicCmd.Remove" /> 移除遗物时发布生命周期事件。</para>
     /// </summary>
     internal class RelicRemovedLifecyclePatch : IPatchMethod
     {

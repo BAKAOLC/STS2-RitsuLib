@@ -3,172 +3,189 @@ using Godot;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Describes a mod card pile at registration time. Everything but the mod id and local stem is optional;
-    ///     sensible defaults match the vanilla Draw / Discard / Exhaust button behaviour.
-    ///     描述注册时的 mod 卡牌牌堆。除 mod id 和 local stem 外均为可选；
-    ///     合理默认值会匹配原版 Draw / Discard / Exhaust 按钮行为。
+    ///     <para xml:lang="en">
+    ///         Configures the lifetime, presentation, and interaction behavior of a mod card pile.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">配置模组卡牌牌堆的生命周期、展示与交互行为。</para>
     /// </summary>
     /// <remarks>
-    ///     Localization follows the vanilla pile convention — the hover-tip title / description and the
-    ///     "open empty pile" thought bubble are always resolved against the built-in
-    ///     <c>static_hover_tips</c> loc table, using the keys <c>"{id}.title"</c>,
-    ///     <c>"{id}.description"</c> and <c>"{id}.empty"</c> where <c>id</c> is the registered pile id. Mods cannot create
-    ///     additional loc
-    ///     tables, so all entries are expected to live in <c>static_hover_tips.json</c> merged through
-    ///     the normal mod-localization pipeline.
-    ///     本地化遵循原版牌堆约定：hover-tip title / description 以及“打开空牌堆”的 thought bubble
-    ///     始终基于内置 <c>static_hover_tips</c> loc table 解析，使用 <c>"{id}.title"</c>、
-    ///     <c>"{id}.description"</c> 和 <c>"{id}.empty"</c> key，其中 <c>id</c> 是已注册牌堆 id。
-    ///     mod 不能创建额外 loc table，因此所有 entry 都应放在 <c>static_hover_tips.json</c> 中，
-    ///     并通过常规 mod-localization 管线合并。
+    ///     <para xml:lang="en">
+    ///         Pile text is read from <c>static_hover_tips</c> with the registered pile ID followed by
+    ///         <c>.title</c>, <c>.description</c>, or <c>.empty</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         牌堆文本从 <c>static_hover_tips</c> 中读取，键名为已注册牌堆 ID 后接
+    ///         <c>.title</c>、<c>.description</c> 或 <c>.empty</c>。
+    ///     </para>
     /// </remarks>
     public sealed record ModCardPileSpec
     {
         /// <summary>
-        ///     Vanilla loc table used for every mod-card-pile hover tip. Mods can only *extend* this table
-        ///     (not create new tables), so the pile subsystem always resolves into it.
-        ///     每个 mod-card-pile hover tip 使用的原版 loc table。mod 只能扩展此表（不能创建新表），
-        ///     因此牌堆子系统总是解析到此表。
+        ///     <para xml:lang="en">The localization table used for mod card-pile text.</para>
+        ///     <para xml:lang="zh-CN">用于模组卡牌牌堆文本的本地化表。</para>
         /// </summary>
         public const string HoverTipLocTable = "static_hover_tips";
 
         /// <summary>
-        ///     Builds a spec with defaults suitable for a combat-only bottom-left pile that auto-stacks
-        ///     toward the screen center (same row as the draw pile).
-        ///     构建带默认值的 spec，适用于仅战斗中存在、位于左下、向屏幕中心自动堆叠的牌堆
-        ///     （与抽牌堆同一行）。
+        ///     <para xml:lang="en">
+        ///         Initializes a combat-only, headless card-pile specification.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化一个仅在战斗中存在且不带界面的卡牌牌堆规范。</para>
         /// </summary>
         public ModCardPileSpec()
         {
         }
 
         /// <summary>
-        ///     Lifetime scope of the pile. Defaults to <see cref="ModCardPileScope.CombatOnly" />.
-        ///     牌堆的生命周期作用域。默认 <see cref="ModCardPileScope.CombatOnly" />。
+        ///     <para xml:lang="en">
+        ///         Gets the pile lifetime scope. The default is <see cref="ModCardPileScope.CombatOnly" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取牌堆的生命周期作用域。默认为 <see cref="ModCardPileScope.CombatOnly" />。
+        ///     </para>
         /// </summary>
         public ModCardPileScope Scope { get; init; } = ModCardPileScope.CombatOnly;
 
         /// <summary>
-        ///     Visual style family; drives which UI chrome is attached in combat. Defaults to
-        ///     <see cref="ModCardPileUiStyle.Headless" /> (no UI button).
-        ///     视觉样式族；决定战斗中附加哪种 UI chrome。默认 <see cref="ModCardPileUiStyle.Headless" />
-        ///     （无 UI 按钮）。
+        ///     <para xml:lang="en">
+        ///         Gets the pile's UI style. The default is <see cref="ModCardPileUiStyle.Headless" />, which
+        ///         does not create a pile control.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取牌堆的界面样式。默认为 <see cref="ModCardPileUiStyle.Headless" />，不会创建牌堆控件。
+        ///     </para>
         /// </summary>
         public ModCardPileUiStyle Style { get; init; } = ModCardPileUiStyle.Headless;
 
         /// <summary>
-        ///     Slot hint paired with <see cref="Style" />. When left at <see cref="ModCardPileAnchor.Default" />
-        ///     the pile auto-stacks after other same-style piles in registration order.
-        ///     与 <see cref="Style" /> 配对的 slot hint。保持为 <see cref="ModCardPileAnchor.Default" /> 时，
-        ///     牌堆会按注册顺序堆叠在其它同样式牌堆之后。
+        ///     <para xml:lang="en">
+        ///         Gets the placement anchor used with <see cref="Style" />. The default anchor lets the layout
+        ///         place piles of the same style by their registered ID order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取与 <see cref="Style" /> 配合使用的放置锚点。默认锚点会让布局按已注册 ID 的顺序放置
+        ///         相同样式的牌堆。
+        ///     </para>
         /// </summary>
         public ModCardPileAnchor Anchor { get; init; } = ModCardPileAnchor.Default;
 
         /// <summary>
-        ///     Godot resource path for the pile's button icon (for example <c>res://art/my_pile.png</c>). When
-        ///     null or missing the placeholder texture is used.
-        ///     牌堆按钮图标的 Godot resource 路径（例如 <c>res://art/my_pile.png</c>）。为 null 或缺失时使用占位贴图。
+        ///     <para xml:lang="en">
+        ///         Gets the optional Godot resource path of the pile icon. A missing or invalid path uses the
+        ///         placeholder texture.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取牌堆图标的可选 Godot 资源路径。路径缺失或无效时使用占位贴图。
+        ///     </para>
         /// </summary>
         public string? IconPath { get; init; }
 
         /// <summary>
-        ///     Optional controller / keyboard hotkey ids that open the pile's view screen.
-        ///     打开牌堆 view screen 的可选手柄 / 键盘 hotkey id。
+        ///     <para xml:lang="en">Gets the optional input-action IDs that open the pile screen.</para>
+        ///     <para xml:lang="zh-CN">获取用于打开牌堆界面的可选输入动作 ID。</para>
         /// </summary>
         public string[]? Hotkeys { get; init; }
 
         /// <summary>
-        ///     When true, cards added to the pile are displayed as <c>NCard</c> nodes inside the pile's UI
-        ///     container (only meaningful for <see cref="ModCardPileUiStyle.ExtraHand" />).
-        ///     为 true 时，加入牌堆的卡牌会在牌堆的 UI 容器中显示为 <c>NCard</c> 节点
-        ///     （仅对 <see cref="ModCardPileUiStyle.ExtraHand" /> 有意义）。
+        ///     <para xml:lang="en">
+        ///         Gets whether cards in an <see cref="ModCardPileUiStyle.ExtraHand" /> pile are represented by
+        ///         card nodes.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆中的卡牌是否显示为卡牌节点。
+        ///     </para>
         /// </summary>
         public bool CardShouldBeVisible { get; init; }
 
         /// <summary>
-        ///     Presentation and interaction settings for <see cref="ModCardPileUiStyle.ExtraHand" />.
-        ///     <see cref="ModCardPileUiStyle.ExtraHand" /> 的展示与交互设置。
+        ///     <para xml:lang="en">
+        ///         Gets the presentation and interaction settings for <see cref="ModCardPileUiStyle.ExtraHand" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 <see cref="ModCardPileUiStyle.ExtraHand" /> 的展示与交互设置。
+        ///     </para>
         /// </summary>
         public ModCardPileExtraHandSpec ExtraHand { get; init; } = new();
 
         /// <summary>
-        ///     Extra screen-space pixels added to the hover tip's resolved <see cref="Godot.Control.GlobalPosition" />.
-        ///     Defaults to <see cref="Vector2.Zero" />. Most useful with <see cref="ModCardPileAnchorKind.Custom" />
-        ///     when the automatic placement needs a small nudge.
-        ///     添加到 hover tip 解析后 <see cref="Godot.Control.GlobalPosition" /> 的额外屏幕空间像素。
-        ///     默认 <see cref="Vector2.Zero" />。当 <see cref="ModCardPileAnchorKind.Custom" /> 的自动放置
-        ///     需要微调时最有用。
+        ///     <para xml:lang="en">
+        ///         Gets the screen-space offset added to the resolved hover-tip position.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取添加到悬停提示最终位置的屏幕空间偏移量。</para>
         /// </summary>
         public Vector2 HoverTipScreenOffset { get; init; }
 
         /// <summary>
-        ///     How the hover tip is anchored relative to the pile button. Defaults to
-        ///     <see cref="ModCardPileHoverTipPlacement.Auto" />.
-        ///     hover tip 相对于牌堆按钮的锚定方式。默认 <see cref="ModCardPileHoverTipPlacement.Auto" />。
+        ///     <para xml:lang="en">
+        ///         Gets the hover-tip placement relative to the pile control. The default is
+        ///         <see cref="ModCardPileHoverTipPlacement.Auto" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取悬停提示相对于牌堆控件的放置方式。默认为
+        ///         <see cref="ModCardPileHoverTipPlacement.Auto" />。
+        ///     </para>
         /// </summary>
         public ModCardPileHoverTipPlacement HoverTipPlacement { get; init; } = ModCardPileHoverTipPlacement.Auto;
 
         /// <summary>
-        ///     When non-null, evaluated periodically on the pile button's <c>_Process</c> tick (same pattern as
-        ///     <see cref="TopBar.ModTopBarButtonSpec.VisibleWhen" />). If the delegate returns false the button is
-        ///     hidden, ignores mouse input, and any active hover tip is removed. When null the button is always
-        ///     shown (subject to normal parent visibility). Attribute-driven registration cannot supply a
-        ///     delegate; use <see cref="ModCardPileRegistry.Register" /> from code when you need this.
-        ///     <see cref="ModCardPileRegistry.Register" />。
-        ///     非 null 时，会在牌堆按钮的 <c>_Process</c> tick 上定期求值（与
-        ///     <see cref="TopBar.ModTopBarButtonSpec.VisibleWhen" /> 模式相同）。如果 delegate 返回 false，按钮会
-        ///     隐藏、忽略鼠标输入，并移除任何活动悬停提示。为 null 时按钮始终
-        ///     显示（仍受普通父节点可见性影响）。attribute-driven 注册不能提供
-        ///     delegate；需要此功能时请从代码调用 <see cref="ModCardPileRegistry.Register" />。
-        ///     <see cref="ModCardPileRegistry.Register" />。
+        ///     <para xml:lang="en">
+        ///         Gets an optional predicate evaluated by the pile control to determine its visibility.
+        ///         Returning <see langword="false" /> hides the control and removes its active hover tip.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取由牌堆控件求值、用于决定其可见性的可选谓词。返回 <see langword="false" /> 会隐藏控件，
+        ///         并移除其当前悬停提示。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileVisibilityContext, bool>? VisibleWhen { get; init; }
 
         /// <summary>
-        ///     Optional default-screen capabilities. Null preserves legacy vanilla <c>NCardPileScreen</c>
-        ///     behavior: no card inspection, no upgrade-preview tickbox, and no sort bar.
-        ///     默认 screen 的可选能力。null 会保留旧的原版 <c>NCardPileScreen</c> 行为：无卡牌检查、
-        ///     无升级预览开关、无排序栏。
+        ///     <para xml:lang="en">
+        ///         Gets the optional default pile-screen capabilities. <see langword="null" /> uses the
+        ///         unextended vanilla pile screen.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取默认牌堆界面的可选扩展能力。<see langword="null" /> 表示使用未经扩展的原版牌堆界面。
+        ///     </para>
         /// </summary>
         public ModCardPileViewSpec? View { get; init; }
 
         /// <summary>
-        ///     Optional callback invoked when the pile's UI button is released. When null (the default) the
-        ///     button falls back to <c>NCardPileScreen.ShowScreen</c> — the same behaviour as vanilla Draw /
-        ///     Discard / Exhaust buttons. Supply a delegate to plug in a custom
-        ///     <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Capstones.ICapstoneScreen" />, inspect the pile, or
-        ///     do nothing at all.
-        ///     牌堆的 UI 按钮释放时调用的可选回调。为 null（默认）时，按钮会回退到
-        ///     <c>NCardPileScreen.ShowScreen</c>，即与原版 Draw / Discard / Exhaust 按钮相同的行为。
-        ///     提供 delegate 可接入自定义 <see cref="MegaCrit.Sts2.Core.Nodes.Screens.Capstones.ICapstoneScreen" />、
-        ///     检查牌堆，或完全不做任何事。
+        ///     <para xml:lang="en">
+        ///         Gets the optional callback invoked when a non-empty pile control is released.
+        ///         <see langword="null" /> opens the vanilla pile screen.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取释放非空牌堆控件时调用的可选回调。<see langword="null" /> 表示打开原版牌堆界面。
+        ///     </para>
         /// </summary>
         /// <remarks>
-        ///     The context exposes helpers — <see cref="ModCardPileOpenContext.ShowDefaultPileScreen" /> runs
-        ///     the default behaviour, while <see cref="ModCardPileOpenContext.OpenCapstoneScreen" /> mounts a
-        ///     custom screen through <c>NCapstoneContainer</c>. The callback is *not* invoked when the pile is
-        ///     empty; in that case the empty-pile thought bubble is shown and re-clicking an already-open
-        ///     default pile screen continues to toggle it closed before the callback runs.
-        ///     context 暴露 helper：<see cref="ModCardPileOpenContext.ShowDefaultPileScreen" /> 运行默认行为，
-        ///     <see cref="ModCardPileOpenContext.OpenCapstoneScreen" /> 通过 <c>NCapstoneContainer</c> 挂载自定义画面。
-        ///     牌堆为空时不会调用此回调；此时会显示空牌堆 thought bubble，并且再次点击已打开的默认牌堆 screen
-        ///     会继续先将其关闭。
+        ///     <para xml:lang="en">
+        ///         Empty piles show the registered empty-pile message instead of invoking the callback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">空牌堆会显示已注册的空牌堆提示，而不会调用该回调。</para>
         /// </remarks>
         public Action<ModCardPileOpenContext>? OnOpen { get; init; }
 
         /// <summary>
-        ///     Optional resolver called for each card fly-in to this pile, allowing mods to provide a dynamic
-        ///     target position for the tail/trail endpoint. Return null to use the default layout position.
-        ///     每次卡牌飞入此牌堆时调用的可选 resolver，允许 mod 为 tail/trail endpoint 提供动态目标位置。
-        ///     返回 null 表示使用默认布局位置。
+        ///     <para xml:lang="en">
+        ///         Gets an optional resolver for card-flight target positions. Returning <see langword="null" />
+        ///         uses the default position.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取卡牌飞行动画目标位置的可选解析器。返回 <see langword="null" /> 时使用默认位置。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileFlightTargetContext, Vector2?>? FlightTargetPositionResolver { get; init; }
 
         /// <summary>
-        ///     Optional resolver called when a shuffle-style fly visual starts from this pile, allowing mods to
-        ///     provide a dynamic source/start position. Return null to use the default layout position.
-        ///     shuffle 风格飞行动画从此牌堆开始时调用的可选解析器，允许 mod 提供动态源/起点位置。
-        ///     返回 null 表示使用默认布局位置。
+        ///     <para xml:lang="en">
+        ///         Gets an optional resolver for shuffle-flight start positions. Returning
+        ///         <see langword="null" /> uses the default position.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取洗牌飞行动画起始位置的可选解析器。返回 <see langword="null" /> 时使用默认位置。
+        ///     </para>
         /// </summary>
         public Func<ModCardPileFlightStartContext, Vector2?>? FlightStartPositionResolver { get; init; }
     }

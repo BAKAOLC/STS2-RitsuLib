@@ -17,8 +17,10 @@ using SerializableRun = MegaCrit.Sts2.Core.Saves.SerializableRun;
 namespace STS2RitsuLib.Unlocks.Patches
 {
     /// <summary>
-    ///     Replaces vanilla ascension-one epoch checks for mod-owned characters with registry-driven epoch grants.
-    ///     将 mod 拥有角色的原版进阶一纪元检查替换为由注册表驱动的纪元授予。
+    ///     <para xml:lang="en">
+    ///         Replaces the base game's Ascension 1 epoch check for mod characters with registered epoch grants.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">将模组角色的游戏本体进阶 1 纪元检查替换为注册表中声明的纪元授予规则。</para>
     /// </summary>
     internal class AscensionOneEpochCompatibilityPatch : IPatchMethod
     {
@@ -88,8 +90,12 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Extends vanilla post-run character-unlock epoch checks with registered and template-derived mod grants.
-    ///     用已注册和模板推导出的 mod 授予扩展原版跑局后角色解锁纪元检查。
+    ///     <para xml:lang="en">
+    ///         Extends the base game's post-run character-unlock check with registered and template-derived mod epochs.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用已注册及由模板推导出的模组纪元扩展游戏本体的一局游戏结束后角色解锁检查。
+    ///     </para>
     /// </summary>
     internal class PostRunCharacterUnlockEpochCompatibilityPatch : IPatchMethod
     {
@@ -163,8 +169,10 @@ namespace STS2RitsuLib.Unlocks.Patches
     }
 
     /// <summary>
-    ///     Overrides ascension reveal queries for characters with a registered reveal epoch dependency.
-    ///     覆盖已注册显示纪元依赖的角色进阶显示查询。
+    ///     <para xml:lang="en">
+    ///         Overrides Ascension reveal queries for characters with a registered prerequisite epoch.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">覆盖已注册前置纪元的角色进阶显示查询。</para>
     /// </summary>
     internal class AscensionEpochRevealCompatibilityPatch : IPatchMethod
     {
@@ -181,8 +189,10 @@ namespace STS2RitsuLib.Unlocks.Patches
         }
 
         /// <summary>
-        ///     Sets the result from save state when a custom ascension reveal epoch is registered.
-        ///     注册自定义进阶显示纪元时，根据存档状态设置结果。
+        ///     <para xml:lang="en">
+        ///         Uses progression data when a custom Ascension reveal epoch is registered.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册自定义进阶显示纪元后，根据进度数据设置查询结果。</para>
         /// </summary>
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(ModelId characterId, ref bool __result)

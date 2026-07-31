@@ -1,16 +1,20 @@
 namespace STS2RitsuLib.Interactions.RightClick
 {
     /// <summary>
-    ///     Implement on a model to receive synced right-click actions through RitsuLib.
-    ///     在模型上实现此接口，即可通过 RitsuLib 接收同步右键动作。
+    ///     <para xml:lang="en">Implement on a model to receive synchronized right-click actions through RitsuLib.</para>
+    ///     <para xml:lang="zh-CN">在模型上实现此接口，以通过 RitsuLib 接收同步的右键操作。</para>
     /// </summary>
     public interface IModRightClickableModel
     {
         /// <summary>
-        ///     Optional local-only fast filter. Use only stable, local UI facts here; mutable gameplay state should be
-        ///     checked in <see cref="CanExecuteRightClick" /> or <see cref="OnRightClick" />.
-        ///     可选的仅本地快速过滤。这里只应使用稳定的本地 UI 信息；可变游戏状态应在
-        ///     <see cref="CanExecuteRightClick" /> 或 <see cref="OnRightClick" /> 中检查。
+        ///     <para xml:lang="en">
+        ///         Provides an optional local-only fast filter. Check only stable local UI facts here; mutable gameplay state
+        ///         should be checked by <see cref="CanExecuteRightClick" /> or <see cref="OnRightClick" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         提供可选且仅在本地运行的快速筛选。此处只应检查稳定的本地界面信息；可变的游戏状态应由
+        ///         <see cref="CanExecuteRightClick" /> 或 <see cref="OnRightClick" /> 检查。
+        ///     </para>
         /// </summary>
         bool CanHandleRightClickLocal(ModRightClickContext context)
         {
@@ -18,8 +22,10 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         /// <summary>
-        ///     Execution-time guard. It runs after the synced action resolves the model on each peer.
-        ///     执行期判定：同步动作在各端解析模型后调用。
+        ///     <para xml:lang="en">
+        ///         Determines whether the action may execute after each peer has resolved the synchronized model.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">各端解析出同步模型后，判断该操作是否可以执行。</para>
         /// </summary>
         bool CanExecuteRightClick(ModRightClickExecutionContext context)
         {
@@ -27,8 +33,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         /// <summary>
-        ///     Runs when the synced right-click action reaches the queue.
-        ///     当同步右键动作到达队列时运行。
+        ///     <para xml:lang="en">Runs when the synchronized right-click action reaches the action queue.</para>
+        ///     <para xml:lang="zh-CN">同步的右键操作进入行动队列后运行。</para>
         /// </summary>
         Task OnRightClick(ModRightClickExecutionContext context);
     }

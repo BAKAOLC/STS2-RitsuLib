@@ -1,28 +1,28 @@
 namespace STS2RitsuLib.Patching.Models
 {
     /// <summary>
-    ///     Outcome of applying a single <see cref="ModPatchInfo" />.
-    ///     应用单个 <see cref="ModPatchInfo" /> 的结果。
+    ///     <para xml:lang="en">Represents the result of applying one <see cref="ModPatchInfo" />.</para>
+    ///     <para xml:lang="zh-CN">表示应用一个 <see cref="ModPatchInfo" /> 的结果。</para>
     /// </summary>
     /// <param name="modPatchInfo">
-    ///     Patch metadata.
-    ///     patch 元数据。
+    ///     <para xml:lang="en">Patch metadata.</para>
+    ///     <para xml:lang="zh-CN">补丁元数据。</para>
     /// </param>
     /// <param name="success">
-    ///     True when applied or intentionally ignored.
-    ///     已应用或被有意忽略时为 True。
+    ///     <para xml:lang="en">Whether the patch was applied or intentionally ignored.</para>
+    ///     <para xml:lang="zh-CN">补丁是否已应用或被有意忽略。</para>
     /// </param>
     /// <param name="errorMessage">
-    ///     Failure or ignore explanation.
-    ///     失败或忽略的说明。
+    ///     <para xml:lang="en">Failure or ignore explanation.</para>
+    ///     <para xml:lang="zh-CN">失败或忽略的说明。</para>
     /// </param>
     /// <param name="exception">
-    ///     Exception when patch application threw.
-    ///     patch 应用抛出时的异常。
+    ///     <para xml:lang="en">Exception thrown while applying the patch, if any.</para>
+    ///     <para xml:lang="zh-CN">应用补丁时抛出的异常（如果有）。</para>
     /// </param>
     /// <param name="ignored">
-    ///     True when target was missing and patch was marked ignorable.
-    ///     目标缺失且 patch 标记为可忽略时为 True。
+    ///     <para xml:lang="en">Whether the patch was ignored because its target was missing.</para>
+    ///     <para xml:lang="zh-CN">补丁是否因目标缺失而被忽略。</para>
     /// </param>
     public class ModPatchResult(
         ModPatchInfo modPatchInfo,
@@ -32,40 +32,43 @@ namespace STS2RitsuLib.Patching.Models
         bool ignored = false)
     {
         /// <summary>
-        ///     Patch that was attempted.
-        ///     尝试应用的 patch。
+        ///     <para xml:lang="en">Gets the patch that was processed.</para>
+        ///     <para xml:lang="zh-CN">获取已处理的补丁。</para>
         /// </summary>
         public ModPatchInfo ModPatchInfo { get; } = modPatchInfo;
 
         /// <summary>
-        ///     True when the patch applied or was ignored as allowed.
-        ///     patch 已应用或按允许被忽略时为 True。
+        ///     <para xml:lang="en">Gets whether the patch was applied or intentionally ignored.</para>
+        ///     <para xml:lang="zh-CN">获取补丁是否已应用或被有意忽略。</para>
         /// </summary>
         public bool Success { get; } = success;
 
         /// <summary>
-        ///     Error or informational message.
-        ///     错误或信息性消息。
+        ///     <para xml:lang="en">Gets the error or informational message.</para>
+        ///     <para xml:lang="zh-CN">获取错误或信息消息。</para>
         /// </summary>
         public string ErrorMessage { get; } = errorMessage;
 
         /// <summary>
-        ///     Exception from Harmony or reflection when present.
-        ///     存在时为来自 Harmony 或反射的异常。
+        ///     <para xml:lang="en">Gets the Harmony or reflection exception, if any.</para>
+        ///     <para xml:lang="zh-CN">获取 Harmony 或反射异常（如果有）。</para>
         /// </summary>
         public Exception? Exception { get; } = exception;
 
         /// <summary>
-        ///     True when the patch was skipped because the target was missing and
-        ///     <see cref="ModPatchInfo.IgnoreIfTargetMissing" /> was set.
-        ///     patch 因目标缺失且
-        ///     已设置 <see cref="ModPatchInfo.IgnoreIfTargetMissing" /> 而被跳过时为 True。
+        ///     <para xml:lang="en">
+        ///         Gets whether the patch was skipped because its target was missing and
+        ///         <see cref="ModPatchInfo.IgnoreIfTargetMissing" /> was set.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取补丁是否因目标缺失且已设置 <see cref="ModPatchInfo.IgnoreIfTargetMissing" /> 而被跳过。
+        ///     </para>
         /// </summary>
         public bool Ignored { get; } = ignored;
 
         /// <summary>
-        ///     Successful application (not ignored).
-        ///     成功应用（未忽略）。
+        ///     <para xml:lang="en">Creates a successful, non-ignored result.</para>
+        ///     <para xml:lang="zh-CN">创建表示补丁已成功应用且未被忽略的结果。</para>
         /// </summary>
         public static ModPatchResult CreateSuccess(ModPatchInfo modPatchInfo)
         {
@@ -73,8 +76,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Failed application with optional exception.
-        ///     应用失败，可带可选异常。
+        ///     <para xml:lang="en">Creates a failure result with an optional exception.</para>
+        ///     <para xml:lang="zh-CN">创建应用失败的结果，可包含异常。</para>
         /// </summary>
         public static ModPatchResult CreateFailure(ModPatchInfo modPatchInfo, string errorMessage,
             Exception? exception = null)
@@ -83,8 +86,8 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Target missing but patch marked ignorable — treated as success with <see cref="Ignored" /> true.
-        ///     目标缺失但 patch 标记为可忽略，视为成功且 <see cref="Ignored" /> 为 true。
+        ///     <para xml:lang="en">Creates a successful ignored result for a missing optional target.</para>
+        ///     <para xml:lang="zh-CN">为缺失的可选目标创建成功且已忽略的结果。</para>
         /// </summary>
         public static ModPatchResult CreateIgnored(ModPatchInfo modPatchInfo, string message)
         {

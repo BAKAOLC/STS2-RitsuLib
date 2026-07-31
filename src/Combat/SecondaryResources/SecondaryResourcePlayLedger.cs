@@ -6,8 +6,8 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Secondary-resource payment details for a card play.
-    ///     一次出牌的次级资源支付详情。
+    ///     <para xml:lang="en">Records the secondary-resource payments resolved for one card play.</para>
+    ///     <para xml:lang="zh-CN">记录一次出牌所解析的次级资源支付情况。</para>
     /// </summary>
     public sealed record SecondaryResourcePlayLedger(
         CardModel Card,
@@ -16,20 +16,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         IReadOnlyDictionary<string, SecondaryResourcePlayLedgerLine> Lines)
     {
         /// <summary>
-        ///     Play-use lines keyed by stable use id.
-        ///     按稳定条款 id 索引的出牌条款明细。
+        ///     <para xml:lang="en">Gets the individual payment entries keyed by stable use identifier.</para>
+        ///     <para xml:lang="zh-CN">获取按稳定支付条款标识符索引的各项支付记录。</para>
         /// </summary>
         public IReadOnlyDictionary<string, SecondaryResourcePlayLedgerLine> UseLines { get; init; } = Lines;
 
         /// <summary>
-        ///     True when at least one resource line exists.
-        ///     至少存在一个资源行时为 true。
+        ///     <para xml:lang="en">Gets whether the ledger contains any resource aggregate or individual use entry.</para>
+        ///     <para xml:lang="zh-CN">获取该支付记录是否包含任何资源汇总或独立支付条目。</para>
         /// </summary>
         public bool HasLines => Lines.Count > 0 || UseLines.Count > 0;
 
         /// <summary>
-        ///     Empty ledger with no lines.
-        ///     没有资源行的空 ledger。
+        ///     <para xml:lang="en">Creates a ledger with no secondary-resource payment entries.</para>
+        ///     <para xml:lang="zh-CN">创建一份不包含次级资源支付条目的记录。</para>
         /// </summary>
         public static SecondaryResourcePlayLedger Empty(CardModel card, Player? player, bool isFree = false)
         {
@@ -38,8 +38,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the amount spent for a resource.
-        ///     返回某个资源的消耗数量。
+        ///     <para xml:lang="en">Returns the total amount spent from the specified resource.</para>
+        ///     <para xml:lang="zh-CN">返回从指定资源中消耗的总量。</para>
         /// </summary>
         public int Spent(string resourceId)
         {
@@ -48,8 +48,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the amount spent for a play-use id.
-        ///     返回某个出牌条款 id 的消耗数量。
+        ///     <para xml:lang="en">Returns the amount spent by the specified payment use.</para>
+        ///     <para xml:lang="zh-CN">返回指定支付条款消耗的资源数量。</para>
         /// </summary>
         public int SpentByUse(string useId)
         {
@@ -58,8 +58,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the total amount spent for a play-use id.
-        ///     返回某个出牌条款 id 的总消耗数量。
+        ///     <para xml:lang="en">
+        ///         Returns the total amount spent by the specified payment use; equivalent to
+        ///         <see cref="SpentByUse" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回指定支付条款消耗的总量；等同于 <see cref="SpentByUse" />。</para>
         /// </summary>
         public int TotalSpentByUse(string useId)
         {
@@ -67,8 +70,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the amount spent as repeatable extra payment for a play-use id.
-        ///     返回某个出牌条款 id 作为可重复额外支付消耗的数量。
+        ///     <para xml:lang="en">Returns the amount spent on repeatable extra payments by the specified use.</para>
+        ///     <para xml:lang="zh-CN">返回指定条款用于可重复额外支付的资源数量。</para>
         /// </summary>
         public int ExtraSpentByUse(string useId)
         {
@@ -77,8 +80,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the full extra-spend stack count for a play-use id.
-        ///     返回某个出牌条款 id 的完整额外消耗层数。
+        ///     <para xml:lang="en">Returns the number of complete extra-payment units bought by the specified use.</para>
+        ///     <para xml:lang="zh-CN">返回指定条款购买的完整额外支付单位数。</para>
         /// </summary>
         public int ExtraStacksByUse(string useId)
         {
@@ -87,8 +90,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the value captured for a resource.
-        ///     返回某个资源捕获到的数值。
+        ///     <para xml:lang="en">Returns the total effect value captured for the specified resource.</para>
+        ///     <para xml:lang="zh-CN">返回为指定资源记录的效果数值总量。</para>
         /// </summary>
         public int Value(string resourceId)
         {
@@ -97,8 +100,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the shortfall amount for a resource.
-        ///     返回某个资源的短缺数量。
+        ///     <para xml:lang="en">Returns the total remaining payment shortfall for the specified resource.</para>
+        ///     <para xml:lang="zh-CN">返回指定资源仍未补足的支付缺口总量。</para>
         /// </summary>
         public int Shortfall(string resourceId)
         {
@@ -107,8 +110,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the amount spent as repeatable extra payment for a resource.
-        ///     返回某个资源作为可重复额外支付消耗的数量。
+        ///     <para xml:lang="en">Returns the total repeatable extra payment made with the specified resource.</para>
+        ///     <para xml:lang="zh-CN">返回使用指定资源完成的可重复额外支付总量。</para>
         /// </summary>
         public int ExtraSpent(string resourceId)
         {
@@ -117,8 +120,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the full extra-spend stack count for a resource.
-        ///     返回某个资源的完整额外消耗层数。
+        ///     <para xml:lang="en">
+        ///         Returns the total number of complete extra-payment units bought with the specified resource.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回使用指定资源购买的完整额外支付单位总数。</para>
         /// </summary>
         public int ExtraStacks(string resourceId)
         {
@@ -127,8 +132,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the original shortfall amount for a resource before replacement payments.
-        ///     返回替代支付前某个资源的原始短缺数量。
+        ///     <para xml:lang="en">
+        ///         Returns the specified resource's total shortfall before replacement payments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回应用替代支付前指定资源的原始费用缺口总量。</para>
         /// </summary>
         public int OriginalShortfall(string resourceId)
         {
@@ -137,8 +144,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the covered shortfall amount for a resource.
-        ///     返回某个资源已被替代支付覆盖的短缺数量。
+        ///     <para xml:lang="en">
+        ///         Returns the amount of the specified resource's shortfall covered by replacement payments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回替代支付为指定资源补足的费用缺口总量。</para>
         /// </summary>
         public int CoveredShortfall(string resourceId)
         {
@@ -147,8 +156,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the value captured for a play-use id.
-        ///     返回某个出牌条款 id 捕获到的数值。
+        ///     <para xml:lang="en">Returns the effect value captured for the specified payment use.</para>
+        ///     <para xml:lang="zh-CN">返回为指定支付条款记录的效果数值。</para>
         /// </summary>
         public int ValueByUse(string useId)
         {
@@ -157,8 +166,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns whether a resource was captured as X.
-        ///     返回某个资源是否按 X 值捕获。
+        ///     <para xml:lang="en">Returns whether any payment entry for the specified resource used an X cost.</para>
+        ///     <para xml:lang="zh-CN">返回指定资源是否有任何支付条目使用了 X 费用。</para>
         /// </summary>
         public bool CostsX(string resourceId)
         {
@@ -167,8 +176,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns whether a play-use line was activated for this play.
-        ///     返回某个出牌条款行是否在本次出牌中激活。
+        ///     <para xml:lang="en">Returns whether the specified payment use was active for this card play.</para>
+        ///     <para xml:lang="zh-CN">返回指定支付条款是否在本次出牌中激活。</para>
         /// </summary>
         public bool Activated(string useId)
         {
@@ -177,8 +186,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to get a play-use line by use id.
-        ///     尝试按条款 id 获取出牌条款行。
+        ///     <para xml:lang="en">Tries to get an individual payment entry by its use identifier.</para>
+        ///     <para xml:lang="zh-CN">尝试按支付条款标识符获取一项独立支付记录。</para>
         /// </summary>
         public bool TryGetUseLine(string useId, out SecondaryResourcePlayLedgerLine line)
         {
@@ -187,8 +196,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the shortfall amount for a play-use id.
-        ///     返回某个出牌条款 id 的短缺数量。
+        ///     <para xml:lang="en">Returns the remaining payment shortfall for the specified use.</para>
+        ///     <para xml:lang="zh-CN">返回指定支付条款仍未补足的费用缺口。</para>
         /// </summary>
         public int ShortfallByUse(string useId)
         {
@@ -197,8 +206,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the original shortfall amount for a play-use id before replacement payments.
-        ///     返回替代支付前某个出牌条款 id 的原始短缺数量。
+        ///     <para xml:lang="en">Returns the specified use's shortfall before replacement payments.</para>
+        ///     <para xml:lang="zh-CN">返回应用替代支付前指定支付条款的原始费用缺口。</para>
         /// </summary>
         public int OriginalShortfallByUse(string useId)
         {
@@ -207,8 +216,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns the covered shortfall amount for a play-use id.
-        ///     返回某个出牌条款 id 已被替代支付覆盖的短缺数量。
+        ///     <para xml:lang="en">
+        ///         Returns the amount of the specified use's shortfall covered by replacement payments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回替代支付为指定支付条款补足的费用缺口数量。</para>
         /// </summary>
         public int CoveredShortfallByUse(string useId)
         {
@@ -218,8 +229,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Secondary-resource ledger line.
-    ///     次级资源 ledger 行。
+    ///     <para xml:lang="en">Records one payment use or one resource aggregate in a card-play ledger.</para>
+    ///     <para xml:lang="zh-CN">记录出牌支付记录中的一项支付条款或一项资源汇总。</para>
     /// </summary>
     public sealed record SecondaryResourcePlayLedgerLine(
         string ResourceId,
@@ -229,74 +240,74 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         bool IsFree)
     {
         /// <summary>
-        ///     Stable play-use id for this line.
-        ///     该行的稳定出牌条款 id。
+        ///     <para xml:lang="en">Gets the stable payment-use identifier represented by this entry.</para>
+        ///     <para xml:lang="zh-CN">获取该条目所表示的稳定支付条款标识符。</para>
         /// </summary>
         public string UseId { get; init; } = ResourceId;
 
         /// <summary>
-        ///     Semantic role for this line.
-        ///     该行的语义角色。
+        ///     <para xml:lang="en">Gets the payment role represented by this entry.</para>
+        ///     <para xml:lang="zh-CN">获取该条目所表示的支付用途。</para>
         /// </summary>
         public SecondaryResourceUseKind Kind { get; init; } = SecondaryResourceUseKind.RequiredCost;
 
         /// <summary>
-        ///     True when this line was active for the play.
-        ///     该行已在本次出牌中激活。
+        ///     <para xml:lang="en">Gets whether this entry was active for the card play.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否在本次出牌中激活。</para>
         /// </summary>
         public bool Activated { get; init; } = IsFree || AmountSpent > 0 || Value > 0;
 
         /// <summary>
-        ///     Amount that remained unpaid for an allowed required-cost shortfall.
-        ///     允许的必需费用短缺中未支付的数量。
+        ///     <para xml:lang="en">Gets the payment shortfall that remained after replacement payments.</para>
+        ///     <para xml:lang="zh-CN">获取替代支付完成后仍未补足的费用缺口。</para>
         /// </summary>
         public int Shortfall { get; init; }
 
         /// <summary>
-        ///     Amount that was short before replacement payments.
-        ///     替代支付前的原始短缺数量。
+        ///     <para xml:lang="en">Gets the original shortfall before replacement payments.</para>
+        ///     <para xml:lang="zh-CN">获取应用替代支付前的原始费用缺口。</para>
         /// </summary>
         public int OriginalShortfall { get; init; }
 
         /// <summary>
-        ///     Amount of the shortfall covered by replacement payments.
-        ///     由替代支付覆盖的短缺数量。
+        ///     <para xml:lang="en">Gets the amount of the original shortfall covered by replacement payments.</para>
+        ///     <para xml:lang="zh-CN">获取替代支付在原始费用缺口中补足的数量。</para>
         /// </summary>
         public int CoveredShortfall { get; init; }
 
         /// <summary>
-        ///     Amount spent as a base required or optional payment.
-        ///     作为基础必需或可选支付消耗的数量。
+        ///     <para xml:lang="en">Gets the amount spent on the base required or optional payment.</para>
+        ///     <para xml:lang="zh-CN">获取用于基础必需支付或可选支付的资源数量。</para>
         /// </summary>
         public int BaseAmountSpent { get; init; }
 
         /// <summary>
-        ///     Amount spent as repeatable extra payment.
-        ///     作为可重复额外支付消耗的数量。
+        ///     <para xml:lang="en">Gets the amount spent on repeatable extra payments.</para>
+        ///     <para xml:lang="zh-CN">获取用于可重复额外支付的资源数量。</para>
         /// </summary>
         public int ExtraAmountSpent { get; init; }
 
         /// <summary>
-        ///     Full repeatable extra-spend stack count.
-        ///     完整可重复额外消耗层数。
+        ///     <para xml:lang="en">Gets the number of complete extra-payment units bought.</para>
+        ///     <para xml:lang="zh-CN">获取购买的完整额外支付单位数。</para>
         /// </summary>
         public int ExtraStacks { get; init; }
 
         /// <summary>
-        ///     True when this line came from an optional spend.
-        ///     该行来自可选支付时为 true。
+        ///     <para xml:lang="en">Gets whether this entry represents an optional payment.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否表示一项可选支付。</para>
         /// </summary>
         public bool IsOptional => Kind == SecondaryResourceUseKind.OptionalSpend;
 
         /// <summary>
-        ///     True when this line came from a repeatable extra spend.
-        ///     该行来自可重复额外支付时为 true。
+        ///     <para xml:lang="en">Gets whether this entry represents a repeatable extra payment.</para>
+        ///     <para xml:lang="zh-CN">获取该条目是否表示一项可重复额外支付。</para>
         /// </summary>
         public bool IsExtraSpend => Kind == SecondaryResourceUseKind.ExtraSpend;
 
         /// <summary>
-        ///     True when this line was activated by an allowed shortfall.
-        ///     该行通过允许的短缺被激活时为 true。
+        ///     <para xml:lang="en">Gets whether any payment shortfall remains.</para>
+        ///     <para xml:lang="zh-CN">获取是否仍有未补足的费用缺口。</para>
         /// </summary>
         public bool HasShortfall => Shortfall > 0;
     }
@@ -311,7 +322,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         public void Add(SecondaryResourcePaymentLine line)
         {
-            _useLines[line.UseId] = new(
+            var ledgerLine = new SecondaryResourcePlayLedgerLine(
                 line.ResourceId,
                 line.IsFree ? 0 : line.AmountToSpend,
                 line.Value,
@@ -332,6 +343,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 ExtraAmountSpent = line.ExtraAmountToSpend,
                 ExtraStacks = line.ExtraStacks,
             };
+
+            if (!_useLines.TryAdd(line.UseId, ledgerLine))
+                throw new InvalidOperationException(
+                    $"Duplicate secondary-resource use id '{line.UseId}' in the card-play ledger.");
         }
 
         public SecondaryResourcePlayLedger Build()
@@ -351,22 +366,24 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                         var lines = group.ToArray();
                         return new SecondaryResourcePlayLedgerLine(
                             group.Key,
-                            lines.Sum(static line => line.AmountSpent),
-                            lines.Sum(static line => line.Value),
+                            SumSaturating(lines, static line => line.AmountSpent),
+                            SumSaturating(lines, static line => line.Value),
                             lines.Any(static line => line.CostsX),
                             lines.All(static line => line.IsFree))
                         {
                             UseId = group.Key,
                             Kind = lines.Any(static line => line.Kind == SecondaryResourceUseKind.RequiredCost)
                                 ? SecondaryResourceUseKind.RequiredCost
-                                : SecondaryResourceUseKind.OptionalSpend,
+                                : lines.Any(static line => line.Kind == SecondaryResourceUseKind.OptionalSpend)
+                                    ? SecondaryResourceUseKind.OptionalSpend
+                                    : SecondaryResourceUseKind.ExtraSpend,
                             Activated = lines.Any(static line => line.Activated),
-                            OriginalShortfall = lines.Sum(static line => line.OriginalShortfall),
-                            CoveredShortfall = lines.Sum(static line => line.CoveredShortfall),
-                            Shortfall = lines.Sum(static line => line.Shortfall),
-                            BaseAmountSpent = lines.Sum(static line => line.BaseAmountSpent),
-                            ExtraAmountSpent = lines.Sum(static line => line.ExtraAmountSpent),
-                            ExtraStacks = lines.Sum(static line => line.ExtraStacks),
+                            OriginalShortfall = SumSaturating(lines, static line => line.OriginalShortfall),
+                            CoveredShortfall = SumSaturating(lines, static line => line.CoveredShortfall),
+                            Shortfall = SumSaturating(lines, static line => line.Shortfall),
+                            BaseAmountSpent = SumSaturating(lines, static line => line.BaseAmountSpent),
+                            ExtraAmountSpent = SumSaturating(lines, static line => line.ExtraAmountSpent),
+                            ExtraStacks = SumSaturating(lines, static line => line.ExtraStacks),
                         };
                     },
                     StringComparer.OrdinalIgnoreCase);
@@ -377,17 +394,28 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                 UseLines = useLines,
             };
         }
+
+        private static int SumSaturating(
+            IEnumerable<SecondaryResourcePlayLedgerLine> lines,
+            Func<SecondaryResourcePlayLedgerLine, int> selector)
+        {
+            return lines.Aggregate(
+                0,
+                (sum, line) => SecondaryResourceAmountMath.AddSaturating(sum, selector(line)));
+        }
     }
 
     /// <summary>
-    ///     Extension helpers for CardPlay secondary-resource ledgers.
-    ///     CardPlay 次级资源 ledger 的扩展辅助工具。
+    ///     <para xml:lang="en">
+    ///         Provides access to secondary-resource payment ledgers attached to <see cref="CardPlay" /> instances.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供对附加到 <see cref="CardPlay" /> 实例的次级资源支付记录的访问。</para>
     /// </summary>
     public static class SecondaryResourcePlayExtensions
     {
         /// <summary>
-        ///     Returns the ledger attached to this play, or an empty ledger.
-        ///     返回附加在本次出牌上的 ledger；没有时返回空 ledger。
+        ///     <para xml:lang="en">Returns this card play's attached payment ledger, or an empty ledger.</para>
+        ///     <para xml:lang="zh-CN">返回附加到本次出牌的支付记录；没有时返回空记录。</para>
         /// </summary>
         public static SecondaryResourcePlayLedger SecondaryResources(this CardPlay play)
         {
@@ -396,8 +424,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to get a material attached ledger.
-        ///     尝试获取一个实际附加的 ledger。
+        ///     <para xml:lang="en">Tries to get a nonempty payment ledger attached to this card play.</para>
+        ///     <para xml:lang="zh-CN">尝试获取附加到本次出牌的非空支付记录。</para>
         /// </summary>
         public static bool TryGetSecondaryResources(
             this CardPlay play,
@@ -409,8 +437,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     }
 
     /// <summary>
-    ///     Runtime storage for pending and attached play ledgers.
-    ///     pending 与已附加出牌 ledger 的运行时存储。
+    ///     <para xml:lang="en">Stores queued and attached card-play payment ledgers at runtime.</para>
+    ///     <para xml:lang="zh-CN">在运行时存储排队等待绑定及已附加的出牌支付记录。</para>
     /// </summary>
     public static class SecondaryResourcePlayLedgerRuntime
     {
@@ -423,8 +451,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             new(() => []);
 
         /// <summary>
-        ///     Gets a ledger attached to a play, or an empty ledger.
-        ///     获取附加在一次出牌上的 ledger；没有时返回空 ledger。
+        ///     <para xml:lang="en">Gets the ledger attached to a card play, or an empty ledger.</para>
+        ///     <para xml:lang="zh-CN">获取附加到一次出牌的支付记录；没有时返回空记录。</para>
         /// </summary>
         public static SecondaryResourcePlayLedger Get(CardPlay play)
         {
@@ -436,8 +464,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attempts to get a material ledger attached to a play.
-        ///     尝试获取附加在一次出牌上的实际 ledger。
+        ///     <para xml:lang="en">Tries to get a nonempty ledger attached to a card play.</para>
+        ///     <para xml:lang="zh-CN">尝试获取附加到一次出牌的非空支付记录。</para>
         /// </summary>
         public static bool TryGet(CardPlay play, out SecondaryResourcePlayLedger ledger)
         {
@@ -450,8 +478,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Attaches a ledger directly to a play.
-        ///     将 ledger 直接附加到一次出牌。
+        ///     <para xml:lang="en">Attaches a payment ledger directly to a card play.</para>
+        ///     <para xml:lang="zh-CN">将支付记录直接附加到一次出牌。</para>
         /// </summary>
         public static void Attach(CardPlay play, SecondaryResourcePlayLedger ledger)
         {
@@ -461,8 +489,12 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Queues a ledger to be attached to the next CardPlay created for a card.
-        ///     将 ledger 排队，等待附加到该卡牌创建的下一次 CardPlay。
+        ///     <para xml:lang="en">
+        ///         Queues a ledger for the next <see cref="CardPlay" /> created for the specified card.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将支付记录加入队列，等待附加到指定卡牌创建的下一个 <see cref="CardPlay" />。
+        ///     </para>
         /// </summary>
         public static void SetPending(CardModel card, SecondaryResourcePlayLedger ledger)
         {
@@ -501,8 +533,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Returns true when the card has a queued or active ledger waiting to bind.
-        ///     当卡牌有等待绑定或正在作用域内复用的 ledger 时返回 true。
+        ///     <para xml:lang="en">
+        ///         Returns whether the card has a queued ledger or an active binding scope.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回该卡牌是否有排队等待绑定的支付记录或活动绑定作用域。</para>
         /// </summary>
         public static bool HasPending(CardModel card)
         {
@@ -515,8 +549,14 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Starts an OnPlayWrapper binding scope, reusing one queued ledger for every CardPlay in that wrapper.
-        ///     开始 OnPlayWrapper 绑定作用域，让队列中的一个 ledger 复用于该 wrapper 内的每个 CardPlay。
+        ///     <para xml:lang="en">
+        ///         Begins an <c>OnPlayWrapper</c> binding scope that reuses one queued ledger for every
+        ///         <see cref="CardPlay" /> created within the scope.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         开始一个 <c>OnPlayWrapper</c> 绑定作用域，使一份排队的支付记录可供作用域内创建的每个
+        ///         <see cref="CardPlay" /> 复用。
+        ///     </para>
         /// </summary>
         public static IDisposable? BeginPendingScope(CardModel card)
         {
@@ -534,8 +574,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Binds a pending ledger to a newly created play, if present.
-        ///     如果存在 pending ledger，则绑定到新创建的出牌。
+        ///     <para xml:lang="en">Binds an available queued or scoped ledger to a newly created card play.</para>
+        ///     <para xml:lang="zh-CN">将可用的排队或作用域内支付记录绑定到新创建的出牌。</para>
         /// </summary>
         public static bool TryBindPending(CardPlay play)
         {

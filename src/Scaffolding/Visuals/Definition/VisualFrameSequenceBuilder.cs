@@ -1,8 +1,10 @@
 namespace STS2RitsuLib.Scaffolding.Visuals.Definition
 {
     /// <summary>
-    ///     Fluent builder for <see cref="VisualFrameSequence" /> with per-frame durations.
-    ///     带逐帧时长的 <see cref="VisualFrameSequence" /> 流式构建器。
+    ///     <para xml:lang="en">
+    ///         Provides a fluent builder for <see cref="VisualFrameSequence" /> instances with per-frame durations.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供可配置逐帧时长的 <see cref="VisualFrameSequence" /> 流式构建器。</para>
     /// </summary>
     public sealed class VisualFrameSequenceBuilder
     {
@@ -16,8 +18,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Starts a new frame sequence.
-        ///     开始一个新的帧序列。
+        ///     <para xml:lang="en">Starts a new frame-sequence definition.</para>
+        ///     <para xml:lang="zh-CN">开始定义新的帧序列。</para>
         /// </summary>
         public static VisualFrameSequenceBuilder Create()
         {
@@ -25,8 +27,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Appends a frame.
-        ///     追加一帧。
+        ///     <para xml:lang="en">Appends a frame.</para>
+        ///     <para xml:lang="zh-CN">追加一帧。</para>
         /// </summary>
         public VisualFrameSequenceBuilder Frame(string texturePath, float durationSeconds)
         {
@@ -34,8 +36,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Appends a frame with optional style overrides applied while this frame is visible.
-        ///     追加一帧，并在该帧可见期间可选应用样式覆盖。
+        ///     <para xml:lang="en">Appends a frame with optional style overrides applied while it is visible.</para>
+        ///     <para xml:lang="zh-CN">追加一帧，并可在该帧可见期间应用样式覆盖。</para>
         /// </summary>
         public VisualFrameSequenceBuilder Frame(string texturePath, float durationSeconds, VisualNodeStyle? style)
         {
@@ -50,8 +52,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Sets a default style applied to every frame that does not define its own style.
-        ///     设置默认样式，应用到所有未定义自身样式的帧。
+        ///     <para xml:lang="en">Sets the default style applied to frames that do not define their own style.</para>
+        ///     <para xml:lang="zh-CN">设置应用于未单独定义样式之帧的默认样式。</para>
         /// </summary>
         public VisualFrameSequenceBuilder DefaultStyle(VisualNodeStyle style)
         {
@@ -61,8 +63,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Sets whether the sequence should loop after the last frame (default <see langword="false" />).
-        ///     设置序列是否在最后一帧后循环（默认 <see langword="false" />）。
+        ///     <para xml:lang="en">
+        ///         Sets whether the sequence loops after its last frame. The default is <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         设置序列在最后一帧之后是否循环；默认值为 <see langword="false" />。
+        ///     </para>
         /// </summary>
         public VisualFrameSequenceBuilder Loop(bool loop = true)
         {
@@ -71,8 +77,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.Definition
         }
 
         /// <summary>
-        ///     Produces an immutable sequence (must contain at least one frame).
-        ///     生成不可变序列（必须至少包含一帧）。
+        ///     <para xml:lang="en">Builds an immutable sequence. At least one frame is required.</para>
+        ///     <para xml:lang="zh-CN">构建不可变序列；序列必须至少包含一帧。</para>
         /// </summary>
         public VisualFrameSequence Build()
         {

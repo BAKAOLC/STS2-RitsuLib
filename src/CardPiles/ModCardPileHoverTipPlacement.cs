@@ -1,43 +1,43 @@
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     How the mod pile button positions its hover tip relative to the pile control. Use non-
-    ///     <see cref="Auto" /> values when a fixed automatic rule does not match your
-    ///     <see cref="ModCardPileAnchorKind.Custom" /> layout (for example a pile pinned near the bottom of the
-    ///     screen often wants <see cref="AboveButtonCentered" /> so the tip grows upward from the button).
-    ///     mod 牌堆按钮如何相对牌堆 control 放置 hover tip。当固定自动规则不适合你的
-    ///     <see cref="ModCardPileAnchorKind.Custom" /> 布局时，使用非 <see cref="Auto" /> 值
-    ///     （例如固定在屏幕底部附近的牌堆通常需要 <see cref="AboveButtonCentered" />，让 tip 从按钮向上展开）。
+    ///     <para xml:lang="en">
+    ///         Specifies how a mod pile control places its hover tip relative to its button bounds.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         指定模组牌堆控件如何相对于按钮边界放置悬停提示。
+    ///     </para>
     /// </summary>
     public enum ModCardPileHoverTipPlacement
     {
         /// <summary>
-        ///     Placement follows <see cref="ModCardPileUiStyle" />, <see cref="ModCardPileAnchorKind" />, and
-        ///     top-bar deck rules inside <see cref="Nodes.NModCardPileButton" />.
-        ///     放置方式遵循 <see cref="ModCardPileUiStyle" />、<see cref="ModCardPileAnchorKind" />，
-        ///     以及 <see cref="Nodes.NModCardPileButton" /> 内的 top-bar deck 规则。
+        ///     <para xml:lang="en">
+        ///         Uses the built-in rule for the pile's UI style and anchor kind.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用该牌堆界面样式与锚点类型对应的内置规则。</para>
         /// </summary>
         Auto = 0,
 
         /// <summary>
-        ///     Tip sits below the anchor rect; its trailing (right) edge aligns with the right edge of the rect
-        ///     (same geometry as the vanilla top-bar deck button).
-        ///     tip 位于 anchor rect 下方；其 trailing（右）边缘与 rect 右边缘对齐
-        ///     （与原版 top-bar deck 按钮相同的几何布局）。
+        ///     <para xml:lang="en">
+        ///         Places the tip below the button with their trailing edges aligned, matching the base-game
+        ///         top-bar deck button.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将提示放在按钮下方并对齐二者的右边缘，与游戏原有的顶部栏牌组按钮一致。
+        ///     </para>
         /// </summary>
         BelowButtonTrailingEdge = 1,
 
         /// <summary>
-        ///     Tip sits above the anchor rect, horizontally centered; content extends upward (good when the pile
-        ///     sits low on the screen).
-        ///     tip 位于 anchor rect 上方并水平居中；内容向上展开（适合牌堆位于屏幕较低处时）。
+        ///     <para xml:lang="en">Places the tip above the button and centers it horizontally.</para>
+        ///     <para xml:lang="zh-CN">将提示放在按钮上方并水平居中。</para>
         /// </summary>
         AboveButtonCentered = 2,
 
         /// <summary>
-        ///     Tip sits below the anchor rect, horizontally centered; content extends downward (good when the pile
-        ///     sits high on the screen).
-        ///     tip 位于 anchor rect 下方并水平居中；内容向下展开（适合牌堆位于屏幕较高处时）。
+        ///     <para xml:lang="en">Places the tip below the button and centers it horizontally.</para>
+        ///     <para xml:lang="zh-CN">将提示放在按钮下方并水平居中。</para>
         /// </summary>
         BelowButtonCentered = 3,
     }

@@ -13,10 +13,15 @@ using STS2RitsuLib.Platform;
 namespace STS2RitsuLib.Loader
 {
     /// <summary>
-    ///     Entry assembly for the multi-variant RitsuLib bundle: loads the matching <c>STS2-RitsuLib.dll</c> from
-    ///     <c>lib/&lt;compat&gt;/</c> into the default ALC, then forwards to the real framework initializer.
-    ///     多变体 RitsuLib bundle 的入口程序集：从
-    ///     <c>lib/&lt;compat&gt;/</c> 将匹配的 <c>STS2-RitsuLib.dll</c> 加载到默认 ALC，然后转发到真正的框架初始化器。
+    ///     <para xml:lang="en">
+    ///         Provides the entry assembly for the multi-variant RitsuLib bundle. It loads the matching
+    ///         <c>STS2-RitsuLib.dll</c> from <c>lib/&lt;compat&gt;/</c> into the default ALC, then invokes the real
+    ///         framework initializer.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供多变体 RitsuLib 捆绑包的入口程序集。它从 <c>lib/&lt;compat&gt;/</c> 将匹配的
+    ///         <c>STS2-RitsuLib.dll</c> 加载到默认 ALC，然后调用实际的框架初始化器。
+    ///     </para>
     /// </summary>
     [ModInitializer(nameof(Initialize))]
     public static class Bootstrap
@@ -246,7 +251,17 @@ namespace STS2RitsuLib.Loader
             }
             catch (ReflectionTypeLoadException ex)
             {
-                Log.Warn($"[RitsuLib.Loader] Partial type load for {assembly.FullName}: {ex.Message}");
+                var loaderExceptions = ex.LoaderExceptions.OfType<Exception>().ToArray();
+                var details = string.Join(
+                    Environment.NewLine,
+                    loaderExceptions.Take(8).Select(static exception => exception.ToString()));
+                var detailBlock = details.Length > 0 ? Environment.NewLine + details : string.Empty;
+                var omitted = loaderExceptions.Length > 8
+                    ? $"{Environment.NewLine}... {loaderExceptions.Length - 8} more loader exception(s) omitted."
+                    : string.Empty;
+                Log.Warn(
+                    $"[RitsuLib.Loader] Partial type load for {assembly.FullName}: {ex.Message}" +
+                    $"{detailBlock}{omitted}");
                 return ex.Types.OfType<Type>();
             }
         }
@@ -261,7 +276,6 @@ namespace STS2RitsuLib.Loader
             catch (ReflectionTypeLoadException ex)
             {
                 Log.Error($"[RitsuLib.Loader] ReflectionTypeLoadException while scanning {realAsm.FullName}: {ex}");
-                if (ex.Types is null) return;
                 foreach (var t in ex.Types.Where(static x => x is not null))
                     TryInvokeInitializerOnType(t!);
 
@@ -433,7 +447,7 @@ namespace STS2RitsuLib.Loader
 
         private sealed class BundleVariantManifest
         {
-            public List<BundleVariantEntry>? Variants { get; set; }
+            public List<BundleVariantEntry>? Variants { get; init; }
         }
 
         private sealed class BundleVariantEntry

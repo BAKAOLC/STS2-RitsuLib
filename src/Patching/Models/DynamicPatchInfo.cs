@@ -5,40 +5,44 @@ using STS2RitsuLib.Patching.Core;
 namespace STS2RitsuLib.Patching.Models
 {
     /// <summary>
-    ///     Describes a runtime-discovered patch target and the Harmony methods to apply to it.
-    ///     描述运行时发现的 patch 目标以及要应用到它的 Harmony 方法。
+    ///     <para xml:lang="en">
+    ///         Describes a patch target resolved at runtime and the Harmony patch methods to apply.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述在运行时解析的补丁目标，以及要应用的 Harmony 补丁方法。
+    ///     </para>
     /// </summary>
     /// <param name="id">
-    ///     Stable patch identifier for logging and unpatch.
-    ///     用于日志和 unpatch 的稳定 patch 标识符。
+    ///     <para xml:lang="en">Stable patch ID used for logging and unpatching.</para>
+    ///     <para xml:lang="zh-CN">用于日志记录和移除补丁的稳定补丁 ID。</para>
     /// </param>
     /// <param name="originalMethod">
-    ///     Vanilla method to patch.
-    ///     要 patch 的原版方法。
+    ///     <para xml:lang="en">Vanilla method to patch.</para>
+    ///     <para xml:lang="zh-CN">要添加补丁的原版方法。</para>
     /// </param>
     /// <param name="prefix">
-    ///     Optional Harmony prefix.
-    ///     可选 Harmony 前置补丁.
+    ///     <para xml:lang="en">Optional Harmony prefix.</para>
+    ///     <para xml:lang="zh-CN">可选的 Harmony 前置补丁。</para>
     /// </param>
     /// <param name="postfix">
-    ///     Optional Harmony postfix.
-    ///     可选 Harmony 后置补丁.
+    ///     <para xml:lang="en">Optional Harmony postfix.</para>
+    ///     <para xml:lang="zh-CN">可选的 Harmony 后置补丁。</para>
     /// </param>
     /// <param name="transpiler">
-    ///     Optional transpiler.
-    ///     可选 transpiler。
+    ///     <para xml:lang="en">Optional Harmony transpiler.</para>
+    ///     <para xml:lang="zh-CN">可选的 Harmony 指令转换器。</para>
     /// </param>
     /// <param name="finalizer">
-    ///     Optional finalizer.
-    ///     可选 finalizer。
+    ///     <para xml:lang="en">Optional Harmony finalizer.</para>
+    ///     <para xml:lang="zh-CN">可选的 Harmony 终结器。</para>
     /// </param>
     /// <param name="isCritical">
-    ///     When false, failures may be treated as optional by the patcher.
-    ///     为 false 时，patcher 可将失败视为可选。
+    ///     <para xml:lang="en">Whether failure to apply the patch is critical.</para>
+    ///     <para xml:lang="zh-CN">补丁应用失败是否属于严重错误。</para>
     /// </param>
     /// <param name="description">
-    ///     Human-readable description; defaults to type.method.
-    ///     人类可读的描述；默认为 type.method。
+    ///     <para xml:lang="en">Human-readable description; defaults to the target type and method.</para>
+    ///     <para xml:lang="zh-CN">便于阅读的描述；默认使用目标类型和方法。</para>
     /// </param>
     public sealed class DynamicPatchInfo(
         string id,
@@ -50,61 +54,77 @@ namespace STS2RitsuLib.Patching.Models
         bool isCritical = true,
         string? description = null)
     {
+        private Func<IDisposable>? _lifetimeLeaseFactory;
+
         /// <summary>
-        ///     Unique patch id within the owning patcher.
-        ///     所属 patcher 内的唯一 patch id。
+        ///     <para xml:lang="en">Gets the patch ID, which is unique within the owning patcher.</para>
+        ///     <para xml:lang="zh-CN">获取补丁 ID；该 ID 在所属补丁器内唯一。</para>
         /// </summary>
         public string Id { get; } = id;
 
         /// <summary>
-        ///     Target method being patched.
-        ///     正在被 patch 的目标方法。
+        ///     <para xml:lang="en">Gets the target method.</para>
+        ///     <para xml:lang="zh-CN">获取补丁的目标方法。</para>
         /// </summary>
         public MethodBase OriginalMethod { get; } = originalMethod;
 
         /// <summary>
-        ///     Harmony prefix delegate, if any.
-        ///     Harmony prefix 委托（如果有）。
+        ///     <para xml:lang="en">Gets the Harmony prefix, if any.</para>
+        ///     <para xml:lang="zh-CN">获取 Harmony 前置补丁（如果有）。</para>
         /// </summary>
         public HarmonyMethod? Prefix { get; } = prefix;
 
         /// <summary>
-        ///     Harmony postfix delegate, if any.
-        ///     Harmony postfix 委托（如果有）。
+        ///     <para xml:lang="en">Gets the Harmony postfix, if any.</para>
+        ///     <para xml:lang="zh-CN">获取 Harmony 后置补丁（如果有）。</para>
         /// </summary>
         public HarmonyMethod? Postfix { get; } = postfix;
 
         /// <summary>
-        ///     Harmony transpiler, if any.
-        ///     Harmony transpiler（如果有）。
+        ///     <para xml:lang="en">Gets the Harmony transpiler, if any.</para>
+        ///     <para xml:lang="zh-CN">获取 Harmony 指令转换器（如果有）。</para>
         /// </summary>
         public HarmonyMethod? Transpiler { get; } = transpiler;
 
         /// <summary>
-        ///     Harmony finalizer, if any.
-        ///     Harmony finalizer（如果有）。
+        ///     <para xml:lang="en">Gets the Harmony finalizer, if any.</para>
+        ///     <para xml:lang="zh-CN">获取 Harmony 终结器（如果有）。</para>
         /// </summary>
         public HarmonyMethod? Finalizer { get; } = finalizer;
 
         /// <summary>
-        ///     Whether this patch is considered critical for mod correctness.
-        ///     此 patch 是否被视为对 mod 正确性关键。
+        ///     <para xml:lang="en">Gets whether failure to apply this patch is critical.</para>
+        ///     <para xml:lang="zh-CN">获取补丁应用失败是否属于严重错误。</para>
         /// </summary>
         public bool IsCritical { get; } = isCritical;
 
         /// <summary>
-        ///     Log-friendly description of the patch purpose.
-        ///     适合日志记录的 patch 目的描述。
+        ///     <para xml:lang="en">Gets a log-friendly description of the patch.</para>
+        ///     <para xml:lang="zh-CN">获取适合写入日志的补丁描述。</para>
         /// </summary>
         public string Description { get; } = string.IsNullOrWhiteSpace(description)
             ? $"Patch {originalMethod.DeclaringType?.Name}.{originalMethod.Name}"
             : description;
 
         /// <summary>
-        ///     True when at least one Harmony hook is non-null.
-        ///     至少一个 Harmony hook 非 null 时为 True。
+        ///     <para xml:lang="en">Gets whether at least one Harmony patch method is specified.</para>
+        ///     <para xml:lang="zh-CN">获取是否至少指定了一个 Harmony 补丁方法。</para>
         /// </summary>
         public bool HasPatchMethods => Prefix != null || Postfix != null || Transpiler != null || Finalizer != null;
+
+        internal IDisposable? AcquireLifetimeLease()
+        {
+            return _lifetimeLeaseFactory?.Invoke();
+        }
+
+        internal void SetLifetimeLeaseFactory(Func<IDisposable> lifetimeLeaseFactory)
+        {
+            ArgumentNullException.ThrowIfNull(lifetimeLeaseFactory);
+            if (_lifetimeLeaseFactory != null)
+                throw new InvalidOperationException("A dynamic patch lifetime is already attached.");
+
+            _lifetimeLeaseFactory = lifetimeLeaseFactory;
+        }
 
         /// <inheritdoc />
         public override string ToString()
@@ -113,10 +133,14 @@ namespace STS2RitsuLib.Patching.Models
         }
 
         /// <summary>
-        ///     Builds a dynamic patch by resolving <paramref name="target" /> the same way as <see cref="ModPatcher" />
-        ///     resolves <see cref="ModPatchInfo" />.
-        ///     通过解析 <paramref name="target" /> 构建动态 patch，方式与 <see cref="ModPatcher" />
-        ///     解析 <see cref="ModPatchInfo" /> 相同。
+        ///     <para xml:lang="en">
+        ///         Resolves <paramref name="target" /> as <see cref="ModPatcher" /> resolves a
+        ///         <see cref="ModPatchInfo" />, then creates a dynamic patch.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         按照 <see cref="ModPatcher" /> 解析 <see cref="ModPatchInfo" /> 的方式解析
+        ///         <paramref name="target" />，然后创建动态补丁。
+        ///     </para>
         /// </summary>
         public static DynamicPatchInfo FromModPatchTarget(
             string id,

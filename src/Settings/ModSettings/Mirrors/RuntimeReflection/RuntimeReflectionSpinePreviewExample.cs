@@ -13,8 +13,13 @@ using MegaCrit.Sts2.Core.Bindings.MegaSpine;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Sample settings page: character spine preview.
-    ///     示例设置页面：角色 spine 预览。
+    ///     <para xml:lang="en">
+    ///         Demonstrates attribute-based runtime-reflection settings with profile and callback bindings, localized
+    ///         text, buttons, and an interactive character Spine preview.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         演示基于特性的运行时反射设置，包括用户档与回调绑定、本地化文本、按钮及交互式角色 Spine 预览。
+    ///     </para>
     /// </summary>
     [ModSettingsPage(Const.ModId, "runtime-reflection-spine-example",
         Title = "Spine preview (sample)",

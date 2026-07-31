@@ -4,12 +4,16 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Timeline.Patches
 {
     /// <summary>
-    ///     Scopes mod timeline co-expansion to vanilla <see cref="NeowEpoch.QueueUnlocks" /> so other
-    ///     <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel.QueueTimelineExpansion" /> callers (character lines, relic rows,
-    ///     etc.) do not unlock or animate every <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" />.
-    ///     将作用域限制为 mod timeline 共同扩展 to 原版 <see cref="NeowEpoch.QueueUnlocks" /> 使 其他
-    ///     <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel.QueueTimelineExpansion" /> 调用方 (角色线, 遗物行,
-    ///     etc.) 不会解锁或播放每个的动画 <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" />。
+    ///     <para xml:lang="en">
+    ///         Limits mod timeline co-expansion to <see cref="NeowEpoch.QueueUnlocks" />, preventing unrelated
+    ///         <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel.QueueTimelineExpansion" /> calls from unlocking or
+    ///         animating every <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将模组时间线的共同扩展限制在 <see cref="NeowEpoch.QueueUnlocks" /> 流程内，避免无关的
+    ///         <see cref="MegaCrit.Sts2.Core.Timeline.EpochModel.QueueTimelineExpansion" /> 调用解锁或播放所有
+    ///         <see cref="STS2RitsuLib.Timeline.Scaffolding.ModEpochTemplate" /> 的动画。
+    ///     </para>
     /// </summary>
     internal sealed class NeowEpochQueueUnlocksCoExpansionScopePatch : IPatchMethod
     {

@@ -1,20 +1,26 @@
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Optional JSON Pointer lists used by <see cref="KeyedJsonDomTransport" /> for subtree sync.
-    ///     <see cref="KeyedJsonDomTransport" /> 用于 subtree sync 的可选 JSON Pointer 列表。
+    ///     <para xml:lang="en">
+    ///         Optional JSON Pointer lists used by <see cref="KeyedJsonDomTransport" /> for subtree synchronization.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="KeyedJsonDomTransport" /> 用于同步子树的可选 JSON Pointer 列表。
+    ///     </para>
     /// </summary>
     /// <param name="PullPaths">
-    ///     Pointers consumed when pulling from a keyed provider via node getters.
-    ///     通过节点 getter 从 keyed 提供方拉取时使用的 pointer。
+    ///     <para xml:lang="en">Pointers read from the keyed provider through node getters.</para>
+    ///     <para xml:lang="zh-CN">通过节点读取器从键控提供方拉取数据时使用的指针。</para>
     /// </param>
     /// <param name="PushPaths">
-    ///     Pointers consumed when pushing document subtrees via node setters.
-    ///     通过节点 setter 推送文档子树时使用的 pointer。
+    ///     <para xml:lang="en">Pointers written through node setters when pushing document subtrees.</para>
+    ///     <para xml:lang="zh-CN">通过节点写入器推送文档子树时使用的指针。</para>
     /// </param>
     /// <param name="MergePushPaths">
-    ///     Pointers consumed when pushing RFC 7386 merge payloads via merge-at hooks.
-    ///     通过 merge-at hook 推送 RFC 7386 合并载荷时使用的 pointer。
+    ///     <para xml:lang="en">Pointers written through merge-at hooks when pushing object subtrees.</para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过指定位置合并钩子推送对象子树时使用的指针。
+    ///     </para>
     /// </param>
     public sealed record KeyedJsonPathRouting(string[]? PullPaths, string[]? PushPaths, string[]? MergePushPaths);
 }

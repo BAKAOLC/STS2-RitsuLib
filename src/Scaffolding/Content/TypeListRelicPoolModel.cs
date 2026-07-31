@@ -4,23 +4,28 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Relic pool base that builds relics from declared CLR types and can override energy icon paths on pools.
-    ///     遗物池基类：从声明的 CLR 类型构建遗物，并可覆盖池上的能量图标路径。
+    ///     <para xml:lang="en">
+    ///         Provides a relic-pool base class with legacy CLR type enumeration and energy-icon path overrides.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供支持旧式 CLR 类型枚举和能量图标路径覆盖的遗物池基类。</para>
     /// </summary>
     public abstract class TypeListRelicPoolModel : RelicPoolModel, IModBigEnergyIconPool, IModTextEnergyIconPool
     {
         /// <summary>
-        ///     Legacy hook: enumerating relic types on the pool class. Prefer registering each relic through
-        ///     <c>ModContentRegistry.RegisterRelic&lt;TPool, TRelic&gt;()</c>,
-        ///     <c>CreateContentPack.Relic&lt;TPool, TRelic&gt;()</c>,
-        ///     or a manifest <c>RelicRegistrationEntry</c> so <c>ModHelper.AddModelToPool</c> injects them without
-        ///     duplicating the same <see cref="RelicModel" /> instances when this property also lists those types.
-        ///     Defaults to an empty sequence.
-        ///     旧式钩子：枚举池类上的遗物类型。建议改为通过以下方式逐个注册遗物：
-        ///     <c>ModContentRegistry.RegisterRelic&lt;TPool, TRelic&gt;()</c>、
-        ///     或 manifest <c>RelicRegistrationEntry</c>，让 <c>ModHelper.AddModelToPool</c> 注入它们，避免
-        ///     当此属性也列出这些类型时重复生成同一批 <see cref="RelicModel" /> 实例。
-        ///     默认为空序列。
+        ///     <para xml:lang="en">
+        ///         Legacy hook that enumerates relic types declared by the pool. Prefer registering each relic through
+        ///         <c>ModContentRegistry.RegisterRelic&lt;TPool, TRelic&gt;()</c>,
+        ///         <c>CreateContentPack.Relic&lt;TPool, TRelic&gt;()</c>, or a manifest
+        ///         <c>RelicRegistrationEntry</c>, which lets <c>ModHelper.AddModelToPool</c> inject the relic without
+        ///         duplicating entries when this property lists the same type. The default sequence is empty.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         用于枚举池所声明遗物类型的旧式钩子。建议通过
+        ///         <c>ModContentRegistry.RegisterRelic&lt;TPool, TRelic&gt;()</c>、
+        ///         <c>CreateContentPack.Relic&lt;TPool, TRelic&gt;()</c> 或清单中的 <c>RelicRegistrationEntry</c>
+        ///         逐个注册遗物，由 <c>ModHelper.AddModelToPool</c> 注入，以免此属性列出相同类型时产生重复条目。
+        ///         默认返回空序列。
+        ///     </para>
         /// </summary>
         [Obsolete(
             "Prefer ModContentRegistry / CreateContentPack .Relic<TPool, TRelic>() or manifest RelicRegistrationEntry. "

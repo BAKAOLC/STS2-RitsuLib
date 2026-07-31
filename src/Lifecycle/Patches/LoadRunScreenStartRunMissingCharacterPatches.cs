@@ -10,10 +10,14 @@ using STS2RitsuLib.Saves;
 namespace STS2RitsuLib.Lifecycle.Patches
 {
     /// <summary>
-    ///     Compatibility: blocks multiplayer load-screen <c>StartRun</c> when any player references an unregistered
-    ///     character, without deleting saves; otherwise leaves the vanilla load flow untouched.
-    ///     兼容性：当任意玩家引用未注册角色时阻止多人加载界面的 <c>StartRun</c> 且不删除存档；
-    ///     其他情况下保持原版加载流程不变。
+    ///     <para xml:lang="en">
+    ///         Blocks multiplayer <c>StartRun</c> when a player references an unregistered character, preserving the save;
+    ///         otherwise, leaves the base-game load flow unchanged.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当一名玩家引用未注册角色时阻止多人游戏的 <c>StartRun</c>，同时保留存档；
+    ///         其他情况下不改变原版游戏的加载流程。
+    ///     </para>
     /// </summary>
     internal class NMultiplayerLoadGameScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
@@ -53,10 +57,14 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Compatibility: blocks custom-run load-screen <c>StartRun</c> when any player references an unregistered
-    ///     character, without deleting saves; otherwise leaves the vanilla load flow untouched.
-    ///     兼容性：当任意玩家引用未注册角色时阻止自定义跑局加载界面的 <c>StartRun</c> 且不删除存档；
-    ///     其他情况下保持原版加载流程不变。
+    ///     <para xml:lang="en">
+    ///         Blocks Custom Mode <c>StartRun</c> when a player references an unregistered character, preserving the save;
+    ///         otherwise, leaves the base-game load flow unchanged.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当一名玩家引用未注册角色时阻止自定义模式的 <c>StartRun</c>，同时保留存档；
+    ///         其他情况下不改变原版游戏的加载流程。
+    ///     </para>
     /// </summary>
     internal class NCustomRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {
@@ -96,10 +104,14 @@ namespace STS2RitsuLib.Lifecycle.Patches
     }
 
     /// <summary>
-    ///     Compatibility: blocks daily-run load-screen <c>StartRun</c> when any player references an unregistered
-    ///     character, without deleting saves; otherwise leaves the vanilla load flow untouched.
-    ///     兼容性：当任意玩家引用未注册角色时阻止每日跑局加载界面的 <c>StartRun</c> 且不删除存档；
-    ///     其他情况下保持原版加载流程不变。
+    ///     <para xml:lang="en">
+    ///         Blocks Daily Climb <c>StartRun</c> when a player references an unregistered character, preserving the save;
+    ///         otherwise, leaves the base-game load flow unchanged.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当一名玩家引用未注册角色时阻止每日攀登的 <c>StartRun</c>，同时保留存档；
+    ///         其他情况下不改变原版游戏的加载流程。
+    ///     </para>
     /// </summary>
     internal class NDailyRunLoadScreenBeginRunMissingCharacterPatch : IPatchMethod
     {

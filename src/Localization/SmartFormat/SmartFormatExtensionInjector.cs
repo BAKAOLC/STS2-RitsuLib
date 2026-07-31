@@ -5,8 +5,8 @@ using SmartFormat.Core.Extensions;
 namespace STS2RitsuLib.Localization.SmartFormat
 {
     /// <summary>
-    ///     Injects registered mod SmartFormat extensions into a live <c>SmartFormatter</c> instance.
-    ///     将已注册的 mod SmartFormat 扩展注入到实时 <c>SmartFormatter</c> 实例中。
+    ///     <para xml:lang="en">Injects registered mod SmartFormat extensions into an active <c>SmartFormatter</c> instance.</para>
+    ///     <para xml:lang="zh-CN">将已注册的模组 SmartFormat 扩展注入正在使用的 <c>SmartFormatter</c> 实例。</para>
     /// </summary>
     public static class SmartFormatExtensionInjector
     {
@@ -14,8 +14,11 @@ namespace STS2RitsuLib.Localization.SmartFormat
             InjectedFormatterNamesByFormatter = new();
 
         /// <summary>
-        ///     Injects all registered sources first, then formatters.
-        ///     先注入所有已注册的 source，然后注入 formatter。
+        ///     <para xml:lang="en">
+        ///         Injects a snapshot of all registered selector sources first, followed by all registered
+        ///         formatters.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">先注入全部已注册选择器数据源的快照，再注入全部已注册格式化器的快照。</para>
         /// </summary>
         public static void InjectAll(SmartFormatter formatter)
         {
@@ -29,8 +32,12 @@ namespace STS2RitsuLib.Localization.SmartFormat
         }
 
         /// <summary>
-        ///     Injects a single registered extension into <paramref name="formatter" />.
-        ///     将单个已注册扩展注入到 <paramref name="formatter" />。
+        ///     <para xml:lang="en">
+        ///         Attempts to inject one registered extension into <paramref name="formatter" />. Unsupported
+        ///         kinds, invalid instances, duplicate formatter names, and injection failures are logged instead of being
+        ///         propagated.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">尝试将一个已注册扩展注入 <paramref name="formatter" />。不支持的类别、无效实例、重复的格式化器名称及注入失败均会被记录，而不会向调用方继续抛出。</para>
         /// </summary>
         public static void Inject(
             SmartFormatter formatter,
@@ -122,11 +129,13 @@ namespace STS2RitsuLib.Localization.SmartFormat
 
         private sealed class InjectedFormatterNames
         {
+            private readonly SmartFormatter _formatter;
             private readonly HashSet<string> _names = new(StringComparer.OrdinalIgnoreCase);
             private readonly Lock _syncRoot = new();
 
             public InjectedFormatterNames(SmartFormatter formatter)
             {
+                _formatter = formatter;
                 foreach (var existingFormatter in formatter.GetFormatterExtensions())
                     if (!string.IsNullOrWhiteSpace(existingFormatter.Name))
                         _names.Add(existingFormatter.Name);
@@ -136,6 +145,10 @@ namespace STS2RitsuLib.Localization.SmartFormat
             {
                 lock (_syncRoot)
                 {
+                    foreach (var existingFormatter in _formatter.GetFormatterExtensions())
+                        if (!string.IsNullOrWhiteSpace(existingFormatter.Name))
+                            _names.Add(existingFormatter.Name);
+
                     return _names.Add(formatterName);
                 }
             }

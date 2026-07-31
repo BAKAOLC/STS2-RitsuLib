@@ -3,12 +3,15 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Godot.NodeFactories
 {
     /// <summary>
-    ///     Converts plain Godot orb / misc scenes whose root is (or should become) a <see cref="Node2D" /> into a typed
-    ///     <see cref="Node2D" /> for <see cref="RitsuGodotNodeFactories" /> (mirrors baselib flexible root handling with an
-    ///     empty named-node set).
-    ///     将普通 Godot 充能球 / 杂项场景转换为 <see cref="RitsuGodotNodeFactories" /> 使用的强类型
-    ///     <see cref="Node2D" />；这些场景的根节点本身是（或应变为）<see cref="Node2D" />（这与 baselib 的灵活根节点处理一致，使用
-    ///     空命名节点集合）。
+    ///     <para xml:lang="en">
+    ///         Converts ordinary Godot orb and miscellaneous scenes into typed <see cref="Node2D" /> roots for
+    ///         <see cref="RitsuGodotNodeFactories" />. The factory mirrors BaseLib's flexible root conversion without
+    ///         requiring any named child slots.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将普通的 Godot 充能球及其他场景转换为供 <see cref="RitsuGodotNodeFactories" /> 使用的强类型
+    ///         <see cref="Node2D" /> 根节点。此工厂与 BaseLib 的灵活根节点转换方式一致，不要求任何具名子节点槽位。
+    ///     </para>
     /// </summary>
     internal sealed class RitsuNode2DSceneRootFactory() : RitsuGodotNodeFactory<Node2D>([])
     {

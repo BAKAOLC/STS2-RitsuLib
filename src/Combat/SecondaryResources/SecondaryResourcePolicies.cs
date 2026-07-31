@@ -1,64 +1,64 @@
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Behavior for required secondary-resource costs when the player does not have enough resource.
-    ///     玩家资源不足以支付必需次级资源费用时的行为。
+    ///     <para xml:lang="en">Specifies how an underfunded required secondary-resource cost behaves.</para>
+    ///     <para xml:lang="zh-CN">指定必需的次级资源费用无法足额支付时的行为。</para>
     /// </summary>
     public enum SecondaryResourceInsufficientPaymentMode
     {
         /// <summary>
-        ///     Keep the current hard-cost behavior: the card cannot be played.
-        ///     保持当前硬费用行为：卡牌不能被打出。
+        ///     <para xml:lang="en">Prevents the card from being played.</para>
+        ///     <para xml:lang="zh-CN">阻止打出卡牌。</para>
         /// </summary>
         BlockPlay = 0,
 
         /// <summary>
-        ///     Allow the card to be played and report the unpaid amount as a shortfall.
-        ///     允许卡牌被打出，并将未支付部分记录为短缺额。
+        ///     <para xml:lang="en">Allows play and reports the unpaid amount as a shortfall.</para>
+        ///     <para xml:lang="zh-CN">允许出牌，并将未支付数量报告为缺口。</para>
         /// </summary>
         AllowPlay = 1,
     }
 
     /// <summary>
-    ///     Handles a committed secondary-resource shortfall payment.
-    ///     处理已提交的次级资源短缺支付。
+    ///     <para xml:lang="en">Handles a committed card payment with a remaining shortfall.</para>
+    ///     <para xml:lang="zh-CN">处理已提交且仍有缺口的卡牌支付。</para>
     /// </summary>
     public delegate Task SecondaryResourceShortfallPaymentHandler(SecondaryResourceShortfallContext context);
 
     /// <summary>
-    ///     Resolves whether another payment source can cover a secondary-resource shortfall.
-    ///     解析是否可用其他支付来源覆盖次级资源短缺。
+    ///     <para xml:lang="en">Plans how much of a shortfall another payment source can cover.</para>
+    ///     <para xml:lang="zh-CN">规划其他支付来源可补足多少缺口。</para>
     /// </summary>
     public delegate SecondaryResourceShortfallResolution SecondaryResourceShortfallResolver(
         SecondaryResourceShortfallResolutionContext context);
 
     /// <summary>
-    ///     Pure planning result for replacing a secondary-resource shortfall with another payment source.
-    ///     用其他支付来源替代次级资源短缺的纯规划结果。
+    ///     <para xml:lang="en">Describes a side-effect-free replacement-payment plan for a shortfall.</para>
+    ///     <para xml:lang="zh-CN">描述用于补足缺口的无副作用替代支付方案。</para>
     /// </summary>
     public sealed record SecondaryResourceShortfallResolution
     {
         /// <summary>
-        ///     No shortfall amount is covered.
-        ///     不覆盖任何短缺数量。
+        ///     <para xml:lang="en">Gets a plan that covers none of the shortfall.</para>
+        ///     <para xml:lang="zh-CN">获取不补足任何缺口的方案。</para>
         /// </summary>
         public static SecondaryResourceShortfallResolution None { get; } = new();
 
         /// <summary>
-        ///     Amount of the shortfall covered by the replacement payment.
-        ///     替代支付覆盖的短缺数量。
+        ///     <para xml:lang="en">Gets the amount covered by the replacement payment.</para>
+        ///     <para xml:lang="zh-CN">获取替代支付补足的数量。</para>
         /// </summary>
         public int CoveredAmount { get; init; }
 
         /// <summary>
-        ///     Optional callback that commits the replacement payment.
-        ///     提交替代支付的可选回调。
+        ///     <para xml:lang="en">Gets the optional callback that commits the replacement payment.</para>
+        ///     <para xml:lang="zh-CN">获取提交替代支付的可选回调。</para>
         /// </summary>
         public SecondaryResourceShortfallPaymentHandler? OnCommit { get; init; }
 
         /// <summary>
-        ///     Creates a resolution that covers part or all of the shortfall.
-        ///     创建覆盖部分或全部短缺的解析结果。
+        ///     <para xml:lang="en">Creates a plan that covers a nonnegative amount of the shortfall.</para>
+        ///     <para xml:lang="zh-CN">创建补足非负缺口数量的方案。</para>
         /// </summary>
         public static SecondaryResourceShortfallResolution Cover(
             int amount,
@@ -73,56 +73,60 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         internal Task Commit(SecondaryResourceShortfallContext context)
         {
-            return OnCommit?.Invoke(context) ?? Task.CompletedTask;
+            if (OnCommit == null)
+                return Task.CompletedTask;
+
+            return OnCommit(context) ??
+                   throw new InvalidOperationException("A shortfall replacement-payment handler returned null.");
         }
     }
 
     /// <summary>
-    ///     Policy for required secondary-resource payments that are short on resource.
-    ///     必需次级资源支付在资源不足时使用的策略。
+    ///     <para xml:lang="en">Defines behavior for an underfunded required secondary-resource payment.</para>
+    ///     <para xml:lang="zh-CN">定义必需的次级资源支付无法足额完成时的行为。</para>
     /// </summary>
     public sealed record SecondaryResourceInsufficientPayment
     {
         /// <summary>
-        ///     Shared policy that preserves the default hard-cost behavior.
-        ///     保持默认硬费用行为的共享策略。
+        ///     <para xml:lang="en">Gets the shared policy that blocks play on a shortfall.</para>
+        ///     <para xml:lang="zh-CN">获取存在缺口时阻止出牌的共享策略。</para>
         /// </summary>
         public static SecondaryResourceInsufficientPayment BlockPlay { get; } = new();
 
         /// <summary>
-        ///     Selected shortfall behavior.
-        ///     选中的短缺行为。
+        ///     <para xml:lang="en">Gets the selected behavior for an unpaid amount.</para>
+        ///     <para xml:lang="zh-CN">获取未支付数量所采用的行为。</para>
         /// </summary>
         public SecondaryResourceInsufficientPaymentMode Mode { get; init; } =
             SecondaryResourceInsufficientPaymentMode.BlockPlay;
 
         /// <summary>
-        ///     True to spend as much of the available resource as possible before reporting the remaining shortfall.
-        ///     为 true 时先消耗可用资源，再把剩余部分报告为短缺额。
+        ///     <para xml:lang="en">Gets whether available resource is spent before reporting the remaining shortfall.</para>
+        ///     <para xml:lang="zh-CN">获取是否先支付可用资源，再报告剩余缺口。</para>
         /// </summary>
         public bool SpendAvailable { get; init; } = true;
 
         /// <summary>
-        ///     Optional callback invoked once when the shortfall payment is committed.
-        ///     短缺支付提交时调用一次的可选回调。
+        ///     <para xml:lang="en">Gets the optional callback invoked after committing a remaining shortfall.</para>
+        ///     <para xml:lang="zh-CN">获取提交剩余缺口后调用的可选回调。</para>
         /// </summary>
         public SecondaryResourceShortfallPaymentHandler? OnShortfall { get; init; }
 
         /// <summary>
-        ///     Optional pure resolver that can cover the shortfall with another payment source before commit.
-        ///     可选的纯解析器：在提交前判定能否用其他支付来源覆盖短缺。
+        ///     <para xml:lang="en">Gets the optional side-effect-free replacement-payment planner.</para>
+        ///     <para xml:lang="zh-CN">获取可选的无副作用替代支付规划器。</para>
         /// </summary>
         public SecondaryResourceShortfallResolver? ResolveShortfall { get; init; }
 
         /// <summary>
-        ///     True when this policy allows a shortfall to pass card-play checks.
-        ///     此策略允许短缺通过出牌检查时为 true。
+        ///     <para xml:lang="en">Gets whether card-play checks may pass despite a shortfall.</para>
+        ///     <para xml:lang="zh-CN">获取存在缺口时是否仍可通过出牌检查。</para>
         /// </summary>
         public bool AllowsPlay => Mode == SecondaryResourceInsufficientPaymentMode.AllowPlay;
 
         /// <summary>
-        ///     Creates a policy that allows play when the required resource is short.
-        ///     创建允许资源不足时打出卡牌的策略。
+        ///     <para xml:lang="en">Creates a policy that permits play with an underfunded required cost.</para>
+        ///     <para xml:lang="zh-CN">创建允许在必需费用不足时出牌的策略。</para>
         /// </summary>
         public static SecondaryResourceInsufficientPayment AllowPlay(
             SecondaryResourceShortfallPaymentHandler? onShortfall = null,
@@ -139,8 +143,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates a policy that allows play and runs a synchronous shortfall callback.
-        ///     创建允许打出并运行同步短缺回调的策略。
+        ///     <para xml:lang="en">Creates an allow-play policy with a synchronous shortfall callback.</para>
+        ///     <para xml:lang="zh-CN">创建带同步缺口回调的允许出牌策略。</para>
         /// </summary>
         public static SecondaryResourceInsufficientPayment AllowPlay(
             Action<SecondaryResourceShortfallContext> onShortfall,
@@ -159,8 +163,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Creates a policy that first tries to replace a shortfall with another payment source.
-        ///     创建优先尝试用其他支付来源替代短缺的策略。
+        ///     <para xml:lang="en">Creates an allow-play policy that first plans a replacement payment.</para>
+        ///     <para xml:lang="zh-CN">创建优先规划替代支付的允许出牌策略。</para>
         /// </summary>
         public static SecondaryResourceInsufficientPayment AllowPlayWithReplacement(
             SecondaryResourceShortfallResolver resolveShortfall,
@@ -173,120 +177,129 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         internal Task InvokeShortfall(SecondaryResourceShortfallContext context)
         {
-            return OnShortfall?.Invoke(context) ?? Task.CompletedTask;
+            if (OnShortfall == null)
+                return Task.CompletedTask;
+
+            return OnShortfall(context) ??
+                   throw new InvalidOperationException("A remaining-shortfall payment handler returned null.");
         }
 
         internal SecondaryResourceShortfallResolution Resolve(SecondaryResourceShortfallResolutionContext context)
         {
-            return ResolveShortfall?.Invoke(context) ?? SecondaryResourceShortfallResolution.None;
+            if (ResolveShortfall == null)
+                return SecondaryResourceShortfallResolution.None;
+
+            return ResolveShortfall(context) ??
+                   throw new InvalidOperationException("A shortfall replacement-payment resolver returned null.");
         }
     }
 
     /// <summary>
-    ///     Persistence scope for a secondary combat resource.
-    ///     次级战斗资源的持久化范围。
+    ///     <para xml:lang="en">Specifies the persistence scope of a secondary combat resource.</para>
+    ///     <para xml:lang="zh-CN">指定次级战斗资源的持久化范围。</para>
     /// </summary>
     public enum SecondaryResourcePersistencePolicy
     {
         /// <summary>
-        ///     The resource is runtime-only and is not written to run saves.
-        ///     该资源仅存在于运行时，不写入跑局存档。
+        ///     <para xml:lang="en">Does not write the resource to run saves.</para>
+        ///     <para xml:lang="zh-CN">不将资源写入一局游戏的存档。</para>
         /// </summary>
         None = 0,
 
         /// <summary>
-        ///     The resource should be restored while the current combat is restored.
-        ///     Currently, normal run saves do not restore an in-progress combat, so this behaves mostly like
-        ///     <see cref="None" /> unless a separate combat-state persistence path captures it.
-        ///     该资源应随当前战斗恢复。
-        ///     目前普通跑局存档不会恢复进行中的战斗；除非另有战斗状态持久化路径捕获它，否则它基本等同于
-        ///     <see cref="None" />。
+        ///     <para xml:lang="en">
+        ///         Includes the resource only in explicitly requested combat-scoped snapshots. Normal run-save
+        ///         synchronization excludes it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         仅在显式请求的战斗范围快照中包含资源；常规的一局游戏存档同步会排除该资源。
+        ///     </para>
         /// </summary>
         Combat = 1,
 
         /// <summary>
-        ///     The resource persists across combats for the current run.
-        ///     该资源在当前跑局中跨战斗持久化。
+        ///     <para xml:lang="en">Persists the resource across combats in the current run.</para>
+        ///     <para xml:lang="zh-CN">使资源在当前一局游戏中跨战斗持久化。</para>
         /// </summary>
         Run = 2,
     }
 
     /// <summary>
-    ///     Built-in turn-start behavior for a secondary resource.
-    ///     次级资源的内建回合开始行为。
+    ///     <para xml:lang="en">Specifies built-in turn-start behavior for a secondary resource.</para>
+    ///     <para xml:lang="zh-CN">指定次级资源的内置回合开始行为。</para>
     /// </summary>
     public enum SecondaryResourceTurnStartPolicy
     {
         /// <summary>
-        ///     Leave the current amount unchanged.
-        ///     保持当前数量不变。
+        ///     <para xml:lang="en">Leaves the current amount unchanged.</para>
+        ///     <para xml:lang="zh-CN">保持当前数量不变。</para>
         /// </summary>
         None = 0,
 
         /// <summary>
-        ///     Set the current amount to the hook-modified max amount.
-        ///     将当前数量设为经过 hook 修正后的最大数量。
+        ///     <para xml:lang="en">Sets the current amount to the hook-modified maximum.</para>
+        ///     <para xml:lang="zh-CN">将当前数量设为经钩子修正后的最大数量。</para>
         /// </summary>
         ResetToMax = 1,
 
         /// <summary>
-        ///     Add the hook-modified max amount to the current amount.
-        ///     将经过 hook 修正后的最大数量加到当前数量上。
+        ///     <para xml:lang="en">Adds the hook-modified maximum to the current amount.</para>
+        ///     <para xml:lang="zh-CN">将经钩子修正后的最大数量加到当前数量。</para>
         /// </summary>
         AddMaxToCurrent = 2,
 
         /// <summary>
-        ///     Set the current amount to zero.
-        ///     将当前数量设为零。
+        ///     <para xml:lang="en">Sets the current amount to the hard lower bound.</para>
+        ///     <para xml:lang="zh-CN">将当前数量设为硬下限。</para>
         /// </summary>
         Clear = 3,
     }
 
     /// <summary>
-    ///     Reason attached to a secondary resource amount mutation.
-    ///     附加在次级资源数量变更上的原因。
+    ///     <para xml:lang="en">Specifies the reason for a secondary-resource amount mutation.</para>
+    ///     <para xml:lang="zh-CN">指定次级资源数量变化的原因。</para>
     /// </summary>
     public enum SecondaryResourceChangeReason
     {
         /// <summary>
-        ///     Unspecified or custom reason.
-        ///     未指定或自定义原因。
+        ///     <para xml:lang="en">Indicates an unspecified or custom reason.</para>
+        ///     <para xml:lang="zh-CN">表示未指定或自定义原因。</para>
         /// </summary>
         Unknown = 0,
 
         /// <summary>
-        ///     Resource amount increased.
-        ///     资源数量增加。
+        ///     <para xml:lang="en">Indicates an amount increase.</para>
+        ///     <para xml:lang="zh-CN">表示数量增加。</para>
         /// </summary>
         Gain = 1,
 
         /// <summary>
-        ///     Resource amount decreased without payment semantics.
-        ///     资源数量减少，但不带支付语义。
+        ///     <para xml:lang="en">Indicates a decrease without payment semantics.</para>
+        ///     <para xml:lang="zh-CN">表示不带支付语义的数量减少。</para>
         /// </summary>
         Lose = 2,
 
         /// <summary>
-        ///     Resource amount was assigned directly.
-        ///     资源数量被直接赋值。
+        ///     <para xml:lang="en">Indicates direct amount assignment.</para>
+        ///     <para xml:lang="zh-CN">表示直接设置数量。</para>
         /// </summary>
         Set = 3,
 
         /// <summary>
-        ///     Resource amount was spent as payment.
-        ///     资源数量作为支付被消耗。
+        ///     <para xml:lang="en">Indicates an amount spent as payment.</para>
+        ///     <para xml:lang="zh-CN">表示作为支付消耗数量。</para>
         /// </summary>
         Spend = 4,
 
         /// <summary>
-        ///     Resource amount was reset.
-        ///     资源数量被重置。
+        ///     <para xml:lang="en">Indicates an explicit reset.</para>
+        ///     <para xml:lang="zh-CN">表示显式重置。</para>
         /// </summary>
         Reset = 5,
 
         /// <summary>
-        ///     Resource amount changed from a turn-start policy.
-        ///     资源数量因回合开始策略而改变。
+        ///     <para xml:lang="en">Indicates a change made by a turn-start policy.</para>
+        ///     <para xml:lang="zh-CN">表示由回合开始策略造成的变化。</para>
         /// </summary>
         TurnStart = 6,
     }

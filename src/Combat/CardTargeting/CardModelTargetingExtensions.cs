@@ -5,27 +5,41 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Combat.CardTargeting
 {
     /// <summary>
-    ///     Extension helpers for resolving card targets by target type.
-    ///     用于按目标类型解析卡牌目标集合的扩展 helper。
+    ///     <para xml:lang="en">Resolves card targets according to their target type.</para>
+    ///     <para xml:lang="zh-CN">根据卡牌的目标类型解析目标。</para>
     /// </summary>
     public static class CardModelTargetingExtensions
     {
         /// <summary>
-        ///     Returns targets resolved from the card's current <see cref="TargetType" />.
-        ///     For single-target types, pass <paramref name="selectedTarget" /> to keep one unified execution path.
-        ///     返回根据当前卡牌 <see cref="TargetType" /> 解析得到的目标列表。
-        ///     对单体目标类型，可传入 <paramref name="selectedTarget" /> 来保持统一执行路径。
+        ///     <para xml:lang="en">Resolves targets from the card's current <see cref="CardModel.TargetType" />.</para>
+        ///     <para xml:lang="zh-CN">根据卡牌当前的 <see cref="CardModel.TargetType" /> 解析目标。</para>
         /// </summary>
         /// <param name="card">
-        ///     Card model whose target type is used for resolution.
-        ///     用于解析目标集合的卡牌模型。
+        ///     <para xml:lang="en">The card whose targets are resolved.</para>
+        ///     <para xml:lang="zh-CN">待解析目标的卡牌。</para>
         /// </param>
         /// <param name="selectedTarget">
-        ///     Optional selected target for single-target types (vanilla or custom).
-        ///     If null, single-target branches return an empty list.
-        ///     原版或自定义单体目标类型可选传入的已选目标。
-        ///     为 null 时，单体目标分支返回空列表。
+        ///     <para xml:lang="en">
+        ///         The selected target for selection-based vanilla or custom single-target types. When omitted, those
+        ///         types resolve no targets; <see cref="TargetType.Self" /> still resolves to the owner.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         基于选择的原版或自定义单体目标类型所用的已选目标。省略时这些类型不解析出目标；
+        ///         <see cref="TargetType.Self" /> 仍解析为卡牌所有者。
+        ///     </para>
         /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The targets resolved for the card.</para>
+        ///     <para xml:lang="zh-CN">为该卡牌解析出的目标。</para>
+        /// </returns>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Resolving <see cref="TargetType.RandomEnemy" /> advances the owner's combat-target RNG.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析 <see cref="TargetType.RandomEnemy" /> 会推进所有者的战斗目标随机数生成器。
+        ///     </para>
+        /// </remarks>
         public static List<Creature> GetTargets(this CardModel card, Creature? selectedTarget = null)
         {
             ArgumentNullException.ThrowIfNull(card);

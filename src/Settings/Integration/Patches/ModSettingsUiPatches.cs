@@ -14,10 +14,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Settings.Patches
 {
     /// <summary>
-    ///     Harmony patch that reuses one <see cref="RitsuModSettingsSubmenu" /> per
-    ///     <see cref="NMainMenuSubmenuStack" /> instance.
-    ///     Harmony patch：每个 <see cref="NMainMenuSubmenuStack" /> 实例复用一个
-    ///     <see cref="RitsuModSettingsSubmenu" />。
+    ///     <para xml:lang="en">
+    ///         Adds <see cref="RitsuModSettingsSubmenu" /> support to the main-menu submenu stack and reuses one instance
+    ///         per stack.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为主菜单子菜单栈添加 <see cref="RitsuModSettingsSubmenu" /> 支持，并为每个栈复用一个实例。
+    ///     </para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -57,10 +60,14 @@ namespace STS2RitsuLib.Settings.Patches
     }
 
     /// <summary>
-    ///     Harmony patch that reuses one <see cref="RitsuModSettingsSubmenu" /> per
-    ///     <see cref="NRunSubmenuStack" /> (in-run pause / settings), mirroring <see cref="ModSettingsSubmenuPatch" />.
-    ///     Harmony patch：每个 <see cref="NRunSubmenuStack" />（跑局中暂停 / 设置）复用一个
-    ///     <see cref="RitsuModSettingsSubmenu" />，对应 <see cref="ModSettingsSubmenuPatch" /> 的做法。
+    ///     <para xml:lang="en">
+    ///         Adds <see cref="RitsuModSettingsSubmenu" /> support to the in-run submenu stack and reuses one instance
+    ///         per stack, matching <see cref="ModSettingsSubmenuPatch" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为对局内子菜单栈添加 <see cref="RitsuModSettingsSubmenu" /> 支持，并为每个栈复用一个实例，
+    ///         与 <see cref="ModSettingsSubmenuPatch" /> 保持一致。
+    ///     </para>
     /// </summary>
     internal class ModSettingsRunSubmenuStackPatch : IPatchMethod
     {
@@ -84,10 +91,20 @@ namespace STS2RitsuLib.Settings.Patches
     }
 
     /// <summary>
-    ///     Injects the “Mod Settings (RitsuLib)” row into the vanilla settings screen and keeps general panel height in sync.
-    ///     The entry is always shown regardless of registered page count; in-run access stays enabled.
-    ///     将 “Mod Settings (RitsuLib)” 行注入原版设置屏幕，并保持 General 面板高度同步。
-    ///     入口固定显示，与是否注册设置页无关；对局中保持可打开。
+    ///     <para xml:lang="en">
+    ///         Adds the “Mod Settings (RitsuLib)” and “Open Logs Folder” rows to the game's General settings panel and
+    ///         keeps the panel size and focus navigation synchronized.
+    ///     </para>
+    ///     <para xml:lang="en">
+    ///         The mod settings entry remains available in a run and is shown even when no mod pages are registered.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在游戏的“游戏设置”标签页中添加“Mod Settings (RitsuLib)”与“Open Logs Folder”行，
+    ///         并同步面板尺寸和焦点导航。
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         模组设置入口在对局内仍可使用，且即使没有已注册的模组页面也会显示。
+    ///     </para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -345,10 +362,14 @@ namespace STS2RitsuLib.Settings.Patches
         }
 
         /// <summary>
-        ///     Mirrors <see cref="NSettingsPanel" />'s private refresh: when content exceeds the viewport (plus padding), panel
-        ///     height becomes <c>contentMinY + parentHeight * 0.4f</c> for bottom scroll slack (game default).
-        ///     复刻 <see cref="NSettingsPanel" /> 的私有刷新逻辑：当内容超过视口（加 padding）时，面板
-        ///     高度变为 <c>contentMinY + parentHeight * 0.4f</c>，为底部滚动留出余量（游戏默认值）。
+        ///     <para xml:lang="en">
+        ///         Mirrors <see cref="NSettingsPanel" />'s private size refresh. When the content plus padding exceeds
+        ///         the viewport, adds 40 percent of the parent height as the game's bottom scrolling allowance.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         复现 <see cref="NSettingsPanel" /> 的私有尺寸刷新逻辑。当内容加留白超过视口时，
+        ///         按游戏逻辑额外加入父控件高度的 40% 作为底部滚动余量。
+        ///     </para>
         /// </summary>
         private static void RefreshPanelSize(NSettingsPanel panel)
         {
@@ -384,10 +405,13 @@ namespace STS2RitsuLib.Settings.Patches
         }
 
         /// <summary>
-        ///     Sum of visible direct children's <see cref="Control.GetCombinedMinimumSize" /> and VBox separation;
-        ///     fallback when <see cref="Control.GetMinimumSize" /> on the root VBox is temporarily too small.
-        ///     可见直接子节点的 <see cref="Control.GetCombinedMinimumSize" /> 与 VBox 间距之和；
-        ///     当根 VBox 上的 <see cref="Control.GetMinimumSize" /> 暂时过小时作为回退。
+        ///     <para xml:lang="en">
+        ///         Computes the combined minimum height of visible direct children and their vertical separation,
+        ///         providing a fallback when the root container temporarily reports an undersized minimum.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         计算可见直接子控件的组合最小高度及其垂直间距，在根容器暂时报告过小的最小尺寸时用作回退。
+        ///     </para>
         /// </summary>
         private static float ComputeVBoxContentMinHeight(VBoxContainer box)
         {
@@ -410,10 +434,14 @@ namespace STS2RitsuLib.Settings.Patches
     }
 
     /// <summary>
-    ///     Rebuilds the General tab vertical focus chain the same way <see cref="NSettingsPanel" /> does in
-    ///     <c>_Ready</c>, after our row is injected (vanilla never sees the new controls).
-    ///     按 <see cref="NSettingsPanel" /> 相同的方式重建 General 标签页的垂直焦点链，
-    ///     在注入我们的行后于 <c>_Ready</c> 中执行（原版不会看到这些新控件）。
+    ///     <para xml:lang="en">
+    ///         Rebuilds the General settings tab's vertical focus chain after the injected rows are present, following
+    ///         the same rules that <see cref="NSettingsPanel" /> applies during <c>_Ready</c>.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在注入行存在后重建“游戏设置”标签页的垂直焦点链，采用
+    ///         <see cref="NSettingsPanel" /> 在 <c>_Ready</c> 期间使用的相同规则。
+    ///     </para>
     /// </summary>
     internal static class GeneralSettingsModEntryFocusWire
     {

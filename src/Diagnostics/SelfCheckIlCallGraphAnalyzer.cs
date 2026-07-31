@@ -240,7 +240,11 @@ namespace STS2RitsuLib.Diagnostics
                     continue;
                 }
 
-                pos += GetOperandLength(opcode.Value.OperandType, il, pos);
+                var operandLength = GetOperandLength(opcode.Value.OperandType, il, pos);
+                if (operandLength < 0 || operandLength > il.Length - pos)
+                    yield break;
+
+                pos += operandLength;
             }
         }
 
@@ -250,11 +254,11 @@ namespace STS2RitsuLib.Diagnostics
                 return null;
             var first = il[pos++];
             if (first != 0xfe)
-                return SingleByteOpCodes[first];
+                return SingleByteOpCodes[first].Name == null ? null : SingleByteOpCodes[first];
             if (pos >= il.Length)
                 return null;
             var second = il[pos++];
-            return MultiByteOpCodes[second];
+            return MultiByteOpCodes[second].Name == null ? null : MultiByteOpCodes[second];
         }
 
         private static int GetOperandLength(OperandType operandType, byte[] il, int pos)
@@ -278,17 +282,17 @@ namespace STS2RitsuLib.Diagnostics
                 OperandType.InlineI8 => 8,
                 OperandType.InlineR => 8,
                 OperandType.InlineSwitch => GetSwitchLength(il, pos),
-                _ => 0,
+                _ => -1,
             };
         }
 
         private static int GetSwitchLength(byte[] il, int pos)
         {
             if (pos + 4 > il.Length)
-                return 0;
+                return -1;
             var count = BitConverter.ToInt32(il, pos);
-            if (count < 0)
-                return 0;
+            if (count < 0 || count > (il.Length - pos - 4) / 4)
+                return -1;
             return 4 + count * 4;
         }
 

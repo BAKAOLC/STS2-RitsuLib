@@ -5,18 +5,18 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Central place for repeated Godot theme overrides on LineEdit, TextEdit, buttons, and popup menus.
-    ///     集中处理 LineEdit、TextEdit、按钮和弹出菜单上重复的 Godot 主题覆盖。
+    ///     <para xml:lang="en">Provides shared Godot theme overrides and compact editor-control factories for settings UI.</para>
+    ///     <para xml:lang="zh-CN">提供设置界面共用的 Godot 主题覆盖和紧凑编辑控件工厂。</para>
     /// </summary>
     public static class ModSettingsUiControlTheming
     {
         /// <summary>
-        ///     Applies the shared surface-button chrome to all standard button states.
-        ///     将共享表面按钮外观应用到所有标准按钮状态。
+        ///     <para xml:lang="en">Applies one shared surface style to the button's normal, hover, pressed, and focus states.</para>
+        ///     <para xml:lang="zh-CN">将同一个共用表面样式应用到按钮的常态、悬停、按下和焦点状态。</para>
         /// </summary>
         /// <param name="control">
-        ///     The button to style.
-        ///     要设置样式的按钮。
+        ///     <para xml:lang="en">The button to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的按钮。</para>
         /// </param>
         public static void ApplyUniformSurfaceButtonStates(BaseButton control)
         {
@@ -28,12 +28,12 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies the shared frame chrome used by color picker swatch buttons.
-        ///     应用颜色选择器色块按钮使用的共享边框外观。
+        ///     <para xml:lang="en">Applies one shared swatch-frame style to every interactive state of a color-picker button.</para>
+        ///     <para xml:lang="zh-CN">将同一个共用色样边框样式应用到颜色选择按钮的所有交互状态。</para>
         /// </summary>
         /// <param name="picker">
-        ///     The color picker button to style.
-        ///     要设置样式的颜色选择器按钮。
+        ///     <para xml:lang="en">The color-picker button to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的颜色选择按钮。</para>
         /// </param>
         public static void ApplyColorPickerSwatchButtonChrome(ColorPickerButton picker)
         {
@@ -45,20 +45,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies the standard value-field theme to a single-line text entry.
-        ///     将标准值字段主题应用到单行文本条目。
+        ///     <para xml:lang="en">Applies the standard font, colors, and framed value-field states to a <see cref="LineEdit" />.</para>
+        ///     <para xml:lang="zh-CN">将标准字体、颜色和带框数值字段状态应用到 <see cref="LineEdit" />。</para>
         /// </summary>
         /// <param name="edit">
-        ///     The line edit to style.
-        ///     要设置样式的 line edit。
+        ///     <para xml:lang="en">The single-line editor to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的单行编辑器。</para>
         /// </param>
         /// <param name="font">
-        ///     The font to use for the value text.
-        ///     值文本使用的字体。
+        ///     <para xml:lang="en">The font used for the value text.</para>
+        ///     <para xml:lang="zh-CN">数值文本使用的字体。</para>
         /// </param>
         /// <param name="fontSize">
-        ///     The font size to apply.
-        ///     要应用的字体大小。
+        ///     <para xml:lang="en">The value-text font size.</para>
+        ///     <para xml:lang="zh-CN">数值文本的字号。</para>
         /// </param>
         public static void ApplyEntryLineEditValueFieldTheme(LineEdit edit, Font font, int fontSize = 17)
         {
@@ -74,20 +74,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies the standard value-field theme to a multi-line text entry.
-        ///     将标准值字段主题应用到多行文本条目。
+        ///     <para xml:lang="en">Applies the standard font, colors, and framed value-field states to a <see cref="TextEdit" />.</para>
+        ///     <para xml:lang="zh-CN">将标准字体、颜色和带框数值字段状态应用到 <see cref="TextEdit" />。</para>
         /// </summary>
         /// <param name="edit">
-        ///     The text edit to style.
-        ///     要设置样式的 text edit。
+        ///     <para xml:lang="en">The multiline editor to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的多行编辑器。</para>
         /// </param>
         /// <param name="font">
-        ///     The font to use for the value text.
-        ///     值文本使用的字体。
+        ///     <para xml:lang="en">The font used for the value text.</para>
+        ///     <para xml:lang="zh-CN">数值文本使用的字体。</para>
         /// </param>
         /// <param name="fontSize">
-        ///     The font size to apply.
-        ///     要应用的字体大小。
+        ///     <para xml:lang="en">The value-text font size.</para>
+        ///     <para xml:lang="zh-CN">数值文本的字号。</para>
         /// </param>
         public static void ApplyEntryTextEditValueFieldTheme(TextEdit edit, Font font, int fontSize = 17)
         {
@@ -103,16 +103,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies the standard popup-menu list styling used by settings pickers.
-        ///     应用设置选择器使用的标准弹出菜单列表样式。
+        ///     <para xml:lang="en">Applies settings fonts, colors, spacing, panel, and hover styles to a popup menu.</para>
+        ///     <para xml:lang="zh-CN">将设置界面的字体、颜色、间距、面板和悬停样式应用到弹出菜单。</para>
         /// </summary>
         /// <param name="popup">
-        ///     The popup menu to style.
-        ///     要设置样式的弹出菜单。
+        ///     <para xml:lang="en">The popup menu to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的弹出菜单。</para>
         /// </param>
         /// <param name="fontSize">
-        ///     The font size to apply to menu rows.
-        ///     要应用到菜单行的字体大小。
+        ///     <para xml:lang="en">The font size used by menu rows.</para>
+        ///     <para xml:lang="zh-CN">菜单行使用的字号。</para>
         /// </param>
         public static void ApplyPopupMenuListTheme(PopupMenu popup, int fontSize)
         {
@@ -130,16 +130,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a segmented row container for compact mode-selection buttons.
-        ///     创建用于紧凑模式选择按钮的分段行容器。
+        ///     <para xml:lang="en">Creates a horizontal row containing the supplied segmented buttons with themed spacing.</para>
+        ///     <para xml:lang="zh-CN">创建包含所给分段按钮并采用主题间距的水平行。</para>
         /// </summary>
         /// <param name="buttons">
-        ///     The buttons to place in the row.
-        ///     要放入该行的按钮。
+        ///     <para xml:lang="en">The buttons to add in order.</para>
+        ///     <para xml:lang="zh-CN">按顺序添加的按钮。</para>
         /// </param>
         /// <returns>
-        ///     A horizontal container with standard spacing for segmented controls.
-        ///     用于分段控件、带标准间距的水平容器。
+        ///     <para xml:lang="en">The populated horizontal container.</para>
+        ///     <para xml:lang="zh-CN">填充后的水平容器。</para>
         /// </returns>
         public static HBoxContainer CreateSegmentedButtonRow(params Button[] buttons)
         {
@@ -152,24 +152,24 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a segmented toggle button using standard settings sizing.
-        ///     使用标准设置尺寸创建分段切换按钮。
+        ///     <para xml:lang="en">Creates an expanding toggle button with the standard segmented-control minimum size.</para>
+        ///     <para xml:lang="zh-CN">创建采用标准分段控件最小尺寸、可水平扩展的切换按钮。</para>
         /// </summary>
         /// <param name="text">
-        ///     The button label.
-        ///     按钮标签。
+        ///     <para xml:lang="en">The button label.</para>
+        ///     <para xml:lang="zh-CN">按钮标签。</para>
         /// </param>
         /// <param name="pressed">
-        ///     Whether the button starts pressed.
-        ///     按钮初始是否按下。
+        ///     <para xml:lang="en">Whether the button is initially pressed.</para>
+        ///     <para xml:lang="zh-CN">按钮初始是否处于按下状态。</para>
         /// </param>
         /// <param name="group">
-        ///     Optional exclusive toggle group.
-        ///     可选 exclusive toggle group.。
+        ///     <para xml:lang="en">An optional button group that controls exclusivity.</para>
+        ///     <para xml:lang="zh-CN">用于控制互斥关系的可选按钮组。</para>
         /// </param>
         /// <returns>
-        ///     A configured segmented toggle button.
-        ///     已配置的分段切换按钮。
+        ///     <para xml:lang="en">The configured toggle button.</para>
+        ///     <para xml:lang="zh-CN">配置完成的切换按钮。</para>
         /// </returns>
         public static Button CreateSegmentedToggleButton(string text, bool pressed, ButtonGroup? group = null)
         {
@@ -187,20 +187,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a button-style settings toggle that matches the standard on/off visual language.
-        ///     创建按钮样式的设置切换控件，匹配标准 on/off 视觉语言。
+        ///     <para xml:lang="en">Creates an expanding settings toggle whose style follows its on, hover, and focus state.</para>
+        ///     <para xml:lang="zh-CN">创建可水平扩展的设置切换按钮，其样式会随开启、悬停和焦点状态更新。</para>
         /// </summary>
         /// <param name="text">
-        ///     The button label.
-        ///     按钮标签。
+        ///     <para xml:lang="en">The button label.</para>
+        ///     <para xml:lang="zh-CN">按钮标签。</para>
         /// </param>
         /// <param name="pressed">
-        ///     Whether the toggle starts enabled.
-        ///     切换控件初始是否启用。
+        ///     <para xml:lang="en">Whether the toggle is initially on.</para>
+        ///     <para xml:lang="zh-CN">切换按钮初始是否开启。</para>
         /// </param>
         /// <returns>
-        ///     A configured toggle button with standard interactive styling.
-        ///     带标准交互样式的已配置切换按钮。
+        ///     <para xml:lang="en">The configured settings toggle.</para>
+        ///     <para xml:lang="zh-CN">配置完成的设置切换按钮。</para>
         /// </returns>
         public static Button CreateSettingsToggleButton(string text, bool pressed)
         {
@@ -224,20 +224,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a compact button-style settings toggle for list headers and other dense layouts.
-        ///     创建用于列表标题和其他密集布局的紧凑按钮样式设置切换控件。
+        ///     <para xml:lang="en">Creates a start-aligned settings toggle sized for list headers and other dense layouts.</para>
+        ///     <para xml:lang="zh-CN">创建适用于列表标题等紧凑布局、靠起始侧对齐的设置切换按钮。</para>
         /// </summary>
         /// <param name="text">
-        ///     The button label.
-        ///     按钮标签。
+        ///     <para xml:lang="en">The button label.</para>
+        ///     <para xml:lang="zh-CN">按钮标签。</para>
         /// </param>
         /// <param name="pressed">
-        ///     Whether the toggle starts enabled.
-        ///     切换控件初始是否启用。
+        ///     <para xml:lang="en">Whether the toggle is initially on.</para>
+        ///     <para xml:lang="zh-CN">切换按钮初始是否开启。</para>
         /// </param>
         /// <returns>
-        ///     A compact toggle button with standard interactive styling.
-        ///     带标准交互样式的紧凑切换按钮。
+        ///     <para xml:lang="en">The configured compact settings toggle.</para>
+        ///     <para xml:lang="zh-CN">配置完成的紧凑设置切换按钮。</para>
         /// </returns>
         public static Button CreateCompactSettingsToggleButton(string text, bool pressed)
         {
@@ -262,20 +262,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a compact On/Off toggle using the standard settings toggle control chrome.
-        ///     使用标准设置切换控件外观创建紧凑 On/Off 切换。
+        ///     <para xml:lang="en">Creates an expanding <see cref="ModSettingsToggleControl" /> sized for a compact editor field.</para>
+        ///     <para xml:lang="zh-CN">创建适合紧凑编辑字段、可水平扩展的 <see cref="ModSettingsToggleControl" />。</para>
         /// </summary>
         /// <param name="initialValue">
-        ///     Whether the toggle starts enabled.
-        ///     切换控件初始是否启用。
+        ///     <para xml:lang="en">The initial toggle value.</para>
+        ///     <para xml:lang="zh-CN">切换控件的初始值。</para>
         /// </param>
         /// <param name="onChanged">
-        ///     Callback invoked after the value changes.
-        ///     值变化后调用的回调。
+        ///     <para xml:lang="en">The callback invoked when the control changes the value.</para>
+        ///     <para xml:lang="zh-CN">控件更改值时调用的回调。</para>
         /// </param>
         /// <returns>
-        ///     A compact toggle control sized for dense editor layouts.
-        ///     为密集编辑器布局定尺寸的紧凑切换控件。
+        ///     <para xml:lang="en">The configured toggle control.</para>
+        ///     <para xml:lang="zh-CN">配置完成的切换控件。</para>
         /// </returns>
         public static ModSettingsToggleControl CreateCompactStateToggle(bool initialValue, Action<bool> onChanged)
         {
@@ -289,20 +289,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a labeled compact editor field for dense multi-column layouts.
-        ///     为密集多列布局创建带标签的紧凑编辑器字段。
+        ///     <para xml:lang="en">Stacks a description label above an editor for use in compact layouts.</para>
+        ///     <para xml:lang="zh-CN">将说明标签置于编辑器上方，组成适用于紧凑布局的字段。</para>
         /// </summary>
         /// <param name="labelText">
-        ///     The descriptive label shown above the editor.
-        ///     显示在编辑器上方的描述性标签。
+        ///     <para xml:lang="en">The label shown above the editor.</para>
+        ///     <para xml:lang="zh-CN">显示在编辑器上方的标签。</para>
         /// </param>
         /// <param name="editor">
-        ///     The editor control to place below the label.
-        ///     放在标签下方的编辑器控件。
+        ///     <para xml:lang="en">The editor placed below the label.</para>
+        ///     <para xml:lang="zh-CN">放置在标签下方的编辑控件。</para>
         /// </param>
         /// <returns>
-        ///     A vertically stacked label-and-editor field.
-        ///     垂直堆叠的标签和编辑器字段。
+        ///     <para xml:lang="en">The vertical field container.</para>
+        ///     <para xml:lang="zh-CN">组成字段的垂直容器。</para>
         /// </returns>
         public static Control CreateCompactEditorField(string labelText, Control editor)
         {
@@ -318,20 +318,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a compact multi-column row for dense settings editors.
-        ///     为密集设置编辑器创建紧凑多列行。
+        ///     <para xml:lang="en">Creates a themed grid containing the supplied editor controls.</para>
+        ///     <para xml:lang="zh-CN">创建包含所给编辑控件并采用主题间距的网格。</para>
         /// </summary>
         /// <param name="columns">
-        ///     The number of columns to use.
-        ///     指定 number of columns to use。
+        ///     <para xml:lang="en">The number of grid columns.</para>
+        ///     <para xml:lang="zh-CN">网格的列数。</para>
         /// </param>
         /// <param name="controls">
-        ///     The fields to place in the row.
-        ///     要放入该行的字段。
+        ///     <para xml:lang="en">The controls to add in order.</para>
+        ///     <para xml:lang="zh-CN">按顺序添加的控件。</para>
         /// </param>
         /// <returns>
-        ///     A compact grid container for grouped editors.
-        ///     用于分组编辑器的紧凑网格容器。
+        ///     <para xml:lang="en">The populated grid container.</para>
+        ///     <para xml:lang="zh-CN">填充后的网格容器。</para>
         /// </returns>
         public static Control CreateCompactEditorRow(int columns, params Control[] controls)
         {
@@ -350,20 +350,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a labeled compact toggle field for dense multi-column editor rows.
-        ///     为密集多列编辑器行创建带标签的紧凑切换字段。
+        ///     <para xml:lang="en">Stacks a description label above a toggle for use in compact layouts.</para>
+        ///     <para xml:lang="zh-CN">将说明标签置于切换控件上方，组成适用于紧凑布局的字段。</para>
         /// </summary>
         /// <param name="labelText">
-        ///     The descriptive label shown above the toggle.
-        ///     显示在切换控件上方的描述性标签。
+        ///     <para xml:lang="en">The label shown above the toggle.</para>
+        ///     <para xml:lang="zh-CN">显示在切换控件上方的标签。</para>
         /// </param>
         /// <param name="toggle">
-        ///     The toggle control to place below the label.
-        ///     放在标签下方的切换控件。
+        ///     <para xml:lang="en">The toggle placed below the label.</para>
+        ///     <para xml:lang="zh-CN">放置在标签下方的切换控件。</para>
         /// </param>
         /// <returns>
-        ///     A vertically stacked label-and-toggle field.
-        ///     垂直堆叠的标签和切换字段。
+        ///     <para xml:lang="en">The vertical field container.</para>
+        ///     <para xml:lang="zh-CN">组成字段的垂直容器。</para>
         /// </returns>
         public static Control CreateCompactToggleField(string labelText, Control toggle)
         {
@@ -371,16 +371,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a compact multi-column row for labeled toggle fields.
-        ///     为带标签的切换字段创建紧凑多列行。
+        ///     <para xml:lang="en">Creates a three-column themed grid containing the supplied toggle fields.</para>
+        ///     <para xml:lang="zh-CN">创建包含所给切换字段并采用主题间距的三列网格。</para>
         /// </summary>
         /// <param name="controls">
-        ///     The fields to place in the row.
-        ///     要放入该行的字段。
+        ///     <para xml:lang="en">The fields to add in order.</para>
+        ///     <para xml:lang="zh-CN">按顺序添加的字段。</para>
         /// </param>
         /// <returns>
-        ///     A three-column grid sized for dense settings editors.
-        ///     为密集设置编辑器定尺寸的三列网格。
+        ///     <para xml:lang="en">The populated three-column grid.</para>
+        ///     <para xml:lang="zh-CN">填充后的三列网格。</para>
         /// </returns>
         public static Control CreateCompactToggleRow(params Control[] controls)
         {
@@ -388,32 +388,32 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates a styled single-line text entry with an initial value.
-        ///     创建带初始值的样式化单行文本条目。
+        ///     <para xml:lang="en">Creates a themed single-line editor and assigns its initial text.</para>
+        ///     <para xml:lang="zh-CN">创建采用主题样式的单行编辑器并设置其初始文本。</para>
         /// </summary>
         /// <param name="text">
-        ///     The initial text value.
-        ///     初始文本值。
+        ///     <para xml:lang="en">The initial text.</para>
+        ///     <para xml:lang="zh-CN">初始文本。</para>
         /// </param>
         /// <param name="placeholder">
-        ///     Placeholder text to display when the field is empty.
-        ///     字段为空时要显示的占位文本。
+        ///     <para xml:lang="en">The placeholder shown while the field is empty.</para>
+        ///     <para xml:lang="zh-CN">字段为空时显示的占位文本。</para>
         /// </param>
         /// <param name="width">
-        ///     The minimum width to reserve for the field.
-        ///     为字段保留的最小宽度。
+        ///     <para xml:lang="en">The fallback minimum width in pixels.</para>
+        ///     <para xml:lang="zh-CN">以像素为单位的回退最小宽度。</para>
         /// </param>
         /// <param name="height">
-        ///     The minimum height to reserve for the field.
-        ///     为字段保留的最小高度。
+        ///     <para xml:lang="en">The fallback minimum height in pixels.</para>
+        ///     <para xml:lang="zh-CN">以像素为单位的回退最小高度。</para>
         /// </param>
         /// <param name="fontSize">
-        ///     The font size to apply.
-        ///     要应用的字体大小。
+        ///     <para xml:lang="en">The editor font size.</para>
+        ///     <para xml:lang="zh-CN">编辑器的字号。</para>
         /// </param>
         /// <returns>
-        ///     The configured line edit instance.
-        ///     指定 configured line edit instance。
+        ///     <para xml:lang="en">The configured editor.</para>
+        ///     <para xml:lang="zh-CN">配置完成的编辑器。</para>
         /// </returns>
         public static LineEdit CreateStyledLineEdit(string text, string placeholder, float width = 220f,
             float height = 44f,
@@ -425,20 +425,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies the shared button-style toggle chrome for the current state.
-        ///     为当前状态应用共享的按钮样式切换外观。
+        ///     <para xml:lang="en">Applies settings-toggle fonts, colors, and state styles for the supplied visual state.</para>
+        ///     <para xml:lang="zh-CN">根据所给视觉状态应用设置切换按钮的字体、颜色和状态样式。</para>
         /// </summary>
         /// <param name="button">
-        ///     The button to style.
-        ///     要设置样式的按钮。
+        ///     <para xml:lang="en">The toggle button to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的切换按钮。</para>
         /// </param>
         /// <param name="on">
-        ///     Whether the toggle is enabled.
-        ///     切换控件是否启用。
+        ///     <para xml:lang="en">Whether the toggle is on.</para>
+        ///     <para xml:lang="zh-CN">切换按钮是否开启。</para>
         /// </param>
         /// <param name="hovered">
-        ///     Whether the button should use its emphasized hover/focus state.
-        ///     按钮是否应使用强调的悬停/焦点状态。
+        ///     <para xml:lang="en">Whether to use the emphasized hover or focus appearance.</para>
+        ///     <para xml:lang="zh-CN">是否使用强调的悬停或焦点外观。</para>
         /// </param>
         public static void ApplySettingsToggleButtonStyle(Button button, bool on, bool hovered)
         {
@@ -455,20 +455,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Creates the stylebox used by button-style settings toggles.
-        ///     创建按钮样式设置切换控件使用的 stylebox。
+        ///     <para xml:lang="en">Gets the cached flat style for a settings toggle's on and emphasis state.</para>
+        ///     <para xml:lang="zh-CN">获取设置切换按钮对应开启状态与强调状态的缓存扁平样式。</para>
         /// </summary>
         /// <param name="on">
-        ///     Whether the toggle is enabled.
-        ///     切换控件是否启用。
+        ///     <para xml:lang="en">Whether the toggle is on.</para>
+        ///     <para xml:lang="zh-CN">切换按钮是否开启。</para>
         /// </param>
         /// <param name="hovered">
-        ///     Whether the button should use its emphasized hover/focus state.
-        ///     按钮是否应使用强调的悬停/焦点状态。
+        ///     <para xml:lang="en">Whether to use the emphasized hover or focus appearance.</para>
+        ///     <para xml:lang="zh-CN">是否使用强调的悬停或焦点外观。</para>
         /// </param>
         /// <returns>
-        ///     A stylebox representing the requested visual state.
-        ///     表示所请求视觉状态的 stylebox。
+        ///     <para xml:lang="en">The shared style instance for the requested state.</para>
+        ///     <para xml:lang="zh-CN">所请求状态对应的共享样式实例。</para>
         /// </returns>
         public static StyleBoxFlat CreateSettingsToggleButtonStyle(bool on, bool hovered)
         {
@@ -531,28 +531,28 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies the standard framed input styling used by single-line text fields.
-        ///     应用单行文本字段使用的标准带框输入样式。
+        ///     <para xml:lang="en">Creates an empty themed single-line editor with a placeholder and theme-resolved minimum size.</para>
+        ///     <para xml:lang="zh-CN">创建带占位文本、采用主题解析最小尺寸的空单行编辑器。</para>
         /// </summary>
         /// <param name="placeholder">
-        ///     Placeholder text to display when the field is empty.
-        ///     字段为空时要显示的占位文本。
+        ///     <para xml:lang="en">The placeholder shown while the field is empty.</para>
+        ///     <para xml:lang="zh-CN">字段为空时显示的占位文本。</para>
         /// </param>
         /// <param name="width">
-        ///     The minimum width to reserve for the field.
-        ///     为字段保留的最小宽度。
+        ///     <para xml:lang="en">The fallback minimum width in pixels.</para>
+        ///     <para xml:lang="zh-CN">以像素为单位的回退最小宽度。</para>
         /// </param>
         /// <param name="height">
-        ///     The minimum height to reserve for the field.
-        ///     为字段保留的最小高度。
+        ///     <para xml:lang="en">The fallback minimum height in pixels.</para>
+        ///     <para xml:lang="zh-CN">以像素为单位的回退最小高度。</para>
         /// </param>
         /// <param name="fontSize">
-        ///     The font size to apply.
-        ///     要应用的字体大小。
+        ///     <para xml:lang="en">The editor font size.</para>
+        ///     <para xml:lang="zh-CN">编辑器的字号。</para>
         /// </param>
         /// <returns>
-        ///     The configured line edit instance.
-        ///     指定 configured line edit instance。
+        ///     <para xml:lang="en">The configured editor.</para>
+        ///     <para xml:lang="zh-CN">配置完成的编辑器。</para>
         /// </returns>
         public static LineEdit CreateStyledLineEdit(string placeholder, float width = 220f, float height = 44f,
             int fontSize = 17)
@@ -570,13 +570,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies themed scrollbar track and grabber colors to a settings
-        ///     <see cref="ScrollContainer" />, sets vertical bar width from
-        ///     <c>components.scrollbar.layout.size</c>, and applies
-        ///     <c>components.scrollbar.layout.scrollbarVSeparation</c> when supported.
-        ///     将主题化滚动条轨道和滑块颜色应用到设置 <see cref="ScrollContainer" />，从 <c>components.scrollbar.layout.size</c> 设置垂直滚动条宽度，并在支持时应用
-        ///     <c>components.scrollbar.layout.scrollbarVSeparation</c>。
+        ///     <para xml:lang="en">
+        ///         Applies the settings scrollbar track, grabber states, width, separation, and optional minimum
+        ///         grabber length to a scroll container.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将设置界面的滚动条轨道、滑块状态、宽度、间距和可选滑块最小长度应用到滚动容器。</para>
         /// </summary>
+        /// <param name="container">
+        ///     <para xml:lang="en">The scroll container to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的滚动容器。</para>
+        /// </param>
         public static void ApplySettingsScrollContainerTheme(ScrollContainer container)
         {
             ApplySettingsScrollContainerThemeCore(
@@ -588,9 +591,20 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Resolves the content gutter needed beside a themed settings scrollbar from the applied style.
-        ///     根据已应用的设置滚动条样式解析内容侧边距。
+        ///     <para xml:lang="en">
+        ///         Calculates the right content gutter from theme defaults and, when available, the scroll
+        ///         container's actual bar width and separation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">根据主题默认值以及可用时滚动容器的实际滚动条宽度与间距，计算内容右侧留白。</para>
         /// </summary>
+        /// <param name="container">
+        ///     <para xml:lang="en">The themed scroll container, or <see langword="null" /> to use theme defaults only.</para>
+        ///     <para xml:lang="zh-CN">已应用主题的滚动容器；传入 <see langword="null" /> 时仅使用主题默认值。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The required nonnegative right gutter in pixels.</para>
+        ///     <para xml:lang="zh-CN">以像素为单位、所需的非负右侧留白。</para>
+        /// </returns>
         public static int ResolveSettingsScrollContentRightGutter(ScrollContainer? container)
         {
             const string gutterToken = "components.scrollbar.layout.contentRightGutter";
@@ -616,13 +630,16 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Applies the same scrollbar chrome as <see cref="ApplySettingsScrollContainerTheme" />, using
-        ///     <c>components.dropdown.layout.scroll.barWidth</c> (fallback: global scrollbar width) and
-        ///     <c>components.dropdown.layout.scroll.scrollbarVSeparation</c> (fallback: global separation).
-        ///     应用与 <see cref="ApplySettingsScrollContainerTheme" /> 相同的滚动条 chrome，使用
-        ///     <c>components.dropdown.layout.scroll.barWidth</c>（回退：全局滚动条宽度）和
-        ///     <c>components.dropdown.layout.scroll.scrollbarVSeparation</c>（回退：全局间距）。
+        ///     <para xml:lang="en">
+        ///         Applies the settings scrollbar theme using dropdown-specific width and separation tokens with
+        ///         global scrollbar fallbacks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用下拉列表专用的宽度与间距主题项应用设置滚动条主题，并以全局滚动条配置作为回退。</para>
         /// </summary>
+        /// <param name="container">
+        ///     <para xml:lang="en">The dropdown-list scroll container to style.</para>
+        ///     <para xml:lang="zh-CN">要设置样式的下拉列表滚动容器。</para>
+        /// </param>
         public static void ApplySettingsScrollContainerThemeForDropdownList(ScrollContainer container)
         {
             var globalBar = RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.size", 8);

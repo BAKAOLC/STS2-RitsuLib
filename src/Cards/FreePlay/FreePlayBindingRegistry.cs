@@ -10,8 +10,8 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Cards.FreePlay
 {
     /// <summary>
-    ///     Detailed free-play resolution result split by detection source.
-    ///     按检测来源拆分的详细 free-play 解析结果。
+    ///     <para xml:lang="en">Describes which detection sources marked a card play as free.</para>
+    ///     <para xml:lang="zh-CN">描述哪些检测来源将一次出牌标记为免费。</para>
     /// </summary>
     public sealed record FreePlayResolution(
         bool IsAutoPlayNoSpend,
@@ -19,8 +19,8 @@ namespace STS2RitsuLib.Cards.FreePlay
         bool IsRegisteredDetectorFree)
     {
         /// <summary>
-        ///     True when any detection source marks this play as free.
-        ///     任一检测来源将本次出牌标记为免费时为 true。
+        ///     <para xml:lang="en">Gets whether any detection source marks this play as free.</para>
+        ///     <para xml:lang="zh-CN">获取是否有任一检测来源将本次出牌标记为免费。</para>
         /// </summary>
         public bool IsFree => IsAutoPlayNoSpend || IsCardBindingFree || IsRegisteredDetectorFree;
     }
@@ -33,8 +33,8 @@ namespace STS2RitsuLib.Cards.FreePlay
     }
 
     /// <summary>
-    ///     Extensible binding registry for "this play is free" semantics.
-    ///     用于“本次出牌免费”语义的可扩展绑定注册表。
+    ///     <para xml:lang="en">Provides an extensible registry for determining whether a card play is free.</para>
+    ///     <para xml:lang="zh-CN">提供可扩展注册表，用于判断一次出牌是否免费。</para>
     /// </summary>
     public static class FreePlayBindingRegistry
     {
@@ -44,17 +44,22 @@ namespace STS2RitsuLib.Cards.FreePlay
         private static readonly AttachedState<CardPlay, PlayFreeBindingState> PlayStates = new(() => new());
 
         /// <summary>
-        ///     Registers an additional free-play detector. The detector should return true when the specified
-        ///     <see cref="CardPlay" /> is considered free by mod-defined rules.
-        ///     注册额外的 free-play 检测器。当指定 <see cref="CardPlay" /> 按 mod 定义规则视为免费时，检测器应返回 true。
+        ///     <para xml:lang="en">
+        ///         Registers an additional free-play detector. The detector should return <see langword="true" /> when
+        ///         mod-defined rules consider the specified <see cref="CardPlay" /> free.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册额外的免费出牌检测器。模组规则将指定 <see cref="CardPlay" /> 视为免费时，检测器应返回
+        ///         <see langword="true" />。
+        ///     </para>
         /// </summary>
         /// <param name="bindingId">
-        ///     Stable unique identifier for replacement/debugging.
-        ///     用于替换和调试的稳定唯一标识符。
+        ///     <para xml:lang="en">Stable unique ID used for replacement and diagnostics.</para>
+        ///     <para xml:lang="zh-CN">用于替换和诊断的稳定唯一 ID。</para>
         /// </param>
         /// <param name="detector">
-        ///     Predicate that evaluates whether a play is free.
-        ///     判断一次出牌是否免费的谓词。
+        ///     <para xml:lang="en">Predicate that determines whether a play is free.</para>
+        ///     <para xml:lang="zh-CN">判断一次出牌是否免费的谓词。</para>
         /// </param>
         public static void Register(string bindingId, Func<CardPlay, bool> detector)
         {
@@ -68,12 +73,12 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Marks that the given card's base costs should be treated as free for its next play.
-        ///     标记给定卡牌下一次出牌的基础费用应视为免费。
+        ///     <para xml:lang="en">Marks the card's base costs as free for its next play.</para>
+        ///     <para xml:lang="zh-CN">将卡牌下一次打出时的基础费用标记为免费。</para>
         /// </summary>
         /// <param name="card">
-        ///     Card receiving a single-use base-cost free charge.
-        ///     获得一次性基础费用免费层数的卡牌。
+        ///     <para xml:lang="en">Card receiving a single-use base-cost-free charge.</para>
+        ///     <para xml:lang="zh-CN">获得一次性基础费用免费次数的卡牌。</para>
         /// </param>
         public static void MarkCardFreeNextPlay(CardModel card)
         {
@@ -86,12 +91,12 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Marks that the given card's base costs should be treated as free until end of turn or its next play.
-        ///     标记给定卡牌在回合结束或下一次打出前，基础费用应视为免费。
+        ///     <para xml:lang="en">Marks the card's base costs as free until the end of the turn or its next play.</para>
+        ///     <para xml:lang="zh-CN">将卡牌的基础费用标记为免费，直至回合结束或该牌下一次打出。</para>
         /// </summary>
         /// <param name="card">
-        ///     Card receiving a current-turn base-cost free charge.
-        ///     获得本回合基础费用免费层数的卡牌。
+        ///     <para xml:lang="en">Card receiving a current-turn base-cost-free charge.</para>
+        ///     <para xml:lang="zh-CN">获得本回合基础费用免费次数的卡牌。</para>
         /// </param>
         public static void MarkCardFreeThisTurn(CardModel card)
         {
@@ -129,12 +134,12 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Marks that the given card's base costs should be treated as free for the current combat.
-        ///     标记给定卡牌在当前战斗中，基础费用应视为免费。
+        ///     <para xml:lang="en">Marks the card's base costs as free for the current combat.</para>
+        ///     <para xml:lang="zh-CN">将卡牌在当前战斗中的基础费用标记为免费。</para>
         /// </summary>
         /// <param name="card">
-        ///     Card receiving combat-duration base-cost free state.
-        ///     获得持续整场战斗基础费用免费状态的卡牌。
+        ///     <para xml:lang="en">Card receiving a combat-duration base-cost-free state.</para>
+        ///     <para xml:lang="zh-CN">获得持续整场战斗基础费用免费状态的卡牌。</para>
         /// </param>
         public static void MarkCardFreeThisCombat(CardModel card)
         {
@@ -142,33 +147,37 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Marks the current <see cref="CardPlay" /> as free immediately.
+        ///     <para xml:lang="en">Immediately marks the current <see cref="CardPlay" /> as free.</para>
+        ///     <para xml:lang="zh-CN">立即将当前 <see cref="CardPlay" /> 标记为免费。</para>
         /// </summary>
         /// <param name="play">
-        ///     Play instance to mark.
-        ///     要标记的出牌实例。
+        ///     <para xml:lang="en">Play instance to mark.</para>
+        ///     <para xml:lang="zh-CN">要标记的出牌实例。</para>
         /// </param>
         public static void MarkCurrentPlayFree(CardPlay play)
         {
             ArgumentNullException.ThrowIfNull(play);
-            PlayStates.Set(play, new()
+            PlayStates.Update(play, state =>
             {
-                IsResolved = true,
-                Resolution = new(false, true, false),
+                state.Resolution = state.IsResolved
+                    ? state.Resolution with { IsCardBindingFree = true }
+                    : new(play.IsAutoPlay, true, false);
+                state.IsResolved = true;
+                return state;
             });
         }
 
         /// <summary>
-        ///     Resolves detailed free-play sources for this <see cref="CardPlay" />.
-        ///     解析此 <see cref="CardPlay" /> 的详细 free-play 来源。
+        ///     <para xml:lang="en">Resolves the free-play sources for this <see cref="CardPlay" />.</para>
+        ///     <para xml:lang="zh-CN">解析此 <see cref="CardPlay" /> 的免费出牌来源。</para>
         /// </summary>
         /// <param name="play">
-        ///     Play instance to evaluate.
-        ///     要求值的出牌实例。
+        ///     <para xml:lang="en">Play instance to evaluate.</para>
+        ///     <para xml:lang="zh-CN">要求值的出牌实例。</para>
         /// </param>
         /// <returns>
-        ///     A split resolution indicating which source marked the play as free.
-        ///     指示由哪个来源将本次出牌标记为免费的拆分解析结果。
+        ///     <para xml:lang="en">A result indicating which sources marked the play as free.</para>
+        ///     <para xml:lang="zh-CN">指示哪些来源将本次出牌标记为免费的结果。</para>
         /// </returns>
         public static FreePlayResolution Resolve(CardPlay play)
         {
@@ -188,16 +197,16 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Convenience helper returning whether the play is free by any source.
-        ///     返回本次出牌是否因任一来源而免费的便捷辅助方法。
+        ///     <para xml:lang="en">Returns whether any source marks the play as free.</para>
+        ///     <para xml:lang="zh-CN">返回是否有任一来源将本次出牌标记为免费。</para>
         /// </summary>
         /// <param name="play">
-        ///     Play instance to evaluate.
-        ///     要求值的出牌实例。
+        ///     <para xml:lang="en">Play instance to evaluate.</para>
+        ///     <para xml:lang="zh-CN">要求值的出牌实例。</para>
         /// </param>
         /// <returns>
-        ///     True when any free-play source applies.
-        ///     任一 free-play 来源适用时为 true。
+        ///     <para xml:lang="en"><see langword="true" /> when any free-play source applies.</para>
+        ///     <para xml:lang="zh-CN">有任一免费出牌来源适用时为 <see langword="true" />。</para>
         /// </returns>
         public static bool IsFreeForPlay(CardPlay play)
         {
@@ -205,10 +214,13 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Returns whether the card is already marked free before a <see cref="CardPlay" /> exists.
-        ///     This does not consume next-play free charges.
-        ///     在 <see cref="CardPlay" /> 尚未创建前返回此卡是否已被标记为免费。
-        ///     此方法不会消费下一次出牌免费层数。
+        ///     <para xml:lang="en">
+        ///         Returns whether the card is marked free before a <see cref="CardPlay" /> exists, without consuming a
+        ///         next-play charge.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回卡牌在 <see cref="CardPlay" /> 创建前是否已被标记为免费，且不消耗下一次出牌的免费次数。
+        ///     </para>
         /// </summary>
         public static bool IsCardFreeForUpcomingPlay(CardModel card)
         {
@@ -223,30 +235,25 @@ namespace STS2RitsuLib.Cards.FreePlay
                 return new(false, false);
 
             var combatState = ResolveCombatState(card);
-            var isFullFree = state.ThisTurnCharges > 0 ||
-                             state.NextPlayCharges > 0 ||
-                             (state.FreeThisCombatState != null &&
-                              ReferenceEquals(state.FreeThisCombatState, combatState));
-            var isBaseCostFree = isFullFree ||
-                                 state.BaseCostsFreeNextPlayCharges > 0 ||
+            var isBaseCostFree = state.BaseCostsFreeNextPlayCharges > 0 ||
                                  state.BaseCostsFreeThisTurnCharges > 0 ||
                                  state.BaseCostsFreeForRestOfTurnCharges > 0 ||
                                  (state.BaseCostsFreeThisCombatState != null &&
                                   ReferenceEquals(state.BaseCostsFreeThisCombatState, combatState));
-            return new(isBaseCostFree, isFullFree);
+            return new(isBaseCostFree, false);
         }
 
         /// <summary>
-        ///     Clears current-turn free-play charges that were not consumed by playing the card.
-        ///     清除未通过打出消耗的本回合 free-play 层数。
+        ///     <para xml:lang="en">Clears current-turn free-play charges that were not consumed by playing the card.</para>
+        ///     <para xml:lang="zh-CN">清除未因打出卡牌而消耗的本回合免费出牌次数。</para>
         /// </summary>
         /// <param name="card">
-        ///     Card receiving end-of-turn cleanup.
-        ///     正在执行回合结束清理的卡牌。
+        ///     <para xml:lang="en">Card receiving end-of-turn cleanup.</para>
+        ///     <para xml:lang="zh-CN">正在执行回合结束清理的卡牌。</para>
         /// </param>
         /// <returns>
-        ///     True when any current-turn free-play charge was cleared.
-        ///     清除了任意本回合 free-play 层数时返回 true。
+        ///     <para xml:lang="en"><see langword="true" /> when any current-turn free-play charge was cleared.</para>
+        ///     <para xml:lang="zh-CN">清除了任一本回合免费出牌次数时为 <see langword="true" />。</para>
         /// </returns>
         public static bool ClearCardFreeThisTurn(CardModel card)
         {
@@ -255,10 +262,8 @@ namespace STS2RitsuLib.Cards.FreePlay
             var changed = false;
             CardStates.Update(card, state =>
             {
-                changed = state.ThisTurnCharges > 0 ||
-                          state.BaseCostsFreeThisTurnCharges > 0 ||
+                changed = state.BaseCostsFreeThisTurnCharges > 0 ||
                           state.BaseCostsFreeForRestOfTurnCharges > 0;
-                state.ThisTurnCharges = 0;
                 state.BaseCostsFreeThisTurnCharges = 0;
                 state.BaseCostsFreeForRestOfTurnCharges = 0;
                 return state;
@@ -267,16 +272,16 @@ namespace STS2RitsuLib.Cards.FreePlay
         }
 
         /// <summary>
-        ///     Clears free-play bindings that expire after the card has been played.
-        ///     清除卡牌打出后过期的 free-play 绑定。
+        ///     <para xml:lang="en">Clears free-play bindings that expire after the card is played.</para>
+        ///     <para xml:lang="zh-CN">清除在卡牌打出后失效的免费出牌绑定。</para>
         /// </summary>
         /// <param name="card">
-        ///     Card receiving after-play cleanup.
-        ///     正在执行打出后清理的卡牌。
+        ///     <para xml:lang="en">Card receiving after-play cleanup.</para>
+        ///     <para xml:lang="zh-CN">正在执行打出后清理的卡牌。</para>
         /// </param>
         /// <returns>
-        ///     True when any after-play binding was cleared or consumed.
-        ///     清除或消费了任意打出后过期绑定时返回 true。
+        ///     <para xml:lang="en"><see langword="true" /> when any after-play binding was cleared or consumed.</para>
+        ///     <para xml:lang="zh-CN">清除或消耗了任一打出后失效的绑定时为 <see langword="true" />。</para>
         /// </returns>
         public static bool ClearCardFreeAfterPlayed(CardModel card)
         {
@@ -285,12 +290,8 @@ namespace STS2RitsuLib.Cards.FreePlay
             var changed = false;
             CardStates.Update(card, state =>
             {
-                changed = state.ThisTurnCharges > 0 ||
-                          state.NextPlayCharges > 0 ||
-                          state.BaseCostsFreeNextPlayCharges > 0 ||
+                changed = state.BaseCostsFreeNextPlayCharges > 0 ||
                           state.BaseCostsFreeThisTurnCharges > 0;
-                state.ThisTurnCharges = 0;
-                state.NextPlayCharges = Math.Max(0, state.NextPlayCharges - 1);
                 state.BaseCostsFreeNextPlayCharges = Math.Max(0, state.BaseCostsFreeNextPlayCharges - 1);
                 state.BaseCostsFreeThisTurnCharges = 0;
                 return state;
@@ -314,9 +315,6 @@ namespace STS2RitsuLib.Cards.FreePlay
             var state = CardStates.GetOrCreate(card);
             var combatState = ResolveCombatState(card);
 
-            if (state.FreeThisCombatState != null && ReferenceEquals(state.FreeThisCombatState, combatState))
-                return true;
-
             if (state.BaseCostsFreeThisCombatState != null &&
                 ReferenceEquals(state.BaseCostsFreeThisCombatState, combatState))
                 return true;
@@ -327,36 +325,40 @@ namespace STS2RitsuLib.Cards.FreePlay
             if (state.BaseCostsFreeForRestOfTurnCharges > 0)
                 return true;
 
-            if (state.BaseCostsFreeNextPlayCharges > 0)
-                return true;
-
-            if (state.ThisTurnCharges > 0)
-                return true;
-
-            return state.NextPlayCharges > 0;
+            return state.BaseCostsFreeNextPlayCharges > 0;
         }
 
         private static bool EvaluateRegisteredDetectors(CardPlay play)
         {
-            Func<CardPlay, bool>[] detectors;
+            KeyValuePair<string, Func<CardPlay, bool>>[] detectors;
             lock (Gate)
             {
-                detectors = [.. RegisteredDetectors.Values];
+                detectors = [.. RegisteredDetectors];
             }
 
-            return detectors.Any(detector => detector(play));
+            foreach (var (bindingId, detector) in detectors)
+                try
+                {
+                    if (detector(play))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[FreePlay] Detector '{bindingId}' failed for card '{play.Card.Id}': {ex}");
+                    throw;
+                }
+
+            return false;
         }
 
         private static CombatStateLike? ResolveCombatState(CardModel card)
         {
-            return card.CombatState ?? card.Owner?.Creature?.CombatState;
+            return card.CombatState ?? (card.IsMutable ? card.Owner.Creature.CombatState : null);
         }
 
         private sealed class CardFreeBindingState
         {
-            public int ThisTurnCharges { get; set; }
-            public int NextPlayCharges { get; set; }
-            public CombatStateLike? FreeThisCombatState { get; set; }
             public int BaseCostsFreeNextPlayCharges { get; set; }
             public int BaseCostsFreeThisTurnCharges { get; set; }
             public int BaseCostsFreeForRestOfTurnCharges { get; set; }

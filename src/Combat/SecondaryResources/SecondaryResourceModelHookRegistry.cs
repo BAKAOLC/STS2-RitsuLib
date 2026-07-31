@@ -8,9 +8,13 @@ using MegaCrit.Sts2.Core.Models.Relics;
 namespace STS2RitsuLib.Combat.SecondaryResources
 {
     /// <summary>
-    ///     Registers secondary-resource cost hooks for model types that cannot implement
-    ///     <see cref="ISecondaryResourceHookListener" /> directly.
-    ///     为无法直接实现 <see cref="ISecondaryResourceHookListener" /> 的模型类型注册次要资源费用 hook。
+    ///     <para xml:lang="en">
+    ///         Registers secondary-resource cost hooks for model types that cannot implement
+    ///         <see cref="ISecondaryResourceHookListener" /> directly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为无法直接实现 <see cref="ISecondaryResourceHookListener" /> 的模型类型注册次级资源费用钩子。
+    ///     </para>
     /// </summary>
     public static class SecondaryResourceModelHookRegistry
     {
@@ -21,8 +25,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         });
 
         /// <summary>
-        ///     Registers or replaces normal and late secondary-resource cost hooks for an exact model type.
-        ///     为精确模型类型注册或替换普通与 late 次要资源费用 hook。
+        ///     <para xml:lang="en">Registers or replaces cost hooks for the exact model type <typeparamref name="TModel" />.</para>
+        ///     <para xml:lang="zh-CN">为精确模型类型 <typeparamref name="TModel" /> 注册或替换费用钩子。</para>
         /// </summary>
         public static void RegisterCostHooks<TModel>(
             Func<TModel, SecondaryResourceCostContext, decimal, decimal>? modifyCost = null,
@@ -39,8 +43,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Registers or replaces normal and late secondary-resource cost hooks for an exact runtime model type.
-        ///     为精确运行时模型类型注册或替换普通与 late 次要资源费用 hook。
+        ///     <para xml:lang="en">Registers or replaces cost hooks for an exact runtime model type.</para>
+        ///     <para xml:lang="zh-CN">为精确的运行时模型类型注册或替换费用钩子。</para>
         /// </summary>
         public static void RegisterCostHooks(
             Type modelType,
@@ -58,8 +62,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Unregisters secondary-resource cost hooks for an exact model type, including built-in compatibility hooks.
-        ///     反注册精确模型类型的次要资源费用 hook，包括内建兼容 hook。
+        ///     <para xml:lang="en">
+        ///         Removes cost hooks for the exact model type <typeparamref name="TModel" />, including built-in
+        ///         compatibility hooks.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         移除精确模型类型 <typeparamref name="TModel" /> 的费用钩子，包括内置兼容性钩子。
+        ///     </para>
         /// </summary>
         public static bool UnregisterCostHooks<TModel>()
             where TModel : AbstractModel
@@ -68,8 +77,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
-        ///     Unregisters secondary-resource cost hooks for an exact runtime model type.
-        ///     反注册精确运行时模型类型的次要资源费用 hook。
+        ///     <para xml:lang="en">Removes cost hooks for an exact runtime model type.</para>
+        ///     <para xml:lang="zh-CN">移除精确运行时模型类型的费用钩子。</para>
         /// </summary>
         public static bool UnregisterCostHooks(Type modelType)
         {

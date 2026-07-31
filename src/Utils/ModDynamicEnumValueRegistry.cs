@@ -1,8 +1,11 @@
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     Per-mod facade for registering dynamic enum values without exposing the internal id category segment.
-    ///     注册动态枚举值的逐 mod facade，不向用户暴露内部 ID category 段。
+    ///     <para xml:lang="en">
+    ///         Per-mod facade for registering dynamic enum values without making the internal ID category
+    ///         segment public.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">用于注册动态枚举值的逐模组门面，不向调用方公开内部 ID 类别段。</para>
     /// </summary>
     public sealed class ModDynamicEnumValueRegistry<TEnum> where TEnum : struct, Enum
     {
@@ -12,14 +15,17 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Owning mod id.
-        ///     所属 mod ID。
+        ///     <para xml:lang="en">Owning mod ID.</para>
+        ///     <para xml:lang="zh-CN">所属模组 ID。</para>
         /// </summary>
         public string ModId { get; }
 
         /// <summary>
-        ///     Registers a value owned by this registry's mod using the enum type's configured category segment.
-        ///     使用此枚举类型配置的 category 段注册一个归属当前 mod 的值。
+        ///     <para xml:lang="en">
+        ///         Registers a value owned by this registry's mod using the enum type's configured category
+        ///         segment.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使用该枚举类型配置的类别段注册归属此注册表模组的值。</para>
         /// </summary>
         public DynamicEnumValueDefinition<TEnum> RegisterOwned(string localStem)
         {
@@ -27,8 +33,8 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Builds the canonical owned id for <paramref name="localStem" />.
-        ///     为 <paramref name="localStem" /> 构建规范 owned ID。
+        ///     <para xml:lang="en">Builds the canonical owned ID for <paramref name="localStem" />.</para>
+        ///     <para xml:lang="zh-CN">为 <paramref name="localStem" /> 构建规范的归属 ID。</para>
         /// </summary>
         public string GetOwnedId(string localStem)
         {
@@ -36,8 +42,11 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns the deterministic value for the canonical owned id without requiring registration.
-        ///     返回规范 owned ID 对应的确定性值，不要求该值已注册。
+        ///     <para xml:lang="en">
+        ///         Returns and records the deterministic value for the canonical owned ID without registering a
+        ///         definition.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回并登记规范归属 ID 对应的确定性值，但不注册定义。</para>
         /// </summary>
         public TEnum GetOwnedValue(string localStem)
         {
@@ -45,8 +54,11 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Returns the deterministic value for the canonical owned id without failing on hash collisions.
-        ///     返回规范 owned ID 对应的确定性值，且不会因哈希碰撞失败。
+        ///     <para xml:lang="en">
+        ///         Returns the registered value for the canonical owned ID, or computes it without failing on hash
+        ///         collisions or adding a minter reverse lookup.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">返回规范归属 ID 的已注册值；未注册时则直接计算，且不会因哈希碰撞而失败，也不会加入生成器的反向查找。</para>
         /// </summary>
         public TEnum GetOwnedValueIgnoringCollisions(string localStem)
         {

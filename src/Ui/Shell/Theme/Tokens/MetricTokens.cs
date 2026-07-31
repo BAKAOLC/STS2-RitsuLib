@@ -1,52 +1,52 @@
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Numeric metrics grouped by intent.
-    ///     按意图分组的数值指标。
+    ///     <para xml:lang="en">Groups shell-theme dimensions, spacing, typography sizes, and layout behavior.</para>
+    ///     <para xml:lang="zh-CN">集中定义 Shell 主题的尺寸、间距、排版大小及布局行为。</para>
     /// </summary>
     /// <param name="Radius">
-    ///     Corner radius scale.
-    ///     圆角半径刻度。
+    ///     <para xml:lang="en">The corner-radius scale.</para>
+    ///     <para xml:lang="zh-CN">圆角半径规格。</para>
     /// </param>
     /// <param name="BorderWidth">
-    ///     Border width scale.
-    ///     边框宽度刻度。
+    ///     <para xml:lang="en">The border-width scale.</para>
+    ///     <para xml:lang="zh-CN">边框宽度规格。</para>
     /// </param>
     /// <param name="Entry">
-    ///     Entry / row sizing.
-    ///     条目/行尺寸。
+    ///     <para xml:lang="en">The entry and row dimensions.</para>
+    ///     <para xml:lang="zh-CN">条目及行的尺寸。</para>
     /// </param>
     /// <param name="Slider">
-    ///     Slider sizing.
-    ///     滑块尺寸。
+    ///     <para xml:lang="en">The slider dimensions.</para>
+    ///     <para xml:lang="zh-CN">滑块尺寸。</para>
     /// </param>
     /// <param name="Choice">
-    ///     Choice / stepper row sizing.
-    ///     选择/步进器行尺寸。
+    ///     <para xml:lang="en">The choice and stepper dimensions.</para>
+    ///     <para xml:lang="zh-CN">选择控件及步进器的尺寸。</para>
     /// </param>
     /// <param name="Color">
-    ///     Color picker row sizing.
-    ///     颜色选择器行尺寸。
+    ///     <para xml:lang="en">The color-picker row dimensions.</para>
+    ///     <para xml:lang="zh-CN">颜色选择器行的尺寸。</para>
     /// </param>
     /// <param name="StringEntry">
-    ///     String editor sizing.
-    ///     字符串编辑器尺寸。
+    ///     <para xml:lang="en">The string-editor dimensions.</para>
+    ///     <para xml:lang="zh-CN">字符串编辑器尺寸。</para>
     /// </param>
     /// <param name="Keybinding">
-    ///     Keybinding capture sizing.
-    ///     按键绑定捕获尺寸。
+    ///     <para xml:lang="en">The key-binding editor dimensions.</para>
+    ///     <para xml:lang="zh-CN">按键绑定编辑器尺寸。</para>
     /// </param>
     /// <param name="Overlay">
-    ///     Floating overlay sizing.
-    ///     浮动覆盖层尺寸。
+    ///     <para xml:lang="en">The floating-overlay dimensions.</para>
+    ///     <para xml:lang="zh-CN">浮动层尺寸。</para>
     /// </param>
     /// <param name="Sidebar">
-    ///     Sidebar navigation sizing and behavior.
-    ///     侧边栏导航的尺寸和行为。
+    ///     <para xml:lang="en">The sidebar navigation dimensions and behavior.</para>
+    ///     <para xml:lang="zh-CN">侧边栏导航的尺寸及行为。</para>
     /// </param>
     /// <param name="FontSize">
-    ///     Font size scale.
-    ///     字体大小刻度。
+    ///     <para xml:lang="en">The font-size scale.</para>
+    ///     <para xml:lang="zh-CN">字号规格。</para>
     /// </param>
     public sealed record MetricTokens(
         RadiusMetrics Radius,
@@ -62,82 +62,82 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         FontSizeMetrics FontSize);
 
     /// <summary>
-    ///     Corner radius scale.
-    ///     圆角半径刻度。
+    ///     <para xml:lang="en">Groups fallback corner radii for common Shell panels.</para>
+    ///     <para xml:lang="zh-CN">集中定义常见 Shell 面板的备用圆角半径。</para>
     /// </summary>
     /// <param name="Default">
-    ///     Shared StyleBox corner radius.
-    ///     共享 StyleBox 的圆角半径。
+    ///     <para xml:lang="en">The default style-box corner radius.</para>
+    ///     <para xml:lang="zh-CN">默认样式框圆角半径。</para>
     /// </param>
     /// <param name="Validation">
-    ///     Corner radius for validation chrome.
-    ///     校验装饰区域的圆角半径。
+    ///     <para xml:lang="en">The corner radius of validation frames.</para>
+    ///     <para xml:lang="zh-CN">验证边框的圆角半径。</para>
     /// </param>
     /// <param name="Overlay">
-    ///     Corner radius for floating overlay panels.
-    ///     浮动叠加面板的圆角半径。
+    ///     <para xml:lang="en">The corner radius of floating overlay panels.</para>
+    ///     <para xml:lang="zh-CN">浮动层面板的圆角半径。</para>
     /// </param>
     public sealed record RadiusMetrics(int Default, int Validation, int Overlay);
 
     /// <summary>
-    ///     Border width scale.
-    ///     边框宽度刻度。
+    ///     <para xml:lang="en">Groups fallback border widths by visual emphasis.</para>
+    ///     <para xml:lang="zh-CN">按视觉强调程度分类定义备用边框宽度。</para>
     /// </summary>
     /// <param name="Thin">
-    ///     Hairline border.
-    ///     细线边框。
+    ///     <para xml:lang="en">The thin border width.</para>
+    ///     <para xml:lang="zh-CN">细边框宽度。</para>
     /// </param>
     /// <param name="Normal">
-    ///     Default emphasis border.
-    ///     默认强调边框。
+    ///     <para xml:lang="en">The normal emphasis border width.</para>
+    ///     <para xml:lang="zh-CN">普通强调边框宽度。</para>
     /// </param>
     /// <param name="Thick">
-    ///     Strong emphasis border.
-    ///     强强调边框。
+    ///     <para xml:lang="en">The strong emphasis border width.</para>
+    ///     <para xml:lang="zh-CN">强强调边框宽度。</para>
     /// </param>
     /// <param name="Overlay">
-    ///     Border width for floating overlay panels.
-    ///     浮动叠加面板的边框宽度。
+    ///     <para xml:lang="en">The border width of floating overlay panels.</para>
+    ///     <para xml:lang="zh-CN">浮动层面板的边框宽度。</para>
     /// </param>
     public sealed record BorderWidthMetrics(int Thin, int Normal, int Thick, int Overlay);
 
     /// <summary>
-    ///     Entry / row sizing.
-    ///     条目 / 行尺寸。
+    ///     <para xml:lang="en">Groups common entry and value-control dimensions.</para>
+    ///     <para xml:lang="zh-CN">集中定义常见条目及值控件的尺寸。</para>
     /// </summary>
     /// <param name="ValueMinWidth">
-    ///     Default minimum width for compact value widgets.
-    ///     紧凑值控件的默认最小宽度。
+    ///     <para xml:lang="en">The default minimum width of compact value controls.</para>
+    ///     <para xml:lang="zh-CN">紧凑值控件的默认最小宽度。</para>
     /// </param>
     /// <param name="ValueMinHeight">
-    ///     Fixed vertical size for value column widgets.
-    ///     值列控件的固定垂直尺寸。
+    ///     <para xml:lang="en">The default minimum height of value controls.</para>
+    ///     <para xml:lang="zh-CN">值控件的默认最小高度。</para>
     /// </param>
     /// <param name="MiniStepperButtonSize">
-    ///     Square size for compact stepper buttons.
-    ///     紧凑步进按钮的正方形尺寸。
+    ///     <para xml:lang="en">The width and height of compact stepper buttons.</para>
+    ///     <para xml:lang="zh-CN">紧凑步进按钮的宽度及高度。</para>
     /// </param>
     public sealed record EntryMetrics(float ValueMinWidth, float ValueMinHeight, int MiniStepperButtonSize);
 
     /// <summary>
-    ///     Slider sizing.
-    ///     滑块尺寸。
+    ///     <para xml:lang="en">Groups slider-row, track, and value-field dimensions.</para>
+    ///     <para xml:lang="zh-CN">集中定义滑块条目、轨道及数值字段的尺寸。</para>
     /// </summary>
     /// <param name="RowMinWidth">
-    ///     Slider row minimum width.
-    ///     滑块行的最小宽度。
+    ///     <para xml:lang="en">The minimum width of a slider row.</para>
+    ///     <para xml:lang="zh-CN">滑块行的最小宽度。</para>
     /// </param>
     /// <param name="TrackMinWidth">
-    ///     Minimum width reserved for the HSlider track.
-    ///     为 HSlider 轨道预留的最小宽度。
+    ///     <para xml:lang="en">The minimum width reserved for the horizontal slider track.</para>
+    ///     <para xml:lang="zh-CN">为水平滑块轨道预留的最小宽度。</para>
     /// </param>
     /// <param name="ValueFieldWidth">
-    ///     Width of the inline numeric field next to sliders.
-    ///     滑块旁内联数值字段的宽度。
+    ///     <para xml:lang="en">The width of the inline numeric field beside a slider.</para>
+    ///     <para xml:lang="zh-CN">滑块旁内联数值字段的宽度。</para>
     /// </param>
     /// <param name="ValueFieldHeight">
-    ///     Height of the inline numeric field next to sliders.
-    ///     滑块旁内联数值字段的高度。
+    ///     <para xml:lang="en">The height of the inline numeric field beside a slider.</para>
+    ///     <para xml:lang="zh-CN">滑块旁内联数值字段的高度。</para>
     /// </param>
     public sealed record SliderMetrics(
         float RowMinWidth,
@@ -146,118 +146,122 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         float ValueFieldHeight);
 
     /// <summary>
-    ///     Choice (stepper) row sizing.
-    ///     选择（步进器）行尺寸。
+    ///     <para xml:lang="en">Groups choice-stepper row dimensions.</para>
+    ///     <para xml:lang="zh-CN">集中定义选择步进器条目的尺寸。</para>
     /// </summary>
     /// <param name="RowMinWidth">
-    ///     Stepper row total width.
-    ///     步进器行总宽度。
+    ///     <para xml:lang="en">The minimum width of the complete stepper row.</para>
+    ///     <para xml:lang="zh-CN">完整步进器行的最小宽度。</para>
     /// </param>
     /// <param name="CenterMinWidth">
-    ///     Minimum width for the center label area.
-    ///     中心标签区域的最小宽度。
+    ///     <para xml:lang="en">The minimum width of the center label area.</para>
+    ///     <para xml:lang="zh-CN">中央标签区域的最小宽度。</para>
     /// </param>
     public sealed record ChoiceMetrics(float RowMinWidth, float CenterMinWidth);
 
     /// <summary>
-    ///     Color picker row sizing.
-    ///     颜色选择器行尺寸。
+    ///     <para xml:lang="en">Groups color-picker row and swatch dimensions.</para>
+    ///     <para xml:lang="zh-CN">集中定义颜色选择器条目及色块的尺寸。</para>
     /// </summary>
     /// <param name="RowMinWidth">
-    ///     Color row minimum width.
-    ///     颜色行的最小宽度。
+    ///     <para xml:lang="en">The minimum width of a color-picker row.</para>
+    ///     <para xml:lang="zh-CN">颜色选择器行的最小宽度。</para>
     /// </param>
     /// <param name="SwatchSize">
-    ///     Swatch size.
-    ///     色块尺寸。
+    ///     <para xml:lang="en">The width and height of the color swatch.</para>
+    ///     <para xml:lang="zh-CN">颜色色块的宽度及高度。</para>
     /// </param>
     public sealed record ColorRowMetrics(float RowMinWidth, float SwatchSize);
 
     /// <summary>
-    ///     String editor sizing.
-    ///     字符串编辑器尺寸。
+    ///     <para xml:lang="en">Groups single-line and multiline string-editor dimensions.</para>
+    ///     <para xml:lang="zh-CN">集中定义单行及多行字符串编辑器的尺寸。</para>
     /// </summary>
     /// <param name="MinWidth">
-    ///     Single-line string entry minimum width.
-    ///     单行字符串条目的最小宽度。
+    ///     <para xml:lang="en">The minimum width of a single-line string entry.</para>
+    ///     <para xml:lang="zh-CN">单行字符串条目的最小宽度。</para>
     /// </param>
     /// <param name="MultilineMinHeight">
-    ///     Multiline string entry minimum height.
-    ///     多行字符串条目的最小高度。
+    ///     <para xml:lang="en">The minimum height of a multiline string entry.</para>
+    ///     <para xml:lang="zh-CN">多行字符串条目的最小高度。</para>
     /// </param>
     public sealed record StringEntryMetrics(float MinWidth, float MultilineMinHeight);
 
     /// <summary>
-    ///     Keybinding capture sizing.
-    ///     按键绑定捕获尺寸。
+    ///     <para xml:lang="en">Groups key-binding editor dimensions and helper-text sizing.</para>
+    ///     <para xml:lang="zh-CN">集中定义按键绑定编辑器的尺寸及辅助文本字号。</para>
     /// </summary>
     /// <param name="BlockWidth">
-    ///     Keybinding block width.
-    ///     按键绑定块宽度。
+    ///     <para xml:lang="en">The width of the key-binding control block.</para>
+    ///     <para xml:lang="zh-CN">按键绑定控件块的宽度。</para>
     /// </param>
     /// <param name="CaptureMinWidth">
-    ///     Minimum width of the keybinding capture button.
-    ///     按键绑定捕获按钮的最小宽度。
+    ///     <para xml:lang="en">The minimum width of the key-capture button.</para>
+    ///     <para xml:lang="zh-CN">按键捕获按钮的最小宽度。</para>
     /// </param>
     /// <param name="HintFontSize">
-    ///     Font size for keybinding helper text.
-    ///     按键绑定辅助文本的字体大小。
+    ///     <para xml:lang="en">The font size of key-binding helper text.</para>
+    ///     <para xml:lang="zh-CN">按键绑定辅助文本的字号。</para>
     /// </param>
     public sealed record KeybindingMetrics(float BlockWidth, float CaptureMinWidth, int HintFontSize);
 
     /// <summary>
-    ///     Floating overlay panel sizing.
-    ///     浮动叠加面板尺寸。
+    ///     <para xml:lang="en">Groups the content padding of floating overlay panels.</para>
+    ///     <para xml:lang="zh-CN">集中定义浮动层面板的内容内边距。</para>
     /// </summary>
     /// <param name="PaddingH">
-    ///     Horizontal padding.
-    ///     水平内边距。
+    ///     <para xml:lang="en">The horizontal content padding.</para>
+    ///     <para xml:lang="zh-CN">水平内容内边距。</para>
     /// </param>
     /// <param name="PaddingV">
-    ///     Vertical padding.
-    ///     垂直内边距。
+    ///     <para xml:lang="en">The vertical content padding.</para>
+    ///     <para xml:lang="zh-CN">垂直内容内边距。</para>
     /// </param>
     public sealed record OverlayMetrics(int PaddingH, int PaddingV);
 
     /// <summary>
-    ///     Sidebar navigation sizing and behavior.
-    ///     侧边栏导航的尺寸和行为。
+    ///     <para xml:lang="en">Groups sidebar navigation dimensions, spacing, and optional metadata display.</para>
+    ///     <para xml:lang="zh-CN">集中定义侧边栏导航的尺寸、间距及可选元数据显示行为。</para>
     /// </summary>
     /// <param name="Width">
-    ///     Fixed sidebar column width.
-    ///     固定侧边栏列宽。
+    ///     <para xml:lang="en">The minimum width of the sidebar column.</para>
+    ///     <para xml:lang="zh-CN">侧边栏列的最小宽度。</para>
     /// </param>
     /// <param name="PageRowMinHeight">
-    ///     Minimum row height for a page tab.
-    ///     页面标签的最小行高。
+    ///     <para xml:lang="en">The minimum height of a page row.</para>
+    ///     <para xml:lang="zh-CN">页面行的最小高度。</para>
     /// </param>
     /// <param name="SectionRowMinHeight">
-    ///     Minimum row height for a section jump row.
-    ///     小节跳转行的最小行高。
+    ///     <para xml:lang="en">The minimum height of a section-navigation row.</para>
+    ///     <para xml:lang="zh-CN">分区导航行的最小高度。</para>
     /// </param>
     /// <param name="ModListSeparation">
-    ///     Vertical gap between mod cards.
-    ///     mod 卡片之间的垂直间距。
+    ///     <para xml:lang="en">The vertical separation between mod cards.</para>
+    ///     <para xml:lang="zh-CN">模组卡片之间的垂直间距。</para>
     /// </param>
     /// <param name="ModCardInnerSeparation">
-    ///     Vertical gap inside an expanded mod card.
-    ///     展开的 mod 卡片内部垂直间距。
+    ///     <para xml:lang="en">The vertical separation within an expanded mod card.</para>
+    ///     <para xml:lang="zh-CN">展开的模组卡片内部的垂直间距。</para>
     /// </param>
     /// <param name="PageTreeSeparation">
-    ///     Gap between stacked root page rows.
-    ///     堆叠根页面行之间的间距。
+    ///     <para xml:lang="en">The separation between stacked root-page rows.</para>
+    ///     <para xml:lang="zh-CN">堆叠的根页面行之间的间距。</para>
     /// </param>
     /// <param name="SectionRailSeparation">
-    ///     Gap between section rail rows.
-    ///     小节导航栏行之间的间距。
+    ///     <para xml:lang="en">The separation between section-navigation rows.</para>
+    ///     <para xml:lang="zh-CN">分区导航行之间的间距。</para>
     /// </param>
     /// <param name="CardInnerMargin">
-    ///     Inner margin for compact sidebar mod cards.
-    ///     紧凑侧边栏 mod 卡片的内侧边距。
+    ///     <para xml:lang="en">The content margin of compact sidebar mod cards.</para>
+    ///     <para xml:lang="zh-CN">紧凑侧边栏模组卡片的内容边距。</para>
     /// </param>
     /// <param name="ShowInlinePageCount">
-    ///     When true, expanded mod cards show an inline "N pages" line.
-    ///     为 true 时，展开的 mod 卡片会显示内联的 "N pages" 行。
+    ///     <para xml:lang="en">
+    ///         <see langword="true" /> to show the localized page-count line within expanded mod cards.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         若要在展开的模组卡片内显示本地化页面计数行，则为 <see langword="true" />。
+    ///     </para>
     /// </param>
     public sealed record SidebarMetrics(
         float Width,
@@ -271,79 +275,80 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         bool ShowInlinePageCount);
 
     /// <summary>
-    ///     Font size scale used across the shell.
+    ///     <para xml:lang="en">Groups font sizes used by shell controls, navigation, and overlays.</para>
+    ///     <para xml:lang="zh-CN">集中定义 Shell 控件、导航及浮层使用的字号。</para>
     /// </summary>
     /// <param name="Button">
-    ///     Default font size for standard buttons.
-    ///     标准按钮的默认字体大小。
+    ///     <para xml:lang="en">The default font size of standard buttons.</para>
+    ///     <para xml:lang="zh-CN">标准按钮的默认字号。</para>
     /// </param>
     /// <param name="MiniButton">
-    ///     Font size for compact (mini) buttons.
-    ///     紧凑（迷你）按钮的字体大小。
+    ///     <para xml:lang="en">The font size of compact buttons.</para>
+    ///     <para xml:lang="zh-CN">紧凑按钮的字号。</para>
     /// </param>
     /// <param name="ValueLabel">
-    ///     Font size for dropdown faces and stepper center labels.
-    ///     下拉框表面和步进器中心标签的字体大小。
+    ///     <para xml:lang="en">The font size of drop-down faces and center labels in steppers.</para>
+    ///     <para xml:lang="zh-CN">下拉框正面及步进器中央标签的字号。</para>
     /// </param>
     /// <param name="PopupRow">
-    ///     Font size for dropdown / popup rows.
-    ///     下拉 / 弹出行的字体大小。
+    ///     <para xml:lang="en">The font size of rows in drop-down and other pop-ups.</para>
+    ///     <para xml:lang="zh-CN">下拉框及其他弹出框中各行的字号。</para>
     /// </param>
     /// <param name="HintSmall">
-    ///     Font size for small inline hints.
-    ///     小型内联提示的字体大小。
+    ///     <para xml:lang="en">The font size of small inline hints.</para>
+    ///     <para xml:lang="zh-CN">小型内联提示的字号。</para>
     /// </param>
     /// <param name="Tooltip">
-    ///     Font size for native control tooltips (TooltipLabel).
-    ///     原生控件工具提示（TooltipLabel）的字体大小。
+    ///     <para xml:lang="en">The font size of native <c>TooltipLabel</c> controls.</para>
+    ///     <para xml:lang="zh-CN">原生 <c>TooltipLabel</c> 控件的字号。</para>
     /// </param>
     /// <param name="Grip">
-    ///     Font size for glyph-style grip labels.
-    ///     字形样式拖拽柄标签的字体大小。
+    ///     <para xml:lang="en">The font size of glyph-based drag grips.</para>
+    ///     <para xml:lang="zh-CN">字形拖动握柄的字号。</para>
     /// </param>
     /// <param name="PillCount">
-    ///     Font size for list count badges.
-    ///     列表计数徽标的字体大小。
+    ///     <para xml:lang="en">The font size of list count badges.</para>
+    ///     <para xml:lang="zh-CN">列表计数徽标的字号。</para>
     /// </param>
     /// <param name="Secondary">
-    ///     Font size for secondary text.
-    ///     次要文本的字体大小。
+    ///     <para xml:lang="en">The font size of secondary text.</para>
+    ///     <para xml:lang="zh-CN">次要文本的字号。</para>
     /// </param>
     /// <param name="HeaderArrow">
-    ///     Font size for header arrow glyphs.
-    ///     标题箭头字形的字体大小。
+    ///     <para xml:lang="en">The font size of header arrow glyphs.</para>
+    ///     <para xml:lang="zh-CN">标题栏箭头字形的字号。</para>
     /// </param>
     /// <param name="HeaderTitle">
-    ///     Font size for collapsible header titles.
-    ///     可折叠标题栏标题的字体大小。
+    ///     <para xml:lang="en">The font size of collapsible-header titles.</para>
+    ///     <para xml:lang="zh-CN">可折叠标题栏标题的字号。</para>
     /// </param>
     /// <param name="HeaderSubtitle">
-    ///     Font size for header subtitles.
-    ///     标题栏副标题的字体大小。
+    ///     <para xml:lang="en">The font size of header subtitles.</para>
+    ///     <para xml:lang="zh-CN">标题栏副标题的字号。</para>
     /// </param>
     /// <param name="PageDescription">
-    ///     Font size for page descriptions in the toolbar area.
-    ///     工具栏区域页面说明的字体大小。
+    ///     <para xml:lang="en">The font size of page descriptions in the toolbar area.</para>
+    ///     <para xml:lang="zh-CN">工具栏区域内页面说明的字号。</para>
     /// </param>
     /// <param name="OverlayTitle">
-    ///     Font size for floating overlay titles.
-    ///     浮动叠加层标题的字体大小。
+    ///     <para xml:lang="en">The font size of floating-overlay titles.</para>
+    ///     <para xml:lang="zh-CN">浮动层标题的字号。</para>
     /// </param>
     /// <param name="OverlayBody">
-    ///     Font size for floating overlay body lines.
-    ///     浮动叠加层正文行的字体大小。
+    ///     <para xml:lang="en">The font size of floating-overlay body text.</para>
+    ///     <para xml:lang="zh-CN">浮动层正文的字号。</para>
     /// </param>
     /// <param name="OverlayPath">
-    ///     Font size for floating overlay path labels.
-    ///     浮动叠加层路径标签的字体大小。
+    ///     <para xml:lang="en">The font size of path labels in floating overlays.</para>
+    ///     <para xml:lang="zh-CN">浮动层中路径标签的字号。</para>
     /// </param>
     /// <param name="SettingsEntryButton">
-    ///     Font size for the vanilla settings entry button label.
-    ///     原版设置条目按钮标签的字体大小。
+    ///     <para xml:lang="en">The font size of the vanilla settings-entry button label.</para>
+    ///     <para xml:lang="zh-CN">原版设置入口按钮标签的字号。</para>
     /// </param>
     /// <param name="SettingLineTitle">
-    ///     Primary title font size for each settings entry row label.
-    ///     每个设置条目行标签的主标题字体大小。
+    ///     <para xml:lang="en">The primary title font size of a settings-entry row.</para>
+    ///     <para xml:lang="zh-CN">设置条目行主标题的字号。</para>
     /// </param>
     public sealed record FontSizeMetrics(
         int Button,

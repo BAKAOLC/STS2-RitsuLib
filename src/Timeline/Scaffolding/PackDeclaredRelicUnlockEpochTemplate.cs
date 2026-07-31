@@ -6,25 +6,30 @@ using STS2RitsuLib.Scaffolding.Content;
 namespace STS2RitsuLib.Timeline.Scaffolding
 {
     /// <summary>
-    ///     Relic-unlock epoch whose gated relic types are declared in the content pack via
-    ///     <see cref="TimelineColumnPackEntry{TStory}" />.
-    ///     遗物解锁纪元 其受门控的遗物类型通过内容包中的声明：
-    ///     <see cref="TimelineColumnPackEntry{TStory}" />。
+    ///     <para xml:lang="en">
+    ///         Provides a relic-unlock epoch whose gated relic types are declared through
+    ///         <see cref="TimelineColumnPackEntry{TStory}" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供通过 <see cref="TimelineColumnPackEntry{TStory}" /> 声明受限遗物类型的遗物解锁纪元。
+    ///     </para>
     /// </summary>
     public abstract class PackDeclaredRelicUnlockEpochTemplate : ModEpochTemplate
     {
         /// <summary>
-        ///     Relics resolved from <see cref="ModEpochGatedContentRegistry" /> for this epoch’s <see cref="EpochModel.Id" />.
-        ///     解析出的遗物，来源： <see cref="ModEpochGatedContentRegistry" /> 用于此纪元的 <see cref="EpochModel.Id" />。
+        ///     <para xml:lang="en">Gets the relics registered for this epoch's <see cref="EpochModel.Id" />.</para>
+        ///     <para xml:lang="zh-CN">获取为此纪元的 <see cref="EpochModel.Id" /> 注册的遗物。</para>
         /// </summary>
-        public IReadOnlyList<RelicModel> Relics => ModEpochGatedContentRegistry.ResolveRelics(Id);
+        public IReadOnlyList<RelicModel> Relics => RequireUnlockPresentationItems(
+            ModEpochGatedContentRegistry.ResolveRelics(Id),
+            nameof(ModEpochGatedContentRegistry));
 
         /// <inheritdoc />
         public override string UnlockText => CreateRelicUnlockText([.. Relics]);
 
         /// <summary>
-        ///     Additional epoch types to append when this epoch unlocks.
-        ///     要追加的额外纪元类型 当此纪元解锁时。
+        ///     <para xml:lang="en">Gets additional epoch types appended when this epoch unlocks.</para>
+        ///     <para xml:lang="zh-CN">获取此纪元解锁时追加的其他纪元类型。</para>
         /// </summary>
         protected virtual IEnumerable<Type> ExpansionEpochTypes => [];
 
@@ -37,12 +42,8 @@ namespace STS2RitsuLib.Timeline.Scaffolding
         /// <inheritdoc />
         public override void QueueUnlocks()
         {
-            if (Relics.Count == 0)
-                throw new InvalidOperationException(
-                    $"Pack-declared relic epoch '{Id}' has no relics in {nameof(ModEpochGatedContentRegistry)}. " +
-                    "Register gated relics for this epoch via TimelineColumnPackEntry (e.g. .Epoch<TEpoch>(e => e.RelicsFromPool<...>())) with a non-empty pool.");
-
-            NTimelineScreen.Instance.QueueRelicUnlock([.. Relics]);
+            var relics = Relics;
+            NTimelineScreen.Instance.QueueRelicUnlock([.. relics]);
 
             var expansion = GetTimelineExpansion();
             if (expansion.Length > 0)

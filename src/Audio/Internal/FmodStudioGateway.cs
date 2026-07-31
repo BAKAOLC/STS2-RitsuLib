@@ -3,8 +3,8 @@ using Godot;
 namespace STS2RitsuLib.Audio.Internal
 {
     /// <summary>
-    ///     Centralized FmodServer lookup and guarded <see cref="GodotObject.Call(StringName, Variant[])" /> calls.
-    ///     集中式 FmodServer 查找和受保护的 <see cref="GodotObject.Call(StringName, Variant[])" /> 调用。
+    ///     <para xml:lang="en">Centralizes guarded <c>FmodServer</c> lookup and dynamic Godot method invocation.</para>
+    ///     <para xml:lang="zh-CN">集中执行受保护的 <c>FmodServer</c> 查找和 Godot 动态方法调用。</para>
     /// </summary>
     internal static class FmodStudioGateway
     {
@@ -14,11 +14,15 @@ namespace STS2RitsuLib.Audio.Internal
         {
             try
             {
-                return !Engine.HasSingleton(ServerName) ? null : Engine.GetSingleton(ServerName);
+                if (!Engine.HasSingleton(ServerName))
+                    return null;
+
+                var server = Engine.GetSingleton(ServerName);
+                return server is not null && GodotObject.IsInstanceValid(server) ? server : null;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FmodServer singleton: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FmodServer singleton: {ex}");
                 return null;
             }
         }
@@ -27,7 +31,7 @@ namespace STS2RitsuLib.Audio.Internal
         {
             result = default;
             var server = TryGetServer();
-            if (server is null)
+            if (server is null || !server.HasMethod(method))
                 return false;
 
             try
@@ -37,7 +41,7 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD {method}: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD {method}: {ex}");
                 return false;
             }
         }

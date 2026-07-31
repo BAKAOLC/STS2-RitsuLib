@@ -4,20 +4,20 @@ using MegaCrit.Sts2.Core.Saves;
 namespace STS2RitsuLib
 {
     /// <summary>
-    ///     Active profile id is known; replayed to new subscribers.
-    ///     已知当前活动档案 ID；会向新订阅者重放。
+    ///     <para xml:lang="en">The active profile ID has been initialized; this event is replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">当前活动档案 ID 已初始化；此事件会向新订阅者重放。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="ProfileId">
-    ///     Current profile id.
-    ///     当前档案 ID。
+    ///     <para xml:lang="en">Current profile id.</para>
+    ///     <para xml:lang="zh-CN">当前档案 ID。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct ProfileIdInitializedEvent(
         SaveManager SaveManager,
@@ -26,24 +26,24 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Profile switch requested.
-    ///     已请求切换档案。
+    ///     <para xml:lang="en">A profile switch is about to begin.</para>
+    ///     <para xml:lang="zh-CN">档案切换即将开始。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="PreviousProfileId">
-    ///     Prior profile id, if any.
-    ///     之前的档案 ID（如果存在）。
+    ///     <para xml:lang="en">Prior profile id, if any.</para>
+    ///     <para xml:lang="zh-CN">之前的档案 ID（如果存在）。</para>
     /// </param>
     /// <param name="NextProfileId">
-    ///     Target profile id.
-    ///     目标档案 ID。
+    ///     <para xml:lang="en">Target profile id.</para>
+    ///     <para xml:lang="zh-CN">目标档案 ID。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct ProfileSwitchingEvent(
         SaveManager SaveManager,
@@ -53,24 +53,24 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Profile switch completed; replayed to new subscribers.
-    ///     档案切换已完成；会向新订阅者重放。
+    ///     <para xml:lang="en">A profile switch has completed; this event is replayed to new subscribers.</para>
+    ///     <para xml:lang="zh-CN">档案切换已完成；此事件会向新订阅者重放。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="PreviousProfileId">
-    ///     Prior profile id, if any.
-    ///     之前的档案 ID（如果存在）。
+    ///     <para xml:lang="en">Prior profile id, if any.</para>
+    ///     <para xml:lang="zh-CN">之前的档案 ID（如果存在）。</para>
     /// </param>
     /// <param name="CurrentProfileId">
-    ///     New active profile id.
-    ///     新的当前活动档案 ID。
+    ///     <para xml:lang="en">New active profile id.</para>
+    ///     <para xml:lang="zh-CN">新的当前活动档案 ID。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct ProfileSwitchedEvent(
         SaveManager SaveManager,
@@ -80,24 +80,24 @@ namespace STS2RitsuLib
     ) : IReplayableFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Run save is about to be written.
-    ///     跑局存档即将写入。
+    ///     <para xml:lang="en">A run save is about to be written.</para>
+    ///     <para xml:lang="zh-CN">局内存档即将写入。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="PreFinishedRoom">
-    ///     Room snapshot before completion, when applicable.
-    ///     适用时为完成前的房间快照。
+    ///     <para xml:lang="en">Room snapshot before completion, when applicable.</para>
+    ///     <para xml:lang="zh-CN">适用时为完成前的房间快照。</para>
     /// </param>
     /// <param name="SaveProgress">
-    ///     Whether progress should be persisted.
-    ///     是否应持久化进度。
+    ///     <para xml:lang="en">Whether progress should be persisted.</para>
+    ///     <para xml:lang="zh-CN">是否应持久化进度。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct RunSavingEvent(
         SaveManager SaveManager,
@@ -107,24 +107,24 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Run save completed.
-    ///     跑局存档已完成。
+    ///     <para xml:lang="en">A run save has been written.</para>
+    ///     <para xml:lang="zh-CN">局内存档已写入。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="PreFinishedRoom">
-    ///     Room snapshot before completion, when applicable.
-    ///     适用时为完成前的房间快照。
+    ///     <para xml:lang="en">Room snapshot before completion, when applicable.</para>
+    ///     <para xml:lang="zh-CN">适用时为完成前的房间快照。</para>
     /// </param>
     /// <param name="SaveProgress">
-    ///     Whether progress was persisted.
-    ///     是否已持久化进度。
+    ///     <para xml:lang="en">Whether progress was persisted.</para>
+    ///     <para xml:lang="zh-CN">是否已持久化进度。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct RunSavedEvent(
         SaveManager SaveManager,
@@ -134,20 +134,20 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Meta/progress save starting.
-    ///     元数据/进度存档即将开始。
+    ///     <para xml:lang="en">A progress save is about to begin.</para>
+    ///     <para xml:lang="zh-CN">进度保存即将开始。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="ProfileId">
-    ///     Profile being saved, when scoped.
-    ///     有作用域时为正在保存的档案。
+    ///     <para xml:lang="en">Profile being saved, when scoped.</para>
+    ///     <para xml:lang="zh-CN">有作用域时为正在保存的档案。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct ProgressSavingEvent(
         SaveManager SaveManager,
@@ -156,20 +156,20 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Meta/progress save finished.
-    ///     元数据/进度存档已完成。
+    ///     <para xml:lang="en">A progress save has completed.</para>
+    ///     <para xml:lang="zh-CN">进度保存已完成。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="ProfileId">
-    ///     Profile that was saved, when scoped.
-    ///     有作用域时为已保存的档案。
+    ///     <para xml:lang="en">Profile that was saved, when scoped.</para>
+    ///     <para xml:lang="zh-CN">有作用域时为已保存的档案。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct ProgressSavedEvent(
         SaveManager SaveManager,
@@ -178,20 +178,20 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Profile deletion requested.
-    ///     已请求删除档案。
+    ///     <para xml:lang="en">A profile is about to be deleted.</para>
+    ///     <para xml:lang="zh-CN">一个档案即将被删除。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="ProfileId">
-    ///     Profile slated for deletion.
-    ///     计划删除的档案。
+    ///     <para xml:lang="en">Profile slated for deletion.</para>
+    ///     <para xml:lang="zh-CN">计划删除的档案。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct ProfileDeletingEvent(
         SaveManager SaveManager,
@@ -200,20 +200,20 @@ namespace STS2RitsuLib
     ) : IFrameworkLifecycleEvent;
 
     /// <summary>
-    ///     Profile deletion completed.
-    ///     档案删除已完成。
+    ///     <para xml:lang="en">A profile has been deleted.</para>
+    ///     <para xml:lang="zh-CN">一个档案已被删除。</para>
     /// </summary>
     /// <param name="SaveManager">
-    ///     Save manager instance.
-    ///     存档管理器实例。
+    ///     <para xml:lang="en">Save manager instance.</para>
+    ///     <para xml:lang="zh-CN">存档管理器实例。</para>
     /// </param>
     /// <param name="ProfileId">
-    ///     Profile that was deleted.
-    ///     已删除的档案。
+    ///     <para xml:lang="en">Profile that was deleted.</para>
+    ///     <para xml:lang="zh-CN">已删除的档案。</para>
     /// </param>
     /// <param name="OccurredAtUtc">
-    ///     When the event was raised.
-    ///     事件触发的时间。
+    ///     <para xml:lang="en">When the event was raised.</para>
+    ///     <para xml:lang="zh-CN">事件触发的时间。</para>
     /// </param>
     public readonly record struct ProfileDeletedEvent(
         SaveManager SaveManager,

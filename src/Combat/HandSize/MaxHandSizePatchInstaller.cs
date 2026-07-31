@@ -4,7 +4,6 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -14,6 +13,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Patching.Builders;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Utils.HarmonyIl;
@@ -21,14 +21,17 @@ using STS2RitsuLib.Utils.HarmonyIl;
 namespace STS2RitsuLib.Combat.HandSize
 {
     /// <summary>
-    ///     Installs RitsuLib max-hand-size patches.
-    ///     安装 RitsuLib 最大手牌数补丁。
+    ///     <para xml:lang="en">Installs RitsuLib maximum-hand-size patches.</para>
+    ///     <para xml:lang="zh-CN">安装 RitsuLib 手牌上限补丁。</para>
     /// </summary>
     internal static class MaxHandSizePatchInstaller
     {
         private const int DefaultMaxHandSize = 10;
         private static readonly Lock Gate = new();
+        private static readonly List<string> RewriteFailures = [];
         private static bool _patched;
+        private static int _rewriteTargetCount;
+        private static int _rewriteSuccessCount;
 
         private static readonly MethodInfo GetMaxHandSizeMethod =
             AccessTools.Method(typeof(MaxHandSizeCalculator), nameof(MaxHandSizeCalculator.Calculate))
@@ -53,6 +56,10 @@ namespace STS2RitsuLib.Combat.HandSize
                 if (_patched)
                     return;
 
+                RewriteFailures.Clear();
+                _rewriteTargetCount = 0;
+                _rewriteSuccessCount = 0;
+
                 var builder = new DynamicPatchBuilder("max_hand_size");
                 var transpilerPlayerArg0 =
                     FromMethodAfterBaseLib(nameof(PlayerArg0Transpiler));
@@ -66,8 +73,16 @@ namespace STS2RitsuLib.Combat.HandSize
                 TryAddMethodPatch(builder, typeof(CardPileCmd),
                     nameof(CardPileCmd.CheckIfDrawIsPossibleAndShowThoughtBubbleIfNot),
                     [typeof(Player)], transpilerPlayerArg0);
+#if STS2_AT_LEAST_0_110_0
+                TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(CombatManager),
+                        nameof(CombatManager.SetupPlayerTurn),
+                        [typeof(CombatTurnState), typeof(Player), typeof(HookPlayerChoiceContext)]),
+                    transpilerStateMachine,
+                    "Patch CombatManager.SetupPlayerTurn state machine max-hand-size constants");
+#else
                 TryAddMethodPatch(builder, typeof(CombatManager), nameof(CombatManager.SetupPlayerTurn),
                     [typeof(Player), typeof(HookPlayerChoiceContext)], transpilerPlayerArg1);
+#endif
                 TryAddMethodPatch(builder, typeof(CardConsoleCmd), nameof(CardConsoleCmd.Process),
                     [typeof(Player), typeof(string[])], transpilerPlayerArg1);
 
@@ -81,7 +96,7 @@ namespace STS2RitsuLib.Combat.HandSize
                     transpilerStateMachine, "Patch CardPileCmd.Draw state machine max-hand-size constants");
 #endif
                 TryAddAsyncMoveNextPatch(builder, ResolveCardPileCmdAddMethod(),
-                    transpilerStateMachine, "Patch CardPileCmd.Add state machine max-hand-size constants");
+                    cardOnPlayTranspiler, "Patch CardPileCmd.Add state machine max-hand-size constants");
 
                 TryAddAsyncMoveNextPatch(builder, AccessTools.Method(typeof(Scrawl), "OnPlay",
                         [typeof(PlayerChoiceContext), typeof(CardPlay)]),
@@ -127,6 +142,14 @@ namespace STS2RitsuLib.Combat.HandSize
                 }
 
                 _patched = true;
+                var rewriteSummary =
+                    $"{_rewriteSuccessCount}/{_rewriteTargetCount} IL rewrite target(s) satisfied";
+                if (RewriteFailures.Count > 0)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[MaxHandSize] Harmony patches installed with partial IL coverage: {rewriteSummary}. " +
+                        $"Unsatisfied targets: {string.Join("; ", RewriteFailures)}");
+                else
+                    RitsuLibFramework.Logger.Info($"[MaxHandSize] {rewriteSummary}.");
 #if !STS2_AT_LEAST_0_104_0
                 RitsuLibFramework.Logger.Info("[MaxHandSize] RitsuLib hand-size patch set installed (compat 0.103.2 profile).");
 #elif !STS2_AT_LEAST_0_105_0
@@ -141,16 +164,19 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static MethodInfo? ResolveCardPileCmdAddMethod()
         {
+#if STS2_AT_LEAST_0_110_0
             return AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
-                   [
-                       typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
-                       typeof(AbstractModel), typeof(bool), typeof(bool),
-                   ])
-                   ?? AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
-                   [
-                       typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
-                       typeof(AbstractModel), typeof(bool),
-                   ]);
+            [
+                typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
+                typeof(AbstractModel), typeof(bool), typeof(bool),
+            ]);
+#else
+            return AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
+                [
+                    typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),
+                    typeof(AbstractModel), typeof(bool),
+                ]);
+#endif
         }
 
         private static HarmonyMethod FromMethodAfterBaseLib(string methodName)
@@ -250,7 +276,8 @@ namespace STS2RitsuLib.Combat.HandSize
             IEnumerable<CodeInstruction> instructions,
             Func<IReadOnlyList<CodeInstruction>, int, IReadOnlyList<CodeInstruction>> buildReplacement,
             string operation,
-            MethodInfo alreadyInstalledCall)
+            MethodInfo alreadyInstalledCall,
+            MethodBase? originalMethod)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
             var report = rewriter.ReplaceEach(
@@ -259,33 +286,44 @@ namespace STS2RitsuLib.Combat.HandSize
                 buildReplacement,
                 code => ContainsCall(code, alreadyInstalledCall));
             WarnIfRewriteUnsatisfied(report);
+            RecordRewriteResult(originalMethod, report);
             return rewriter.InstructionsChecked(operation);
         }
 
-        private static IEnumerable<CodeInstruction> PlayerArg0Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> PlayerArg0Transpiler(
+            IEnumerable<CodeInstruction> instructions,
+            MethodBase __originalMethod)
         {
             return RewriteMaxHandSizeLoads(instructions,
                 static (_, _) => [HarmonyIl.Ldarg(0), HarmonyIl.Call(GetMaxHandSizeMethod)],
                 "[MaxHandSize] PlayerArg0 max-hand-size replacement",
-                GetMaxHandSizeMethod);
+                GetMaxHandSizeMethod,
+                __originalMethod);
         }
 
-        private static IEnumerable<CodeInstruction> PlayerArg1Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> PlayerArg1Transpiler(
+            IEnumerable<CodeInstruction> instructions,
+            MethodBase __originalMethod)
         {
             return RewriteMaxHandSizeLoads(instructions,
                 static (_, _) => [HarmonyIl.Ldarg(1), HarmonyIl.Call(GetMaxHandSizeMethod)],
                 "[MaxHandSize] PlayerArg1 max-hand-size replacement",
-                GetMaxHandSizeMethod);
+                GetMaxHandSizeMethod,
+                __originalMethod);
         }
 
-        private static IEnumerable<CodeInstruction> StateMachineTranspiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> StateMachineTranspiler(
+            IEnumerable<CodeInstruction> instructions,
+            MethodBase __originalMethod)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
             var loadPlayer = FindStateMachinePlayerLoad(rewriter);
             if (loadPlayer == null)
             {
+                RecordRewriteFailure(__originalMethod, "Player load pattern not found");
                 RitsuLibFramework.Logger.Warn(
-                    "[MaxHandSize] State-machine transpiler could not resolve Player load pattern; skipped replacements.");
+                    $"[MaxHandSize] {FormatMethod(__originalMethod)} could not resolve Player load pattern; " +
+                    "skipped replacements.");
                 return rewriter.Instructions();
             }
 
@@ -295,17 +333,22 @@ namespace STS2RitsuLib.Combat.HandSize
                 (_, _) => [.. HarmonyIl.CloneAll(loadPlayer), HarmonyIl.Call(GetMaxHandSizeMethod)],
                 code => ContainsCall(code, GetMaxHandSizeMethod));
             WarnIfRewriteUnsatisfied(report);
+            RecordRewriteResult(__originalMethod, report);
             return rewriter.InstructionsChecked("[MaxHandSize] State-machine max-hand-size replacement");
         }
 
-        private static IEnumerable<CodeInstruction> CardOnPlayTranspiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> CardOnPlayTranspiler(
+            IEnumerable<CodeInstruction> instructions,
+            MethodBase __originalMethod)
         {
             var rewriter = HarmonyIlRewriter.From(instructions);
             var loadCard = FindStateMachineCardLoad(rewriter);
             if (loadCard == null)
             {
+                RecordRewriteFailure(__originalMethod, "CardModel load pattern not found");
                 RitsuLibFramework.Logger.Warn(
-                    "[MaxHandSize] Card OnPlay transpiler could not resolve Card load pattern; skipped replacements.");
+                    $"[MaxHandSize] {FormatMethod(__originalMethod)} could not resolve CardModel load pattern; " +
+                    "skipped replacements.");
                 return rewriter.Instructions();
             }
 
@@ -315,7 +358,34 @@ namespace STS2RitsuLib.Combat.HandSize
                 (_, _) => [.. HarmonyIl.CloneAll(loadCard), HarmonyIl.Call(GetMaxHandSizeFromCardMethod)],
                 code => ContainsCall(code, GetMaxHandSizeFromCardMethod));
             WarnIfRewriteUnsatisfied(report);
+            RecordRewriteResult(__originalMethod, report);
             return rewriter.InstructionsChecked("[MaxHandSize] Card OnPlay max-hand-size replacement");
+        }
+
+        private static void RecordRewriteResult(MethodBase? originalMethod, HarmonyIlRewriteReport report)
+        {
+            _rewriteTargetCount++;
+            if (report.Succeeded)
+            {
+                _rewriteSuccessCount++;
+                RitsuLibFramework.Logger.Debug(
+                    $"[MaxHandSize] {FormatMethod(originalMethod)}: {report.Applied} replacement(s), " +
+                    $"alreadySatisfied={report.AlreadySatisfied}.");
+                return;
+            }
+
+            RewriteFailures.Add($"{FormatMethod(originalMethod)} ({report.Matches} match(es))");
+        }
+
+        private static void RecordRewriteFailure(MethodBase? originalMethod, string reason)
+        {
+            _rewriteTargetCount++;
+            RewriteFailures.Add($"{FormatMethod(originalMethod)} ({reason})");
+        }
+
+        private static string FormatMethod(MethodBase? method)
+        {
+            return method == null ? "<unknown method>" : $"{method.DeclaringType?.Name}.{method.Name}";
         }
 
         private static IReadOnlyList<CodeInstruction>? FindStateMachinePlayerLoad(HarmonyIlRewriter rewriter)
@@ -346,7 +416,7 @@ namespace STS2RitsuLib.Combat.HandSize
         private static StringName GetShortcutOrDefault(NPlayerHand hand, int idx)
         {
             var arr = hand._selectCardShortcuts;
-            return idx >= 0 && idx < arr.Length ? arr[idx] : MegaInput.releaseCard;
+            return idx >= 0 && idx < arr.Length ? arr[idx] : Sts2InputCompat.CancelCardPlayAction;
         }
 
         private static IEnumerable<CodeInstruction> StartCardPlayTranspiler(IEnumerable<CodeInstruction> instructions)

@@ -6,8 +6,12 @@ using STS2RitsuLib.Settings;
 namespace STS2RitsuLib.Diagnostics.Commands
 {
     /// <summary>
-    ///     RitsuLib diagnostic console command entry.
-    ///     RitsuLib 诊断控制台命令入口。
+    ///     <para xml:lang="en">
+    ///         Implements the root console command for RitsuLib diagnostics and settings navigation.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         实现 RitsuLib 诊断和设置导航的根控制台命令。
+    ///     </para>
     /// </summary>
     public sealed class RitsuLibConsoleCmd : AbstractConsoleCmd
     {
@@ -58,16 +62,16 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length < 2 || !args[0].Equals("selfcheck", StringComparison.OrdinalIgnoreCase))
                 return new(false, UsageText());
 
-            if (args[1].Equals("run", StringComparison.OrdinalIgnoreCase))
+            if (args.Length == 2 && args[1].Equals("run", StringComparison.OrdinalIgnoreCase))
             {
                 var ok = SelfCheckBundleCoordinator.TryManualRunFromConsole(out var message);
                 return new(ok, message);
             }
 
-            if (!args[1].Equals("open-output", StringComparison.OrdinalIgnoreCase))
+            if (args.Length != 2 || !args[1].Equals("open-output", StringComparison.OrdinalIgnoreCase))
                 return new(false, UsageText());
-            SelfCheckBundleCoordinator.TryOpenOutputFolderFromSettings();
-            return new(true, "Requested to open RitsuLib self-check output folder.");
+            var opened = SelfCheckBundleCoordinator.TryOpenOutputFolderFromSettings(out var openMessage);
+            return new(opened, openMessage);
         }
 
         private static CmdResult ProcessSettings(string[] args)

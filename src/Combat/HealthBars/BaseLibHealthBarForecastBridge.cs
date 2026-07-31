@@ -9,19 +9,31 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Combat.HealthBars
 {
     /// <summary>
-    ///     When BaseLib is loaded, registers <see cref="HealthBarForecastRegistry.GetSegments" /> with BaseLib's
-    ///     <c>HealthBarForecastRegistry.RegisterForeign</c> so a single renderer can consume Ritsu-typed segments.
-    ///     加载 BaseLib 时，将 <see cref="HealthBarForecastRegistry.GetSegments" /> 注册到 BaseLib 的
-    ///     <c>HealthBarForecastRegistry.RegisterForeign</c>，使单个渲染器可以消费 Ritsu 类型的片段。
+    ///     <para xml:lang="en">
+    ///         Bridges <see cref="HealthBarForecastRegistry.GetSegments" /> to BaseLib's
+    ///         <c>HealthBarForecastRegistry.RegisterForeign</c> API so a single renderer can consume both libraries'
+    ///         forecast segments.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 <see cref="HealthBarForecastRegistry.GetSegments" /> 桥接到 BaseLib 的
+    ///         <c>HealthBarForecastRegistry.RegisterForeign</c> API，使同一个渲染器能够处理两个库的预测片段。
+    ///     </para>
     /// </summary>
     /// <remarks>
-    ///     <see cref="ShouldRitsuRendererStandDown" /> becomes true after a successful bridge so duplicate overlays are
-    ///     not drawn.
-    ///     成功桥接后，<see cref="ShouldRitsuRendererStandDown" /> 变为 true，从而不绘制重复覆盖层。
+    ///     <para xml:lang="en">
+    ///         After registration succeeds with BaseLib's current render protocol,
+    ///         <see cref="ShouldRitsuRendererStandDown" /> prevents RitsuLib from drawing duplicate overlays.
+    ///         Older BaseLib protocols are imported into RitsuLib's renderer instead.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使用 BaseLib 当前渲染协议注册成功后，<see cref="ShouldRitsuRendererStandDown" /> 会阻止
+    ///         RitsuLib 重复绘制覆盖层。较旧的 BaseLib 协议则会由 RitsuLib 渲染器导入。
+    ///     </para>
     /// </remarks>
     internal static class BaseLibHealthBarForecastBridge
     {
         private const string SourceId = "ritsulib.registry";
+        private static readonly Lock Gate = new();
         private static bool _registered;
         private static bool _legacyImportMode;
         private static bool _baselibSupportsForecastInterop;
@@ -37,25 +49,40 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static readonly ConcurrentDictionary<Type, LegacyImportReader> LegacyImportReaders = new();
 
         /// <summary>
-        ///     When <see langword="true" />, Ritsu's <c>NHealthBar</c> forecast postfixes should skip drawing because BaseLib
-        ///     already merged this mod's segments.
-        ///     为 <see langword="true" /> 时，Ritsu 的 <c>NHealthBar</c> forecast postfix 应跳过绘制，因为 BaseLib
-        ///     已经合并了此 mod 的片段。
+        ///     <para xml:lang="en">
+        ///         Gets whether BaseLib has accepted RitsuLib's segments and RitsuLib's <c>NHealthBar</c> patches
+        ///         should stop drawing them.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取 BaseLib 是否已接收 RitsuLib 的片段，以及 RitsuLib 的 <c>NHealthBar</c> 补丁是否应停止绘制。
+        ///     </para>
         /// </summary>
         public static bool ShouldRitsuRendererStandDown()
         {
-            return _registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol;
+            lock (Gate)
+            {
+                return _registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol;
+            }
         }
 
         public static bool ShouldSuppressBaseLibRenderer()
         {
-            return !ShouldRitsuRendererStandDown() && (_legacyImportMode || TryResolveLegacyImportApi(out _));
+            lock (Gate)
+            {
+                return !(_registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol)
+                       && (_legacyImportMode || TryResolveLegacyImportApi(out _));
+            }
         }
 
         internal static IReadOnlyList<BaseLibImportedHealthBarForecastSegment> GetImportedSegments(Creature creature)
         {
-            if (ShouldRitsuRendererStandDown() || !TryResolveLegacyImportApi(out var getSegments))
-                return [];
+            MethodInfo getSegments;
+            lock (Gate)
+            {
+                if ((_registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol)
+                    || !TryResolveLegacyImportApi(out getSegments))
+                    return [];
+            }
 
             try
             {
@@ -68,40 +95,48 @@ namespace STS2RitsuLib.Combat.HealthBars
             }
             catch (Exception ex)
             {
-                if (_loggedLegacyImportFailure)
-                    return [];
+                lock (Gate)
+                {
+                    if (_loggedLegacyImportFailure)
+                        return [];
+                    _loggedLegacyImportFailure = true;
+                }
 
-                _loggedLegacyImportFailure = true;
                 RitsuLibFramework.Logger.Warn($"[HealthBarForecast] Failed to import BaseLib forecast segments: {ex}");
                 return [];
             }
         }
 
         /// <summary>
-        ///     Attempts foreign registration from <c>NHealthBar._Ready</c> (early load path).
-        ///     从 <c>NHealthBar._Ready</c> 尝试 foreign 注册（早期加载路径）。
+        ///     <para xml:lang="en">
+        ///         Attempts cross-library registration from the early <c>NHealthBar._Ready</c> path.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从较早执行的 <c>NHealthBar._Ready</c> 路径尝试跨库注册。
+        ///     </para>
         /// </summary>
         public static void TryRegisterPrimary()
         {
-            if (_registered || _legacyImportMode)
-                return;
             TryRegisterCore();
         }
 
         /// <summary>
-        ///     Attempts foreign registration from forecast render path if <see cref="TryRegisterPrimary" /> did not run yet.
-        ///     如果 <see cref="TryRegisterPrimary" /> 尚未运行，则从 forecast 渲染路径尝试 foreign 注册。
+        ///     <para xml:lang="en">
+        ///         Retries cross-library registration from the forecast render path when the primary attempt has not
+        ///         succeeded.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         主要注册尝试尚未成功时，从预测渲染路径重试跨库注册。
+        ///     </para>
         /// </summary>
         public static void TryRegisterSecondary()
         {
-            if (_registered || _legacyImportMode)
-                return;
             TryRegisterCore();
         }
 
         /// <summary>
-        ///     Alias for <see cref="TryRegisterPrimary" />.
-        ///     <see cref="TryRegisterPrimary" /> 的别名。
+        ///     <para xml:lang="en">Calls <see cref="TryRegisterPrimary" />.</para>
+        ///     <para xml:lang="zh-CN">调用 <see cref="TryRegisterPrimary" />。</para>
         /// </summary>
         public static void TryRegister()
         {
@@ -110,63 +145,67 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static void TryRegisterCore()
         {
-            if (_registered || _legacyImportMode)
-                return;
-            if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
-                return;
-
-            try
+            lock (Gate)
             {
-                var registryType = ResolveBaseLibRegistryType();
-                if (registryType == null)
+                if (_registered || _legacyImportMode)
+                    return;
+                if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                     return;
 
-                var registerForeign = registryType.GetMethod(
-                    "RegisterForeign",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null,
-                    [typeof(string), typeof(string), typeof(Func<Creature, IEnumerable<object>>)],
-                    null);
-
-                if (registerForeign == null)
+                try
                 {
-                    _baselibSupportsForecastInterop = false;
-                    _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
-                    if (_loggedMissingRegisterForeign) return;
-                    _loggedMissingRegisterForeign = true;
-                    RitsuLibFramework.Logger.Warn(
-                        $"[HealthBarForecast] BaseLib registry type '{registryType.FullName}' does not expose " +
-                        "RegisterForeign(string, string, Func<Creature, IEnumerable<object>>); forecast interop unavailable.");
+                    var registryType = ResolveBaseLibRegistryType();
+                    if (registryType == null)
+                        return;
 
-                    return;
-                }
+                    var registerForeign = registryType.GetMethod(
+                        "RegisterForeign",
+                        BindingFlags.Public | BindingFlags.Static,
+                        null,
+                        [typeof(string), typeof(string), typeof(Func<Creature, IEnumerable<object>>)],
+                        null);
 
-                if (!BaseLibSupportsRitsuRenderProtocol(registryType))
-                {
+                    if (registerForeign == null)
+                    {
+                        _baselibSupportsForecastInterop = false;
+                        _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        if (_loggedMissingRegisterForeign) return;
+                        _loggedMissingRegisterForeign = true;
+                        RitsuLibFramework.Logger.Warn(
+                            $"[HealthBarForecast] BaseLib registry type '{registryType.FullName}' does not expose " +
+                            "RegisterForeign(string, string, Func<Creature, IEnumerable<object>>); forecast interop unavailable.");
+
+                        return;
+                    }
+
+                    if (!BaseLibSupportsRitsuRenderProtocol(registryType))
+                    {
+                        _baselibSupportsForecastInterop = true;
+                        _baselibSupportsRitsuRenderProtocol = false;
+                        _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        if (_loggedLegacyImportMode) return;
+                        _loggedLegacyImportMode = true;
+                        RitsuLibFramework.Logger.Info(
+                            "[HealthBarForecast] BaseLib forecast registry uses the legacy render protocol; " +
+                            "RitsuLib will import BaseLib segments and keep its own renderer active.");
+
+                        return;
+                    }
+
+                    var provider = GetSegmentsForCreature;
+                    _registerForeign ??=
+                        registerForeign.CreateDelegate<Action<string, string, Func<Creature, IEnumerable<object>>>>();
+                    _registerForeign(Const.ModId, SourceId, provider);
+                    _registered = true;
                     _baselibSupportsForecastInterop = true;
-                    _baselibSupportsRitsuRenderProtocol = false;
-                    _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
-                    if (_loggedLegacyImportMode) return;
-                    _loggedLegacyImportMode = true;
-                    RitsuLibFramework.Logger.Info(
-                        "[HealthBarForecast] BaseLib forecast registry uses the legacy render protocol; " +
-                        "RitsuLib will import BaseLib segments and keep its own renderer active.");
-
-                    return;
+                    _baselibSupportsRitsuRenderProtocol = true;
+                    RitsuLibFramework.Logger.Info("[HealthBarForecast] Registered BaseLib bridge provider.");
                 }
-
-                var provider = GetSegmentsForCreature;
-                _registerForeign ??=
-                    registerForeign.CreateDelegate<Action<string, string, Func<Creature, IEnumerable<object>>>>();
-                _registerForeign(Const.ModId, SourceId, provider);
-                _registered = true;
-                _baselibSupportsForecastInterop = true;
-                _baselibSupportsRitsuRenderProtocol = true;
-                RitsuLibFramework.Logger.Info("[HealthBarForecast] Registered BaseLib bridge provider.");
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn($"[HealthBarForecast] Failed to register BaseLib bridge provider: {ex}");
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[HealthBarForecast] Failed to register BaseLib bridge provider: {ex}");
+                }
             }
         }
 
@@ -269,7 +308,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
             var segment = entryType.GetProperty("Segment", BindingFlags.Instance | BindingFlags.Public);
             var sequenceOrder = entryType.GetProperty("SequenceOrder", BindingFlags.Instance | BindingFlags.Public);
-            if (segment == null || sequenceOrder == null)
+            if (segment == null || sequenceOrder?.PropertyType != typeof(long))
                 return LegacyImportReader.Unavailable;
 
             var method = typeof(BaseLibHealthBarForecastBridge)

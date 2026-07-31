@@ -6,6 +6,17 @@ using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Platform.Steam
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Provides reflection-based Steam Workshop queries, subscription actions, update triggering, and
+    ///         download monitoring. When compatible Steamworks bindings are unavailable, its query methods return
+    ///         empty or unavailable results rather than calling native Steam APIs directly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供基于反射的 Steam 创意工坊查询、订阅操作、更新触发和下载监控。当不具备兼容的 Steamworks 绑定时，
+    ///         其查询方法返回空结果或不可用结果，而不会直接调用原生 Steam API。
+    ///     </para>
+    /// </summary>
     internal static class RitsuSteamWorkshopUpdates
     {
         private const int QueryBatchSize = 20;
@@ -680,6 +691,10 @@ namespace STS2RitsuLib.Platform.Steam
                                previous.Updated != remoteDetails.Updated;
                     }
                 }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn($"[SteamWorkshopUpdate] Check failed: {ex.Message}");
@@ -714,12 +729,14 @@ namespace STS2RitsuLib.Platform.Steam
                 if (items.Count == 0)
                     return false;
 
+                cancellationToken.ThrowIfCancellationRequested();
                 var startedAt = DateTimeOffset.UtcNow;
                 var idleSince = startedAt;
                 var observedDownloadActivity = false;
                 HashSet<ulong> loggedUnavailableProgressItems = [];
-                while (!cancellationToken.IsCancellationRequested)
+                while (true)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var completed = 0;
                     var bytesDownloaded = 0UL;
                     var bytesTotal = 0UL;
@@ -742,7 +759,7 @@ namespace STS2RitsuLib.Platform.Steam
                         {
                             bytesDownloaded += itemDownloaded;
                             bytesTotal += itemTotal;
-                            active = itemTotal > 0 || itemDownloaded > 0;
+                            active |= itemTotal > 0 || itemDownloaded > 0;
                             observedDownloadActivity |= active;
                             if (itemTotal > 0 && itemDownloaded >= itemTotal)
                                 completed++;
@@ -790,8 +807,6 @@ namespace STS2RitsuLib.Platform.Steam
                     await Task.Delay(DownloadProgressPollInterval, cancellationToken)
                         .ConfigureAwait(false);
                 }
-
-                return false;
             }
 
             private bool HasAnyLocalInstallChanged(IReadOnlyDictionary<ulong, DownloadMonitorItem> items)
@@ -1237,12 +1252,12 @@ namespace STS2RitsuLib.Platform.Steam
                     callResultSet.Invoke(callResult, [apiCall, callback]);
                     var timeoutTask = Task.Delay(QueryTimeout, cancellationToken);
                     var completed = await Task.WhenAny(completion.Task, timeoutTask).ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (completed == completion.Task)
                         return await completion.Task.ConfigureAwait(false);
 
-                    if (!cancellationToken.IsCancellationRequested)
-                        RitsuLibFramework.Logger.Warn(
-                            "[SteamWorkshopUpdate] Workshop details query timed out.");
+                    RitsuLibFramework.Logger.Warn(
+                        "[SteamWorkshopUpdate] Workshop details query timed out.");
                     return null;
                 }
                 finally

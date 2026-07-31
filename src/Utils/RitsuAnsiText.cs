@@ -3,7 +3,8 @@ using System.Text;
 namespace STS2RitsuLib.Utils
 {
     /// <summary>
-    ///     Helpers for converting ANSI terminal text into plain or segmented styled text.
+    ///     <para xml:lang="en">Provides helpers that convert ANSI terminal text into plain or segmented styled text.</para>
+    ///     <para xml:lang="zh-CN">提供将 ANSI 终端文本转换为纯文本或分段样式文本的辅助方法。</para>
     /// </summary>
     public static class RitsuAnsiText
     {
@@ -32,7 +33,8 @@ namespace STS2RitsuLib.Utils
         ];
 
         /// <summary>
-        ///     Removes ANSI CSI/OSC escape sequences from <paramref name="text" />.
+        ///     <para xml:lang="en">Removes ANSI escape sequences from <paramref name="text" />, including CSI and OSC sequences.</para>
+        ///     <para xml:lang="zh-CN">移除 <paramref name="text" /> 中的 ANSI 转义序列，包括 CSI 和 OSC 序列。</para>
         /// </summary>
         public static string StripControlSequences(string text)
         {
@@ -60,7 +62,11 @@ namespace STS2RitsuLib.Utils
         }
 
         /// <summary>
-        ///     Parses ANSI SGR foreground colors and text attributes into styled text segments.
+        ///     <para xml:lang="en">
+        ///         Parses supported ANSI SGR foreground colors plus bold and dim attributes into styled text
+        ///         segments.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">将受支持的 ANSI SGR 前景色以及粗体和暗淡属性解析为带样式文本片段。</para>
         /// </summary>
         public static IReadOnlyList<RitsuTextSegment> ParseSegments(string text)
         {

@@ -3,10 +3,10 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
 {
     /// <summary>
-    ///     Extension methods for <see cref="CardModel" /> hand-highlight conditions; use inside
-    ///     <c>ShouldGlowGoldInternal</c> / <c>ShouldGlowRedInternal</c> overrides for concise, readable code.
-    ///     <see cref="CardModel" /> 手牌高亮条件的扩展方法；可在
-    ///     <c>ShouldGlowGoldInternal</c> / <c>ShouldGlowRedInternal</c> 重写中使用，以获得简洁易读的代码。
+    ///     <para xml:lang="en">
+    ///         Provides <see cref="CardModel" /> extension methods for common hand-glow conditions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">提供常用手牌发光条件的 <see cref="CardModel" /> 扩展方法。</para>
     /// </summary>
     public static class CardModelHandGlowExtensions
     {

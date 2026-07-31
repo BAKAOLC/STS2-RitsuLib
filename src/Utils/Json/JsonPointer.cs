@@ -3,16 +3,20 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Utils.Json
 {
     /// <summary>
-    ///     RFC 6901 JSON Pointer helpers for <see cref="JsonNode" /> DOM navigation and mutation.
-    ///     https://www.rfc-editor.org/rfc/rfc6901
-    ///     RFC 6901 JSON Pointer helpers 用于 <see cref="JsonNode" /> DOM navigation 和 mutation.
-    ///     https://www.rfc-edit或.或g/rfc/rfc6901
+    ///     <para xml:lang="en">
+    ///         Provides RFC 6901 JSON Pointer helpers for <see cref="JsonNode" /> DOM navigation and mutation.
+    ///         The empty string selects the document root; <c>/</c> selects an object member whose key is empty.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为 <see cref="JsonNode" /> DOM 导航和修改提供 RFC 6901 JSON 指针辅助方法。空字符串选择文档根；
+    ///         <c>/</c> 选择键为空字符串的对象成员。
+    ///     </para>
     /// </summary>
     public static class JsonPointer
     {
         /// <summary>
-        ///     Checks whether the pointer selects the document root.
-        ///     检查指针是否选择文档根。
+        ///     <para xml:lang="en">Checks whether the pointer is empty and therefore selects the document root.</para>
+        ///     <para xml:lang="zh-CN">检查指针是否为空，从而选择文档根。</para>
         /// </summary>
         public static bool IsRoot(string? pointer)
         {
@@ -20,25 +24,31 @@ namespace STS2RitsuLib.Utils.Json
                 return true;
 
             var t = pointer.Trim();
-            return t.Length == 0 || t == "/";
+            return t.Length == 0;
         }
 
         /// <summary>
-        ///     Normalizes a JSON Pointer fragment for DOM navigation (leading slash optional when authoring).
-        ///     规范化用于 DOM 导航的 JSON Pointer 片段（编写时可省略前导斜杠）。
+        ///     <para xml:lang="en">
+        ///         Normalizes a JSON Pointer fragment for DOM navigation. Empty input remains empty; authors may
+        ///         omit the leading slash for non-root pointers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">规范化用于 DOM 导航的 JSON 指针片段。空输入保持为空；非根指针编写时可省略前导斜杠。</para>
         /// </summary>
         public static string Normalize(string rawPointer)
         {
             var t = rawPointer.Trim();
-            if (t.Length == 0 || t == "/")
-                return "/";
+            if (t.Length == 0)
+                return string.Empty;
 
             return t.StartsWith('/') ? t : "/" + t;
         }
 
         /// <summary>
-        ///     Resolves a node under <paramref name="root" /> by JSON Pointer, or <c>null</c> when not found.
-        ///     通过 JSON Pointer 解析 <paramref name="root" /> 下的节点；未找到时为 <c>null</c>。
+        ///     <para xml:lang="en">
+        ///         Resolves a node under <paramref name="root" /> by JSON Pointer, or returns
+        ///         <see langword="null" /> when no node exists at the pointer.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">通过 JSON 指针解析 <paramref name="root" /> 下的节点；该指针位置不存在节点时返回 <see langword="null" />。</para>
         /// </summary>
         public static JsonNode? Get(JsonNode root, string jsonPointer)
         {
@@ -66,10 +76,15 @@ namespace STS2RitsuLib.Utils.Json
         }
 
         /// <summary>
-        ///     Sets <paramref name="value" /> at <paramref name="jsonPointer" /> under an object root.
-        ///     Null removes the property when targeting an object.
-        ///     在对象根下的 <paramref name="jsonPointer" /> 位置设置 <paramref name="value" />。
-        ///     目标为对象时，null 会移除该属性。
+        ///     <para xml:lang="en">
+        ///         Sets <paramref name="value" /> at <paramref name="jsonPointer" /> under an object root. A
+        ///         <see langword="null" /> value removes a targeted object property; the empty pointer replaces or
+        ///         clears the root object's members.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在对象根下的 <paramref name="jsonPointer" /> 位置设置 <paramref name="value" />。
+        ///         <see langword="null" /> 值会移除目标对象属性；空指针会替换或清空根对象的成员。
+        ///     </para>
         /// </summary>
         public static void Set(JsonObject documentRoot, string jsonPointer, JsonNode? value)
         {
@@ -126,8 +141,8 @@ namespace STS2RitsuLib.Utils.Json
         }
 
         /// <summary>
-        ///     Enumerates decoded JSON Pointer segments.
-        ///     枚举已解码的 JSON Pointer 段。
+        ///     <para xml:lang="en">Enumerates decoded JSON Pointer segments. In particular, <c>/</c> yields one empty segment.</para>
+        ///     <para xml:lang="zh-CN">枚举已解码的 JSON 指针段。特别地，<c>/</c> 会产生一个空段。</para>
         /// </summary>
         public static IEnumerable<string> EnumerateSegments(string jsonPointer)
         {
@@ -138,16 +153,13 @@ namespace STS2RitsuLib.Utils.Json
             if (t[0] == '/')
                 t = t[1..];
 
-            if (t.Length == 0)
-                yield break;
-
             foreach (var seg in t.Split('/'))
                 yield return DecodeSegment(seg);
         }
 
         /// <summary>
-        ///     Decodes a JSON Pointer segment (~0 and ~1).
-        ///     Decodes a JSON Pointer segment (~0 和 ~1).
+        ///     <para xml:lang="en">Decodes the RFC 6901 <c>~0</c> and <c>~1</c> segment escapes.</para>
+        ///     <para xml:lang="zh-CN">解码 RFC 6901 的 <c>~0</c> 和 <c>~1</c> 段转义。</para>
         /// </summary>
         public static string DecodeSegment(string segment)
         {

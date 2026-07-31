@@ -22,11 +22,14 @@ using STS2RitsuLib.TopBar;
 namespace STS2RitsuLib.Interop.AutoRegistration
 {
     /// <summary>
-    ///     Built-in contributor: scans assemblies once for ritsulib auto-registration attributes, sorts them
-    ///     deterministically,
-    ///     and dispatches through the existing explicit registry APIs.
-    ///     内置贡献器：对程序集扫描一次以查找 ritsulib 自动注册特性，按确定性顺序排序，
-    ///     并通过现有显式注册表 API 分发。
+    ///     <para xml:lang="en">
+    ///         Built-in contributor that scans each assembly once for RitsuLib auto-registration attributes,
+    ///         orders the resulting operations deterministically, and dispatches them through explicit registry APIs.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         内置贡献器：对每个程序集扫描一次 RitsuLib 自动注册特性，对所得操作进行确定性排序，
+    ///         再通过显式注册表 API 执行。
+    ///     </para>
     /// </summary>
     public sealed class AttributeAutoRegistrationTypeDiscoveryContributor : IModTypeDiscoveryContributor
     {
@@ -110,8 +113,17 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             var signatures = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var attributeSource in EnumerateEffectiveRegistrationAttributes(type))
-                Append(attributeSource.Attribute, attributeSource.DeclaringType,
-                    attributeSource.DeclaringType != type);
+                try
+                {
+                    Append(attributeSource.Attribute, attributeSource.DeclaringType,
+                        attributeSource.DeclaringType != type);
+                }
+                catch (Exception ex)
+                {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[AutoRegister] Failed to inspect {attributeSource.Attribute.GetType().Name} for " +
+                        $"'{type.FullName}' (declared on '{attributeSource.DeclaringType.FullName}'): {ex}");
+                }
 
             return operations;
 
@@ -148,7 +160,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 nameof(RegisterCardAttribute),
                                 () => contentRegistry.RegisterCard(registerCard.PoolType, type,
                                     ResolvePublicEntryOptions(registerCard)),
-                                [TypeDependencyKey(type)]));
+                                providedKeys: [TypeDependencyKey(type)]));
                         });
                         break;
                     case RegisterRelicAttribute registerRelic:
@@ -160,7 +172,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 nameof(RegisterRelicAttribute),
                                 () => contentRegistry.RegisterRelic(registerRelic.PoolType, type,
                                     ResolvePublicEntryOptions(registerRelic)),
-                                [TypeDependencyKey(type)]));
+                                providedKeys: [TypeDependencyKey(type)]));
                         });
                         break;
                     case RegisterPotionAttribute registerPotion:
@@ -172,7 +184,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                                 nameof(RegisterPotionAttribute),
                                 () => contentRegistry.RegisterPotion(registerPotion.PoolType, type,
                                     ResolvePublicEntryOptions(registerPotion)),
-                                [TypeDependencyKey(type)]));
+                                providedKeys: [TypeDependencyKey(type)]));
                         });
                         break;
                     case RegisterTrashHeapCardAttribute registerTrashHeapCard:
@@ -1390,33 +1402,25 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 IconPath = attr.IconPath,
                 Order = attr.ButtonOrder,
                 Offset = new(attr.OffsetX, attr.OffsetY),
-                OnClick = handler is null ? null : handler.OnClick,
-                VisibleWhen = handler is null ? null : handler.IsVisible,
-                IsOpenWhen = handler is null ? null : handler.IsOpen,
+                OnClick = handler.OnClick,
+                VisibleWhen = handler.IsVisible,
+                IsOpenWhen = handler.IsOpen,
                 // IModTopBarButtonHandler.GetCount returns -1 by default, which NModCardPileButton
                 // interprets as "hide the badge". Handlers that want a count simply override GetCount
                 // and return a non-negative value.
-                CountProvider = handler is null ? null : handler.GetCount,
+                CountProvider = handler.GetCount,
             };
         }
 
-        private static IModTopBarButtonHandler? ResolveTopBarButtonHandler(Type declaringType)
+        private static IModTopBarButtonHandler ResolveTopBarButtonHandler(Type declaringType)
         {
             if (!typeof(IModTopBarButtonHandler).IsAssignableFrom(declaringType))
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[AutoRegister] RegisterOwnedTopBarButton: type '{declaringType.FullName}' must implement "
-                    + $"{nameof(IModTopBarButtonHandler)}; button will be registered without OnClick/VisibleWhen.");
-                return null;
-            }
+                throw new InvalidOperationException(
+                    $"Type '{declaringType.FullName}' must implement {nameof(IModTopBarButtonHandler)}.");
 
             if (declaringType.GetConstructor(Type.EmptyTypes) == null)
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[AutoRegister] RegisterOwnedTopBarButton: type '{declaringType.FullName}' has no parameterless "
-                    + "constructor — OnClick / VisibleWhen will not be wired.");
-                return null;
-            }
+                throw new InvalidOperationException(
+                    $"Type '{declaringType.FullName}' must provide a public parameterless constructor.");
 
             try
             {
@@ -1424,9 +1428,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[AutoRegister] RegisterOwnedTopBarButton: failed to instantiate handler '{declaringType.FullName}': {ex.Message}");
-                return null;
+                throw new InvalidOperationException(
+                    $"Failed to instantiate top-bar button handler '{declaringType.FullName}'.", ex);
             }
         }
 
@@ -1452,10 +1455,15 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                 parent =>
                 {
                     var node = factoryProvider?.CreateNode(parent) ?? CreateNodeByDefaultConstructor(nodeType);
-                    if (!nodeType.IsInstanceOfType(node))
-                        throw new InvalidOperationException(
-                            $"Node attachment factory '{declaringType.FullName}' returned {node.GetType().FullName}, expected {nodeType.FullName}.");
-                    return node;
+                    if (nodeType.IsInstanceOfType(node))
+                        return node;
+
+                    var actualType = node?.GetType().FullName ?? "<null>";
+                    if (node != null && GodotObject.IsInstanceValid(node))
+                        node.Free();
+                    throw new InvalidOperationException(
+                        $"Node attachment factory '{declaringType.FullName}' returned {actualType}, " +
+                        $"expected {nodeType.FullName}.");
                 },
                 ComposeNodeAttachmentSetup(setup),
                 options,
@@ -1573,6 +1581,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             if (nodeType.IsInstanceOfType(node))
                 return node;
 
+            node.Free();
             throw new InvalidOperationException(
                 $"Scene '{scenePath}' instantiated {node.GetType().FullName}, expected {nodeType.FullName}.");
         }
@@ -1659,7 +1668,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             string? explicitModifierId)
         {
             if (!string.IsNullOrWhiteSpace(explicitModifierId))
-                return explicitModifierId;
+                return explicitModifierId.Trim();
 
             var stem = $"{targetModelType.Name}_{capabilityType.Name}";
             return ModContentRegistry.GetQualifiedModelCapabilityId(ownerModId, stem);

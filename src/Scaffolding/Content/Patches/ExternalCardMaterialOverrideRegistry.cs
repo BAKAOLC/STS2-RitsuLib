@@ -4,10 +4,13 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     External override registry for card frame/portrait/banner materials.
-    ///     Intended for models that cannot implement RitsuLib interfaces directly (for example, vanilla cards).
-    ///     卡牌 frame/portrait/banner materials的外部覆盖注册表。
-    ///     用于无法直接实现 RitsuLib 接口的模型（例如原版卡牌）。
+    ///     <para xml:lang="en">
+    ///         Provides external card frame, portrait, and title-banner material overrides for models that cannot
+    ///         implement RitsuLib interfaces directly, including base-game cards.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         为无法直接实现 RitsuLib 接口的模型（包括原版卡牌）提供外部卡牌边框、卡图和标题横幅材质覆盖。
+    ///     </para>
     /// </summary>
     public static class ExternalCardMaterialOverrideRegistry
     {
@@ -26,8 +29,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             new(StringComparer.Ordinal);
 
         /// <summary>
-        ///     Registers or replaces a frame material provider.
-        ///     注册或替换边框材质提供器。
+        ///     <para xml:lang="en">Registers or replaces a card-frame material provider.</para>
+        ///     <para xml:lang="zh-CN">注册或替换卡牌边框材质提供器。</para>
         /// </summary>
         public static void RegisterFrameProvider(string key, Func<CardModel, Material?> provider)
         {
@@ -42,8 +45,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Registers or replaces a portrait material provider.
-        ///     注册或替换卡图材质提供器。
+        ///     <para xml:lang="en">Registers or replaces a card-portrait material provider.</para>
+        ///     <para xml:lang="zh-CN">注册或替换卡图材质提供器。</para>
         /// </summary>
         public static void RegisterPortraitProvider(string key, Func<CardModel, Material?> provider)
         {
@@ -58,8 +61,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Registers or replaces a banner material provider.
-        ///     注册或替换横幅材质提供器。
+        ///     <para xml:lang="en">Registers or replaces a card title-banner material provider.</para>
+        ///     <para xml:lang="zh-CN">注册或替换卡牌标题横幅材质提供器。</para>
         /// </summary>
         public static void RegisterBannerProvider(string key, Func<CardModel, Material?> provider)
         {
@@ -74,8 +77,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Removes a frame material provider by key.
-        ///     按键移除a 边框材质 提供器。
+        ///     <para xml:lang="en">Removes a card-frame material provider by key.</para>
+        ///     <para xml:lang="zh-CN">按键移除卡牌边框材质提供器。</para>
         /// </summary>
         public static bool UnregisterFrameProvider(string key)
         {
@@ -92,8 +95,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Removes a portrait material provider by key.
-        ///     按键移除卡图材质提供器。
+        ///     <para xml:lang="en">Removes a card-portrait material provider by key.</para>
+        ///     <para xml:lang="zh-CN">按键移除卡图材质提供器。</para>
         /// </summary>
         public static bool UnregisterPortraitProvider(string key)
         {
@@ -110,8 +113,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Removes a banner material provider by key.
-        ///     按键移除a 横幅材质 提供器。
+        ///     <para xml:lang="en">Removes a card title-banner material provider by key.</para>
+        ///     <para xml:lang="zh-CN">按键移除卡牌标题横幅材质提供器。</para>
         /// </summary>
         public static bool UnregisterBannerProvider(string key)
         {
@@ -128,8 +131,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Registers or replaces a pool-frame material provider.
-        ///     注册或替换pool-边框材质提供器。
+        ///     <para xml:lang="en">Registers or replaces a card-pool frame-material provider.</para>
+        ///     <para xml:lang="zh-CN">注册或替换卡池边框材质提供器。</para>
         /// </summary>
         public static void RegisterPoolFrameProvider(string key, Func<CardPoolModel, Material?> provider)
         {
@@ -144,8 +147,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Removes a pool-frame material provider by key.
-        ///     按键移除a pool-边框材质 提供器。
+        ///     <para xml:lang="en">Removes a card-pool frame-material provider by key.</para>
+        ///     <para xml:lang="zh-CN">按键移除卡池边框材质提供器。</para>
         /// </summary>
         public static bool UnregisterPoolFrameProvider(string key)
         {
@@ -162,8 +165,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         }
 
         /// <summary>
-        ///     Clears all frame, portrait, and banner providers.
-        ///     清除所有边框、卡图和横幅提供器。
+        ///     <para xml:lang="en">Removes all card and card-pool material providers.</para>
+        ///     <para xml:lang="zh-CN">移除所有卡牌和卡池材质提供器。</para>
         /// </summary>
         public static void Clear()
         {
@@ -197,6 +200,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (value == null)
                     continue;
 
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External frame material provider returned an invalid Material for '{card.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
+
                 material = value;
                 return true;
             }
@@ -223,6 +233,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
                 if (value == null)
                     continue;
+
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External portrait material provider returned an invalid Material for '{card.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
 
                 material = value;
                 return true;
@@ -251,6 +268,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (value == null)
                     continue;
 
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External banner material provider returned an invalid Material for '{card.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
+
                 material = value;
                 return true;
             }
@@ -277,6 +301,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
                 if (value == null)
                     continue;
+
+                if (!GodotObject.IsInstanceValid(value))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[Assets] External pool frame material provider returned an invalid Material for '{pool.GetType().Name}'. Ignoring it.");
+                    continue;
+                }
 
                 material = value;
                 return true;

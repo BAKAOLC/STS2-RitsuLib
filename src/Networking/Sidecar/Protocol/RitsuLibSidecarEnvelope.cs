@@ -3,62 +3,75 @@ using System.Buffers.Binary;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Parses and builds sidecar envelopes: fixed magic, wire version, flags, 64-bit opcode, optional header
-    ///     extension, then payload.
-    ///     extension, then payload.
-    ///     解析并构建 sidecar envelope：固定 magic、线版本、标志、64 位 opcode、可选 header
-    ///     扩展，然后是载荷。
-    ///     扩展，然后是载荷。
+    ///     <para xml:lang="en">
+    ///         Parses and builds Sidecar envelopes containing magic, wire version, flags, opcode, an optional
+    ///         header extension, and payload.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">解析和构建包含魔数、线格式版本、标志、操作码、可选头扩展和载荷的 Sidecar 信封。</para>
     /// </summary>
     public static class RitsuLibSidecarEnvelope
     {
         /// <summary>
-        ///     Result of parsing an on-wire envelope.
-        ///     解析线上 envelope 的结果。
+        ///     <para xml:lang="en">Specifies the outcome of parsing an on-wire envelope.</para>
+        ///     <para xml:lang="zh-CN">指定解析线上信封的结果。</para>
         /// </summary>
         public enum ParseOutcome
         {
             /// <summary>
-            ///     Parse succeeded.
-            ///     解析成功。
+            ///     <para xml:lang="en">Parsing succeeded.</para>
+            ///     <para xml:lang="zh-CN">解析成功。</para>
             /// </summary>
             Ok,
 
             /// <summary>
-            ///     Packet shorter than the minimum header.
-            ///     数据包短于最小 header。
+            ///     <para xml:lang="en">The packet is shorter than the minimum header.</para>
+            ///     <para xml:lang="zh-CN">数据包短于最小头部。</para>
             /// </summary>
             TooSmall,
 
             /// <summary>
-            ///     Magic mismatch.
-            ///     Magic 不匹配。
+            ///     <para xml:lang="en">The magic value does not match.</para>
+            ///     <para xml:lang="zh-CN">魔数不匹配。</para>
             /// </summary>
             BadMagic,
 
             /// <summary>
-            ///     Wire format version is zero or greater than <see cref="RitsuLibSidecarWire.SupportedWireFormatVersionMax" />.
-            ///     线格式版本为零或大于 <see cref="RitsuLibSidecarWire.SupportedWireFormatVersionMax" />。
+            ///     <para xml:lang="en">
+            ///         The wire format version is zero or exceeds
+            ///         <see cref="RitsuLibSidecarWire.SupportedWireFormatVersionMax" />.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">线格式版本为零或超过 <see cref="RitsuLibSidecarWire.SupportedWireFormatVersionMax" />。</para>
             /// </summary>
             WireVersionUnsupported,
 
             /// <summary>
-            ///     Declared payload length invalid, gzip corrupt, or decompressed size over cap.
-            ///     声明的载荷长度无效、gzip 损坏，或解压后的大小超过上限。
+            ///     <para xml:lang="en">
+            ///         The declared payload length is invalid, decompression fails, or decompressed data exceeds the
+            ///         cap.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">声明的载荷长度无效、解压失败，或解压数据超过上限。</para>
             /// </summary>
             PayloadLengthInvalid,
 
             /// <summary>
-            ///     Header extension length over cap.
-            ///     Header 扩展长度超过上限。
+            ///     <para xml:lang="en">The header-extension length exceeds the cap.</para>
+            ///     <para xml:lang="zh-CN">头扩展长度超过上限。</para>
             /// </summary>
             ExtensionLengthInvalid,
 
             /// <summary>
-            ///     Total packet length does not match header fields.
-            ///     数据包总长度与 header 字段不匹配。
+            ///     <para xml:lang="en">The total packet length does not match the header fields.</para>
+            ///     <para xml:lang="zh-CN">数据包总长度与头部字段不匹配。</para>
             /// </summary>
             TotalLengthMismatch,
+
+            /// <summary>
+            ///     <para xml:lang="en">
+            ///         The supplied span does not contain exactly the bytes in the array used for returned memory views.
+            ///     </para>
+            ///     <para xml:lang="zh-CN">提供的跨度与用于返回内存视图的数组内容不完全一致。</para>
+            /// </summary>
+            BackingMismatch,
         }
 
         private const RitsuLibSidecarWireFlags PayloadCompressionFlags =
@@ -68,16 +81,16 @@ namespace STS2RitsuLib.Networking.Sidecar
         private const uint KnownWireFlagsMask = (uint)PayloadCompressionFlags;
 
         /// <summary>
-        ///     Parses an envelope from a byte array backing store.
-        ///     从字节数组后备存储解析 envelope。
+        ///     <para xml:lang="en">Parses an envelope from the byte array that backs the returned memory views.</para>
+        ///     <para xml:lang="zh-CN">从返回内存视图所引用的底层字节数组解析信封。</para>
         /// </summary>
         /// <param name="packet">
-        ///     Full on-wire bytes; slice views reference this array.
-        ///     完整线上字节；slice 视图引用此数组。
+        ///     <para xml:lang="en">Full on-wire bytes; returned memory views reference this array.</para>
+        ///     <para xml:lang="zh-CN">完整线上字节；返回的内存视图引用此数组。</para>
         /// </param>
         /// <param name="parsed">
-        ///     Populated when the return value is <see cref="ParseOutcome.Ok" />.
-        ///     返回值为 <see cref="ParseOutcome.Ok" /> 时填充。
+        ///     <para xml:lang="en">Populated when the return value is <see cref="ParseOutcome.Ok" />.</para>
+        ///     <para xml:lang="zh-CN">返回值为 <see cref="ParseOutcome.Ok" /> 时填充。</para>
         /// </param>
         public static ParseOutcome TryParse(byte[] packet, out ParsedEnvelope parsed)
         {
@@ -85,24 +98,30 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Parses an envelope; <paramref name="backing" /> must be the same array as <paramref name="packet" /> spans.
-        ///     解析 envelope；<paramref name="backing" /> 必须与 <paramref name="packet" /> span 使用同一数组。
+        ///     <para xml:lang="en">
+        ///         Parses an envelope only when <paramref name="packet" /> exactly contains the bytes in
+        ///         <paramref name="backing" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">仅当 <paramref name="packet" /> 精确包含 <paramref name="backing" /> 中的字节时解析信封。</para>
         /// </summary>
         /// <param name="packet">
-        ///     Full on-wire bytes as a span over <paramref name="backing" />.
-        ///     作为 <paramref name="backing" /> 上 span 的完整线上字节。
+        ///     <para xml:lang="en">Full on-wire bytes equal to the contents of <paramref name="backing" />.</para>
+        ///     <para xml:lang="zh-CN">与 <paramref name="backing" /> 内容相等的完整线上字节。</para>
         /// </param>
         /// <param name="backing">
-        ///     Array used to construct <see cref="ReadOnlyMemory{T}" /> for extension and payload.
-        ///     用于为扩展和载荷构造 <see cref="ReadOnlyMemory{T}" /> 的数组。
+        ///     <para xml:lang="en">Array used to construct <see cref="ReadOnlyMemory{T}" /> views for the extension and payload.</para>
+        ///     <para xml:lang="zh-CN">用于构造扩展和载荷 <see cref="ReadOnlyMemory{T}" /> 视图的数组。</para>
         /// </param>
         /// <param name="parsed">
-        ///     Populated when the return value is <see cref="ParseOutcome.Ok" />.
-        ///     返回值为 <see cref="ParseOutcome.Ok" /> 时填充。
+        ///     <para xml:lang="en">Populated when the return value is <see cref="ParseOutcome.Ok" />.</para>
+        ///     <para xml:lang="zh-CN">返回值为 <see cref="ParseOutcome.Ok" /> 时填充。</para>
         /// </param>
         public static ParseOutcome TryParse(ReadOnlySpan<byte> packet, byte[] backing, out ParsedEnvelope parsed)
         {
             parsed = default;
+            if (backing == null || packet.Length != backing.Length || !packet.SequenceEqual(backing))
+                return ParseOutcome.BackingMismatch;
+
             if (packet.Length < RitsuLibSidecarWire.MinEnvelopeSize)
                 return ParseOutcome.TooSmall;
 
@@ -176,38 +195,35 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Builds a complete on-wire envelope. <paramref name="headerExtension" /> is copied after the fixed
-        ///     header for forward-compatible optional fields.
-        ///     构建完整线上 envelope。<paramref name="headerExtension" /> 会复制到固定
-        ///     header 之后，用于向前兼容的可选字段。
+        ///     <para xml:lang="en">Builds a complete on-wire envelope, optionally gzip-compressing the logical payload.</para>
+        ///     <para xml:lang="zh-CN">构建完整线上信封，并可选择 gzip 压缩逻辑载荷。</para>
         /// </summary>
         /// <param name="wireFormatVersion">
-        ///     Wire format version field; must be within the supported range.
-        ///     线格式版本字段；必须位于支持范围内。
+        ///     <para xml:lang="en">Wire format version, which must be within the supported range.</para>
+        ///     <para xml:lang="zh-CN">必须位于支持范围内的线格式版本。</para>
         /// </param>
         /// <param name="flags">
-        ///     Wire flags; gzip may be set when <paramref name="gzipLogicalPayload" /> is <c>true</c>.
-        ///     线标志；当 <paramref name="gzipLogicalPayload" /> 为 <c>true</c> 时可设置 gzip。
+        ///     <para xml:lang="en">Wire flags; the gzip flag is controlled by <paramref name="gzipLogicalPayload" />.</para>
+        ///     <para xml:lang="zh-CN">线格式标志；gzip 标志由 <paramref name="gzipLogicalPayload" /> 控制。</para>
         /// </param>
         /// <param name="opcode">
-        ///     64-bit sidecar opcode.
-        ///     64 位 sidecar opcode。
+        ///     <para xml:lang="en">64-bit Sidecar opcode.</para>
+        ///     <para xml:lang="zh-CN">64 位 Sidecar 操作码。</para>
         /// </param>
         /// <param name="headerExtension">
-        ///     Optional bytes after the fixed header, before the payload.
-        ///     固定 header 之后、载荷之前的可选字节。
+        ///     <para xml:lang="en">Optional bytes after the fixed header and before the payload.</para>
+        ///     <para xml:lang="zh-CN">固定头部之后、载荷之前的可选字节。</para>
         /// </param>
         /// <param name="payloadLogical">
-        ///     Uncompressed logical payload; may be compressed when
-        ///     <paramref name="gzipLogicalPayload" /> is <c>true</c>.
-        ///     未压缩的逻辑载荷；当
-        ///     <paramref name="gzipLogicalPayload" /> 为 <c>true</c> 时可能被压缩。
+        ///     <para xml:lang="en">Uncompressed logical payload.</para>
+        ///     <para xml:lang="zh-CN">未压缩的逻辑载荷。</para>
         /// </param>
         /// <param name="gzipLogicalPayload">
-        ///     When <c>true</c>, compresses the payload and ORs in
-        ///     <see cref="RitsuLibSidecarWireFlags.PayloadGzip" />.
-        ///     为 <c>true</c> 时，压缩载荷并按 OR 写入
-        ///     <see cref="RitsuLibSidecarWireFlags.PayloadGzip" />。
+        ///     <para xml:lang="en">
+        ///         Whether to gzip-compress the payload and set
+        ///         <see cref="RitsuLibSidecarWireFlags.PayloadGzip" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">是否 gzip 压缩载荷并设置 <see cref="RitsuLibSidecarWireFlags.PayloadGzip" />。</para>
         /// </param>
         public static byte[] Build(
             ushort wireFormatVersion,
@@ -229,9 +245,33 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Builds a complete on-wire envelope using the requested payload compression mode.
-        ///     使用指定 payload 压缩模式构建完整线上 envelope。
+        ///     <para xml:lang="en">Builds a complete on-wire envelope using the requested payload compression mode.</para>
+        ///     <para xml:lang="zh-CN">使用请求的载荷压缩模式构建完整线上信封。</para>
         /// </summary>
+        /// <param name="wireFormatVersion">
+        ///     <para xml:lang="en">Wire format version, which must be within the supported range.</para>
+        ///     <para xml:lang="zh-CN">必须位于支持范围内的线格式版本。</para>
+        /// </param>
+        /// <param name="flags">
+        ///     <para xml:lang="en">Wire flags with compression bits replaced by <paramref name="compression" />.</para>
+        ///     <para xml:lang="zh-CN">其压缩位会由 <paramref name="compression" /> 替换的线格式标志。</para>
+        /// </param>
+        /// <param name="opcode">
+        ///     <para xml:lang="en">64-bit Sidecar opcode.</para>
+        ///     <para xml:lang="zh-CN">64 位 Sidecar 操作码。</para>
+        /// </param>
+        /// <param name="headerExtension">
+        ///     <para xml:lang="en">Optional bytes after the fixed header and before the payload.</para>
+        ///     <para xml:lang="zh-CN">固定头部之后、载荷之前的可选字节。</para>
+        /// </param>
+        /// <param name="payloadLogical">
+        ///     <para xml:lang="en">Uncompressed logical payload.</para>
+        ///     <para xml:lang="zh-CN">未压缩的逻辑载荷。</para>
+        /// </param>
+        /// <param name="compression">
+        ///     <para xml:lang="en">Payload compression mode.</para>
+        ///     <para xml:lang="zh-CN">载荷压缩模式。</para>
+        /// </param>
         public static byte[] Build(
             ushort wireFormatVersion,
             RitsuLibSidecarWireFlags flags,
@@ -309,34 +349,34 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Decoded header fields and logical payload.
-        ///     已解码的 header 字段和逻辑载荷。
+        ///     <para xml:lang="en">Contains decoded header fields and the logical payload.</para>
+        ///     <para xml:lang="zh-CN">包含已解码的头部字段和逻辑载荷。</para>
         /// </summary>
         public readonly struct ParsedEnvelope
         {
             /// <summary>
-            ///     Creates a parsed envelope value.
-            ///     创建 parsed envelope 值。
+            ///     <para xml:lang="en">Creates a parsed-envelope value.</para>
+            ///     <para xml:lang="zh-CN">创建已解析的信封值。</para>
             /// </summary>
             /// <param name="wireFormatVersion">
-            ///     Wire version from the packet.
-            ///     数据包中的线版本。
+            ///     <para xml:lang="en">Wire format version from the packet.</para>
+            ///     <para xml:lang="zh-CN">数据包中的线格式版本。</para>
             /// </param>
             /// <param name="flags">
-            ///     Decoded wire flags.
-            ///     已解码的线标志。
+            ///     <para xml:lang="en">Decoded wire flags.</para>
+            ///     <para xml:lang="zh-CN">已解码的线格式标志。</para>
             /// </param>
             /// <param name="opcode">
-            ///     64-bit opcode from the packet.
-            ///     数据包中的 64 位 opcode。
+            ///     <para xml:lang="en">64-bit opcode from the packet.</para>
+            ///     <para xml:lang="zh-CN">数据包中的 64 位操作码。</para>
             /// </param>
             /// <param name="headerExtension">
-            ///     Optional extension segment.
-            ///     可选扩展段。
+            ///     <para xml:lang="en">Optional header-extension segment.</para>
+            ///     <para xml:lang="zh-CN">可选头扩展段。</para>
             /// </param>
             /// <param name="payload">
-            ///     Logical payload (decompressed if gzip was set).
-            ///     逻辑载荷（如果设置了 gzip，则为解压后）。
+            ///     <para xml:lang="en">Logical payload, decompressed when required by the flags.</para>
+            ///     <para xml:lang="zh-CN">逻辑载荷；必要时会按标志解压。</para>
             /// </param>
             public ParsedEnvelope(
                 ushort wireFormatVersion,
@@ -353,32 +393,32 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
 
             /// <summary>
-            ///     Wire format version from the packet.
-            ///     数据包中的线格式版本。
+            ///     <para xml:lang="en">Wire format version from the packet.</para>
+            ///     <para xml:lang="zh-CN">数据包中的线格式版本。</para>
             /// </summary>
             public ushort WireFormatVersion { get; }
 
             /// <summary>
-            ///     Decoded flags (unknown bits cleared).
-            ///     已解码标志（未知位已清除）。
+            ///     <para xml:lang="en">Decoded flags with unknown bits cleared.</para>
+            ///     <para xml:lang="zh-CN">未知位已清除的已解码标志。</para>
             /// </summary>
             public RitsuLibSidecarWireFlags Flags { get; }
 
             /// <summary>
-            ///     64-bit opcode (from <see cref="RitsuLibSidecarOpcodes.For" /> or a framework constant).
-            ///     64 位 opcode（来自 <see cref="RitsuLibSidecarOpcodes.For" /> 或框架常量）。
+            ///     <para xml:lang="en">64-bit opcode from <see cref="RitsuLibSidecarOpcodes.For" /> or a framework constant.</para>
+            ///     <para xml:lang="zh-CN">来自 <see cref="RitsuLibSidecarOpcodes.For" /> 或框架常量的 64 位操作码。</para>
             /// </summary>
             public ulong Opcode { get; }
 
             /// <summary>
-            ///     Opaque header extension; v1 senders typically use length 0.
-            ///     不透明 header 扩展；v1 发送方通常使用长度 0。
+            ///     <para xml:lang="en">Opaque header extension; version-1 senders typically use an empty extension.</para>
+            ///     <para xml:lang="zh-CN">不透明头扩展；版本 1 发送方通常使用空扩展。</para>
             /// </summary>
             public ReadOnlyMemory<byte> HeaderExtension { get; }
 
             /// <summary>
-            ///     Logical payload (after optional gzip decompression).
-            ///     逻辑载荷（可选 gzip 解压之后）。
+            ///     <para xml:lang="en">Logical payload after any compression indicated by the flags is removed.</para>
+            ///     <para xml:lang="zh-CN">移除标志指示的任何压缩后的逻辑载荷。</para>
             /// </summary>
             public ReadOnlyMemory<byte> Payload { get; }
         }

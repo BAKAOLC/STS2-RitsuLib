@@ -7,8 +7,13 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Relics.Patches
 {
     /// <summary>
-    ///     Lets mods provide per-character Dusty Tome ancient-card candidates before vanilla unlocked-card selection.
-    ///     允许 mod 在原版已解锁卡牌选择前，为每个角色提供 Dusty Tome ancient 卡牌候选。
+    ///     <para xml:lang="en">
+    ///         Lets mods provide per-character Ancient card candidates for Dusty Tome before the base game chooses from
+    ///         unlocked cards.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         允许模组按角色为尘封之书提供先古卡牌候选项，其优先级高于游戏本体从已解锁卡牌中进行的选择。
+    ///     </para>
     /// </summary>
     internal sealed class DustyTomeSetupForPlayerPatch : IPatchMethod
     {

@@ -3,23 +3,27 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 namespace STS2RitsuLib.CardPiles
 {
     /// <summary>
-    ///     Runtime instance of a mod card pile. Behaves as a vanilla <see cref="CardPile" /> and simply carries
-    ///     a back-reference to its <see cref="ModCardPileDefinition" /> so UI and patch code can look up mod
-    ///     metadata (icon, localization, style).
-    ///     （icon、localization、style）。
-    ///     mod 卡牌牌堆的运行时实例。行为类似原版 <see cref="CardPile" />，并携带指向其
-    ///     <see cref="ModCardPileDefinition" /> 的反向引用，使 UI 和 patch 代码可以查找 mod
-    ///     元数据（icon、localization、style）。
+    ///     <para xml:lang="en">
+    ///         Represents a runtime <see cref="CardPile" /> created from a registered mod card-pile definition.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示根据已注册模组卡牌牌堆定义创建的运行时 <see cref="CardPile" />。
+    ///     </para>
     /// </summary>
     public sealed class ModCardPile : CardPile
     {
         /// <summary>
-        ///     Creates a pile whose <see cref="CardPile.Type" /> matches <paramref name="definition" />'s minted value.
-        ///     创建一个 <see cref="CardPile.Type" /> 匹配 <paramref name="definition" /> 生成值的牌堆。
+        ///     <para xml:lang="en">
+        ///         Creates a pile whose <see cref="CardPile.Type" /> is the dynamic value stored by
+        ///         <paramref name="definition" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         创建 <see cref="CardPile.Type" /> 为 <paramref name="definition" /> 所存动态值的牌堆。
+        ///     </para>
         /// </summary>
         /// <param name="definition">
-        ///     Registry entry this pile was created from.
-        ///     创建此牌堆所依据的注册条目。
+        ///     <para xml:lang="en">The registered definition used to create the pile.</para>
+        ///     <para xml:lang="zh-CN">用于创建牌堆的已注册定义。</para>
         /// </param>
         public ModCardPile(ModCardPileDefinition definition) : base(definition.PileType)
         {
@@ -27,8 +31,8 @@ namespace STS2RitsuLib.CardPiles
         }
 
         /// <summary>
-        ///     Back-reference to the immutable definition this pile was built from.
-        ///     指向此牌堆所依据不可变定义的反向引用。
+        ///     <para xml:lang="en">Gets the definition used to create this pile.</para>
+        ///     <para xml:lang="zh-CN">获取用于创建此牌堆的定义。</para>
         /// </summary>
         public ModCardPileDefinition Definition { get; }
     }

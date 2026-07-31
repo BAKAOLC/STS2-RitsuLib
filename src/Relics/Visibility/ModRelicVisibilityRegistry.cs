@@ -3,8 +3,8 @@ using MegaCrit.Sts2.Core.Models;
 namespace STS2RitsuLib.Relics.Visibility
 {
     /// <summary>
-    ///     Runtime registry for mod relic visibility rules.
-    ///     Mod 遗物可见性规则的运行时注册表。
+    ///     <para xml:lang="en">Provides a runtime registry of mod-defined relic visibility rules.</para>
+    ///     <para xml:lang="zh-CN">提供模组自定义遗物可见性规则的运行时注册表。</para>
     /// </summary>
     public static class ModRelicVisibilityRegistry
     {
@@ -12,12 +12,16 @@ namespace STS2RitsuLib.Relics.Visibility
         private static readonly List<VisibilityRuleRegistration> Rules = [];
 
         /// <summary>
-        ///     Registers a visibility rule. Returning false hides the relic.
-        ///     注册可见性规则。返回 false 会隐藏该遗物。
+        ///     <para xml:lang="en">
+        ///         Registers a visibility rule. Returning <see langword="false" /> from the rule hides the relic.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册可见性规则。规则返回 <see langword="false" /> 时会隐藏相应遗物。
+        ///     </para>
         /// </summary>
         /// <returns>
-        ///     A disposable registration handle.
-        ///     可释放的注册句柄。
+        ///     <para xml:lang="en">A handle whose disposal unregisters the rule.</para>
+        ///     <para xml:lang="zh-CN">释放后会注销该规则的句柄。</para>
         /// </returns>
         public static IDisposable Register(string modId, Func<RelicModel, bool> isVisible)
         {
@@ -34,8 +38,8 @@ namespace STS2RitsuLib.Relics.Visibility
         }
 
         /// <summary>
-        ///     Returns whether a relic should be visible in normal relic UI.
-        ///     返回遗物是否应在正常遗物 UI 中可见。
+        ///     <para xml:lang="en">Returns whether a relic should appear in ordinary relic UI.</para>
+        ///     <para xml:lang="zh-CN">返回遗物是否应显示在常规遗物界面中。</para>
         /// </summary>
         public static bool IsVisible(RelicModel relic)
         {

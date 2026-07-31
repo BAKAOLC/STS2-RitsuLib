@@ -4,10 +4,12 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Hooks framework lifecycle and keeps sidecar session state aligned with the current net service. Handshake
-    ///     negotiation is attempted only for peers marked <see cref="RitsuLibSidecarPeerReachability.Supported" />.
-    ///     挂接框架生命周期，并保持 sidecar 会话状态与当前 net service 对齐。握手
-    ///     协商仅会对标记为 <see cref="RitsuLibSidecarPeerReachability.Supported" /> 的 peer 尝试。
+    ///     <para xml:lang="en">
+    ///         Keeps the Sidecar session synchronized with framework lifecycle and network-service changes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使 Sidecar 会话与框架生命周期及网络服务变更保持同步。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarNetworkingLifecycle
     {
@@ -18,8 +20,14 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static bool _processFrameHooked;
 
         /// <summary>
-        ///     Subscribes once per process (idempotent). Called from <see cref="RitsuLibSidecarProtocol.EnsureDefaultHandlers" />.
-        ///     每个进程订阅一次（幂等）。由 <see cref="RitsuLibSidecarProtocol.EnsureDefaultHandlers" /> 调用。
+        ///     <para xml:lang="en">
+        ///         Installs the lifecycle subscriptions and process-frame watcher once per process. If installation fails,
+        ///         acquired subscriptions are disposed before the failure is rethrown, so a later call may retry.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在每个进程中安装一次生命周期订阅和逐帧监视器。安装失败时会先释放已获取的订阅，再重新抛出失败，
+        ///         因此后续调用可以重试。
+        ///     </para>
         /// </summary>
         public static void EnsureHooksInstalled()
         {
@@ -31,10 +39,45 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (_subscriptions != null)
                     return;
 
-                var a = RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(_ => TryAttachProcessFrameWatch());
-                var b = RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => OnRunEnded());
-                _subscriptions = new SubscriptionGroup(a, b);
-                TryAttachProcessFrameWatch();
+                IDisposable? gameReadySubscription = null;
+                IDisposable? runEndedSubscription = null;
+                try
+                {
+                    gameReadySubscription =
+                        RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(_ => TryAttachProcessFrameWatch());
+                    runEndedSubscription = RitsuLibFramework.SubscribeLifecycle<RunEndedEvent>(_ => OnRunEnded());
+                    TryAttachProcessFrameWatch();
+                    _subscriptions = new SubscriptionGroup(gameReadySubscription, runEndedSubscription);
+                }
+                catch (Exception installException)
+                {
+                    List<Exception>? cleanupExceptions = null;
+                    TryDispose(runEndedSubscription);
+                    TryDispose(gameReadySubscription);
+                    if (cleanupExceptions == null)
+                        throw;
+
+                    cleanupExceptions.Insert(0, installException);
+                    throw new AggregateException(
+                        "Sidecar lifecycle installation and rollback both failed.",
+                        cleanupExceptions);
+
+                    void TryDispose(IDisposable? subscription)
+                    {
+                        if (subscription == null)
+                            return;
+
+                        try
+                        {
+                            subscription.Dispose();
+                        }
+                        catch (Exception cleanupException)
+                        {
+                            cleanupExceptions ??= [];
+                            cleanupExceptions.Add(cleanupException);
+                        }
+                    }
+                }
             }
         }
 

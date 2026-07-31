@@ -9,8 +9,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Diagnostics.Patches
 {
     /// <summary>
-    ///     Supplies <c>unlock &lt;type&gt; &lt;id&gt;...</c> autocomplete via
-    ///     <see cref="AbstractConsoleCmd.CompleteArgument" />.
+    ///     <para xml:lang="en">
+    ///         Provides autocomplete for <c>unlock &lt;type&gt; &lt;id&gt;...</c> through
+    ///         <see cref="AbstractConsoleCmd.CompleteArgument" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过 <see cref="AbstractConsoleCmd.CompleteArgument" /> 为
+    ///         <c>unlock &lt;type&gt; &lt;id&gt;...</c> 提供自动补全。
+    ///     </para>
     /// </summary>
     internal sealed class DevConsoleAutocompleteUnlockArgumentPatch : IPatchMethod
     {

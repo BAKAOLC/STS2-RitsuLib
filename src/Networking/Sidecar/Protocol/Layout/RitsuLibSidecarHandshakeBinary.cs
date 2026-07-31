@@ -3,30 +3,47 @@ using System.Buffers.Binary;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Binary layout for <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> and <c>HandshakeAck</c> payloads.
-    ///     <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> 和 <c>HandshakeAck</c> 载荷的二进制布局。
+    ///     <para xml:lang="en">
+    ///         Encodes and decodes <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> and
+    ///         <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> payloads.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         编解码 <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> 和
+    ///         <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> 载荷。
+    ///     </para>
     /// </summary>
     public static class RitsuLibSidecarHandshakeBinary
     {
         /// <summary>
-        ///     Length of a <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> body: version, max version, features (all
-        ///     big-endian where multi-byte).
-        ///     <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> body 的长度：version、max version、features（多字节均为
-        ///     big-endian）。
+        ///     <para xml:lang="en">
+        ///         The handshake payload length, including the requested version, maximum supported version, and
+        ///         feature flags. Multibyte values use big-endian order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         握手载荷的长度，其中包含请求版本、支持的最高版本和功能标志；多字节值采用大端序。
+        ///     </para>
         /// </summary>
         public const int HandshakePayloadSize = RitsuLibSidecarHandshakeLayout.HandshakePayloadSize;
 
         /// <summary>
-        ///     Length of a <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> body: selected version, ok byte,
-        ///     ack-sender features.
-        ///     <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> body 的长度：selected version、ok byte、
-        ///     ack-sender features。
+        ///     <para xml:lang="en">
+        ///         The acknowledgement payload length, including the selected version, acceptance byte, and sender
+        ///         feature flags.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         握手确认载荷的长度，其中包含选定版本、接受状态字节和发送方功能标志。
+        ///     </para>
         /// </summary>
         public const int AckPayloadSize = RitsuLibSidecarHandshakeLayout.AckPayloadSize;
 
         /// <summary>
-        ///     Serializes a hello payload; <paramref name="d" /> must be at least <see cref="HandshakePayloadSize" />.
-        ///     序列化 hello 载荷；<paramref name="d" /> 至少必须为 <see cref="HandshakePayloadSize" />。
+        ///     <para xml:lang="en">
+        ///         Writes a handshake payload to <paramref name="d" />, which must be at least
+        ///         <see cref="HandshakePayloadSize" /> bytes long.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将握手载荷写入 <paramref name="d" />；其长度不得小于 <see cref="HandshakePayloadSize" /> 字节。
+        ///     </para>
         /// </summary>
         public static void WriteHandshake(Span<byte> d, ushort wireFormatVersion, ushort supportedWireFormatVersionMax,
             RitsuLibSidecarPeerFeatures features)
@@ -47,8 +64,12 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Deserializes a hello body from a full <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> message payload.
-        ///     从完整的 <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> 消息载荷反序列化 hello body。
+        ///     <para xml:lang="en">
+        ///         Reads a handshake from a complete <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> payload.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从完整的 <see cref="RitsuLibSidecarControlOpcodes.Handshake" /> 载荷中读取握手信息。
+        ///     </para>
         /// </summary>
         public static void ReadHandshake(ReadOnlySpan<byte> d, out ushort wireFormatVersion,
             out ushort supportedWireFormatVersionMax, out RitsuLibSidecarPeerFeatures features)
@@ -66,8 +87,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Serializes an ack; <paramref name="d" /> must be at least <see cref="AckPayloadSize" />.
-        ///     序列化 ack；<paramref name="d" /> 至少必须为 <see cref="AckPayloadSize" />。
+        ///     <para xml:lang="en">
+        ///         Writes a handshake acknowledgement to <paramref name="d" />, which must be at least
+        ///         <see cref="AckPayloadSize" /> bytes long.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将握手确认写入 <paramref name="d" />；其长度不得小于 <see cref="AckPayloadSize" /> 字节。
+        ///     </para>
         /// </summary>
         public static void WriteAck(
             Span<byte> d,
@@ -89,8 +115,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Deserializes an ack body from a <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> message payload.
-        ///     从 <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> 消息载荷反序列化 ack body。
+        ///     <para xml:lang="en">
+        ///         Reads an acknowledgement from a complete
+        ///         <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> payload.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从完整的 <see cref="RitsuLibSidecarControlOpcodes.HandshakeAck" /> 载荷中读取握手确认。
+        ///     </para>
         /// </summary>
         public static void ReadAck(
             ReadOnlySpan<byte> d,

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Telemetry
@@ -13,7 +12,7 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 EnsureLoaded();
-                return Clone(_document!);
+                return Normalize(_document!);
             }
         }
 
@@ -22,7 +21,7 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 EnsureLoaded();
-                return Clone(GetOrCreate(applicantId));
+                return CloneConsent(GetOrCreate(applicantId));
             }
         }
 
@@ -60,6 +59,7 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 EnsureLoaded();
+                var previous = Normalize(_document!);
                 var consent = GetOrCreate(applicantId);
                 consent.Consent = state;
                 consent.GrantedRequests = grantedRequests == null
@@ -67,7 +67,16 @@ namespace STS2RitsuLib.Telemetry
                     : new(grantedRequests, StringComparer.OrdinalIgnoreCase);
                 if (state != TelemetryConsentState.Granted)
                     consent.SharedContributionSources.Clear();
-                Save();
+                try
+                {
+                    Save();
+                }
+                catch
+                {
+                    _document = previous;
+                    throw;
+                }
+
                 RitsuLibFramework.Logger.Info(
                     $"[Telemetry] Applicant consent updated: {applicantId} -> {state} ({consent.GrantedRequests.Count} granted request(s)).");
             }
@@ -90,6 +99,7 @@ namespace STS2RitsuLib.Telemetry
             lock (Sync)
             {
                 EnsureLoaded();
+                var previous = Normalize(_document!);
                 var consent = GetOrCreate(applicantId);
                 if (!consent.SharedContributionSources.TryGetValue(contributorModId, out var ids))
                 {
@@ -105,7 +115,16 @@ namespace STS2RitsuLib.Telemetry
                 if (ids.Count == 0)
                     consent.SharedContributionSources.Remove(contributorModId);
 
-                Save();
+                try
+                {
+                    Save();
+                }
+                catch
+                {
+                    _document = previous;
+                    throw;
+                }
+
                 RitsuLibFramework.Logger.Info(
                     $"[Telemetry] Shared contribution consent updated: applicant={applicantId}, source={contributorModId}/{contributionId}, granted={granted}.");
             }
@@ -120,9 +139,7 @@ namespace STS2RitsuLib.Telemetry
                 TelemetryPaths.ConsentPath,
                 TelemetryJson.Options,
                 "TelemetryConsent");
-            _document = result is { Success: true, Data: not null }
-                ? result.Data
-                : new();
+            _document = Normalize(result is { Success: true, Data: not null } ? result.Data : new());
         }
 
         private static TelemetryApplicantConsent GetOrCreate(string applicantId)
@@ -136,13 +153,70 @@ namespace STS2RitsuLib.Telemetry
 
         private static void Save()
         {
-            FileOperations.WriteJson(TelemetryPaths.ConsentPath, _document, TelemetryJson.Options, "TelemetryConsent");
+            var result = FileOperations.WriteJson(
+                TelemetryPaths.ConsentPath,
+                _document,
+                TelemetryJson.Options,
+                "TelemetryConsent");
+            if (!result.Success)
+                throw new InvalidOperationException(
+                    $"Failed to persist telemetry consent: {result.ErrorMessage}");
         }
 
-        private static T Clone<T>(T value)
+        private static TelemetryConsentDocument Normalize(TelemetryConsentDocument document)
         {
-            var json = JsonSerializer.Serialize(value, TelemetryJson.Options);
-            return JsonSerializer.Deserialize<T>(json, TelemetryJson.Options)!;
+            var applicants = new Dictionary<string, TelemetryApplicantConsent>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (applicantId, consent) in document.Applicants ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(applicantId) || consent == null)
+                    continue;
+
+                var sharedSources =
+                    new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var (contributorModId, contributionIds) in consent.SharedContributionSources ?? [])
+                {
+                    if (string.IsNullOrWhiteSpace(contributorModId))
+                        continue;
+
+                    sharedSources[contributorModId] = new(
+                        (contributionIds ?? [])
+                        .Where(id => !string.IsNullOrWhiteSpace(id)),
+                        StringComparer.OrdinalIgnoreCase);
+                }
+
+                applicants[applicantId] = new()
+                {
+                    Consent = Enum.IsDefined(consent.Consent)
+                        ? consent.Consent
+                        : TelemetryConsentState.Unknown,
+                    GrantedRequests = new(
+                        (consent.GrantedRequests ?? [])
+                        .Where(id => !string.IsNullOrWhiteSpace(id)),
+                        StringComparer.OrdinalIgnoreCase),
+                    SharedContributionSources = sharedSources,
+                };
+            }
+
+            return new()
+            {
+                SchemaVersion = 1,
+                Applicants = applicants,
+            };
+        }
+
+        private static TelemetryApplicantConsent CloneConsent(TelemetryApplicantConsent consent)
+        {
+            var sharedSources =
+                new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var (contributorModId, contributionIds) in consent.SharedContributionSources)
+                sharedSources[contributorModId] = new(contributionIds, StringComparer.OrdinalIgnoreCase);
+
+            return new()
+            {
+                Consent = consent.Consent,
+                GrantedRequests = new(consent.GrantedRequests, StringComparer.OrdinalIgnoreCase),
+                SharedContributionSources = sharedSources,
+            };
         }
     }
 }

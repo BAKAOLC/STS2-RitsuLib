@@ -1,8 +1,8 @@
 namespace STS2RitsuLib.RuntimeInput
 {
     /// <summary>
-    ///     Immutable snapshot describing one active runtime hotkey registration.
-    ///     描述一个活动运行时热键注册的不可变快照。
+    ///     <para xml:lang="en">Provides an immutable snapshot of an active runtime hotkey registration.</para>
+    ///     <para xml:lang="zh-CN">提供活动运行时热键注册的不可变快照。</para>
     /// </summary>
     public sealed record RuntimeHotkeyRegistrationInfo(
         string CurrentBinding,
@@ -18,22 +18,22 @@ namespace STS2RitsuLib.RuntimeInput
         string? DebugName)
     {
         /// <summary>
-        ///     All currently active bindings for this hotkey, in display order.
-        ///     此热键当前所有活动绑定，按显示顺序排列。
+        ///     <para xml:lang="en">Gets all active bindings for this hotkey in display order.</para>
+        ///     <para xml:lang="zh-CN">按显示顺序获取此热键的所有有效绑定。</para>
         /// </summary>
         public IReadOnlyList<string> CurrentBindings { get; init; } =
             string.IsNullOrWhiteSpace(CurrentBinding) ? [] : [CurrentBinding];
 
         /// <summary>
-        ///     Per-binding modifier-only flags aligned with <see cref="CurrentBindings" />.
-        ///     与 <see cref="CurrentBindings" /> 对齐的逐绑定“仅修饰键”标志。
+        ///     <para xml:lang="en">Gets modifier-only flags corresponding by index to <see cref="CurrentBindings" />.</para>
+        ///     <para xml:lang="zh-CN">获取按索引对应于 <see cref="CurrentBindings" /> 的“仅修饰键”标志。</para>
         /// </summary>
         public IReadOnlyList<bool> BindingModifierOnlyStates { get; init; } = [IsModifierOnly];
     }
 
     /// <summary>
-    ///     Detailed immutable snapshot describing one active runtime hotkey registration, including all bindings.
-    ///     描述一个活动运行时热键注册的详细不可变快照，包括所有绑定。
+    ///     <para xml:lang="en">Provides a detailed immutable snapshot of an active hotkey and all its bindings.</para>
+    ///     <para xml:lang="zh-CN">提供活动热键及其所有绑定的详细不可变快照。</para>
     /// </summary>
     public sealed record RuntimeHotkeyRegistrationDetails(
         IReadOnlyList<string> CurrentBindings,
@@ -49,20 +49,20 @@ namespace STS2RitsuLib.RuntimeInput
         string? DebugName)
     {
         /// <summary>
-        ///     First active binding, kept for compatibility with single-binding consumers.
-        ///     第一个活动绑定，为兼容单绑定消费者而保留。
+        ///     <para xml:lang="en">Gets the first active binding for compatibility with single-binding consumers.</para>
+        ///     <para xml:lang="zh-CN">获取第一个有效绑定，以兼容仅支持单个绑定的调用方。</para>
         /// </summary>
         public string CurrentBinding => CurrentBindings.FirstOrDefault() ?? string.Empty;
 
         /// <summary>
-        ///     Whether the first active binding is modifier-only.
-        ///     第一个活动绑定是否仅包含修饰键。
+        ///     <para xml:lang="en">Gets whether the first active binding consists only of modifier keys.</para>
+        ///     <para xml:lang="zh-CN">获取第一个有效绑定是否仅由修饰键组成。</para>
         /// </summary>
         public bool IsModifierOnly => BindingModifierOnlyStates.FirstOrDefault();
 
         /// <summary>
-        ///     Down-converts this detailed snapshot to the legacy single-binding view.
-        ///     将此详细快照降级转换为旧版单绑定视图。
+        ///     <para xml:lang="en">Converts this snapshot to the compatibility view used by single-binding consumers.</para>
+        ///     <para xml:lang="zh-CN">将此快照转换为仅支持单个绑定的调用方所用的兼容视图。</para>
         /// </summary>
         public RuntimeHotkeyRegistrationInfo ToRegistrationInfo()
         {

@@ -5,9 +5,29 @@ using MegaCrit.Sts2.Core.Nodes.Screens;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Stable location inside the RitsuLib mod settings UI.
-    ///     RitsuLib Mod 设置 UI 内的稳定位置。
+    ///     <para xml:lang="en">
+    ///         Identifies a stable location in the RitsuLib mod settings UI, from a mod down to an optional entry.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         标识 RitsuLib 模组设置界面中从模组到可选条目的稳定位置。
+    ///     </para>
     /// </summary>
+    /// <param name="ModId">
+    ///     <para xml:lang="en">The target mod ID.</para>
+    ///     <para xml:lang="zh-CN">目标模组 ID。</para>
+    /// </param>
+    /// <param name="PageId">
+    ///     <para xml:lang="en">The optional target page ID.</para>
+    ///     <para xml:lang="zh-CN">可选的目标页面 ID。</para>
+    /// </param>
+    /// <param name="SectionId">
+    ///     <para xml:lang="en">The optional target section ID.</para>
+    ///     <para xml:lang="zh-CN">可选的目标节 ID。</para>
+    /// </param>
+    /// <param name="EntryId">
+    ///     <para xml:lang="en">The optional target entry ID.</para>
+    ///     <para xml:lang="zh-CN">可选的目标条目 ID。</para>
+    /// </param>
     public sealed record ModSettingsLocation(
         string ModId,
         string? PageId = null,
@@ -15,81 +35,92 @@ namespace STS2RitsuLib.Settings
         string? EntryId = null);
 
     /// <summary>
-    ///     Optional behavior for opening a settings location.
-    ///     打开设置位置时的可选行为。
+    ///     <para xml:lang="en">Configures presentation behavior when opening a settings location.</para>
+    ///     <para xml:lang="zh-CN">配置打开设置位置时的呈现行为。</para>
     /// </summary>
     public sealed class ModSettingsOpenOptions
     {
         /// <summary>
-        ///     Briefly pulse the target section or entry after navigation.
-        ///     跳转后短暂高亮目标 section 或条目。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether to briefly pulse-highlight the target section or entry after navigation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或初始化导航后是否短暂脉冲高亮目标节或条目。</para>
         /// </summary>
         public bool Highlight { get; init; } = true;
 
         /// <summary>
-        ///     Move UI focus into the target area when possible.
-        ///     可行时将 UI 焦点移入目标区域。
+        ///     <para xml:lang="en">Gets or initializes whether to move UI focus into the target area when possible.</para>
+        ///     <para xml:lang="zh-CN">获取或初始化是否在可行时将界面焦点移入目标区域。</para>
         /// </summary>
         public bool Focus { get; init; } = true;
 
         /// <summary>
-        ///     Expand a collapsible target section before scrolling to an entry inside it.
-        ///     滚动到折叠 section 内的条目前，先展开该 section。
+        ///     <para xml:lang="en">
+        ///         Gets or initializes whether to expand a collapsed target section before scrolling to an entry inside
+        ///         it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化滚动到折叠目标节中的条目前是否先展开该节。
+        ///     </para>
         /// </summary>
         public bool ExpandCollapsedSection { get; init; } = true;
     }
 
     /// <summary>
-    ///     Result returned by mod settings navigation requests.
-    ///     Mod 设置导航请求返回的结果。
+    ///     <para xml:lang="en">
+    ///         Describes the acceptance, resolution, or completion of a mod settings navigation request.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         描述模组设置导航请求的接受、解析或完成结果。
+    ///     </para>
     /// </summary>
     public sealed class ModSettingsOpenResult
     {
         /// <summary>
-        ///     True when the request was accepted or completed.
-        ///     请求已接受或已完成时为 true。
+        ///     <para xml:lang="en">Gets whether the reported navigation stage succeeded.</para>
+        ///     <para xml:lang="zh-CN">获取所报告的导航阶段是否成功。</para>
         /// </summary>
         public bool Success { get; init; }
 
         /// <summary>
-        ///     Stable machine-readable result code.
-        ///     稳定的机器可读结果代码。
+        ///     <para xml:lang="en">Gets the stable machine-readable result code.</para>
+        ///     <para xml:lang="zh-CN">获取稳定的机器可读结果代码。</para>
         /// </summary>
         public string Code { get; init; } = "";
 
         /// <summary>
-        ///     Human-readable result message.
-        ///     面向人的结果消息。
+        ///     <para xml:lang="en">Gets a human-readable result message.</para>
+        ///     <para xml:lang="zh-CN">获取便于阅读的结果消息。</para>
         /// </summary>
         public string Message { get; init; } = "";
 
         /// <summary>
-        ///     Target mod id.
-        ///     目标 Mod id。
+        ///     <para xml:lang="en">Gets the target mod ID reported for this stage.</para>
+        ///     <para xml:lang="zh-CN">获取此阶段所报告的目标模组 ID。</para>
         /// </summary>
         public string ModId { get; init; } = "";
 
         /// <summary>
-        ///     Resolved target page id, when any.
-        ///     解析后的目标页面 id（如果有）。
+        ///     <para xml:lang="en">Gets the reported target page ID, when present.</para>
+        ///     <para xml:lang="zh-CN">获取所报告的目标页面 ID（如果存在）。</para>
         /// </summary>
         public string? PageId { get; init; }
 
         /// <summary>
-        ///     Resolved target section id, when any.
-        ///     解析后的目标 section id（如果有）。
+        ///     <para xml:lang="en">Gets the reported target section ID, when present.</para>
+        ///     <para xml:lang="zh-CN">获取所报告的目标节 ID（如果存在）。</para>
         /// </summary>
         public string? SectionId { get; init; }
 
         /// <summary>
-        ///     Target entry id, when any.
-        ///     目标条目 id（如果有）。
+        ///     <para xml:lang="en">Gets the reported target entry ID, when present.</para>
+        ///     <para xml:lang="zh-CN">获取所报告的目标条目 ID（如果存在）。</para>
         /// </summary>
         public string? EntryId { get; init; }
 
         /// <summary>
-        ///     True when the navigation has been queued and will finish later.
-        ///     导航已排队、稍后才会完成时为 true。
+        ///     <para xml:lang="en">Gets whether navigation was queued for later completion.</para>
+        ///     <para xml:lang="zh-CN">获取导航是否已排队等待稍后完成。</para>
         /// </summary>
         public bool IsDeferred { get; init; }
 
@@ -128,15 +159,53 @@ namespace STS2RitsuLib.Settings
     }
 
     /// <summary>
-    ///     Public entry points for opening RitsuLib mod settings pages from mods, reflection, or console commands.
-    ///     从 mod、反射或控制台命令打开 RitsuLib Mod 设置页面的公共入口。
+    ///     <para xml:lang="en">
+    ///         Provides public entry points for opening RitsuLib mod settings locations from mods, reflection, or
+    ///         console commands.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         提供从模组、反射调用或控制台命令打开 RitsuLib 模组设置位置的公共入口。
+    ///     </para>
     /// </summary>
     public static class ModSettingsNavigator
     {
         /// <summary>
-        ///     Reflection-friendly request entry point. Pass <see langword="null" /> for unspecified ids.
-        ///     反射友好的请求入口；未指定的 id 传 <see langword="null" />。
+        ///     <para xml:lang="en">
+        ///         Resolves a location supplied as individual IDs, opens an available settings host, and queues the
+        ///         visible navigation for a later frame. Pass <see langword="null" /> for unspecified IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析以各个 ID 提供的位置，打开可用的设置宿主，并将可见界面的导航排到后续帧执行。
+        ///         未指定的 ID 应传入 <see langword="null" />。
+        ///     </para>
         /// </summary>
+        /// <param name="modId">
+        ///     <para xml:lang="en">The target mod ID.</para>
+        ///     <para xml:lang="zh-CN">目标模组 ID。</para>
+        /// </param>
+        /// <param name="pageId">
+        ///     <para xml:lang="en">The optional target page ID.</para>
+        ///     <para xml:lang="zh-CN">可选的目标页面 ID。</para>
+        /// </param>
+        /// <param name="sectionId">
+        ///     <para xml:lang="en">The optional target section ID.</para>
+        ///     <para xml:lang="zh-CN">可选的目标节 ID。</para>
+        /// </param>
+        /// <param name="entryId">
+        ///     <para xml:lang="en">The optional target entry ID.</para>
+        ///     <para xml:lang="zh-CN">可选的目标条目 ID。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         A deferred success result when the location is resolved and queued; otherwise, an input, registry,
+        ///         resolution, or host error. Deferred execution failures are logged and are not reflected in this
+        ///         immediate result.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         位置成功解析并排队时返回延迟成功结果；否则返回输入、注册表、位置解析或宿主错误。
+        ///         延迟执行期间的失败只会被记录，不会反映在此即时结果中。
+        ///     </para>
+        /// </returns>
         public static ModSettingsOpenResult RequestOpenByIds(
             string modId,
             string? pageId,
@@ -176,14 +245,43 @@ namespace STS2RitsuLib.Settings
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.Warn($"[Settings] Deferred navigation failed: {ex.Message}");
+                RitsuLibFramework.Logger.Warn($"[Settings] Deferred navigation failed: {ex}");
             }
         }
 
         /// <summary>
-        ///     Opens a settings location and waits until the visible UI has navigated to it.
-        ///     打开设置位置，并等待可见 UI 完成导航。
+        ///     <para xml:lang="en">
+        ///         Opens a settings location supplied as individual IDs and waits for the visible UI to finish navigating
+        ///         to it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         打开以各个 ID 提供的设置位置，并等待可见界面完成导航。
+        ///     </para>
         /// </summary>
+        /// <param name="modId">
+        ///     <para xml:lang="en">The target mod ID.</para>
+        ///     <para xml:lang="zh-CN">目标模组 ID。</para>
+        /// </param>
+        /// <param name="pageId">
+        ///     <para xml:lang="en">The optional target page ID.</para>
+        ///     <para xml:lang="zh-CN">可选的目标页面 ID。</para>
+        /// </param>
+        /// <param name="sectionId">
+        ///     <para xml:lang="en">The optional target section ID.</para>
+        ///     <para xml:lang="zh-CN">可选的目标节 ID。</para>
+        /// </param>
+        /// <param name="entryId">
+        ///     <para xml:lang="en">The optional target entry ID.</para>
+        ///     <para xml:lang="zh-CN">可选的目标条目 ID。</para>
+        /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">Optional navigation presentation behavior.</para>
+        ///     <para xml:lang="zh-CN">可选的导航呈现行为。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A task whose result describes resolution, host opening, and visible navigation.</para>
+        ///     <para xml:lang="zh-CN">其结果描述位置解析、宿主打开与可见界面导航的任务。</para>
+        /// </returns>
         public static Task<ModSettingsOpenResult> OpenByIdsAsync(
             string modId,
             string? pageId = null,
@@ -195,13 +293,31 @@ namespace STS2RitsuLib.Settings
         }
 
         /// <summary>
-        ///     Opens a settings location and waits until the visible UI has navigated to it.
-        ///     打开设置位置，并等待可见 UI 完成导航。
+        ///     <para xml:lang="en">
+        ///         Resolves and opens a settings location, then waits for the visible UI to finish navigating to it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析并打开设置位置，然后等待可见界面完成导航。
+        ///     </para>
         /// </summary>
+        /// <param name="location">
+        ///     <para xml:lang="en">The settings location to open.</para>
+        ///     <para xml:lang="zh-CN">要打开的设置位置。</para>
+        /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">Optional navigation presentation behavior.</para>
+        ///     <para xml:lang="zh-CN">可选的导航呈现行为。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A task whose result describes resolution, host opening, and visible navigation.</para>
+        ///     <para xml:lang="zh-CN">其结果描述位置解析、宿主打开与可见界面导航的任务。</para>
+        /// </returns>
         public static async Task<ModSettingsOpenResult> OpenAsync(
             ModSettingsLocation location,
             ModSettingsOpenOptions? options = null)
         {
+            ArgumentNullException.ThrowIfNull(location);
+
             var requested = Normalize(location);
             var resolved = ResolveLocation(requested);
             if (!resolved.Success)
@@ -216,6 +332,15 @@ namespace STS2RitsuLib.Settings
 
         internal static ModSettingsOpenResult ResolveLocation(ModSettingsLocation requested)
         {
+            if (string.IsNullOrWhiteSpace(requested.ModId))
+                return ModSettingsOpenResult.Error("invalid-location", "A mod id is required.", requested);
+            if (string.IsNullOrWhiteSpace(requested.PageId) &&
+                (!string.IsNullOrWhiteSpace(requested.SectionId) || !string.IsNullOrWhiteSpace(requested.EntryId)))
+                return ModSettingsOpenResult.Error(
+                    "invalid-location",
+                    "A page id is required when opening a section or entry.",
+                    requested);
+
             try
             {
                 RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
@@ -225,17 +350,12 @@ namespace STS2RitsuLib.Settings
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[Settings] Failed to refresh page registry before navigation: {ex.Message}");
-            }
-
-            if (string.IsNullOrWhiteSpace(requested.ModId))
-                return ModSettingsOpenResult.Error("invalid-location", "A mod id is required.", requested);
-            if (string.IsNullOrWhiteSpace(requested.PageId) &&
-                (!string.IsNullOrWhiteSpace(requested.SectionId) || !string.IsNullOrWhiteSpace(requested.EntryId)))
+                    $"[Settings] Failed to refresh page registry before navigation: {ex}");
                 return ModSettingsOpenResult.Error(
-                    "invalid-location",
-                    "A page id is required when opening a section or entry.",
+                    "registry-refresh-failed",
+                    "Settings pages could not be refreshed.",
                     requested);
+            }
 
             var pages = ModSettingsRegistry.GetPages()
                 .Where(page => string.Equals(page.ModId, requested.ModId, StringComparison.OrdinalIgnoreCase))

@@ -1,16 +1,25 @@
 namespace STS2RitsuLib.Scaffolding.Content
 {
     /// <summary>
-    ///     Declarative pack step (timeline, unlocks, or other <see cref="ModContentPackContext" /> surfaces), like
-    ///     <see cref="IContentRegistrationEntry" /> but for the full pack context.
-    ///     声明式内容包步骤（时间线、解锁或其他 <see cref="ModContentPackContext" /> 表面），类似
-    ///     <see cref="IContentRegistrationEntry" />，但作用于完整内容包上下文。
+    ///     <para xml:lang="en">
+    ///         Represents a declarative content-pack step for timelines, unlocks, or other
+    ///         <see cref="ModContentPackContext" /> features. Unlike <see cref="IContentRegistrationEntry" />, it
+    ///         receives the complete pack context.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         表示用于时间线、解锁或其他 <see cref="ModContentPackContext" /> 功能的声明式内容包步骤。与
+    ///         <see cref="IContentRegistrationEntry" /> 不同，它会接收完整的内容包上下文。
+    ///     </para>
     /// </summary>
     public interface IModContentPackEntry
     {
         /// <summary>
-        ///     Runs this step during <see cref="ModContentPackBuilder.Apply" />.
-        ///     在 <see cref="ModContentPackBuilder.Apply" /> 期间运行此步骤。
+        ///     <para xml:lang="en">
+        ///         Applies this step during <see cref="ModContentPackBuilder.Apply" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在 <see cref="ModContentPackBuilder.Apply" /> 期间应用此步骤。
+        ///     </para>
         /// </summary>
         void Apply(ModContentPackContext context);
     }

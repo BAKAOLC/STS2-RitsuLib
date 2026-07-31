@@ -5,8 +5,12 @@ using STS2RitsuLib.Content.Patches;
 namespace STS2RitsuLib.Models.Identity
 {
     /// <summary>
-    ///     Runtime model identity registry backed by deterministic vanilla lifecycle entry points.
-    ///     基于确定性原版生命周期入口的运行时 model identity 注册表。
+    ///     <para xml:lang="en">
+    ///         Tracks runtime model identities through deterministic base-game lifecycle entry points.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         通过确定的游戏原版生命周期入口跟踪运行时模型身份。
+    ///     </para>
     /// </summary>
     internal static class ModModelIdentityRegistry
     {

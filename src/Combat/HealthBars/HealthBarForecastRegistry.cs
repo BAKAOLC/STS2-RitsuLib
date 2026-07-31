@@ -5,110 +5,124 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 namespace STS2RitsuLib.Combat.HealthBars
 {
     /// <summary>
-    ///     Which side of the health bar a forecast segment should grow from.
-    ///     forecast 片段应从生命条的哪一侧增长。
+    ///     <para xml:lang="en">Specifies the health-bar edge from which a forecast segment extends.</para>
+    ///     <para xml:lang="zh-CN">指定生命条预测片段从哪一侧边缘延伸。</para>
     /// </summary>
     public enum HealthBarForecastGrowthDirection
     {
         /// <summary>
-        ///     Grows inward from the current HP edge, like poison.
-        ///     从当前 HP 边缘向内增长，类似 poison。
+        ///     <para xml:lang="en">Extends inward from the current-HP edge, like Poison.</para>
+        ///     <para xml:lang="zh-CN">从当前生命值边缘向内延伸，与“中毒”相同。</para>
         /// </summary>
         FromRight = 0,
 
         /// <summary>
-        ///     Grows outward from the empty side, like doom.
-        ///     从空白侧向外增长，类似 doom。
+        ///     <para xml:lang="en">Extends inward from the empty edge, like Doom.</para>
+        ///     <para xml:lang="zh-CN">从空白侧边缘向内延伸，与“灾厄”相同。</para>
         /// </summary>
         FromLeft = 1,
     }
 
     /// <summary>
-    ///     How <see cref="HealthBarForecastGrowthDirection.FromLeft" /> segments share the empty-edge origin.
-    ///     <see cref="HealthBarForecastGrowthDirection.FromLeft" /> 片段如何共享空白边缘原点。
+    ///     <para xml:lang="en">
+    ///         Specifies how <see cref="HealthBarForecastGrowthDirection.FromLeft" /> segments share the empty-edge
+    ///         origin.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         指定 <see cref="HealthBarForecastGrowthDirection.FromLeft" /> 片段如何共享空白侧边缘的起点。
+    ///     </para>
     /// </summary>
     public enum HealthBarForecastLeftOriginLayout
     {
         /// <summary>
-        ///     Segments connect end-to-end from the empty edge (legacy layout).
-        ///     片段从空白边缘首尾相接（旧版布局）。
+        ///     <para xml:lang="en">Connects segments end to end from the empty edge.</para>
+        ///     <para xml:lang="zh-CN">从空白侧边缘开始首尾相接地排列片段。</para>
         /// </summary>
         Chained = 0,
 
         /// <summary>
-        ///     Each segment spans from the empty edge by its own <c>Amount</c> (capped to remaining HP). Larger
-        ///     <c>Amount</c> is drawn behind; smaller in front. Equal widths stack deterministically by
-        ///     <c>Order</c>, then registration order — later on top.
-        ///     每个片段从空白边缘开始，按自身 <c>Amount</c> 跨越（限制为剩余 HP）。较大的
-        ///     <c>Amount</c> 绘制在后方；较小的绘制在前方。宽度相等时按 <c>Order</c>、再按注册顺序
-        ///     确定性叠放，靠后者在上层。
+        ///     <para xml:lang="en">
+        ///         Starts every segment at the empty edge and gives it its own amount-capped width. Longer segments are
+        ///         drawn behind shorter ones; equal widths use segment order and then registration order, with later
+        ///         entries on top.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         每个片段都从空白侧边缘开始，并按自身数值计算不超过剩余生命值的宽度。较长片段绘制在较短片段
+        ///         后方；宽度相同时依次按片段顺序和注册顺序排列，较晚的项位于上层。
+        ///     </para>
         /// </summary>
         OverlapFromOrigin = 1,
     }
 
     /// <summary>
-    ///     One forecast overlay segment for a creature health bar.
-    ///     生物生命条上的一个 forecast 覆盖片段。
+    ///     <para xml:lang="en">Describes one forecast segment on a creature's health bar.</para>
+    ///     <para xml:lang="zh-CN">描述生物生命条上的一个预测片段。</para>
     /// </summary>
     /// <param name="Amount">
-    ///     HP amount represented by this segment.
-    ///     此片段表示的 HP 数量。
+    ///     <para xml:lang="en">The HP amount represented by the segment.</para>
+    ///     <para xml:lang="zh-CN">该片段表示的生命值数值。</para>
     /// </param>
     /// <param name="Color">
-    ///     Lethal HP label theming; also used as the forecast nine-patch <see cref="CanvasItem.SelfModulate" /> when
-    ///     <see cref="OverlaySelfModulate" /> is null.
-    ///     致命 HP 标签主题色；当 <see cref="OverlaySelfModulate" /> 为 null 时，也用作 forecast 九宫格
-    ///     <see cref="CanvasItem.SelfModulate" />。
+    ///     <para xml:lang="en">
+    ///         The lethal HP-label color. When <paramref name="OverlaySelfModulate" /> is <see langword="null" />, this
+    ///         also becomes the forecast overlay's <see cref="CanvasItem.SelfModulate" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         预测致命时的生命值文本颜色。当 <paramref name="OverlaySelfModulate" /> 为
+    ///         <see langword="null" /> 时，也会作为预测覆盖层的 <see cref="CanvasItem.SelfModulate" />。
+    ///     </para>
     /// </param>
     /// <param name="Direction">
-    ///     Which edge the segment grows from.
-    ///     片段从哪条边增长。
+    ///     <para xml:lang="en">The edge from which the segment extends.</para>
+    ///     <para xml:lang="zh-CN">片段延伸的起始边缘。</para>
     /// </param>
     /// <param name="Order">
-    ///     Lower values are rendered earlier in the chain.
-    ///     For <see cref="HealthBarForecastGrowthDirection.FromRight" />, earlier segments stay closer to the current HP
-    ///     edge; for <see cref="HealthBarForecastGrowthDirection.FromLeft" />, earlier segments stay closer to the empty
-    ///     edge.
-    ///     数值较低者在链中更早渲染。
-    ///     对 <see cref="HealthBarForecastGrowthDirection.FromRight" />，较早片段更靠近当前 HP
-    ///     边缘；对 <see cref="HealthBarForecastGrowthDirection.FromLeft" />，较早片段更靠近空白
-    ///     边缘。
+    ///     <para xml:lang="en">
+    ///         The primary render order. Lower values render earlier and remain closer to the selected origin edge.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         主要渲染顺序。数值较低的片段更早渲染，并更靠近所选的起始边缘。
+    ///     </para>
     /// </param>
     /// <param name="OverlayMaterial">
-    ///     Optional Godot material (e.g. shader like vanilla doom). When null, only <see cref="Color" /> tint applies.
-    ///     可选 Godot material（例如类似原版 doom 的 shader）。为 null 时仅应用 <see cref="Color" /> 染色。
+    ///     <para xml:lang="en">
+    ///         The optional Godot material. When <see langword="null" />, only the modulation color is applied.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的 Godot 材质。为 <see langword="null" /> 时只应用调制色。
+    ///     </para>
     /// </param>
     /// <param name="OverlaySelfModulate">
-    ///     Optional <see cref="CanvasItem.SelfModulate" /> for the forecast nine-patch. When null, <see cref="Color" /> is
-    ///     used
-    ///     used
-    ///     for both overlay tint and lethal HP label; when set, <see cref="Color" /> is still used for lethal label theming.
-    ///     forecast 九宫格的可选 <see cref="CanvasItem.SelfModulate" />。为 null 时，<see cref="Color" /> 会
-    ///     用于
-    ///     用于
-    ///     覆盖层染色和致命 HP 标签；设置后，<see cref="Color" /> 仍用于致命标签主题。
+    ///     <para xml:lang="en">
+    ///         The optional overlay <see cref="CanvasItem.SelfModulate" />. This does not change the lethal HP-label
+    ///         color supplied by <paramref name="Color" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         覆盖层可选的 <see cref="CanvasItem.SelfModulate" />。该值不会改变由
+    ///         <paramref name="Color" /> 提供的致命生命值文本颜色。
+    ///     </para>
     /// </param>
     /// <param name="LeftOriginLayout">
-    ///     For <see cref="HealthBarForecastGrowthDirection.FromLeft" /> only:
-    ///     <see cref="HealthBarForecastLeftOriginLayout.Chained" />
-    ///     or <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />. Ignored for
-    ///     <see cref="HealthBarForecastGrowthDirection.FromRight" />.
-    ///     仅用于 <see cref="HealthBarForecastGrowthDirection.FromLeft" />：
-    ///     <see cref="HealthBarForecastLeftOriginLayout.Chained" />
-    ///     或 <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />。对
-    ///     <see cref="HealthBarForecastGrowthDirection.FromRight" /> 忽略。
+    ///     <para xml:lang="en">
+    ///         The empty-edge layout for <see cref="HealthBarForecastGrowthDirection.FromLeft" /> segments. Ignored
+    ///         for <see cref="HealthBarForecastGrowthDirection.FromRight" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="HealthBarForecastGrowthDirection.FromLeft" /> 片段使用的空白侧布局。
+    ///         对 <see cref="HealthBarForecastGrowthDirection.FromRight" /> 片段忽略。
+    ///     </para>
     /// </param>
     /// <param name="LeftExclusiveZGroup">
-    ///     For <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />: larger values draw above smaller values.
-    ///     Within the same group, longer strips sit behind shorter strips; equal widths stack by
-    ///     <c>Order</c>, then registration order — later on top.
-    ///     对 <see cref="HealthBarForecastLeftOriginLayout.OverlapFromOrigin" />：较大值绘制在较小值上方。
-    ///     同一组内，较长条位于较短条后方；宽度相等时按 <c>Order</c>、再按注册顺序叠放，靠后者在上层。
+    ///     <para xml:lang="en">
+    ///         The exclusive Z group for overlapping empty-edge segments. Larger groups draw above smaller groups.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         空白侧重叠片段使用的互斥 Z 组。数值较大的组绘制在数值较小的组之上。
+    ///     </para>
     /// </param>
     /// <param name="AffectsHpLabel">
-    ///     Whether this segment can recolor the HP label when it reaches lethal threshold. Defaults to true to preserve
-    ///     existing forecast behavior.
-    ///     此片段达到致命阈值时是否可以重染 HP 标签。默认为 true，以保留现有 forecast 行为。
+    ///     <para xml:lang="en">Whether this segment can recolor the HP label when its forecast becomes lethal.</para>
+    ///     <para xml:lang="zh-CN">该片段的预测致命时是否可以改变生命值文本颜色。</para>
     /// </param>
     public readonly record struct HealthBarForecastSegment(
         int Amount,
@@ -122,8 +136,8 @@ namespace STS2RitsuLib.Combat.HealthBars
         bool AffectsHpLabel = true)
     {
         /// <summary>
-        ///     Initializes a segment without overlay material or separate overlay modulate.
-        ///     初始化一个没有覆盖 material 或单独覆盖 modulate 的片段。
+        ///     <para xml:lang="en">Initializes a segment without an overlay material or separate overlay color.</para>
+        ///     <para xml:lang="zh-CN">初始化不带覆盖材质或独立覆盖层颜色的片段。</para>
         /// </summary>
         public HealthBarForecastSegment(int amount, Color color, HealthBarForecastGrowthDirection direction,
             int order = 0)
@@ -132,8 +146,10 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Initializes a segment with an optional <see cref="OverlayMaterial" /> and default overlay modulate.
-        ///     初始化一个带可选 <see cref="OverlayMaterial" /> 和默认覆盖 modulate 的片段。
+        ///     <para xml:lang="en">
+        ///         Initializes a segment with an optional overlay material and the default overlay color.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化带可选覆盖材质并使用默认覆盖层颜色的片段。</para>
         /// </summary>
         public HealthBarForecastSegment(
             int amount,
@@ -146,8 +162,10 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Initializes a segment with an optional overlay modulate and default left-origin layout.
-        ///     初始化一个带可选覆盖 modulate 和默认左源布局的片段。
+        ///     <para xml:lang="en">
+        ///         Initializes a segment with an optional overlay color and the default empty-edge layout.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化带可选覆盖层颜色并使用默认空白侧布局的片段。</para>
         /// </summary>
         public HealthBarForecastSegment(
             int amount,
@@ -162,8 +180,10 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Initializes a segment with a left-origin layout and default exclusive z group.
-        ///     初始化一个带左源布局和默认独占 z 组的片段。
+        ///     <para xml:lang="en">
+        ///         Initializes a segment with an empty-edge layout and the default exclusive Z group.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化带空白侧布局并使用默认互斥 Z 组的片段。</para>
         /// </summary>
         public HealthBarForecastSegment(
             int amount,
@@ -178,8 +198,10 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Initializes a segment with explicit left-origin layout and exclusive z group.
-        ///     初始化一个带显式左源布局和独占 z 组的片段。
+        ///     <para xml:lang="en">
+        ///         Initializes a segment with an explicit empty-edge layout and exclusive Z group.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">初始化显式指定空白侧布局和互斥 Z 组的片段。</para>
         /// </summary>
         public HealthBarForecastSegment(
             int amount,
@@ -197,15 +219,36 @@ namespace STS2RitsuLib.Combat.HealthBars
     }
 
     /// <summary>
-    ///     Helpers for common turn-relative ordering of forecast segments.
-    ///     常见回合相对 forecast 片段排序的辅助方法。
+    ///     <para xml:lang="en">Provides forecast ordering keys relative to the active turn.</para>
+    ///     <para xml:lang="zh-CN">提供相对于当前行动回合的预测排序键。</para>
     /// </summary>
     public static class HealthBarForecastOrder
     {
         /// <summary>
-        ///     Returns an order key for effects that trigger at the start of <paramref name="triggerSide" />'s turn.
-        ///     返回在 <paramref name="triggerSide" /> 回合开始时触发的效果所用的 order key。
+        ///     <para xml:lang="en">
+        ///         Gets the ordering key for an effect that triggers at the start of <paramref name="triggerSide" />'s
+        ///         turn.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取在 <paramref name="triggerSide" /> 一方回合开始时触发的效果所用的排序键。
+        ///     </para>
         /// </summary>
+        /// <param name="creature">
+        ///     <para xml:lang="en">The creature whose combat state determines the active side.</para>
+        ///     <para xml:lang="zh-CN">使用其战斗状态判断当前行动方的生物。</para>
+        /// </param>
+        /// <param name="triggerSide">
+        ///     <para xml:lang="en">The side whose turn-start effect is being ordered.</para>
+        ///     <para xml:lang="zh-CN">待排序的回合开始效果所属的一方。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <c>1</c> while <paramref name="triggerSide" /> is active; otherwise, <c>0</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="triggerSide" /> 为当前行动方时返回 <c>1</c>；否则返回 <c>0</c>。
+        ///     </para>
+        /// </returns>
         public static int ForSideTurnStart(Creature creature, CombatSide triggerSide)
         {
             ArgumentNullException.ThrowIfNull(creature);
@@ -213,9 +256,30 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Returns an order key for effects that trigger at the end of <paramref name="triggerSide" />'s turn.
-        ///     返回在 <paramref name="triggerSide" /> 回合结束时触发的效果所用的 order key。
+        ///     <para xml:lang="en">
+        ///         Gets the ordering key for an effect that triggers at the end of <paramref name="triggerSide" />'s
+        ///         turn.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取在 <paramref name="triggerSide" /> 一方回合结束时触发的效果所用的排序键。
+        ///     </para>
         /// </summary>
+        /// <param name="creature">
+        ///     <para xml:lang="en">The creature whose combat state determines the active side.</para>
+        ///     <para xml:lang="zh-CN">使用其战斗状态判断当前行动方的生物。</para>
+        /// </param>
+        /// <param name="triggerSide">
+        ///     <para xml:lang="en">The side whose turn-end effect is being ordered.</para>
+        ///     <para xml:lang="zh-CN">待排序的回合结束效果所属的一方。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <c>0</c> while <paramref name="triggerSide" /> is active; otherwise, <c>1</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="triggerSide" /> 为当前行动方时返回 <c>0</c>；否则返回 <c>1</c>。
+        ///     </para>
+        /// </returns>
         public static int ForSideTurnEnd(Creature creature, CombatSide triggerSide)
         {
             ArgumentNullException.ThrowIfNull(creature);
@@ -224,30 +288,40 @@ namespace STS2RitsuLib.Combat.HealthBars
     }
 
     /// <summary>
-    ///     Global registry of health bar forecast providers contributed by mods.
-    ///     由 mod 提供的生命条 forecast provider 全局注册表。
+    ///     <para xml:lang="en">Provides the global registry for mod-defined health-bar forecast sources.</para>
+    ///     <para xml:lang="zh-CN">提供模组自定义生命条预测来源的全局注册表。</para>
     /// </summary>
     public static class HealthBarForecastRegistry
     {
         private static readonly Lock SyncRoot = new();
-        private static readonly Dictionary<(string ModId, string ProviderId), ProviderEntry> Providers = [];
+
+        private static readonly Dictionary<(string ModId, string ProviderId), ProviderEntry> Providers =
+            new(HealthBarProviderKeyComparer.Instance);
+
         private static long _nextRegistrationOrder;
 
         /// <summary>
-        ///     Registers or replaces a forecast provider for <paramref name="modId" />.
-        ///     为 <paramref name="modId" /> 注册或替换 forecast provider。
+        ///     <para xml:lang="en">
+        ///         Creates and registers a forecast source, replacing the source with the same mod and source
+        ///         identifiers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">创建并注册预测来源，同时替换模组标识符和来源标识符均相同的来源。</para>
         /// </summary>
         /// <typeparam name="TSource">
-        ///     Concrete <see cref="IHealthBarForecastSource" /> with a parameterless constructor.
-        ///     带无参构造函数的具体 <see cref="IHealthBarForecastSource" />。
+        ///     <para xml:lang="en">
+        ///         The concrete <see cref="IHealthBarForecastSource" /> type with a parameterless constructor.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">带无参构造函数的具体 <see cref="IHealthBarForecastSource" /> 类型。</para>
         /// </typeparam>
         /// <param name="modId">
-        ///     Owning mod identifier.
-        ///     所属 mod 标识符。
+        ///     <para xml:lang="en">The owning mod identifier. Surrounding whitespace is ignored.</para>
+        ///     <para xml:lang="zh-CN">所属模组的标识符；忽略首尾空白。</para>
         /// </param>
         /// <param name="sourceId">
-        ///     Optional unique id; defaults to the type full name.
-        ///     可选唯一 id；默认使用类型全名。
+        ///     <para xml:lang="en">
+        ///         The optional source identifier within the mod. Defaults to the source type's full name.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">来源在该模组内的可选标识符；默认使用来源类型的完整名称。</para>
         /// </param>
         public static void Register<TSource>(string modId, string? sourceId = null)
             where TSource : IHealthBarForecastSource, new()
@@ -256,20 +330,22 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Registers or replaces a forecast source instance for <paramref name="modId" />.
-        ///     为 <paramref name="modId" /> 注册或替换 forecast source 实例。
+        ///     <para xml:lang="en">
+        ///         Registers a forecast source instance, replacing the source with the same mod and source identifiers.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册预测来源实例，同时替换模组标识符和来源标识符均相同的来源。</para>
         /// </summary>
         /// <param name="modId">
-        ///     Owning mod identifier.
-        ///     所属 mod 标识符。
+        ///     <para xml:lang="en">The owning mod identifier. Surrounding whitespace is ignored.</para>
+        ///     <para xml:lang="zh-CN">所属模组的标识符；忽略首尾空白。</para>
         /// </param>
         /// <param name="sourceId">
-        ///     Unique id for this source within the mod.
-        ///     此 source 在 mod 内的唯一 id。
+        ///     <para xml:lang="en">The source identifier within the mod. Surrounding whitespace is ignored.</para>
+        ///     <para xml:lang="zh-CN">来源在该模组内的标识符；忽略首尾空白。</para>
         /// </param>
         /// <param name="source">
-        ///     Provider instance.
-        ///     Provider 实例。
+        ///     <para xml:lang="en">The forecast source instance.</para>
+        ///     <para xml:lang="zh-CN">预测来源实例。</para>
         /// </param>
         public static void Register(
             string modId,
@@ -280,32 +356,36 @@ namespace STS2RitsuLib.Combat.HealthBars
             ArgumentException.ThrowIfNullOrWhiteSpace(sourceId);
             ArgumentNullException.ThrowIfNull(source);
 
+            var normalizedModId = modId.Trim();
+            var normalizedSourceId = sourceId.Trim();
             lock (SyncRoot)
             {
-                var key = (modId, sourceId);
+                var key = (normalizedModId, normalizedSourceId);
                 var registrationOrder = Providers.TryGetValue(key, out var existing)
                     ? existing.RegistrationOrder
                     : _nextRegistrationOrder++;
 
-                Providers[key] = new(modId, sourceId, source, registrationOrder);
+                Providers[key] = new(normalizedModId, normalizedSourceId, source, registrationOrder);
             }
         }
 
         /// <summary>
-        ///     Removes a previously registered provider.
-        ///     移除先前注册的 provider。
+        ///     <para xml:lang="en">Removes a registered forecast source.</para>
+        ///     <para xml:lang="zh-CN">移除已注册的预测来源。</para>
         /// </summary>
         /// <param name="modId">
-        ///     Mod identifier used at registration.
-        ///     注册时使用的 mod 标识符。
+        ///     <para xml:lang="en">The mod identifier used during registration. Surrounding whitespace is ignored.</para>
+        ///     <para xml:lang="zh-CN">注册时使用的模组标识符；忽略首尾空白。</para>
         /// </param>
         /// <param name="sourceId">
-        ///     Source id used at registration.
-        ///     注册时使用的 source id。
+        ///     <para xml:lang="en">
+        ///         The source identifier used during registration. Surrounding whitespace is ignored.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">注册时使用的来源标识符；忽略首尾空白。</para>
         /// </param>
         /// <returns>
-        ///     <see langword="true" /> if an entry was removed.
-        ///     如果移除了条目，则为 <see langword="true" />。
+        ///     <para xml:lang="en"><see langword="true" /> if a source was removed; otherwise, <see langword="false" />.</para>
+        ///     <para xml:lang="zh-CN">成功移除来源时为 <see langword="true" />；否则为 <see langword="false" />。</para>
         /// </returns>
         public static bool Unregister(string modId, string sourceId)
         {
@@ -314,18 +394,27 @@ namespace STS2RitsuLib.Combat.HealthBars
 
             lock (SyncRoot)
             {
-                return Providers.Remove((modId, sourceId));
+                return Providers.Remove((modId.Trim(), sourceId.Trim()));
             }
         }
 
         /// <summary>
-        ///     Collects segments from powers implementing <see cref="IHealthBarForecastSource" /> and registered providers.
-        ///     从实现 <see cref="IHealthBarForecastSource" /> 的能力和已注册 provider 收集片段。
+        ///     <para xml:lang="en">
+        ///         Collects segments from the creature's powers that implement <see cref="IHealthBarForecastSource" />
+        ///         and from globally registered sources.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从该生物实现 <see cref="IHealthBarForecastSource" /> 的能力和全局注册来源中收集片段。
+        ///     </para>
         /// </summary>
         /// <param name="creature">
-        ///     Creature whose bar is being evaluated.
-        ///     正在评估生命条的生物。
+        ///     <para xml:lang="en">The creature whose health bar is being evaluated.</para>
+        ///     <para xml:lang="zh-CN">待评估生命条的生物。</para>
         /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The positive forecast segments in stable source order.</para>
+        ///     <para xml:lang="zh-CN">按稳定来源顺序排列的正数预测片段。</para>
+        /// </returns>
         internal static IReadOnlyList<RegisteredHealthBarForecastSegment> GetSegments(Creature creature)
         {
             ArgumentNullException.ThrowIfNull(creature);
@@ -372,9 +461,10 @@ namespace STS2RitsuLib.Combat.HealthBars
             try
             {
                 var providedSegments = source.GetHealthBarForecastSegments(context);
-                segments.AddRange(from segment in providedSegments
+                var snapshot = (from segment in providedSegments
                     where segment.Amount > 0
-                    select new RegisteredHealthBarForecastSegment(segment, sequenceOrder));
+                    select new RegisteredHealthBarForecastSegment(segment, sequenceOrder)).ToArray();
+                segments.AddRange(snapshot);
             }
             catch (Exception ex)
             {
@@ -385,16 +475,23 @@ namespace STS2RitsuLib.Combat.HealthBars
         }
 
         /// <summary>
-        ///     Segment plus a sequence key for stable ordering when <see cref="HealthBarForecastSegment.Order" /> ties.
-        ///     片段加序列 key，用于在 <see cref="HealthBarForecastSegment.Order" /> 相同时稳定排序。
+        ///     <para xml:lang="en">
+        ///         Associates a segment with the stable source key used when
+        ///         <see cref="HealthBarForecastSegment.Order" /> values tie.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将片段与 <see cref="HealthBarForecastSegment.Order" /> 相同时使用的稳定来源排序键关联。
+        ///     </para>
         /// </summary>
         /// <param name="Segment">
-        ///     Forecast data.
-        ///     Forecast 数据。
+        ///     <para xml:lang="en">The forecast segment.</para>
+        ///     <para xml:lang="zh-CN">预测片段。</para>
         /// </param>
         /// <param name="SequenceOrder">
-        ///     Monotonic key (powers first, then registered sources).
-        ///     单调 key（先能力，后注册 source）。
+        ///     <para xml:lang="en">
+        ///         The monotonic source key, with creature powers ordered before globally registered sources.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">单调递增的来源排序键；生物的能力排在全局注册来源之前。</para>
         /// </param>
         internal readonly record struct RegisteredHealthBarForecastSegment(
             HealthBarForecastSegment Segment,
@@ -405,5 +502,26 @@ namespace STS2RitsuLib.Combat.HealthBars
             string SourceId,
             IHealthBarForecastSource Source,
             long RegistrationOrder);
+    }
+
+    internal sealed class HealthBarProviderKeyComparer :
+        IEqualityComparer<(string ModId, string SourceId)>
+    {
+        internal static HealthBarProviderKeyComparer Instance { get; } = new();
+
+        public bool Equals(
+            (string ModId, string SourceId) x,
+            (string ModId, string SourceId) y)
+        {
+            return string.Equals(x.ModId, y.ModId, StringComparison.OrdinalIgnoreCase)
+                   && string.Equals(x.SourceId, y.SourceId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public int GetHashCode((string ModId, string SourceId) obj)
+        {
+            return HashCode.Combine(
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.ModId),
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.SourceId));
+        }
     }
 }

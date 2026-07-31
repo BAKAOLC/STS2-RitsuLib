@@ -3,10 +3,14 @@ using Godot;
 namespace STS2RitsuLib.Audio.Internal
 {
     /// <summary>
-    ///     Mirrors <c>audio_manager_proxy.gd</c> bookkeeping for <c>event:/…</c> paths that exist only via guids.txt + mod
-    ///     banks (no strings.bank path table).
-    ///     复现 <c>audio_manager_proxy.gd</c> 对仅通过 guids.txt + mod
-    ///     bank 存在的 <c>event:/…</c> 路径的簿记（没有 strings.bank 路径表）。
+    ///     <para xml:lang="en">
+    ///         Mirrors the loop, music, and run-audio ownership used by <c>audio_manager_proxy.gd</c> for
+    ///         <c>event:/…</c> paths available through <c>guids.txt</c> and mod banks but absent from a strings bank.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         对可通过 <c>guids.txt</c> 和模组音频库访问、但不存在于 strings bank 中的 <c>event:/…</c>
+    ///         路径，复现 <c>audio_manager_proxy.gd</c> 使用的循环、音乐和局内音频归属管理。
+    ///     </para>
     /// </summary>
     internal static class GuidMappedNaudioStudioProxy
     {
@@ -28,15 +32,16 @@ namespace STS2RitsuLib.Audio.Internal
 
         internal static void StopAllMappedLoops()
         {
-            LoopSlot[] slots;
             lock (Gate)
             {
-                slots = [.. LoopQueues.Values.SelectMany(static list => list)];
-                LoopQueues.Clear();
+                foreach (var path in LoopQueues.Keys.ToArray())
+                {
+                    var slots = LoopQueues[path];
+                    slots.RemoveAll(static slot => StopSlot(slot));
+                    if (slots.Count == 0)
+                        LoopQueues.Remove(path);
+                }
             }
-
-            foreach (var slot in slots)
-                StopSlot(slot);
         }
 
         internal static bool TryEnqueueMappedLoop(string path, bool usesLoopParam)
@@ -45,17 +50,13 @@ namespace STS2RitsuLib.Audio.Internal
             if (inst is null)
                 return false;
 
-            try
+            if (!FmodStudioEventInstances.TryStart(inst))
             {
-                inst.Call("start");
-                inst.Call("release");
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped PlayLoop start/release: {ex.Message}");
+                DisposeUnownedInstance(path, inst);
                 return false;
             }
 
+            var releaseScheduled = FmodStudioEventInstances.TryScheduleRelease(inst);
             lock (Gate)
             {
                 if (!LoopQueues.TryGetValue(path, out var list))
@@ -64,7 +65,7 @@ namespace STS2RitsuLib.Audio.Internal
                     LoopQueues[path] = list;
                 }
 
-                list.Add(new(inst, usesLoopParam));
+                list.Add(new(inst, usesLoopParam, releaseScheduled));
             }
 
             return true;
@@ -84,17 +85,21 @@ namespace STS2RitsuLib.Audio.Internal
                 return false;
 
             var slot = list[0];
+            if (!StopSlot(slot))
+                return false;
+
             list.RemoveAt(0);
             if (list.Count == 0)
                 LoopQueues.Remove(path);
 
-            StopSlot(slot);
-
             return true;
         }
 
-        private static void StopSlot(LoopSlot slot)
+        private static bool StopSlot(LoopSlot slot)
         {
+            if (!GodotObject.IsInstanceValid(slot.Instance))
+                return true;
+
             try
             {
                 if (slot.UsesLoopParam)
@@ -104,8 +109,11 @@ namespace STS2RitsuLib.Audio.Internal
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped StopLoop: {ex.Message}");
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped StopLoop: {ex}");
+                return false;
             }
+
+            return slot.ReleaseScheduled || FmodStudioEventInstances.TryScheduleRelease(slot.Instance);
         }
 
         internal static bool TrySetParamOnFirstMappedLoop(string path, string param, float value)
@@ -121,7 +129,7 @@ namespace STS2RitsuLib.Audio.Internal
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped SetParam: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped SetParam: {ex}");
                     return false;
                 }
 
@@ -129,11 +137,11 @@ namespace STS2RitsuLib.Audio.Internal
             }
         }
 
-        internal static void ReleaseMappedMusic()
+        internal static bool ReleaseMappedMusic()
         {
             lock (Gate)
             {
-                ReleaseMappedInstance(ref _musicInstance, "StopMusic");
+                return ReleaseMappedInstance(ref _musicInstance, "StopMusic");
             }
         }
 
@@ -143,30 +151,30 @@ namespace STS2RitsuLib.Audio.Internal
             if (inst is null)
                 return false;
 
-            try
-            {
-                inst.Call("start");
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped PlayMusic start: {ex.Message}");
-                return false;
-            }
-
             lock (Gate)
             {
+                if (!ReleaseMappedInstance(ref _musicInstance, "ReplaceMusic") ||
+                    !FmodStudioEventInstances.TryStart(inst))
+                {
+                    DisposeUnownedInstance(path, inst);
+                    return false;
+                }
+
                 _musicInstance = inst;
             }
 
             return true;
         }
 
-        internal static void ReleaseMappedRunMusic()
+        internal static bool ReleaseMappedRunMusic()
         {
             lock (Gate)
             {
-                ReleaseMappedInstance(ref _runMusicInstance, "StopRunMusic");
+                if (!ReleaseMappedInstance(ref _runMusicInstance, "StopRunMusic"))
+                    return false;
+
                 _runMusicPath = null;
+                return true;
             }
         }
 
@@ -175,12 +183,15 @@ namespace STS2RitsuLib.Audio.Internal
             return TryStartMappedSingleInstance(path, ref _runMusicInstance, ref _runMusicPath, "PlayRunMusic");
         }
 
-        internal static void ReleaseMappedRunAmbience()
+        internal static bool ReleaseMappedRunAmbience()
         {
             lock (Gate)
             {
-                ReleaseMappedInstance(ref _runAmbienceInstance, "StopRunAmbience");
+                if (!ReleaseMappedInstance(ref _runAmbienceInstance, "StopRunAmbience"))
+                    return false;
+
                 _runAmbiencePath = null;
+                return true;
             }
         }
 
@@ -192,13 +203,20 @@ namespace STS2RitsuLib.Audio.Internal
 
         internal static bool TrySetParameterOnMappedRunMusic(string parameter, float value)
         {
-            return TrySetParameterOnMappedInstance(_runMusicInstance, parameter, value, "UpdateRunMusicParameter");
+            lock (Gate)
+            {
+                return TrySetParameterOnMappedInstance(_runMusicInstance, parameter, value,
+                    "UpdateRunMusicParameter");
+            }
         }
 
         internal static bool TrySetParameterOnMappedRunAmbience(string parameter, float value)
         {
-            return TrySetParameterOnMappedInstance(_runAmbienceInstance, parameter, value,
-                "UpdateRunAmbienceParameter");
+            lock (Gate)
+            {
+                return TrySetParameterOnMappedInstance(_runAmbienceInstance, parameter, value,
+                    "UpdateRunAmbienceParameter");
+            }
         }
 
         internal static bool TryUpdateMappedMusicParameter(string parameter, string labelValue)
@@ -214,7 +232,7 @@ namespace STS2RitsuLib.Audio.Internal
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped UpdateMusicParameter: {ex.Message}");
+                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped UpdateMusicParameter: {ex}");
                     return false;
                 }
 
@@ -257,18 +275,15 @@ namespace STS2RitsuLib.Audio.Internal
             if (inst is null)
                 return false;
 
-            try
-            {
-                inst.Call("start");
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation} start: {ex.Message}");
-                return false;
-            }
-
             lock (Gate)
             {
+                if (!ReleaseMappedInstance(ref slot, $"Replace{operation}") ||
+                    !FmodStudioEventInstances.TryStart(inst))
+                {
+                    DisposeUnownedInstance(path, inst);
+                    return false;
+                }
+
                 slot = inst;
                 slotPath = path;
             }
@@ -279,45 +294,53 @@ namespace STS2RitsuLib.Audio.Internal
         private static bool TrySetParameterOnMappedInstance(GodotObject? instance, string parameter, float value,
             string operation)
         {
-            lock (Gate)
-            {
-                if (instance is null || !GodotObject.IsInstanceValid(instance))
-                    return false;
-
-                try
-                {
-                    instance.Call("set_parameter_by_name", parameter, value);
-                }
-                catch (Exception ex)
-                {
-                    RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation}: {ex.Message}");
-                    return false;
-                }
-
-                return true;
-            }
-        }
-
-        private static void ReleaseMappedInstance(ref GodotObject? instance, string operation)
-        {
-            if (instance is null)
-                return;
+            if (instance is null || !GodotObject.IsInstanceValid(instance))
+                return false;
 
             try
             {
-                instance.Call("stop", 0);
-                instance.Call("release");
+                instance.Call("set_parameter_by_name", parameter, value);
+                return true;
             }
             catch (Exception ex)
             {
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation}: {ex.Message}");
-            }
-            finally
-            {
-                instance = null;
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] mapped {operation}: {ex}");
+                return false;
             }
         }
 
-        private sealed record LoopSlot(GodotObject Instance, bool UsesLoopParam);
+        private static bool ReleaseMappedInstance(ref GodotObject? instance, string operation)
+        {
+            if (instance is null)
+                return true;
+
+            if (!GodotObject.IsInstanceValid(instance))
+            {
+                instance = null;
+                return true;
+            }
+
+            if (!FmodStudioEventInstances.TryStop(instance))
+            {
+                RitsuLibFramework.Logger.Warn($"[Audio] mapped {operation}: stop failed.");
+                return false;
+            }
+
+            if (!FmodStudioEventInstances.TryScheduleRelease(instance))
+                return false;
+
+            instance = null;
+            return true;
+        }
+
+        private static void DisposeUnownedInstance(string path, GodotObject instance)
+        {
+            var handle = new AudioEventHandle(AudioSource.Event(path), AudioLifecycleScope.Manual, instance);
+            AudioLifecycleRegistry.Shared.Attach(handle, null);
+            if (handle.TryStop(false))
+                handle.TryRelease();
+        }
+
+        private sealed record LoopSlot(GodotObject Instance, bool UsesLoopParam, bool ReleaseScheduled);
     }
 }

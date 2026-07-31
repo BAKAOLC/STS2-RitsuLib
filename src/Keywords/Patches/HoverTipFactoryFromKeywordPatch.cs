@@ -6,15 +6,20 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Keywords.Patches
 {
     /// <summary>
-    ///     Routes <see cref="HoverTipFactory.FromKeyword" /> calls for minted mod <see cref="CardKeyword" />
-    ///     values to <see cref="ModKeywordRegistry.CreateHoverTip" /> so the hover tip uses the registered
-    ///     title / description / icon instead of the slugified numeric fallback produced by
-    ///     <c>CardKeywordExtensions.GetLocKeyPrefix</c> for unknown enum values. Vanilla keywords skip the
-    ///     prefix entirely and fall through to the original factory.
-    ///     将铸造的 mod <see cref="CardKeyword" />
-    ///     值的 <see cref="HoverTipFactory.FromKeyword" /> 调用路由到 <see cref="ModKeywordRegistry.CreateHoverTip" />，使悬停提示使用已注册的
-    ///     标题/描述/图标，而不是 <c>CardKeywordExtensions.GetLocKeyPrefix</c> 为未知 enum 值生成的 slugified numeric fallback。原版关键词会跳过该
-    ///     prefix，并完全落回原始工厂。
+    ///     <para xml:lang="en">
+    ///         Routes <see cref="HoverTipFactory.FromKeyword" /> calls for minted mod <see cref="CardKeyword" /> values
+    ///         to <see cref="ModKeywordRegistry.CreateHoverTip(string)" />. Registered titles, descriptions, and icons
+    ///         are therefore used instead of the numeric localization-key fallback that
+    ///         <c>CardKeywordExtensions.GetLocKeyPrefix</c> produces for unknown enum values. Native keywords and
+    ///         unregistered values continue through the original factory unchanged.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将动态生成的模组 <see cref="CardKeyword" /> 值传入
+    ///         <see cref="HoverTipFactory.FromKeyword" /> 时，改由
+    ///         <see cref="ModKeywordRegistry.CreateHoverTip(string)" /> 创建悬停提示，从而使用注册的标题、描述和
+    ///         图标，而不是 <c>CardKeywordExtensions.GetLocKeyPrefix</c> 为未知枚举值生成的数字本地化键。
+    ///         原版关键词和未注册值仍由原方法处理。
+    ///     </para>
     /// </summary>
     [HarmonyBefore(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.First)]

@@ -3,27 +3,27 @@ using System.Text.Json.Serialization;
 namespace STS2RitsuLib.Telemetry
 {
     /// <summary>
-    ///     User consent state for one telemetry applicant.
-    ///     单个 telemetry 申请方的用户授权状态。
+    ///     <para xml:lang="en">Specifies the user's consent state for one telemetry applicant.</para>
+    ///     <para xml:lang="zh-CN">指定用户对一个遥测申请方的授权状态。</para>
     /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum TelemetryConsentState
     {
         /// <summary>
-        ///     The user has not made a decision yet; telemetry is not sent.
-        ///     用户尚未作出决定；不会发送 telemetry。
+        ///     <para xml:lang="en">The user has not made a decision; telemetry is not sent.</para>
+        ///     <para xml:lang="zh-CN">用户尚未作出决定；不会发送遥测数据。</para>
         /// </summary>
         Unknown,
 
         /// <summary>
-        ///     The user denied this applicant; telemetry is not sent.
-        ///     用户拒绝了此申请方；不会发送 telemetry。
+        ///     <para xml:lang="en">The user denied this applicant; telemetry is not sent.</para>
+        ///     <para xml:lang="zh-CN">用户拒绝了此申请方；不会发送遥测数据。</para>
         /// </summary>
         Denied,
 
         /// <summary>
-        ///     The user granted at least one request for this applicant.
-        ///     用户已授权此申请方的至少一项申请。
+        ///     <para xml:lang="en">The user granted at least one request for this applicant.</para>
+        ///     <para xml:lang="zh-CN">用户已授权此申请方的至少一个申请项。</para>
         /// </summary>
         Granted,
     }

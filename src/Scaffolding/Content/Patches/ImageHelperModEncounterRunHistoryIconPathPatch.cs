@@ -10,24 +10,14 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Run history and top bar call <see cref="ImageHelper.GetRoomIconPath" /> with a <see cref="ModelId" /> that may be
-    ///     an
-    ///     encounter, ancient, event, etc. Only when the id resolves to an <see cref="EncounterModel" /> with mod overrides do
-    ///     we
-    ///     remap paths (otherwise vanilla resolution runs). Mod encounters without this would hit missing
-    ///     <c>ui/run_history/&lt;mod_entry&gt;.png</c>. This prefix returns
-    ///     <see cref="IModEncounterAssetOverrides.CustomRunHistoryIconPath" /> /
-    ///     <see cref="IModEncounterAssetOverrides.CustomRunHistoryIconOutlinePath" />
-    ///     when those paths exist (same pattern as <see cref="ImageHelperAncientModRunHistoryIconPathPatch" /> for ancients).
-    ///     跑局历史和顶部栏会使用一个 <see cref="ModelId" /> 调用 <see cref="ImageHelper.GetRoomIconPath" />，该 id 可能是
-    ///     一个
-    ///     遭遇、远古事件、事件等。只有当 id 解析为带有 mod 覆盖的 <see cref="EncounterModel" /> 时，
-    ///     我们
-    ///     才会重映射路径（否则走原版解析）。没有此前缀的 mod 遭遇会命中缺失的
-    ///     <c>ui/run_history/&lt;mod_entry&gt;.png</c>。此前缀会返回
-    ///     <see cref="IModEncounterAssetOverrides.CustomRunHistoryIconPath" /> /
-    ///     <see cref="IModEncounterAssetOverrides.CustomRunHistoryIconOutlinePath" />
-    ///     中存在的路径（模式与远古事件的 <see cref="ImageHelperAncientModRunHistoryIconPathPatch" /> 相同）。
+    ///     <para xml:lang="en">
+    ///         Makes direct <see cref="ImageHelper.GetRoomIconPath" /> and
+    ///         <see cref="ImageHelper.GetRoomIconOutlinePath" /> calls honor encounter run-history icon overrides.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使直接调用 <see cref="ImageHelper.GetRoomIconPath" /> 和
+    ///         <see cref="ImageHelper.GetRoomIconOutlinePath" /> 时识别遭遇的游戏历史图标覆盖。
+    ///     </para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -83,17 +73,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static string? ResolveMainIconPath(EncounterModel encounter)
         {
-            return ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconPath(encounter, out var externalPath)
-                ? externalPath
-                : (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconPath;
+            if (ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconPath(encounter, out var externalPath) &&
+                AssetPathDiagnostics.Exists(
+                    externalPath,
+                    encounter,
+                    "ExternalAssetOverrideRegistry.EncounterRunHistoryIconPath"))
+                return externalPath;
+
+            return (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconPath;
         }
 
         private static string? ResolveOutlineIconPath(EncounterModel encounter)
         {
-            return ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconOutlinePath(encounter,
-                out var externalPath)
-                ? externalPath
-                : (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconOutlinePath;
+            if (ExternalAssetOverrideRegistry.TryGetEncounterRunHistoryIconOutlinePath(
+                    encounter,
+                    out var externalPath) &&
+                AssetPathDiagnostics.Exists(
+                    externalPath,
+                    encounter,
+                    "ExternalAssetOverrideRegistry.EncounterRunHistoryIconOutlinePath"))
+                return externalPath;
+
+            return (encounter as IModEncounterAssetOverrides)?.CustomRunHistoryIconOutlinePath;
         }
     }
 }

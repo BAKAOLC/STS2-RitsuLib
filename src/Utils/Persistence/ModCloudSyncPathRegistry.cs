@@ -1,5 +1,12 @@
 namespace STS2RitsuLib.Utils.Persistence
 {
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Tracks registered mod-data slots and derives the account-relative paths eligible for cloud
+    ///         synchronization.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">跟踪已注册的模组数据槽，并推导可进行云同步的账户相对路径。</para>
+    /// </summary>
     internal static class ModCloudSyncPathRegistry
     {
         private static readonly Lock Sync = new();

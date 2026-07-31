@@ -13,11 +13,17 @@ using STS2RitsuLib.Scaffolding.Godot;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Reimplements <c>NFakeMerchant.AfterRoomIsLoaded</c> so player booth visuals use the same
-    ///     <see cref="NMerchantCharacter" /> path as <see cref="NMerchantRoomProceduralCharacterInstantiationPatch" />
-    ///     (including procedural merchant shells and world cue playback).
-    ///     重新实现 <c>NFakeMerchant.AfterRoomIsLoaded</c>，让玩家摊位视觉使用与 <see cref="NMerchantCharacter" /> 相同的路径，和
-    ///     <see cref="NMerchantRoomProceduralCharacterInstantiationPatch" /> 一致（包括程序化商人外壳和世界 cue 播放）。
+    ///     <para xml:lang="en">
+    ///         Reimplements <c>NFakeMerchant.AfterRoomIsLoaded</c> when any player has a RitsuLib merchant-visual
+    ///         override. Player booth visuals are then created as <see cref="NMerchantCharacter" /> nodes through
+    ///         <see cref="NMerchantRoomProceduralCharacterInstantiationPatch" />, including procedural visuals and
+    ///         world-animation cues.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当任一玩家具有 RitsuLib 商人形象替换时，重新实现 <c>NFakeMerchant.AfterRoomIsLoaded</c>。随后通过
+    ///         <see cref="NMerchantRoomProceduralCharacterInstantiationPatch" /> 将所有玩家的摊位形象创建为
+    ///         <see cref="NMerchantCharacter" /> 节点，并支持程序化形象和世界场景动画提示。
+    ///     </para>
     /// </summary>
     internal class NFakeMerchantProceduralCharacterInstantiationPatch : IPatchMethod
     {

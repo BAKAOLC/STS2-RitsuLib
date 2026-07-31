@@ -3,42 +3,48 @@ using Godot;
 namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
 {
     /// <summary>
-    ///     One extra amount/text badge on a combat UI icon. Each slot is laid out independently.
-    ///     战斗 UI 图标上的一个额外数量/文本徽标。每个槽位独立布局。
+    ///     <para xml:lang="en">Describes one independently positioned plain-text badge on a combat icon.</para>
+    ///     <para xml:lang="zh-CN">描述战斗图标上一个独立定位的纯文本角标。</para>
     /// </summary>
     /// <param name="Text">
-    ///     Badge text. Whitespace-only entries are skipped.
-    ///     徽标文本。仅包含空白的条目会被跳过。
+    ///     <para xml:lang="en">The badge text. Whitespace-only entries are ignored.</para>
+    ///     <para xml:lang="zh-CN">角标文本；仅含空白的条目会被忽略。</para>
     /// </param>
     /// <param name="Corner">
-    ///     <see cref="ExtraIconAmountLabelCorner.TopLeft" />, <see cref="ExtraIconAmountLabelCorner.TopRight" />,
-    ///     <see cref="ExtraIconAmountLabelCorner.BottomLeft" />, or <see cref="ExtraIconAmountLabelCorner.BottomRight" />
-    ///     for built-in layout, or
-    ///     <see cref="ExtraIconAmountLabelCorner.Custom" /> with <paramref name="CustomRect" />.
-    ///     <see cref="ExtraIconAmountLabelCorner.TopLeft" />、<see cref="ExtraIconAmountLabelCorner.TopRight" />、
-    ///     <see cref="ExtraIconAmountLabelCorner.BottomLeft" /> 或 <see cref="ExtraIconAmountLabelCorner.BottomRight" />
-    ///     用于内置布局，或
-    ///     将 <see cref="ExtraIconAmountLabelCorner.Custom" /> 与 <paramref name="CustomRect" /> 搭配使用。
+    ///     <para xml:lang="en">
+    ///         The built-in corner to use, or <see cref="ExtraIconAmountLabelCorner.Custom" /> to use
+    ///         <paramref name="CustomRect" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         要使用的内置角落；使用 <see cref="ExtraIconAmountLabelCorner.Custom" /> 时改用
+    ///         <paramref name="CustomRect" />。
+    ///     </para>
     /// </param>
     /// <param name="CustomRect">
-    ///     When <paramref name="Corner" /> is <see cref="ExtraIconAmountLabelCorner.Custom" />, local rectangle
-    ///     (position and size in host control space, same convention as <c>offset_*</c> for a top-left-anchored child).
-    ///     Ignored for presets. Entries with non-positive width or height are skipped at runtime.
-    ///     当 <paramref name="Corner" /> 为 <see cref="ExtraIconAmountLabelCorner.Custom" /> 时，表示局部矩形
-    ///     （宿主 control 空间中的位置和大小，与左上锚定子节点的 <c>offset_*</c> 约定相同）。
-    ///     预设角会忽略它。宽度或高度非正的条目会在运行时跳过。
+    ///     <para xml:lang="en">
+    ///         The host-local bounds used for <see cref="ExtraIconAmountLabelCorner.Custom" />. Preset corners ignore
+    ///         this value; custom entries with non-positive width or height are ignored.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         <see cref="ExtraIconAmountLabelCorner.Custom" /> 使用的宿主局部边界。内置角落会忽略此值；
+    ///         宽度或高度非正的自定义条目也会被忽略。
+    ///     </para>
     /// </param>
     /// <param name="FontColor">
-    ///     When set, overrides the foreground color for this badge after base typography is copied from the host
-    ///     reference label. When <see langword="null" />, keeps the inherited color from that reference (default).
-    ///     设置后，在从宿主参考标签复制基础排版后覆盖此徽标的前景色。为 <see langword="null" /> 时，保留
-    ///     从该参考继承的颜色（默认）。
+    ///     <para xml:lang="en">
+    ///         The optional foreground-color override, or <see langword="null" /> to use the host's color.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的前景色覆盖；为 <see langword="null" /> 时使用宿主颜色。
+    ///     </para>
     /// </param>
     /// <param name="FontOutlineColor">
-    ///     When set, overrides the outline color after base typography is copied. When <see langword="null" />, keeps
-    ///     the inherited outline from that reference (default).
-    ///     设置后，在复制基础排版后覆盖描边颜色。为 <see langword="null" /> 时，保留
-    ///     从该参考继承的描边（默认）。
+    ///     <para xml:lang="en">
+    ///         The optional outline-color override, or <see langword="null" /> to use the host's color.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         可选的描边颜色覆盖；为 <see langword="null" /> 时使用宿主颜色。
+    ///     </para>
     /// </param>
     public readonly record struct ExtraIconAmountLabelSlot(
         string Text,
@@ -48,8 +54,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         Color? FontOutlineColor)
     {
         /// <summary>
-        ///     Preset-corner slot: default <c>CustomRect</c>, no color overrides.
-        ///     预设角槽位：默认 <c>CustomRect</c>，无颜色覆盖。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner without color overrides.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建不带颜色覆盖的条目。</para>
         /// </summary>
         public ExtraIconAmountLabelSlot(string text, ExtraIconAmountLabelCorner corner)
             : this(text, corner, default, null, null)
@@ -57,8 +63,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-corner slot from bounds, no color overrides.
-        ///     由边界创建的自定义角槽位，无颜色覆盖。
+        ///     <para xml:lang="en">Creates an entry with explicit bounds and no color overrides.</para>
+        ///     <para xml:lang="zh-CN">创建具有显式边界且不带颜色覆盖的条目。</para>
         /// </summary>
         public ExtraIconAmountLabelSlot(string text, ExtraIconAmountLabelCorner corner, Rect2 customRect)
             : this(text, corner, customRect, null, null)
@@ -66,8 +72,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Shorthand for a preset-corner slot: <c>new ExtraIconAmountLabelSlot(text, corner)</c>.
-        ///     预设角槽位的简写：<c>new ExtraIconAmountLabelSlot(text, corner)</c>。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot At(ExtraIconAmountLabelCorner corner, string text)
         {
@@ -75,10 +81,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Preset-corner slot; forwards to the primary constructor with <c>CustomRect</c> default and no outline
-        ///     override.
-        ///     预设角槽位；转发到主构造函数，使用默认 <c>CustomRect</c> 且无描边
-        ///     覆盖。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner with a foreground-color override.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建带前景色覆盖的条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot At(ExtraIconAmountLabelCorner corner, string text, Color? fontColor)
         {
@@ -86,10 +90,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Preset-corner slot with foreground and outline overrides (use <see langword="null" /> to keep inherited
-        ///     reference colors for that channel).
-        ///     带有前景色和描边覆盖的预设角落槽位（使用 <see langword="null" /> 可保留该通道继承的
-        ///     引用颜色）。
+        ///     <para xml:lang="en">Creates an entry at a built-in corner with optional color overrides.</para>
+        ///     <para xml:lang="zh-CN">在内置角落创建带可选颜色覆盖的条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot At(ExtraIconAmountLabelCorner corner, string text, Color? fontColor,
             Color? fontOutlineColor)
@@ -98,8 +100,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Slot at <see cref="ExtraIconAmountLabelCorner.Custom" /> with position and size (host-local space).
-        ///     位于 <see cref="ExtraIconAmountLabelCorner.Custom" /> 的槽位，包含位置和尺寸（宿主本地空间）。
+        ///     <para xml:lang="en">Creates a custom-bounds entry.</para>
+        ///     <para xml:lang="zh-CN">创建使用自定义边界的条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot WithCustom(string text, Rect2 customRect)
         {
@@ -107,8 +109,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-bounds slot; foreground override only (no outline override).
-        ///     自定义边界槽位；仅覆盖前景色（不覆盖描边）。
+        ///     <para xml:lang="en">Creates a custom-bounds entry with a foreground-color override.</para>
+        ///     <para xml:lang="zh-CN">创建带前景色覆盖的自定义边界条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot WithCustom(string text, Rect2 customRect, Color? fontColor)
         {
@@ -116,10 +118,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom-bounds slot with optional foreground and outline overrides (use <see langword="null" /> to keep
-        ///     inherited reference colors).
-        ///     带有可选前景色和描边覆盖的自定义边界槽位（使用 <see langword="null" /> 可保留
-        ///     继承的引用颜色）。
+        ///     <para xml:lang="en">Creates a custom-bounds entry with optional color overrides.</para>
+        ///     <para xml:lang="zh-CN">创建带可选颜色覆盖的自定义边界条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot WithCustom(string text, Rect2 customRect, Color? fontColor,
             Color? fontOutlineColor)
@@ -129,12 +129,8 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Slot at <see cref="ExtraIconAmountLabelCorner.Custom" /> with edges
-        ///     <paramref name="left" />, <paramref name="top" />, <paramref name="right" />,
-        ///     <paramref name="bottom" /> (host-local, same convention as control offsets from top-left anchor).
-        ///     位于 <see cref="ExtraIconAmountLabelCorner.Custom" /> 的槽位，边缘为
-        ///     <paramref name="left" />、<paramref name="top" />、<paramref name="right" />、
-        ///     <paramref name="bottom" />（宿主本地空间，约定与从左上锚点起算的控件偏移相同）。
+        ///     <para xml:lang="en">Creates a custom entry from host-local edge offsets.</para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建自定义条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot WithCustom(string text, float left, float top, float right, float bottom)
         {
@@ -143,8 +139,10 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom edge slot; foreground override only (no outline override).
-        ///     自定义边缘槽位；仅覆盖前景色（不覆盖描边）。
+        ///     <para xml:lang="en">
+        ///         Creates a custom entry from host-local edge offsets with a foreground-color override.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建带前景色覆盖的自定义条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot WithCustom(string text, float left, float top, float right, float bottom,
             Color? fontColor)
@@ -154,8 +152,10 @@ namespace STS2RitsuLib.Combat.Ui.ExtraCornerAmountLabels
         }
 
         /// <summary>
-        ///     Custom edge slot with optional foreground and outline overrides.
-        ///     带有可选前景色和描边覆盖的自定义边缘槽位。
+        ///     <para xml:lang="en">
+        ///         Creates a custom entry from host-local edge offsets with optional color overrides.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">根据宿主局部边缘偏移创建带可选颜色覆盖的自定义条目。</para>
         /// </summary>
         public static ExtraIconAmountLabelSlot WithCustom(string text, float left, float top, float right, float bottom,
             Color? fontColor, Color? fontOutlineColor)

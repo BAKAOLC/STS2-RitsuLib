@@ -10,16 +10,14 @@ using STS2RitsuLib.Utils;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     Vanilla run-history rows call <see cref="ImageHelper.GetRoomIconPath" /> /
-    ///     <see cref="ImageHelper.GetRoomIconOutlinePath" />
-    ///     directly, bypassing <see cref="AncientEventModel.RunHistoryIcon" />. This prefix returns mod
-    ///     <see cref="IModAncientEventAssetOverrides" /> paths at resolve time so the first load uses the correct textures
-    ///     (no post-load replacement on <c>NMapPointHistoryEntry</c>).
-    ///     原版跑局历史行会直接调用 <see cref="ImageHelper.GetRoomIconPath" /> /
-    ///     <see cref="ImageHelper.GetRoomIconOutlinePath" />，
-    ///     绕过 <see cref="AncientEventModel.RunHistoryIcon" />。此前缀在解析时返回 mod
-    ///     <see cref="IModAncientEventAssetOverrides" /> 路径，使首次加载就使用正确纹理
-    ///     （无需在 <c>NMapPointHistoryEntry</c> 上进行加载后替换）。
+    ///     <para xml:lang="en">
+    ///         Makes direct <see cref="ImageHelper.GetRoomIconPath" /> and
+    ///         <see cref="ImageHelper.GetRoomIconOutlinePath" /> calls honor Ancient-event run-history icon overrides.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         使直接调用 <see cref="ImageHelper.GetRoomIconPath" /> 和
+    ///         <see cref="ImageHelper.GetRoomIconOutlinePath" /> 时识别先古事件的游戏历史图标覆盖。
+    ///     </para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]
@@ -75,16 +73,28 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static string? ResolveMainIconPath(AncientEventModel ancient)
         {
-            return ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconPath(ancient, out var externalPath)
-                ? externalPath
-                : (ancient as IModAncientEventAssetOverrides)?.CustomRunHistoryIconPath;
+            if (ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconPath(ancient, out var externalPath) &&
+                AssetPathDiagnostics.Exists(
+                    externalPath,
+                    ancient,
+                    "ExternalAssetOverrideRegistry.AncientRunHistoryIconPath"))
+                return externalPath;
+
+            return (ancient as IModAncientEventAssetOverrides)?.CustomRunHistoryIconPath;
         }
 
         private static string? ResolveOutlineIconPath(AncientEventModel ancient)
         {
-            return ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconOutlinePath(ancient, out var externalPath)
-                ? externalPath
-                : (ancient as IModAncientEventAssetOverrides)?.CustomRunHistoryIconOutlinePath;
+            if (ExternalAssetOverrideRegistry.TryGetAncientRunHistoryIconOutlinePath(
+                    ancient,
+                    out var externalPath) &&
+                AssetPathDiagnostics.Exists(
+                    externalPath,
+                    ancient,
+                    "ExternalAssetOverrideRegistry.AncientRunHistoryIconOutlinePath"))
+                return externalPath;
+
+            return (ancient as IModAncientEventAssetOverrides)?.CustomRunHistoryIconOutlinePath;
         }
     }
 }

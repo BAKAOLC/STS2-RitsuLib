@@ -8,8 +8,8 @@ namespace STS2RitsuLib
     public static partial class RitsuLibFramework
     {
         /// <summary>
-        ///     Gets an independent per-run RNG stream for a mod.
-        ///     为 Mod 获取一条独立的按跑局 RNG 流。
+        ///     <para xml:lang="en">Gets an independent per-run RNG stream for a mod.</para>
+        ///     <para xml:lang="zh-CN">获取模组独立的每局游戏 RNG 流。</para>
         /// </summary>
         public static StsRng GetModRunRng(RunState runState, string modId, string streamId)
         {
@@ -17,8 +17,8 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Gets an independent per-run RNG stream for a mod using a player's run.
-        ///     使用玩家所属跑局为 Mod 获取一条独立的按跑局 RNG 流。
+        ///     <para xml:lang="en">Gets a mod's independent per-run RNG stream from a player's run.</para>
+        ///     <para xml:lang="zh-CN">从玩家所属的一局游戏获取模组独立的每局 RNG 流。</para>
         /// </summary>
         public static StsRng GetModRunRng(Player player, string modId, string streamId)
         {
@@ -29,8 +29,8 @@ namespace STS2RitsuLib
         }
 
         /// <summary>
-        ///     Gets an independent per-player RNG stream for a mod.
-        ///     为 Mod 获取一条独立的按玩家 RNG 流。
+        ///     <para xml:lang="en">Gets an independent per-player RNG stream for a mod.</para>
+        ///     <para xml:lang="zh-CN">获取模组独立的每位玩家 RNG 流。</para>
         /// </summary>
         public static StsRng GetModPlayerRng(Player player, string modId, string streamId)
         {

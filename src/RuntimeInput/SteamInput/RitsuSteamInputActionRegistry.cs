@@ -1,11 +1,12 @@
 using System.Globalization;
+using System.IO.Hashing;
 using System.Text;
 
 namespace STS2RitsuLib.RuntimeInput
 {
     /// <summary>
-    ///     Optional Steam Input action registration for runtime hotkeys.
-    ///     运行时热键的可选 Steam Input 动作注册。
+    ///     <para xml:lang="en">Registers optional Steam Input actions for runtime hotkeys.</para>
+    ///     <para xml:lang="zh-CN">为运行时热键注册可选的 Steam Input 动作。</para>
     /// </summary>
     public static class RitsuSteamInputActionRegistry
     {
@@ -16,8 +17,12 @@ namespace STS2RitsuLib.RuntimeInput
         internal static event Action? ActionsChanged;
 
         /// <summary>
-        ///     Registers a Godot action name to be exposed as a Steam Input digital action when Steam is available.
-        ///     当 Steam 可用时，将一个 Godot action 名称注册为可暴露给 Steam Input 的数字动作。
+        ///     <para xml:lang="en">
+        ///         Registers a Godot input action for exposure as a Steam Input digital action when Steam is available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册一个 Godot 输入动作，以便在 Steam 可用时将其公开为 Steam Input 数字动作。
+        ///     </para>
         /// </summary>
         public static IDisposable RegisterAction(
             string actionName,
@@ -37,9 +42,15 @@ namespace STS2RitsuLib.RuntimeInput
                     return new RegistrationHandle(normalizedActionName);
                 }
 
+                var steamActionId = BuildSteamActionId(normalizedActionName);
+                if (Registrations.Values.Any(existing =>
+                        string.Equals(existing.SteamActionId, steamActionId, StringComparison.Ordinal)))
+                    throw new InvalidOperationException(
+                        $"Steam Input action id collision for '{normalizedActionName}'.");
+
                 Registrations[normalizedActionName] = new(
                     normalizedActionName,
-                    BuildSteamActionId(normalizedActionName),
+                    steamActionId,
                     displayName,
                     description,
                     registrationId);
@@ -88,7 +99,7 @@ namespace STS2RitsuLib.RuntimeInput
 
         private static string BuildSteamActionId(string actionName)
         {
-            var builder = new StringBuilder("ritsu_");
+            var builder = new StringBuilder();
             foreach (var ch in actionName)
             {
                 if (char.IsAsciiLetterOrDigit(ch))
@@ -100,12 +111,20 @@ namespace STS2RitsuLib.RuntimeInput
                 builder.Append('_');
             }
 
-            var collapsed = string.Join('_', builder.ToString()
+            var stem = string.Join('_', builder.ToString()
                 .Split('_', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-            return collapsed.Length > 6
-                ? collapsed
-                : "ritsu_action_" + Math.Abs(actionName.GetHashCode(StringComparison.Ordinal))
-                    .ToString(CultureInfo.InvariantCulture);
+            if (string.Equals(stem, actionName, StringComparison.Ordinal))
+                return $"ritsu_{stem}";
+
+            if (stem.Length == 0)
+                stem = "action";
+            if (stem.Length > 32)
+                stem = stem[..32].TrimEnd('_');
+
+            var hash = XxHash64.HashToUInt64(Encoding.UTF8.GetBytes(actionName));
+            return string.Create(
+                CultureInfo.InvariantCulture,
+                $"ritsu_{stem}_{hash:x16}");
         }
 
         private sealed record Registration(

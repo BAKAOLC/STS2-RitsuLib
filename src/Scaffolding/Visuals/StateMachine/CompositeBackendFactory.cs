@@ -8,34 +8,46 @@ using STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine
 {
     /// <summary>
-    ///     Helper that composes a <see cref="CompositeAnimationBackend" /> from the nodes found under a visuals
-    ///     root, in priority order: cue frame sequences / static textures, Spine, Godot animation tree state machine,
-    ///     Godot animation player, Godot animated sprite.
-    ///     辅助类：按优先级顺序，从视觉根节点下找到的节点组合出
-    ///     <see cref="CompositeAnimationBackend" />：cue 帧序列 / 静态纹理、Spine、Godot animation tree 状态机、
-    ///     Godot animation player、Godot animated sprite。
+    ///     <para xml:lang="en">
+    ///         Builds animation backends from nodes beneath a visuals root, in priority order: cue frames or static textures,
+    ///         Spine, a Godot animation-tree state machine, a Godot animation player, and a Godot animated sprite.
+    ///         Multiple discovered backends are combined into <see cref="CompositeAnimationBackend" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         按优先级从视觉效果根节点下构建动画后端：视觉提示帧或静态纹理、Spine、Godot 动画树状态机、
+    ///         Godot 动画播放器和 Godot 动画精灵。发现多个后端时，会将其组合为
+    ///         <see cref="CompositeAnimationBackend" />。
+    ///     </para>
     /// </summary>
     public static class CompositeBackendFactory
     {
         /// <summary>
-        ///     Builds the composite backend. Returns the cue-only backend when no Godot / Spine nodes are found,
-        ///     or a truly-empty (single backend) pass-through when cues are unavailable.
-        ///     构建组合后端。找不到 Godot / Spine 节点时返回仅 cue 后端；
-        ///     cue 不可用时返回真正为空的（单后端）透传后端。
+        ///     <para xml:lang="en">
+        ///         Builds the available backends, returning the sole backend directly or a composite when multiple backends
+        ///         are found. Throws when no supported backend is available.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         构建可用的动画后端；仅发现一个时直接返回该后端，发现多个时返回组合后端。
+        ///         没有任何受支持的后端时抛出异常。
+        ///     </para>
         /// </summary>
         /// <param name="visualsRoot">
-        ///     Root node under which backends are discovered.
-        ///     用于发现后端的根节点。
+        ///     <para xml:lang="en">The root beneath which backends are discovered.</para>
+        ///     <para xml:lang="zh-CN">用于发现动画后端的根节点。</para>
         /// </param>
         /// <param name="character">
-        ///     Optional character model used to pull <see cref="VisualCueSet" /> when
-        ///     <paramref name="cueSet" /> is <see langword="null" />.
-        ///     可选角色模型；当 <paramref name="cueSet" /> 为 <see langword="null" /> 时用于取得
-        ///     <see cref="VisualCueSet" />。
+        ///     <para xml:lang="en">
+        ///         An optional character model from which to obtain a <see cref="VisualCueSet" /> when
+        ///         <paramref name="cueSet" /> is <see langword="null" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可选的角色模型；当 <paramref name="cueSet" /> 为 <see langword="null" /> 时从中获取
+        ///         <see cref="VisualCueSet" />。
+        ///     </para>
         /// </param>
         /// <param name="cueSet">
-        ///     Optional explicit cue set; takes priority over the character-derived one.
-        ///     可选显式 cue set；优先于从角色派生的 cue set。
+        ///     <para xml:lang="en">An optional explicit cue set, which takes precedence over character-derived cues.</para>
+        ///     <para xml:lang="zh-CN">可选的显式视觉提示集，优先于从角色模型取得的视觉提示。</para>
         /// </param>
         public static IAnimationBackend Build(Node visualsRoot, CharacterModel? character = null,
             VisualCueSet? cueSet = null)

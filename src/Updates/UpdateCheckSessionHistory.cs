@@ -1,10 +1,14 @@
 namespace STS2RitsuLib.Updates
 {
+    /// <summary>
+    ///     <para xml:lang="en">Tracks update versions already logged or notified during the current process session.</para>
+    ///     <para xml:lang="zh-CN">跟踪当前进程会话中已记录日志或已通知的更新版本。</para>
+    /// </summary>
     internal static class UpdateCheckSessionHistory
     {
         private static readonly Lock SyncRoot = new();
-        private static readonly HashSet<string> LoggedVersions = new(StringComparer.Ordinal);
-        private static readonly HashSet<string> NotifiedVersions = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> LoggedVersions = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> NotifiedVersions = new(StringComparer.OrdinalIgnoreCase);
 
         internal static bool TryRecordLoggedVersion(string modId, string? version)
         {
@@ -23,7 +27,7 @@ namespace STS2RitsuLib.Updates
             if (normalizedModId.Length == 0 || string.IsNullOrEmpty(normalizedVersion))
                 return false;
 
-            var key = $"{normalizedModId}\n{normalizedVersion.ToUpperInvariant()}";
+            var key = $"{normalizedModId}\n{normalizedVersion}";
             lock (SyncRoot)
             {
                 return versions.Add(key);

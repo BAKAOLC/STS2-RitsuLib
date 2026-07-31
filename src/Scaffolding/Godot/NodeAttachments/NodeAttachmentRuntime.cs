@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Nodes;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
@@ -6,6 +7,9 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
     internal static class NodeAttachmentRuntime
     {
         private static readonly AttachedState<Node, Dictionary<string, Node>> AttachedNodes =
+            new(() => new(StringComparer.OrdinalIgnoreCase));
+
+        private static readonly AttachedState<Node, HashSet<string>> PendingAttachmentIds =
             new(() => new(StringComparer.OrdinalIgnoreCase));
 
         public static bool TryGetAttached<TParent, TNode>(TParent parent, string id, out TNode node)
@@ -39,9 +43,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                 }
                 catch (Exception ex)
                 {
-                    RitsuLibFramework.Logger.ErrorNoTrace(
-                        $"[NodeAttachment] Failed to attach '{definition.Id}' to {parent.GetType().FullName}: {ex.Message}");
-                    RitsuLibFramework.Logger.Debug(ex.ToString());
+                    LogAttachmentFailure(definition, parent.GetType(), ex);
                 }
         }
 
@@ -49,11 +51,26 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
         {
             var attachParent = ResolveAttachParent(parent, definition);
             var attached = AttachedNodes.GetOrCreate(parent);
+            var pending = PendingAttachmentIds.GetOrCreate(parent);
+            if (pending.Contains(definition.Id))
+                return;
+
             if (attached.TryGetValue(definition.Id, out var tracked))
             {
                 if (GodotObject.IsInstanceValid(tracked))
                 {
-                    EnsureAttached(attachParent, tracked, definition);
+                    if (EnsureAttached(attachParent, tracked, definition))
+                        return;
+
+                    pending.Add(definition.Id);
+                    ScheduleDeferredAttachment(
+                        parent,
+                        attachParent,
+                        tracked,
+                        definition,
+                        attached,
+                        pending,
+                        false);
                     return;
                 }
 
@@ -70,9 +87,15 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                         if (!definition.NodeType.IsInstanceOfType(existing))
                             throw new InvalidOperationException(
                                 $"Existing child '{definition.Name}' is {existing.GetType().FullName}, expected {definition.NodeType.FullName}.");
-                        attached[definition.Id] = existing;
                         ApplyNodeOptions(existing, definition);
+                        if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.BeforeAdd)
+                            definition.RunSetup(parent, existing);
+                        if (definition.Options.UniqueNameInOwner)
+                            existing.Owner = attachParent;
                         ApplyInsertion(attachParent, existing, definition);
+                        if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
+                            definition.RunSetup(parent, existing);
+                        attached[definition.Id] = existing;
                         return;
                     case NodeAttachmentDuplicatePolicy.SkipIfExistingByName:
                         return;
@@ -89,17 +112,31 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                 }
 
             var child = definition.CreateNode(parent);
-            ApplyNodeOptions(child, definition);
+            try
+            {
+                ApplyNodeOptions(child, definition);
 
-            if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.BeforeAdd)
-                definition.RunSetup(parent, child);
+                if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.BeforeAdd)
+                    definition.RunSetup(parent, child);
 
-            EnsureAttached(attachParent, child, definition);
+                if (!EnsureAttached(attachParent, child, definition))
+                {
+                    pending.Add(definition.Id);
+                    ScheduleDeferredAttachment(parent, attachParent, child, definition, attached, pending, true);
+                    return;
+                }
 
-            if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
-                definition.RunSetup(parent, child);
+                if (definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
+                    definition.RunSetup(parent, child);
 
-            attached[definition.Id] = child;
+                attached[definition.Id] = child;
+            }
+            catch
+            {
+                pending.Remove(definition.Id);
+                FreeFailedChild(child, attachParent);
+                throw;
+            }
         }
 
         private static Node ResolveAttachParent(Node lifecycleParent, NodeAttachmentDefinition definition)
@@ -112,7 +149,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             return attachParent;
         }
 
-        private static void EnsureAttached(Node attachParent, Node child, NodeAttachmentDefinition definition)
+        private static bool EnsureAttached(Node attachParent, Node child, NodeAttachmentDefinition definition)
         {
             if (!GodotObject.IsInstanceValid(child))
                 throw new InvalidOperationException(
@@ -122,7 +159,7 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             if (currentParent == attachParent)
             {
                 ApplyInsertion(attachParent, child, definition);
-                return;
+                return true;
             }
 
             if (currentParent != null)
@@ -132,7 +169,10 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             switch (definition.Options.AddMode)
             {
                 case NodeAttachmentAddMode.AddChildSafely:
-                    RitsuGodotTreeCompat.AddChildSafely(attachParent, child);
+                    if (!NGame.IsMainThread() || (attachParent.IsInsideTree() && !attachParent.IsNodeReady()))
+                        return false;
+
+                    attachParent.AddChild(child);
                     break;
                 case NodeAttachmentAddMode.AddChildDirect:
                     attachParent.AddChild(child);
@@ -147,6 +187,82 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
                 child.Owner = attachParent;
 
             ApplyInsertion(attachParent, child, definition);
+            return true;
+        }
+
+        private static void ScheduleDeferredAttachment(
+            Node lifecycleParent,
+            Node attachParent,
+            Node child,
+            NodeAttachmentDefinition definition,
+            Dictionary<string, Node> attached,
+            HashSet<string> pending,
+            bool runAfterAddSetup)
+        {
+            Callable.From(() =>
+            {
+                pending.Remove(definition.Id);
+                try
+                {
+                    if (!GodotObject.IsInstanceValid(lifecycleParent))
+                        throw new InvalidOperationException(
+                            $"Node attachment '{definition.Id}' lifecycle parent is no longer valid.");
+
+                    if (!GodotObject.IsInstanceValid(attachParent))
+                        throw new InvalidOperationException(
+                            $"Node attachment '{definition.Id}' attach parent is no longer valid.");
+
+                    if (!GodotObject.IsInstanceValid(child))
+                        throw new InvalidOperationException(
+                            $"Node attachment '{definition.Id}' child is no longer valid.");
+
+                    var currentParent = child.GetParent();
+                    if (currentParent == null)
+                        attachParent.AddChild(child);
+                    else if (currentParent != attachParent)
+                        throw new InvalidOperationException(
+                            $"Node attachment '{definition.Id}' child already belongs to {currentParent.GetType().FullName}.");
+
+                    if (definition.Options.UniqueNameInOwner)
+                        child.Owner = attachParent;
+
+                    ApplyInsertion(attachParent, child, definition);
+
+                    if (runAfterAddSetup &&
+                        definition.Options.SetupTiming == NodeAttachmentSetupTiming.AfterAdd)
+                        definition.RunSetup(lifecycleParent, child);
+
+                    attached[definition.Id] = child;
+                }
+                catch (Exception ex)
+                {
+                    FreeFailedChild(child, attachParent);
+                    LogAttachmentFailure(definition, definition.ParentType, ex);
+                }
+            }).CallDeferred();
+        }
+
+        private static void FreeFailedChild(Node child, Node attachParent)
+        {
+            if (!GodotObject.IsInstanceValid(child))
+                return;
+
+            var currentParent = child.GetParent();
+            if (currentParent != null && currentParent != attachParent)
+                return;
+
+            currentParent?.RemoveChild(child);
+            child.Free();
+        }
+
+        private static void LogAttachmentFailure(
+            NodeAttachmentDefinition definition,
+            Type parentType,
+            Exception exception)
+        {
+            RitsuLibFramework.Logger.ErrorNoTrace(
+                $"[NodeAttachment] Failed to attach '{definition.Id}' to {parentType.FullName}: {exception.Message}");
+            RitsuLibFramework.Logger.Debug(exception.ToString());
         }
 
         private static void ApplyNodeOptions(Node child, NodeAttachmentDefinition definition)

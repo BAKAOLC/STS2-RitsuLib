@@ -3,28 +3,37 @@ using System.Text.RegularExpressions;
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
-    ///     Resolves W3C Design Tokens <c>{path.to.token}</c> references inside a merged token tree, in place.
-    ///     A reference must denote a single leaf; the resolver replaces it with the leaf's resolved value.
-    ///     在合并后的令牌树中原地解析 W3C Design Tokens <c>{path.to.token}</c> 引用。
-    ///     引用必须指向单个叶节点；解析器会将其替换为该叶节点的解析值。
+    ///     <para xml:lang="en">
+    ///         Resolves whole-value W3C Design Tokens references such as <c>{path.to.token}</c> within a merged
+    ///         token tree. Each reference must identify a leaf token.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在合并后的令牌树中解析形如 <c>{path.to.token}</c> 的 W3C 设计令牌整值引用。
+    ///         每个引用都必须指向一个叶令牌。
+    ///     </para>
     /// </summary>
     internal static partial class RitsuShellThemeReferenceResolver
     {
         private static readonly Regex SingleReferenceRegex = GetSingleReferenceRegex();
 
         /// <summary>
-        ///     Resolves all <c>{ref}</c> references in <paramref name="root" />. Loops produce an exception in
-        ///     <paramref name="errors" /> and the offending leaf is left with its raw string.
-        ///     解析 <c>{ref}</c> 引用，范围为 <paramref name="root" />。循环引用会在
-        ///     <paramref name="errors" /> 中产生异常，出错的叶节点会保留其原始字符串。
+        ///     <para xml:lang="en">
+        ///         Resolves all whole-value references in <paramref name="root" /> in place. Missing targets and
+        ///         cycles append diagnostics to <paramref name="errors" /> and leave the affected reference
+        ///         unresolved.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         原地解析 <paramref name="root" /> 中的所有整值引用。目标缺失或出现循环引用时，会向
+        ///         <paramref name="errors" /> 添加诊断，并保留受影响的未解析引用。
+        ///     </para>
         /// </summary>
         /// <param name="root">
-        ///     Merged token root.
-        ///     合并后的令牌根节点。
+        ///     <para xml:lang="en">The merged token tree to update.</para>
+        ///     <para xml:lang="zh-CN">要更新的合并令牌树。</para>
         /// </param>
         /// <param name="errors">
-        ///     Diagnostics accumulator.
-        ///     诊断累加器。
+        ///     <para xml:lang="en">The collection that receives reference diagnostics.</para>
+        ///     <para xml:lang="zh-CN">接收引用诊断的集合。</para>
         /// </param>
         public static void ResolveAll(Dictionary<string, object?> root, IList<string> errors)
         {
@@ -90,9 +99,38 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         }
 
         /// <summary>
-        ///     Looks up a leaf token by dotted path (e.g. <c>core.color.amber.500</c>).
-        ///     按点分隔路径查找叶令牌（例如 <c>core.color.amber.500</c>）。
+        ///     <para xml:lang="en">
+        ///         Tries to find a leaf token by dotted path, such as <c>core.color.amber.500</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         尝试按点分路径查找叶令牌，例如 <c>core.color.amber.500</c>。
+        ///     </para>
         /// </summary>
+        /// <param name="root">
+        ///     <para xml:lang="en">The token tree to search.</para>
+        ///     <para xml:lang="zh-CN">要搜索的令牌树。</para>
+        /// </param>
+        /// <param name="path">
+        ///     <para xml:lang="en">The dotted path to the expected leaf.</para>
+        ///     <para xml:lang="zh-CN">指向预期叶令牌的点分路径。</para>
+        /// </param>
+        /// <param name="leaf">
+        ///     <para xml:lang="en">
+        ///         Receives the matching leaf token, or <see langword="null" /> when the lookup fails.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         接收匹配的叶令牌；查找失败时为 <see langword="null" />。
+        ///     </para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> if the path resolves to a leaf token; otherwise,
+        ///         <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         若路径解析到叶令牌，则为 <see langword="true" />；否则为 <see langword="false" />。
+        ///     </para>
+        /// </returns>
         public static bool TryFindLeaf(Dictionary<string, object?> root, string path, out LeafToken? leaf)
         {
             leaf = null;

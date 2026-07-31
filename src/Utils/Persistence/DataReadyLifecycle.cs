@@ -3,14 +3,14 @@ using STS2RitsuLib.Data;
 namespace STS2RitsuLib.Utils.Persistence
 {
     /// <summary>
-    ///     Profile data lifecycle hub:
-    ///     - ProfileDataReady: profile data is safe to read/write
-    ///     - ProfileDataChanged: profile switched after being ready
-    ///     - ProfileDataInvalidated: current ready profile became invalid
-    ///     档案数据生命周期枢纽：
-    ///     - ProfileDataReady：档案数据可安全读写
-    ///     - ProfileDataChanged：ready 后档案发生切换
-    ///     - ProfileDataInvalidated：当前 ready 档案变为无效
+    ///     <para xml:lang="en">
+    ///         Coordinates profile-data readiness and publishes <see cref="ProfileDataReadyEvent" />,
+    ///         <see cref="ProfileDataChangedEvent" />, and <see cref="ProfileDataInvalidatedEvent" /> lifecycle events.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         协调档案数据的就绪状态，并发布 <see cref="ProfileDataReadyEvent" />、<see cref="ProfileDataChangedEvent" />
+    ///         和 <see cref="ProfileDataInvalidatedEvent" /> 生命周期事件。
+    ///     </para>
     /// </summary>
     public static class DataReadyLifecycle
     {
@@ -19,33 +19,37 @@ namespace STS2RitsuLib.Utils.Persistence
         private static ProfileDataReadyEvent? _lastReadyEvent;
 
         /// <summary>
-        ///     True when profile path initialization completed and data is considered safe to use.
-        ///     当档案路径初始化完成且数据被认为可安全使用时为 true。
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when profile-path initialization has completed and the data is
+        ///         considered safe to use.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">档案路径初始化完成且数据可安全使用时为 <see langword="true" />。</para>
         /// </summary>
         public static bool IsReady { get; private set; }
 
         /// <summary>
-        ///     Profile id associated with the last ready notification, or <c>-1</c> when not ready.
-        ///     与最近一次 ready 通知关联的档案 id；未 ready 时为 <c>-1</c>。
+        ///     <para xml:lang="en">Profile ID associated with the last ready notification, or <c>-1</c> when not ready.</para>
+        ///     <para xml:lang="zh-CN">与最近一次就绪通知关联的档案 ID；未就绪时为 <c>-1</c>。</para>
         /// </summary>
         public static int ReadyProfileId { get; private set; } = -1;
 
         /// <summary>
-        ///     Derived lifecycle state from <see cref="IsReady" />.
-        ///     从 <see cref="IsReady" /> 派生的生命周期状态。
+        ///     <para xml:lang="en">Lifecycle state derived from <see cref="IsReady" />.</para>
+        ///     <para xml:lang="zh-CN">从 <see cref="IsReady" /> 派生的生命周期状态。</para>
         /// </summary>
         public static DataLifecycleState State =>
             IsReady ? DataLifecycleState.Ready : DataLifecycleState.WaitingForProfile;
 
         /// <summary>
-        ///     Refreshes the current profile, ensures profile services, reloads data if paths changed, and raises
-        ///     lifecycle events when appropriate.
-        ///     刷新当前档案，确保档案服务可用，在路径变化时重新加载数据，并在适当时触发
-        ///     生命周期事件。
+        ///     <para xml:lang="en">
+        ///         Refreshes the current profile, ensures profile services, reloads data after path changes, and
+        ///         publishes lifecycle events when appropriate.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">刷新当前档案，确保档案服务可用，在路径变化后重新加载数据，并在适当时发布生命周期事件。</para>
         /// </summary>
         /// <param name="source">
-        ///     Diagnostic label for log and event payloads.
-        ///     用于日志和事件载荷的诊断标签。
+        ///     <para xml:lang="en">Diagnostic label for log and event payloads.</para>
+        ///     <para xml:lang="zh-CN">用于日志和事件载荷的诊断标签。</para>
         /// </param>
         public static void NotifyPotentialReady(string source)
         {
@@ -118,11 +122,11 @@ namespace STS2RitsuLib.Utils.Persistence
         }
 
         /// <summary>
-        ///     Marks the given profile as invalid and raises
-        ///     <see cref="STS2RitsuLib.Utils.Persistence.ProfileDataInvalidatedEvent" /> when it was the active ready
-        ///     profile.
-        ///     将给定档案标记为无效，并在它是活动 ready
-        ///     档案时触发 <see cref="STS2RitsuLib.Utils.Persistence.ProfileDataInvalidatedEvent" />。
+        ///     <para xml:lang="en">
+        ///         Invalidates the given profile and publishes <see cref="ProfileDataInvalidatedEvent" /> if it
+        ///         was the active ready profile.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">使指定档案失效；如果它是当前已就绪的活动档案，则发布 <see cref="ProfileDataInvalidatedEvent" />。</para>
         /// </summary>
         public static void NotifyProfileInvalidated(int profileId, string reason)
         {

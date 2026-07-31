@@ -8,10 +8,14 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     /// <summary>
-    ///     Reparents <see cref="NStarCounter" /> to <c>%StarAnchor</c> when the active energy counter scene exposes
-    ///     that anchor, so custom energy counters can control star counter placement.
-    ///     当活动能量计数器场景暴露 <c>%StarAnchor</c> 时，将 <see cref="NStarCounter" /> 重新设为其子节点，
-    ///     使自定义能量计数器可以控制星星计数器位置。
+    ///     <para xml:lang="en">
+    ///         Reparents <see cref="NStarCounter" /> to <c>%StarAnchor</c> when the active energy-counter scene exposes
+    ///         that anchor, allowing custom energy counters to control the star counter's placement.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当当前能量计数器场景提供 <c>%StarAnchor</c> 时，将 <see cref="NStarCounter" /> 重新设为其子节点，
+    ///         使自定义能量计数器能够控制星星计数器的位置。
+    ///     </para>
     /// </summary>
     [HarmonyAfter(Const.BaseLibHarmonyId)]
     [HarmonyPriority(Priority.Last)]

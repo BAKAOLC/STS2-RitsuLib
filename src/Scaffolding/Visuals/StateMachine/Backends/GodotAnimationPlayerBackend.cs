@@ -3,8 +3,8 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 {
     /// <summary>
-    ///     <see cref="IAnimationBackend" /> driver for Godot <see cref="AnimationPlayer" />.
-    ///     Godot <see cref="AnimationPlayer" /> 的 <see cref="IAnimationBackend" /> 驱动。
+    ///     <para xml:lang="en">Implements <see cref="IAnimationBackend" /> for a Godot <see cref="AnimationPlayer" />.</para>
+    ///     <para xml:lang="zh-CN">为 Godot <see cref="AnimationPlayer" /> 实现 <see cref="IAnimationBackend" />。</para>
     /// </summary>
     public sealed class GodotAnimationPlayerBackend : IAnimationBackend, IAnimationTimingProvider
     {
@@ -15,10 +15,13 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private bool _suppressEvents;
 
         /// <summary>
-        ///     Wraps <paramref name="player" /> and hooks <c>AnimationPlayer.AnimationFinished</c> and
-        ///     <c>AnimationPlayer.AnimationStarted</c> so queued auto-advances surface as <see cref="Started" />.
-        ///     包装 <paramref name="player" /> 并挂接 <c>AnimationPlayer.AnimationFinished</c> 和
-        ///     <c>AnimationPlayer.AnimationStarted</c>，使排队的自动推进表现为 <see cref="Started" />。
+        ///     <para xml:lang="en">
+        ///         Wraps <paramref name="player" /> and forwards its started and finished signals, including starts caused by
+        ///         the player's native queue.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         包装 <paramref name="player" /> 并转发其开始和结束信号，包括播放器原生队列推进所引起的开始事件。
+        ///     </para>
         /// </summary>
         public GodotAnimationPlayerBackend(AnimationPlayer player)
         {
@@ -62,6 +65,7 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
             if (animation != null)
                 animation.LoopMode = loop ? Animation.LoopModeEnum.Linear : Animation.LoopModeEnum.None;
 
+            _player.ClearQueue();
             if (_player.CurrentAnimation == id)
                 _player.Stop();
 
@@ -73,6 +77,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         {
             if (!HasAnimation(id))
                 return;
+
+            if (!_player.IsPlaying())
+            {
+                Play(id, loop);
+                return;
+            }
 
             var animation = _player.GetAnimation(id);
             if (animation != null)
@@ -129,8 +139,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         }
 
         /// <summary>
-        ///     Detaches the signal connections. Safe to call more than once.
-        ///     断开信号连接。可安全多次调用。
+        ///     <para xml:lang="en">Detaches the signal connections. Repeated calls are safe.</para>
+        ///     <para xml:lang="zh-CN">断开信号连接；可安全地重复调用。</para>
         /// </summary>
         public void Dispose()
         {

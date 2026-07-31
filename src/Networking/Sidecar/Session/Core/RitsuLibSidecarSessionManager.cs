@@ -5,10 +5,11 @@ using STS2RitsuLib.Platform;
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
-    ///     Sidecar session state hub: tracks current multiplayer service, peer reachability/features, and pluggable
-    ///     capability providers.
-    ///     Sidecar 会话状态中心：跟踪当前多人 service、peer 可达性/feature，以及可插拔
-    ///     能力提供方。
+    ///     <para xml:lang="en">
+    ///         Maintains Sidecar session state, including the current multiplayer service, peer reachability and
+    ///         features, and pluggable capability-validation routes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">维护 Sidecar 会话状态，包括当前多人游戏服务、对等方可达性和功能以及可插拔的能力验证路由。</para>
     /// </summary>
     public static class RitsuLibSidecarSessionManager
     {
@@ -26,8 +27,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static bool _providerBootstrapped;
 
         /// <summary>
-        ///     Current session epoch; incremented on each observed net service switch.
-        ///     当前会话纪元；每次观察到 net service 切换时递增。
+        ///     <para xml:lang="en">Current session epoch, incremented for each observed network-service switch.</para>
+        ///     <para xml:lang="zh-CN">当前会话纪元；每次观察到网络服务切换时递增。</para>
         /// </summary>
         public static long Epoch
         {
@@ -41,32 +42,32 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Event fired when a non-singleplayer service becomes active.
-        ///     非单人 service 变为活动状态时触发的事件。
+        ///     <para xml:lang="en">Raised after a non-singleplayer service has become the active session service.</para>
+        ///     <para xml:lang="zh-CN">在非单人游戏服务成为活动会话服务后引发。</para>
         /// </summary>
         public static event Action<SidecarSessionBoundEvent>? SessionBound;
 
         /// <summary>
-        ///     Event fired when session transitions to unbound/singleplayer.
-        ///     会话转换为未绑定/单人状态时触发的事件。
+        ///     <para xml:lang="en">Raised after the session transitions to an unbound or single-player service.</para>
+        ///     <para xml:lang="zh-CN">在会话转换为未绑定或单人游戏服务后引发。</para>
         /// </summary>
         public static event Action<SidecarSessionUnboundEvent>? SessionUnbound;
 
         /// <summary>
-        ///     Event fired on reachability transitions.
-        ///     可达性转换时触发的事件。
+        ///     <para xml:lang="en">Raised after a peer's reachability state changes.</para>
+        ///     <para xml:lang="zh-CN">在对等方的可达性状态改变后引发。</para>
         /// </summary>
         public static event Action<SidecarPeerReachabilityChangedEvent>? PeerReachabilityChanged;
 
         /// <summary>
-        ///     Event fired when handshake information marks a peer as sidecar-capable.
-        ///     握手信息将 peer 标记为 sidecar-capable 时触发的事件。
+        ///     <para xml:lang="en">Raised after accepted handshake information marks a peer as Sidecar-capable.</para>
+        ///     <para xml:lang="zh-CN">在已接受的握手信息将对等方标记为支持 Sidecar 后引发。</para>
         /// </summary>
         public static event Action<SidecarHandshakeCompletedEvent>? HandshakeCompleted;
 
         /// <summary>
-        ///     Ensures built-in capability providers are registered once.
-        ///     确保内置能力提供方只注册一次。
+        ///     <para xml:lang="en">Ensures the built-in capability-validation routes are registered once.</para>
+        ///     <para xml:lang="zh-CN">确保内置能力验证路由只注册一次。</para>
         /// </summary>
         public static void EnsureProvidersBootstrapped()
         {
@@ -85,8 +86,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Registers an additional validation route (deduplicated by concrete type).
-        ///     注册额外验证路由（按具体类型去重）。
+        ///     <para xml:lang="en">Registers an additional validation route, deduplicated by concrete route type.</para>
+        ///     <para xml:lang="zh-CN">注册额外验证路由，并按路由具体类型去重。</para>
         /// </summary>
         public static void RegisterValidationRoute(IRitsuLibSidecarCapabilityValidationRoute route)
         {
@@ -103,8 +104,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Observes current net service and updates session state when it changes.
-        ///     观察当前 net service，并在其变化时更新会话状态。
+        ///     <para xml:lang="en">
+        ///         Observes the current network service and updates session state when its instance changes. It raises
+        ///         session events only after committing the new state; event subscribers run synchronously.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         观察当前网络服务，并在其实例变更时更新会话状态。仅在提交新状态后引发会话事件；事件订阅者同步运行。
+        ///     </para>
         /// </summary>
         public static void ObserveNetService(INetGameService? netService)
         {
@@ -114,7 +120,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             ulong[] seededPeers = [];
             lock (Gate)
             {
-                if (IsSemanticallySameService(_currentNetService, netService))
+                if (ReferenceEquals(_currentNetService, netService))
                     return;
 
                 _epoch++;
@@ -153,8 +159,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Returns true only when the peer is currently <see cref="RitsuLibSidecarPeerReachability.Supported" />.
-        ///     仅当 peer 当前为 <see cref="RitsuLibSidecarPeerReachability.Supported" /> 时返回 true。
+        ///     <para xml:lang="en">Returns whether the peer is currently <see cref="RitsuLibSidecarPeerReachability.Supported" />.</para>
+        ///     <para xml:lang="zh-CN">返回该对等方当前是否为 <see cref="RitsuLibSidecarPeerReachability.Supported" />。</para>
         /// </summary>
         public static bool CanSendToPeer(ulong peerNetId)
         {
@@ -163,8 +169,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Tries to read current reachability for a peer.
-        ///     尝试读取 peer 的当前可达性。
+        ///     <para xml:lang="en">Tries to read the current reachability state for a peer.</para>
+        ///     <para xml:lang="zh-CN">尝试读取对等方的当前可达性状态。</para>
         /// </summary>
         public static bool TryGetReachability(ulong peerNetId, out RitsuLibSidecarPeerReachability reachability)
         {
@@ -175,8 +181,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Returns a snapshot of peers currently allowed for sidecar sends.
-        ///     返回当前允许进行 sidecar 发送的 peer 快照。
+        ///     <para xml:lang="en">Returns a copy of the peers currently allowed to receive Sidecar sends.</para>
+        ///     <para xml:lang="zh-CN">返回当前允许接收 Sidecar 发送的对等方副本。</para>
         /// </summary>
         public static IReadOnlyList<ulong> GetSupportedPeersSnapshot()
         {
@@ -195,8 +201,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Records a host-side peer connection, seeds <c>Unknown</c>, then refreshes from providers.
-        ///     记录主机侧 peer 连接，播种 <c>Unknown</c>，然后从提供方刷新。
+        ///     <para xml:lang="en">Records a host-side peer connection, seeds <c>Unknown</c>, then refreshes provider verdicts.</para>
+        ///     <para xml:lang="zh-CN">记录主机侧对等方连接，设为 <c>Unknown</c>，然后刷新提供方判定。</para>
         /// </summary>
         public static void NotePeerConnected(ulong peerNetId)
         {
@@ -206,8 +212,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Removes reachability/feature state for a disconnected peer.
-        ///     移除断开 peer 的可达性/feature 状态。
+        ///     <para xml:lang="en">Removes reachability, feature, and handshake-negotiation state for a disconnected peer.</para>
+        ///     <para xml:lang="zh-CN">移除已断开对等方的可达性、功能和握手协商状态。</para>
         /// </summary>
         public static void NotePeerDisconnected(ulong peerNetId)
         {
@@ -223,10 +229,14 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Marks the peer as terminal for outbound handshake negotiation (transport budget, ack timeout, etc.) and
-        ///     forces <see cref="RitsuLibSidecarPeerReachability.Unsupported" /> for session stability.
-        ///     将 peer 标记为出站握手协商的终止状态（传输预算、ack 超时等），并
-        ///     强制会话中的 <see cref="RitsuLibSidecarPeerReachability.Unsupported" /> 以保持稳定。
+        ///     <para xml:lang="en">
+        ///         Marks a peer terminal for outbound handshake negotiation, such as after a transport-budget or
+        ///         acknowledgement-timeout failure, and forces it to <see cref="RitsuLibSidecarPeerReachability.Unsupported" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将对等方标记为出站握手协商的终止状态，例如传输预算或确认超时失败后，并强制其为
+        ///         <see cref="RitsuLibSidecarPeerReachability.Unsupported" />。
+        ///     </para>
         /// </summary>
         public static void NoteHandshakeNegotiationAborted(ulong peerNetId, string reason)
         {
@@ -239,12 +249,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Marks the peer as terminal-unreachable for sidecar sends due to a transport-layer failure indicating the
-        ///     peer connection is missing (e.g. host transport no longer has a connection entry for the peer).
-        ///     This prevents per-frame resend loops from repeatedly throwing.
-        ///     由于传输层失败表明 peer 连接缺失，将 peer 标记为 sidecar 发送的终止不可达状态
-        ///     （例如主机传输不再有该 peer 的连接条目）。
-        ///     这可防止逐帧重发循环反复抛出异常。
+        ///     <para xml:lang="en">
+        ///         Marks a peer terminal-unreachable for Sidecar sends after a transport failure indicates its
+        ///         connection is missing, preventing per-frame resend loops from repeatedly throwing.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在传输失败表明对等方连接缺失后，将其标记为 Sidecar 发送的终止不可达状态，以防逐帧重发循环反复抛出异常。
+        ///     </para>
         /// </summary>
         public static void NoteTransportConnectionMissing(ulong peerNetId)
         {
@@ -258,8 +269,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Stores handshake feature result and updates peer reachability according to handshake result.
-        ///     存储握手 feature 结果，并根据握手结果更新 peer 可达性。
+        ///     <para xml:lang="en">Stores handshake features and updates peer reachability from the acceptance result.</para>
+        ///     <para xml:lang="zh-CN">存储握手功能，并根据接受结果更新对等方可达性。</para>
         /// </summary>
         public static void NoteHandshakeFromPeer(ulong peerNetId, RitsuLibSidecarPeerFeatures features, bool accepted)
         {
@@ -285,8 +296,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Tries to read last known feature flags for a peer.
-        ///     尝试读取 peer 的最后已知 feature flags。
+        ///     <para xml:lang="en">Tries to read the last known feature flags for a peer.</para>
+        ///     <para xml:lang="zh-CN">尝试读取对等方最后已知的功能标志。</para>
         /// </summary>
         public static bool TryGetPeerFeatures(ulong peerNetId, out RitsuLibSidecarPeerFeatures features)
         {
@@ -297,8 +308,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Sets a manual reachability hint and re-evaluates provider verdicts.
-        ///     设置手动可达性提示，并重新评估提供方判定。
+        ///     <para xml:lang="en">Sets a manual reachability hint, then re-evaluates provider verdicts.</para>
+        ///     <para xml:lang="zh-CN">设置手动可达性提示，然后重新评估提供方判定。</para>
         /// </summary>
         public static void SetPeerReachabilityHint(ulong peerNetId, RitsuLibSidecarPeerReachability reachability)
         {
@@ -307,8 +318,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Re-evaluates a peer using registered providers; first non-null verdict wins.
-        ///     使用已注册提供方重新评估 peer；第一个非 null 判定获胜。
+        ///     <para xml:lang="en">Re-evaluates a peer through registered routes; the first non-null verdict wins.</para>
+        ///     <para xml:lang="zh-CN">通过已注册路由重新评估对等方；第一个非 <see langword="null" /> 的判定获胜。</para>
         /// </summary>
         public static void RefreshReachabilityFromProviders(ulong peerNetId)
         {
@@ -348,8 +359,8 @@ namespace STS2RitsuLib.Networking.Sidecar
         }
 
         /// <summary>
-        ///     Re-evaluates all currently known peers using registered providers.
-        ///     使用已注册提供方重新评估所有当前已知 peer。
+        ///     <para xml:lang="en">Re-evaluates all currently known peers through the registered routes.</para>
+        ///     <para xml:lang="zh-CN">通过已注册路由重新评估所有当前已知对等方。</para>
         /// </summary>
         public static void RefreshAllReachabilityFromProviders()
         {
@@ -442,17 +453,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                     .Where(static pair => pair.Value == RitsuLibSidecarPeerReachability.Supported)
                     .Select(static pair => pair.Key),
             ];
-        }
-
-        private static bool IsSemanticallySameService(INetGameService? a, INetGameService? b)
-        {
-            if (ReferenceEquals(a, b))
-                return true;
-
-            if (a is null || b is null)
-                return false;
-
-            return a.Type == b.Type && a.NetId == b.NetId;
         }
     }
 }

@@ -4,8 +4,8 @@ using STS2RitsuLib.Ui.Shell.Theme;
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
-    ///     Factory for reusable RitsuLib mod-settings UI chrome and controls.
-    ///     可复用的 RitsuLib Mod 设置 UI chrome 与控件工厂。
+    ///     <para xml:lang="en">Creates the reusable layout, page chrome, and controls used by RitsuLib settings pages.</para>
+    ///     <para xml:lang="zh-CN">创建 RitsuLib 设置页面使用的可复用布局、页面框架与控件。</para>
     /// </summary>
     public static partial class ModSettingsUiFactory
     {
@@ -85,7 +85,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[Settings] Failed to build section '{page.ModId}:{page.Id}:{section.Id}': {ex.Message}");
+                        $"[Settings] Failed to build section '{page.ModId}:{page.Id}:{section.Id}': {ex}");
                     failedSection = new(CreateBuildErrorPlaceholder(
                         ModSettingsLocalization.Get("section.failed.title", "Section failed to load"),
                         string.Format(
@@ -191,6 +191,8 @@ namespace STS2RitsuLib.Settings
                 entry.MaxValue,
                 entry.Step,
                 FormatValue,
+                // The callback cannot run until after construction assigns controlSlot.
+                // ReSharper disable once AccessToModifiedClosure
                 value =>
                 {
                     entry.Binding.Write(value);
@@ -225,7 +227,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsUiFactory] Slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                        $"[ModSettingsUiFactory] Slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex}");
                     return value.ToString("0.##");
                 }
             }
@@ -241,6 +243,8 @@ namespace STS2RitsuLib.Settings
                 entry.MaxValue,
                 entry.Step,
                 FormatValue,
+                // The callback cannot run until after construction assigns controlSlot.
+                // ReSharper disable once AccessToModifiedClosure
                 value =>
                 {
                     entry.Binding.Write(value);
@@ -275,7 +279,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsUiFactory] Float slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                        $"[ModSettingsUiFactory] Float slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex}");
                     return value.ToString("0.##");
                 }
             }
@@ -349,10 +353,9 @@ namespace STS2RitsuLib.Settings
 
             (TValue Value, string Label)[] ResolveOptions()
             {
-                var options = entry.OptionsProvider?.Invoke() ?? entry.Options;
                 return
                 [
-                    .. options
+                    .. entry.ResolveOptions()
                         .Select(option => (option.Value, Label: ModSettingsUiContext.Resolve(option.Label))),
                 ];
             }
@@ -847,6 +850,8 @@ namespace STS2RitsuLib.Settings
                 entry.MaxValue,
                 entry.Step,
                 FormatValue,
+                // The callback cannot run until after construction assigns controlSlot.
+                // ReSharper disable once AccessToModifiedClosure
                 value =>
                 {
                     entry.Binding.Write(Mathf.RoundToInt(value));
@@ -882,7 +887,7 @@ namespace STS2RitsuLib.Settings
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ModSettingsUiFactory] Int slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex.Message}");
+                        $"[ModSettingsUiFactory] Int slider formatter failed for {entry.Binding.ModId}.{entry.Binding.DataKey} ({entry.Id}): {ex}");
                     return intValue.ToString();
                 }
             }

@@ -1,4 +1,11 @@
-using System.IO.Compression;
+#if STS2_AT_LEAST_0_110_0
+using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.StartRunLobbyPlayer;
+#else
+using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.LobbyPlayer;
+#endif
+#if STS2_AT_LEAST_0_110_0
+using MegaCrit.Sts2.Core.Multiplayer;
+#endif
 using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
@@ -19,6 +26,7 @@ using MegaCrit.Sts2.Core.Saves.Test;
 using MegaCrit.Sts2.Core.Unlocks;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Networking.MessageExtensions;
+using STS2RitsuLib.Networking.Sidecar;
 using STS2RitsuLib.Patching.Models;
 using GameMode = MegaCrit.Sts2.Core.Runs.GameMode;
 
@@ -29,6 +37,7 @@ namespace STS2RitsuLib.RunData.Patches
         private const string TailExtensionId = "ritsulib.runSavedData";
         private const int PayloadVersion = 2;
         private const int LegacyStringPayloadVersion = 1;
+        private const int MaxPayloadBytes = (int)RitsuLibSidecarWire.MaxPayloadBytes;
         private static readonly AsyncLocal<Stack<RunSavedDataSaveRunCapture>?> ActiveSaveRunCaptures = new();
 
         public static string GetRunSavePath(RunSaveManager manager, bool isMultiplayer)
@@ -53,7 +62,7 @@ namespace STS2RitsuLib.RunData.Patches
                     .ReadFile(GetRunSavePath(manager, isMultiplayer));
                 RunSavedDataRegistry.AttachDocumentFromJson(save, json);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to read run extension data: {ex.Message}");
             }
@@ -104,7 +113,7 @@ namespace STS2RitsuLib.RunData.Patches
                 injectedBytes = Encoding.UTF8.GetBytes(injectedJson);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to inject run extension data: {ex.Message}");
                 return false;
@@ -144,7 +153,7 @@ namespace STS2RitsuLib.RunData.Patches
             {
                 return RunManager.Instance.ShouldSave && RunManager.Instance.NetService.Type == NetGameType.Host;
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return false;
             }
@@ -152,14 +161,31 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void WritePayload(PacketWriter writer, string? payload)
         {
-            if (string.IsNullOrWhiteSpace(payload))
-                return;
+            byte[]? compressed = null;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(payload))
+                {
+                    var byteCount = Encoding.UTF8.GetByteCount(payload);
+                    if (byteCount <= MaxPayloadBytes)
+                        compressed = RitsuLibSidecarCompression.BrotliCompress(Encoding.UTF8.GetBytes(payload));
+                    else
+                        RitsuLibFramework.Logger.Warn(
+                            $"[RunSavedData] Synchronized payload is {byteCount} UTF-8 bytes; " +
+                            $"maximum is {MaxPayloadBytes} bytes.");
+                }
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RunSavedData] Failed to write synchronized payload: {ex.Message}");
+            }
 
             RitsuNetMessageTailExtensions.WriteLegacySingleBytes(
                 writer,
                 TailExtensionId,
                 PayloadVersion,
-                Brotli(Encoding.UTF8.GetBytes(payload)));
+                compressed);
         }
 
         public static string? PrepareNewRunPayload(StartRunLobby lobby, string seed,
@@ -170,7 +196,7 @@ namespace STS2RitsuLib.RunData.Patches
                 RunSavedDataLobby.PublishStagingEvent(lobby, RunSavedDataLobbyStagingReason.Committing);
                 return RunSavedDataRegistry.BuildLobbyStagingPayload(lobby);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to prepare new-run payload: {ex.Message}");
                 return null;
@@ -179,38 +205,36 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static string? TryReadPayload(PacketReader reader)
         {
-            var payload = RitsuNetMessageTailExtensions.TryReadLegacySingleBytes(
-                reader,
-                TailExtensionId,
-                PayloadVersion,
-                LegacyStringPayloadVersion,
-                out var wasLegacyString);
-            if (payload == null)
-                return null;
-
-            return wasLegacyString
-                ? Encoding.UTF8.GetString(payload)
-                : Encoding.UTF8.GetString(Unbrotli(payload));
-        }
-
-        private static byte[] Brotli(byte[] data)
-        {
-            using var output = new MemoryStream();
-            using (var brotli = new BrotliStream(output, CompressionLevel.SmallestSize, true))
+            try
             {
-                brotli.Write(data, 0, data.Length);
-            }
+                var payload = RitsuNetMessageTailExtensions.TryReadLegacySingleBytes(
+                    reader,
+                    TailExtensionId,
+                    PayloadVersion,
+                    LegacyStringPayloadVersion,
+                    out var wasLegacyString);
+                if (payload == null)
+                    return null;
 
-            return output.ToArray();
+                return wasLegacyString
+                    ? Encoding.UTF8.GetString(payload)
+                    : Encoding.UTF8.GetString(Unbrotli(payload));
+            }
+            catch (InvalidDataException ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RunSavedData] Failed to read synchronized payload: {ex.Message}");
+                return null;
+            }
         }
 
-        private static byte[] Unbrotli(byte[] data)
+        private static byte[] Unbrotli(ReadOnlySpan<byte> data)
         {
-            using var input = new MemoryStream(data, false);
-            using var brotli = new BrotliStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            brotli.CopyTo(output);
-            return output.ToArray();
+            if (RitsuLibSidecarCompression.TryBrotliDecompress(data, out var decompressed))
+                return decompressed;
+
+            throw new InvalidDataException(
+                $"The synchronized payload is invalid or exceeds {MaxPayloadBytes} decompressed bytes.");
         }
     }
 
@@ -580,6 +604,13 @@ namespace STS2RitsuLib.RunData.Patches
             PendingNewRunPayload = null;
             return payload;
         }
+
+        internal static string? ConsumePreparedPayload()
+        {
+            var payload = PreparedNewRunPayload;
+            PreparedNewRunPayload = null;
+            return payload;
+        }
     }
 
     internal sealed class RunSavedDataLobbyBeginRunMessageSerializePatch : IPatchMethod
@@ -753,12 +784,17 @@ namespace STS2RitsuLib.RunData.Patches
         {
             return
             [
+#if STS2_AT_LEAST_0_110_0
+                new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
+                    [typeof(SerializableUnlockState), typeof(int), typeof(PeerVersionInfo), typeof(ulong)]),
+#else
                 new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
                     [typeof(SerializableUnlockState), typeof(int), typeof(ulong)]),
+#endif
             ];
         }
 
-        public static void Postfix(StartRunLobby __instance, LobbyPlayer? __result)
+        public static void Postfix(StartRunLobby __instance, LobbyPlayerCompat? __result)
         {
             if (__result == null || __instance.NetService.Type == NetGameType.Client)
                 return;
@@ -823,7 +859,7 @@ namespace STS2RitsuLib.RunData.Patches
             __state = RunSavedDataLobbySync.PushOutboundContribution(__instance);
         }
 
-        public static void Postfix(IDisposable? __state)
+        public static void Finalizer(IDisposable? __state)
         {
             __state?.Dispose();
         }
@@ -895,8 +931,9 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void Prefix(RunManager __instance)
         {
-            var payload = RunSavedDataLobbyBeginRunMessageState.ConsumePendingPayload() ??
-                          RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload;
+            var pendingPayload = RunSavedDataLobbyBeginRunMessageState.ConsumePendingPayload();
+            var preparedPayload = RunSavedDataLobbyBeginRunMessageState.ConsumePreparedPayload();
+            var payload = pendingPayload ?? preparedPayload;
             if (!string.IsNullOrWhiteSpace(payload) && __instance.State != null)
             {
                 RunSavedDataRegistry.ImportPayloadIntoRun(__instance.State, payload);

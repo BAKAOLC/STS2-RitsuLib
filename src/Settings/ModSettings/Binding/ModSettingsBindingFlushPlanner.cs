@@ -3,10 +3,13 @@ namespace STS2RitsuLib.Settings
     internal static class ModSettingsBindingFlushPlanner
     {
         /// <summary>
-        ///     When several decorators for the same logical control are all marked dirty, only the roots of the save-forwarding
-        ///     DAG should run <see cref="IModSettingsBinding.Save" /> so inner persistence is not executed multiple times.
-        ///     当同一逻辑控件的多个装饰器都标记为 dirty 时，只有保存转发
-        ///     DAG 的根应运行 <see cref="IModSettingsBinding.Save" />，避免内部持久化被执行多次。
+        ///     <para xml:lang="en">
+        ///         Selects dirty bindings that are not immediate save targets of another dirty binding. Saving only
+        ///         these roots prevents decorator chains from persisting the same logical setting more than once.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         选择不是其他脏绑定直接保存目标的脏绑定。仅保存这些根绑定可避免装饰器链重复持久化同一逻辑设置。
+        ///     </para>
         /// </summary>
         internal static List<IModSettingsBinding> SelectEffectiveSaveRoots(HashSet<IModSettingsBinding> dirty)
         {

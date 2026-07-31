@@ -9,27 +9,29 @@ using MegaCrit.Sts2.Core.Runs;
 namespace STS2RitsuLib.Models.Capabilities
 {
     /// <summary>
-    ///     Listener resolved from a model, model capability, or global listener registry.
-    ///     从模型、模型 capability 或全局监听器注册表解析出的监听器。
+    ///     <para xml:lang="en">Listener resolved from a model, model capability, or global listener registry.</para>
+    ///     <para xml:lang="zh-CN">从模型、模型能力或全局监听器注册表解析出的监听器。</para>
     /// </summary>
     public readonly record struct ModelHookListener<TListener>(TListener Listener, AbstractModel? Model)
         where TListener : class;
 
     /// <summary>
-    ///     Shared dispatcher for model and capability backed hook listener streams.
-    ///     模型和 capability 驱动的 hook listener 流共用分发器。
+    ///     <para xml:lang="en">Shared dispatcher for model- and capability-backed hook listener streams.</para>
+    ///     <para xml:lang="zh-CN">由模型和能力提供的钩子监听器流所共用的分发器。</para>
     /// </summary>
     public static class ModelHookListenerDispatcher
     {
         /// <summary>
-        ///     Resolves listeners from combat hook models, attached capabilities, and optional extra models.
-        ///     从战斗 hook 模型、已附加 capability 与可选额外模型中解析监听器。
+        ///     <para xml:lang="en">Resolves listeners from combat hook models, attached capabilities, and optional extra models.</para>
+        ///     <para xml:lang="zh-CN">从战斗钩子模型、已附加能力与可选的额外模型中解析监听器。</para>
         /// </summary>
         public static IEnumerable<ModelHookListener<TListener>> FromCombat<TListener>(
             CombatStateLike combatState,
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(combatState);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore<TListener>(combatState.IterateHookListeners(), null, null, extraModels);
         }
 
@@ -43,8 +45,14 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Resolves combat listeners and inserts an optional adapter immediately after each matching model listener.
-        ///     解析战斗监听器，并在每个匹配模型监听器之后立即插入可选适配器。
+        ///     <para xml:lang="en">
+        ///         Resolves combat listeners and inserts an optional adapter immediately after each source model or
+        ///         model-backed capability for which <paramref name="adapterResolver" /> returns one.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析战斗监听器；当 <paramref name="adapterResolver" /> 为来源模型或由模型承载的能力返回适配器时，
+        ///         将该适配器紧接在对应来源之后插入。
+        ///     </para>
         /// </summary>
         public static IEnumerable<ModelHookListener<TListener>> FromCombatWithAdapters<TListener>(
             CombatStateLike combatState,
@@ -52,7 +60,9 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(combatState);
             ArgumentNullException.ThrowIfNull(adapterResolver);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore(combatState.IterateHookListeners(), null, adapterResolver, extraModels);
         }
 
@@ -68,8 +78,8 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Resolves listeners from run hook models, attached capabilities, and optional extra models.
-        ///     从跑局 hook 模型、已附加 capability 与可选额外模型中解析监听器。
+        ///     <para xml:lang="en">Resolves listeners from run hook models, attached capabilities, and optional extra models.</para>
+        ///     <para xml:lang="zh-CN">从局内钩子模型、已附加能力与可选的额外模型中解析监听器。</para>
         /// </summary>
         public static IEnumerable<ModelHookListener<TListener>> FromRun<TListener>(
             IRunState runState,
@@ -77,6 +87,8 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(runState);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore<TListener>(runState.IterateHookListeners(combatState), null, null, extraModels);
         }
 
@@ -91,14 +103,19 @@ namespace STS2RitsuLib.Models.Capabilities
         }
 
         /// <summary>
-        ///     Resolves listeners from an explicit model sequence, attached capabilities, and optional extra models.
-        ///     从显式模型序列、已附加 capability 与可选额外模型中解析监听器。
+        ///     <para xml:lang="en">
+        ///         Resolves listeners from an explicit model sequence, attached capabilities, and optional extra
+        ///         models.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">从显式模型序列、已附加能力与可选的额外模型中解析监听器。</para>
         /// </summary>
         public static IEnumerable<ModelHookListener<TListener>> FromModels<TListener>(
             IEnumerable<AbstractModel> models,
             params AbstractModel?[] extraModels)
             where TListener : class
         {
+            ArgumentNullException.ThrowIfNull(models);
+            ArgumentNullException.ThrowIfNull(extraModels);
             return FromModelsCore<TListener>(models, null, null, extraModels);
         }
 
@@ -209,8 +226,8 @@ namespace STS2RitsuLib.Models.Capabilities
     }
 
     /// <summary>
-    ///     Thread-safe process-wide hook listener registry.
-    ///     线程安全的进程级 hook listener 注册表。
+    ///     <para xml:lang="en">Thread-safe process-wide hook listener registry.</para>
+    ///     <para xml:lang="zh-CN">线程安全的进程级钩子监听器注册表。</para>
     /// </summary>
     internal sealed class ModelHookListenerRegistry<TListener>
         where TListener : class

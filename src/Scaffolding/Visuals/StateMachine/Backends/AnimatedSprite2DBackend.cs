@@ -3,14 +3,19 @@ using Godot;
 namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
 {
     /// <summary>
-    ///     <see cref="IAnimationBackend" /> driver for Godot <see cref="AnimatedSprite2D" />.
-    ///     用于 Godot <see cref="AnimatedSprite2D" /> 的 <see cref="IAnimationBackend" /> 驱动器。
+    ///     <para xml:lang="en">Drives a Godot <see cref="AnimatedSprite2D" /> through <see cref="IAnimationBackend" />.</para>
+    ///     <para xml:lang="zh-CN">通过 <see cref="IAnimationBackend" /> 驱动 Godot <see cref="AnimatedSprite2D" />。</para>
     /// </summary>
     /// <remarks>
-    ///     Loop flag is written back to <see cref="SpriteFrames" /> when it differs from the stored value so the
-    ///     state machine's intent wins; completion is reported through <see cref="AnimatedSprite2D.AnimationFinished" />.
-    ///     当循环标志与 <see cref="SpriteFrames" /> 中存储的值不同时，会将其写回，确保
-    ///     状态机的意图优先；完成事件通过 <see cref="AnimatedSprite2D.AnimationFinished" /> 报告。
+    ///     <para xml:lang="en">
+    ///         When the requested loop flag differs from the value stored in <see cref="SpriteFrames" />, the backend updates
+    ///         the resource to honor the state-machine request. Completion is reported through
+    ///         <see cref="AnimatedSprite2D.AnimationFinished" />.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         当请求的循环标记与 <see cref="SpriteFrames" /> 中存储的值不同时，后端会更新该资源以遵循状态机请求。
+    ///         播放完成通过 <see cref="AnimatedSprite2D.AnimationFinished" /> 报告。
+    ///     </para>
     /// </remarks>
     public sealed class AnimatedSprite2DBackend : IAnimationBackend, IAnimationTimingProvider
     {
@@ -21,8 +26,12 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         private bool _queuedLoop;
 
         /// <summary>
-        ///     Wraps <paramref name="sprite" /> and hooks <see cref="AnimatedSprite2D.AnimationFinished" />.
-        ///     包装 <paramref name="sprite" /> 并挂接 <see cref="AnimatedSprite2D.AnimationFinished" />。
+        ///     <para xml:lang="en">
+        ///         Wraps <paramref name="sprite" /> and connects to <see cref="AnimatedSprite2D.AnimationFinished" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         包装 <paramref name="sprite" />，并连接 <see cref="AnimatedSprite2D.AnimationFinished" /> 信号。
+        ///     </para>
         /// </summary>
         public AnimatedSprite2DBackend(AnimatedSprite2D sprite)
         {
@@ -143,8 +152,8 @@ namespace STS2RitsuLib.Scaffolding.Visuals.StateMachine.Backends
         }
 
         /// <summary>
-        ///     Detaches the signal connection. Safe to call more than once.
-        ///     断开信号连接。可安全多次调用。
+        ///     <para xml:lang="en">Disconnects the signal handler. Repeated calls are safe.</para>
+        ///     <para xml:lang="zh-CN">断开信号处理程序；可安全地重复调用。</para>
         /// </summary>
         public void Dispose()
         {

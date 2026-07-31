@@ -3,54 +3,106 @@ using System.Text.Json.Nodes;
 namespace STS2RitsuLib.Interop
 {
     /// <summary>
-    ///     Optional reflection-bound delegates for JSON DOM tiers (merge, pointer, UTF-16 text, root object).
-    ///     JSON DOM tier 使用的可选反射绑定 delegate（merge、pointer、UTF-16 text、root object）。
+    ///     <para xml:lang="en">
+    ///         Optional reflection-bound operations for keyed JSON documents, including merge patch, JSON Patch,
+    ///         JSON Pointer, full-text, and root-object access.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         键控 JSON 文档的可选反射绑定操作，包括合并补丁、JSON Patch、JSON Pointer、完整文本和根对象访问。
+    ///     </para>
     /// </summary>
     /// <param name="GetMergePatch">
-    ///     RFC 7386 merge-patch for a key, or <c>null</c> when unbound.
-    ///     https://www.rfc-editor.org/rfc/rfc7386
-    ///     某个 key 的 RFC 7386 merge-patch；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Gets an <see href="https://www.rfc-editor.org/rfc/rfc7386">RFC 7386 JSON Merge Patch</see>
+    ///         for a key, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         获取指定键的 <see href="https://www.rfc-editor.org/rfc/rfc7386">RFC 7386 JSON 合并补丁</see>；
+    ///         未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="GetRootObject">
-    ///     Full document root as <see cref="JsonObject" />, or <c>null</c> when unbound.
-    ///     作为 <see cref="JsonObject" /> 的完整 document root；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Gets the complete document root as a <see cref="JsonObject" />, or is
+    ///         <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         以 <see cref="JsonObject" /> 获取完整文档根节点；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="GetNode">
-    ///     Sub-tree read by JSON Pointer, or <c>null</c> when unbound.
-    ///     通过 JSON Pointer 读取的 sub-tree；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Gets a subtree selected by JSON Pointer, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         获取 JSON Pointer 选定的子树；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="ApplyMergePatch">
-    ///     Apply an RFC 7386 merge patch to a key, or <c>null</c> when unbound.
-    ///     对某个 key 应用 RFC 7386 merge patch；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Applies an RFC 7386 JSON Merge Patch to a key, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 RFC 7386 JSON 合并补丁应用到指定键；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="GetJsonPatch">
-    ///     JSON Patch (RFC 6902) document for a key, or <c>null</c> when unbound.
-    ///     https://www.rfc-editor.org/rfc/rfc6902
-    ///     某个 key 的 JSON Patch（RFC 6902）文档；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Gets an <see href="https://www.rfc-editor.org/rfc/rfc6902">RFC 6902 JSON Patch</see>
+    ///         document for a key, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         获取指定键的 <see href="https://www.rfc-editor.org/rfc/rfc6902">RFC 6902 JSON Patch</see>
+    ///         文档；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="SetRootObject">
-    ///     Replace root object for a key, or <c>null</c> when unbound.
-    ///     替换某个 key 的根对象；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Replaces the root object for a key, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         替换指定键的根对象；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="SetNode">
-    ///     Write a node at a JSON Pointer, or <c>null</c> when unbound.
-    ///     在 JSON Pointer 位置写入节点；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Writes a node at a JSON Pointer, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 JSON Pointer 指定位置写入节点；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="MergeObjectAt">
-    ///     Merge an object at a JSON Pointer, or <c>null</c> when unbound.
-    ///     在 JSON Pointer 位置 merge object；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Merges an object at a JSON Pointer, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 JSON Pointer 指定位置合并对象；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="GetJson">
-    ///     Whole document as JSON text, or <c>null</c> when unbound.
-    ///     作为 JSON 文本的完整 document；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Gets the complete document as JSON text, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         以 JSON 文本获取完整文档；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="SetJson">
-    ///     Write whole document from JSON text, or <c>null</c> when unbound.
-    ///     从 JSON 文本写入完整 document；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Replaces the complete document from JSON text, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         从 JSON 文本替换完整文档；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     /// <param name="ApplyJsonPatch">
-    ///     Apply a JSON Patch (RFC 6902) document to a key, or <c>null</c> when unbound.
-    ///     对某个 key 应用 JSON Patch（RFC 6902）文档；未绑定时为 <c>null</c>。
+    ///     <para xml:lang="en">
+    ///         Applies an RFC 6902 JSON Patch document to a key, or is <see langword="null" /> when unbound.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将 RFC 6902 JSON Patch 文档应用到指定键；未绑定时为 <see langword="null" />。
+    ///     </para>
     /// </param>
     public sealed record JsonDomChannelDelegates(
         Func<string, JsonNode?>? GetMergePatch,
