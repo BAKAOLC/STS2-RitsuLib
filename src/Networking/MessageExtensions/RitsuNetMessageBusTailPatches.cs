@@ -61,11 +61,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             var serializeDefinition = AccessTools.DeclaredMethod(
                 typeof(NetMessageBus),
                 nameof(NetMessageBus.SerializeMessage));
-            var postfixDefinition = AccessTools.DeclaredMethod(
-                typeof(RitsuNetMessageBusTailPatches),
-                nameof(SerializePostfix));
-            if (serializeDefinition is not { IsGenericMethodDefinition: true } ||
-                postfixDefinition is not { IsGenericMethodDefinition: true })
+            if (serializeDefinition is not { IsGenericMethodDefinition: true })
             {
                 RitsuLibFramework.Logger.Warn(
                     "[NetMessageTailExtensions] NetMessageBus serialization surface is unavailable; " +
@@ -75,13 +71,22 @@ namespace STS2RitsuLib.Networking.MessageExtensions
 
             var registrations = Volatile.Read(ref _readRegistrations).Values;
 
-            var patches = registrations.Select(registration => new DynamicPatchInfo(
-                registration.PatchId,
-                serializeDefinition.MakeGenericMethod(registration.MessageType),
-                postfix: new(postfixDefinition.MakeGenericMethod(registration.MessageType)),
-                isCritical: registration.IsCritical,
-                description: registration.Description));
+            var patches = registrations.Select(CreatePatch);
             return patcher.ApplyDynamicPatches(patches, true);
+
+            DynamicPatchInfo CreatePatch(TailOwnerRegistration registration)
+            {
+                var patchType = typeof(SerializePatch<>).MakeGenericType(registration.MessageType);
+                var postfixName = nameof(SerializePatch<INetMessage>.Postfix);
+                var postfix = AccessTools.DeclaredMethod(patchType, postfixName)
+                              ?? throw new MissingMethodException(patchType.FullName, postfixName);
+                return new(
+                    registration.PatchId,
+                    serializeDefinition.MakeGenericMethod(registration.MessageType),
+                    postfix: new(postfix),
+                    isCritical: registration.IsCritical,
+                    description: registration.Description);
+            }
         }
 
         internal static void ValidateReaderAccess()
@@ -101,21 +106,6 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             registration.ReadTail(reader);
         }
 
-        [HarmonyPriority(Priority.Last)]
-        private static void SerializePostfix<TMessage>(
-            NetMessageBus __instance,
-            TMessage message,
-            ref int length,
-            ref byte[] __result)
-            where TMessage : INetMessage
-        {
-            var writer = WriterRef?.Invoke(__instance)
-                         ?? throw new InvalidOperationException("NetMessageBus has no active packet writer.");
-            RitsuNetMessageTailExtensions.Write(writer, message);
-            length = checked((int)(((long)writer.BitPosition + ByteBits - 1) / ByteBits));
-            __result = writer.Buffer;
-        }
-
         private static AccessTools.FieldRef<NetMessageBus, TField>? TryCreateFieldRef<TField>(string fieldName)
         {
             try
@@ -125,6 +115,23 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return null;
+            }
+        }
+
+        private static class SerializePatch<TMessage> where TMessage : INetMessage
+        {
+            [HarmonyPriority(Priority.Last)]
+            internal static void Postfix(
+                NetMessageBus __instance,
+                TMessage message,
+                ref int length,
+                ref byte[] __result)
+            {
+                var writer = WriterRef?.Invoke(__instance)
+                             ?? throw new InvalidOperationException("NetMessageBus has no active packet writer.");
+                RitsuNetMessageTailExtensions.Write(writer, message);
+                length = checked((int)(((long)writer.BitPosition + ByteBits - 1) / ByteBits));
+                __result = writer.Buffer;
             }
         }
 
