@@ -19,13 +19,15 @@ namespace STS2RitsuLib.Networking.MessageExtensions
     ///         only once, with at most 64 registrations per message type. Registrations remain active for the process
     ///         lifetime. The owner of a message's serialization patches must call <see cref="Write{TMessage}" /> and
     ///         <see cref="Read{TMessage}" /> exactly once after the vanilla body; other mods extending the same message
-    ///         should only register their entries.
+    ///         should only register their entries. Patch a stable outer serialization boundary: small message
+    ///         <c>Serialize</c> and <c>Deserialize</c> methods may be inlined before Harmony can intercept them.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         注册在进程内按消息类型共享，扩展 ID 区分大小写且只能注册一次，每种消息类型最多注册 64 个扩展，
     ///         并在当前进程的生命周期内持续有效。消息序列化补丁的所有者必须在原版消息体之后各调用一次
     ///         <see cref="Write{TMessage}" /> 与 <see cref="Read{TMessage}" />；扩展同一消息的其他模组只应注册
-    ///         各自条目。
+    ///         各自条目。补丁应放在稳定的外层序列化边界；较短的消息 <c>Serialize</c> 与
+    ///         <c>Deserialize</c> 方法可能在 Harmony 拦截前被内联。
     ///     </para>
     /// </remarks>
     public static class RitsuNetMessageTailExtensions

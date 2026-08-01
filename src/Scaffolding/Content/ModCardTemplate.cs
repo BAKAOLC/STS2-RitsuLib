@@ -53,8 +53,25 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <inheritdoc />
         public virtual CardAssetProfile AssetProfile => CardAssetProfile.Empty;
 
-        /// <inheritdoc />
-        public virtual string? CustomPortraitPath => AssetProfile.PortraitPath;
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the configured main portrait path, or RitsuLib's embedded placeholder when none is configured.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已配置的主卡图路径；未配置时使用 RitsuLib 的内嵌占位图。
+        ///     </para>
+        /// </summary>
+        // ReSharper disable once ReturnTypeCanBeNotNullable
+        public virtual string? CustomPortraitPath
+        {
+            get
+            {
+                var portraitPath = AssetProfile.PortraitPath;
+                return string.IsNullOrWhiteSpace(portraitPath)
+                    ? RitsuLibEmbeddedPngAssets.CardArtPlaceholder.ResourcePath
+                    : portraitPath;
+            }
+        }
 
         /// <inheritdoc />
         public virtual string? CustomBetaPortraitPath => AssetProfile.BetaPortraitPath;

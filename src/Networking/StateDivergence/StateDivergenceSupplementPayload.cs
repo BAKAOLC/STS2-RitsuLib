@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
-using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics.Logging;
@@ -104,18 +103,6 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     ReadPayload);
                 Volatile.Write(ref _registered, 1);
             }
-        }
-
-        public static void Write(PacketWriter writer, StateDivergenceMessage message)
-        {
-            EnsureRegistered();
-            RitsuNetMessageTailExtensions.Write(writer, message);
-        }
-
-        public static void Read(PacketReader reader)
-        {
-            EnsureRegistered();
-            RitsuNetMessageTailExtensions.Read<StateDivergenceMessage>(reader);
         }
 
         public static StateDivergenceSupplementPayload CreateLocalSnapshot(NetChecksumData checksum)

@@ -441,7 +441,7 @@ namespace STS2RitsuLib
                     RitsuLibStartupAudit.Measure("mobileSteamRuntime",
                         RitsuLibMobileSteamRuntime.LogSuppressedSteamFeaturesAtStartup);
                     RitsuLibStartupAudit.Measure("imageResourceLoader",
-                        RitsuLibModImageResourceLoader.EnsureRegistered);
+                        RitsuLibEmbeddedPngResourceLoader.EnsureRegistered);
                     RitsuLibStartupAudit.Measure("godotNodeFactories", RitsuGodotNodeFactoryBootstrap.EnsureRegistered);
                     RitsuLibStartupAudit.Measure("modTypeDiscoveryBuiltIns",
                         ModTypeDiscoveryHub.EnsureBuiltInContributorsRegistered);

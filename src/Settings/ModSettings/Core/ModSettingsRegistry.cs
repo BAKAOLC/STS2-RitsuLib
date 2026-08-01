@@ -338,14 +338,16 @@ namespace STS2RitsuLib.Settings
             lock (SyncRoot)
             {
                 return _sortedPagesCache ??= Array.AsReadOnly(
-                    [.. PagesById.Values
+                [
+                    .. PagesById.Values
                         .OrderBy(page => ModSidebarOrders.GetValueOrDefault(page.ModId, 0))
                         .ThenBy(page => ModSettingsLocalization.ResolveModNameFallback(page.ModId, page.ModId),
                             StringComparer.OrdinalIgnoreCase)
                         .ThenBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
                         .ThenBy(page => PageSortOverrides.GetValueOrDefault(CreateCompositeId(page.ModId, page.Id),
                             page.SortOrder))
-                        .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)]);
+                        .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase),
+                ]);
             }
         }
 

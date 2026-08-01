@@ -47,7 +47,7 @@
 
     <PropertyGroup Label="NuGet package">
         <IsPackable>true</IsPackable>
-        <Version>0.5.3</Version>
+        <Version>0.5.4</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -151,6 +151,8 @@
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\src\**\*"/>
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="resources\card_art_placeholder.png"
+                          LogicalName="STS2RitsuLib.Assets.card_art_placeholder.png"/>
         <EmbeddedResource Include="resources\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
         <EmbeddedResource Include="resources\mod_image_ex.png" LogicalName="STS2RitsuLib.Assets.mod_image_ex.png"/>
         <EmbeddedResource Include="src\Settings\Localization\EasterEggs\*.json"
