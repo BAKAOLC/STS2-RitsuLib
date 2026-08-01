@@ -39,6 +39,26 @@ namespace STS2RitsuLib.Keywords
 
         /// <summary>
         ///     <para xml:lang="en">
+        ///         Resolves the registered mod keyword identified by <paramref name="keywordId" /> and adds its
+        ///         deterministic value to the native card keyword set.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         解析 <paramref name="keywordId" /> 标识的已注册模组关键词，并将其确定性枚举值加入原版卡牌
+        ///         关键词集合。
+        ///     </para>
+        /// </summary>
+        /// <exception cref="KeyNotFoundException">
+        ///     <para xml:lang="en">No mod keyword with the specified ID is registered.</para>
+        ///     <para xml:lang="zh-CN">未注册具有指定 ID 的模组关键词。</para>
+        /// </exception>
+        public static void AddModKeyword(this CardModel card, string keywordId)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            card.AddModKeyword(ModKeywordRegistry.Get(keywordId).CardKeywordValue);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
         ///         Removes <paramref name="value" /> from the native card keyword set.
         ///     </para>
         ///     <para xml:lang="zh-CN">
@@ -67,6 +87,25 @@ namespace STS2RitsuLib.Keywords
         {
             ArgumentNullException.ThrowIfNull(card);
             return card.Keywords.Contains(value);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Returns whether <paramref name="card" /> currently contains the registered mod keyword identified
+        ///         by <paramref name="keywordId" />. An unregistered ID returns <see langword="false" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回 <paramref name="card" /> 当前是否包含 <paramref name="keywordId" /> 标识的已注册模组
+        ///         关键词；ID 未注册时返回 <see langword="false" />。
+        ///     </para>
+        /// </summary>
+        public static bool HasModKeyword(this CardModel card, string keywordId)
+        {
+            ArgumentNullException.ThrowIfNull(card);
+            ArgumentException.ThrowIfNullOrWhiteSpace(keywordId);
+
+            return ModKeywordRegistry.TryGet(keywordId, out var definition) &&
+                   card.Keywords.Contains(definition.CardKeywordValue);
         }
 
         /// <summary>
