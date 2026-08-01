@@ -151,6 +151,8 @@
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\src\**\*"/>
     </ItemGroup>
     <ItemGroup>
+        <EmbeddedResource Include="resources\card_art_placeholder.png"
+                          LogicalName="STS2RitsuLib.Assets.card_art_placeholder.png"/>
         <EmbeddedResource Include="resources\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
         <EmbeddedResource Include="resources\mod_image_ex.png" LogicalName="STS2RitsuLib.Assets.mod_image_ex.png"/>
         <EmbeddedResource Include="src\Settings\Localization\EasterEggs\*.json"

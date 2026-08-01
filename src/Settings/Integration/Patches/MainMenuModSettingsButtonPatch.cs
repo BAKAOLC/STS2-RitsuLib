@@ -82,7 +82,7 @@ namespace STS2RitsuLib.Settings.Patches
                 return existing;
             }
 
-            RitsuLibModImageResourceLoader.EnsureRegistered();
+            RitsuLibEmbeddedPngResourceLoader.EnsureRegistered();
             var group = new Control
             {
                 Name = GroupNodeName,
@@ -290,7 +290,7 @@ namespace STS2RitsuLib.Settings.Patches
                 GrowVertical = GrowDirection.Both,
                 PivotOffset = button.PivotOffset,
                 MouseFilter = MouseFilterEnum.Ignore,
-                Texture = ResourceLoader.Load<Texture2D>(RitsuLibModImageResourceLoader.ModImagePath),
+                Texture = ResourceLoader.Load<Texture2D>(RitsuLibEmbeddedPngAssets.ModImage.ResourcePath),
                 ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             };
