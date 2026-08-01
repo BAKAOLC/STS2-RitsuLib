@@ -3,7 +3,6 @@ using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Connection;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
-using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using STS2RitsuLib.Patching.Models;
@@ -48,52 +47,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics.Patches
         public static void Prefix(InitialGameInfoMessage message)
         {
             JoinFailureDiagnosticsService.ObserveInitialGameInfo(message);
-        }
-    }
-
-    internal sealed class JoinFailureDiagnosticsInitialInfoSerializePatch : IPatchMethod
-    {
-        public static string PatchId => "join_failure_diagnostics_initial_game_info_serialize";
-        public static bool IsCritical => false;
-
-        public static string Description =>
-            "Append registered RitsuLib join diagnostics data to the initial game-info message";
-
-        public static ModPatchTarget[] GetTargets()
-        {
-            JoinDiagnosticsPayloadCodec.EnsureRegistered();
-            return
-            [
-                new(typeof(InitialGameInfoMessage), nameof(InitialGameInfoMessage.Serialize), [typeof(PacketWriter)]),
-            ];
-        }
-
-        public static void Postfix(InitialGameInfoMessage __instance, PacketWriter writer)
-        {
-            JoinDiagnosticsPayloadCodec.Write(writer, __instance);
-        }
-    }
-
-    internal sealed class JoinFailureDiagnosticsInitialInfoDeserializePatch : IPatchMethod
-    {
-        public static string PatchId => "join_failure_diagnostics_initial_game_info_deserialize";
-        public static bool IsCritical => false;
-
-        public static string Description =>
-            "Read registered RitsuLib join diagnostics data from the initial game-info message";
-
-        public static ModPatchTarget[] GetTargets()
-        {
-            JoinDiagnosticsPayloadCodec.EnsureRegistered();
-            return
-            [
-                new(typeof(InitialGameInfoMessage), nameof(InitialGameInfoMessage.Deserialize), [typeof(PacketReader)]),
-            ];
-        }
-
-        public static void Postfix(PacketReader reader)
-        {
-            JoinDiagnosticsPayloadCodec.Read(reader);
         }
     }
 

@@ -3,15 +3,13 @@ using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.StartRunLobbyP
 #else
 using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.LobbyPlayer;
 #endif
-#if STS2_AT_LEAST_0_110_0
-using MegaCrit.Sts2.Core.Multiplayer;
-#endif
 using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Daily;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
@@ -34,8 +32,8 @@ namespace STS2RitsuLib.RunData.Patches
 {
     internal static class RunSavedDataPatchHelpers
     {
-        private const string TailExtensionId = "ritsulib.runSavedData";
-        private const int PayloadVersion = 2;
+        internal const string TailExtensionId = "ritsulib.runSavedData";
+        internal const int PayloadVersion = 2;
         private const int LegacyStringPayloadVersion = 1;
         private const int MaxPayloadBytes = (int)RitsuLibSidecarWire.MaxPayloadBytes;
         private static readonly AsyncLocal<Stack<RunSavedDataSaveRunCapture>?> ActiveSaveRunCaptures = new();
@@ -161,31 +159,40 @@ namespace STS2RitsuLib.RunData.Patches
 
         public static void WritePayload(PacketWriter writer, string? payload)
         {
-            byte[]? compressed = null;
+            RitsuNetMessageTailExtensions.WriteLegacySingleBytes(
+                writer,
+                TailExtensionId,
+                PayloadVersion,
+                EncodePayload(payload));
+        }
+
+        internal static byte[]? EncodePayload(string? payload)
+        {
             try
             {
                 if (!string.IsNullOrWhiteSpace(payload))
                 {
                     var byteCount = Encoding.UTF8.GetByteCount(payload);
                     if (byteCount <= MaxPayloadBytes)
-                        compressed = RitsuLibSidecarCompression.BrotliCompress(Encoding.UTF8.GetBytes(payload));
-                    else
-                        RitsuLibFramework.Logger.Warn(
-                            $"[RunSavedData] Synchronized payload is {byteCount} UTF-8 bytes; " +
-                            $"maximum is {MaxPayloadBytes} bytes.");
+                        return RitsuLibSidecarCompression.BrotliCompress(Encoding.UTF8.GetBytes(payload));
+
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RunSavedData] Synchronized payload is {byteCount} UTF-8 bytes; " +
+                        $"maximum is {MaxPayloadBytes} bytes.");
                 }
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[RunSavedData] Failed to write synchronized payload: {ex.Message}");
+                    $"[RunSavedData] Failed to encode synchronized payload: {ex.Message}");
             }
 
-            RitsuNetMessageTailExtensions.WriteLegacySingleBytes(
-                writer,
-                TailExtensionId,
-                PayloadVersion,
-                compressed);
+            return null;
+        }
+
+        internal static string DecodePayload(ReadOnlySpan<byte> payload)
+        {
+            return Encoding.UTF8.GetString(Unbrotli(payload));
         }
 
         public static string? PrepareNewRunPayload(StartRunLobby lobby, string seed,
@@ -613,38 +620,37 @@ namespace STS2RitsuLib.RunData.Patches
         }
     }
 
-    internal sealed class RunSavedDataLobbyBeginRunMessageSerializePatch : IPatchMethod
+    internal static class RunSavedDataLobbyBeginRunMessageTail
     {
-        public static string PatchId => "ritsulib_run_saved_data_lobby_begin_run_message_serialize";
-        public static string Description => "Synchronize RunSavedData in new-run lobby begin messages";
-        public static bool IsCritical => false;
+        private static readonly Lock RegistrationLock = new();
+        private static bool _registered;
 
-        public static ModPatchTarget[] GetTargets()
+        internal static void EnsureRegistered()
         {
-            return [new(typeof(LobbyBeginRunMessage), nameof(LobbyBeginRunMessage.Serialize), [typeof(PacketWriter)])];
-        }
+            lock (RegistrationLock)
+            {
+                if (_registered)
+                    return;
 
-        public static void Postfix(LobbyBeginRunMessage __instance, PacketWriter writer)
-        {
-            RunSavedDataPatchHelpers.WritePayload(writer, RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload);
-        }
-    }
+                RitsuNetMessageTailExtensions.RegisterBytes<LobbyBeginRunMessage>(
+                    RunSavedDataPatchHelpers.TailExtensionId,
+                    RunSavedDataPatchHelpers.PayloadVersion,
+                    static _ => RunSavedDataPatchHelpers.EncodePayload(
+                        RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload),
+                    static (version, payload) =>
+                    {
+                        if (version != RunSavedDataPatchHelpers.PayloadVersion)
+                        {
+                            RitsuLibFramework.Logger.Warn(
+                                $"[RunSavedData] Unsupported lobby begin-run payload version {version}.");
+                            return;
+                        }
 
-    internal sealed class RunSavedDataLobbyBeginRunMessageDeserializePatch : IPatchMethod
-    {
-        public static string PatchId => "ritsulib_run_saved_data_lobby_begin_run_message_deserialize";
-        public static string Description => "Synchronize RunSavedData in new-run lobby begin messages";
-        public static bool IsCritical => false;
-
-        public static ModPatchTarget[] GetTargets()
-        {
-            return
-                [new(typeof(LobbyBeginRunMessage), nameof(LobbyBeginRunMessage.Deserialize), [typeof(PacketReader)])];
-        }
-
-        public static void Postfix(PacketReader reader)
-        {
-            RunSavedDataLobbyBeginRunMessageState.SetPendingPayload(RunSavedDataPatchHelpers.TryReadPayload(reader));
+                        RunSavedDataLobbyBeginRunMessageState.SetPendingPayload(
+                            RunSavedDataPatchHelpers.DecodePayload(payload.Span));
+                    });
+                _registered = true;
+            }
         }
     }
 

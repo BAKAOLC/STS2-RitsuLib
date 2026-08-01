@@ -92,18 +92,6 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             }
         }
 
-        public static void Write(PacketWriter writer, InitialGameInfoMessage message)
-        {
-            EnsureRegistered();
-            RitsuNetMessageTailExtensions.Write(writer, message);
-        }
-
-        public static void Read(PacketReader reader)
-        {
-            EnsureRegistered();
-            RitsuNetMessageTailExtensions.Read<InitialGameInfoMessage>(reader);
-        }
-
         private static byte[]? SerializePayload(InitialGameInfoMessage message)
         {
             try

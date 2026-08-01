@@ -1,3 +1,5 @@
+using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
+using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using STS2RitsuLib.Audio.Patches;
 using STS2RitsuLib.CardPiles.Patches;
 using STS2RitsuLib.Cards.FreePlay.Patches;
@@ -21,9 +23,12 @@ using STS2RitsuLib.Localization.Patches;
 using STS2RitsuLib.Models.Capabilities.Patches;
 using STS2RitsuLib.Models.Identity.Patches;
 using STS2RitsuLib.Models.Patches;
+using STS2RitsuLib.Networking.JoinDiagnostics;
 using STS2RitsuLib.Networking.JoinDiagnostics.Patches;
 using STS2RitsuLib.Networking.ManagedActions.Patches;
+using STS2RitsuLib.Networking.MessageExtensions;
 using STS2RitsuLib.Networking.Sidecar.Patches;
+using STS2RitsuLib.Networking.StateDivergence;
 using STS2RitsuLib.Networking.StateDivergence.Patches;
 using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Platform;
@@ -71,13 +76,35 @@ namespace STS2RitsuLib
                     return false;
             }
 
-            return true;
+            return RitsuLibStartupAudit.Measure(
+                "patchAll.messageTailBus",
+                () => RitsuNetMessageBusTailPatches.ApplySerializePatches(
+                    GetFrameworkPatcher(FrameworkPatcherArea.Core)));
         }
 
         private static void RegisterFrameworkPatcher(FrameworkPatcherArea area, ModPatcher patcher)
         {
             if (!FrameworkPatchersByArea.TryAdd(area, patcher))
                 throw new InvalidOperationException($"Duplicate framework patcher registration for area '{area}'.");
+        }
+
+        private static void RegisterMessageTailPatches(ModPatcher patcher)
+        {
+            JoinDiagnosticsPayloadCodec.EnsureRegistered();
+            StateDivergenceSupplementPayloadCodec.EnsureRegistered();
+            RunSavedDataLobbyBeginRunMessageTail.EnsureRegistered();
+
+            RitsuNetMessageBusTailPatches.Register<InitialGameInfoMessage>(
+                "join_failure_diagnostics_initial_game_info_bus_serialize",
+                "Append registered RitsuLib join diagnostics at the non-inlined message-bus boundary");
+            RitsuNetMessageBusTailPatches.Register<StateDivergenceMessage>(
+                "state_divergence_supplement_bus_serialize",
+                "Append registered RitsuLib divergence diagnostics at the non-inlined message-bus boundary");
+            RitsuNetMessageBusTailPatches.Register<LobbyBeginRunMessage>(
+                "ritsulib_run_saved_data_lobby_begin_run_bus_serialize",
+                "Append registered new-run data at the non-inlined message-bus boundary",
+                static () => RunSavedDataLobbyBeginRunMessageState.SetPendingPayload(null));
+            patcher.RegisterPatch<RitsuNetMessageBusTailDeserializePatch>();
         }
 
         private static void RegisterLifecyclePatches()
@@ -130,8 +157,6 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RunSavedDataStartRunLobbySetReadyPatch>();
             patcher.RegisterPatch<RunSavedDataPrepareNewRunPayloadPatch>();
             patcher.RegisterPatch<RunSavedDataPrepareSingleplayerNewRunPayloadPatch>();
-            patcher.RegisterPatch<RunSavedDataLobbyBeginRunMessageSerializePatch>();
-            patcher.RegisterPatch<RunSavedDataLobbyBeginRunMessageDeserializePatch>();
             patcher.RegisterPatch<RunSavedDataInitializeNewRunPatch>();
             patcher.RegisterPatch<RunSavedDataClientLoadJoinResponseMessageSerializePatch>();
             patcher.RegisterPatch<RunSavedDataClientLoadJoinResponseMessageDeserializePatch>();
@@ -232,15 +257,12 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarStartRunLobbyHostClientDisconnectedPatch>();
             patcher.RegisterPatch<RitsuLibSidecarPreRunCapabilityGatePatch>();
             patcher.RegisterPatch<RitsuLibSidecarChecksumDivergenceRelayPatch>();
+            RegisterMessageTailPatches(patcher);
             patcher.RegisterPatch<JoinFailureDiagnosticsBeginAttemptPatch>();
-            patcher.RegisterPatch<JoinFailureDiagnosticsInitialInfoSerializePatch>();
-            patcher.RegisterPatch<JoinFailureDiagnosticsInitialInfoDeserializePatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsInitialInfoPatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupCreatePatch>();
             patcher.RegisterPatch<JoinFailureDiagnosticsPopupReadyPatch>();
             patcher.RegisterPatch<StateDivergenceDiagnosticsLogPatch>();
-            patcher.RegisterPatch<StateDivergenceSupplementSerializePatch>();
-            patcher.RegisterPatch<StateDivergenceSupplementDeserializePatch>();
             patcher.RegisterPatch<StateDivergenceDiagnosticsPopupCreatePatch>();
             patcher.RegisterPatch<StateDivergenceDiagnosticsPopupReadyPatch>();
             patcher.RegisterPatch<RunEndedLifecyclePatch>();
