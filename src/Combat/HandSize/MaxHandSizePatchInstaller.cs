@@ -387,10 +387,8 @@ namespace STS2RitsuLib.Combat.HandSize
             var count = 0;
             // ReSharper disable once LoopCanBeConvertedToQuery
             for (var i = 0; i < code.Count; i++)
-            {
                 if (IsBaseLibBaseAmountToken(code, i))
                     count++;
-            }
 
             return count;
         }

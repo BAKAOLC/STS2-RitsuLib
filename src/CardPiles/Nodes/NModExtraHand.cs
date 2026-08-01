@@ -28,6 +28,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         internal const float DefaultChromeHeight = 280f;
         internal static readonly Vector2 DefaultChromeSize = new(DefaultChromeWidth, DefaultChromeHeight);
         private static readonly ModCardPileExtraHandSpec DefaultLayout = new();
+
         private static readonly Action<NHandCardHolder, NCard> SetHolderCard =
             PrivateAccess.DeclaredMethodDelegate<NHandCardHolder, Action<NHandCardHolder, NCard>>(
                 "SetCard", typeof(NCard));
@@ -193,13 +194,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             var sourcePosition = sourceCard.GlobalPosition;
             if (holder.CardNode == null)
-            {
                 SetHolderCard(holder, sourceCard);
-            }
-            else if (!ReferenceEquals(holder.CardNode, sourceCard))
-            {
-                sourceCard.QueueFree();
-            }
+            else if (!ReferenceEquals(holder.CardNode, sourceCard)) sourceCard.QueueFree();
 
             holder.GlobalPosition = sourcePosition;
             holder.SetAngleInstantly(0f);

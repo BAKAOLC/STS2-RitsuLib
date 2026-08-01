@@ -97,10 +97,8 @@ namespace STS2RitsuLib.CardPiles
                 if (cardPlay == null
                     || !GodotObject.IsInstanceValid(cardPlay)
                     || !ReferenceEquals(cardPlay.Holder, holder))
-                {
                     throw new InvalidOperationException(
                         "Vanilla hand did not create a card-play node for the extra-hand holder.");
-                }
 
                 origin.CardPlay = cardPlay;
                 if (cardPlay is NMouseCardPlay mouseCardPlay)
@@ -137,12 +135,10 @@ namespace STS2RitsuLib.CardPiles
                 }
 
                 if (cancellationException != null)
-                {
                     throw new AggregateException(
                         "Extra-hand targeting initialization and vanilla cancellation both failed.",
                         ex,
                         cancellationException);
-                }
 
                 throw;
             }
@@ -154,9 +150,7 @@ namespace STS2RitsuLib.CardPiles
             if (cardPlay == null
                 || !GodotObject.IsInstanceValid(cardPlay)
                 || !ReferenceEquals(cardPlay.Holder, origin.Holder))
-            {
                 return;
-            }
 
             origin.CardPlay = cardPlay;
             if (NTargetManager.Instance.IsInSelection)
