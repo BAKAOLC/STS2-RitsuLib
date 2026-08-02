@@ -129,6 +129,7 @@ namespace STS2RitsuLib.Settings
 
         private FileSystemWatcher? _shellThemeWatcher;
         private bool _shellThemeWatcherQueued;
+        private IDisposable? _tooltipTimingScope;
         private PanelContainer? _sidebarHeaderCard;
         private Label? _sidebarHeaderSubtitleLabel;
         private Label? _sidebarHeaderTitleLabel;
@@ -295,6 +296,7 @@ namespace STS2RitsuLib.Settings
             if (_shellThemeChangedHandler != null)
                 RitsuShellThemeRuntime.ThemeChanged -= _shellThemeChangedHandler;
             StopShellThemeWatcher();
+            ReleaseQuickTooltipTiming();
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             base._ExitTree();
             FlushDirtyBindings();
@@ -309,6 +311,7 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.None;
             ApplySettingsFocusBehavior();
             ProcessMode = ProcessModeEnum.Inherit;
+            _tooltipTimingScope ??= RitsuShellTooltipTiming.Acquire(0.16d);
             _lastVisibleMirrorRefreshPageKey = null;
             TryStartShellThemeWatcher();
             SyncBirthdayLabelVisibility();
@@ -333,6 +336,7 @@ namespace STS2RitsuLib.Settings
             _lastVisibleMirrorRefreshPageKey = null;
             HideContentBuildOverlay();
             StopShellThemeWatcher();
+            ReleaseQuickTooltipTiming();
             CallDeferredIfAlive(ApplySettingsFocusBehavior);
             base.OnSubmenuClosed();
         }
@@ -361,8 +365,15 @@ namespace STS2RitsuLib.Settings
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
             StopShellThemeWatcher();
+            ReleaseQuickTooltipTiming();
             CallDeferredIfAlive(ApplySettingsFocusBehavior);
             base.OnSubmenuHidden();
+        }
+
+        private void ReleaseQuickTooltipTiming()
+        {
+            _tooltipTimingScope?.Dispose();
+            _tooltipTimingScope = null;
         }
 
         private void TryStartShellThemeWatcher()
