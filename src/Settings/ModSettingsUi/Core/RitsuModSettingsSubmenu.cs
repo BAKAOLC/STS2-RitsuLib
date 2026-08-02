@@ -3256,21 +3256,9 @@ namespace STS2RitsuLib.Settings
                 _expandedModIds.Add(modId);
         }
 
-        private bool SelectedPageContentReady()
-        {
-            if (string.IsNullOrWhiteSpace(_selectedModId) || string.IsNullOrWhiteSpace(_selectedPageId))
-                return true;
-
-            var key = CreatePageCacheKey(_selectedModId, _selectedPageId);
-            if (!_pageContentCaches.TryGetValue(key, out var cache))
-                return true;
-
-            return cache.State is PageBuildState.Ready or PageBuildState.Failed;
-        }
-
         private bool ShouldShowExpandedModNav(string modId)
         {
-            return _expandedModIds.Contains(modId) && SelectedPageContentReady();
+            return _expandedModIds.Contains(modId);
         }
 
         private void FlushDirtyBindings()
