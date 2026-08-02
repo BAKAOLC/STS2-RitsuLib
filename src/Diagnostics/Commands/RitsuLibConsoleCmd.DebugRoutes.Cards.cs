@@ -73,7 +73,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 !RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType))
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 4, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCardActions.SubmitModifyPile(
                 issuingPlayer,
                 target,
@@ -88,7 +88,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 !int.TryParse(args[4], out var levels))
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 5, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCardActions.SubmitModifyPile(
                 issuingPlayer,
                 target,
@@ -114,7 +114,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     out var cardIndex,
                     out var expectedCardId,
                     out var error))
-                return new(false, error);
+                return DebugFailure(error);
 
             return ToCmdResult(RitsuDebugCardActions.SubmitCopyCard(
                 issuingPlayer,
@@ -142,7 +142,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     out var cardIndex,
                     out var expectedCardId,
                     out var error))
-                return new(false, error);
+                return DebugFailure(error);
 
             return ToCmdResult(RitsuDebugCardActions.SubmitMoveCard(
                 issuingPlayer,

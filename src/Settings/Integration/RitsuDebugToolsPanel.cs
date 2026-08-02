@@ -417,14 +417,10 @@ namespace STS2RitsuLib.Settings
             try
             {
                 var submission = submit();
-                SetStatus(
-                    submission.Accepted
-                        ? L("ritsulib.debugTools.requestAccepted", "The requested change was accepted.")
-                        : submission.Message,
-                    !submission.Accepted);
-                if (!submission.Accepted)
-                    RitsuToastService.ShowWarning(submission.Message,
-                        L("ritsulib.debugTools.toastTitle", "Developer tools"));
+                if (submission.Accepted)
+                    SetStatus(L("ritsulib.debugTools.requestAccepted", "The requested change was accepted."), false);
+                else
+                    ShowActionWarning(submission.Message);
                 return submission.Accepted;
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
@@ -436,6 +432,12 @@ namespace STS2RitsuLib.Settings
                 RitsuToastService.ShowError(message, L("ritsulib.debugTools.toastTitle", "Developer tools"));
                 return false;
             }
+        }
+
+        private void ShowActionWarning(string message)
+        {
+            SetStatus(message, true);
+            RitsuToastService.ShowWarning(message, L("ritsulib.debugTools.toastTitle", "Developer tools"));
         }
 
         private void SetStatus(string text, bool error)

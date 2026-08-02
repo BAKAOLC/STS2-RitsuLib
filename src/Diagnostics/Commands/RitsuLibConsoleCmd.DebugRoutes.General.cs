@@ -65,7 +65,9 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var creatures = CombatManager.Instance.DebugOnlyGetState()?.Creatures;
             if (creatures == null)
-                return new(false, "This inspection requires an active combat.");
+                return DebugFailure(
+                    "console.activeCombatInspection",
+                    "This inspection requires an active combat.");
             return new(true, string.Join(
                 Environment.NewLine,
                 creatures.Select(creature =>
@@ -79,9 +81,9 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is not (4 or 5))
                 return new(false, DebugUsageText());
             if (!RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType))
-                return new(false, $"Unsupported pile '{args[3]}'.");
+                return DebugFailure("card.unsupportedPile", "Unsupported pile '{0}'.", args[3]);
             if (!TryResolveTargetPlayer(issuingPlayer, args, 4, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             var pile = RitsuDebugCardActions.GetPile(target, pileType);
             return pile == null
                 ? new(false, $"Pile {pileType} is unavailable.")
@@ -96,7 +98,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is not (3 or 4))
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 3, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return new(true, string.Join(
                 Environment.NewLine,
                 target.Relics.Select((relic, index) => $"[{index}] {relic.Id}")));
@@ -107,7 +109,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is not (3 or 4))
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 3, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return new(true, string.Join(
                 Environment.NewLine,
                 Enumerable.Range(0, target.MaxPotionCount).Select(index =>

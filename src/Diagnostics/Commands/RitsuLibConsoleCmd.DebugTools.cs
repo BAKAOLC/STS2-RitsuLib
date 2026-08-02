@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Diagnostics.DevConsole;
+using STS2RitsuLib.Settings;
 
 namespace STS2RitsuLib.Diagnostics.Commands
 {
@@ -23,19 +24,21 @@ namespace STS2RitsuLib.Diagnostics.Commands
 
             var cardInput = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]);
             if (!RitsuDebugCardActions.TryResolveCanonicalCard(cardInput, out var canonical, out var cardError))
-                return new(false, cardError);
+                return DebugFailure(cardError);
 
             var pileType = PileType.Hand;
             if (args.Length >= 5 && !RitsuDebugCardActions.TryParseMutablePileType(args[4], out pileType))
-                return new(false,
-                    $"Unsupported pile '{args[4]}'. Valid piles: {string.Join(", ", RitsuDebugCardActions.GetMutablePileNames())}.");
+                return DebugFailure("card.unsupportedPile", "Unsupported pile '{0}'.", args[4]);
 
             var upgradeLevels = 0;
             if (args.Length >= 6 && !int.TryParse(args[5], out upgradeLevels))
-                return new(false, $"Upgrade levels must be an int, got '{args[5]}'.");
+                return DebugFailure(
+                    "console.upgradeLevelsInteger",
+                    "Upgrade levels must be an int, got '{0}'.",
+                    args[5]);
 
             if (!TryResolveTargetPlayer(issuingPlayer, args, 6, out var target, out var targetError))
-                return new(false, targetError);
+                return DebugFailure(targetError);
 
             return ToCmdResult(RitsuDebugCardActions.SubmitCreateCard(
                 issuingPlayer,
@@ -51,25 +54,34 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
 
             if (!RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType))
-                return new(false,
-                    $"Unsupported pile '{args[3]}'. Valid piles: {string.Join(", ", RitsuDebugCardActions.GetMutablePileNames())}.");
+                return DebugFailure("card.unsupportedPile", "Unsupported pile '{0}'.", args[3]);
 
             if (!int.TryParse(args[4], out var cardIndex))
-                return new(false, $"Card index must be an int, got '{args[4]}'.");
+                return DebugFailure("console.cardIndexInteger", "Card index must be an int, got '{0}'.", args[4]);
 
             if (!int.TryParse(args[5], out var replayCount))
-                return new(false, $"Replay count must be an int, got '{args[5]}'.");
+                return DebugFailure(
+                    "console.replayCountInteger",
+                    "Replay count must be an int, got '{0}'.",
+                    args[5]);
 
             if (!TryResolveTargetPlayer(issuingPlayer, args, 6, out var target, out var targetError))
-                return new(false, targetError);
+                return DebugFailure(targetError);
 
             var pile = RitsuDebugCardActions.GetPile(target, pileType);
             if (pile == null)
-                return new(false, $"Pile '{pileType}' is unavailable for the target player.");
+                return DebugFailure(
+                    "card.pileUnavailable",
+                    "Pile '{0}' is unavailable for the selected player.",
+                    pileType);
 
             if (cardIndex < 0 || cardIndex >= pile.Cards.Count)
-                return new(false,
-                    $"Card index {cardIndex} is outside {pileType}'s range 0-{pile.Cards.Count - 1}.");
+                return DebugFailure(
+                    "card.indexRange",
+                    "Card index {0} is outside {1}'s range 0-{2}.",
+                    cardIndex,
+                    pileType,
+                    pile.Cards.Count - 1);
 
             return ToCmdResult(RitsuDebugCardActions.SubmitSetReplayCount(
                 issuingPlayer,
@@ -95,7 +107,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     out var cardIndex,
                     out var expectedCardId,
                     out var error))
-                return new(false, error);
+                return DebugFailure(error);
 
             return ToCmdResult(RitsuDebugCardActions.SubmitRemoveCard(
                 issuingPlayer,
@@ -110,11 +122,14 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is < 7 or > 9)
                 return new(false, DebugUsageText());
             if (!RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType))
-                return new(false, $"Unsupported pile '{args[3]}'.");
+                return DebugFailure("card.unsupportedPile", "Unsupported pile '{0}'.", args[3]);
             if (!int.TryParse(args[4], out var cardIndex))
-                return new(false, $"Card index must be an int, got '{args[4]}'.");
+                return DebugFailure("console.cardIndexInteger", "Card index must be an int, got '{0}'.", args[4]);
             if (!TryParseCardEditField(args[5], out var field))
-                return new(false, $"Unknown card edit field '{args[5]}'.");
+                return DebugFailure(
+                    "console.unknownCardEditField",
+                    "Unknown card edit field '{0}'.",
+                    args[5]);
 
             string? dynamicVarKey = null;
             var valueIndex = 6;
@@ -122,20 +137,29 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (field == RitsuDebugCardEditField.DynamicVar)
             {
                 if (args.Length < 8)
-                    return new(false, "Dynamic-variable edits require a key and a value.");
+                    return DebugFailure(
+                        "console.dynamicVarNeedsKeyValue",
+                        "Dynamic-variable edits require a key and a value.");
                 dynamicVarKey = args[6];
                 valueIndex = 7;
                 playerIndex = 8;
             }
 
             if (!int.TryParse(args[valueIndex], out var value))
-                return new(false, $"Card edit value must be an int, got '{args[valueIndex]}'.");
+                return DebugFailure(
+                    "console.cardEditInteger",
+                    "Card edit value must be an int, got '{0}'.",
+                    args[valueIndex]);
             if (!TryResolveTargetPlayer(issuingPlayer, args, playerIndex, out var target, out var targetError))
-                return new(false, targetError);
+                return DebugFailure(targetError);
 
             var pile = RitsuDebugCardActions.GetPile(target, pileType);
             if (pile == null || cardIndex < 0 || cardIndex >= pile.Cards.Count)
-                return new(false, $"Card index {cardIndex} is invalid for {pileType}.");
+                return DebugFailure(
+                    "console.cardIndexInvalid",
+                    "Card index {0} is invalid for {1}.",
+                    cardIndex,
+                    pileType);
 
             return ToCmdResult(RitsuDebugCardActions.SubmitEditCard(
                 issuingPlayer,
@@ -163,12 +187,15 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     out var cardIndex,
                     out var expectedCardId,
                     out var error))
-                return new(false, error);
+                return DebugFailure(error);
             var input = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[5]);
             if (!RitsuDebugCardActions.TryResolveEnchantment(input, out var enchantment, out error))
-                return new(false, error);
+                return DebugFailure(error);
             if (!int.TryParse(args[6], out var amount))
-                return new(false, $"Enchantment amount must be an int, got '{args[6]}'.");
+                return DebugFailure(
+                    "console.enchantmentAmountInteger",
+                    "Enchantment amount must be an int, got '{0}'.",
+                    args[6]);
             return ToCmdResult(RitsuDebugCardActions.SubmitEnchantCard(
                 issuingPlayer,
                 target,
@@ -194,7 +221,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     out var cardIndex,
                     out var expectedCardId,
                     out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCardActions.SubmitClearCardEnchantment(
                 issuingPlayer,
                 target,
@@ -218,7 +245,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     out var cardIndex,
                     out var expectedCardId,
                     out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCardActions.SubmitUpgradeCard(
                 issuingPlayer,
                 target,
@@ -241,7 +268,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var input = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]);
             if (!RitsuDebugRunActions.TryResolveEncounter(input, out var encounter, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugRunActions.SubmitEnterEncounter(
                 issuingPlayer,
                 encounter.Id.ToString()));
@@ -253,7 +280,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var input = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]);
             if (!RitsuDebugCombatActions.TryResolveMonster(input, out var monster, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCombatActions.SubmitAddMonster(
                 issuingPlayer,
                 issuingPlayer,
@@ -266,10 +293,10 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var input = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[2]);
             if (!RitsuDebugRunActions.TryResolveEvent(input, out var eventModel, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             var ancientOption = args.Length >= 4 ? args[3] : null;
             if (!TryResolveTargetPlayer(issuingPlayer, args, 4, out var historyPlayer, out error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugRunActions.SubmitEnterEvent(
                 issuingPlayer,
                 historyPlayer,
@@ -485,7 +512,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
             out PileType pileType,
             out int cardIndex,
             out string expectedCardId,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             target = issuingPlayer;
             pileType = default;
@@ -493,28 +520,38 @@ namespace STS2RitsuLib.Diagnostics.Commands
             expectedCardId = string.Empty;
             if (!RitsuDebugCardActions.TryParseMutablePileType(args[pileArgumentIndex], out pileType))
             {
-                error = $"Unsupported pile '{args[pileArgumentIndex]}'.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "card.unsupportedPile",
+                    "Unsupported pile '{0}'.",
+                    args[pileArgumentIndex]);
                 return false;
             }
 
             if (!int.TryParse(args[cardIndexArgumentIndex], out cardIndex))
             {
-                error = $"Card index must be an int, got '{args[cardIndexArgumentIndex]}'.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "console.cardIndexInteger",
+                    "Card index must be an int, got '{0}'.",
+                    args[cardIndexArgumentIndex]);
                 return false;
             }
 
-            if (!TryResolveTargetPlayer(issuingPlayer, args, playerArgumentIndex, out target, out error))
+            if (!TryResolveTargetPlayer(issuingPlayer, args, playerArgumentIndex, out target, out feedback))
                 return false;
 
             var pile = RitsuDebugCardActions.GetPile(target, pileType);
             if (pile == null || cardIndex < 0 || cardIndex >= pile.Cards.Count)
             {
-                error = $"Card index {cardIndex} is invalid for {pileType}.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "console.cardIndexInvalid",
+                    "Card index {0} is invalid for {1}.",
+                    cardIndex,
+                    pileType);
                 return false;
             }
 
             expectedCardId = pile.Cards[cardIndex].Id.ToString();
-            error = string.Empty;
+            feedback = default;
             return true;
         }
 
@@ -571,23 +608,30 @@ namespace STS2RitsuLib.Diagnostics.Commands
             string[] args,
             int argumentIndex,
             out Player target,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             target = issuingPlayer;
-            error = string.Empty;
+            feedback = default;
             if (args.Length <= argumentIndex)
                 return true;
 
             if (!int.TryParse(args[argumentIndex], out var playerIndex))
             {
-                error = $"Target player index must be an int, got '{args[argumentIndex]}'.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "console.targetPlayerIndexInteger",
+                    "Target player index must be an int, got '{0}'.",
+                    args[argumentIndex]);
                 return false;
             }
 
             var players = issuingPlayer.RunState.Players;
             if (playerIndex < 0 || playerIndex >= players.Count)
             {
-                error = $"Target player index {playerIndex} is outside the valid range 0-{players.Count - 1}.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "console.targetPlayerIndexRange",
+                    "Target player index {0} is outside the valid range 0-{1}.",
+                    playerIndex,
+                    players.Count - 1);
                 return false;
             }
 
@@ -600,11 +644,26 @@ namespace STS2RitsuLib.Diagnostics.Commands
             return new(submission.Accepted, submission.Message);
         }
 
+        private static CmdResult DebugFailure(RitsuDebugActionFeedback feedback)
+        {
+            return new(false, feedback.GetLocalizedText());
+        }
+
+        private static CmdResult DebugFailure(
+            string code,
+            string fallback,
+            params object?[] arguments)
+        {
+            return DebugFailure(RitsuDebugActionFeedback.Create(code, fallback, arguments));
+        }
+
         private static string DebugUsageText()
         {
-            return
-                $"Usage: ritsulib debug <{string.Join('|', DebugConsoleGroups.Select(static group => group.Name))}> ...; " +
-                "use console completion to list actions and arguments.";
+            return string.Format(
+                ModSettingsLocalization.Get(
+                    "ritsulib.debugTools.feedback.console.usage",
+                    "Usage: ritsulib debug <{0}> ...; use console completion to list actions and arguments."),
+                string.Join('|', DebugConsoleGroups.Select(static group => group.Name)));
         }
     }
 }

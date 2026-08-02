@@ -26,33 +26,86 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     internal readonly record struct RitsuDebugActionDecisionMessage(
         string RequestId,
         bool Accepted,
-        string Reason);
+        RitsuDebugActionFeedback Feedback);
 
     internal readonly record struct RitsuDebugActionContext(
         Player Requester,
         Player Target);
 
-    internal readonly record struct RitsuDebugActionCheck(bool Success, string Error)
+    internal readonly record struct RitsuDebugActionCheck(bool Success, RitsuDebugActionFeedback Feedback)
     {
-        internal static RitsuDebugActionCheck Ok => new(true, string.Empty);
+        internal static RitsuDebugActionCheck Ok => new(true, default);
 
-        internal static RitsuDebugActionCheck Fail(string error)
+        internal static RitsuDebugActionCheck Fail(
+            string code,
+            string fallback,
+            params object?[] arguments)
         {
-            return new(false, error);
+            return new(false, RitsuDebugActionFeedback.Create(code, fallback, arguments));
+        }
+
+        internal static RitsuDebugActionCheck Fail(RitsuDebugActionFeedback feedback)
+        {
+            return new(false, feedback);
         }
     }
 
-    internal readonly record struct RitsuDebugActionSubmission(bool Accepted, string Message);
+    internal readonly record struct RitsuDebugActionSubmission(
+        bool Accepted,
+        RitsuDebugActionFeedback Feedback)
+    {
+        internal static RitsuDebugActionSubmission Success => new(true, default);
+
+        internal static RitsuDebugActionSubmission PendingApproval(
+            string code,
+            string fallback,
+            params object?[] arguments)
+        {
+            return new(true, RitsuDebugActionFeedback.Create(code, fallback, arguments));
+        }
+
+        internal static RitsuDebugActionSubmission Reject(
+            string code,
+            string fallback,
+            params object?[] arguments)
+        {
+            return new(false, RitsuDebugActionFeedback.Create(code, fallback, arguments));
+        }
+
+        internal static RitsuDebugActionSubmission Reject(RitsuDebugActionFeedback feedback)
+        {
+            return new(false, feedback);
+        }
+
+        internal string Message => Accepted
+            ? Feedback.IsValid()
+                ? Feedback.GetLocalizedText()
+                : ModSettingsLocalization.Get(
+                    "ritsulib.debugTools.requestAccepted",
+                    "The requested change was accepted.")
+            : Feedback.GetLocalizedText();
+    }
 
     internal readonly record struct RitsuDebugActionExecutionResult(
         string ActionId,
         ulong RequestedByNetId,
         ulong TargetPlayerNetId,
         bool Success,
-        string Message);
+        RitsuDebugActionFeedback Feedback)
+    {
+        internal string Message => Feedback.IsValid() ? Feedback.GetLocalizedText() : string.Empty;
+    }
 
-    internal sealed class RitsuDebugActionExecutionException(string message)
-        : InvalidOperationException(message);
+    internal sealed class RitsuDebugActionExecutionException : InvalidOperationException
+    {
+        internal RitsuDebugActionExecutionException(RitsuDebugActionFeedback feedback)
+            : base(feedback.GetEnglishText())
+        {
+            Feedback = feedback;
+        }
+
+        internal RitsuDebugActionFeedback Feedback { get; }
+    }
 
     internal static class RitsuDebugActionProtocol
     {
@@ -60,7 +113,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private const int MaxActionIdLength = 64;
         private const int MaxActionPayloadCharacters = 8 * 1024;
-        private const int MaxDecisionMessageCharacters = 2048;
         private const int MaxPendingClientRequests = 32;
         private const int MaxRecentHostClientRequests = 256;
         private const int MaxClientRequestsPerWindow = 16;
@@ -192,16 +244,20 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             EnsureHandlersRegistered();
 
             if (!RitsuLibSettingsStore.AreDeveloperToolsEnabled())
-                return new(false, "RitsuLib developer tools are disabled in settings.");
+                return RitsuDebugActionSubmission.Reject(
+                    "protocol.toolsDisabled",
+                    "RitsuLib developer tools are disabled in settings.");
 
             envelope = envelope with { RequestedByNetId = requester.NetId };
             if (!TryValidateEnvelope(envelope, out _, out var validationError))
-                return new(false, validationError);
+                return RitsuDebugActionSubmission.Reject(validationError);
 
             var runManager = RunManager.Instance;
             var netService = runManager?.NetService;
             if (runManager == null || netService == null)
-                return new(false, "Start a run before changing its state.");
+                return RitsuDebugActionSubmission.Reject(
+                    "protocol.startRun",
+                    "Start a run before changing its state.");
 
             switch (netService)
             {
@@ -209,33 +265,41 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return RequestManagedAction(runManager, envelope);
                 case NetHostGameService host:
                     return !CanHostSynchronize(host, out var hostError)
-                        ? new(false, hostError)
+                        ? RitsuDebugActionSubmission.Reject(hostError)
                         : RequestManagedAction(runManager, envelope);
                 case NetClientGameService client:
                     return SubmitClientRequest(runManager, client, requester, envelope);
                 default:
-                    return new(false, "Developer tools cannot change state in the current game mode.");
+                    return RitsuDebugActionSubmission.Reject(
+                        "protocol.unsupportedGameMode",
+                        "Developer tools cannot change state in the current game mode.");
             }
         }
 
-        internal static bool CanHostSynchronize(NetHostGameService host, out string error)
+        internal static bool CanHostSynchronize(
+            NetHostGameService host,
+            out RitsuDebugActionFeedback feedback)
         {
             foreach (var peer in host.ConnectedPeers)
             {
                 if (!peer.readyForBroadcasting)
                 {
-                    error = "Another player is not ready yet; no state was changed.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.peerNotReady",
+                        "Another player is not ready yet; no state was changed.");
                     return false;
                 }
 
                 if (!PeerSupportsDeveloperActions(peer.peerId))
                 {
-                    error = "A connected player cannot apply developer-tool changes; no state was changed.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.connectedPlayerUnsupported",
+                        "A connected player cannot apply developer-tool changes; no state was changed.");
                     return false;
                 }
             }
 
-            error = string.Empty;
+            feedback = default;
             return true;
         }
 
@@ -246,7 +310,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionEnvelope envelope)
         {
             if (!PeerSupportsDeveloperActions(client.HostNetId))
-                return new(false,
+                return RitsuDebugActionSubmission.Reject(
+                    "protocol.hostUnsupported",
                     "The host does not support these RitsuLib developer tools; no state was changed.");
 
             string requestId;
@@ -254,7 +319,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 RemoveExpiredPendingClientRequests();
                 if (PendingClientRequests.Count >= MaxPendingClientRequests)
-                    return new(false, "Too many changes are waiting for approval. Try again later.");
+                    return RitsuDebugActionSubmission.Reject(
+                        "protocol.tooManyPending",
+                        "Too many changes are waiting for approval. Try again later.");
 
                 requestId = Guid.NewGuid().ToString("N");
                 PendingClientRequests.Add(requestId, new(envelope.ActionId, DateTimeOffset.UtcNow));
@@ -264,14 +331,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     runManager,
                     RequestDescriptor,
                     new(requestId, envelope)))
-                return new(true, "The host will review this change. The result will appear as a notification.");
+                return RitsuDebugActionSubmission.PendingApproval(
+                    "protocol.awaitingApproval",
+                    "The host will review this change. The result will appear as a notification.");
 
             lock (Gate)
             {
                 PendingClientRequests.Remove(requestId);
             }
 
-            return new(false, "The request could not be sent to the host; no state was changed.");
+            return RitsuDebugActionSubmission.Reject(
+                "protocol.sendFailed",
+                "The request could not be sent to the host; no state was changed.");
         }
 
         private static void OnClientRequest(
@@ -288,17 +359,23 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var action = request.Action with { RequestedByNetId = context.SenderNetId };
             RitsuDebugActionSubmission decision;
             if (!TryReserveHostClientRequest(context.SenderNetId, request.RequestId, out var requestError))
-                decision = new(false, requestError);
+                decision = RitsuDebugActionSubmission.Reject(requestError);
             else if (!PeerSupportsDeveloperActions(context.SenderNetId))
-                decision = new(false, "The requesting player does not support these RitsuLib developer tools.");
+                decision = RitsuDebugActionSubmission.Reject(
+                    "protocol.requesterUnsupported",
+                    "The requesting player does not support these RitsuLib developer tools.");
             else if (!RitsuLibSettingsStore.AreDeveloperToolsEnabled())
-                decision = new(false, "The host has not enabled RitsuLib developer tools.");
+                decision = RitsuDebugActionSubmission.Reject(
+                    "protocol.hostToolsDisabled",
+                    "The host has not enabled RitsuLib developer tools.");
             else if (!RitsuLibSettingsStore.AreDeveloperToolClientRequestsAllowed())
-                decision = new(false, "The host does not allow other players to request state changes.");
+                decision = RitsuDebugActionSubmission.Reject(
+                    "protocol.clientRequestsDisabled",
+                    "The host does not allow other players to request state changes.");
             else if (!CanHostSynchronize(host, out var capabilityError))
-                decision = new(false, capabilityError);
+                decision = RitsuDebugActionSubmission.Reject(capabilityError);
             else if (!TryValidateEnvelope(action, out _, out var validationError))
-                decision = new(false, validationError);
+                decision = RitsuDebugActionSubmission.Reject(validationError);
             else
                 decision = RequestManagedAction(runManager, action);
 
@@ -306,7 +383,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     host,
                     context.SenderNetId,
                     DecisionDescriptor,
-                    new(request.RequestId, decision.Accepted, decision.Message)))
+                    new(request.RequestId, decision.Accepted, decision.Feedback)))
                 RitsuLibFramework.Logger.Warn(
                     $"[DebugTools] Could not return request decision to client {context.SenderNetId}.");
         }
@@ -318,8 +395,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 context.SenderNetId != client.HostNetId)
                 return;
             if (!IsValidRequestId(context.Message.RequestId) ||
-                string.IsNullOrWhiteSpace(context.Message.Reason) ||
-                context.Message.Reason.Length > MaxDecisionMessageCharacters)
+                (!context.Message.Accepted && !context.Message.Feedback.IsValid()))
             {
                 RitsuLibFramework.Logger.Warn("[DebugTools] Ignored an invalid host decision message.");
                 return;
@@ -338,7 +414,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (context.Message.Accepted)
             {
                 RitsuLibFramework.Logger.Info(
-                    $"[DebugTools] Host accepted client request '{actionId}': {context.Message.Reason}");
+                    $"[DebugTools] Host accepted client request '{actionId}'.");
                 RitsuToastService.ShowInfo(
                     ModSettingsLocalization.Get(
                         "ritsulib.debugTools.requestApproved",
@@ -347,9 +423,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return;
             }
 
+            var feedback = context.Message.Feedback;
             RitsuLibFramework.Logger.Warn(
-                $"[DebugTools] Host rejected client request '{actionId}': {context.Message.Reason}");
-            RitsuToastService.ShowWarning(context.Message.Reason, title);
+                $"[DebugTools] Host rejected client request '{actionId}': {feedback.GetEnglishText()}");
+            RitsuToastService.ShowWarning(feedback.GetLocalizedText(), title);
         }
 
         private static RitsuDebugActionSubmission RequestManagedAction(
@@ -357,8 +434,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionEnvelope envelope)
         {
             return RitsuLibManagedNetActions.Request(runManager, ActionDescriptor, envelope)
-                ? new(true, "The requested change was accepted and will be applied shortly.")
-                : new(false, "The requested change could not be accepted; no state was changed.");
+                ? RitsuDebugActionSubmission.Success
+                : RitsuDebugActionSubmission.Reject(
+                    "protocol.requestRejected",
+                    "The requested change could not be accepted; no state was changed.");
         }
 
         private static async Task ExecuteManagedActionAsync(
@@ -371,14 +450,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 NotifyActionExecuted(
                     managedContext.Message,
                     false,
-                    "Only the host can approve this change; no state was changed.");
+                    RitsuDebugActionFeedback.Create(
+                        "protocol.hostOnlyApproval",
+                        "Only the host can approve this change; no state was changed."));
                 return;
             }
 
-            if (!TryValidateEnvelope(managedContext.Message, out var prepared, out var error))
+            if (!TryValidateEnvelope(managedContext.Message, out var prepared, out var feedback))
             {
-                RitsuLibFramework.Logger.Warn($"[DebugTools] Rejected synchronized action: {error}");
-                NotifyActionExecuted(managedContext.Message, false, error);
+                RitsuLibFramework.Logger.Warn(
+                    $"[DebugTools] Rejected synchronized action: {feedback.GetEnglishText()}");
+                NotifyActionExecuted(managedContext.Message, false, feedback);
                 return;
             }
 
@@ -389,7 +471,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
             catch (RitsuDebugActionExecutionException ex)
             {
-                NotifyActionExecuted(managedContext.Message, false, ex.Message);
+                NotifyActionExecuted(managedContext.Message, false, ex.Feedback);
                 throw;
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
@@ -399,24 +481,26 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 NotifyActionExecuted(
                     managedContext.Message,
                     false,
-                    "The requested change could not be completed. See the game log for details.");
+                    RitsuDebugActionFeedback.Create(
+                        "protocol.executionFailed",
+                        "The requested change could not be completed. See the game log for details."));
                 throw;
             }
 
             RitsuLibFramework.Logger.Info(
                 $"[DebugTools] Executed '{managedContext.Message.ActionId}' requestedBy=" +
                 $"{prepared.Context.Requester.NetId} target={prepared.Context.Target.NetId}: {result}");
-            NotifyActionExecuted(managedContext.Message, true, result);
+            NotifyActionExecuted(managedContext.Message, true, default);
         }
 
         private static void NotifyActionExecuted(
             RitsuDebugActionEnvelope envelope,
             bool success,
-            string message)
+            RitsuDebugActionFeedback feedback)
         {
             if (!success && RunManager.Instance?.NetService?.NetId == envelope.RequestedByNetId)
                 RitsuToastService.ShowError(
-                    message,
+                    feedback.GetLocalizedText(),
                     ModSettingsLocalization.Get("ritsulib.debugTools.toastTitle", "Developer tools"));
 
             if (ActionExecuted is not { } handlers)
@@ -427,7 +511,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 envelope.RequestedByNetId,
                 envelope.TargetPlayerNetId,
                 success,
-                message);
+                feedback);
             foreach (var handler in handlers.GetInvocationList().OfType<Action<RitsuDebugActionExecutionResult>>())
                 try
                 {
@@ -442,12 +526,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         private static bool TryValidateEnvelope(
             RitsuDebugActionEnvelope envelope,
             out PreparedAction prepared,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             prepared = default;
             if (envelope.ProtocolVersion != CurrentProtocolVersion)
             {
-                error = "This change requires a compatible RitsuLib version on every player.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "protocol.incompatibleVersion",
+                    "This change requires a compatible RitsuLib version on every player.");
                 return false;
             }
 
@@ -455,13 +541,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 envelope.ActionId.Length > MaxActionIdLength ||
                 envelope.ActionId.Any(char.IsWhiteSpace))
             {
-                error = "The requested change is invalid.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "protocol.invalidAction",
+                    "The requested change is invalid.");
                 return false;
             }
 
             if (envelope.PayloadJson == null || envelope.PayloadJson.Length > MaxActionPayloadCharacters)
             {
-                error = "The requested change contains invalid or excessive data.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "protocol.excessiveData",
+                    "The requested change contains invalid or excessive data.");
                 return false;
             }
 
@@ -470,7 +560,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 if (!Registrations.TryGetValue(envelope.ActionId, out registration!))
                 {
-                    error = "This RitsuLib version does not support the requested change.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.unsupportedAction",
+                        "This RitsuLib version does not support the requested change.");
                     return false;
                 }
             }
@@ -479,21 +571,27 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var state = runManager?.DebugOnlyGetState();
             if (runManager == null || state == null || !runManager.IsInProgress)
             {
-                error = "A run is not currently in progress.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "run.notInProgress",
+                    "A run is not currently in progress.");
                 return false;
             }
 
             var requester = state.Players.FirstOrDefault(player => player.NetId == envelope.RequestedByNetId);
             if (requester == null)
             {
-                error = "The player requesting this change is no longer in the run.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "protocol.requesterUnavailable",
+                    "The player requesting this change is no longer in the run.");
                 return false;
             }
 
             var target = state.Players.FirstOrDefault(player => player.NetId == envelope.TargetPlayerNetId);
             if (target == null)
             {
-                error = "The selected player is no longer in the run.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "protocol.targetUnavailable",
+                    "The selected player is no longer in the run.");
                 return false;
             }
 
@@ -501,12 +599,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var check = registration.Validate(actionContext, envelope.PayloadJson);
             if (!check.Success)
             {
-                error = check.Error;
+                feedback = check.Feedback;
                 return false;
             }
 
             prepared = new(registration, actionContext);
-            error = string.Empty;
+            feedback = default;
             return true;
         }
 
@@ -546,7 +644,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         private static bool TryReserveHostClientRequest(
             ulong senderNetId,
             string requestId,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             var now = DateTimeOffset.UtcNow;
             var rateCutoff = now - TimeSpan.FromSeconds(5);
@@ -562,13 +660,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
                 if (RecentHostClientRequests.ContainsKey(key))
                 {
-                    error = "This request was already handled; no state was changed.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.requestAlreadyHandled",
+                        "This request was already handled; no state was changed.");
                     return false;
                 }
 
                 if (RecentHostClientRequests.Count >= MaxRecentHostClientRequests)
                 {
-                    error = "Too many changes were requested recently. Try again in a few seconds.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.rateLimited",
+                        "Too many changes were requested recently. Try again in a few seconds.");
                     return false;
                 }
 
@@ -576,14 +678,16 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         pair.Key.SenderNetId == senderNetId && pair.Value >= rateCutoff) >=
                     MaxClientRequestsPerWindow)
                 {
-                    error = "Too many changes were requested recently. Try again in a few seconds.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.rateLimited",
+                        "Too many changes were requested recently. Try again in a few seconds.");
                     return false;
                 }
 
                 RecentHostClientRequests.Add(key, now);
             }
 
-            error = string.Empty;
+            feedback = default;
             return true;
         }
 
@@ -640,7 +744,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 string payloadJson)
             {
                 if (!TryDeserializePayload(payloadJson, out var payload, out var error))
-                    throw new InvalidOperationException(error);
+                    throw new RitsuDebugActionExecutionException(error);
 
                 return execute(context, payload);
             }
@@ -648,7 +752,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             private bool TryDeserializePayload(
                 string payloadJson,
                 out TPayload payload,
-                out string error)
+                out RitsuDebugActionFeedback feedback)
             {
                 try
                 {
@@ -656,12 +760,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     if (parsed is null)
                     {
                         payload = default!;
-                        error = "The requested change is missing required data.";
+                        feedback = RitsuDebugActionFeedback.Create(
+                            "protocol.missingData",
+                            "The requested change is missing required data.");
                         return false;
                     }
 
                     payload = parsed;
-                    error = string.Empty;
+                    feedback = default;
                     return true;
                 }
                 catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
@@ -669,7 +775,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     RitsuLibFramework.Logger.Warn(
                         $"[DebugTools] Invalid data for action '{ActionId}' ({typeof(TPayload).Name}): {ex}");
                     payload = default!;
-                    error = "The requested change contains invalid data.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.invalidData",
+                        "The requested change contains invalid data.");
                     return false;
                 }
             }

@@ -275,12 +275,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static bool TryResolveEnchantment(
             string input,
             out EnchantmentModel enchantment,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             enchantment = null!;
             if (string.IsNullOrWhiteSpace(input) || input.Length > 128)
             {
-                error = "The enchantment ID is empty or too long.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "model.enchantmentIdInvalid",
+                    "The enchantment ID is empty or too long.");
                 return false;
             }
 
@@ -297,13 +299,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (matches.Length == 1)
             {
                 enchantment = matches[0];
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
-            error = matches.Length == 0
-                ? $"Unknown enchantment '{input}'."
-                : $"The enchantment ID '{input}' is ambiguous; use the full model ID.";
+            feedback = matches.Length == 0
+                ? RitsuDebugActionFeedback.Create(
+                    "model.enchantmentUnknown",
+                    "Unknown enchantment '{0}'.",
+                    input)
+                : RitsuDebugActionFeedback.Create(
+                    "model.enchantmentAmbiguous",
+                    "The enchantment ID '{0}' is ambiguous; use the full model ID.",
+                    input);
             return false;
         }
 
@@ -333,12 +341,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static bool TryResolveCanonicalCard(
             string cardId,
             out CardModel card,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             card = null!;
             if (string.IsNullOrWhiteSpace(cardId) || cardId.Length > 128)
             {
-                error = "The card ID is empty or too long.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "model.cardIdInvalid",
+                    "The card ID is empty or too long.");
                 return false;
             }
 
@@ -349,7 +359,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (fullMatches.Length == 1)
             {
                 card = fullMatches[0];
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
@@ -360,13 +370,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (entryMatches.Length == 1)
             {
                 card = entryMatches[0];
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
-            error = entryMatches.Length > 1 || fullMatches.Length > 1
-                ? $"Card ID '{cardId}' is ambiguous; use the full model ID."
-                : $"Card '{cardId}' was not found.";
+            feedback = entryMatches.Length > 1 || fullMatches.Length > 1
+                ? RitsuDebugActionFeedback.Create(
+                    "model.cardAmbiguous",
+                    "Card ID '{0}' is ambiguous; use the full model ID.",
+                    cardId)
+                : RitsuDebugActionFeedback.Create(
+                    "model.cardUnknown",
+                    "Card '{0}' was not found.",
+                    cardId);
             return false;
         }
 
@@ -375,24 +391,38 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             ModifyPilePayload payload)
         {
             if (!Enum.IsDefined(payload.Operation))
-                return RitsuDebugActionCheck.Fail("The card-pile operation is invalid.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.invalidPileOperation",
+                    "The card-pile operation is invalid.");
             if (!TryParseMutablePileType(payload.Pile, out var pileType))
-                return RitsuDebugActionCheck.Fail($"Unsupported pile '{payload.Pile}'.");
-            if (pileType != PileType.Deck && !TryRequireActiveCombat(context.Target, out var combatError))
-                return RitsuDebugActionCheck.Fail(combatError);
+                return RitsuDebugActionCheck.Fail(
+                    "card.unsupportedPile",
+                    "Unsupported pile '{0}'.",
+                    payload.Pile);
+            if (pileType != PileType.Deck && !TryRequireActiveCombat(context.Target, out var combatFeedback))
+                return RitsuDebugActionCheck.Fail(combatFeedback);
             if (GetPile(context.Target, pileType) == null)
-                return RitsuDebugActionCheck.Fail($"Pile '{pileType}' is unavailable for the selected player.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.pileUnavailable",
+                    "Pile '{0}' is unavailable for the selected player.",
+                    pileType);
 
             return payload.Operation switch
             {
                 RitsuDebugCardPileOperation.Clear when payload.Levels == 0 => RitsuDebugActionCheck.Ok,
                 RitsuDebugCardPileOperation.Clear =>
-                    RitsuDebugActionCheck.Fail("Clearing a card pile does not accept upgrade levels."),
+                    RitsuDebugActionCheck.Fail(
+                        "card.clearPileUpgradeLevels",
+                        "Clearing a card pile does not accept upgrade levels."),
                 RitsuDebugCardPileOperation.Upgrade when payload.Levels is >= 1 and <= MaxBulkUpgradeLevels =>
                     RitsuDebugActionCheck.Ok,
                 RitsuDebugCardPileOperation.Upgrade => RitsuDebugActionCheck.Fail(
-                    $"Upgrade levels must be between 1 and {MaxBulkUpgradeLevels}."),
-                _ => RitsuDebugActionCheck.Fail("The card-pile operation is invalid."),
+                    "card.upgradeLevelsRange",
+                    "Upgrade levels must be between 1 and {0}.",
+                    MaxBulkUpgradeLevels),
+                _ => RitsuDebugActionCheck.Fail(
+                    "card.invalidPileOperation",
+                    "The card-pile operation is invalid."),
             };
         }
 
@@ -437,21 +467,29 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             if (!TryParseMutablePileType(payload.Pile, out var pileType))
                 return RitsuDebugActionCheck.Fail(
-                    $"Unsupported pile '{payload.Pile}'. Valid piles: {string.Join(", ", GetMutablePileNames())}.");
+                    "card.unsupportedPile",
+                    "Unsupported pile '{0}'.",
+                    payload.Pile);
 
-            if (!TryResolveCanonicalCard(payload.CardId, out var canonical, out var cardError))
-                return RitsuDebugActionCheck.Fail(cardError);
+            if (!TryResolveCanonicalCard(payload.CardId, out var canonical, out var cardFeedback))
+                return RitsuDebugActionCheck.Fail(cardFeedback);
 
             if (payload.UpgradeLevels < 0 || payload.UpgradeLevels > canonical.MaxUpgradeLevel)
                 return RitsuDebugActionCheck.Fail(
-                    $"Upgrade levels for {canonical.Id} must be between 0 and {canonical.MaxUpgradeLevel}.");
+                    "card.createUpgradeRange",
+                    "Upgrade levels for {0} must be between 0 and {1}.",
+                    canonical.Id,
+                    canonical.MaxUpgradeLevel);
 
-            if (pileType != PileType.Deck && !TryRequireActiveCombat(context.Target, out var combatError))
-                return RitsuDebugActionCheck.Fail(combatError);
+            if (pileType != PileType.Deck && !TryRequireActiveCombat(context.Target, out var combatFeedback))
+                return RitsuDebugActionCheck.Fail(combatFeedback);
 
             var pile = GetPile(context.Target, pileType);
             if (pile == null)
-                return RitsuDebugActionCheck.Fail($"Pile '{pileType}' is unavailable for the target player.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.pileUnavailable",
+                    "Pile '{0}' is unavailable for the selected player.",
+                    pileType);
             return RitsuDebugActionCheck.Ok;
         }
 
@@ -469,7 +507,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 var result = await CardPileCmd.Add(deckCard, PileType.Deck);
                 if (!result.success)
                     throw new RitsuDebugActionExecutionException(
-                        $"The game did not add {canonical.Id} to the deck.");
+                        RitsuDebugActionFeedback.Create(
+                            "card.addToDeckFailed",
+                            "The game did not add {0} to the deck.",
+                            canonical.Id));
 
                 CardCmd.PreviewCardPileAdd(result);
                 return $"Created {canonical.Id} in the deck at upgrade level {deckCard.CurrentUpgradeLevel}.";
@@ -484,7 +525,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 context.Target);
             if (!addResult.success)
                 throw new RitsuDebugActionExecutionException(
-                    $"The game did not add {canonical.Id} to {pileType}.");
+                    RitsuDebugActionFeedback.Create(
+                        "card.addToPileFailed",
+                        "The game did not add {0} to {1}.",
+                        canonical.Id,
+                        pileType));
 
             var actualPile = combatCard.Pile?.Type ?? pileType;
             if (actualPile is PileType.Draw or PileType.Discard or PileType.Exhaust)
@@ -500,19 +545,27 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             CopyCardPayload payload)
         {
             if (payload.Count is < 1 or > MaxCopyCount)
-                return RitsuDebugActionCheck.Fail($"Copy count must be between 1 and {MaxCopyCount}.");
-            if (!TryGetLocatedCard(context.Target, payload.Location, out _, out _, out var error))
-                return RitsuDebugActionCheck.Fail(error);
+                return RitsuDebugActionCheck.Fail(
+                    "card.copyCountRange",
+                    "Copy count must be between 1 and {0}.",
+                    MaxCopyCount);
+            if (!TryGetLocatedCard(context.Target, payload.Location, out _, out _, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             if (!TryParseMutablePileType(payload.DestinationPile, out var destinationPile))
-                return RitsuDebugActionCheck.Fail($"Unsupported destination pile '{payload.DestinationPile}'.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.unsupportedDestinationPile",
+                    "Unsupported destination pile '{0}'.",
+                    payload.DestinationPile);
             if (destinationPile != PileType.Deck &&
-                !TryRequireActiveCombat(context.Target, out var combatError))
-                return RitsuDebugActionCheck.Fail(combatError);
+                !TryRequireActiveCombat(context.Target, out var combatFeedback))
+                return RitsuDebugActionCheck.Fail(combatFeedback);
 
             var destination = GetPile(context.Target, destinationPile);
             if (destination == null)
                 return RitsuDebugActionCheck.Fail(
-                    $"Pile '{destinationPile}' is unavailable for the selected player.");
+                    "card.pileUnavailable",
+                    "Pile '{0}' is unavailable for the selected player.",
+                    destinationPile);
 
             return RitsuDebugActionCheck.Ok;
         }
@@ -559,7 +612,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
             if (actualPiles.Count == 0)
                 throw new RitsuDebugActionExecutionException(
-                    $"The card could not be copied to {destinationPile}.");
+                    RitsuDebugActionFeedback.Create(
+                        "card.copyFailed",
+                        "The card could not be copied to {0}.",
+                        destinationPile));
 
             if (actualPiles.Count == 1)
                 return $"Copied {source.Id} to {actualPiles[0]}.";
@@ -582,22 +638,28 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     payload.Location,
                     out var sourcePile,
                     out _,
-                    out var error))
-                return RitsuDebugActionCheck.Fail(error);
+                    out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             if (!TryParseMutablePileType(payload.DestinationPile, out var destinationPile) ||
                 !destinationPile.IsCombatPile())
                 return RitsuDebugActionCheck.Fail(
+                    "card.moveCombatOnly",
                     "Cards can be moved only between combat piles; use Copy to cross the deck boundary.");
             if (!sourcePile.IsCombatPile())
                 return RitsuDebugActionCheck.Fail(
+                    "card.deckMoveRequiresCopy",
                     "Deck cards cannot be moved directly into combat; copy the card instead.");
             if (sourcePile == destinationPile)
-                return RitsuDebugActionCheck.Fail("The card is already in the selected pile.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.alreadyInPile",
+                    "The card is already in the selected pile.");
 
             var destination = GetPile(context.Target, destinationPile);
             if (destination == null)
                 return RitsuDebugActionCheck.Fail(
-                    $"Pile '{destinationPile}' is unavailable for the selected player.");
+                    "card.pileUnavailable",
+                    "Pile '{0}' is unavailable for the selected player.",
+                    destinationPile);
             return RitsuDebugActionCheck.Ok;
         }
 
@@ -610,7 +672,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var result = await CardPileCmd.Add(card, destinationPile);
             if (!result.success)
                 throw new RitsuDebugActionExecutionException(
-                    $"The card could not be moved to {destinationPile}.");
+                    RitsuDebugActionFeedback.Create(
+                        "card.moveFailed",
+                        "The card could not be moved to {0}.",
+                        destinationPile));
 
             var actualPile = card.Pile?.Type ?? destinationPile;
             return actualPile == destinationPile
@@ -625,10 +690,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             if (payload.ReplayCount is < 0 or > MaxReplayCount)
                 return RitsuDebugActionCheck.Fail(
-                    $"Replay count must be between 0 and {MaxReplayCount}.");
-            return TryGetLocatedCard(context.Target, payload.Location, out _, out _, out var error)
+                    "card.replayRange",
+                    "Replay count must be between 0 and {0}.",
+                    MaxReplayCount);
+            return TryGetLocatedCard(context.Target, payload.Location, out _, out _, out var feedback)
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail(error);
+                : RitsuDebugActionCheck.Fail(feedback);
         }
 
         private static Task<string> ExecuteSetReplayCountAsync(
@@ -646,8 +713,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             CardLocationPayload payload)
         {
-            if (!TryGetLocatedCard(context.Target, payload, out _, out _, out var error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryGetLocatedCard(context.Target, payload, out _, out _, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
 
             return RitsuDebugActionCheck.Ok;
         }
@@ -669,35 +736,50 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             EditCardPayload payload)
         {
             if (!Enum.IsDefined(payload.Field))
-                return RitsuDebugActionCheck.Fail("The card edit field is invalid.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.invalidEditField",
+                    "The card edit field is invalid.");
             if (!TryGetLocatedCard(
                     context.Target,
                     payload.Location,
                     out _,
                     out var card,
-                    out var error))
-                return RitsuDebugActionCheck.Fail(error);
+                    out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
 
             if (payload.Value is < 0 or > 999_999)
-                return RitsuDebugActionCheck.Fail("Card edit values must be between 0 and 999999.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.editValueRange",
+                    "Card edit values must be between 0 and 999999.");
             if (payload.Field is RitsuDebugCardEditField.Exhaust or
                     RitsuDebugCardEditField.Ethereal or
                     RitsuDebugCardEditField.Unplayable or
                     RitsuDebugCardEditField.ExhaustOnNextPlay && payload.Value is not (0 or 1))
-                return RitsuDebugActionCheck.Fail("Card flag values must be 0 or 1.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.flagValue",
+                    "Card flag values must be 0 or 1.");
             if (payload.Field == RitsuDebugCardEditField.Cost && card.EnergyCost.CostsX)
-                return RitsuDebugActionCheck.Fail("The base cost of an X-cost card cannot be replaced.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.xCostCannotReplace",
+                    "The base cost of an X-cost card cannot be replaced.");
             if (payload.Field == RitsuDebugCardEditField.DynamicVar)
             {
                 if (string.IsNullOrWhiteSpace(payload.DynamicVarKey) || payload.DynamicVarKey.Length > 64)
-                    return RitsuDebugActionCheck.Fail("A valid dynamic-variable key is required.");
+                    return RitsuDebugActionCheck.Fail(
+                        "card.dynamicVarKeyRequired",
+                        "A valid dynamic-variable key is required.");
                 if (!card.DynamicVars.ContainsKey(payload.DynamicVarKey))
                     return RitsuDebugActionCheck.Fail(
-                        $"Card {card.Id} has no dynamic variable named '{payload.DynamicVarKey}'.");
+                        "card.dynamicVarMissing",
+                        "Card {0} has no dynamic variable named '{1}'.",
+                        card.Id,
+                        payload.DynamicVarKey);
             }
             else if (payload.DynamicVarKey != null)
             {
-                return RitsuDebugActionCheck.Fail("A dynamic-variable key is valid only for DynamicVar edits.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.dynamicVarUnexpected",
+                    "A dynamic-variable key is valid only for DynamicVar edits.");
             }
 
             return RitsuDebugActionCheck.Ok;
@@ -752,17 +834,23 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     payload.Location,
                     out _,
                     out var card,
-                    out var error))
-                return RitsuDebugActionCheck.Fail(error);
-            if (!TryResolveEnchantment(payload.EnchantmentId, out var enchantment, out error))
-                return RitsuDebugActionCheck.Fail(error);
+                    out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (!TryResolveEnchantment(payload.EnchantmentId, out var enchantment, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             if (payload.Amount is < 1 or > 999_999)
-                return RitsuDebugActionCheck.Fail("Enchantment amount must be between 1 and 999999.");
+                return RitsuDebugActionCheck.Fail(
+                    "card.enchantmentAmountRange",
+                    "Enchantment amount must be between 1 and 999999.");
             var preview = (CardModel)card.ClonePreservingMutability();
             CardCmd.ClearEnchantment(preview);
             return enchantment.CanEnchant(preview)
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail($"Enchantment {enchantment.Id} cannot be applied to {card.Id}.");
+                : RitsuDebugActionCheck.Fail(
+                    "card.enchantmentIncompatible",
+                    "Enchantment {0} cannot be applied to {1}.",
+                    enchantment.Id,
+                    card.Id);
         }
 
         private static Task<string> ExecuteEnchantCardAsync(
@@ -783,7 +871,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 if (CardCmd.Enchant(enchantment.ToMutable(), card, payload.Amount) == null)
                     throw new RitsuDebugActionExecutionException(
-                        $"The game did not apply enchantment {enchantment.Id} to card {card.Id}.");
+                        RitsuDebugActionFeedback.Create(
+                            "card.enchantmentApplyFailed",
+                            "The game did not apply enchantment {0} to card {1}.",
+                            enchantment.Id,
+                            card.Id));
             }
             catch (Exception applyException) when (RitsuLibExceptionPolicy.IsRecoverable(applyException))
             {
@@ -792,8 +884,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     {
                         if (CardCmd.Enchant(previousEnchantment.ToMutable(), card, previousAmount) == null)
                             throw new RitsuDebugActionExecutionException(
-                                $"The previous enchantment {previousEnchantment.Id} could not be restored to " +
-                                $"card {card.Id}.");
+                                RitsuDebugActionFeedback.Create(
+                                    "card.enchantmentRestoreFailed",
+                                    "The previous enchantment {0} could not be restored to card {1}.",
+                                    previousEnchantment.Id,
+                                    card.Id));
                     }
                     catch (Exception restoreException) when (RitsuLibExceptionPolicy.IsRecoverable(restoreException))
                     {
@@ -817,11 +912,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             CardLocationPayload payload)
         {
-            if (!TryGetLocatedCard(context.Target, payload, out _, out var card, out var error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryGetLocatedCard(context.Target, payload, out _, out var card, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             return card.Enchantment != null
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail($"Card {card.Id} has no enchantment.");
+                : RitsuDebugActionCheck.Fail(
+                    "card.noEnchantment",
+                    "Card {0} has no enchantment.",
+                    card.Id);
         }
 
         private static Task<string> ExecuteClearCardEnchantmentAsync(
@@ -842,17 +940,22 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             if (payload.Levels is < 1 or > MaxBulkUpgradeLevels)
                 return RitsuDebugActionCheck.Fail(
-                    $"Upgrade levels must be between 1 and {MaxBulkUpgradeLevels}.");
+                    "card.upgradeLevelsRange",
+                    "Upgrade levels must be between 1 and {0}.",
+                    MaxBulkUpgradeLevels);
             if (!TryGetLocatedCard(
                     context.Target,
                     payload.Location,
                     out _,
                     out var card,
-                    out var error))
-                return RitsuDebugActionCheck.Fail(error);
+                    out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             return card.IsUpgradable
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail($"Card {card.Id} is already at its maximum upgrade level.");
+                : RitsuDebugActionCheck.Fail(
+                    "card.maximumUpgrade",
+                    "Card {0} is already at its maximum upgrade level.",
+                    card.Id);
         }
 
         private static Task<string> ExecuteUpgradeCardAsync(
@@ -884,29 +987,37 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             CardLocationPayload payload,
             out PileType pileType,
             out CardModel card,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             card = null!;
             if (string.IsNullOrWhiteSpace(payload.ExpectedCardId) || payload.ExpectedCardId.Length > 128)
             {
                 pileType = default;
-                error = "The selected card is invalid.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "card.selectedInvalid",
+                    "The selected card is invalid.");
                 return false;
             }
 
             if (!TryParseMutablePileType(payload.Pile, out pileType))
             {
-                error = $"Unsupported pile '{payload.Pile}'.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "card.unsupportedPile",
+                    "Unsupported pile '{0}'.",
+                    payload.Pile);
                 return false;
             }
 
-            if (pileType != PileType.Deck && !TryRequireActiveCombat(target, out error))
+            if (pileType != PileType.Deck && !TryRequireActiveCombat(target, out feedback))
                 return false;
 
             var pile = GetPile(target, pileType);
             if (pile == null)
             {
-                error = $"Pile '{pileType}' is unavailable for the target player.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "card.pileUnavailable",
+                    "Pile '{0}' is unavailable for the selected player.",
+                    pileType);
                 return false;
             }
 
@@ -919,29 +1030,40 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     !ReferenceEquals(locatedCard.Pile, pile) ||
                     !locatedCard.Id.ToString().Equals(payload.ExpectedCardId, StringComparison.Ordinal))
                 {
-                    error = "The selected card moved or is no longer available.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "card.selectedMoved",
+                        "The selected card moved or is no longer available.");
                     return false;
                 }
 
                 card = locatedCard;
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
             if (payload.CardIndex < 0 || payload.CardIndex >= pile.Cards.Count)
             {
-                error = $"Card index {payload.CardIndex} is outside {pileType}'s range 0-{pile.Cards.Count - 1}.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "card.indexRange",
+                    "Card index {0} is outside {1}'s range 0-{2}.",
+                    payload.CardIndex,
+                    pileType,
+                    pile.Cards.Count - 1);
                 return false;
             }
 
             card = pile.Cards[payload.CardIndex];
             if (!card.Id.ToString().Equals(payload.ExpectedCardId, StringComparison.Ordinal))
             {
-                error = $"The card at {pileType}[{payload.CardIndex}] changed before the action could run.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "card.slotChanged",
+                    "The card at {0}[{1}] changed before the action could run.",
+                    pileType,
+                    payload.CardIndex);
                 return false;
             }
 
-            error = string.Empty;
+            feedback = default;
             return true;
         }
 
@@ -982,16 +1104,20 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 card.RemoveKeyword(keyword);
         }
 
-        private static bool TryRequireActiveCombat(Player target, out string error)
+        private static bool TryRequireActiveCombat(
+            Player target,
+            out RitsuDebugActionFeedback feedback)
         {
             if (!CombatManager.Instance.IsInProgress || CombatManager.Instance.IsOverOrEnding ||
                 target.PlayerCombatState == null || target.Creature.CombatState == null)
             {
-                error = "This change requires an active combat.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "action.activeCombatRequired",
+                    "This change requires an active combat.");
                 return false;
             }
 
-            error = string.Empty;
+            feedback = default;
             return true;
         }
 

@@ -51,7 +51,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is < 3 or > 4)
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 3, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugInventoryActions.SubmitClearInventory(
                 issuingPlayer,
                 target,
@@ -63,12 +63,18 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is < 4 or > 5)
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 4, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             if (!int.TryParse(args[3], out var slotIndex) || slotIndex < 0 || slotIndex >= target.MaxPotionCount)
-                return new(false, $"Potion slot must be between 0 and {target.MaxPotionCount - 1}.");
+                return DebugFailure(
+                    "inventory.potionSlotRange",
+                    "Potion slot must be between 0 and {0}.",
+                    target.MaxPotionCount - 1);
             var potion = target.GetPotionAtSlotIndex(slotIndex);
             if (potion == null)
-                return new(false, $"Potion slot {slotIndex} is empty.");
+                return DebugFailure(
+                    "inventory.potionSlotEmpty",
+                    "Potion slot {0} is empty.",
+                    slotIndex);
             return ToCmdResult(RitsuDebugInventoryActions.SubmitDiscardPotion(
                 issuingPlayer,
                 target,

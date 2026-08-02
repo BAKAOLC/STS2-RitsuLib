@@ -77,34 +77,38 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static bool TryResolveEncounter(
             string input,
             out EncounterModel encounter,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
-            return TryResolveModel(ModelDb.AllEncounters, input, "encounter", out encounter, out error);
+            return TryResolveModel(ModelDb.AllEncounters, input, "encounter", out encounter, out feedback);
         }
 
-        internal static bool TryResolveEvent(string input, out EventModel eventModel, out string error)
+        internal static bool TryResolveEvent(
+            string input,
+            out EventModel eventModel,
+            out RitsuDebugActionFeedback feedback)
         {
             return TryResolveModel(
                 ModelDb.AllEvents.Concat(ModelDb.AllAncients).DistinctBy(static model => model.Id),
                 input,
                 "event",
                 out eventModel,
-                out error);
+                out feedback);
         }
 
         internal static bool TryGetAvailableAncientOptions(
             AncientEventModel canonical,
             Player player,
             out EventOption[] options,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             ArgumentNullException.ThrowIfNull(canonical);
             ArgumentNullException.ThrowIfNull(player);
             options = [];
             if (EventOwnerProperty?.SetMethod == null)
             {
-                error =
-                    "This game version cannot determine which Ancient options are available for the selected player.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "run.ancientUnsupportedVersion",
+                    "This game version cannot determine which Ancient options are available for the selected player.");
                 return false;
             }
 
@@ -118,21 +122,27 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     .ToArray();
                 if (candidates.Length > MaxAncientOptionCount)
                 {
-                    error = $"Ancient event {canonical.Id} exposes more than {MaxAncientOptionCount} options.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "run.ancientTooManyOptions",
+                        "Ancient event {0} exposes more than {1} options.",
+                        canonical.Id,
+                        MaxAncientOptionCount);
                     return false;
                 }
 
                 options = candidates
                     .DistinctBy(GetAncientOptionToken, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[DebugTools] Could not resolve Ancient options for '{canonical.Id}': {ex}");
-                error = "Available Ancient options could not be determined for the selected player.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "run.ancientOptionsUnavailable",
+                    "Available Ancient options could not be determined for the selected player.");
                 return false;
             }
         }
@@ -141,11 +151,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             RoomPayload payload)
         {
-            if (!TryRequireActiveRun(out var error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryRequireActiveRun(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             if (!Enum.TryParse<RoomType>(payload.RoomType, true, out var roomType) ||
                 roomType == RoomType.Unassigned)
-                return RitsuDebugActionCheck.Fail($"Unknown or unsupported room type '{payload.RoomType}'.");
+                return RitsuDebugActionCheck.Fail(
+                    "run.invalidRoomType",
+                    "Unknown or unsupported room type '{0}'.",
+                    payload.RoomType);
             return RitsuDebugActionCheck.Ok;
         }
 
@@ -153,33 +166,37 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             ModelPayload payload)
         {
-            if (!TryRequireActiveRun(out var error))
-                return RitsuDebugActionCheck.Fail(error);
-            return TryResolveEncounter(payload.ModelId, out _, out error)
+            if (!TryRequireActiveRun(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            return TryResolveEncounter(payload.ModelId, out _, out feedback)
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail(error);
+                : RitsuDebugActionCheck.Fail(feedback);
         }
 
         private static RitsuDebugActionCheck ValidateEnterEvent(
             RitsuDebugActionContext context,
             EventPayload payload)
         {
-            if (!TryRequireActiveRun(out var error))
-                return RitsuDebugActionCheck.Fail(error);
-            if (!TryResolveEvent(payload.EventId, out var eventModel, out error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryRequireActiveRun(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (!TryResolveEvent(payload.EventId, out var eventModel, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             if (payload.AncientOption == null)
                 return RitsuDebugActionCheck.Ok;
             if (eventModel is not AncientEventModel ancient)
                 return RitsuDebugActionCheck.Fail(
+                    "run.ancientOptionOnly",
                     "An Ancient option may be specified only for an Ancient event.");
-            if (!TryGetAvailableAncientOptions(ancient, context.Target, out var options, out error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryGetAvailableAncientOptions(ancient, context.Target, out var options, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             return options.Any(option =>
                 GetAncientOptionToken(option).Equals(payload.AncientOption, StringComparison.OrdinalIgnoreCase))
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(
-                    $"Ancient event {ancient.Id} has no option '{payload.AncientOption}'.");
+                    "run.ancientOptionMissing",
+                    "Ancient event {0} has no option '{1}'.",
+                    ancient.Id,
+                    payload.AncientOption);
         }
 
         private static async Task<string> ExecuteEnterRoomAsync(
@@ -230,15 +247,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return option.TextKey.Split('.').Last();
         }
 
-        private static bool TryRequireActiveRun(out string error)
+        private static bool TryRequireActiveRun(out RitsuDebugActionFeedback feedback)
         {
             if (!RunManager.Instance.IsInProgress)
             {
-                error = "A run is not currently in progress.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "run.notInProgress",
+                    "A run is not currently in progress.");
                 return false;
             }
 
-            error = string.Empty;
+            feedback = default;
             return true;
         }
 
@@ -247,13 +266,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string input,
             string kind,
             out TModel model,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
             where TModel : AbstractModel
         {
             model = null!;
             if (string.IsNullOrWhiteSpace(input) || input.Length > 128)
             {
-                error = $"The {kind} ID is empty or too long.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    $"model.{kind}IdInvalid",
+                    $"The {kind} ID is empty or too long.");
                 return false;
             }
 
@@ -271,13 +292,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (matches.Length == 1)
             {
                 model = matches[0];
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
-            error = matches.Length == 0
-                ? $"Unknown {kind} '{input}'."
-                : $"The {kind} ID '{input}' is ambiguous; use the full model ID.";
+            feedback = matches.Length == 0
+                ? RitsuDebugActionFeedback.Create(
+                    $"model.{kind}Unknown",
+                    $"Unknown {kind} '{{0}}'.",
+                    input)
+                : RitsuDebugActionFeedback.Create(
+                    $"model.{kind}Ambiguous",
+                    $"The {kind} ID '{{0}}' is ambiguous; use the full model ID.",
+                    input);
             return false;
         }
 

@@ -119,7 +119,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             ArgumentNullException.ThrowIfNull(creature);
             return creature.Monster == null
-                ? new(false, "Only creatures backed by a monster model can be copied.")
+                ? RitsuDebugActionSubmission.Reject(
+                    "combat.creatureModelRequired",
+                    "Only creatures backed by a monster model can be copied.")
                 : SubmitAddMonster(requester, actionTarget, creature.Monster.Id.ToString());
         }
 
@@ -144,12 +146,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return SubmitPower(requester, actionTarget, RemovePowerActionId, combatId, powerId, 0);
         }
 
-        internal static bool TryResolvePower(string input, out PowerModel power, out string error)
+        internal static bool TryResolvePower(
+            string input,
+            out PowerModel power,
+            out RitsuDebugActionFeedback feedback)
         {
             power = null!;
             if (string.IsNullOrWhiteSpace(input) || input.Length > 128)
             {
-                error = "The power ID is empty or too long.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "model.powerIdInvalid",
+                    "The power ID is empty or too long.");
                 return false;
             }
 
@@ -166,22 +173,33 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (matches.Length == 1)
             {
                 power = matches[0];
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
-            error = matches.Length == 0
-                ? $"Unknown power '{input}'."
-                : $"The power ID '{input}' is ambiguous; use the full model ID.";
+            feedback = matches.Length == 0
+                ? RitsuDebugActionFeedback.Create(
+                    "model.powerUnknown",
+                    "Unknown power '{0}'.",
+                    input)
+                : RitsuDebugActionFeedback.Create(
+                    "model.powerAmbiguous",
+                    "The power ID '{0}' is ambiguous; use the full model ID.",
+                    input);
             return false;
         }
 
-        internal static bool TryResolveMonster(string input, out MonsterModel monster, out string error)
+        internal static bool TryResolveMonster(
+            string input,
+            out MonsterModel monster,
+            out RitsuDebugActionFeedback feedback)
         {
             monster = null!;
             if (string.IsNullOrWhiteSpace(input) || input.Length > 128)
             {
-                error = "The monster ID is empty or too long.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "model.monsterIdInvalid",
+                    "The monster ID is empty or too long.");
                 return false;
             }
 
@@ -199,13 +217,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (matches.Length == 1)
             {
                 monster = matches[0];
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
-            error = matches.Length == 0
-                ? $"Unknown monster '{input}'."
-                : $"The monster ID '{input}' is ambiguous; use the full model ID.";
+            feedback = matches.Length == 0
+                ? RitsuDebugActionFeedback.Create(
+                    "model.monsterUnknown",
+                    "Unknown monster '{0}'.",
+                    input)
+                : RitsuDebugActionFeedback.Create(
+                    "model.monsterAmbiguous",
+                    "The monster ID '{0}' is ambiguous; use the full model ID.",
+                    input);
             return false;
         }
 
@@ -235,37 +259,53 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             ModifyCreaturePayload payload)
         {
-            if (!TryRequireCombat(out var error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryRequireCombat(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             if (!Enum.IsDefined(payload.Operation))
-                return RitsuDebugActionCheck.Fail("The creature operation is invalid.");
+                return RitsuDebugActionCheck.Fail(
+                    "combat.invalidCreatureOperation",
+                    "The creature operation is invalid.");
 
             var creature = FindCreature(payload.CombatId);
             if (creature == null)
-                return RitsuDebugActionCheck.Fail("The selected creature is no longer available.");
+                return RitsuDebugActionCheck.Fail(
+                    "combat.creatureUnavailable",
+                    "The selected creature is no longer available.");
 
             if (payload.Operation == RitsuDebugCreatureOperation.Kill && creature.IsPlayer)
-                return RitsuDebugActionCheck.Fail("Killing player characters is not supported.");
+                return RitsuDebugActionCheck.Fail(
+                    "combat.killPlayerUnsupported",
+                    "Killing player characters is not supported.");
             if (payload.Operation == RitsuDebugCreatureOperation.Kill && creature.IsDead)
-                return RitsuDebugActionCheck.Fail("The selected creature is already dead.");
+                return RitsuDebugActionCheck.Fail(
+                    "combat.creatureAlreadyDead",
+                    "The selected creature is already dead.");
 
             if (payload.Operation is not (RitsuDebugCreatureOperation.Kill or
                     RitsuDebugCreatureOperation.ClearPowers) &&
                 payload.Value is < 0 or > MaxAmount)
-                return RitsuDebugActionCheck.Fail($"The amount must be between 0 and {MaxAmount}.");
+                return RitsuDebugActionCheck.Fail(
+                    "combat.amountRange",
+                    "The amount must be between 0 and {0}.",
+                    MaxAmount);
 
             if (payload.Operation == RitsuDebugCreatureOperation.SetCurrentHp &&
                 payload.Value > creature.MaxHp)
                 return RitsuDebugActionCheck.Fail(
-                    $"Current HP cannot exceed the creature's max HP ({creature.MaxHp}).");
+                    "combat.currentHpExceedsMax",
+                    "Current HP cannot exceed the creature's max HP ({0}).",
+                    creature.MaxHp);
             if (payload.Operation == RitsuDebugCreatureOperation.SetCurrentHp && creature.IsPlayer &&
                 payload.Value == 0)
                 return RitsuDebugActionCheck.Fail(
+                    "combat.playerHpAboveZero",
                     "A player's current HP must remain above zero.");
             if (payload.Operation == RitsuDebugCreatureOperation.SetMaxHp &&
                 payload.Value < Math.Max(1, creature.CurrentHp))
                 return RitsuDebugActionCheck.Fail(
-                    $"Max HP cannot be lower than the creature's current HP ({creature.CurrentHp}).");
+                    "combat.maxHpBelowCurrent",
+                    "Max HP cannot be lower than the creature's current HP ({0}).",
+                    creature.CurrentHp);
 
             return RitsuDebugActionCheck.Ok;
         }
@@ -274,15 +314,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             RitsuDebugRunActions.ModelPayload payload)
         {
-            if (!TryRequireCombat(out var error))
-                return RitsuDebugActionCheck.Fail(error);
-            if (!TryResolveMonster(payload.ModelId, out _, out error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryRequireCombat(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (!TryResolveMonster(payload.ModelId, out _, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
 
             var combatState = CombatManager.Instance.DebugOnlyGetState()!;
             if (combatState.Enemies.Count >= MaxEnemyCount)
                 return RitsuDebugActionCheck.Fail(
-                    $"These tools support at most {MaxEnemyCount} enemies in one combat.");
+                    "combat.enemyLimit",
+                    "These tools support at most {0} enemies in one combat.",
+                    MaxEnemyCount);
 
             return RitsuDebugActionCheck.Ok;
         }
@@ -291,17 +333,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             RitsuDebugRunActions.ModelPayload payload)
         {
-            if (!TryRequireCombat(out var error))
-                return RitsuDebugActionCheck.Fail(error);
-            if (!RitsuDebugRunActions.TryResolveEncounter(payload.ModelId, out var encounter, out error))
-                return RitsuDebugActionCheck.Fail(error);
-            if (!TryCreateEncounterMonsters(encounter, context.Target, out var monsters, out error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryRequireCombat(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (!RitsuDebugRunActions.TryResolveEncounter(payload.ModelId, out var encounter, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (!TryCreateEncounterMonsters(encounter, context.Target, out var monsters, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
 
             var combatState = CombatManager.Instance.DebugOnlyGetState()!;
             if (combatState.Enemies.Count + monsters.Length > MaxEnemyCount)
                 return RitsuDebugActionCheck.Fail(
-                    $"Adding this encounter would exceed the limit of {MaxEnemyCount} enemies in one combat.");
+                    "combat.encounterWouldExceedEnemyLimit",
+                    "Adding this encounter would exceed the limit of {0} enemies in one combat.",
+                    MaxEnemyCount);
 
             return RitsuDebugActionCheck.Ok;
         }
@@ -311,29 +355,40 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             ConfirmedPayload payload)
         {
             if (!payload.Confirmed)
-                return RitsuDebugActionCheck.Fail("Defeating all enemies was not confirmed.");
-            if (!TryRequireCombat(out var error))
-                return RitsuDebugActionCheck.Fail(error);
+                return RitsuDebugActionCheck.Fail(
+                    "combat.defeatNotConfirmed",
+                    "Defeating all enemies was not confirmed.");
+            if (!TryRequireCombat(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             return CombatManager.Instance.DebugOnlyGetState()!.Enemies.Any(static creature => !creature.IsDead)
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail("There are no living enemies in the current combat.");
+                : RitsuDebugActionCheck.Fail(
+                    "combat.noLivingEnemies",
+                    "There are no living enemies in the current combat.");
         }
 
         private static RitsuDebugActionCheck ValidateApplyPower(
             RitsuDebugActionContext context,
             PowerPayload payload)
         {
-            if (!TryRequireCombat(out var error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryRequireCombat(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             var creature = FindCreature(payload.CombatId);
             if (creature == null)
-                return RitsuDebugActionCheck.Fail("The selected creature is no longer available.");
+                return RitsuDebugActionCheck.Fail(
+                    "combat.creatureUnavailable",
+                    "The selected creature is no longer available.");
             if (!creature.CanReceivePowers)
-                return RitsuDebugActionCheck.Fail("The selected creature cannot receive powers right now.");
-            if (!TryResolvePower(payload.PowerId, out _, out error))
-                return RitsuDebugActionCheck.Fail(error);
+                return RitsuDebugActionCheck.Fail(
+                    "combat.cannotReceivePowers",
+                    "The selected creature cannot receive powers right now.");
+            if (!TryResolvePower(payload.PowerId, out _, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             return payload.Amount is < 1 or > MaxAmount
-                ? RitsuDebugActionCheck.Fail($"Power amount must be between 1 and {MaxAmount}.")
+                ? RitsuDebugActionCheck.Fail(
+                    "combat.powerAmountRange",
+                    "Power amount must be between 1 and {0}.",
+                    MaxAmount)
                 : RitsuDebugActionCheck.Ok;
         }
 
@@ -341,16 +396,21 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             PowerPayload payload)
         {
-            if (!TryRequireCombat(out var error))
-                return RitsuDebugActionCheck.Fail(error);
+            if (!TryRequireCombat(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             var creature = FindCreature(payload.CombatId);
             if (creature == null)
-                return RitsuDebugActionCheck.Fail("The selected creature is no longer available.");
-            if (!TryResolvePower(payload.PowerId, out var canonical, out error))
-                return RitsuDebugActionCheck.Fail(error);
+                return RitsuDebugActionCheck.Fail(
+                    "combat.creatureUnavailable",
+                    "The selected creature is no longer available.");
+            if (!TryResolvePower(payload.PowerId, out var canonical, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
             return creature.Powers.Any(power => power.Id == canonical.Id)
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail($"The selected creature does not have {canonical.Id}.");
+                : RitsuDebugActionCheck.Fail(
+                    "combat.powerMissing",
+                    "The selected creature does not have {0}.",
+                    canonical.Id);
         }
 
         private static async Task<string> ExecuteModifyCreatureAsync(
@@ -486,7 +546,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             EncounterModel canonical,
             Player target,
             out MonsterModel[] monsters,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
         {
             try
             {
@@ -498,18 +558,25 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     .ToArray();
                 if (monsters.Length == 0)
                 {
-                    error = $"Encounter {canonical.Id} does not generate any enemies.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "combat.encounterEmpty",
+                        "Encounter {0} does not generate any enemies.",
+                        canonical.Id);
                     return false;
                 }
 
                 if (monsters.Length > MaxEnemyCount)
                 {
-                    error = $"Encounter {canonical.Id} generates more than {MaxEnemyCount} enemies.";
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "combat.encounterTooLarge",
+                        "Encounter {0} generates more than {1} enemies.",
+                        canonical.Id,
+                        MaxEnemyCount);
                     monsters = [];
                     return false;
                 }
 
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
@@ -517,7 +584,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 RitsuLibFramework.Logger.Warn(
                     $"[DebugTools] Could not generate enemies for encounter '{canonical.Id}': {ex}");
                 monsters = [];
-                error = "The selected encounter could not generate enemies for the current run.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    "combat.encounterGenerationFailed",
+                    "The selected encounter could not generate enemies for the current run.");
                 return false;
             }
         }
@@ -528,16 +597,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 _ = PreloadManager.Cache.GetAsset<Resource>(path);
         }
 
-        private static bool TryRequireCombat(out string error)
+        private static bool TryRequireCombat(out RitsuDebugActionFeedback feedback)
         {
             if (CombatManager.Instance.IsInProgress && !CombatManager.Instance.IsOverOrEnding &&
                 CombatManager.Instance.DebugOnlyGetState() != null)
             {
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
-            error = "This change requires an active combat.";
+            feedback = RitsuDebugActionFeedback.Create(
+                "action.activeCombatRequired",
+                "This change requires an active combat.");
             return false;
         }
 

@@ -93,14 +93,20 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
-        internal static bool TryResolveRelic(string input, out RelicModel relic, out string error)
+        internal static bool TryResolveRelic(
+            string input,
+            out RelicModel relic,
+            out RitsuDebugActionFeedback feedback)
         {
-            return TryResolveModel(ModelDb.AllRelics, input, "relic", out relic, out error);
+            return TryResolveModel(ModelDb.AllRelics, input, "relic", out relic, out feedback);
         }
 
-        internal static bool TryResolvePotion(string input, out PotionModel potion, out string error)
+        internal static bool TryResolvePotion(
+            string input,
+            out PotionModel potion,
+            out RitsuDebugActionFeedback feedback)
         {
-            return TryResolveModel(ModelDb.AllPotions, input, "potion", out potion, out error);
+            return TryResolveModel(ModelDb.AllPotions, input, "potion", out potion, out feedback);
         }
 
         private static RitsuDebugActionSubmission SubmitModel(
@@ -126,7 +132,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
             return context.Target.GetRelicById(relic.Id) == null
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail($"The target player already owns {relic.Id}.");
+                : RitsuDebugActionCheck.Fail(
+                    "inventory.relicAlreadyOwned",
+                    "The target player already owns {0}.",
+                    relic.Id);
         }
 
         private static RitsuDebugActionCheck ValidateRemoveRelic(
@@ -138,7 +147,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
             return context.Target.GetRelicById(relic.Id) != null
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail($"The target player does not own {relic.Id}.");
+                : RitsuDebugActionCheck.Fail(
+                    "inventory.relicNotOwned",
+                    "The target player does not own {0}.",
+                    relic.Id);
         }
 
         private static RitsuDebugActionCheck ValidateAddPotion(
@@ -150,7 +162,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
             return FindEmptyPotionSlot(context.Target) >= 0
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail("The target player's potion belt is full.");
+                : RitsuDebugActionCheck.Fail(
+                    "inventory.potionBeltFull",
+                    "The target player's potion belt is full.");
         }
 
         private static RitsuDebugActionCheck ValidateDiscardPotion(
@@ -159,16 +173,23 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             if (payload.SlotIndex < 0 || payload.SlotIndex >= context.Target.MaxPotionCount)
                 return RitsuDebugActionCheck.Fail(
-                    $"Potion slot must be between 0 and {context.Target.MaxPotionCount - 1}.");
+                    "inventory.potionSlotRange",
+                    "Potion slot must be between 0 and {0}.",
+                    context.Target.MaxPotionCount - 1);
 
             var potion = context.Target.GetPotionAtSlotIndex(payload.SlotIndex);
             if (potion == null)
-                return RitsuDebugActionCheck.Fail($"Potion slot {payload.SlotIndex} is empty.");
+                return RitsuDebugActionCheck.Fail(
+                    "inventory.potionSlotEmpty",
+                    "Potion slot {0} is empty.",
+                    payload.SlotIndex);
 
             return potion.Id.ToString().Equals(payload.ExpectedPotionId, StringComparison.Ordinal)
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(
-                    $"The potion in slot {payload.SlotIndex} changed before the action could run.");
+                    "inventory.potionSlotChanged",
+                    "The potion in slot {0} changed before the action could run.",
+                    payload.SlotIndex);
         }
 
         private static RitsuDebugActionCheck ValidateClearInventory(
@@ -176,7 +197,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             ClearInventoryPayload payload)
         {
             if (!Enum.IsDefined(payload.Kind))
-                return RitsuDebugActionCheck.Fail("The inventory type is invalid.");
+                return RitsuDebugActionCheck.Fail(
+                    "inventory.invalidKind",
+                    "The inventory type is invalid.");
             var hasItems = payload.Kind switch
             {
                 RitsuDebugInventoryKind.Relics => context.Target.Relics.Count > 0,
@@ -186,7 +209,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             };
             return hasItems
                 ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail("The selected inventory is already empty.");
+                : RitsuDebugActionCheck.Fail(
+                    "inventory.alreadyEmpty",
+                    "The selected inventory is already empty.");
         }
 
         private static async Task<string> ExecuteAddRelicAsync(
@@ -216,7 +241,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var result = await PotionCmd.TryToProcure(potion.ToMutable(), context.Target);
             if (!result.success)
                 throw new RitsuDebugActionExecutionException(
-                    $"The game did not add potion {potion.Id} to the selected player.");
+                    RitsuDebugActionFeedback.Create(
+                        "inventory.potionAddFailed",
+                        "The game did not add potion {0} to the selected player.",
+                        potion.Id));
             return $"Added potion {potion.Id} to the selected player.";
         }
 
@@ -268,13 +296,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string input,
             string kind,
             out TModel model,
-            out string error)
+            out RitsuDebugActionFeedback feedback)
             where TModel : AbstractModel
         {
             model = null!;
             if (string.IsNullOrWhiteSpace(input) || input.Length > 128)
             {
-                error = $"The {kind} ID is empty or too long.";
+                feedback = RitsuDebugActionFeedback.Create(
+                    $"model.{kind}IdInvalid",
+                    $"The {kind} ID is empty or too long.");
                 return false;
             }
 
@@ -292,13 +322,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (matches.Length == 1)
             {
                 model = matches[0];
-                error = string.Empty;
+                feedback = default;
                 return true;
             }
 
-            error = matches.Length == 0
-                ? $"Unknown {kind} '{input}'."
-                : $"The {kind} ID '{input}' is ambiguous; use the full model ID.";
+            feedback = matches.Length == 0
+                ? RitsuDebugActionFeedback.Create(
+                    $"model.{kind}Unknown",
+                    $"Unknown {kind} '{{0}}'.",
+                    input)
+                : RitsuDebugActionFeedback.Create(
+                    $"model.{kind}Ambiguous",
+                    $"The {kind} ID '{{0}}' is ambiguous; use the full model ID.",
+                    input);
             return false;
         }
 

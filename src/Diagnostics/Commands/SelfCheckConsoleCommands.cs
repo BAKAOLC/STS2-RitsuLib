@@ -69,7 +69,9 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length >= 1 && args[0].Equals("debug", StringComparison.OrdinalIgnoreCase))
                 return RitsuLibSettingsStore.AreDeveloperToolsEnabled()
                     ? ProcessDebug(issuingPlayer, args)
-                    : new(false, "RitsuLib developer tools are disabled in settings.");
+                    : new(false, ModSettingsLocalization.Get(
+                        "ritsulib.debugTools.feedback.protocol.toolsDisabled",
+                        "RitsuLib developer tools are disabled in settings."));
 
             if (args.Length >= 1 && args[0].Equals("settings", StringComparison.OrdinalIgnoreCase))
                 return ProcessSettings(args);

@@ -77,7 +77,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var input = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]);
             if (!RitsuDebugRunActions.TryResolveEncounter(input, out var encounter, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCombatActions.SubmitAddEncounter(
                 issuingPlayer,
                 issuingPlayer,
@@ -100,7 +100,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var input = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]);
             if (!RitsuDebugCombatActions.TryResolvePower(input, out var power, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCombatActions.SubmitApplyPower(
                 issuingPlayer,
                 issuingPlayer,
@@ -115,7 +115,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var input = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]);
             if (!RitsuDebugCombatActions.TryResolvePower(input, out var power, out var error))
-                return new(false, error);
+                return DebugFailure(error);
             return ToCmdResult(RitsuDebugCombatActions.SubmitRemovePower(
                 issuingPlayer,
                 issuingPlayer,

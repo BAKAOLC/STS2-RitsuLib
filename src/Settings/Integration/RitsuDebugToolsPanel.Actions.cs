@@ -811,14 +811,14 @@ namespace STS2RitsuLib.Settings
             string? ancientOption = null;
             if (eventModel is AncientEventModel ancient)
             {
-                var optionError = string.Empty;
+                var optionFeedback = default(RitsuDebugActionFeedback);
                 var options = Array.Empty<(string? Value, string Label)>();
                 if (TryGetTargetPlayer(out var target) &&
                     RitsuDebugRunActions.TryGetAvailableAncientOptions(
                         ancient,
                         target,
                         out var availableOptions,
-                        out optionError))
+                        out optionFeedback))
                     options = availableOptions.Select(option =>
                     {
                         var token = RitsuDebugRunActions.GetAncientOptionToken(option);
@@ -826,10 +826,11 @@ namespace STS2RitsuLib.Settings
                         return ((string?)token, string.IsNullOrWhiteSpace(title) ? token : title);
                     }).ToArray();
 
-                if (options.Length == 0 && !string.IsNullOrWhiteSpace(optionError))
+                if (options.Length == 0 && optionFeedback.IsValid())
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[DebugToolsUi] Could not list options for '{ancient.Id}': {optionError}");
+                        $"[DebugToolsUi] Could not list options for '{ancient.Id}': " +
+                        optionFeedback.GetEnglishText());
                     AddHint(root, L("ritsulib.debugTools.ancientOptionsUnavailable",
                         "Available options could not be determined for the selected player."));
                 }

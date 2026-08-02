@@ -34,7 +34,9 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length < 2 || !DebugConsoleGroupsByName.TryGetValue(args[1], out var group))
                 return new(false, DebugUsageText());
             if (group.RequiresPlayer && player == null)
-                return new(false, "A player is required to change or inspect run state.");
+                return DebugFailure(
+                    "console.playerRequired",
+                    "A player is required to change or inspect run state.");
 
             if (group.Actions.Count == 0)
                 return group.Execute!(this, player, args);
@@ -149,7 +151,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is < 4 or > 5 || !int.TryParse(args[3], out var value))
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 4, out var target, out var error))
-                return new(false, error);
+                return DebugFailure(error);
 
             return ToCmdResult(RitsuDebugPlayerActions.Submit(issuingPlayer, target, operation, value));
         }
@@ -175,11 +177,15 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (acceptsValue)
             {
                 if (args.Length != 5 || !int.TryParse(args[4], out value))
-                    return new(false, "This creature change requires an integer value.");
+                    return DebugFailure(
+                        "console.creatureIntegerValue",
+                        "This creature change requires an integer value.");
             }
             else if (args.Length != 4)
             {
-                return new(false, "This creature change does not accept a value.");
+                return DebugFailure(
+                    "console.creatureNoValue",
+                    "This creature change does not accept a value.");
             }
 
             return ToCmdResult(RitsuDebugCombatActions.SubmitModifyCreature(
@@ -211,7 +217,9 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 return new(false, DebugUsageText());
             var creature = RitsuDebugCombatActions.FindCreature(combatId);
             if (creature == null)
-                return new(false, "The selected creature is no longer available.");
+                return DebugFailure(
+                    "combat.creatureUnavailable",
+                    "The selected creature is no longer available.");
             return ToCmdResult(RitsuDebugCombatActions.SubmitDuplicateCreature(
                 issuingPlayer,
                 issuingPlayer,
@@ -244,19 +252,19 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length is < 4 or > 5)
                 return new(false, DebugUsageText());
             if (!TryResolveTargetPlayer(issuingPlayer, args, 4, out var target, out var targetError))
-                return new(false, targetError);
+                return DebugFailure(targetError);
             var modelInput = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]);
             if (relic)
             {
                 if (!RitsuDebugInventoryActions.TryResolveRelic(modelInput, out var model, out var modelError))
-                    return new(false, modelError);
+                    return DebugFailure(modelError);
                 return ToCmdResult(add
                     ? RitsuDebugInventoryActions.SubmitAddRelic(issuingPlayer, target, model.Id.ToString())
                     : RitsuDebugInventoryActions.SubmitRemoveRelic(issuingPlayer, target, model.Id.ToString()));
             }
 
             if (!RitsuDebugInventoryActions.TryResolvePotion(modelInput, out var potion, out var potionError))
-                return new(false, potionError);
+                return DebugFailure(potionError);
             return ToCmdResult(RitsuDebugInventoryActions.SubmitAddPotion(
                 issuingPlayer,
                 target,
