@@ -1,7 +1,9 @@
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Platform.Steam;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Updates;
 using STS2RitsuLib.Utils.Persistence;
 
@@ -52,6 +54,15 @@ namespace STS2RitsuLib.Settings
                 T("ritsulib.uiShellTheme.description",
                     "Applies a built-in color theme to the Ritsu settings UI shell (sidebars, rows, and modals)."),
                 ModSettingsChoicePresentation.Dropdown);
+            section.AddKeyBinding(
+                "settings_open_hotkey",
+                T("ritsulib.settings.hotkey.label", "Open mod settings"),
+                ui.SettingsOpenHotkey,
+                true,
+                false,
+                false,
+                T("ritsulib.settings.hotkey.description",
+                    "Opens the independent mod settings center from anywhere in the game."));
             section.AddButton(
                 "ui_shell_theme_reset_file",
                 T("ritsulib.uiShellTheme.resetFile.label", "Reset existing theme files"),
@@ -293,6 +304,47 @@ namespace STS2RitsuLib.Settings
                     .WithTitle(T("ritsulib.category.developerTools.label", "Developer tools"))
                     .WithDescription(T("ritsulib.category.developerTools.description",
                         "Console fixes, diagnostics, self-checks, and export tools."))
+                    .AddSection("developer_tools", section => section
+                        .WithTitle(T("ritsulib.section.developerTools.title", "Developer tools"))
+                        .Collapsible()
+                        .AddToggle(
+                            "developer_tools_enabled",
+                            T("ritsulib.debugTools.enabled.label", "Enable developer tools"),
+                            ui.DeveloperToolsEnabled,
+                            T("ritsulib.debugTools.enabled.description",
+                                "Enables RitsuLib console commands and the visual workspace for inspecting and modifying cards, players, creatures, inventories, and rooms. The workspace remains closed until you open it. In multiplayer, this setting controls only the tools available on this device; changes approved by the host are still applied to keep the run consistent. Off by default."))
+                        .AddToggle(
+                            "developer_tools_allow_client_requests",
+                            T("ritsulib.debugTools.allowClientRequests.label", "Allow client debug requests"),
+                            ui.DeveloperToolsAllowClientRequests,
+                            T("ritsulib.debugTools.allowClientRequests.description",
+                                "Allows other compatible players to request supported changes to players, creatures, cards, and rooms. The host checks every request. Requests are unavailable if any connected player lacks the required RitsuLib support. Off by default."))
+                        .AddKeyBinding(
+                            "debug_tools_open_hotkey",
+                            T("ritsulib.debugTools.hotkey.label", "Toggle developer tools"),
+                            ui.DebugToolsOpenHotkey,
+                            true,
+                            false,
+                            false,
+                            T("ritsulib.debugTools.hotkey.description",
+                                "Shows or closes the developer tools workspace when the feature is enabled. This shortcut does not change the feature setting."))
+                        .AddButton(
+                            "debug_state_tools_open",
+                            T("ritsulib.debugTools.pageLink.label", "Developer tools workspace"),
+                            T("button.open", "Open"),
+                            TryOpenDebugToolsWorkspace,
+                            ModSettingsButtonTone.Accent,
+                            T("ritsulib.debugTools.pageLink.description",
+                                "Browse game content with previews and modify supported run state without typing console commands."))
+                        .WithEntryVisibleWhen(
+                            "developer_tools_allow_client_requests",
+                            RitsuLibSettingsStore.AreDeveloperToolsEnabled)
+                        .WithEntryVisibleWhen(
+                            "debug_tools_open_hotkey",
+                            RitsuLibSettingsStore.AreDeveloperToolsEnabled)
+                        .WithEntryVisibleWhen(
+                            "debug_state_tools_open",
+                            RitsuLibSettingsStore.AreDeveloperToolsEnabled))
                     .AddSection("dev_debug_tools", section => section
                         .WithTitle(T("ritsulib.section.devDebugTools.title", "Developer debug tools"))
                         .Collapsible()
@@ -400,6 +452,14 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.commonFolders.locOverride.description",
                                 "Opens the localization_override folder."))),
                 "developer-tools");
+        }
+
+        private static void TryOpenDebugToolsWorkspace()
+        {
+            if (RitsuOverlayHostService.TryOpenDebugTools(out var message))
+                return;
+            RitsuToastService.ShowWarning(message,
+                L("ritsulib.debugTools.toastTitle", "Developer tools"));
         }
     }
 }

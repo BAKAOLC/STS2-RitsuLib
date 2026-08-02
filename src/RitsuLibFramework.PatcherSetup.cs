@@ -45,6 +45,7 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Settings.Patches;
 using STS2RitsuLib.Timeline.Patches;
 using STS2RitsuLib.TopBar.Patches;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.RichTextEffects.Patches;
 using STS2RitsuLib.Ui.Shell.Theme.Patches;
 using STS2RitsuLib.Unlocks.Patches;
@@ -650,6 +651,9 @@ namespace STS2RitsuLib
 #endif
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
             patcher.RegisterPatch<MainMenuModSettingsButtonPatch>();
+            patcher.RegisterPatch<RitsuOverlayActiveScreenPatch>();
+            patcher.RegisterPatch<RitsuDebugCardHolderSmallScalePatch>();
+            patcher.RegisterPatch<RitsuDebugCardHolderHoverScalePatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
         }
 

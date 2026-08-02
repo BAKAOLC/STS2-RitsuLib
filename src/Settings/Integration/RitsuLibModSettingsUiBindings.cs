@@ -1,6 +1,8 @@
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Graphics;
+using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
 
@@ -22,6 +24,10 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> DevConsoleHistoryNavigationPatchEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DevConsoleAutocompleteEnhancementsEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DevConsoleClearInputOnVisibilityChange { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> DeveloperToolsEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> DeveloperToolsAllowClientRequests { get; private init; } = null!;
+        public IModSettingsValueBinding<string> DebugToolsOpenHotkey { get; private init; } = null!;
+        public IModSettingsValueBinding<string> SettingsOpenHotkey { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> DebugCompatAncientArchitect { get; private init; } =
             null!;
@@ -90,8 +96,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> RelicDetailPngExportIncludeHover { get; private init; } =
             null!;
 
-        public IModSettingsValueBinding<string>
-            PotionDetailPngExportOutputPath { get; private init; } =
+        public IModSettingsValueBinding<string> PotionDetailPngExportOutputPath { get; private init; } =
             null!;
 
         public IModSettingsValueBinding<double> PotionDetailPngExportScale { get; private init; } =
@@ -201,6 +206,56 @@ namespace STS2RitsuLib.Settings
                         settings => settings.DevConsoleClearInputOnVisibilityChange,
                         (settings, value) => settings.DevConsoleClearInputOnVisibilityChange = value),
                     () => defaults.DevConsoleClearInputOnVisibilityChange),
+                DeveloperToolsEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.DeveloperToolsEnabled,
+                        (settings, value) =>
+                        {
+                            settings.DeveloperToolsEnabled = value;
+                            RitsuOverlayHostService.NotifyDeveloperToolsAvailabilityChanged(value);
+                        }),
+                    () => defaults.DeveloperToolsEnabled),
+                DeveloperToolsAllowClientRequests = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.DeveloperToolsAllowClientRequests,
+                        (settings, value) => settings.DeveloperToolsAllowClientRequests = value),
+                    () => defaults.DeveloperToolsAllowClientRequests),
+                DebugToolsOpenHotkey = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RuntimeHotkeyService.NormalizeOrDefault(
+                            settings.DebugToolsOpenHotkey,
+                            RitsuLibSettings.DefaultDebugToolsOpenHotkey),
+                        (settings, value) =>
+                        {
+                            var normalized = RuntimeHotkeyService.NormalizeOrDefault(
+                                value,
+                                RitsuLibSettings.DefaultDebugToolsOpenHotkey);
+                            settings.DebugToolsOpenHotkey = normalized;
+                            RitsuOverlayHostService.TryRebindDebugToolsHotkey(normalized);
+                        }),
+                    () => defaults.DebugToolsOpenHotkey),
+                SettingsOpenHotkey = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RuntimeHotkeyService.NormalizeOrDefault(
+                            settings.SettingsOpenHotkey,
+                            RitsuLibSettings.DefaultSettingsOpenHotkey),
+                        (settings, value) =>
+                        {
+                            var normalized = RuntimeHotkeyService.NormalizeOrDefault(
+                                value,
+                                RitsuLibSettings.DefaultSettingsOpenHotkey);
+                            settings.SettingsOpenHotkey = normalized;
+                            RitsuOverlayHostService.TryRebindSettingsHotkey(normalized);
+                        }),
+                    () => defaults.SettingsOpenHotkey),
                 ModSourceHoverTipsEnabled = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
