@@ -525,6 +525,8 @@ namespace STS2RitsuLib.Ui.Overlay
             Visible = _available && _sessionVisible && !_suppressed;
             if (!Visible)
             {
+                _railShown = false;
+                _collapseAfter = 0d;
                 ReleaseQuickTooltipTiming();
                 _railTween?.Kill();
                 _railTween = null;
@@ -534,6 +536,9 @@ namespace STS2RitsuLib.Ui.Overlay
                 _rail.Hide();
                 _clickAway.Hide();
                 _workspaceMover.Hide();
+                _rail.OffsetLeft = HiddenRailLeft;
+                _rail.OffsetRight = HiddenRailLeft + RailWidth;
+                _rail.Modulate = new(1f, 1f, 1f, 0f);
                 return;
             }
 
@@ -546,7 +551,12 @@ namespace STS2RitsuLib.Ui.Overlay
                 return;
             }
 
-            _railShown = false;
+            if (_railShown)
+            {
+                _peekTab.Hide();
+                return;
+            }
+
             _rail.OffsetLeft = HiddenRailLeft;
             _rail.OffsetRight = HiddenRailLeft + RailWidth;
             _rail.Modulate = new(1f, 1f, 1f, 0f);
