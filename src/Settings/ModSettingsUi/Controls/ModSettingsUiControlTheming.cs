@@ -10,6 +10,62 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public static class ModSettingsUiControlTheming
     {
+        private const string AdaptiveButtonTextEnabledMeta = "ritsulib_adaptive_button_text";
+        private const string AdaptiveButtonTextMaximumMeta = "ritsulib_adaptive_button_text_maximum";
+        private const string AdaptiveButtonTextMinimumMeta = "ritsulib_adaptive_button_text_minimum";
+
+        internal static void EnableAdaptiveButtonText(Button button, int minimumFontSize, int maximumFontSize)
+        {
+            ArgumentNullException.ThrowIfNull(button);
+            if (minimumFontSize < 1 || maximumFontSize < minimumFontSize)
+                throw new ArgumentOutOfRangeException(nameof(minimumFontSize));
+            var alreadyEnabled = button.HasMeta(AdaptiveButtonTextEnabledMeta);
+            button.SetMeta(AdaptiveButtonTextEnabledMeta, true);
+            button.SetMeta(AdaptiveButtonTextMinimumMeta, minimumFontSize);
+            button.SetMeta(AdaptiveButtonTextMaximumMeta, maximumFontSize);
+            button.ClipText = true;
+            if (alreadyEnabled)
+            {
+                RefreshAdaptiveButtonText(button);
+                return;
+            }
+
+            button.Resized += () => RefreshAdaptiveButtonText(button);
+            button.Ready += () => RefreshAdaptiveButtonText(button);
+            RefreshAdaptiveButtonText(button);
+        }
+
+        internal static void RefreshAdaptiveButtonText(Button button)
+        {
+            if (!GodotObject.IsInstanceValid(button) || !button.HasMeta(AdaptiveButtonTextEnabledMeta))
+                return;
+            var minimumFontSize = button.GetMeta(AdaptiveButtonTextMinimumMeta).AsInt32();
+            var maximumFontSize = button.GetMeta(AdaptiveButtonTextMaximumMeta).AsInt32();
+            var font = button.GetThemeFont("font");
+            var available = button.Size;
+            if (button.GetThemeStylebox("normal") is StyleBoxFlat style)
+            {
+                available.X -= style.ContentMarginLeft + style.ContentMarginRight;
+                available.Y -= style.ContentMarginTop + style.ContentMarginBottom;
+            }
+
+            if (button.Icon != null)
+                available.X -= button.Icon.GetWidth() + button.GetThemeConstant("h_separation");
+            if (available.X <= 1f || available.Y <= 1f)
+            {
+                button.AddThemeFontSizeOverride("font_size", maximumFontSize);
+                return;
+            }
+
+            var fontSize = maximumFontSize;
+            while (fontSize > minimumFontSize &&
+                   (font.GetStringSize(button.Text, HorizontalAlignment.Left, -1f, fontSize).X > available.X ||
+                    font.GetHeight(fontSize) > available.Y))
+                fontSize--;
+            if (button.GetThemeFontSize("font_size") != fontSize)
+                button.AddThemeFontSizeOverride("font_size", fontSize);
+        }
+
         /// <summary>
         ///     <para xml:lang="en">Applies one shared surface style to the button's normal, hover, pressed, and focus states.</para>
         ///     <para xml:lang="zh-CN">将同一个共用表面样式应用到按钮的常态、悬停、按下和焦点状态。</para>
@@ -215,6 +271,10 @@ namespace STS2RitsuLib.Settings
                     new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight)),
             };
             ApplySettingsToggleButtonStyle(button, pressed, false);
+            EnableAdaptiveButtonText(
+                button,
+                11,
+                RitsuShellTheme.Current.Metric.FontSize.Button);
             button.Toggled += on => ApplySettingsToggleButtonStyle(button, on, false);
             button.MouseEntered += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, true);
             button.MouseExited += () => ApplySettingsToggleButtonStyle(button, button.ButtonPressed, false);
@@ -452,6 +512,7 @@ namespace STS2RitsuLib.Settings
             button.AddThemeStyleboxOverride("hover", CreateSettingsToggleButtonStyle(on, true));
             button.AddThemeStyleboxOverride("pressed", CreateSettingsToggleButtonStyle(true, true));
             button.AddThemeStyleboxOverride("focus", CreateSettingsToggleButtonStyle(on, true));
+            RefreshAdaptiveButtonText(button);
         }
 
         /// <summary>

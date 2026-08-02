@@ -72,6 +72,10 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            ModSettingsUiControlTheming.EnableAdaptiveButtonText(
+                this,
+                11,
+                RitsuShellTheme.Current.Metric.FontSize.Button);
             Pressed += ToggleValue;
         }
 
@@ -145,6 +149,7 @@ namespace STS2RitsuLib.Settings
             AddThemeStyleboxOverride("pressed", CreateStyle(true, true));
             AddThemeStyleboxOverride("focus", CreateFocusStyle(_isOn));
             AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
+            ModSettingsUiControlTheming.RefreshAdaptiveButtonText(this);
         }
 
         private static StyleBoxFlat CreateFocusStyle(bool on)
@@ -1349,6 +1354,10 @@ namespace STS2RitsuLib.Settings
             face.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Color.White);
             face.AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Color.White);
             ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(face);
+            ModSettingsUiControlTheming.EnableAdaptiveButtonText(
+                face,
+                11,
+                RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
             face.Pressed += OnFacePressed;
             AddChild(face);
             _faceButton = face;
@@ -2213,6 +2222,7 @@ namespace STS2RitsuLib.Settings
                 ModSettingsLocalization.Get("choice.dropdown.tooltip",
                     "Opens a list to choose a value. Current: {0}"),
                 label);
+            ModSettingsUiControlTheming.RefreshAdaptiveButtonText(_faceButton);
         }
 
         private static StyleBoxFlat CreateDropdownCurrentRowNormal()
@@ -4407,6 +4417,10 @@ namespace STS2RitsuLib.Settings
             AddThemeStyleboxOverride("pressed", CreateStyle(true));
             AddThemeStyleboxOverride("focus", CreateFocusStyle());
             AddThemeStyleboxOverride("disabled", CreateStyle(false, true));
+            ModSettingsUiControlTheming.EnableAdaptiveButtonText(
+                this,
+                10,
+                RitsuShellTheme.Current.Metric.FontSize.MiniButton);
             Pressed += action;
         }
 
@@ -6907,6 +6921,10 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
+            ModSettingsUiControlTheming.EnableAdaptiveButtonText(
+                this,
+                11,
+                RitsuShellTheme.Current.Metric.FontSize.Button);
             ApplyVisualState();
         }
 
