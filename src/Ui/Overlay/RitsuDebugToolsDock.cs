@@ -303,14 +303,6 @@ namespace STS2RitsuLib.Ui.Overlay
             _pageTitle.AddThemeFontSizeOverride("font_size", 20);
             _pageTitle.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
             header.AddChild(_pageTitle);
-            var collapse = CreateIconButton(
-                RitsuDebugToolsIcons.Get(
-                    RitsuDebugToolsGlyph.ChevronLeft,
-                    20,
-                    RitsuShellTheme.Current.Text.LabelPrimary),
-                ModSettingsLocalization.Get("ritsulib.debugTools.collapse", "Collapse developer tools"),
-                () => Collapse());
-            header.AddChild(collapse);
             column.AddChild(header);
 
             var separator = new HSeparator();

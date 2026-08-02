@@ -23,7 +23,6 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class RitsuDebugToolsPanel : VBoxContainer, IScreenContext
     {
-        private const int DetailTitleFontSize = 20;
         private const int DetailBodyFontSize = 16;
         private const int DetailMetadataFontSize = 15;
         private const int DetailIdentifierFontSize = 14;

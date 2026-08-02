@@ -289,6 +289,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
+                ClipContents = true,
             };
             AddChild(workspace);
             workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -907,7 +908,10 @@ namespace STS2RitsuLib.Ui.Catalog
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[Catalog] Detail factory failed for '{item.Id}': {ex}");
-                return CreatePlaceholder($"{item.Title}\n{_options.DetailUnavailableText}", true);
+                var message = _detailTitle == null
+                    ? $"{item.Title}\n{_options.DetailUnavailableText}"
+                    : _options.DetailUnavailableText;
+                return CreatePlaceholder(message, true);
             }
         }
 

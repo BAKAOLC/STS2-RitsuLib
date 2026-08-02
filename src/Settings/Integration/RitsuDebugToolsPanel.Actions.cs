@@ -34,7 +34,6 @@ namespace STS2RitsuLib.Settings
         private Control CreateCardDetail(CardModel card)
         {
             var root = DetailShell(
-                SafeTitle(card),
                 card.Id.ToString(),
                 () => card.Portrait,
                 $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · {L("ritsulib.debugTools.cost", "Cost")} {CardCost(card)}",
@@ -83,11 +82,11 @@ namespace STS2RitsuLib.Settings
         private Control CreatePileCardDetail(PileCardEntry entry)
         {
             var root = DetailShell(
-                SafeTitle(entry.Card),
                 entry.Card.Id.ToString(),
                 () => entry.Card.Portrait,
                 $"{EnumLabel(entry.PileType)} #{entry.Index + 1} · {EnumLabel(entry.Card.Type)} · {EnumLabel(entry.Card.Rarity)}",
-                SafeCardDescription(entry.Card));
+                SafeCardDescription(entry.Card),
+                descriptionRefreshFactory: () => SafeCardDescription(entry.Card));
             AddSectionTitle(root, L("ritsulib.debugTools.action.cardState", "Card state"));
             var upgrades = CreateIntegerEdit("1");
             var upgradeButton = ActionButton(
@@ -394,7 +393,6 @@ namespace STS2RitsuLib.Settings
         private Control CreateRelicDetail(RelicModel relic)
         {
             var root = DetailShell(
-                SafeTitle(relic),
                 relic.Id.ToString(),
                 () => relic.BigIcon,
                 EnumLabel(relic.Rarity),
@@ -414,7 +412,6 @@ namespace STS2RitsuLib.Settings
         private Control CreatePotionDetail(PotionModel potion)
         {
             var root = DetailShell(
-                SafeTitle(potion),
                 potion.Id.ToString(),
                 () => PotionPreviewImage(potion),
                 EnumLabel(potion.Rarity),
@@ -428,7 +425,6 @@ namespace STS2RitsuLib.Settings
         private Control CreatePowerDetail(PowerModel power)
         {
             var root = DetailShell(
-                SafeTitle(power),
                 power.Id.ToString(),
                 () => power.Icon,
                 EnumLabel(power.Type),
@@ -489,11 +485,15 @@ namespace STS2RitsuLib.Settings
         private Control CreatePlayerDetail(Player player)
         {
             var root = DetailShell(
-                SafeTitle(player.Character),
                 player.Character.Id.ToString(),
                 null,
                 PlayerVitals(player),
                 string.Format(L("ritsulib.debugTools.playerSummary", "Max energy {0} · Potion slots {1}"),
+                    player.MaxEnergy,
+                    player.MaxPotionCount),
+                () => PlayerVitals(player),
+                () => string.Format(
+                    L("ritsulib.debugTools.playerSummary", "Max energy {0} · Potion slots {1}"),
                     player.MaxEnergy,
                     player.MaxPotionCount));
             AddSectionTitle(root, L("ritsulib.debugTools.action.playerState", "Player state"));
@@ -590,14 +590,14 @@ namespace STS2RitsuLib.Settings
         private Control CreateCreatureDetail(Creature creature)
         {
             var root = DetailShell(
-                creature.Name,
                 string.Format(
                     L("ritsulib.debugTools.creatureIdentity", "Creature #{0} · {1}"),
                     creature.CombatId,
                     creature.ModelId),
                 null,
                 CreatureVitals(creature),
-                creature.LogName);
+                creature.LogName,
+                () => CreatureVitals(creature));
             AddSectionTitle(root, L("ritsulib.debugTools.action.creatureState", "Creature state"));
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.Damage, "1", 0,
                 RitsuDebugCombatActions.MaxAmount);
@@ -715,7 +715,7 @@ namespace STS2RitsuLib.Settings
 
         private Control CreateEncounterDetail(EncounterModel encounter)
         {
-            var root = DetailShell(SafeTitle(encounter), encounter.Id.ToString(), null,
+            var root = DetailShell(encounter.Id.ToString(), null,
                 L("ritsulib.debugTools.encounter", "Encounter"), string.Empty);
             var monsters = GetEncounterMonsters(encounter);
             if (monsters.Length > 0)
@@ -750,7 +750,6 @@ namespace STS2RitsuLib.Settings
         private Control CreateMonsterDetail(MonsterModel monster)
         {
             var root = DetailShell(
-                SafeTitle(monster),
                 monster.Id.ToString(),
                 null,
                 MonsterVitals(monster),
@@ -775,7 +774,6 @@ namespace STS2RitsuLib.Settings
         private Control CreateRoomDetail(RoomType roomType)
         {
             var root = DetailShell(
-                RoomLabel(roomType),
                 roomType.ToString(),
                 null,
                 L("ritsulib.debugTools.room", "Room"),
@@ -796,7 +794,6 @@ namespace STS2RitsuLib.Settings
         private Control CreateEventDetail(EventModel eventModel)
         {
             var root = DetailShell(
-                SafeTitle(eventModel),
                 eventModel.Id.ToString(),
                 null,
                 eventModel is AncientEventModel
@@ -906,11 +903,12 @@ namespace STS2RitsuLib.Settings
         }
 
         private static RitsuDebugLiveDetailContainer DetailShell(
-            string title,
             string id,
             Func<Texture2D?>? textureFactory,
             string metadata,
-            string description)
+            string description,
+            Func<string>? metadataRefreshFactory = null,
+            Func<string>? descriptionRefreshFactory = null)
         {
             var root = new RitsuDebugLiveDetailContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             root.AddThemeConstantOverride("separation", 12);
@@ -951,15 +949,6 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
             };
             identity.AddThemeConstantOverride("separation", 4);
-            var titleLabel = new Label
-            {
-                Text = title,
-                AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            };
-            titleLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            titleLabel.AddThemeFontSizeOverride("font_size", DetailTitleFontSize);
-            titleLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
-            identity.AddChild(titleLabel);
             var idLabel = new Label
             {
                 Text = id,
@@ -974,6 +963,8 @@ namespace STS2RitsuLib.Settings
             metaLabel.AddThemeFontSizeOverride("font_size", DetailMetadataFontSize);
             metaLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichSecondary);
             identity.AddChild(metaLabel);
+            if (metadataRefreshFactory != null)
+                root.RegisterRefresh(() => metaLabel.Text = metadataRefreshFactory());
             header.AddChild(identity);
             root.AddChild(header);
             if (!string.IsNullOrWhiteSpace(description))
@@ -1003,6 +994,8 @@ namespace STS2RitsuLib.Settings
                 descriptionLabel.AddThemeColorOverride("default_color", RitsuShellTheme.Current.Text.RichBody);
                 descriptionLabel.SetTextAutoSize(description);
                 root.AddChild(descriptionLabel);
+                if (descriptionRefreshFactory != null)
+                    root.RegisterRefresh(() => descriptionLabel.SetTextAutoSize(descriptionRefreshFactory()));
             }
 
             return root;

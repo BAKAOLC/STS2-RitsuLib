@@ -183,7 +183,23 @@ namespace STS2RitsuLib.Settings
             _expandedBody.Visible = _expanded;
             RefreshHeader();
             if (_expanded)
+            {
                 QueueGridLayout();
+                Callable.From(ScrollExpandedBodyIntoView).CallDeferred();
+            }
+        }
+
+        private void ScrollExpandedBodyIntoView()
+        {
+            if (!_expanded || !IsInsideTree())
+                return;
+            for (var ancestor = GetParent(); ancestor != null; ancestor = ancestor.GetParent())
+            {
+                if (ancestor is not ScrollContainer scroll || !scroll.IsAncestorOf(_expandedBody))
+                    continue;
+                scroll.EnsureControlVisible(_expandedBody);
+                return;
+            }
         }
 
         private void Select(string id)
@@ -218,6 +234,8 @@ namespace STS2RitsuLib.Settings
                 ? selectedTitle
                 : ModSettingsLocalization.Get("ritsulib.debugTools.noEnchantment", "None selected");
             _header.Text = $"{_title} · {selection}  {(_expanded ? "▾" : "▸")}";
+            _header.TooltipText = selection;
+            ModSettingsUiControlTheming.RefreshAdaptiveButtonText(_header);
         }
 
         private void QueueGridLayout()

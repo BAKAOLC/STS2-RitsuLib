@@ -208,6 +208,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
+                ClipContents = true,
             };
             AddChild(workspace);
             workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
