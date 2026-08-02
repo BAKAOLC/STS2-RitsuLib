@@ -56,27 +56,200 @@ namespace STS2RitsuLib.Settings
                 value => selectedPile = value));
             AddHint(root, L("ritsulib.debugTools.fullHandPlacement",
                 "Cards sent to a full hand follow the game's rules and enter the discard pile."));
-            var upgrades = CreateIntegerEdit("0");
-            var addButton = ActionButton(
+            var count = IntField(root, L("ritsulib.debugTools.field.cardCount", "Number of cards"), "1");
+            var upgrades = IntField(
+                root,
+                L("ritsulib.debugTools.field.upgrades", "Upgrade levels"),
+                "0");
+
+            AddSectionTitle(root, L("ritsulib.debugTools.action.initialCardState", "Initial card state"));
+            AddHint(root, L(
+                "ritsulib.debugTools.initialCardStateHint",
+                "Displayed values are the card's defaults. Only values you change override the created card."));
+
+            var baseCostChanged = false;
+            LineEdit? baseCost = null;
+            if (!card.EnergyCost.CostsX)
+            {
+                baseCost = CreateIntegerEdit(
+                    card.EnergyCost.GetWithModifiers(CostModifiers.None).ToString());
+                baseCost.TextChanged += _ => baseCostChanged = true;
+                root.AddChild(Field(OperationLabel(RitsuDebugCardEditField.Cost), baseCost));
+            }
+
+            var replayChanged = false;
+            var replay = CreateIntegerEdit(card.BaseReplayCount.ToString());
+            replay.TextChanged += _ => replayChanged = true;
+            root.AddChild(Field(L("ritsulib.debugTools.field.replay", "Replay count"), replay));
+
+            var changedDynamicVariables = new HashSet<string>(StringComparer.Ordinal);
+            var dynamicVariableEditors = new Dictionary<string, LineEdit>(StringComparer.Ordinal);
+            foreach (var (key, dynamicVar) in card.DynamicVars.OrderBy(
+                         static pair => pair.Key,
+                         StringComparer.OrdinalIgnoreCase))
+            {
+                if (dynamicVar.BaseValue is < 0 or > RitsuDebugCardActions.MaxCardEditValue ||
+                    dynamicVar.BaseValue != decimal.Truncate(dynamicVar.BaseValue))
+                    continue;
+
+                var dynamicVariableKey = key;
+                var editor = CreateIntegerEdit(decimal.ToInt32(dynamicVar.BaseValue).ToString());
+                editor.TextChanged += _ => changedDynamicVariables.Add(dynamicVariableKey);
+                dynamicVariableEditors.Add(dynamicVariableKey, editor);
+                root.AddChild(Field(dynamicVariableKey, editor));
+            }
+
+            bool? exhaust = null;
+            bool? ethereal = null;
+            bool? unplayable = null;
+            var localKeywords = card.GetKeywordsWithSources(KeywordSources.Local);
+            root.AddChild(ModSettingsUiControlTheming.CreateCompactEditorRow(
+                2,
+                InitialFlagField(
+                    RitsuDebugCardEditField.Exhaust,
+                    localKeywords.Contains(CardKeyword.Exhaust),
+                    value => exhaust = value),
+                InitialFlagField(
+                    RitsuDebugCardEditField.Ethereal,
+                    localKeywords.Contains(CardKeyword.Ethereal),
+                    value => ethereal = value),
+                InitialFlagField(
+                    RitsuDebugCardEditField.Unplayable,
+                    localKeywords.Contains(CardKeyword.Unplayable),
+                    value => unplayable = value)));
+
+            var enchantmentOptions = ModelDb.DebugEnchantments
+                .OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase)
+                .Select(enchantment => new RitsuDebugEnchantmentOption(
+                    enchantment.Id.ToString(),
+                    SafeTitle(enchantment),
+                    () => enchantment.Icon))
+                .ToArray();
+            var specifyEnchantment = false;
+            RitsuDebugEnchantmentPicker? enchantmentPicker = null;
+            LineEdit? enchantmentAmount = null;
+            if (enchantmentOptions.Length > 0)
+            {
+                enchantmentPicker = new(
+                    L("ritsulib.debugTools.field.enchantment", "Enchantment"),
+                    enchantmentOptions,
+                    null)
+                {
+                    Visible = false,
+                };
+                enchantmentAmount = CreateIntegerEdit("1");
+                enchantmentPicker.AddExpandedControl(Field(
+                    L("ritsulib.debugTools.field.enchantmentAmount", "Enchantment amount"),
+                    enchantmentAmount));
+                var picker = enchantmentPicker;
+                root.AddChild(Field(
+                    L("ritsulib.debugTools.field.specifyEnchantment", "Specify enchantment"),
+                    ModSettingsUiControlTheming.CreateCompactStateToggle(false, enabled =>
+                    {
+                        specifyEnchantment = enabled;
+                        picker.Visible = enabled;
+                    })));
+                root.AddChild(enchantmentPicker);
+            }
+
+            root.AddChild(ActionButton(
                 L("ritsulib.debugTools.action.add", "Add"),
                 ModSettingsButtonTone.Accent,
-                () =>
-                {
-                    if (!TryReadInt(upgrades, 0, card.MaxUpgradeLevel, out var upgradeLevels) ||
-                        !TryGetActionContext(out var requester, out var selectedTarget))
-                        return;
-                    RunAction(() => RitsuDebugCardActions.SubmitCreateCard(
-                        requester,
-                        selectedTarget,
-                        card.Id.ToString(),
-                        selectedPile,
-                        upgradeLevels));
-                });
-            root.AddChild(ActionField(
-                L("ritsulib.debugTools.field.upgrades", "Upgrade levels"),
-                upgrades,
-                addButton));
+                Submit));
             return root;
+
+            Control InitialFlagField(
+                RitsuDebugCardEditField field,
+                bool initialValue,
+                Action<bool> changed)
+            {
+                return ModSettingsUiControlTheming.CreateCompactToggleField(
+                    OperationLabel(field),
+                    ModSettingsUiControlTheming.CreateCompactStateToggle(initialValue, changed));
+            }
+
+            void Submit()
+            {
+                if (!TryReadInt(count, 1, RitsuDebugCardActions.MaxCreateCount, out var cardCount) ||
+                    !TryReadInt(upgrades, 0, card.MaxUpgradeLevel, out var upgradeLevels))
+                    return;
+
+                int? costValue = null;
+                if (baseCostChanged)
+                {
+                    if (baseCost == null || !TryReadInt(
+                            baseCost,
+                            0,
+                            RitsuDebugCardActions.MaxCardEditValue,
+                            out var parsedCost))
+                        return;
+                    costValue = parsedCost;
+                }
+
+                int? replayValue = null;
+                if (replayChanged)
+                {
+                    if (!TryReadInt(replay, 0, RitsuDebugCardActions.MaxReplayCount, out var parsedReplay))
+                        return;
+                    replayValue = parsedReplay;
+                }
+
+                Dictionary<string, int>? dynamicVariables = null;
+                foreach (var key in changedDynamicVariables)
+                {
+                    if (!TryReadInt(
+                            dynamicVariableEditors[key],
+                            0,
+                            RitsuDebugCardActions.MaxCardEditValue,
+                            out var value))
+                        return;
+                    dynamicVariables ??= new(StringComparer.Ordinal);
+                    dynamicVariables.Add(key, value);
+                }
+
+                string? enchantmentId = null;
+                int? enchantmentAmountValue = null;
+                if (specifyEnchantment)
+                {
+                    if (enchantmentPicker?.SelectedId == null)
+                    {
+                        SetStatus(L(
+                            "ritsulib.debugTools.selectEnchantment",
+                            "Select an enchantment before creating the card."), true);
+                        return;
+                    }
+
+                    if (enchantmentAmount == null ||
+                        !TryReadInt(
+                            enchantmentAmount,
+                            1,
+                            RitsuDebugCardActions.MaxCardEditValue,
+                            out var parsedEnchantmentAmount))
+                        return;
+                    enchantmentId = enchantmentPicker.SelectedId;
+                    enchantmentAmountValue = parsedEnchantmentAmount;
+                }
+
+                if (!TryGetActionContext(out var requester, out var selectedTarget))
+                    return;
+                var initialState = new RitsuDebugCardActions.CardStatePayload(
+                    costValue,
+                    replayValue,
+                    dynamicVariables,
+                    exhaust,
+                    ethereal,
+                    unplayable,
+                    enchantmentId,
+                    enchantmentAmountValue);
+                RunAction(() => RitsuDebugCardActions.SubmitCreateCard(
+                    requester,
+                    selectedTarget,
+                    card.Id.ToString(),
+                    selectedPile,
+                    cardCount,
+                    upgradeLevels,
+                    initialState));
+            }
         }
 
         private Control CreatePileCardDetail(PileCardEntry entry)

@@ -39,6 +39,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const int MaxReplayCount = 99;
         internal const int MaxBulkUpgradeLevels = 99;
         internal const int MaxCopyCount = 100;
+        internal const int MaxCreateCount = 100;
+        internal const int MaxCardEditValue = 999_999;
+        internal const int MaxDynamicVariableCount = 64;
 
         private static readonly PileType[] MutablePileTypes =
             [PileType.Hand, PileType.Draw, PileType.Discard, PileType.Exhaust, PileType.Deck];
@@ -147,13 +150,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             Player target,
             string cardId,
             PileType pileType,
-            int upgradeLevels)
+            int count,
+            int upgradeLevels,
+            CardStatePayload state)
         {
             var envelope = RitsuDebugActionProtocol.CreateEnvelope(
                 CreateCardActionId,
                 requester,
                 target,
-                new CreateCardPayload(cardId, pileType.ToString(), upgradeLevels));
+                new CreateCardPayload(cardId, pileType.ToString(), count, upgradeLevels, state));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -473,12 +478,24 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (!TryResolveCanonicalCard(payload.CardId, out var canonical, out var cardFeedback))
                 return RitsuDebugActionCheck.Fail(cardFeedback);
 
+            if (payload.Count is < 1 or > MaxCreateCount)
+                return RitsuDebugActionCheck.Fail(
+                    "card.createCountRange",
+                    "Card count must be between 1 and {0}.",
+                    MaxCreateCount);
+
             if (payload.UpgradeLevels < 0 || payload.UpgradeLevels > canonical.MaxUpgradeLevel)
                 return RitsuDebugActionCheck.Fail(
                     "card.createUpgradeRange",
                     "Upgrade levels for {0} must be between 0 and {1}.",
                     canonical.Id,
                     canonical.MaxUpgradeLevel);
+
+            var preview = canonical.ToMutable();
+            ApplyUpgradeLevels(preview, payload.UpgradeLevels);
+            var stateCheck = ValidateCardState(preview, payload.State);
+            if (!stateCheck.Success)
+                return stateCheck;
 
             if (pileType != PileType.Deck && !TryRequireActiveCombat(context.Target, out var combatFeedback))
                 return RitsuDebugActionCheck.Fail(combatFeedback);
@@ -501,42 +518,150 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
             if (pileType == PileType.Deck)
             {
-                var deckCard = context.Target.RunState.CreateCard(canonical, context.Target);
-                ApplyUpgradeLevels(deckCard, payload.UpgradeLevels);
-                var result = await CardPileCmd.Add(deckCard, PileType.Deck);
-                if (!result.success)
-                    throw new RitsuDebugActionExecutionException(
-                        RitsuDebugActionFeedback.Create(
-                            "card.addToDeckFailed",
-                            "The game did not add {0} to the deck.",
-                            canonical.Id));
+                for (var index = 0; index < payload.Count; index++)
+                {
+                    var deckCard = context.Target.RunState.CreateCard(canonical, context.Target);
+                    ApplyUpgradeLevels(deckCard, payload.UpgradeLevels);
+                    ApplyCardState(deckCard, payload.State);
+                    var result = await CardPileCmd.Add(deckCard, PileType.Deck);
+                    if (!result.success)
+                        throw new RitsuDebugActionExecutionException(
+                            RitsuDebugActionFeedback.Create(
+                                "card.addToDeckFailed",
+                                "The game did not add {0} to the deck.",
+                                canonical.Id));
 
-                CardCmd.PreviewCardPileAdd(result);
-                return $"Created {canonical.Id} in the deck at upgrade level {deckCard.CurrentUpgradeLevel}.";
+                    CardCmd.PreviewCardPileAdd(result);
+                }
+
+                return payload.Count == 1
+                    ? $"Created {canonical.Id} in the deck."
+                    : $"Created {payload.Count} copies of {canonical.Id} in the deck.";
             }
 
             var combatState = context.Target.Creature.CombatState!;
-            var combatCard = combatState.CreateCard(canonical, context.Target);
-            ApplyUpgradeLevels(combatCard, payload.UpgradeLevels);
-            var addResult = await CardPileCmd.AddGeneratedCardToCombat(
-                combatCard,
-                pileType,
-                context.Target);
-            if (!addResult.success)
+            var actualPiles = new HashSet<PileType>();
+            for (var index = 0; index < payload.Count; index++)
+            {
+                var combatCard = combatState.CreateCard(canonical, context.Target);
+                ApplyUpgradeLevels(combatCard, payload.UpgradeLevels);
+                ApplyCardState(combatCard, payload.State);
+                var addResult = await CardPileCmd.AddGeneratedCardToCombat(
+                    combatCard,
+                    pileType,
+                    context.Target);
+                if (!addResult.success)
+                    throw new RitsuDebugActionExecutionException(
+                        RitsuDebugActionFeedback.Create(
+                            "card.addToPileFailed",
+                            "The game did not add {0} to {1}.",
+                            canonical.Id,
+                            pileType));
+
+                var actualPile = combatCard.Pile?.Type ?? pileType;
+                actualPiles.Add(actualPile);
+                if (actualPile is PileType.Draw or PileType.Discard or PileType.Exhaust)
+                    combatCard.Pile?.InvokeCardAddFinished();
+            }
+
+            return actualPiles.Count == 1 && actualPiles.Contains(pileType)
+                ? $"Created {payload.Count} {canonical.Id} card(s) in {pileType}."
+                : $"Created {payload.Count} {canonical.Id} card(s); game pile rules selected their final placement.";
+        }
+
+        internal static RitsuDebugActionCheck ValidateCardState(CardModel card, CardStatePayload state)
+        {
+            if (state.BaseCost is < 0 or > MaxCardEditValue ||
+                state.ReplayCount is < 0 or > MaxReplayCount)
+                return RitsuDebugActionCheck.Fail(
+                    "card.stateValueRange",
+                    "Card state values are outside the supported range.");
+            if (state.BaseCost.HasValue && card.EnergyCost.CostsX)
+                return RitsuDebugActionCheck.Fail(
+                    "card.xCostCannotReplace",
+                    "The base cost of an X-cost card cannot be replaced.");
+
+            if (state.DynamicVars is { Count: > MaxDynamicVariableCount })
+                return RitsuDebugActionCheck.Fail(
+                    "card.dynamicVarLimit",
+                    "A card state can change at most {0} dynamic variables.",
+                    MaxDynamicVariableCount);
+            if (state.DynamicVars != null)
+                foreach (var (key, value) in state.DynamicVars)
+                {
+                    if (string.IsNullOrWhiteSpace(key) || key.Length > 64)
+                        return RitsuDebugActionCheck.Fail(
+                            "card.dynamicVarKeyRequired",
+                            "A valid dynamic-variable key is required.");
+                    if (value is < 0 or > MaxCardEditValue)
+                        return RitsuDebugActionCheck.Fail(
+                            "card.editValueRange",
+                            "Card edit values must be between 0 and 999999.");
+                    if (!card.DynamicVars.ContainsKey(key))
+                        return RitsuDebugActionCheck.Fail(
+                            "card.dynamicVarMissing",
+                            "Card {0} has no dynamic variable named '{1}'.",
+                            card.Id,
+                            key);
+                }
+
+            if (state.EnchantmentId == null)
+                return state.EnchantmentAmount == null
+                    ? RitsuDebugActionCheck.Ok
+                    : RitsuDebugActionCheck.Fail(
+                        "card.enchantmentUnexpectedAmount",
+                        "An enchantment amount requires an enchantment.");
+            if (!state.EnchantmentAmount.HasValue || state.EnchantmentAmount is < 1 or > MaxCardEditValue)
+                return RitsuDebugActionCheck.Fail(
+                    "card.enchantmentAmountRange",
+                    "Enchantment amount must be between 1 and 999999.");
+            if (!TryResolveEnchantment(state.EnchantmentId, out var enchantment, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+
+            var preview = (CardModel)card.ClonePreservingMutability();
+            ApplyCardStateWithoutEnchantment(preview, state);
+            CardCmd.ClearEnchantment(preview);
+            return enchantment.CanEnchant(preview)
+                ? RitsuDebugActionCheck.Ok
+                : RitsuDebugActionCheck.Fail(
+                    "card.enchantmentIncompatible",
+                    "Enchantment {0} cannot be applied to {1}.",
+                    enchantment.Id,
+                    card.Id);
+        }
+
+        internal static void ApplyCardState(CardModel card, CardStatePayload state)
+        {
+            ApplyCardStateWithoutEnchantment(card, state);
+            if (state.EnchantmentId == null)
+                return;
+
+            _ = TryResolveEnchantment(state.EnchantmentId, out var enchantment, out _);
+            CardCmd.ClearEnchantment(card);
+            if (CardCmd.Enchant(enchantment.ToMutable(), card, state.EnchantmentAmount!.Value) == null)
                 throw new RitsuDebugActionExecutionException(
                     RitsuDebugActionFeedback.Create(
-                        "card.addToPileFailed",
-                        "The game did not add {0} to {1}.",
-                        canonical.Id,
-                        pileType));
+                        "card.enchantmentApplyFailed",
+                        "The game did not apply enchantment {0} to card {1}.",
+                        enchantment.Id,
+                        card.Id));
+        }
 
-            var actualPile = combatCard.Pile?.Type ?? pileType;
-            if (actualPile is PileType.Draw or PileType.Discard or PileType.Exhaust)
-                combatCard.Pile?.InvokeCardAddFinished();
-
-            return actualPile == pileType
-                ? $"Created {canonical.Id} in {actualPile} at upgrade level {combatCard.CurrentUpgradeLevel}."
-                : $"Created {canonical.Id} in {actualPile} because {pileType} could not accept another card.";
+        private static void ApplyCardStateWithoutEnchantment(CardModel card, CardStatePayload state)
+        {
+            if (state.BaseCost.HasValue)
+                card.EnergyCost.SetCustomBaseCost(state.BaseCost.Value);
+            if (state.ReplayCount.HasValue)
+                card.BaseReplayCount = state.ReplayCount.Value;
+            if (state.DynamicVars != null)
+                foreach (var (key, value) in state.DynamicVars)
+                    SetDynamicVar(card, key, value);
+            if (state.Exhaust.HasValue)
+                SetKeyword(card, CardKeyword.Exhaust, state.Exhaust.Value);
+            if (state.Ethereal.HasValue)
+                SetKeyword(card, CardKeyword.Ethereal, state.Ethereal.Value);
+            if (state.Unplayable.HasValue)
+                SetKeyword(card, CardKeyword.Unplayable, state.Unplayable.Value);
         }
 
         private static RitsuDebugActionCheck ValidateCopyCard(
@@ -1136,7 +1261,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal readonly record struct CreateCardPayload(
             string CardId,
             string Pile,
-            int UpgradeLevels);
+            int Count,
+            int UpgradeLevels,
+            CardStatePayload State);
+
+        internal readonly record struct CardStatePayload(
+            int? BaseCost,
+            int? ReplayCount,
+            Dictionary<string, int>? DynamicVars,
+            bool? Exhaust,
+            bool? Ethereal,
+            bool? Unplayable,
+            string? EnchantmentId,
+            int? EnchantmentAmount);
 
         internal readonly record struct CopyCardPayload(
             CardLocationPayload Location,

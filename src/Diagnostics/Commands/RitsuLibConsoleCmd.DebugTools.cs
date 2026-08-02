@@ -45,7 +45,9 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 target,
                 canonical.Id.ToString(),
                 pileType,
-                upgradeLevels));
+                1,
+                upgradeLevels,
+                default));
         }
 
         private static CmdResult ProcessSetReplayCount(Player issuingPlayer, string[] args)
