@@ -6,14 +6,17 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
-using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Catalog;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
-    internal sealed record RitsuDebugCardCatalogEntry(RitsuCatalogItem Item, CardModel VisualCard);
+    internal sealed record RitsuDebugCardCatalogEntry(
+        RitsuCatalogItem Item,
+        CardModel VisualCard,
+        CardModel SourceCard,
+        Func<Control> DetailFactory);
 
     internal sealed partial class RitsuDebugCardCatalog : Control
     {
@@ -35,6 +38,7 @@ namespace STS2RitsuLib.Settings
         private const float CardVerticalGap = 32f;
         private const float CardHorizontalPadding = 12f;
         private const float CardVerticalPadding = 16f;
+        private const float CardSelectionFrameMargin = 7f;
         private const float DetailDrawerWidth = 400f;
         private const int OverscanRows = 2;
         private static readonly List<(CardSortField Field, bool Ascending)> SortPriority =
@@ -44,17 +48,17 @@ namespace STS2RitsuLib.Settings
             (CardSortField.Cost, true),
             (CardSortField.Alphabet, true),
         ];
-        private readonly Func<RitsuCatalogItem, Control> _detailFactory;
-        private readonly RitsuDebugCardCatalogEntry[] _entries;
+        private RitsuDebugCardCatalogEntry[] _entries;
         private readonly Dictionary<string, int> _filterSelections = new(StringComparer.Ordinal);
         private readonly RitsuCatalogFilter[] _filters;
         private readonly Dictionary<NGridCardHolder, string> _holderItemIds = [];
         private readonly List<NGridCardHolder> _holders = [];
-        private readonly Dictionary<string, RitsuDebugCardCatalogEntry> _itemsById;
+        private readonly List<PanelContainer> _selectionFrames = [];
+        private Dictionary<string, RitsuDebugCardCatalogEntry> _itemsById;
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
-        private readonly Dictionary<string, int> _sourceIndexes;
+        private Dictionary<string, int> _sourceIndexes;
         private readonly Dictionary<CardSortField, Button> _sortButtons = [];
         private Control _canvas = null!;
         private ColorRect _detailBackdrop = null!;
@@ -77,7 +81,6 @@ namespace STS2RitsuLib.Settings
         internal RitsuDebugCardCatalog(
             string searchPlaceholder,
             IReadOnlyList<RitsuDebugCardCatalogEntry> entries,
-            Func<RitsuCatalogItem, Control> detailFactory,
             IReadOnlyList<RitsuCatalogFilter>? filters = null,
             string? primaryFilterId = null,
             string? primaryDefaultOptionId = null,
@@ -86,21 +89,13 @@ namespace STS2RitsuLib.Settings
             string? defaultFilterOptionId = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
-            ArgumentNullException.ThrowIfNull(entries);
-            ArgumentNullException.ThrowIfNull(detailFactory);
-            if (entries.Count > RitsuCatalogBrowser.MaximumItemCount)
-                throw new ArgumentException("The card catalog contains too many entries.", nameof(entries));
-            if (entries.Any(static entry => entry == null || entry.Item == null || entry.VisualCard == null))
-                throw new ArgumentException("Card catalog entries cannot contain null.", nameof(entries));
-            if (entries.Select(static entry => entry.Item.Id).Distinct(StringComparer.Ordinal).Count() != entries.Count)
-                throw new ArgumentException("Card catalog item IDs must be unique.", nameof(entries));
+            ValidateEntries(entries);
 
             SearchPlaceholder = searchPlaceholder;
             _entries = [.. entries];
             _itemsById = _entries.ToDictionary(static entry => entry.Item.Id, StringComparer.Ordinal);
             _sourceIndexes = _entries.Select((entry, index) => (entry.Item.Id, Index: index))
                 .ToDictionary(static pair => pair.Id, static pair => pair.Index, StringComparer.Ordinal);
-            _detailFactory = detailFactory;
             _filters = filters == null ? [] : [.. filters];
             foreach (var filter in _filters)
                 _filterSelections.Add(filter.Id, -1);
@@ -143,16 +138,30 @@ namespace STS2RitsuLib.Settings
             return holder is NGridCardHolder && holder.HasMeta(HolderMetaKey);
         }
 
-        internal void RefreshAfterAction(string actionId)
+        internal void UpdateEntries(IReadOnlyList<RitsuDebugCardCatalogEntry> entries)
         {
-            if (actionId is not (RitsuDebugCardActions.ModifyPileActionId or
-                RitsuDebugCardActions.SetReplayCountActionId or
-                RitsuDebugCardActions.EditCardActionId or
-                RitsuDebugCardActions.EnchantCardActionId or
-                RitsuDebugCardActions.ClearCardEnchantmentActionId or
-                RitsuDebugCardActions.UpgradeCardActionId))
-                return;
+            ValidateEntries(entries);
+            var rebuildDetail = false;
+            if (_selectedItemId != null)
+            {
+                var previous = _itemsById.GetValueOrDefault(_selectedItemId);
+                var current = entries.FirstOrDefault(entry => entry.Item.Id == _selectedItemId);
+                rebuildDetail = previous == null ||
+                                current == null ||
+                                !ReferenceEquals(previous.SourceCard, current.SourceCard) ||
+                                !string.Equals(previous.Item.Subtitle, current.Item.Subtitle, StringComparison.Ordinal);
+            }
 
+            _entries = [.. entries];
+            _itemsById = _entries.ToDictionary(static entry => entry.Item.Id, StringComparer.Ordinal);
+            _sourceIndexes = _entries.Select((entry, index) => (entry.Item.Id, Index: index))
+                .ToDictionary(static pair => pair.Id, static pair => pair.Index, StringComparer.Ordinal);
+            ApplyFilter(rebuildDetail);
+            RefreshState();
+        }
+
+        internal void RefreshState()
+        {
             foreach (var holder in _holders)
             {
                 if (!holder.Visible ||
@@ -166,6 +175,21 @@ namespace STS2RitsuLib.Settings
                 .OfType<RitsuDebugLiveDetailContainer>()
                 .FirstOrDefault()
                 ?.RefreshState();
+        }
+
+        private static void ValidateEntries(IReadOnlyList<RitsuDebugCardCatalogEntry> entries)
+        {
+            ArgumentNullException.ThrowIfNull(entries);
+            if (entries.Count > RitsuCatalogBrowser.MaximumItemCount)
+                throw new ArgumentException("The card catalog contains too many entries.", nameof(entries));
+            if (entries.Any(static entry => entry == null ||
+                                            entry.Item == null ||
+                                            entry.VisualCard == null ||
+                                            entry.SourceCard == null ||
+                                            entry.DetailFactory == null))
+                throw new ArgumentException("Card catalog entries cannot contain null.", nameof(entries));
+            if (entries.Select(static entry => entry.Item.Id).Distinct(StringComparer.Ordinal).Count() != entries.Count)
+                throw new ArgumentException("Card catalog item IDs must be unique.", nameof(entries));
         }
 
         public override void _Ready()
@@ -443,6 +467,7 @@ namespace STS2RitsuLib.Settings
                 button.Text = field == primary.Field
                     ? $"{SortLabel(field)} {(primary.Ascending ? '▲' : '▼')}"
                     : SortLabel(field);
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(button);
             }
         }
 
@@ -497,6 +522,7 @@ namespace STS2RitsuLib.Settings
             var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             row.AddThemeConstantOverride("separation", 4);
             catalog.AddChild(row);
+            AddOptionButton(-1, filter.AllLabel);
             for (var index = 0; index < filter.Options.Count; index++)
             {
                 var option = filter.Options[index];
@@ -506,22 +532,30 @@ namespace STS2RitsuLib.Settings
                     row.AddChild(separator);
                 }
 
-                var capturedIndex = index;
-                var button = ModSettingsUiControlTheming.CreateCompactSettingsToggleButton(
-                    option.Label,
-                    _filterSelections[filter.Id] == index);
-                button.CustomMinimumSize = new(96f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
-                button.Pressed += () =>
-                {
-                    _filterSelections[filter.Id] = capturedIndex;
-                    RefreshPrimaryFilterButtons();
-                    ApplyFilter();
-                };
-                _primaryFilterButtons.Add(index, button);
-                row.AddChild(button);
+                AddOptionButton(index, option.Label);
             }
 
             row.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+            return;
+
+            void AddOptionButton(int optionIndex, string label)
+            {
+                var button = ModSettingsUiControlTheming.CreateCompactSettingsToggleButton(
+                    label,
+                    _filterSelections[filter.Id] == optionIndex);
+                button.CustomMinimumSize = new(96f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
+                button.TooltipText = label;
+                button.Pressed += () =>
+                {
+                    _filterSelections[filter.Id] = _filterSelections[filter.Id] == optionIndex
+                        ? -1
+                        : optionIndex;
+                    RefreshPrimaryFilterButtons();
+                    ApplyFilter();
+                };
+                _primaryFilterButtons.Add(optionIndex, button);
+                row.AddChild(button);
+            }
         }
 
         private void RefreshPrimaryFilterButtons()
@@ -530,7 +564,11 @@ namespace STS2RitsuLib.Settings
                 return;
             var selected = _filterSelections[_primaryFilterId];
             foreach (var (index, button) in _primaryFilterButtons)
+            {
                 button.ButtonPressed = index == selected;
+                ModSettingsUiControlTheming.ApplySettingsToggleButtonStyle(button, index == selected, false);
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(button);
+            }
         }
 
         private async void ScheduleSearch()
@@ -543,7 +581,7 @@ namespace STS2RitsuLib.Settings
                 ApplyFilter();
         }
 
-        private void ApplyFilter()
+        private void ApplyFilter(bool rebuildDetail = true)
         {
             var terms = _search.Text.Split((char[]?)null,
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -556,7 +594,8 @@ namespace STS2RitsuLib.Settings
 
             if (_selectedItemId != null && _filtered.All(entry => entry.Item.Id != _selectedItemId))
                 _selectedItemId = null;
-            RebuildDetail();
+            if (rebuildDetail || _selectedItemId == null)
+                RebuildDetail();
             UpdateCanvasMinimumSize();
             QueueGridRefresh();
         }
@@ -658,9 +697,11 @@ namespace STS2RitsuLib.Settings
             for (var slot = 0; slot < _holders.Count; slot++)
             {
                 var holder = _holders[slot];
+                var selectionFrame = _selectionFrames[slot];
                 if (slot >= end - start)
                 {
                     holder.Hide();
+                    selectionFrame.Hide();
                     continue;
                 }
 
@@ -677,9 +718,17 @@ namespace STS2RitsuLib.Settings
                 holder.Position = new(
                     originX + column * (CardWidth + CardHorizontalGap) + CardWidth * 0.5f,
                     CardVerticalPadding + row * rowHeight + CardHeight * 0.5f);
-                holder.Modulate = entry.Item.Id == _selectedItemId
+                var selected = entry.Item.Id == _selectedItemId;
+                holder.Modulate = selected
                     ? Colors.White
                     : new Color(0.9f, 0.9f, 0.93f);
+                selectionFrame.Position = holder.Position - new Vector2(
+                    CardWidth * 0.5f + CardSelectionFrameMargin,
+                    CardHeight * 0.5f + CardSelectionFrameMargin);
+                selectionFrame.Size = new(
+                    CardWidth + CardSelectionFrameMargin * 2f,
+                    CardHeight + CardSelectionFrameMargin * 2f);
+                selectionFrame.Visible = selected;
                 holder.Show();
             }
         }
@@ -703,8 +752,17 @@ namespace STS2RitsuLib.Settings
                 holder.Scale = holder.SmallScale;
                 holder.MouseFilter = MouseFilterEnum.Pass;
                 holder.Pressed += OnHolderPressed;
+                var selectionFrame = new PanelContainer
+                {
+                    MouseFilter = MouseFilterEnum.Ignore,
+                    Visible = false,
+                };
+                selectionFrame.AddThemeStyleboxOverride("panel",
+                    RitsuShellChromeStyles.CreateSelectedListItemCardStyle());
+                _canvas.AddChild(selectionFrame);
                 _canvas.AddChild(holder);
                 card.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
+                _selectionFrames.Add(selectionFrame);
                 _holders.Add(holder);
             }
         }
@@ -747,7 +805,7 @@ namespace STS2RitsuLib.Settings
             _detailTitle.Text = selected.Item.Title;
             try
             {
-                var content = _detailFactory(selected.Item);
+                var content = selected.DetailFactory();
                 if (content == null || !IsInstanceValid(content) || content.GetParent() != null)
                     throw new InvalidOperationException("The card detail factory returned an invalid control.");
                 content.SizeFlagsHorizontal = SizeFlags.ExpandFill;

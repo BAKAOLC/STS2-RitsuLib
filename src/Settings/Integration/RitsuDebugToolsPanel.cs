@@ -1,6 +1,8 @@
 using Godot;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.DebugTools;
@@ -33,8 +35,10 @@ namespace STS2RitsuLib.Settings
         private Control? _currentBrowser;
         private RitsuDebugToolsPageView[] _pages = [];
         private bool _refreshScheduled;
+        private bool _stateRefreshScheduled;
         private Label? _status;
         private ModSettingsDropdownChoiceControl<ulong>? _targetDropdown;
+        private ulong[] _targetPlayerIds = [];
         private ulong? _targetPlayerNetId;
 
         public Control? DefaultFocusedControl => _targetDropdown;
@@ -51,6 +55,8 @@ namespace STS2RitsuLib.Settings
         {
             RitsuDebugActionProtocol.ActionExecuted += OnDebugActionExecuted;
             RitsuDebugToolsPageRegistry.Changed += OnPageRegistryChanged;
+            CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
+            CombatManager.Instance.CombatEnded += OnCombatEnded;
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             SizeFlagsVertical = SizeFlags.ExpandFill;
             CustomMinimumSize = new(0f, 540f);
@@ -76,6 +82,8 @@ namespace STS2RitsuLib.Settings
         {
             RitsuDebugActionProtocol.ActionExecuted -= OnDebugActionExecuted;
             RitsuDebugToolsPageRegistry.Changed -= OnPageRegistryChanged;
+            CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
+            CombatManager.Instance.CombatEnded -= OnCombatEnded;
             base._ExitTree();
         }
 
@@ -118,6 +126,7 @@ namespace STS2RitsuLib.Settings
             var targetOptions = players
                 .Select((player, index) => (player.NetId, PlayerLabel(player, index)))
                 .ToArray();
+            _targetPlayerIds = players.Select(static player => player.NetId).ToArray();
             _targetDropdown = new(
                 targetOptions,
                 _targetPlayerNetId ?? 0,
@@ -132,14 +141,6 @@ namespace STS2RitsuLib.Settings
                 CustomMinimumSize = new(300f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             toolbar.AddChild(_targetDropdown);
-            var refresh = new ModSettingsTextButton(
-                L("ritsulib.debugTools.refresh", "Refresh"),
-                ModSettingsButtonTone.Normal,
-                RefreshAll)
-            {
-                CustomMinimumSize = new(120f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
-            };
-            toolbar.AddChild(refresh);
         }
 
         private void BuildWorkspace()
@@ -178,9 +179,7 @@ namespace STS2RitsuLib.Settings
             var players = GetPlayers();
             if (players.All(player => player.NetId != _targetPlayerNetId))
                 _targetPlayerNetId = players.FirstOrDefault()?.NetId;
-            _targetDropdown?.SetOptions(
-                players.Select((player, index) => (player.NetId, PlayerLabel(player, index))).ToArray(),
-                _targetPlayerNetId ?? 0);
+            UpdateTargetDropdown(players, true);
             RefreshPages();
             RebuildBrowser();
         }
@@ -459,9 +458,107 @@ namespace STS2RitsuLib.Settings
                     ? L("ritsulib.debugTools.changeApplied", "The requested change was applied.")
                     : result.Message,
                 !result.Success);
-            if (result.TargetPlayerNetId == _targetPlayerNetId &&
-                _currentBrowser is RitsuDebugCardCatalog cardCatalog)
-                cardCatalog.RefreshAfterAction(result.ActionId);
+            if (result.Success && result.TargetPlayerNetId == _targetPlayerNetId)
+                ScheduleStateRefresh();
+        }
+
+        private void OnCombatStateChanged(CombatState _)
+        {
+            ScheduleStateRefresh();
+        }
+
+        private void OnCombatEnded(CombatRoom _)
+        {
+            ScheduleStateRefresh();
+        }
+
+        private void ScheduleStateRefresh()
+        {
+            if (_stateRefreshScheduled || !IsInsideTree())
+                return;
+            _stateRefreshScheduled = true;
+            Callable.From(() =>
+            {
+                _stateRefreshScheduled = false;
+                if (IsInsideTree())
+                    RefreshCurrentState();
+            }).CallDeferred();
+        }
+
+        private void RefreshCurrentState()
+        {
+            var players = GetPlayers();
+            var previousTarget = _targetPlayerNetId;
+            if (players.All(player => player.NetId != _targetPlayerNetId))
+                _targetPlayerNetId = players.FirstOrDefault()?.NetId;
+            UpdateTargetDropdown(players);
+            if (previousTarget != _targetPlayerNetId)
+            {
+                RefreshPages();
+                RebuildBrowser();
+                return;
+            }
+
+            if (_currentBrowser == null || !IsInstanceValid(_currentBrowser))
+                return;
+
+            switch (_currentPageId)
+            {
+                case $"{Const.ModId}:pile-cards":
+                    if (_currentBrowser is RitsuDebugCardCatalog pileCatalog &&
+                        TryGetTargetPlayer(out var target))
+                        pileCatalog.UpdateEntries(CreatePileCardCatalogEntries(GetPileCardEntries(target)));
+                    else
+                        RebuildBrowser();
+                    break;
+                case $"{Const.ModId}:players":
+                    RefreshCatalogItems(CreatePlayerCatalogItems(players));
+                    break;
+                case $"{Const.ModId}:creatures":
+                    var creatures = CombatManager.Instance.DebugOnlyGetState()?.Creatures
+                        .Where(static creature => creature.CombatId.HasValue)
+                        .OrderBy(static creature => creature.CombatId)
+                        .ToArray() ?? [];
+                    RefreshCatalogItems(CreateCreatureCatalogItems(creatures));
+                    break;
+                default:
+                    RefreshLiveDetails(_currentBrowser);
+                    break;
+            }
+        }
+
+        private void UpdateTargetDropdown(IReadOnlyList<Player> players, bool force = false)
+        {
+            var playerIds = players.Select(static player => player.NetId).ToArray();
+            if (!force && _targetPlayerIds.SequenceEqual(playerIds))
+                return;
+            _targetPlayerIds = playerIds;
+            _targetDropdown?.SetOptions(
+                players.Select((player, index) => (player.NetId, PlayerLabel(player, index))).ToArray(),
+                _targetPlayerNetId ?? 0);
+        }
+
+        private void RefreshCatalogItems(IReadOnlyList<RitsuCatalogItem> items)
+        {
+            if (_currentBrowser is not RitsuCatalogBrowser browser ||
+                !browser.Items.Select(static item => item.Id).SequenceEqual(
+                    items.Select(static item => item.Id),
+                    StringComparer.Ordinal))
+            {
+                RebuildBrowser();
+                return;
+            }
+
+            browser.UpdateItems(items);
+            RefreshLiveDetails(browser);
+        }
+
+        private static void RefreshLiveDetails(Node node)
+        {
+            if (node is RitsuDebugLiveDetailContainer detail)
+                detail.RefreshState();
+            foreach (var child in node.GetChildren())
+                RefreshLiveDetails(child);
         }
 
         private void ScheduleRefresh()

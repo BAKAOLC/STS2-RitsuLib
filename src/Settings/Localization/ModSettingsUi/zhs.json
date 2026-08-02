@@ -793,8 +793,6 @@
   "ritsulib.debugTools.category.rooms": "房间",
   "ritsulib.debugTools.category.encounters": "遭遇",
   "ritsulib.debugTools.category.events": "事件",
-  "ritsulib.debugTools.refresh": "刷新",
-  "ritsulib.debugTools.collapse": "收起开发者工具",
   "ritsulib.debugTools.expand": "显示开发者工具",
   "ritsulib.debugTools.disabled": "请先在 RitsuLib 设置中启用“开发者工具”，再打开此工作区。",
   "ritsulib.debugTools.notAvailableYet": "RitsuLib 开发者工具暂时不可用，请在当前界面载入完成后重试。",

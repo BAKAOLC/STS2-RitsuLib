@@ -793,8 +793,6 @@
   "ritsulib.debugTools.category.rooms": "Rooms",
   "ritsulib.debugTools.category.encounters": "Encounters",
   "ritsulib.debugTools.category.events": "Events",
-  "ritsulib.debugTools.refresh": "Refresh",
-  "ritsulib.debugTools.collapse": "Collapse developer tools",
   "ritsulib.debugTools.expand": "Show developer tools",
   "ritsulib.debugTools.disabled": "Enable developer tools in RitsuLib settings before opening this workspace.",
   "ritsulib.debugTools.notAvailableYet": "RitsuLib developer tools are not available yet. Try again after the current screen finishes loading.",

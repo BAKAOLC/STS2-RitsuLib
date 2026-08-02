@@ -176,6 +176,16 @@ namespace STS2RitsuLib.Ui.Catalog
         /// </exception>
         public void SetItems(IReadOnlyList<RitsuCatalogItem> items)
         {
+            SetItems(items, true);
+        }
+
+        internal void UpdateItems(IReadOnlyList<RitsuCatalogItem> items)
+        {
+            SetItems(items, false);
+        }
+
+        private void SetItems(IReadOnlyList<RitsuCatalogItem> items, bool rebuildDetail)
+        {
             ArgumentNullException.ThrowIfNull(items);
             if (items.Count > MaximumItemCount)
                 throw new ArgumentException($"A catalog cannot contain more than {MaximumItemCount} items.",
@@ -190,7 +200,7 @@ namespace STS2RitsuLib.Ui.Catalog
             _filterFailureKeys.Clear();
             _iconCache.Clear();
             if (_uiBuilt)
-                ApplyFilter();
+                ApplyFilter(rebuildDetail);
         }
 
         /// <summary>
@@ -526,7 +536,7 @@ namespace STS2RitsuLib.Ui.Catalog
             ApplyFilter();
         }
 
-        private void ApplyFilter()
+        private void ApplyFilter(bool rebuildDetail = true)
         {
             var terms = (_search?.Text ?? string.Empty).Split(
                 (char[]?)null,
@@ -550,7 +560,7 @@ namespace STS2RitsuLib.Ui.Catalog
                      _options.DetailPresentation == RitsuCatalogDetailPresentation.Inline &&
                      _filteredItems.Length > 0)
                 SetSelection(_filteredItems[0].Id, true);
-            else
+            else if (rebuildDetail)
                 RebuildDetail();
             QueueVirtualRefresh();
         }
