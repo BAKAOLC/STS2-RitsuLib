@@ -4772,6 +4772,8 @@ namespace STS2RitsuLib.Settings
 
         internal ModSettingsUiContext UiContext { get; }
 
+        internal ModSettingsMenuCapabilities EntryMenuCapabilities => _entry.MenuCapabilities;
+
         public override void _Notification(int what)
         {
             if (what != NotificationDragEnd) return;
@@ -4892,8 +4894,8 @@ namespace STS2RitsuLib.Settings
             };
             header.AddChild(addButton);
 
-            if (ModSettingsUiFactory.CreateEntryActionsButton(UiContext, _entry.Binding) is ModSettingsActionsButton
-                actionsButton)
+            if (ModSettingsUiFactory.CreateEntryActionsButton(UiContext, _entry.Binding, _entry.MenuCapabilities) is
+                ModSettingsActionsButton actionsButton)
             {
                 header.AddChild(actionsButton);
                 ModSettingsUiFactory.AttachContextMenuTargets(this, shell, actionsButton);
@@ -5688,7 +5690,8 @@ namespace STS2RitsuLib.Settings
                 actions.AddChild(headerAccessory);
 
             var actionsButton = new ModSettingsActionsButton(
-                ModSettingsUiFactory.BuildListItemMenuActions(owner.UiContext, itemContext),
+                ModSettingsUiFactory.BuildListItemMenuActions(owner.UiContext, itemContext,
+                    owner.EntryMenuCapabilities),
                 itemContext.RequestRefresh)
             {
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
@@ -6369,14 +6372,6 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyContentEnabledState()
         {
-            if (_content != null)
-                ModSettingsUiFactory.ApplyEnabledRecursive(_content, _contentEnabled);
-
-            // Actions should follow the content enabled state (disabled when unavailable).
-            if (_headerActions != null)
-                ModSettingsUiFactory.ApplyEnabledRecursive(_headerActions, _contentEnabled);
-
-            // Collapsing stays operable; only the content becomes disabled.
             _toggle?.SetContentEnabled(_contentEnabled);
         }
 
