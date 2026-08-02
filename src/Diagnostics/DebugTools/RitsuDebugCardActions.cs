@@ -15,7 +15,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         Exhaust,
         Ethereal,
         Unplayable,
-        ExhaustOnNextPlay,
         DynamicVar,
     }
 
@@ -753,8 +752,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "Card edit values must be between 0 and 999999.");
             if (payload.Field is RitsuDebugCardEditField.Exhaust or
                     RitsuDebugCardEditField.Ethereal or
-                    RitsuDebugCardEditField.Unplayable or
-                    RitsuDebugCardEditField.ExhaustOnNextPlay && payload.Value is not (0 or 1))
+                    RitsuDebugCardEditField.Unplayable && payload.Value is not (0 or 1))
                 return RitsuDebugActionCheck.Fail(
                     "card.flagValue",
                     "Card flag values must be 0 or 1.");
@@ -808,9 +806,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     break;
                 case RitsuDebugCardEditField.Unplayable:
                     SetKeyword(card, CardKeyword.Unplayable, payload.Value != 0);
-                    break;
-                case RitsuDebugCardEditField.ExhaustOnNextPlay:
-                    card.ExhaustOnNextPlay = payload.Value != 0;
                     break;
                 case RitsuDebugCardEditField.DynamicVar:
                     SetDynamicVar(card, payload.DynamicVarKey!, payload.Value);

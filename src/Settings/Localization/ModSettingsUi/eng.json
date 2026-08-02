@@ -1098,7 +1098,6 @@
   "ritsulib.debugTools.operation.RitsuDebugCardEditField.Exhaust": "Exhaust",
   "ritsulib.debugTools.operation.RitsuDebugCardEditField.Ethereal": "Ethereal",
   "ritsulib.debugTools.operation.RitsuDebugCardEditField.Unplayable": "Unplayable",
-  "ritsulib.debugTools.operation.RitsuDebugCardEditField.ExhaustOnNextPlay": "Exhaust on next play",
   "ritsulib.debugTools.operation.RitsuDebugPlayerOperation.AddGold": "Add gold",
   "ritsulib.debugTools.operation.RitsuDebugPlayerOperation.SetGold": "Set gold",
   "ritsulib.debugTools.operation.RitsuDebugPlayerOperation.Heal": "Heal",

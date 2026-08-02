@@ -1098,7 +1098,6 @@
   "ritsulib.debugTools.operation.RitsuDebugCardEditField.Exhaust": "消耗",
   "ritsulib.debugTools.operation.RitsuDebugCardEditField.Ethereal": "虚无",
   "ritsulib.debugTools.operation.RitsuDebugCardEditField.Unplayable": "不可打出",
-  "ritsulib.debugTools.operation.RitsuDebugCardEditField.ExhaustOnNextPlay": "下次打出后消耗",
   "ritsulib.debugTools.operation.RitsuDebugPlayerOperation.AddGold": "增加金币",
   "ritsulib.debugTools.operation.RitsuDebugPlayerOperation.SetGold": "设置金币",
   "ritsulib.debugTools.operation.RitsuDebugPlayerOperation.Heal": "治疗",

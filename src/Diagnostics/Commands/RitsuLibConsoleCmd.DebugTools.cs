@@ -409,7 +409,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length == 7)
                 return CompleteCurrentArgument(
                     field is RitsuDebugCardEditField.Exhaust or RitsuDebugCardEditField.Ethereal or
-                        RitsuDebugCardEditField.Unplayable or RitsuDebugCardEditField.ExhaustOnNextPlay
+                        RitsuDebugCardEditField.Unplayable
                         ? ["0", "1"]
                         : ["0", "1", "2", "3", "5", "10"],
                     args);
@@ -576,7 +576,6 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 "exhaust" => RitsuDebugCardEditField.Exhaust,
                 "ethereal" => RitsuDebugCardEditField.Ethereal,
                 "unplayable" => RitsuDebugCardEditField.Unplayable,
-                "exhaust-next" => RitsuDebugCardEditField.ExhaustOnNextPlay,
                 "dynamic-var" => RitsuDebugCardEditField.DynamicVar,
                 _ => (RitsuDebugCardEditField)(-1),
             };
@@ -587,7 +586,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
         {
             return
             [
-                "cost", "exhaust", "ethereal", "unplayable", "exhaust-next", "dynamic-var",
+                "cost", "exhaust", "ethereal", "unplayable", "dynamic-var",
             ];
         }
 

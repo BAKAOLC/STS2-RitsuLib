@@ -223,9 +223,7 @@ namespace STS2RitsuLib.Settings
                 CardFlagField(root, entry, RitsuDebugCardEditField.Ethereal,
                     localKeywords.Contains(CardKeyword.Ethereal)),
                 CardFlagField(root, entry, RitsuDebugCardEditField.Unplayable,
-                    localKeywords.Contains(CardKeyword.Unplayable)),
-                CardFlagField(root, entry, RitsuDebugCardEditField.ExhaustOnNextPlay,
-                    entry.Card.ExhaustOnNextPlay)));
+                    localKeywords.Contains(CardKeyword.Unplayable))));
 
             var enchantments = ModelDb.DebugEnchantments
                 .OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase)
@@ -352,8 +350,6 @@ namespace STS2RitsuLib.Settings
 
         private static bool ReadCardFlag(CardModel card, RitsuDebugCardEditField field)
         {
-            if (field == RitsuDebugCardEditField.ExhaustOnNextPlay)
-                return card.ExhaustOnNextPlay;
             var keyword = field switch
             {
                 RitsuDebugCardEditField.Exhaust => CardKeyword.Exhaust,
