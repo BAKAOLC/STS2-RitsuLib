@@ -969,6 +969,7 @@ namespace STS2RitsuLib.Ui.Catalog
         {
             private readonly Label _badge;
             private readonly TextureRect _icon;
+            private readonly ColorRect _selectionIndicator;
             private readonly Label _title;
             private string? _itemId;
 
@@ -982,6 +983,9 @@ namespace STS2RitsuLib.Ui.Catalog
                     if (_itemId != null)
                         ItemPressed?.Invoke(_itemId);
                 };
+
+                _selectionIndicator = CreateSelectionIndicator();
+                AddChild(_selectionIndicator);
 
                 var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore };
                 margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -1049,8 +1053,13 @@ namespace STS2RitsuLib.Ui.Catalog
                 _badge.Text = item.Badge ?? item.Subtitle ?? string.Empty;
                 _badge.Visible = !string.IsNullOrWhiteSpace(_badge.Text);
                 TooltipText = ResolveTooltip(item);
-                var normal = RitsuShellChromeStyles.CreateListItemCardStyle(selected);
-                var emphasis = RitsuShellChromeStyles.CreateListItemCardStyle(true);
+                _selectionIndicator.Visible = selected;
+                var normal = selected
+                    ? RitsuShellChromeStyles.CreateSelectedListItemCardStyle()
+                    : RitsuShellChromeStyles.CreateListItemCardStyle();
+                var emphasis = selected
+                    ? normal
+                    : RitsuShellChromeStyles.CreateListItemCardStyle(true);
                 AddThemeStyleboxOverride("normal", normal);
                 AddThemeStyleboxOverride("hover", emphasis);
                 AddThemeStyleboxOverride("pressed", emphasis);
@@ -1063,6 +1072,7 @@ namespace STS2RitsuLib.Ui.Catalog
         {
             private readonly Label _badge;
             private readonly TextureRect _icon;
+            private readonly ColorRect _selectionIndicator;
             private readonly Label _subtitle;
             private readonly Label _title;
             private string? _itemId;
@@ -1078,6 +1088,9 @@ namespace STS2RitsuLib.Ui.Catalog
                     if (_itemId != null)
                         ItemPressed?.Invoke(_itemId);
                 };
+
+                _selectionIndicator = CreateSelectionIndicator();
+                AddChild(_selectionIndicator);
 
                 var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore };
                 margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -1151,14 +1164,34 @@ namespace STS2RitsuLib.Ui.Catalog
                 _badge.Text = item.Badge ?? string.Empty;
                 _badge.Visible = !string.IsNullOrWhiteSpace(item.Badge);
                 TooltipText = ResolveTooltip(item);
-                var normal = RitsuShellChromeStyles.CreateListItemCardStyle(selected);
-                var emphasis = RitsuShellChromeStyles.CreateListItemCardStyle(true);
+                _selectionIndicator.Visible = selected;
+                var normal = selected
+                    ? RitsuShellChromeStyles.CreateSelectedListItemCardStyle()
+                    : RitsuShellChromeStyles.CreateListItemCardStyle();
+                var emphasis = selected
+                    ? normal
+                    : RitsuShellChromeStyles.CreateListItemCardStyle(true);
                 AddThemeStyleboxOverride("normal", normal);
                 AddThemeStyleboxOverride("hover", emphasis);
                 AddThemeStyleboxOverride("pressed", emphasis);
                 AddThemeStyleboxOverride("focus", emphasis);
                 AddThemeStyleboxOverride("disabled", normal);
             }
+        }
+
+        private static ColorRect CreateSelectionIndicator()
+        {
+            var indicator = new ColorRect
+            {
+                Color = RitsuShellTheme.Current.Component.ListItem.Accent.Border,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Visible = false,
+            };
+            indicator.AnchorLeft = 1f;
+            indicator.AnchorRight = 1f;
+            indicator.AnchorBottom = 1f;
+            indicator.OffsetLeft = -5f;
+            return indicator;
         }
 
         private static string ResolveTooltip(RitsuCatalogItem item)
