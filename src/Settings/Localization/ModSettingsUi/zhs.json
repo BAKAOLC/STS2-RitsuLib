@@ -1003,6 +1003,7 @@
   "ritsulib.debugTools.field.enchantment": "附魔",
   "ritsulib.debugTools.field.enchantmentAmount": "附魔数值",
   "ritsulib.debugTools.field.ancientOption": "先古选项",
+  "ritsulib.debugTools.field.specifyAncientOption": "指定选项",
   "ritsulib.debugTools.integerHint": "输入整数",
   "ritsulib.debugTools.invalidInteger": "请输入 {0} 至 {1} 之间的整数。",
   "ritsulib.debugTools.action.createCard": "创建卡牌",

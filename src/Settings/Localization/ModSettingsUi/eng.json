@@ -1003,6 +1003,7 @@
   "ritsulib.debugTools.field.enchantment": "Enchantment",
   "ritsulib.debugTools.field.enchantmentAmount": "Enchantment amount",
   "ritsulib.debugTools.field.ancientOption": "Ancient option",
+  "ritsulib.debugTools.field.specifyAncientOption": "Specify option",
   "ritsulib.debugTools.integerHint": "Enter an integer",
   "ritsulib.debugTools.invalidInteger": "Enter an integer between {0} and {1}.",
   "ritsulib.debugTools.action.createCard": "Create card",

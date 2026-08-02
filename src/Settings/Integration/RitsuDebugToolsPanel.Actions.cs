@@ -805,7 +805,7 @@ namespace STS2RitsuLib.Settings
             if (eventModel is AncientEventModel ancient)
             {
                 var optionFeedback = default(RitsuDebugActionFeedback);
-                var options = Array.Empty<(string? Value, string Label)>();
+                var options = Array.Empty<(string Value, string Label)>();
                 if (TryGetTargetPlayer(out var target) &&
                     RitsuDebugRunActions.TryGetAvailableAncientOptions(
                         ancient,
@@ -816,10 +816,10 @@ namespace STS2RitsuLib.Settings
                     {
                         var token = RitsuDebugRunActions.GetAncientOptionToken(option);
                         var title = SafeDescription(() => option.Title?.GetFormattedText());
-                        return ((string?)token, string.IsNullOrWhiteSpace(title) ? token : title);
+                        return (token, string.IsNullOrWhiteSpace(title) ? token : title);
                     }).ToArray();
 
-                if (options.Length == 0 && optionFeedback.IsValid())
+                if (optionFeedback.IsValid())
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[DebugToolsUi] Could not list options for '{ancient.Id}': " +
@@ -830,12 +830,25 @@ namespace STS2RitsuLib.Settings
 
                 if (options.Length > 0)
                 {
-                    ancientOption = options[0].Item1;
-                    root.AddChild(DropdownField(
+                    var selectableOptions = options;
+                    var optionFieldHolder = new Control?[1];
+                    var specifyOption = ModSettingsUiControlTheming.CreateCompactStateToggle(false, enabled =>
+                    {
+                        ancientOption = enabled ? selectableOptions[0].Value : null;
+                        if (optionFieldHolder[0] != null)
+                            optionFieldHolder[0]!.Visible = enabled;
+                    });
+                    root.AddChild(Field(
+                        L("ritsulib.debugTools.field.specifyAncientOption", "Specify option"),
+                        specifyOption));
+                    var optionField = DropdownField(
                         L("ritsulib.debugTools.field.ancientOption", "Ancient option"),
-                        options,
-                        ancientOption,
-                        value => ancientOption = value));
+                        selectableOptions,
+                        selectableOptions[0].Value,
+                        value => ancientOption = value);
+                    optionFieldHolder[0] = optionField;
+                    optionField.Hide();
+                    root.AddChild(optionField);
                 }
             }
 
