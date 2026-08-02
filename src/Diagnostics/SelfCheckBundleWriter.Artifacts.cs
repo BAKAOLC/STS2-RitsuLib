@@ -5,9 +5,9 @@ using System.Text;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Runs;
-using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Platform;
+using STS2RitsuLib.Utils.Persistence;
 using Environment = System.Environment;
 using IOFileAccess = System.IO.FileAccess;
 
@@ -119,7 +119,7 @@ namespace STS2RitsuLib.Diagnostics
             ICollection<ArtifactEntry> artifacts,
             ICollection<string> warnings)
         {
-            var accountBasePath = ProjectSettings.GlobalizePath(UserDataPathProvider.GetAccountScopedBasePath(""));
+            var accountBasePath = ProjectSettings.GlobalizePath(ProfileManager.GetAccountRootPath());
             if (!Directory.Exists(accountBasePath))
             {
                 warnings.Add($"account save directory not found: {SanitizeForReport(accountBasePath)}");
@@ -202,7 +202,7 @@ namespace STS2RitsuLib.Diagnostics
                 $"Godot User Data Dir: {SanitizeForReport(SafeGodotString(OS.GetUserDataDir))}",
                 $"Godot Data Dir: {SanitizeForReport(SafeGodotString(OS.GetDataDir))}",
                 $"user://: {SanitizeForReport(GetUserDataDirectory())}",
-                $"Account Scoped Base Path: {SanitizeForReport(ProjectSettings.GlobalizePath(UserDataPathProvider.GetAccountScopedBasePath("")))}",
+                $"Account Scoped Base Path: {SanitizeForReport(ProjectSettings.GlobalizePath(ProfileManager.GetAccountRootPath()))}",
                 $".NET Framework: {RuntimeInformation.FrameworkDescription}",
                 $"OS Description: {RuntimeInformation.OSDescription}",
                 $"OS Architecture: {RuntimeInformation.OSArchitecture}",
