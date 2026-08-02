@@ -5,6 +5,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.Nodes.Debug;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Patching;
 using STS2RitsuLib.Patching.Models;
 using GameDevConsole = MegaCrit.Sts2.Core.DevConsole.DevConsole;
 
@@ -73,20 +74,26 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Replaces the base game's developer-console history navigation with shell-style cursor movement and
-    ///         restoration of the in-progress draft.
+    ///         Extends developer-console input with numeric keypad confirmation, shell-style history cursor movement,
+    ///         and restoration of the in-progress draft.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         将原版开发者控制台的历史记录导航替换为 Shell 风格的光标移动，并可恢复尚未提交的输入草稿。
+    ///         为开发者控制台输入增加数字小键盘确认、Shell 风格的历史记录光标移动，以及尚未提交输入草稿的恢复能力。
     ///     </para>
     /// </summary>
     internal sealed class DevConsoleHistoryNavigationInputPatch : IPatchMethod
     {
+        private static readonly Action<NDevConsole> AcceptSelection =
+            PrivateAccess.MethodDelegate<NDevConsole, Action<NDevConsole>>("AcceptSelection");
+
+        private static readonly Action<NDevConsole> ProcessCommand =
+            PrivateAccess.MethodDelegate<NDevConsole, Action<NDevConsole>>("ProcessCommand");
+
         public static string PatchId => "dev_console_history_navigation_input";
         public static bool IsCritical => false;
 
         public static string Description =>
-            "DevConsole history navigation: fix up/down cursor movement and restore the in-progress draft";
+            "DevConsole input: support numpad Enter, fix history navigation, and restore the in-progress draft";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -95,12 +102,6 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         public static bool Prefix(NDevConsole __instance, InputEvent inputEvent)
         {
-            var historyPatchEnabled = RitsuLibSettingsStore.IsDevConsoleHistoryNavigationPatchEnabled();
-            var clearInputOnVisibilityChange =
-                RitsuLibSettingsStore.ShouldClearDevConsoleInputOnVisibilityChange();
-            if (!historyPatchEnabled && !clearInputOnVisibilityChange)
-                return true;
-
             if (inputEvent is not InputEventKey { Pressed: not false } keyEvent)
                 return true;
 
@@ -109,6 +110,22 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
             var tabCompletion = DevConsoleHistoryNavigationState.GetTabCompletion(__instance);
             if (tabCompletion == null)
+                return true;
+
+            if (IsNumpadEnter(keyEvent))
+            {
+                if (tabCompletion.InSelectionMode)
+                    AcceptSelection(__instance);
+                else
+                    ProcessCommand(__instance);
+
+                return false;
+            }
+
+            var historyPatchEnabled = RitsuLibSettingsStore.IsDevConsoleHistoryNavigationPatchEnabled();
+            var clearInputOnVisibilityChange =
+                RitsuLibSettingsStore.ShouldClearDevConsoleInputOnVisibilityChange();
+            if (!historyPatchEnabled && !clearInputOnVisibilityChange)
                 return true;
 
             if (WillCloseConsole(keyEvent, tabCompletion))
@@ -135,6 +152,12 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
             __instance.GetViewport().SetInputAsHandled();
             return false;
+        }
+
+        private static bool IsNumpadEnter(InputEventKey keyEvent)
+        {
+            return keyEvent.Keycode == Key.KpEnter
+                   || keyEvent.PhysicalKeycode == Key.KpEnter;
         }
 
         private static bool WillCloseConsole(InputEventKey keyEvent, TabCompletionState tabCompletion)
