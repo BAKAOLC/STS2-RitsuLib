@@ -13,9 +13,11 @@ namespace STS2RitsuLib.Data.Models
         ///     <para xml:lang="en">The current schema version written when settings are created or normalized.</para>
         ///     <para xml:lang="zh-CN">创建或规范化设置时写入的当前架构版本。</para>
         /// </summary>
-        public const int CurrentSchemaVersion = 15;
+        public const int CurrentSchemaVersion = 16;
 
         internal const double DefaultToastDurationSeconds = 6d;
+        internal const string DefaultSettingsOpenHotkey = "Ctrl+Shift+F9";
+        internal const string DefaultDebugToolsOpenHotkey = "Ctrl+Shift+F10";
 
         /// <summary>
         ///     <para xml:lang="en">Gets or sets the persisted schema version used by the migration pipeline.</para>
@@ -173,6 +175,61 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("dev_console_clear_input_on_visibility_change")]
         public bool DevConsoleClearInputOnVisibilityChange { get; set; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether RitsuLib developer tools are enabled. When enabled, the visual workspace and
+        ///         developer-console commands can inspect or modify supported game state. In multiplayer this controls
+        ///         local access; changes approved by the host are still applied so every player retains the same run
+        ///         state. These tools are disabled by default.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置是否启用 RitsuLib 开发者工具。启用后，可视化工作台和开发者控制台指令可以检查或修改
+        ///         受支持的游戏状态。在多人模式下，此设置只控制本机入口；主机批准的修改仍会生效，使所有玩家保持
+        ///         相同的对局状态。这些工具默认关闭。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("developer_tools_enabled")]
+        public bool DeveloperToolsEnabled { get; set; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether a multiplayer host accepts supported state changes requested by other players.
+        ///         The host must also enable the developer tools, and every connected player must use a compatible
+        ///         RitsuLib version before a request can be accepted.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置多人游戏主机是否接受其他玩家请求的受支持状态修改。主机还必须启用开发者工具，
+        ///         且每个在线玩家都必须使用兼容的 RitsuLib 版本，请求才会被接受。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("developer_tools_allow_client_requests")]
+        public bool DeveloperToolsAllowClientRequests { get; set; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets the runtime key binding that opens the visual developer-tools workspace. The binding is
+        ///         ignored while developer tools are disabled. The binding changes only workspace visibility and does
+        ///         not enable or disable the feature.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置用于显示或关闭可视化开发者工具工作台的运行时按键绑定。开发者工具关闭时会忽略此绑定；
+        ///         此按键绑定只改变工作台可见性，不会启用或禁用该功能。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("debug_tools_open_hotkey")]
+        public string DebugToolsOpenHotkey { get; set; } = DefaultDebugToolsOpenHotkey;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets the runtime key binding that opens the independent mod settings center.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置用于打开独立模组设置中心的运行时按键绑定。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("settings_open_hotkey")]
+        public string SettingsOpenHotkey { get; set; } = DefaultSettingsOpenHotkey;
 
         /// <summary>
         ///     <para xml:lang="en">Gets or sets whether content-source hover tips are enabled.</para>

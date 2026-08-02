@@ -1,13 +1,14 @@
+using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Interactions.RightClick;
 
 namespace STS2RitsuLib.Networking.Sidecar
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Coordinates one-time installation of RitsuLib Sidecar's built-in protocol handlers.
+    ///         Provides the entry point that prepares RitsuLib's built-in multiplayer features.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         协调 RitsuLib Sidecar 内置协议处理器的一次性安装。
+    ///         提供用于准备 RitsuLib 内置多人功能的入口。
     ///     </para>
     /// </summary>
     public static class RitsuLibSidecarProtocol
@@ -19,22 +20,20 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Registers the built-in control, synchronization, right-click, lifecycle, and capability handlers once
-        ///         per process.
+        ///         Prepares RitsuLib's built-in multiplayer support, including synchronized mod interactions and
+        ///         optional developer-tool changes. Repeated calls are safe.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         在每个进程中注册一次内置的控制、同步、右键交互、生命周期和能力处理器。
+        ///         准备 RitsuLib 的内置多人支持，包括同步的模组交互和可选的开发者工具修改；可安全重复调用。
         ///     </para>
         /// </summary>
         /// <remarks>
         ///     <para xml:lang="en">
-        ///         The completed marker is written only after every registration succeeds. An installation failure clears
-        ///         the in-progress marker, allowing a later call to retry. Calls that arrive while installation is in
-        ///         progress return without waiting, including reentrant calls.
+        ///         This method is safe to call repeatedly or reentrantly. A concurrent call may return before another
+        ///         call finishes; if preparation fails, a later call may retry.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         仅在所有注册成功后才写入完成标记。安装失败会清除进行中标记，使后续调用可以重试。
-        ///         在安装进行期间到达的调用（包括重入调用）会直接返回而不会等待。
+        ///         此方法可安全重复调用或重入调用。并发调用可能会在另一调用完成前返回；准备失败后，后续调用可再次尝试。
         ///     </para>
         /// </remarks>
         public static void EnsureDefaultHandlers()
@@ -54,6 +53,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     RitsuLibSidecarBuiltInHandlers.Register();
                     RitsuLibSidecarSyncMessages.RegisterBuiltInHandler();
                     ModRightClickRegistry.RegisterBuiltInSyncDescriptors();
+                    RitsuDebugActionProtocol.EnsureHandlersRegistered();
                     RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();
                     RitsuLibSidecarRequiredCapabilities.RegisterRequiredCapability(
                         "ritsulib:sidecar_core_supported",

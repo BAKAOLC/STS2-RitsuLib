@@ -1,21 +1,23 @@
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
+using STS2RitsuLib.Data;
 using STS2RitsuLib.Settings;
 
 namespace STS2RitsuLib.Diagnostics.Commands
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Implements the root console command for RitsuLib diagnostics and settings navigation.
+    ///         Implements the root console command for RitsuLib diagnostics, settings navigation, and opt-in
+    ///         run-state editing tools.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         实现 RitsuLib 诊断和设置导航的根控制台命令。
+    ///         实现 RitsuLib 诊断、设置导航与需主动启用的对局状态编辑工具根控制台指令。
     ///     </para>
     /// </summary>
-    public sealed class RitsuLibConsoleCmd : AbstractConsoleCmd
+    public sealed partial class RitsuLibConsoleCmd : AbstractConsoleCmd
     {
-        private static readonly string[] RootCommands = ["selfcheck", "settings"];
+        private static readonly string[] StandardRootCommands = ["selfcheck", "settings"];
         private static readonly string[] SelfCheckActions = ["run", "open-output"];
         private static readonly string[] SettingsActions = ["open"];
 
@@ -23,11 +25,14 @@ namespace STS2RitsuLib.Diagnostics.Commands
         public override string CmdName => "ritsulib";
 
         /// <inheritdoc />
-        public override string Args =>
-            "selfcheck run|open-output OR settings open <modId> [pageId] [sectionId] [entryId]";
+        public override string Args => RitsuLibSettingsStore.AreDeveloperToolsEnabled()
+            ? "selfcheck run|open-output OR settings open <modId> [pageId] [sectionId] [entryId] OR debug <group> ..."
+            : "selfcheck run|open-output OR settings open <modId> [pageId] [sectionId] [entryId]";
 
         /// <inheritdoc />
-        public override string Description => "RitsuLib tools: selfcheck run/open-output; settings open.";
+        public override string Description => RitsuLibSettingsStore.AreDeveloperToolsEnabled()
+            ? "RitsuLib tools: self-check, settings navigation, and explicitly enabled run-state editing."
+            : "RitsuLib tools: selfcheck run/open-output; settings open.";
 
         /// <inheritdoc />
         public override bool IsNetworked => false;
@@ -38,8 +43,13 @@ namespace STS2RitsuLib.Diagnostics.Commands
             if (args.Length <= 1)
             {
                 var partial = args.Length == 0 ? string.Empty : args[0];
-                return CompleteArgument(RootCommands, [], partial, CompletionType.Subcommand);
+                return CompleteArgument(GetRootCommands(), [], partial, CompletionType.Subcommand);
             }
+
+            if (args[0].Equals("debug", StringComparison.OrdinalIgnoreCase))
+                return RitsuLibSettingsStore.AreDeveloperToolsEnabled()
+                    ? CompleteDebugArguments(player, args)
+                    : base.GetArgumentCompletions(player, args);
 
             if (args[0].Equals("settings", StringComparison.OrdinalIgnoreCase))
                 return CompleteSettingsArguments(args);
@@ -56,6 +66,11 @@ namespace STS2RitsuLib.Diagnostics.Commands
         /// <inheritdoc />
         public override CmdResult Process(Player? issuingPlayer, string[] args)
         {
+            if (args.Length >= 1 && args[0].Equals("debug", StringComparison.OrdinalIgnoreCase))
+                return RitsuLibSettingsStore.AreDeveloperToolsEnabled()
+                    ? ProcessDebug(issuingPlayer, args)
+                    : new(false, "RitsuLib developer tools are disabled in settings.");
+
             if (args.Length >= 1 && args[0].Equals("settings", StringComparison.OrdinalIgnoreCase))
                 return ProcessSettings(args);
 
@@ -114,8 +129,16 @@ namespace STS2RitsuLib.Diagnostics.Commands
 
         private static string UsageText()
         {
-            return
-                "Usage: ritsulib selfcheck run|open-output OR ritsulib settings open <modId> [pageId] [sectionId] [entryId]";
+            return RitsuLibSettingsStore.AreDeveloperToolsEnabled()
+                ? "Usage: ritsulib selfcheck run|open-output OR ritsulib settings open <modId> [pageId] [sectionId] [entryId] OR ritsulib debug <group> ..."
+                : "Usage: ritsulib selfcheck run|open-output OR ritsulib settings open <modId> [pageId] [sectionId] [entryId]";
+        }
+
+        private static string[] GetRootCommands()
+        {
+            return RitsuLibSettingsStore.AreDeveloperToolsEnabled()
+                ? [.. StandardRootCommands, "debug"]
+                : StandardRootCommands;
         }
 
         private static string[] GetModIdCandidates()
@@ -185,9 +208,9 @@ namespace STS2RitsuLib.Diagnostics.Commands
                 ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
                 RitsuLibModSettingsBootstrap.RefreshDynamicPages();
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
-                // Completion is best-effort; command execution reports concrete failures.
+                RitsuLibFramework.Logger.Warn($"[Settings] Could not refresh console completion data: {ex}");
             }
         }
     }

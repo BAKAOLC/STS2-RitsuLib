@@ -61,5 +61,15 @@ namespace STS2RitsuLib.Networking.Sidecar
         ///     </para>
         /// </summary>
         ModelRightClickV2 = 1 << 3,
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Indicates that this player can apply host-approved state changes made with RitsuLib developer tools.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         表示该玩家能够应用由主机批准的 RitsuLib 开发者工具状态修改。
+        ///     </para>
+        /// </summary>
+        DeveloperActionsV1 = 1 << 4,
     }
 }

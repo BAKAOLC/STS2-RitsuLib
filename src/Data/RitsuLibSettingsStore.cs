@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using STS2RitsuLib.Data.Migrations;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics.Logging;
+using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Utils.Persistence;
@@ -57,6 +58,7 @@ namespace STS2RitsuLib.Data
                                 new RitsuLibSettingsV12ToV13Migration(),
                                 new RitsuLibSettingsV13ToV14Migration(),
                                 new RitsuLibSettingsV14ToV15Migration(),
+                                new RitsuLibSettingsV15ToV16Migration(),
                             ]);
                     }
 
@@ -288,6 +290,34 @@ namespace STS2RitsuLib.Data
         {
             Initialize();
             return GetSettings().DevConsoleClearInputOnVisibilityChange;
+        }
+
+        internal static bool AreDeveloperToolsEnabled()
+        {
+            Initialize();
+            return GetSettings().DeveloperToolsEnabled;
+        }
+
+        internal static bool AreDeveloperToolClientRequestsAllowed()
+        {
+            Initialize();
+            return GetSettings().DeveloperToolsAllowClientRequests;
+        }
+
+        internal static string GetDebugToolsOpenHotkey()
+        {
+            Initialize();
+            return RuntimeHotkeyService.NormalizeOrDefault(
+                GetSettings().DebugToolsOpenHotkey,
+                RitsuLibSettings.DefaultDebugToolsOpenHotkey);
+        }
+
+        internal static string GetSettingsOpenHotkey()
+        {
+            Initialize();
+            return RuntimeHotkeyService.NormalizeOrDefault(
+                GetSettings().SettingsOpenHotkey,
+                RitsuLibSettings.DefaultSettingsOpenHotkey);
         }
 
         private static RitsuLibSettings GetSettings()
