@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.ControllerInput;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -37,22 +38,28 @@ namespace STS2RitsuLib.Settings
         private Control? _browserHost;
         private Button? _creaturePickButton;
         private bool _creaturePicking;
+        private ModSettingsDropdownChoiceControl<uint>? _creatureTargetDropdown;
         private Control? _currentBrowser;
         private RitsuDebugToolsPageView[] _pages = [];
         private bool _refreshScheduled;
+        private uint? _selectedCreatureCombatId;
+        private string? _selectedCreaturePresetId;
         private bool _stateRefreshScheduled;
         private Label? _status;
         private ModSettingsDropdownChoiceControl<ulong>? _targetDropdown;
+        private Label? _targetLabel;
         private ulong[] _targetPlayerIds = [];
         private ulong? _targetPlayerNetId;
-        private uint? _selectedCreatureCombatId;
-        private string? _selectedCreaturePresetId;
 
         internal string CurrentPageId { get; private set; } = $"{Const.ModId}:cards";
 
         internal float CurrentPageWidthFraction => GetCurrentPage()?.PreferredWidthFraction ?? 0.62f;
 
-        public Control? DefaultFocusedControl => _targetDropdown;
+        public Control? DefaultFocusedControl => _creatureTargetDropdown is { Visible: true }
+            ? _creatureTargetDropdown
+            : _targetDropdown is { Visible: true }
+                ? _targetDropdown
+                : _creaturePickButton;
 
         internal event Action<IReadOnlyList<RitsuDebugToolsPageView>>? PagesChanged;
 
@@ -132,15 +139,15 @@ namespace STS2RitsuLib.Settings
             toolbar.AddThemeConstantOverride("separation", 10);
             panel.AddChild(toolbar);
 
-            var targetLabel = new Label
+            _targetLabel = new()
             {
                 Text = L("ritsulib.debugTools.targetPlayer", "Target player"),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            targetLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            targetLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
-            targetLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
-            toolbar.AddChild(targetLabel);
+            _targetLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            _targetLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
+            _targetLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
+            toolbar.AddChild(_targetLabel);
 
             var players = GetPlayers();
             if (players.Length > 0)
@@ -177,6 +184,23 @@ namespace STS2RitsuLib.Settings
             };
             toolbar.AddChild(_targetDropdown);
 
+            var creatures = CurrentCreatures();
+            var creatureTarget = creatures.Length == 0 ? 0 : PreferredCreatureCombatId(creatures);
+            _creatureTargetDropdown = new(
+                CreateCreatureTargetOptions(creatures),
+                creatureTarget,
+                selected =>
+                {
+                    _selectedCreatureCombatId = selected;
+                    if (_currentBrowser != null && IsInstanceValid(_currentBrowser))
+                        RefreshLiveDetails(_currentBrowser);
+                })
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                CustomMinimumSize = new(300f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+            };
+            toolbar.AddChild(_creatureTargetDropdown);
+
             _creaturePickButton = new ModSettingsTextButton(
                 L("ritsulib.debugTools.action.pickCreature", "Pick creature"),
                 ModSettingsButtonTone.Accent,
@@ -190,6 +214,7 @@ namespace STS2RitsuLib.Settings
             };
             toolbar.AddChild(_creaturePickButton);
             RefreshCreaturePickButton();
+            RefreshHeaderTarget();
         }
 
         private void BuildWorkspace()
@@ -218,6 +243,7 @@ namespace STS2RitsuLib.Settings
             if (CurrentPageId.Equals(selected.Id, StringComparison.OrdinalIgnoreCase))
                 return true;
             CurrentPageId = selected.Id;
+            RefreshHeaderTarget();
             RebuildBrowser();
             PageChanged?.Invoke(selected);
             return true;
@@ -261,6 +287,7 @@ namespace STS2RitsuLib.Settings
             ];
             if (_pages.All(page => !page.Id.Equals(CurrentPageId, StringComparison.OrdinalIgnoreCase)))
                 CurrentPageId = _pages.FirstOrDefault()?.Id ?? string.Empty;
+            RefreshHeaderTarget();
             PagesChanged?.Invoke(Array.AsReadOnly(_pages));
             var current = GetCurrentPage();
             if (current != null)
@@ -563,6 +590,7 @@ namespace STS2RitsuLib.Settings
             if (players.All(player => player.NetId != _targetPlayerNetId))
                 _targetPlayerNetId = players.FirstOrDefault()?.NetId;
             UpdateTargetDropdown(players);
+            RefreshHeaderTarget();
             if (previousTarget != _targetPlayerNetId)
             {
                 RefreshPages();
@@ -593,7 +621,10 @@ namespace STS2RitsuLib.Settings
                     if (_selectedCreatureCombatId.HasValue &&
                         creatures.All(creature => creature.CombatId != _selectedCreatureCombatId))
                         _selectedCreatureCombatId = null;
-                    RefreshCatalogItems(CreateCreatureCatalogItems(creatures));
+                    if (_currentBrowser is RitsuCatalogBrowser creatureBrowser)
+                        creatureBrowser.SetItems(CreateCreatureCatalogItems(creatures));
+                    else
+                        RebuildBrowser();
                     break;
                 default:
                     RefreshLiveDetails(_currentBrowser);
@@ -610,6 +641,67 @@ namespace STS2RitsuLib.Settings
             _targetDropdown?.SetOptions(
                 [.. players.Select((player, index) => (player.NetId, PlayerLabel(player, index)))],
                 _targetPlayerNetId ?? 0);
+        }
+
+        private void RefreshHeaderTarget()
+        {
+            if (_targetLabel == null || _targetDropdown == null || _creatureTargetDropdown == null)
+                return;
+
+            var mode = HeaderTargetModeForPage();
+            _targetLabel.Visible = mode != HeaderTargetMode.None;
+            _targetDropdown.Visible = mode == HeaderTargetMode.Player;
+            _creatureTargetDropdown.Visible = mode == HeaderTargetMode.Creature;
+            switch (mode)
+            {
+                case HeaderTargetMode.Player:
+                    _targetLabel.Text = L("ritsulib.debugTools.targetPlayer", "Target player");
+                    break;
+                case HeaderTargetMode.Creature:
+                    _targetLabel.Text = L("ritsulib.debugTools.targetCreature", "Target creature");
+                    var creatures = CurrentCreatures();
+                    if (creatures.Length == 0)
+                    {
+                        _selectedCreatureCombatId = null;
+                        _creatureTargetDropdown.SetOptions([], 0);
+                        break;
+                    }
+
+                    var selected = PreferredCreatureCombatId(creatures);
+                    _selectedCreatureCombatId = selected;
+                    _creatureTargetDropdown.SetOptions(CreateCreatureTargetOptions(creatures), selected);
+                    break;
+                case HeaderTargetMode.None:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private HeaderTargetMode HeaderTargetModeForPage()
+        {
+            return CurrentPageId switch
+            {
+                $"{Const.ModId}:powers" => HeaderTargetMode.Creature,
+                $"{Const.ModId}:players" or
+                    $"{Const.ModId}:creatures" or
+                    $"{Const.ModId}:monsters" or
+                    $"{Const.ModId}:rooms" or
+                    $"{Const.ModId}:encounters" => HeaderTargetMode.None,
+                _ => HeaderTargetMode.Player,
+            };
+        }
+
+        private static (uint Value, string Label)[] CreateCreatureTargetOptions(IEnumerable<Creature> creatures)
+        {
+            return
+            [
+                .. creatures.Select(creature =>
+                    (creature.CombatId!.Value, string.Format(
+                        L("ritsulib.debugTools.creatureChoice", "#{0} · {1}"),
+                        creature.CombatId.Value,
+                        creature.Name))),
+            ];
         }
 
         private void RefreshCatalogItems(IReadOnlyList<RitsuCatalogItem> items)
@@ -791,10 +883,8 @@ namespace STS2RitsuLib.Settings
                 return;
 
             foreach (var (hitbox, handler) in _creaturePickHandlers)
-            {
                 if (IsInstanceValid(hitbox))
                     hitbox.GuiInput -= handler;
-            }
 
             _creaturePickHandlers.Clear();
             _creaturePicking = false;
@@ -829,6 +919,13 @@ namespace STS2RitsuLib.Settings
                 return;
             frame.AddThemeConstantOverride("margin_right", gutter);
             frame.QueueSort();
+        }
+
+        private enum HeaderTargetMode
+        {
+            None,
+            Player,
+            Creature,
         }
     }
 }

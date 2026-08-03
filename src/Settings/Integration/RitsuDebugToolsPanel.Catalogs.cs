@@ -224,22 +224,22 @@ namespace STS2RitsuLib.Settings
                 .Where(static creature => creature.CombatId.HasValue)
                 .OrderBy(static creature => creature.CombatId)
                 .ToArray() ?? [];
-            var byId = creatures.ToDictionary(
-                static creature => creature.CombatId!.Value.ToString(),
-                StringComparer.Ordinal);
             var filter = new RitsuCatalogFilter(
                 "side",
                 L("ritsulib.debugTools.filter.side", "Side"),
                 L("ritsulib.debugTools.filter.all", "All"),
                 [
                     new("players", L("ritsulib.debugTools.filter.players", "Players"),
-                        item => byId[item.Id].IsPlayer),
+                        item => ResolveCurrentCreature(item)?.IsPlayer == true),
                     new("nonPlayers", L("ritsulib.debugTools.filter.nonPlayers", "Enemies and summons"),
-                        item => !byId[item.Id].IsPlayer),
+                        item => ResolveCurrentCreature(item)?.IsPlayer == false),
                 ]);
             var browser = Browser(
                 L("ritsulib.debugTools.search.creatures", "Search combat creatures"),
-                item => CreateCreatureDetail(byId[item.Id]),
+                item => ResolveCurrentCreature(item) is { } creature
+                    ? CreateCreatureDetail(creature)
+                    : EmptyBrowser(L("ritsulib.debugTools.targetChanged",
+                        "The selected target is no longer available.")),
                 [filter],
                 RitsuCatalogPresentation.Grid,
                 220f,
@@ -247,6 +247,13 @@ namespace STS2RitsuLib.Settings
                 detailWidth: 520f);
             browser.SetItems(CreateCreatureCatalogItems(creatures));
             return browser;
+
+            static Creature? ResolveCurrentCreature(RitsuCatalogItem item)
+            {
+                return uint.TryParse(item.Id, out var combatId)
+                    ? RitsuDebugCombatActions.FindCreature(combatId)
+                    : null;
+            }
         }
 
         private static PileCardEntry[] GetPileCardEntries(Player player)
