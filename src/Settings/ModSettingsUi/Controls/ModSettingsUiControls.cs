@@ -2048,9 +2048,6 @@ namespace STS2RitsuLib.Settings
             }
 
             var usableW = Mathf.Max(0f, shelfW - reserve);
-            var rowW = _dropdownUniformRowLayoutWidth > 0f
-                ? Mathf.Min(_dropdownUniformRowLayoutWidth, usableW)
-                : usableW;
 
             _rowButtons.Clear();
 
@@ -2071,7 +2068,7 @@ namespace STS2RitsuLib.Settings
                 row.Visible = true;
                 row.FocusMode = FocusModeEnum.All;
                 ResetDropdownVirtualRowState(row);
-                ApplyDropdownVirtualRowPresentation(row, optIndex, rowW);
+                ApplyDropdownVirtualRowPresentation(row, optIndex, usableW);
                 var yTop = RowTopOffset(optIndex, _dropdownRowStride);
                 row.Position = new(0f, yTop);
                 row.TooltipText = string.Empty;
@@ -2448,7 +2445,12 @@ namespace STS2RitsuLib.Settings
             var panelSize = new Vector2(panelW, measured.Y);
 
             var gr = _faceButton.GetGlobalRect();
-            var desiredTopLeft = new Vector2(gr.Position.X, gr.End.Y);
+            var spaceBelow = vr.End.Y - gr.End.Y;
+            var spaceAbove = gr.Position.Y - vr.Position.Y;
+            var openAbove = spaceBelow < panelSize.Y && spaceAbove > spaceBelow;
+            var desiredTopLeft = new Vector2(
+                gr.Position.X,
+                openAbove ? gr.Position.Y - panelSize.Y : gr.End.Y);
 
             var maxX = Mathf.Max(vr.Position.X, vr.End.X - panelSize.X);
             var maxY = Mathf.Max(vr.Position.Y, vr.End.Y - panelSize.Y);

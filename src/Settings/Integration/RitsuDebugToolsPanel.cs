@@ -33,6 +33,7 @@ namespace STS2RitsuLib.Settings
         private const int DetailMetadataFontSize = 15;
         private const int DetailIdentifierFontSize = 14;
         private const int DetailSectionFontSize = 16;
+        private const float HeaderTargetWidth = 320f;
         private readonly Dictionary<Control, GuiInputEventHandler> _creaturePickHandlers = [];
         private readonly HashSet<string> _pageFailures = new(StringComparer.Ordinal);
         private Control? _browserHost;
@@ -179,8 +180,8 @@ namespace STS2RitsuLib.Settings
                     RebuildBrowser();
                 })
             {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new(300f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                CustomMinimumSize = new(HeaderTargetWidth, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             toolbar.AddChild(_targetDropdown);
 
@@ -196,8 +197,8 @@ namespace STS2RitsuLib.Settings
                         RefreshLiveDetails(_currentBrowser);
                 })
             {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new(300f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+                CustomMinimumSize = new(HeaderTargetWidth, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             toolbar.AddChild(_creatureTargetDropdown);
 
