@@ -435,13 +435,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             ModifyPilePayload payload)
         {
             _ = TryParseMutablePileType(payload.Pile, out var pileType);
-            var cards = GetPile(context.Target, pileType)!.Cards.ToArray();
+            var pile = GetPile(context.Target, pileType)!;
+            var cards = pile.Cards.ToArray();
             if (payload.Operation == RitsuDebugCardPileOperation.Clear)
             {
                 if (pileType == PileType.Deck)
                     await CardPileCmd.RemoveFromDeck(cards, false);
                 else
+                {
                     await CardPileCmd.RemoveFromCombat(cards, true);
+                    NotifySilentPileRemovals(pile, cards.Length);
+                }
 
                 return cards.Length == 1
                     ? $"Removed 1 card from {pileType}."
@@ -463,6 +467,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return upgradedCards == 1
                 ? $"Upgraded 1 card in {pileType}."
                 : $"Upgraded {upgradedCards} cards in {pileType}.";
+        }
+
+        private static void NotifySilentPileRemovals(CardPile pile, int removedCardCount)
+        {
+            if (removedCardCount == 0)
+                return;
+            pile.InvokeContentsChanged();
+            for (var index = 0; index < removedCardCount; index++)
+                pile.InvokeCardRemoveFinished();
         }
 
         internal static RitsuDebugActionCheck ValidateCreateCard(
@@ -513,6 +526,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             CreateCardPayload payload)
         {
+            return await ExecuteCreateCardAsync(context, payload, true);
+        }
+
+        internal static async Task<string> ExecuteCreateCardAsync(
+            RitsuDebugActionContext context,
+            CreateCardPayload payload,
+            bool previewDeckAdds)
+        {
             _ = TryParseMutablePileType(payload.Pile, out var pileType);
             _ = TryResolveCanonicalCard(payload.CardId, out var canonical, out _);
 
@@ -531,7 +552,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                                 "The game did not add {0} to the deck.",
                                 canonical.Id));
 
-                    CardCmd.PreviewCardPileAdd(result);
+                    if (previewDeckAdds)
+                        CardCmd.PreviewCardPileAdd(result);
                 }
 
                 return payload.Count == 1

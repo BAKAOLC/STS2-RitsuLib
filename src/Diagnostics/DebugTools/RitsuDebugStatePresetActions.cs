@@ -291,6 +291,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 await SetPlayerValue(context, RitsuDebugPlayerOperation.SetPotionSlots, potionSlots);
             foreach (var pile in preset.CardPiles)
             {
+                _ = RitsuDebugCardActions.TryParseMutablePileType(pile.Pile, out var pileType);
                 if (pile.ApplyMode == RitsuDebugStatePresetApplyMode.Replace)
                     await RitsuDebugCardActions.ExecuteModifyPileAsync(
                         context,
@@ -298,7 +299,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 foreach (var card in pile.Cards)
                     await RitsuDebugCardActions.ExecuteCreateCardAsync(
                         context,
-                        new(card.CardId, pile.Pile, card.Count, card.UpgradeLevels, card.ToCardState()));
+                        new(card.CardId, pile.Pile, card.Count, card.UpgradeLevels, card.ToCardState()),
+                        false);
+                if (pileType != PileType.Deck ||
+                    RitsuDebugCardActions.GetPile(context.Target, pileType) is not { } deck)
+                    continue;
+                var addedCardCount = pile.Cards.Sum(static card => card.Count);
+                for (var index = 0; index < addedCardCount; index++)
+                    deck.InvokeCardAddFinished();
             }
 
             if (preset.Relics != null)
