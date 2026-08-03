@@ -267,6 +267,7 @@ namespace STS2RitsuLib.Settings
         public override void _ExitTree()
         {
             CancelPendingUiWork();
+            CloseQuickSearch(false);
 
             var vp = GetViewport();
             if (vp != null && _guiFocusSignalConnected &&
@@ -330,6 +331,7 @@ namespace STS2RitsuLib.Settings
         public override void OnSubmenuClosed()
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
+            CloseQuickSearch(false);
             PopPaneHotkeys();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
@@ -345,6 +347,7 @@ namespace STS2RitsuLib.Settings
         protected override void OnSubmenuShown()
         {
             base.OnSubmenuShown();
+            _quickSearchLastShiftTapMsec = 0;
             SetProcessInput(true);
             ApplySettingsFocusBehavior();
             PushPaneHotkeys();
@@ -358,6 +361,7 @@ namespace STS2RitsuLib.Settings
         protected override void OnSubmenuHidden()
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
+            CloseQuickSearch(false);
             PopPaneHotkeys();
             FlushPendingRefreshActionsImmediate();
             HideContentBuildOverlay();
@@ -1333,7 +1337,29 @@ namespace STS2RitsuLib.Settings
             headerTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             headerTitle.AddThemeFontSizeOverride("font_size", 22);
             _sidebarHeaderTitleLabel = headerTitle;
-            headerBox.AddChild(headerTitle);
+
+            var headerTitleRow = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            };
+            headerTitleRow.AddThemeConstantOverride("separation", 8);
+            headerTitle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            headerTitleRow.AddChild(headerTitle);
+
+            _quickSearchButton = new(
+                string.Empty,
+                OpenQuickSearch)
+            {
+                CustomMinimumSize = new(38f, 32f),
+                SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                IconAlignment = HorizontalAlignment.Center,
+                ExpandIcon = false,
+            };
+            ApplyQuickSearchButtonPresentation();
+            headerTitleRow.AddChild(_quickSearchButton);
+            headerBox.AddChild(headerTitleRow);
 
             var subtitleLabel = new Label
             {
@@ -3021,6 +3047,12 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void _Input(InputEvent @event)
         {
+            if (TryHandleQuickSearchInput(@event))
+            {
+                GetViewport()?.SetInputAsHandled();
+                return;
+            }
+
             var focusOwner = GetViewport()?.GuiGetFocusOwner();
             if (IsFocusNavigationBlocked() && !IsFocusUnderBlockingOverlay(focusOwner) && IsBlockedFocusInput(@event))
             {
@@ -3247,6 +3279,7 @@ namespace STS2RitsuLib.Settings
         private void ApplyStaticTexts()
         {
             ApplyBirthdayLabelText();
+            ApplyQuickSearchButtonPresentation();
         }
 
         private void ExpandOnlyMod(string? modId)
@@ -3309,6 +3342,7 @@ namespace STS2RitsuLib.Settings
         private void OnLocaleChanged()
         {
             FlushDirtyBindings();
+            ResetQuickSearchOverlay();
             ModSettingsRegistry.InvalidateOrderingCache();
             _sidebarStructureDirty = true;
             _contentStructureDirty = true;
@@ -3318,6 +3352,7 @@ namespace STS2RitsuLib.Settings
 
         private void OnShellThemeChanged()
         {
+            ResetQuickSearchOverlay();
             CallDeferredIfAlive(() =>
             {
                 ResetUiCachesForShellThemeChange();

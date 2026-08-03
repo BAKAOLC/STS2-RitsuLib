@@ -16,6 +16,7 @@ namespace STS2RitsuLib.Ui.Overlay
         Rooms,
         Encounters,
         Events,
+        Search,
         Puzzle,
         ChevronLeft,
         ChevronRight,
@@ -78,6 +79,8 @@ namespace STS2RitsuLib.Ui.Overlay
                     "<path d='M12 3l7 3v5c0 5-2.7 8.5-7 10-4.3-1.5-7-5-7-10V6zM8.5 8.5l7 7M15.5 8.5l-7 7'/>",
                 RitsuDebugToolsGlyph.Events =>
                     "<path d='M12 3l2.2 5.1 5.5.5-4.2 3.7 1.3 5.4-4.8-2.8-4.8 2.8 1.3-5.4-4.2-3.7 5.5-.5z'/><path d='M12 8v3.5M12 13.8v.2'/>",
+                RitsuDebugToolsGlyph.Search =>
+                    "<circle cx='10.5' cy='10.5' r='6.5'/><path d='M15.5 15.5L21 21'/>",
                 RitsuDebugToolsGlyph.ChevronLeft => "<path d='M15 5l-7 7 7 7'/>",
                 RitsuDebugToolsGlyph.ChevronRight => "<path d='M9 5l7 7-7 7'/>",
                 _ =>

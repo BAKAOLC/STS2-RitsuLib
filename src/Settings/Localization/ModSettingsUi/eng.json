@@ -1272,5 +1272,11 @@
   "ritsulib.debugTools.feedback.creaturePreset.powerInvalid": "A saved Power entry is invalid or duplicated.",
   "ritsulib.debugTools.feedback.creaturePreset.dataLimit": "The creature preset contains too much data to apply.",
   "ritsulib.debugTools.feedback.creaturePreset.duplicateName": "A creature preset named '{0}' already exists.",
-  "ritsulib.debugTools.feedback.creaturePreset.countLimit": "At most {0} creature presets can be stored."
+  "ritsulib.debugTools.feedback.creaturePreset.countLimit": "At most {0} creature presets can be stored.",
+  "search.title": "Search settings",
+  "search.buttonTooltip": "Search all settings (double-tap Shift)",
+  "search.placeholder": "Search mods, pages, sections, and settings",
+  "search.hint": "Double-tap Shift to open · ↑/↓ to select · Enter to navigate · Esc to close",
+  "search.start": "Type a setting name or description to find its destination.",
+  "search.empty": "No matching settings found."
 }

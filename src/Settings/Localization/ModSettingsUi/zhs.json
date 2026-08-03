@@ -1272,5 +1272,11 @@
   "ritsulib.debugTools.feedback.creaturePreset.powerInvalid": "保存的能力条目无效或重复。",
   "ritsulib.debugTools.feedback.creaturePreset.dataLimit": "生物配置预设的数据量过大，无法应用。",
   "ritsulib.debugTools.feedback.creaturePreset.duplicateName": "已存在名为“{0}”的生物配置预设。",
-  "ritsulib.debugTools.feedback.creaturePreset.countLimit": "最多可保存 {0} 个生物配置预设。"
+  "ritsulib.debugTools.feedback.creaturePreset.countLimit": "最多可保存 {0} 个生物配置预设。",
+  "search.title": "搜索设置",
+  "search.buttonTooltip": "搜索所有设置（双击 Shift）",
+  "search.placeholder": "搜索模组、页面、分组和设置",
+  "search.hint": "双击 Shift 唤起 · ↑/↓ 选择 · Enter 跳转 · Esc 关闭",
+  "search.start": "输入设置名称或说明以查找目标位置。",
+  "search.empty": "没有找到匹配的设置。"
 }
