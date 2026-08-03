@@ -12,6 +12,8 @@ namespace STS2RitsuLib.Compat
     /// </summary>
     internal static class Sts2ModManagerCompat
     {
+        private const string RitsuLibManifestId = "STS2-RitsuLib";
+
         private const BindingFlags InstanceMemberFlags =
             BindingFlags.Instance |
             BindingFlags.Public |
@@ -327,12 +329,15 @@ namespace STS2RitsuLib.Compat
         internal static bool TryGetBestModPresentationInfo(string modId, out RitsuModPresentationInfo? info)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
+            var manifestId = string.Equals(modId, Const.ModId, StringComparison.OrdinalIgnoreCase)
+                ? RitsuLibManifestId
+                : modId;
 
             info = EnumerateModsForManifestLookup()
                 .Select(TryBuildModPresentationInfo)
                 .Where(entry => entry != null)
                 .Select(entry => entry!)
-                .Where(entry => string.Equals(entry.Id, modId, StringComparison.OrdinalIgnoreCase))
+                .Where(entry => string.Equals(entry.Id, manifestId, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(entry => entry.Rank)
                 .FirstOrDefault();
             return info != null;

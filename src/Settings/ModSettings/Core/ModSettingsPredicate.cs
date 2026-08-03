@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Settings
             {
                 return predicate();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 var method = predicate.Method;
                 var predicateName = $"{method.DeclaringType?.FullName ?? "<unknown>"}.{method.Name}";

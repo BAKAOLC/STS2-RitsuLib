@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
@@ -22,6 +23,7 @@ namespace STS2RitsuLib.Content
 
         private static readonly Lock SyncRoot = new();
         private static readonly Dictionary<Type, ContentSourceInfo> SourceByModelType = [];
+        private static bool _registrationsFrozen;
 
         private static readonly Dictionary<string, ContentSourceInfo> SourceByModId =
             new(StringComparer.OrdinalIgnoreCase);
@@ -77,7 +79,7 @@ namespace STS2RitsuLib.Content
 
         private static HoverTip CreateTip(ContentSourceInfo source)
         {
-            return new(GetTitle(), source.Format())
+            return new(GetTitle(), source.FormatForBbCode())
             {
                 Id = TipIdPrefix + source.Id,
             };
@@ -92,13 +94,18 @@ namespace STS2RitsuLib.Content
 
         internal static ContentSourceInfo Resolve(Type modelType)
         {
+            bool shouldCache;
             lock (SyncRoot)
             {
-                if (SourceByModelType.TryGetValue(modelType, out var cached))
+                shouldCache = _registrationsFrozen;
+                if (shouldCache && SourceByModelType.TryGetValue(modelType, out var cached))
                     return cached;
             }
 
-            var resolved = ResolveUncached(modelType);
+            var resolved = ResolveUncached(modelType, shouldCache);
+            if (!shouldCache)
+                return resolved;
+
             lock (SyncRoot)
             {
                 SourceByModelType[modelType] = resolved;
@@ -130,17 +137,30 @@ namespace STS2RitsuLib.Content
             var displayName = string.IsNullOrWhiteSpace(source.DisplayName)
                 ? ModSettingsLocalization.ResolveModName(modId, modId)
                 : source.DisplayName;
-            return CacheModSource(new(modId, NormalizeDisplayName(displayName, modId)));
+            return new(modId, NormalizeDisplayName(displayName, modId));
         }
 
-        private static ContentSourceInfo ResolveUncached(Type modelType)
+        internal static void FreezeRegistrations()
+        {
+            lock (SyncRoot)
+            {
+                if (_registrationsFrozen)
+                    return;
+
+                SourceByModelType.Clear();
+                SourceByModId.Clear();
+                _registrationsFrozen = true;
+            }
+        }
+
+        private static ContentSourceInfo ResolveUncached(Type modelType, bool shouldCache)
         {
             var assembly = modelType.Assembly;
             if (assembly == GameAssembly)
                 return ContentSourceInfo.Vanilla;
 
             if (ModContentRegistry.TryGetOwnerModId(modelType, out var ownerModId))
-                return ResolveMod(ownerModId);
+                return ResolveMod(ownerModId, shouldCache);
 
             foreach (var mod in Sts2ModManagerCompat.EnumerateModsForManifestLookup())
             {
@@ -149,7 +169,7 @@ namespace STS2RitsuLib.Content
 
                 var modId = NormalizeModId(mod.manifest?.id, assembly);
                 var displayName = NormalizeDisplayName(mod.manifest?.name, modId);
-                return CacheModSource(new(modId, displayName));
+                return CacheModSource(new(modId, displayName), shouldCache);
             }
 
             var fallbackId = assembly.GetName().Name ?? modelType.Namespace ?? modelType.Name;
@@ -158,14 +178,21 @@ namespace STS2RitsuLib.Content
 
         private static ContentSourceInfo ResolveMod(string modId)
         {
+            bool shouldCache;
             lock (SyncRoot)
             {
-                if (SourceByModId.TryGetValue(modId, out var cached))
+                shouldCache = _registrationsFrozen;
+                if (shouldCache && SourceByModId.TryGetValue(modId, out var cached))
                     return cached;
             }
 
+            return ResolveMod(modId, shouldCache);
+        }
+
+        private static ContentSourceInfo ResolveMod(string modId, bool shouldCache)
+        {
             var displayName = ModSettingsLocalization.ResolveModName(modId, modId);
-            return CacheModSource(new(modId, NormalizeDisplayName(displayName, modId)));
+            return CacheModSource(new(modId, NormalizeDisplayName(displayName, modId)), shouldCache);
         }
 
         private static bool TryResolveBaseLibKeyword(CardKeyword keyword, out ContentSourceInfo source)
@@ -180,8 +207,11 @@ namespace STS2RitsuLib.Content
             return true;
         }
 
-        private static ContentSourceInfo CacheModSource(ContentSourceInfo source)
+        private static ContentSourceInfo CacheModSource(ContentSourceInfo source, bool shouldCache)
         {
+            if (!shouldCache)
+                return source;
+
             lock (SyncRoot)
             {
                 SourceByModId[source.Id] = source;
@@ -226,6 +256,11 @@ namespace STS2RitsuLib.Content
                         ? DisplayName
                         : $"{DisplayName} ({Id})",
                 };
+            }
+
+            public string FormatForBbCode()
+            {
+                return Format().EscapeBbcodeTags();
             }
         }
 

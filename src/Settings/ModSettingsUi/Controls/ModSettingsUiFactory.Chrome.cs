@@ -11,13 +11,6 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public static partial class ModSettingsUiFactory
     {
-        private const string EnabledSyncMetaKey = "__ritsu_enabled_sync_attached";
-        private const string EnabledSyncOriginalMouseFilterMetaKey = "__ritsu_enabled_orig_mouse_filter";
-        private const string EnabledSyncOriginalProcessModeMetaKey = "__ritsu_enabled_orig_process_mode";
-        private const string EnabledSyncOriginalModulateMetaKey = "__ritsu_enabled_orig_modulate";
-        private const string EnabledSyncOriginalDisabledMetaKey = "__ritsu_enabled_orig_disabled";
-        private const string EnabledSyncOriginalLineEditEditableMetaKey = "__ritsu_enabled_orig_line_edit_editable";
-        private const string EnabledSyncOriginalTextEditEditableMetaKey = "__ritsu_enabled_orig_text_edit_editable";
         private const float DisabledOpacityFactorFallback = 0.78f;
         private const string DisabledOpacityTokenPath = "semantic.state.disabled.opacity";
         private const string DisabledTintTokenPath = "semantic.state.disabled.tint";
@@ -124,35 +117,6 @@ namespace STS2RitsuLib.Settings
                 return string.IsNullOrWhiteSpace(s)
                     ? ModSettingsLocalization.Get("entry.label.empty", "-")
                     : s;
-            }
-        }
-
-        private static void AttachHostSurfaceReadOnlySync(ModSettingsUiContext context, Control valueControl,
-            Control? actionControl, Func<bool>? canApply = null)
-        {
-            var readOnlyMask = context.GetSectionHostReadOnlyMask();
-            if (readOnlyMask == ModSettingsHostSurface.None)
-                return;
-
-            Sync();
-            RegisterRefreshWhenAlive(context, valueControl, Sync, ModSettingsUiRefreshSpec.Always);
-            if (actionControl != null)
-                RegisterRefreshWhenAlive(context, actionControl, Sync, ModSettingsUiRefreshSpec.Always);
-            return;
-
-            void Sync()
-            {
-                if (canApply != null && !canApply())
-                    return;
-                if (!GodotObject.IsInstanceValid(valueControl))
-                    return;
-
-                var locked = ModSettingsHostSurfaceResolver.IsReadOnlyOnCurrentHost(readOnlyMask);
-                valueControl.ProcessMode = locked ? Node.ProcessModeEnum.Disabled : Node.ProcessModeEnum.Inherit;
-                valueControl.Modulate = locked ? new(1f, 1f, 1f, 0.58f) : Colors.White;
-                if (actionControl == null || !GodotObject.IsInstanceValid(actionControl)) return;
-                actionControl.ProcessMode = locked ? Node.ProcessModeEnum.Disabled : Node.ProcessModeEnum.Inherit;
-                actionControl.Modulate = locked ? new(1f, 1f, 1f, 0.58f) : Colors.White;
             }
         }
 
@@ -378,7 +342,7 @@ namespace STS2RitsuLib.Settings
         }
 
         internal static List<ModSettingsMenuAction> BuildListItemMenuActions<TItem>(ModSettingsUiContext context,
-            ModSettingsListItemContext<TItem> itemContext)
+            ModSettingsListItemContext<TItem> itemContext, ModSettingsMenuCapabilities capabilities)
         {
             var actions = new List<ModSettingsMenuAction>
             {
@@ -392,15 +356,19 @@ namespace STS2RitsuLib.Settings
                     ModSettingsLocalization.Get("button.duplicate", "Duplicate"),
                     itemContext.SupportsStructuredClipboard,
                     itemContext.Duplicate),
-                new(ModSettingsStandardActionIds.Copy, ModSettingsLocalization.Get("button.copy", "Copy data"),
-                    itemContext.SupportsStructuredClipboard,
-                    () => { itemContext.TryCopyToClipboard(); }),
-                new(ModSettingsStandardActionIds.Paste, ModSettingsLocalization.Get("button.paste", "Paste data"),
-                    itemContext.CanPasteFromClipboard,
-                    () => { itemContext.TryPasteFromClipboard(); }),
                 new(ModSettingsStandardActionIds.Remove, ModSettingsLocalization.Get("button.remove", "Remove"), true,
                     itemContext.Remove),
             };
+            if (capabilities.HasFlag(ModSettingsMenuCapabilities.Copy))
+                actions.Insert(actions.Count - 1,
+                    new(ModSettingsStandardActionIds.Copy, ModSettingsLocalization.Get("button.copy", "Copy data"),
+                        itemContext.SupportsStructuredClipboard,
+                        () => { itemContext.TryCopyToClipboard(); }));
+            if (capabilities.HasFlag(ModSettingsMenuCapabilities.Paste))
+                actions.Insert(actions.Count - 1,
+                    new(ModSettingsStandardActionIds.Paste, ModSettingsLocalization.Get("button.paste", "Paste data"),
+                        itemContext.CanPasteFromClipboard,
+                        () => { itemContext.TryPasteFromClipboard(); }));
             ModSettingsUiActionRegistry.AppendListItemActions(context, itemContext, actions);
             return actions;
         }
@@ -421,14 +389,15 @@ namespace STS2RitsuLib.Settings
             if (pageContext.Page.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.Paste))
                 actions.Add(new(ModSettingsStandardActionIds.PagePaste,
                     ModSettingsLocalization.Get("button.paste", "Paste data"),
-                    () => ModSettingsUiChromeClipboard.CanPastePage(pageContext),
+                    () => ModSettingsInteractionPolicy.CanMutateAnyEntry(pageContext.Page) &&
+                          ModSettingsUiChromeClipboard.CanPastePage(pageContext),
                     () =>
                     {
                         ModSettingsUiChromeClipboard.TryPastePage(pageContext);
                         context.RequestRefresh();
                     }));
             if (pageContext.Page.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.ResetToDefault) &&
-                PageCanResetToDefault(pageContext.Page))
+                PageHasResettableEntries(pageContext.Page))
                 actions.Add(new(ModSettingsStandardActionIds.PageResetToDefault,
                     ModSettingsLocalization.Get("button.resetPageDefaults", "Reset page to defaults"),
                     () => PageCanResetToDefault(pageContext.Page),
@@ -453,17 +422,19 @@ namespace STS2RitsuLib.Settings
             if (sectionContext.Section.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.Paste))
                 actions.Add(new(ModSettingsStandardActionIds.SectionPaste,
                     ModSettingsLocalization.Get("button.paste", "Paste data"),
-                    () => ModSettingsUiChromeClipboard.CanPasteSection(sectionContext),
+                    () => ModSettingsInteractionPolicy.CanMutateAnyEntry(sectionContext.Page,
+                              sectionContext.Section) &&
+                          ModSettingsUiChromeClipboard.CanPasteSection(sectionContext),
                     () =>
                     {
                         ModSettingsUiChromeClipboard.TryPasteSection(sectionContext);
                         context.RequestRefresh();
                     }));
             if (sectionContext.Section.MenuCapabilities.HasFlag(ModSettingsMenuCapabilities.ResetToDefault) &&
-                SectionCanResetToDefault(sectionContext.Section))
+                SectionHasResettableEntries(sectionContext.Section))
                 actions.Add(new(ModSettingsStandardActionIds.SectionResetToDefault,
                     ModSettingsLocalization.Get("button.resetSectionDefaults", "Reset section to defaults"),
-                    () => SectionCanResetToDefault(sectionContext.Section),
+                    () => SectionCanResetToDefault(sectionContext.Page, sectionContext.Section),
                     () => { ResetSectionToDefaults(sectionContext); }));
             ModSettingsUiActionRegistry.AppendSectionActions(context, sectionContext, actions);
             return actions;
@@ -471,18 +442,29 @@ namespace STS2RitsuLib.Settings
 
         private static bool PageCanResetToDefault(ModSettingsPage page)
         {
-            return page.Sections.Any(SectionCanResetToDefault);
+            return page.Sections.Any(section => SectionCanResetToDefault(page, section));
         }
 
-        private static bool SectionCanResetToDefault(ModSettingsSection section)
+        private static bool PageHasResettableEntries(ModSettingsPage page)
         {
-            return section.Entries.Any(entry => entry.CanResetToDefault);
+            return page.Sections.Any(SectionHasResettableEntries);
+        }
+
+        private static bool SectionCanResetToDefault(ModSettingsPage page, ModSettingsSection section)
+        {
+            return section.Entries.Any(entry => entry.CanResetToDefault &&
+                                                ModSettingsInteractionPolicy.CanMutateEntry(page, section, entry));
+        }
+
+        private static bool SectionHasResettableEntries(ModSettingsSection section)
+        {
+            return section.Entries.Any(static entry => entry.CanResetToDefault);
         }
 
         private static void ResetPageToDefaults(ModSettingsPageUiContext pageContext)
         {
             var count = pageContext.Page.Sections.Sum(section =>
-                ResetSectionEntriesToDefaults(pageContext.Host, section));
+                ResetSectionEntriesToDefaults(pageContext.Host, pageContext.Page, section));
 
             if (count > 0)
                 pageContext.Host.RequestRefreshAfterDataModelBatchChange();
@@ -490,13 +472,15 @@ namespace STS2RitsuLib.Settings
 
         private static void ResetSectionToDefaults(ModSettingsSectionUiContext sectionContext)
         {
-            if (ResetSectionEntriesToDefaults(sectionContext.Host, sectionContext.Section) > 0)
+            if (ResetSectionEntriesToDefaults(sectionContext.Host, sectionContext.Page, sectionContext.Section) > 0)
                 sectionContext.Host.RequestRefreshAfterDataModelBatchChange();
         }
 
-        private static int ResetSectionEntriesToDefaults(IModSettingsUiActionHost host, ModSettingsSection section)
+        private static int ResetSectionEntriesToDefaults(IModSettingsUiActionHost host, ModSettingsPage page,
+            ModSettingsSection section)
         {
-            return section.Entries.Count(entry => entry.TryResetToDefault(host));
+            return section.Entries.Count(entry =>
+                ModSettingsInteractionPolicy.CanMutateEntry(page, section, entry) && entry.TryResetToDefault(host));
         }
 
         private static void CopyBindingValueToClipboard<TValue>(IModSettingsValueBinding<TValue> binding)
@@ -672,21 +656,33 @@ namespace STS2RitsuLib.Settings
 
             var visibleHost = MaybeWrapDynamicVisibility(context, built,
                 ModSettingsVisibility.CreateSectionVisibilityPredicate(page, section));
+            object? enableGate = null;
+            if (section.EnabledWhen != null)
+            {
+                enableGate = new();
+                Apply();
+                RegisterRefreshWhenAlive(context, visibleHost, Apply, ModSettingsUiRefreshSpec.Always);
+            }
 
-            // For collapsible sections, keep the collapse toggle operable while disabling the content/actions.
-            if (section.EnabledWhen == null || built is not ModSettingsCollapsibleSection collapsibleHost)
-                return new(visibleHost, entryHost, sectionActionsButton,
-                    built is ModSettingsCollapsibleSection lazyCollapsible && section.StartCollapsed
-                        ? lazyCollapsible
-                        : null);
-            Apply();
-            RegisterRefreshWhenAlive(context, visibleHost, Apply, ModSettingsUiRefreshSpec.Always);
             return new(visibleHost, entryHost, sectionActionsButton,
-                section.StartCollapsed ? collapsibleHost : null);
+                built is ModSettingsCollapsibleSection lazyCollapsible && section.StartCollapsed
+                    ? lazyCollapsible
+                    : null,
+                enableGate);
 
             void Apply()
             {
-                collapsibleHost.SetContentEnabled(ModSettingsPredicate.Evaluate(section.EnabledWhen));
+                var enabled = ModSettingsPredicate.Evaluate(section.EnabledWhen);
+                if (built is ModSettingsCollapsibleSection collapsible)
+                {
+                    ApplyEnabledRecursive(entryHost, enableGate!, enabled);
+                    if (sectionActionsButton != null)
+                        ApplyEnabledRecursive(sectionActionsButton, enableGate!, enabled);
+                    collapsible.SetContentEnabled(enabled);
+                    return;
+                }
+
+                ApplyEnabledRecursive(built, enableGate!, enabled);
             }
         }
 
@@ -702,9 +698,17 @@ namespace STS2RitsuLib.Settings
                 control = TryCreatePooledStandardEntry(context, entry, entryNodePool, out var pooled)
                     ? pooled
                     : entry.CreateControl(context);
+                Func<bool>? canApply = null;
+                if (control is ReusableSettingLine reusable)
+                {
+                    var reuseVersion = reusable.ReuseVersion;
+                    canApply = () => reusable.ReuseVersion == reuseVersion;
+                }
+
                 control = MaybeWrapDynamicVisibility(context, control,
                     CreateEntryVisibilityPredicate(page, entry));
-                control = MaybeWrapDynamicEnabled(context, control, entry.EnabledPredicate);
+                AttachHostSurfaceReadOnlySync(context, control, context.GetSectionHostReadOnlyMask(), canApply);
+                control = MaybeWrapDynamicEnabled(context, control, entry.EnabledPredicate, canApply);
             }
             catch (Exception ex)
             {
@@ -724,6 +728,12 @@ namespace STS2RitsuLib.Settings
             return new(control, sectionPlan.EntryHost, added =>
             {
                 context.RegisterEntryAnchor(page, section, entry, added);
+                if (sectionPlan.EnableGate != null)
+                    ApplyEnabledRecursive(added, sectionPlan.EnableGate,
+                        ModSettingsPredicate.Evaluate(section.EnabledWhen));
+                if (context.PageEnableGate != null)
+                    ApplyEnabledRecursive(added, context.PageEnableGate,
+                        ModSettingsPredicate.Evaluate(page.EnabledWhen));
                 if (added is ReusableSettingLine reusable)
                     reusable.RefreshLayoutAfterAdded();
                 if (sectionPlan.SectionActionsButton != null)
@@ -738,106 +748,6 @@ namespace STS2RitsuLib.Settings
                 return null;
 
             return () => ModSettingsVisibility.IsEntryVisible(page, entry);
-        }
-
-        internal static Control MaybeWrapDynamicEnabled(ModSettingsUiContext context, Control host,
-            Func<bool>? predicate)
-        {
-            if (predicate == null || host.HasMeta(EnabledSyncMetaKey))
-                return host;
-            host.SetMeta(EnabledSyncMetaKey, true);
-
-            Apply();
-            RegisterRefreshWhenAlive(context, host, Apply, ModSettingsUiRefreshSpec.Always);
-            return host;
-
-            void Apply()
-            {
-                if (!GodotObject.IsInstanceValid(host))
-                    return;
-                ApplyEnabledRecursive(host, ModSettingsPredicate.Evaluate(predicate));
-            }
-        }
-
-        internal static void ApplyEnabledRecursive(Node node, bool enabled)
-        {
-            if (node is Control control)
-                ApplyEnabledToControl(control, enabled);
-
-            foreach (var child in node.GetChildren())
-                if (child != null)
-                    ApplyEnabledRecursive(child, enabled);
-        }
-
-        internal static void ApplyEnabledToControl(Control control, bool enabled)
-        {
-            if (!GodotObject.IsInstanceValid(control))
-                return;
-
-            if (!control.HasMeta(EnabledSyncOriginalMouseFilterMetaKey))
-                control.SetMeta(EnabledSyncOriginalMouseFilterMetaKey, (int)control.MouseFilter);
-            if (!control.HasMeta(EnabledSyncOriginalProcessModeMetaKey))
-                control.SetMeta(EnabledSyncOriginalProcessModeMetaKey, (int)control.ProcessMode);
-            if (!control.HasMeta(EnabledSyncOriginalModulateMetaKey))
-                control.SetMeta(EnabledSyncOriginalModulateMetaKey, control.Modulate);
-
-            switch (control)
-            {
-                case BaseButton button when !button.HasMeta(EnabledSyncOriginalDisabledMetaKey):
-                    button.SetMeta(EnabledSyncOriginalDisabledMetaKey, button.Disabled);
-                    break;
-                case LineEdit lineEdit when !lineEdit.HasMeta(EnabledSyncOriginalLineEditEditableMetaKey):
-                    lineEdit.SetMeta(EnabledSyncOriginalLineEditEditableMetaKey, lineEdit.Editable);
-                    break;
-                case TextEdit textEdit when !textEdit.HasMeta(EnabledSyncOriginalTextEditEditableMetaKey):
-                    textEdit.SetMeta(EnabledSyncOriginalTextEditEditableMetaKey, textEdit.Editable);
-                    break;
-            }
-
-            if (enabled)
-            {
-                control.MouseFilter =
-                    (Control.MouseFilterEnum)(int)control.GetMeta(EnabledSyncOriginalMouseFilterMetaKey);
-                control.ProcessMode = (Node.ProcessModeEnum)(int)control.GetMeta(EnabledSyncOriginalProcessModeMetaKey);
-                control.Modulate = (Color)control.GetMeta(EnabledSyncOriginalModulateMetaKey);
-                switch (control)
-                {
-                    case BaseButton btn:
-                        btn.Disabled = btn.HasMeta(EnabledSyncOriginalDisabledMetaKey) &&
-                                       (bool)btn.GetMeta(EnabledSyncOriginalDisabledMetaKey);
-                        break;
-                    case LineEdit line when line.HasMeta(EnabledSyncOriginalLineEditEditableMetaKey):
-                        line.Editable = (bool)line.GetMeta(EnabledSyncOriginalLineEditEditableMetaKey);
-                        break;
-                    case TextEdit text when text.HasMeta(EnabledSyncOriginalTextEditEditableMetaKey):
-                        text.Editable = (bool)text.GetMeta(EnabledSyncOriginalTextEditEditableMetaKey);
-                        break;
-                }
-
-                return;
-            }
-
-            if (control is ModSettingsActionsButton actions)
-                actions.ForceCloseDropdown();
-            if (control is IModSettingsTransientPopupOwner popupOwner)
-                popupOwner.ForceCloseTransientUi();
-
-            control.ProcessMode = Node.ProcessModeEnum.Disabled;
-            control.MouseFilter = Control.MouseFilterEnum.Ignore;
-            var orig = (Color)control.GetMeta(EnabledSyncOriginalModulateMetaKey);
-            control.Modulate = ResolveDisabledModulate(control, orig);
-            switch (control)
-            {
-                case BaseButton b:
-                    b.Disabled = true;
-                    break;
-                case LineEdit lineEditNow:
-                    lineEditNow.Editable = false;
-                    break;
-                case TextEdit textEditNow:
-                    textEditNow.Editable = false;
-                    break;
-            }
         }
 
         internal static void SetDisabledStylePath(Control control, string tokenBasePath)
@@ -1354,6 +1264,7 @@ namespace STS2RitsuLib.Settings
             Control Control,
             Control EntryHost,
             ModSettingsActionsButton? SectionActionsButton,
-            ModSettingsCollapsibleSection? LazyContentSection);
+            ModSettingsCollapsibleSection? LazyContentSection,
+            object? EnableGate);
     }
 }

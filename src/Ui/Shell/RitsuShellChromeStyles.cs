@@ -375,6 +375,25 @@ namespace STS2RitsuLib.Ui.Shell
                 () => BuildListItemCardStyle(accent));
         }
 
+        internal static StyleBoxFlat CreateSelectedListItemCardStyle()
+        {
+            return RitsuShellStyleCache.GetOrBuild("chrome.listItem.selected", BuildSelectedListItemCardStyle);
+        }
+
+        private static StyleBoxFlat BuildSelectedListItemCardStyle()
+        {
+            var style = BuildListItemCardStyle(true);
+            var accent = RitsuShellTheme.Current.Component.ListItem.Accent.Border;
+            var borderWidth = Math.Max(2, style.BorderWidthLeft);
+            style.BorderWidthLeft = borderWidth;
+            style.BorderWidthTop = borderWidth;
+            style.BorderWidthRight = borderWidth;
+            style.BorderWidthBottom = borderWidth;
+            style.ShadowColor = new(accent.R, accent.G, accent.B, Math.Min(0.5f, accent.A));
+            style.ShadowSize = Math.Max(5, style.ShadowSize);
+            return style;
+        }
+
         private static StyleBoxFlat BuildListItemCardStyle(bool accent)
         {
             var t = RitsuShellTheme.Current;

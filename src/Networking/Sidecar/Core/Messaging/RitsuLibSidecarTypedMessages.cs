@@ -233,7 +233,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             {
                 message = registration.Deserialize(context.Payload.Span);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibSidecarRepeatedWarningLog.Warn(
                     $"typed-deserialize:opcode={opcode}:sender={context.SenderNetId}:{ex.GetType().FullName}:{ex.Message}",

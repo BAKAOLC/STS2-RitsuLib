@@ -134,8 +134,10 @@ namespace STS2RitsuLib.Settings
         private Label? _sidebarHeaderTitleLabel;
         private Control _sidebarPanelRoot = null!;
         private ScrollContainer _sidebarScrollContainer = null!;
+        private MarginContainer _sidebarScrollFrame = null!;
         private bool _sidebarStructureDirty = true;
         private bool _suppressScrollSync;
+        private IDisposable? _tooltipTimingScope;
         private Callable _updatePaneHotkeyIconsCallable;
         private Callable _viewportSizeChangedCallable;
         private bool _viewportSizeSignalConnected;
@@ -224,6 +226,9 @@ namespace STS2RitsuLib.Settings
             _updatePaneHotkeyIconsCallable = Callable.From(UpdatePaneHotkeyHintIcons);
             TryConnectPaneHotkeyStyleSignals();
             _scrollContainer.GetVScrollBar().ValueChanged += OnContentScrollChanged;
+            _scrollContainer.GetVScrollBar().VisibilityChanged += OnScrollbarVisibilityChanged;
+            _sidebarScrollContainer.GetVScrollBar().VisibilityChanged += OnScrollbarVisibilityChanged;
+            SyncScrollbarContentGutters();
             SubscribeLocaleChanges();
             _shellThemeChangedHandler = OnShellThemeChanged;
             RitsuShellThemeRuntime.ThemeChanged += _shellThemeChangedHandler;
@@ -262,6 +267,7 @@ namespace STS2RitsuLib.Settings
         public override void _ExitTree()
         {
             CancelPendingUiWork();
+            CloseQuickSearch(false);
 
             var vp = GetViewport();
             if (vp != null && _guiFocusSignalConnected &&
@@ -279,10 +285,19 @@ namespace STS2RitsuLib.Settings
             }
 
             TryDisconnectPaneHotkeyStyleSignals();
+            if (IsInstanceValid(_scrollContainer))
+            {
+                _scrollContainer.GetVScrollBar().ValueChanged -= OnContentScrollChanged;
+                _scrollContainer.GetVScrollBar().VisibilityChanged -= OnScrollbarVisibilityChanged;
+            }
+
+            if (IsInstanceValid(_sidebarScrollContainer))
+                _sidebarScrollContainer.GetVScrollBar().VisibilityChanged -= OnScrollbarVisibilityChanged;
             PopPaneHotkeys();
             if (_shellThemeChangedHandler != null)
                 RitsuShellThemeRuntime.ThemeChanged -= _shellThemeChangedHandler;
             StopShellThemeWatcher();
+            ReleaseQuickTooltipTiming();
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             base._ExitTree();
             FlushDirtyBindings();
@@ -297,6 +312,7 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.None;
             ApplySettingsFocusBehavior();
             ProcessMode = ProcessModeEnum.Inherit;
+            _tooltipTimingScope ??= RitsuShellTooltipTiming.Acquire(0.16d);
             _lastVisibleMirrorRefreshPageKey = null;
             TryStartShellThemeWatcher();
             SyncBirthdayLabelVisibility();
@@ -315,12 +331,14 @@ namespace STS2RitsuLib.Settings
         public override void OnSubmenuClosed()
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
+            CloseQuickSearch(false);
             PopPaneHotkeys();
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
             HideContentBuildOverlay();
             StopShellThemeWatcher();
+            ReleaseQuickTooltipTiming();
             CallDeferredIfAlive(ApplySettingsFocusBehavior);
             base.OnSubmenuClosed();
         }
@@ -329,6 +347,7 @@ namespace STS2RitsuLib.Settings
         protected override void OnSubmenuShown()
         {
             base.OnSubmenuShown();
+            _quickSearchLastShiftTapMsec = 0;
             SetProcessInput(true);
             ApplySettingsFocusBehavior();
             PushPaneHotkeys();
@@ -342,6 +361,7 @@ namespace STS2RitsuLib.Settings
         protected override void OnSubmenuHidden()
         {
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
+            CloseQuickSearch(false);
             PopPaneHotkeys();
             FlushPendingRefreshActionsImmediate();
             HideContentBuildOverlay();
@@ -349,8 +369,15 @@ namespace STS2RitsuLib.Settings
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
             StopShellThemeWatcher();
+            ReleaseQuickTooltipTiming();
             CallDeferredIfAlive(ApplySettingsFocusBehavior);
             base.OnSubmenuHidden();
+        }
+
+        private void ReleaseQuickTooltipTiming()
+        {
+            _tooltipTimingScope?.Dispose();
+            _tooltipTimingScope = null;
         }
 
         private void TryStartShellThemeWatcher()
@@ -552,25 +579,12 @@ namespace STS2RitsuLib.Settings
             {
                 if (!IsInstanceValid(control))
                     continue;
-                try
-                {
-                    var visible = predicate();
-                    if (control.Visible == visible)
-                        continue;
-                    control.Visible = visible;
-                    ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(control);
-                    changed = true;
-                }
-                catch
-                {
-                    if (!control.Visible)
-                    {
-                        control.Visible = true;
-                        changed = true;
-                    }
-
-                    ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(control);
-                }
+                var visible = ModSettingsPredicate.Evaluate(predicate);
+                if (control.Visible == visible)
+                    continue;
+                control.Visible = visible;
+                ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(control);
+                changed = true;
             }
 
             return changed;
@@ -734,6 +748,8 @@ namespace STS2RitsuLib.Settings
 
             _refreshBindingTriggers.Clear();
 
+            var selectionChanged = EnsureSelectionIsValid();
+
             var contentVisibilityChanged = ApplyDynamicVisibilityTargets(_globalDynamicVisibilityTargets);
             if (_modButtonList != null && IsInstanceValid(_modButtonList))
                 _modButtonList.RefreshRows();
@@ -744,6 +760,17 @@ namespace STS2RitsuLib.Settings
                      _pageContentCaches.TryGetValue(CreatePageCacheKey(_selectedModId, _selectedPageId),
                          out var selectedVisibilityPage))
                 contentVisibilityChanged |= ApplyDynamicVisibilityTargets(selectedVisibilityPage.VisibilityTargets);
+
+            if (selectionChanged)
+            {
+                _sidebarStructureDirty = true;
+                RebuildSidebar();
+                EnsureSelectedPageContentStructure();
+                RefreshSelectionState();
+                RefreshVisibleContent(includeAllPages, false);
+                RefreshContentBuildOverlayVisibility();
+                return;
+            }
 
             if (contentVisibilityChanged &&
                 !TryGetSelectedPageContentCache(out selectedLayoutPage))
@@ -1310,7 +1337,29 @@ namespace STS2RitsuLib.Settings
             headerTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             headerTitle.AddThemeFontSizeOverride("font_size", 22);
             _sidebarHeaderTitleLabel = headerTitle;
-            headerBox.AddChild(headerTitle);
+
+            var headerTitleRow = new HBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            };
+            headerTitleRow.AddThemeConstantOverride("separation", 8);
+            headerTitle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            headerTitleRow.AddChild(headerTitle);
+
+            _quickSearchButton = new(
+                string.Empty,
+                OpenQuickSearch)
+            {
+                CustomMinimumSize = new(38f, 32f),
+                SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                IconAlignment = HorizontalAlignment.Center,
+                ExpandIcon = false,
+            };
+            ApplyQuickSearchButtonPresentation();
+            headerTitleRow.AddChild(_quickSearchButton);
+            headerBox.AddChild(headerTitleRow);
 
             var subtitleLabel = new Label
             {
@@ -1342,7 +1391,8 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
-            sidebarScrollFrame.AddThemeConstantOverride("margin_right", ResolveScrollbarContentRightGutter());
+            _sidebarScrollFrame = sidebarScrollFrame;
+            sidebarScrollFrame.AddThemeConstantOverride("margin_right", 0);
             scroll.AddChild(sidebarScrollFrame);
 
             _modButtonList = new(this)
@@ -1417,7 +1467,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
             };
 
-            scrollContent.Configure(_contentList, ResolveScrollbarContentRightGutter());
+            scrollContent.Configure(_contentList, 0);
             CreateContentBuildOverlay(panel);
 
             return panel;
@@ -1604,7 +1654,7 @@ namespace STS2RitsuLib.Settings
 
             var rootPages = ModSettingsRegistry.GetPages()
                 .Where(page => string.IsNullOrWhiteSpace(page.ParentPageId) &&
-                               IsPageVisibleOnCurrentHost(page))
+                               CanPageAppearOnCurrentHost(page))
                 .GroupBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
                 .OrderBy(group => ModSettingsRegistry.GetModSidebarOrder(group.Key))
                 .ThenBy(group => ModSettingsLocalization.ResolveModName(group.Key, group.Key),
@@ -1626,7 +1676,7 @@ namespace STS2RitsuLib.Settings
                 var modId = group.Key;
                 var pages = ModSettingsRegistry.GetPages()
                     .Where(page => string.Equals(page.ModId, modId, StringComparison.OrdinalIgnoreCase) &&
-                                   IsPageVisibleOnCurrentHost(page))
+                                   CanPageAppearOnCurrentHost(page))
                     .OrderBy(ModSettingsRegistry.GetEffectivePageSortOrder)
                     .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
@@ -1649,7 +1699,7 @@ namespace STS2RitsuLib.Settings
                     0,
                     pageCountText,
                     () => ActivateSidebarMod(modId),
-                    null)
+                    () => pages.Any(IsPageVisibleOnCurrentHost))
                 {
                     TooltipInfo = ResolveSidebarModTooltipInfo(modId, title, titleSourcePages),
                 });
@@ -1662,6 +1712,14 @@ namespace STS2RitsuLib.Settings
             }
 
             return rows;
+        }
+
+        private static bool CanPageAppearOnCurrentHost(ModSettingsPage page)
+        {
+            return ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(page.VisibleOnHostSurfaces) &&
+                   page.Sections.Any(section =>
+                       ModSettingsHostSurfaceResolver.IsVisibleOnCurrentHost(section.VisibleOnHostSurfaces) &&
+                       section.Entries.Count > 0);
         }
 
         private void AddSidebarPageRows(List<ModSettingsSidebarRow> rows, IReadOnlyList<ModSettingsPage> pages,
@@ -1843,7 +1901,7 @@ namespace STS2RitsuLib.Settings
             _selectionDirty = false;
         }
 
-        private void RefreshVisibleContent(bool includeAllPagesRefresh)
+        private void RefreshVisibleContent(bool includeAllPagesRefresh, bool flushRefreshActions = true)
         {
             foreach (var cache in _pageContentCaches.Values)
                 cache.Root.Visible = false;
@@ -1914,7 +1972,8 @@ namespace STS2RitsuLib.Settings
                     break;
                 case PageBuildState.Ready:
                     RefreshPageHostLayout(selectedCache);
-                    FlushRefreshActionsImmediate(includeAllPagesRefresh);
+                    if (flushRefreshActions)
+                        FlushRefreshActionsImmediate(includeAllPagesRefresh);
                     break;
             }
 
@@ -2151,7 +2210,7 @@ namespace STS2RitsuLib.Settings
                 ClearHostChildren(cache.HeaderHost);
                 ClearHostChildren(cache.ContentHost);
 
-                var context = new ModSettingsUiContext(this, cache.PageKey);
+                var context = new ModSettingsUiContext(this, cache.PageKey, cache.EnableGate);
                 var isChildPage = !string.IsNullOrWhiteSpace(page.ParentPageId);
                 Action onBack = isChildPage
                     ? () =>
@@ -2313,14 +2372,14 @@ namespace STS2RitsuLib.Settings
             if (page.EnabledWhen != null)
             {
                 var initiallyEnabled = ModSettingsPredicate.Evaluate(page.EnabledWhen);
-                ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, initiallyEnabled);
-                ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, initiallyEnabled);
+                ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, cache.EnableGate, initiallyEnabled);
+                ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, cache.EnableGate, initiallyEnabled);
                 RegisterRefreshAction(() =>
                 {
                     var enabled = ModSettingsPredicate.Evaluate(page.EnabledWhen);
 
-                    ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, enabled);
-                    ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, enabled);
+                    ModSettingsUiFactory.ApplyEnabledRecursive(cache.HeaderHost, cache.EnableGate, enabled);
+                    ModSettingsUiFactory.ApplyEnabledRecursive(cache.ContentHost, cache.EnableGate, enabled);
                 }, ModSettingsUiRefreshSpec.Always, cache.PageKey);
             }
 
@@ -2607,17 +2666,21 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyContentViewportWidth()
         {
+            SyncScrollbarContentGutters();
             var viewportWidth = ResolveStableContentViewportWidth();
             if (viewportWidth <= 1f)
                 return;
 
-            var contentWidth = Mathf.Max(0f, viewportWidth - ResolveScrollbarContentRightGutter());
+            var contentWidth = Mathf.Max(0f, viewportWidth - _contentScrollContent.RightGutter);
             _contentScrollContent.SetViewportSize(new(viewportWidth, ResolveStableContentViewportHeight()));
             _contentList.SetLayoutWidth(contentWidth);
         }
 
         private float ResolveStableContentViewportWidth()
         {
+            if (_contentScrollContent is { } content && IsInstanceValid(content) && content.Size.X > 1f)
+                return content.Size.X;
+
             if (_scrollContainer is { } scroll && IsInstanceValid(scroll) && scroll.Size.X > 1f)
                 return scroll.Size.X;
 
@@ -2984,6 +3047,12 @@ namespace STS2RitsuLib.Settings
         /// <inheritdoc />
         public override void _Input(InputEvent @event)
         {
+            if (TryHandleQuickSearchInput(@event))
+            {
+                GetViewport()?.SetInputAsHandled();
+                return;
+            }
+
             var focusOwner = GetViewport()?.GuiGetFocusOwner();
             if (IsFocusNavigationBlocked() && !IsFocusUnderBlockingOverlay(focusOwner) && IsBlockedFocusInput(@event))
             {
@@ -3210,6 +3279,7 @@ namespace STS2RitsuLib.Settings
         private void ApplyStaticTexts()
         {
             ApplyBirthdayLabelText();
+            ApplyQuickSearchButtonPresentation();
         }
 
         private void ExpandOnlyMod(string? modId)
@@ -3219,21 +3289,9 @@ namespace STS2RitsuLib.Settings
                 _expandedModIds.Add(modId);
         }
 
-        private bool SelectedPageContentReady()
-        {
-            if (string.IsNullOrWhiteSpace(_selectedModId) || string.IsNullOrWhiteSpace(_selectedPageId))
-                return true;
-
-            var key = CreatePageCacheKey(_selectedModId, _selectedPageId);
-            if (!_pageContentCaches.TryGetValue(key, out var cache))
-                return true;
-
-            return cache.State is PageBuildState.Ready or PageBuildState.Failed;
-        }
-
         private bool ShouldShowExpandedModNav(string modId)
         {
-            return _expandedModIds.Contains(modId) && SelectedPageContentReady();
+            return _expandedModIds.Contains(modId);
         }
 
         private void FlushDirtyBindings()
@@ -3284,6 +3342,7 @@ namespace STS2RitsuLib.Settings
         private void OnLocaleChanged()
         {
             FlushDirtyBindings();
+            ResetQuickSearchOverlay();
             ModSettingsRegistry.InvalidateOrderingCache();
             _sidebarStructureDirty = true;
             _contentStructureDirty = true;
@@ -3293,6 +3352,7 @@ namespace STS2RitsuLib.Settings
 
         private void OnShellThemeChanged()
         {
+            ResetQuickSearchOverlay();
             CallDeferredIfAlive(() =>
             {
                 ResetUiCachesForShellThemeChange();
@@ -3368,6 +3428,36 @@ namespace STS2RitsuLib.Settings
         private static int ResolveScrollbarContentRightGutter()
         {
             return RitsuShellThemeLayoutResolver.ResolveInt(ScrollbarContentRightGutterTokenPath, 12);
+        }
+
+        private void OnScrollbarVisibilityChanged()
+        {
+            SyncScrollbarContentGutters();
+            QueueDeferredContentLayoutRefresh();
+            if (IsInstanceValid(_modButtonList))
+                _modButtonList.RefreshRows();
+        }
+
+        private void SyncScrollbarContentGutters()
+        {
+            if (IsInstanceValid(_contentScrollContent) && IsInstanceValid(_scrollContainer))
+            {
+                var gutter = _scrollContainer.GetVScrollBar().Visible
+                    ? ResolveScrollbarContentRightGutter()
+                    : 0;
+                _contentScrollContent.SetRightGutter(gutter);
+            }
+
+            if (!IsInstanceValid(_sidebarScrollFrame) || !IsInstanceValid(_sidebarScrollContainer))
+                return;
+
+            var sidebarGutter = _sidebarScrollContainer.GetVScrollBar().Visible
+                ? ResolveScrollbarContentRightGutter()
+                : 0;
+            if (_sidebarScrollFrame.GetThemeConstant("margin_right") == sidebarGutter)
+                return;
+            _sidebarScrollFrame.AddThemeConstantOverride("margin_right", sidebarGutter);
+            _sidebarScrollFrame.QueueSort();
         }
 
         private void ResetUiCachesForShellThemeChange()
@@ -3617,19 +3707,7 @@ namespace STS2RitsuLib.Settings
             public void RefreshRows(bool redraw = true)
             {
                 foreach (var row in _rows)
-                {
-                    bool visible;
-                    try
-                    {
-                        visible = row.VisibleWhen?.Invoke() ?? true;
-                    }
-                    catch
-                    {
-                        visible = true;
-                    }
-
-                    row.Visible = visible;
-                }
+                    row.Visible = ModSettingsPredicate.Evaluate(row.VisibleWhen);
 
                 ClampActiveIndex();
                 ClampHoveredIndex();
@@ -4479,6 +4557,7 @@ namespace STS2RitsuLib.Settings
             public required string PageKey { get; init; }
             public required Control Root { get; init; }
             public required PageBuildState State { get; set; }
+            public object EnableGate { get; } = new();
             public ulong LastUsedMsec { get; set; }
             public List<ModSettingsRefreshRegistration> RefreshRegistrations { get; } = [];
             public List<(Control Control, Func<bool> Predicate)> VisibilityTargets { get; } = [];

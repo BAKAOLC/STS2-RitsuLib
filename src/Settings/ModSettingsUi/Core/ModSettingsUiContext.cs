@@ -4,7 +4,10 @@ using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {
-    internal sealed partial class ModSettingsUiContext(RitsuModSettingsSubmenu submenu, string? pageScopeId = null)
+    internal sealed partial class ModSettingsUiContext(
+        RitsuModSettingsSubmenu submenu,
+        string? pageScopeId = null,
+        object? pageEnableGate = null)
         : IModSettingsUiActionHost
     {
         private readonly Dictionary<string, Dictionary<string, object?>> _rowUiState = [];
@@ -12,6 +15,8 @@ namespace STS2RitsuLib.Settings
         private ModSettingsEntryDefinition? _sectionBuildEntry;
         private ModSettingsPage? _sectionBuildPage;
         private ModSettingsSection? _sectionBuildSection;
+
+        internal object? PageEnableGate => pageEnableGate;
 
         public void MarkDirty(IModSettingsBinding binding)
         {

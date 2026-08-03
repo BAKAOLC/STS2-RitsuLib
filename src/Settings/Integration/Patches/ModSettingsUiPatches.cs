@@ -184,7 +184,9 @@ namespace STS2RitsuLib.Settings.Patches
 
             void OpenSubmenu()
             {
-                screen.GetAncestorOfType<NSubmenuStack>()?.PushSubmenuType(typeof(RitsuModSettingsSubmenu));
+                var result = ModSettingsNavigator.RequestOpenByIds(Const.ModId, null, null, null);
+                if (!result.Success)
+                    RitsuLibFramework.Logger.Warn($"[Settings] Game-settings shortcut failed: {result.Message}");
             }
         }
 

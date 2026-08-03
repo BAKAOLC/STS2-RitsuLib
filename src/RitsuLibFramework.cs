@@ -47,6 +47,7 @@ using STS2RitsuLib.Telemetry;
 using STS2RitsuLib.Telemetry.Diagnostics;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.TopBar;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Updates;
@@ -489,6 +490,7 @@ namespace STS2RitsuLib
                         ModCardPilePersistence.Initialize();
                         SecondaryResourcePersistence.Initialize();
                         RuntimeHotkeyService.Initialize();
+                        RitsuOverlayHostService.Initialize();
                         RitsuToastService.Initialize();
                         RitsuCanvasTextureFilterService.Initialize();
                         RuntimeDetourCompatibilityScanner.Initialize();

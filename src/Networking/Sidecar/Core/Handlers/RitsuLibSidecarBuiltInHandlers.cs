@@ -9,7 +9,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarPeerFeatures.ChunkedStreams |
             RitsuLibSidecarPeerFeatures.ManagedNetActions |
             RitsuLibSidecarPeerFeatures.BrotliPayloadCompression |
-            RitsuLibSidecarPeerFeatures.ModelRightClickV2;
+            RitsuLibSidecarPeerFeatures.ModelRightClickV2 |
+            RitsuLibSidecarPeerFeatures.DeveloperActionsV1;
 
         private static readonly RitsuLibSidecarChunkReassembly Chunks = new();
 

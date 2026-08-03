@@ -1,6 +1,5 @@
 using Godot;
-using MegaCrit.Sts2.Core.Nodes;
-using MegaCrit.Sts2.Core.Nodes.Screens;
+using STS2RitsuLib.Ui.Overlay;
 
 namespace STS2RitsuLib.Settings
 {
@@ -167,6 +166,15 @@ namespace STS2RitsuLib.Settings
     ///         提供从模组、反射调用或控制台命令打开 RitsuLib 模组设置位置的公共入口。
     ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         Call these UI navigation entry points on the Godot main thread. Resolution is synchronous; methods ending
+    ///         in <c>Async</c> additionally wait for the visible navigation to finish.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         请在 Godot 主线程调用这些界面导航入口。位置解析会同步完成；名称以 <c>Async</c> 结尾的方法还会等待可见界面完成导航。
+    ///     </para>
+    /// </remarks>
     public static class ModSettingsNavigator
     {
         /// <summary>
@@ -243,7 +251,7 @@ namespace STS2RitsuLib.Settings
             {
                 // UI lifetime ended while the deferred navigation was waiting for layout.
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[Settings] Deferred navigation failed: {ex}");
             }
@@ -347,7 +355,7 @@ namespace STS2RitsuLib.Settings
                 ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
                 RitsuLibModSettingsBootstrap.RefreshDynamicPages();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[Settings] Failed to refresh page registry before navigation: {ex}");
@@ -468,53 +476,7 @@ namespace STS2RitsuLib.Settings
 
         private static bool TryOpenHost(out RitsuModSettingsSubmenu submenu, out string error)
         {
-            if (Engine.GetMainLoop() is SceneTree { Root: { } root })
-            {
-                var visible = FindVisibleSubmenu(root);
-                if (visible != null)
-                {
-                    submenu = visible;
-                    error = "";
-                    return true;
-                }
-            }
-
-            var game = NGame.Instance;
-            if (game?.MainMenu?.SubmenuStack is { } mainMenuStack)
-            {
-                submenu = mainMenuStack.PushSubmenuType<RitsuModSettingsSubmenu>();
-                error = "";
-                return true;
-            }
-
-            if (game?.CurrentRunNode?.GlobalUi?.SubmenuStack is { } runCapstoneStack)
-            {
-                runCapstoneStack.ShowScreen(CapstoneSubmenuType.Settings);
-                submenu = runCapstoneStack.Stack.PushSubmenuType<RitsuModSettingsSubmenu>();
-                error = "";
-                return true;
-            }
-
-            submenu = null!;
-            error = "No active main-menu or run settings host is available.";
-            return false;
-        }
-
-        private static RitsuModSettingsSubmenu? FindVisibleSubmenu(Node root)
-        {
-            var queue = new Queue<Node>();
-            queue.Enqueue(root);
-            while (queue.Count > 0)
-            {
-                var node = queue.Dequeue();
-                if (node is RitsuModSettingsSubmenu { Visible: true } submenu && submenu.IsInsideTree())
-                    return submenu;
-
-                foreach (var child in node.GetChildren())
-                    queue.Enqueue(child);
-            }
-
-            return null;
+            return RitsuOverlayHostService.TryOpenSettings(out submenu, out error);
         }
 
         private static bool IsPageCurrentlyVisible(ModSettingsPage page)

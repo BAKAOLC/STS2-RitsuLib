@@ -1,4 +1,4 @@
-using MegaCrit.Sts2.Core.Platform;
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Utils.Persistence.Context;
 
@@ -98,9 +98,27 @@ namespace STS2RitsuLib.Utils.Persistence
         /// </summary>
         public static string GetAccountBasePath(string modId = Const.ModId)
         {
-            var platformDir = GetPlatformDirectory();
-            var userId = GetUserId();
-            return $"user://{platformDir}/{userId}/mod_data/{modId}";
+            return $"{GetAccountRootPath()}/mod_data/{modId}";
+        }
+
+        internal static string GetAccountRootPath()
+        {
+            try
+            {
+                var saveManager = MockSaveManager(null!) ?? ActiveSaveManager(null!);
+                if (saveManager != null)
+                {
+                    var accountRoot = SaveStore(saveManager).GetFullPath(string.Empty);
+                    if (!string.IsNullOrWhiteSpace(accountRoot))
+                        return accountRoot.Replace('\\', '/').TrimEnd('/');
+                }
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                // Fall back to the game's dynamic resolver when its save backend is not available yet.
+            }
+
+            return UserDataPathProvider.GetAccountScopedBasePath(null).Replace('\\', '/').TrimEnd('/');
         }
 
         /// <summary>
@@ -295,30 +313,13 @@ namespace STS2RitsuLib.Utils.Persistence
             }
         }
 
-        private static string GetPlatformDirectory()
-        {
-            try
-            {
-                var platform = PlatformUtil.PrimaryPlatform;
-                return UserDataPathProvider.GetPlatformDirectoryName(platform);
-            }
-            catch
-            {
-                return "default";
-            }
-        }
+        [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_saveStore")]
+        private static extern ref readonly ISaveStore SaveStore(SaveManager manager);
 
-        private static string GetUserId()
-        {
-            try
-            {
-                var platform = PlatformUtil.PrimaryPlatform;
-                return PlatformUtil.GetLocalPlayerId(platform).ToString();
-            }
-            catch
-            {
-                return "0";
-            }
-        }
+        [UnsafeAccessor(UnsafeAccessorKind.StaticField, Name = "_mockInstance")]
+        private static extern ref readonly SaveManager? MockSaveManager(SaveManager manager);
+
+        [UnsafeAccessor(UnsafeAccessorKind.StaticField, Name = "_instance")]
+        private static extern ref readonly SaveManager? ActiveSaveManager(SaveManager manager);
     }
 }

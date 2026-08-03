@@ -77,7 +77,7 @@ namespace STS2RitsuLib.Networking.MessageExtensions
             DynamicPatchInfo CreatePatch(TailOwnerRegistration registration)
             {
                 var patchType = typeof(SerializePatch<>).MakeGenericType(registration.MessageType);
-                var postfixName = nameof(SerializePatch<INetMessage>.Postfix);
+                const string postfixName = nameof(SerializePatch<INetMessage>.Postfix);
                 var postfix = AccessTools.DeclaredMethod(patchType, postfixName)
                               ?? throw new MissingMethodException(patchType.FullName, postfixName);
                 return new(

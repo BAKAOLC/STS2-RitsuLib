@@ -226,7 +226,9 @@ namespace STS2RitsuLib.Settings.Patches
                 return;
 
             RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
-            mainMenu.SubmenuStack.PushSubmenuType<RitsuModSettingsSubmenu>();
+            var result = ModSettingsNavigator.RequestOpenByIds(Const.ModId, null, null, null);
+            if (!result.Success)
+                RitsuLibFramework.Logger.Warn($"[Settings] Main-menu shortcut failed: {result.Message}");
         }
     }
 

@@ -707,6 +707,8 @@ namespace STS2RitsuLib.Settings
                 {
                     if (!map.TryGetValue(entry.Id, out var snap) || snap == null)
                         continue;
+                    if (!ModSettingsInteractionPolicy.CanMutateEntry(target.Page, section, entry))
+                        continue;
                     if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
                         any = true;
                 }
@@ -725,6 +727,8 @@ namespace STS2RitsuLib.Settings
             foreach (var entry in target.Section.Entries)
             {
                 if (!payload.Bindings.TryGetValue(entry.Id, out var snap) || snap == null)
+                    continue;
+                if (!ModSettingsInteractionPolicy.CanMutateEntry(target.Page, target.Section, entry))
                     continue;
                 if (entry.TryPasteChromeBindingSnapshot(snap, target.Host))
                     any = true;

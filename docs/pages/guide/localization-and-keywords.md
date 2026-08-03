@@ -353,6 +353,17 @@ Card keyword text goes in `card_keywords`:
 }
 ```
 
+Keyword descriptions can use the standard current-character energy icon syntax:
+
+```json
+{
+  "MY_MOD_KEYWORD_BLEEDING.description": "The next card costs 0{energyPrefix:energyIcons(1)}."
+}
+```
+
+This supplies the energy icon prefix only. Card dynamic variables such as `{Damage}` or `{Block}` are not available in
+keyword descriptions because a keyword hover tip is not tied to one card instance.
+
 Use the keyword on a `ModCardTemplate`:
 
 ```csharp
@@ -416,6 +427,16 @@ MY_MOD_KEYWORD_BLEEDING
   "MY_MOD_KEYWORD_BLEEDING.description": "回合结束时失去生命。"
 }
 ```
+
+关键词描述可以使用跟随当前角色的标准能量图标语法：
+
+```json
+{
+  "MY_MOD_KEYWORD_BLEEDING.description": "下一张牌的耗能为 0{energyPrefix:energyIcons(1)}。"
+}
+```
+
+这里仅提供能量图标前缀。关键词悬浮提示不绑定具体卡牌实例，因此其中不能使用 `{Damage}`、`{Block}` 等卡牌动态变量。
 
 在 `ModCardTemplate` 中使用关键词：
 

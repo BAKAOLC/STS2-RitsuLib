@@ -441,11 +441,13 @@ namespace STS2RitsuLib.Networking.ManagedActions
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Represents a vanilla queue action that executes a RitsuLib-managed payload. Missing registrations and
-    ///         executor failures are logged and suppressed, so the vanilla action queue continues.
+    ///         Applies a registered RitsuLib multiplayer action in game-action order. Missing registrations and
+    ///         executor failures are surfaced to the game's action executor; recoverable executor failures are also
+    ///         logged with their RitsuLib descriptor context before propagation.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         表示执行 RitsuLib 托管载荷的原版队列动作。缺失注册和执行器失败会被记录并抑制，因此原版动作队列将继续运行。
+    ///         按游戏动作顺序应用已注册的 RitsuLib 多人操作。缺失注册与执行器失败会交由游戏动作执行器处理；
+    ///         可恢复的执行器失败还会在继续抛出前连同 RitsuLib 描述符上下文写入日志。
     ///     </para>
     /// </summary>
     public sealed class RitsuLibManagedGameAction(
@@ -486,21 +488,19 @@ namespace STS2RitsuLib.Networking.ManagedActions
         protected override async Task ExecuteAction()
         {
             if (!RitsuLibManagedNetActions.TryGetRegistration(DescriptorOpcode, ActionType, out var registration))
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[ManagedNetAction] Missing descriptor opcode {DescriptorOpcode} for action type {ActionType}.");
-                return;
-            }
+                throw new InvalidOperationException(
+                    $"Missing managed-action descriptor opcode {DescriptorOpcode} for action type {ActionType}.");
 
             var choiceContext = new GameActionPlayerChoiceContext(this);
             try
             {
                 await registration.Execute(this, choiceContext);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[ManagedNetAction] Action opcode {DescriptorOpcode} type {ActionType} failed: {ex}");
+                throw;
             }
         }
 

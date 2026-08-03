@@ -507,10 +507,12 @@ namespace STS2RitsuLib.Keywords
         /// <summary>
         ///     <para xml:lang="en">
         ///         Creates a native <see cref="IHoverTip" /> for <paramref name="id" /> using its registered title,
-        ///         description, and icon.
+        ///         description, and icon. The description can use the standard current-character
+        ///         <c>{energyPrefix:energyIcons(1)}</c> localization expression.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         使用注册的标题、描述和图标，为 <paramref name="id" /> 创建原版 <see cref="IHoverTip" />。
+        ///         使用注册的标题、描述和图标，为 <paramref name="id" /> 创建原版 <see cref="IHoverTip" />。描述可使用跟随当前角色的
+        ///         标准 <c>{energyPrefix:energyIcons(1)}</c> 本地化表达式。
         ///     </para>
         /// </summary>
         public static IHoverTip CreateHoverTip(string id)
@@ -521,7 +523,9 @@ namespace STS2RitsuLib.Keywords
             if (!string.IsNullOrWhiteSpace(definition.IconPath) && ResourceLoader.Exists(definition.IconPath))
                 icon = ResourceLoader.Load<Texture2D>(definition.IconPath);
 
-            return new HoverTip(GetTitle(id), GetDescription(id), icon);
+            var description = GetDescription(id);
+            description.Add("energyPrefix", "");
+            return new HoverTip(GetTitle(id), description, icon);
         }
 
         /// <summary>

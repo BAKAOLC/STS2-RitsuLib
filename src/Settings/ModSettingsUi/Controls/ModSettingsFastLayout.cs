@@ -68,6 +68,7 @@ namespace STS2RitsuLib.Settings
             {
                 var layoutWidth = ResolveLayoutWidth();
                 var minHeight = 0f;
+                var minWidth = 0f;
                 var visibleCount = 0;
                 foreach (var child in GetChildren())
                 {
@@ -78,6 +79,8 @@ namespace STS2RitsuLib.Settings
                         PrepareChildWidth(control, layoutWidth);
                     var childMin = control.GetCombinedMinimumSize();
                     minHeight += childMin.Y;
+                    if (layoutWidth <= 1f)
+                        minWidth = Math.Max(minWidth, childMin.X);
                     visibleCount++;
                 }
 
@@ -85,15 +88,6 @@ namespace STS2RitsuLib.Settings
                     minHeight += _separation * (visibleCount - 1);
                 if (layoutWidth > 1f)
                     return new(1f, minHeight);
-
-                var minWidth = 0f;
-                foreach (var child in GetChildren())
-                {
-                    if (child is not Control control || !IsInstanceValid(control) || !control.Visible)
-                        continue;
-
-                    minWidth = Math.Max(minWidth, control.GetCombinedMinimumSize().X);
-                }
 
                 return new(minWidth, minHeight);
             }
@@ -339,15 +333,13 @@ namespace STS2RitsuLib.Settings
                         return;
                     SetDescription(descriptionProvider());
                 }, descriptionSpec);
-                if (_valueControl != null)
-                    AttachHostSurfaceReadOnlySync(context, _valueControl, actionControl,
-                        () => ReuseVersion == version);
                 return version;
             }
 
             internal void ReleaseForPool()
             {
                 ReuseVersion++;
+                ClearEnabledStateRecursive(this);
                 this.ReleaseFocusIfInsideTree();
                 Visible = false;
                 ProcessMode = ProcessModeEnum.Inherit;
@@ -792,7 +784,6 @@ namespace STS2RitsuLib.Settings
         internal sealed partial class FixedWidthScrollContent : Control
         {
             private Control? _content;
-            private int _rightGutter;
             private float _viewportHeight;
             private float _viewportWidth = -1f;
 
@@ -803,12 +794,24 @@ namespace STS2RitsuLib.Settings
                 ClipContents = true;
             }
 
+            internal int RightGutter { get; private set; }
+
             internal void Configure(Control content, int rightGutter)
             {
                 _content = content;
-                _rightGutter = Math.Max(0, rightGutter);
+                RightGutter = Math.Max(0, rightGutter);
                 if (content.GetParent() != this)
                     AddChild(content);
+                RequestLayout();
+            }
+
+            internal void SetRightGutter(int rightGutter)
+            {
+                rightGutter = Math.Max(0, rightGutter);
+                if (RightGutter == rightGutter)
+                    return;
+
+                RightGutter = rightGutter;
                 RequestLayout();
             }
 
@@ -883,7 +886,7 @@ namespace STS2RitsuLib.Settings
 
             private float ResolveContentWidth(float viewportWidth)
             {
-                return Math.Max(1f, viewportWidth - _rightGutter);
+                return Math.Max(1f, viewportWidth - RightGutter);
             }
         }
 

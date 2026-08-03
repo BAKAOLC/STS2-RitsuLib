@@ -117,8 +117,12 @@ namespace STS2RitsuLib.Settings
                             }
                         }
 
-                        if (page.EnabledWhen != null)
-                            ApplyEnabledRecursive(sectionPlan.EntryHost, page.EnabledWhen());
+                        if (sectionPlan.EnableGate != null)
+                            ApplyEnabledRecursive(sectionPlan.EntryHost, sectionPlan.EnableGate,
+                                ModSettingsPredicate.Evaluate(section.EnabledWhen));
+                        if (context.PageEnableGate != null)
+                            ApplyEnabledRecursive(sectionPlan.EntryHost, context.PageEnableGate,
+                                ModSettingsPredicate.Evaluate(page.EnabledWhen));
                     });
                     continue;
                 }
