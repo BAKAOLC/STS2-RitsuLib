@@ -25,8 +25,6 @@ namespace STS2RitsuLib.Keywords.Patches
     [HarmonyPriority(Priority.First)]
     internal sealed class HoverTipFactoryFromKeywordPatch : IPatchMethod
     {
-        private static readonly Dictionary<CardKeyword, IHoverTip> ModKeywordTipCache = [];
-        private static readonly Lock SyncRoot = new();
         public static string PatchId => "ritsulib_hover_tip_factory_from_keyword_mod_route";
 
         public static string Description =>
@@ -44,17 +42,7 @@ namespace STS2RitsuLib.Keywords.Patches
             if (!ModKeywordRegistry.TryGetByCardKeyword(keyword, out var definition))
                 return true;
 
-            lock (SyncRoot)
-            {
-                if (!ModKeywordTipCache.TryGetValue(keyword, out var cached))
-                {
-                    cached = ModKeywordRegistry.CreateHoverTip(definition.Id);
-                    ModKeywordTipCache[keyword] = cached;
-                }
-
-                __result = cached;
-            }
-
+            __result = ModKeywordRegistry.CreateHoverTip(definition.Id);
             return false;
         }
     }
