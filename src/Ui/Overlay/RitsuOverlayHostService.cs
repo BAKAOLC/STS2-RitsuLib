@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Ui.Overlay
     internal static class RitsuOverlayHostService
     {
         private static readonly Lock SyncRoot = new();
+        private static IRuntimeHotkeyHandle? _creaturePickerHotkey;
         private static RitsuOverlayHost? _host;
         private static IRuntimeHotkeyHandle? _debugToolsHotkey;
         private static IRuntimeHotkeyHandle? _settingsHotkey;
@@ -124,6 +125,18 @@ namespace STS2RitsuLib.Ui.Overlay
             }
         }
 
+        internal static void TryRebindCreaturePickerHotkey(string binding)
+        {
+            lock (SyncRoot)
+            {
+                if (_creaturePickerHotkey == null)
+                    return;
+                if (!_creaturePickerHotkey.TryRebind(binding, out _))
+                    RitsuLibFramework.Logger.Warn(
+                        $"[DebugToolsUi] Could not apply creature-picker hotkey binding '{binding}'.");
+            }
+        }
+
         internal static void TryRebindSettingsHotkey(string binding)
         {
             lock (SyncRoot)
@@ -192,12 +205,65 @@ namespace STS2RitsuLib.Ui.Overlay
                     // GameReady will retry after the runtime input router has a game root.
                 }
 
-            if (_debugToolsHotkey != null)
+            if (_debugToolsHotkey == null)
+                try
+                {
+                    _debugToolsHotkey = RuntimeHotkeyService.Register(
+                        RitsuLibSettingsStore.GetDebugToolsOpenHotkey(),
+                        () =>
+                        {
+                            lock (SyncRoot)
+                            {
+                                EnsureAttached(NGame.Instance);
+                                if (_host is not { } host || !GodotObject.IsInstanceValid(host))
+                                    return;
+                                if (!RitsuLibSettingsStore.AreDeveloperToolsEnabled())
+                                {
+                                    RitsuToastService.ShowWarning(
+                                        ModSettingsLocalization.Get(
+                                            "ritsulib.debugTools.disabled",
+                                            "Enable developer tools in RitsuLib settings before opening this workspace."),
+                                        ModSettingsLocalization.Get(
+                                            "ritsulib.debugTools.toastTitle",
+                                            "Developer tools"));
+                                    return;
+                                }
+
+                                host.ToggleDebugTools();
+                            }
+                        },
+                        new()
+                        {
+                            Id = "ritsulib.debug-tools.open",
+                            DisplayName = RuntimeHotkeyText.Dynamic(() =>
+                                ModSettingsLocalization.Get(
+                                    "ritsulib.debugTools.hotkey.label",
+                                    "Toggle developer tools")),
+                            Description = RuntimeHotkeyText.Dynamic(() =>
+                                ModSettingsLocalization.Get(
+                                    "ritsulib.debugTools.hotkey.description",
+                                    "Show or close the developer tools workspace.")),
+                            Category = RuntimeHotkeyText.Dynamic(() =>
+                                ModSettingsLocalization.Get("ritsulib.category.developerTools.label",
+                                    "Developer tools")),
+                            Purpose = "debug-tools",
+                            SuppressWhenTextInputFocused = false,
+                            SuppressWhenDevConsoleVisible = true,
+                            MarkInputHandled = true,
+                            DebugName = "RitsuLib developer tools",
+                        });
+                }
+                catch (InvalidOperationException)
+                {
+                    // GameReady will retry after the runtime input router has a game root.
+                }
+
+            if (_creaturePickerHotkey != null)
                 return;
             try
             {
-                _debugToolsHotkey = RuntimeHotkeyService.Register(
-                    RitsuLibSettingsStore.GetDebugToolsOpenHotkey(),
+                _creaturePickerHotkey = RuntimeHotkeyService.Register(
+                    RitsuLibSettingsStore.GetCreaturePickerHotkey(),
                     () =>
                     {
                         lock (SyncRoot)
@@ -210,34 +276,34 @@ namespace STS2RitsuLib.Ui.Overlay
                                 RitsuToastService.ShowWarning(
                                     ModSettingsLocalization.Get(
                                         "ritsulib.debugTools.disabled",
-                                        "Enable developer tools in RitsuLib settings before opening this workspace."),
+                                        "Enable developer tools in RitsuLib settings before using this shortcut."),
                                     ModSettingsLocalization.Get(
                                         "ritsulib.debugTools.toastTitle",
                                         "Developer tools"));
                                 return;
                             }
 
-                            host.ToggleDebugTools();
+                            host.ToggleCreaturePicking();
                         }
                     },
                     new()
                     {
-                        Id = "ritsulib.debug-tools.open",
+                        Id = "ritsulib.debug-tools.pick-creature",
                         DisplayName = RuntimeHotkeyText.Dynamic(() =>
                             ModSettingsLocalization.Get(
-                                "ritsulib.debugTools.hotkey.label",
-                                "Toggle developer tools")),
+                                "ritsulib.debugTools.creaturePickerHotkey.label",
+                                "Pick a combat creature")),
                         Description = RuntimeHotkeyText.Dynamic(() =>
                             ModSettingsLocalization.Get(
-                                "ritsulib.debugTools.hotkey.description",
-                                "Show or close the developer tools workspace.")),
+                                "ritsulib.debugTools.creaturePickerHotkey.description",
+                                "Start creature picking directly during combat.")),
                         Category = RuntimeHotkeyText.Dynamic(() =>
                             ModSettingsLocalization.Get("ritsulib.category.developerTools.label", "Developer tools")),
                         Purpose = "debug-tools",
                         SuppressWhenTextInputFocused = false,
                         SuppressWhenDevConsoleVisible = true,
                         MarkInputHandled = true,
-                        DebugName = "RitsuLib developer tools",
+                        DebugName = "RitsuLib combat creature picker",
                     });
             }
             catch (InvalidOperationException)
@@ -346,6 +412,25 @@ namespace STS2RitsuLib.Ui.Overlay
             }
 
             OpenDebugTools();
+        }
+
+        internal void ToggleCreaturePicking()
+        {
+            var dock = EnsureDebugToolsDock();
+            dock.SetSuppressed(false);
+            if (_debugToolsPanel == null)
+                return;
+
+            _switchingWorkspace = true;
+            try
+            {
+                CloseFixedWorkspace();
+                _debugToolsPanel.ToggleCreaturePicking();
+            }
+            finally
+            {
+                _switchingWorkspace = false;
+            }
         }
 
         internal void SetDeveloperToolsAvailable(bool available)

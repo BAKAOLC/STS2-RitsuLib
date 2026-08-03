@@ -27,6 +27,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> DeveloperToolsEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<bool> DeveloperToolsAllowClientRequests { get; private init; } = null!;
         public IModSettingsValueBinding<string> DebugToolsOpenHotkey { get; private init; } = null!;
+        public IModSettingsValueBinding<string> CreaturePickerHotkey { get; private init; } = null!;
         public IModSettingsValueBinding<string> SettingsOpenHotkey { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> DebugCompatAncientArchitect { get; private init; } =
@@ -240,6 +241,22 @@ namespace STS2RitsuLib.Settings
                             RitsuOverlayHostService.TryRebindDebugToolsHotkey(normalized);
                         }),
                     () => defaults.DebugToolsOpenHotkey),
+                CreaturePickerHotkey = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RuntimeHotkeyService.NormalizeOrDefault(
+                            settings.CreaturePickerHotkey,
+                            RitsuLibSettings.DefaultCreaturePickerHotkey),
+                        (settings, value) =>
+                        {
+                            var normalized = RuntimeHotkeyService.NormalizeOrDefault(
+                                value,
+                                RitsuLibSettings.DefaultCreaturePickerHotkey);
+                            settings.CreaturePickerHotkey = normalized;
+                            RitsuOverlayHostService.TryRebindCreaturePickerHotkey(normalized);
+                        }),
+                    () => defaults.CreaturePickerHotkey),
                 SettingsOpenHotkey = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, string>(
                         Const.ModId,

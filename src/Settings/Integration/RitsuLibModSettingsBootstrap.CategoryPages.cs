@@ -328,6 +328,15 @@ namespace STS2RitsuLib.Settings
                             false,
                             T("ritsulib.debugTools.hotkey.description",
                                 "Shows or closes the developer tools workspace when the feature is enabled. This shortcut does not change the feature setting."))
+                        .AddKeyBinding(
+                            "creature_picker_hotkey",
+                            T("ritsulib.debugTools.creaturePickerHotkey.label", "Pick a combat creature"),
+                            ui.CreaturePickerHotkey,
+                            true,
+                            false,
+                            false,
+                            T("ritsulib.debugTools.creaturePickerHotkey.description",
+                                "Starts creature picking directly during combat. Select a creature to open its editor, or press the shortcut again or Esc to cancel."))
                         .AddButton(
                             "debug_state_tools_open",
                             T("ritsulib.debugTools.pageLink.label", "Developer tools workspace"),
@@ -341,6 +350,9 @@ namespace STS2RitsuLib.Settings
                             RitsuLibSettingsStore.AreDeveloperToolsEnabled)
                         .WithEntryVisibleWhen(
                             "debug_tools_open_hotkey",
+                            RitsuLibSettingsStore.AreDeveloperToolsEnabled)
+                        .WithEntryVisibleWhen(
+                            "creature_picker_hotkey",
                             RitsuLibSettingsStore.AreDeveloperToolsEnabled)
                         .WithEntryVisibleWhen(
                             "debug_state_tools_open",

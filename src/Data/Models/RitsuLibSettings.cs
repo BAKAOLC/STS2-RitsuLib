@@ -13,11 +13,12 @@ namespace STS2RitsuLib.Data.Models
         ///     <para xml:lang="en">The current schema version written when settings are created or normalized.</para>
         ///     <para xml:lang="zh-CN">创建或规范化设置时写入的当前架构版本。</para>
         /// </summary>
-        public const int CurrentSchemaVersion = 16;
+        public const int CurrentSchemaVersion = 17;
 
         internal const double DefaultToastDurationSeconds = 6d;
         internal const string DefaultSettingsOpenHotkey = "Ctrl+Shift+F9";
         internal const string DefaultDebugToolsOpenHotkey = "Ctrl+Shift+F10";
+        internal const string DefaultCreaturePickerHotkey = "Ctrl+Shift+F11";
 
         /// <summary>
         ///     <para xml:lang="en">Gets or sets the persisted schema version used by the migration pipeline.</para>
@@ -219,6 +220,19 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("debug_tools_open_hotkey")]
         public string DebugToolsOpenHotkey { get; set; } = DefaultDebugToolsOpenHotkey;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets the runtime key binding that starts direct combat-creature picking. The binding is
+        ///         ignored while developer tools are disabled or creature picking is unavailable.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置用于直接开始选择战斗生物的运行时按键绑定。开发者工具关闭或无法选择生物时，
+        ///         此按键绑定会被忽略。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("creature_picker_hotkey")]
+        public string CreaturePickerHotkey { get; set; } = DefaultCreaturePickerHotkey;
 
         /// <summary>
         ///     <para xml:lang="en">
