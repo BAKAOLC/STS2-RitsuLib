@@ -22,7 +22,7 @@ namespace STS2RitsuLib
         ///     <para xml:lang="en">Assembly and manifest version string.</para>
         ///     <para xml:lang="zh-CN">程序集和清单版本字符串。</para>
         /// </summary>
-        public const string Version = "0.5.4";
+        public const string Version = "0.5.5";
 
         /// <summary>
         ///     <para xml:lang="en">Steam Workshop item ID for the official RitsuLib release.</para>
