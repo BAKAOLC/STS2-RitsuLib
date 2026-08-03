@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
@@ -16,6 +17,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Settings;
 
 namespace STS2RitsuLib.Content.Patches
 {
@@ -33,9 +35,12 @@ namespace STS2RitsuLib.Content.Patches
         private const float EventTipHotZoneMinHeight = 112f;
         private const double EventTipSlideDuration = 0.28;
 
+        private static readonly ConditionalWeakTable<NEventLayout, EventSourceBadgeState> EventSourceBadgeStates =
+            new();
+
         internal static void Append(ContentSourceHoverTipFactory.ContentSourceInfo source, ref HoverTip tip)
         {
-            tip.Description = $"[purple]{source.Format()}[/purple]\n{tip.Description}";
+            tip.Description = $"[purple]{source.FormatForBbCode()}[/purple]\n{tip.Description}";
         }
 
         internal static void Append(AbstractModel model, ref IEnumerable<IHoverTip> result)
@@ -43,7 +48,14 @@ namespace STS2RitsuLib.Content.Patches
             if (!ContentSourceHoverTipFactory.TryCreate(model, out var tip))
                 return;
 
-            result = [tip, .. result];
+            var tips = result.ToArray();
+            if (tips.Any(existing => string.Equals(existing.Id, tip.Id, StringComparison.OrdinalIgnoreCase)))
+            {
+                result = tips;
+                return;
+            }
+
+            result = [tip, .. tips];
         }
 
         internal static void AppendToFirstHoverTip(AbstractModel model, ref IEnumerable<IHoverTip> result)
@@ -68,10 +80,19 @@ namespace STS2RitsuLib.Content.Patches
 
         private static HoverTip CreateSourceTip(ContentSourceHoverTipFactory.ContentSourceInfo source)
         {
-            return new(ContentSourceHoverTipFactory.GetTitle(), source.Format())
+            return new(ContentSourceHoverTipFactory.GetTitle(), source.FormatForBbCode())
             {
                 Id = "ritsulib:content_source:" + source.Id,
             };
+        }
+
+        internal static void TrackAndUpdateEventSourceBadge(NEventLayout layout, EventModel eventModel)
+        {
+            var state = EventSourceBadgeStates.GetOrCreateValue(layout);
+            state.EventModel = eventModel;
+            state.Settings = EventSourceSettings.Capture();
+            EnsureEventSourceSettingsSubscription(layout, state);
+            UpdateEventSourceBadge(layout, eventModel);
         }
 
         internal static void UpdateEventSourceBadge(NEventLayout layout, EventModel eventModel)
@@ -82,15 +103,8 @@ namespace STS2RitsuLib.Content.Patches
             var existing = layout.GetNodeOrNull<NHoverTipSet>(EventBadgeNodeName);
             var existingHotZone = layout.GetNodeOrNull<Control>(EventDrawerHotZoneName);
             if (!RitsuLibSettingsStore.IsModSourceHoverTipsEnabled() ||
-                !RitsuLibSettingsStore.ShouldShowEventModSourceHoverTips())
-            {
-                RemoveBadge(layout, existing);
-                RemoveBadge(layout, existingHotZone);
-                return;
-            }
-
-            var source = ContentSourceHoverTipFactory.Resolve(eventModel.GetType());
-            if (!ContentSourceHoverTipFactory.ShouldShow(source))
+                !RitsuLibSettingsStore.ShouldShowEventModSourceHoverTips() ||
+                !ContentSourceHoverTipFactory.TryResolve(eventModel, out var source))
             {
                 RemoveBadge(layout, existing);
                 RemoveBadge(layout, existingHotZone);
@@ -139,7 +153,7 @@ namespace STS2RitsuLib.Content.Patches
             if (!IsNodeUsable(tipSet._textHoverTipContainer))
                 return;
 
-            AddHoverTipControl(tipSet, new(ContentSourceHoverTipFactory.GetTitle(), source.Format())
+            AddHoverTipControl(tipSet, new(ContentSourceHoverTipFactory.GetTitle(), source.FormatForBbCode())
             {
                 Id = "ritsulib:event_content_source:" + source.Id,
             });
@@ -287,6 +301,84 @@ namespace STS2RitsuLib.Content.Patches
             return node != null &&
                    GodotObject.IsInstanceValid(node) &&
                    !node.IsQueuedForDeletion();
+        }
+
+        private static void EnsureEventSourceSettingsSubscription(NEventLayout layout, EventSourceBadgeState state)
+        {
+            if (state.SettingsListener != null)
+                return;
+
+            state.SettingsListener = binding =>
+            {
+                if (!string.Equals(binding.ModId, Const.ModId, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(binding.DataKey, Const.SettingsKey, StringComparison.Ordinal))
+                    return;
+
+                var settings = EventSourceSettings.Capture();
+                if (settings == state.Settings)
+                    return;
+
+                state.Settings = settings;
+                QueueEventSourceBadgeRefresh(layout, state);
+            };
+            ModSettingsBindingWriteEvents.ValueWritten += state.SettingsListener;
+
+            try
+            {
+                layout.Connect(
+                    Node.SignalName.TreeExiting,
+                    Callable.From(() =>
+                    {
+                        ModSettingsBindingWriteEvents.ValueWritten -= state.SettingsListener;
+                        state.SettingsListener = null;
+                        state.RefreshQueued = false;
+                    }),
+                    (uint)GodotObject.ConnectFlags.OneShot);
+            }
+            catch
+            {
+                ModSettingsBindingWriteEvents.ValueWritten -= state.SettingsListener;
+                state.SettingsListener = null;
+                throw;
+            }
+        }
+
+        private static void QueueEventSourceBadgeRefresh(NEventLayout layout, EventSourceBadgeState state)
+        {
+            if (state.RefreshQueued)
+                return;
+
+            state.RefreshQueued = true;
+            Callable.From(() =>
+            {
+                state.RefreshQueued = false;
+                if (state.EventModel is { } eventModel && IsNodeUsable(layout))
+                    UpdateEventSourceBadge(layout, eventModel);
+            }).CallDeferred();
+        }
+
+        private sealed class EventSourceBadgeState
+        {
+            public EventModel? EventModel { get; set; }
+            public EventSourceSettings Settings { get; set; }
+            public Action<IModSettingsBinding>? SettingsListener { get; set; }
+            public bool RefreshQueued { get; set; }
+        }
+
+        private readonly record struct EventSourceSettings(
+            bool Enabled,
+            ContentSourceDisplayStyle DisplayStyle,
+            bool IncludeVanilla,
+            bool EventsEnabled)
+        {
+            public static EventSourceSettings Capture()
+            {
+                return new(
+                    RitsuLibSettingsStore.IsModSourceHoverTipsEnabled(),
+                    RitsuLibSettingsStore.GetModSourceHoverTipsDisplayStyle(),
+                    RitsuLibSettingsStore.ShouldIncludeVanillaModSourceHoverTips(),
+                    RitsuLibSettingsStore.ShouldShowEventModSourceHoverTips());
+            }
         }
     }
 
@@ -478,6 +570,9 @@ namespace STS2RitsuLib.Content.Patches
 
         public static void Postfix(PowerModel __instance, ref IEnumerable<IHoverTip> __result)
         {
+            if (!__instance.IsVisible)
+                return;
+
             ContentSourceHoverTipPatchHelper.AppendToFirstHoverTip(__instance, ref __result);
         }
     }
@@ -626,7 +721,7 @@ namespace STS2RitsuLib.Content.Patches
 
         public static void Postfix(NEventLayout __instance, EventModel eventModel)
         {
-            ContentSourceHoverTipPatchHelper.UpdateEventSourceBadge(__instance, eventModel);
+            ContentSourceHoverTipPatchHelper.TrackAndUpdateEventSourceBadge(__instance, eventModel);
         }
     }
 }

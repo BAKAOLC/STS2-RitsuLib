@@ -1402,6 +1402,7 @@ namespace STS2RitsuLib.Content
                     registry._freezeReason = reason;
             }
 
+            ContentSourceHoverTipFactory.FreezeRegistrations();
             ResolvedModelCache.MarkFrozen();
 
             foreach (var registry in Registries.Values)
