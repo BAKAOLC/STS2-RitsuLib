@@ -205,10 +205,24 @@ namespace STS2RitsuLib.Settings
         {
             _detailTween?.Kill();
             _detailTween = null;
-            foreach (var holder in _holders)
+            for (var index = 0; index < _holders.Count; index++)
+            {
+                var holder = _holders[index];
                 if (IsInstanceValid(holder))
+                {
+                    holder.RemoveMeta(HolderMetaKey);
+                    if (index < _selectionFrames.Count && IsInstanceValid(_selectionFrames[index]))
+                    {
+                        holder.RemoveChildSafely(_selectionFrames[index]);
+                        _selectionFrames[index].QueueFreeSafely();
+                    }
+
                     holder.QueueFreeSafely();
+                }
+            }
+
             _holders.Clear();
+            _selectionFrames.Clear();
             _holderItemIds.Clear();
             base._ExitTree();
         }

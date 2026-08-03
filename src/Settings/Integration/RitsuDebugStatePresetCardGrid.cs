@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using STS2RitsuLib.Diagnostics.DebugTools;
@@ -77,7 +78,7 @@ namespace STS2RitsuLib.Settings
             var current = (Control)_flow.GetChild(index);
             var replacement = CreateTile(_cards[index], index);
             _flow.RemoveChild(current);
-            current.QueueFree();
+            ReleaseTile(current);
             _flow.AddChild(replacement);
             _flow.MoveChild(replacement, index);
         }
@@ -87,7 +88,7 @@ namespace STS2RitsuLib.Settings
             foreach (var child in _flow.GetChildren())
             {
                 _flow.RemoveChild(child);
-                child.QueueFree();
+                ReleaseTile((Control)child);
             }
 
             for (var index = 0; index < _cards.Count; index++)
@@ -159,6 +160,32 @@ namespace STS2RitsuLib.Settings
                 index == _selectedIndex
                     ? RitsuShellChromeStyles.CreateSelectedListItemCardStyle()
                     : RitsuShellChromeStyles.CreateListItemCardStyle());
+        }
+
+        private static void ReleaseTile(Control tile)
+        {
+            var holder = FindCardHolder(tile);
+            if (holder != null && IsInstanceValid(holder))
+            {
+                holder.RemoveMeta(RitsuDebugCardCatalog.HolderMetaKey);
+                holder.GetParent()?.RemoveChildSafely(holder);
+                holder.QueueFreeSafely();
+            }
+
+            tile.QueueFree();
+        }
+
+        private static NGridCardHolder? FindCardHolder(Node parent)
+        {
+            foreach (var child in parent.GetChildren())
+            {
+                if (child is NGridCardHolder holder)
+                    return holder;
+                if (FindCardHolder(child) is { } descendant)
+                    return descendant;
+            }
+
+            return null;
         }
 
         private static string BuildTooltip(RitsuDebugStatePresetCard card)

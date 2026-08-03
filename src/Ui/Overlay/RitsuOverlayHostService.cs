@@ -2,6 +2,7 @@ using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.RuntimeInput;
@@ -96,6 +97,18 @@ namespace STS2RitsuLib.Ui.Overlay
 
                 screen = null!;
                 return false;
+            }
+        }
+
+        internal static void TryAttachHoverTips(Control owner, NHoverTipSet? hoverTips)
+        {
+            if (hoverTips == null || !GodotObject.IsInstanceValid(owner) || !GodotObject.IsInstanceValid(hoverTips))
+                return;
+
+            lock (SyncRoot)
+            {
+                if (_host is { } host && GodotObject.IsInstanceValid(host) && host.IsAncestorOf(owner))
+                    host.AttachHoverTips(hoverTips);
             }
         }
 
@@ -243,6 +256,7 @@ namespace STS2RitsuLib.Ui.Overlay
         private ColorRect _fixedBackdrop = null!;
         private RitsuOverlaySubmenuStack _fixedStack = null!;
         private Control _floatingWindows = null!;
+        private Control _hoverTips = null!;
         private Control? _previousFocus;
         private bool _switchingWorkspace;
 
@@ -367,7 +381,23 @@ namespace STS2RitsuLib.Ui.Overlay
             _fixedStack.StackModified += OnFixedStackModified;
             _fixedBackdrop.Hide();
             _fixedStack.Hide();
+
+            _hoverTips = new()
+            {
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                ZIndex = 100,
+            };
+            _hoverTips.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            root.AddChild(_hoverTips);
             SetProcessUnhandledInput(true);
+        }
+
+        internal void AttachHoverTips(NHoverTipSet hoverTips)
+        {
+            if (!IsInstanceValid(_hoverTips) || !IsInstanceValid(hoverTips) || hoverTips.GetParent() == _hoverTips)
+                return;
+
+            hoverTips.Reparent(_hoverTips);
         }
 
         private RitsuDebugToolsDock EnsureDebugToolsDock()

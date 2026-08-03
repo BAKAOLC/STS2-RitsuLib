@@ -652,6 +652,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
             patcher.RegisterPatch<MainMenuModSettingsButtonPatch>();
             patcher.RegisterPatch<RitsuOverlayActiveScreenPatch>();
+            patcher.RegisterPatch<RitsuOverlayHoverTipLayerPatch>();
             patcher.RegisterPatch<RitsuDebugCardHolderSmallScalePatch>();
             patcher.RegisterPatch<RitsuDebugCardHolderHoverScalePatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
