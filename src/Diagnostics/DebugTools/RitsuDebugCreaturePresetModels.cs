@@ -59,9 +59,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return Array.AsReadOnly<RitsuDebugCreaturePreset>(
             [
                 .. (data.Presets ?? [])
-                    .Where(IsReadable)
-                    .Take(MaximumPresetCount)
-                    .Select(static preset => preset.Clone()),
+                .Where(IsReadable)
+                .Take(MaximumPresetCount)
+                .Select(static preset => preset.Clone()),
             ]);
         }
 
