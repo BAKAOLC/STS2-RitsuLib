@@ -244,7 +244,7 @@ namespace STS2RitsuLib.Settings
                 RitsuCatalogPresentation.Grid,
                 220f,
                 84f,
-                detailWidth: 520f);
+                detailWidth: 640f);
             browser.SetItems(CreateCreatureCatalogItems(creatures));
             return browser;
 

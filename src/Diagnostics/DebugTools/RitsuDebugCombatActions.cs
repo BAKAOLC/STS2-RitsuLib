@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
@@ -6,8 +7,10 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.ValueProps;
+using STS2RitsuLib.Networking.Sidecar;
 
 namespace STS2RitsuLib.Diagnostics.DebugTools
 {
@@ -32,9 +35,36 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const string ApplyPowerActionId = "combat.power.apply";
         internal const string ApplyPowerToCreaturesActionId = "combat.power.apply-many";
         internal const string RemovePowerActionId = "combat.power.remove";
-        internal const int MaxAmount = 999_999;
+        internal const string StunMonsterActionId = "combat.monster.stun";
+        internal const string SetMonsterIntentActionId = "combat.monster.intent.set";
+        internal const string RandomMonsterIntentActionId = "combat.monster.intent.random-group";
+        internal const string PerformMonsterIntentActionId = "combat.monster.intent.perform";
+        internal const int MaxAmount = 999_999_999;
         internal const int MaxCreatureTargetCount = 128;
         internal const int MaxEnemyCount = 64;
+
+        internal static bool IsMonsterIntentActionFor(
+            RitsuDebugActionExecutionResult result,
+            uint combatId)
+        {
+            try
+            {
+                return result.ActionId switch
+                {
+                    SetMonsterIntentActionId =>
+                        JsonSerializer.Deserialize<MonsterIntentPayload>(result.PayloadJson).CombatId == combatId,
+                    RandomMonsterIntentActionId =>
+                        JsonSerializer.Deserialize<MonsterIntentGroupPayload>(result.PayloadJson).CombatId == combatId,
+                    PerformMonsterIntentActionId or StunMonsterActionId =>
+                        JsonSerializer.Deserialize<MonsterActionPayload>(result.PayloadJson).CombatId == combatId,
+                    _ => false,
+                };
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+        }
 
         internal static void RegisterBuiltInActions()
         {
@@ -66,6 +96,26 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 RemovePowerActionId,
                 ValidateRemovePower,
                 ExecuteRemovePowerAsync);
+            RitsuDebugActionProtocol.Register<MonsterActionPayload>(
+                StunMonsterActionId,
+                ValidateStunMonster,
+                ExecuteStunMonsterAsync,
+                RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1);
+            RitsuDebugActionProtocol.Register<MonsterIntentPayload>(
+                SetMonsterIntentActionId,
+                ValidateSetMonsterIntent,
+                ExecuteSetMonsterIntentAsync,
+                RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1);
+            RitsuDebugActionProtocol.Register<MonsterIntentGroupPayload>(
+                RandomMonsterIntentActionId,
+                ValidateRandomMonsterIntent,
+                ExecuteRandomMonsterIntentAsync,
+                RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1);
+            RitsuDebugActionProtocol.Register<MonsterActionPayload>(
+                PerformMonsterIntentActionId,
+                ValidatePerformMonsterIntent,
+                ExecutePerformMonsterIntentAsync,
+                RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1);
             RitsuDebugCreaturePresetActions.RegisterBuiltInActions();
         }
 
@@ -168,6 +218,60 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string powerId)
         {
             return SubmitPower(requester, actionTarget, RemovePowerActionId, combatId, powerId, 0);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitSetMonsterIntent(
+            Player requester,
+            Player actionTarget,
+            uint combatId,
+            string moveId)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                SetMonsterIntentActionId,
+                requester,
+                actionTarget,
+                new MonsterIntentPayload(combatId, moveId));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitStunMonster(
+            Player requester,
+            Player actionTarget,
+            uint combatId)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                StunMonsterActionId,
+                requester,
+                actionTarget,
+                new MonsterActionPayload(combatId));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitRandomMonsterIntent(
+            Player requester,
+            Player actionTarget,
+            uint combatId,
+            string groupId)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                RandomMonsterIntentActionId,
+                requester,
+                actionTarget,
+                new MonsterIntentGroupPayload(combatId, groupId));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitPerformMonsterIntent(
+            Player requester,
+            Player actionTarget,
+            uint combatId)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                PerformMonsterIntentActionId,
+                requester,
+                actionTarget,
+                new MonsterActionPayload(combatId));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
         internal static bool TryResolvePower(
@@ -479,6 +583,77 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     canonical.Id);
         }
 
+        private static RitsuDebugActionCheck ValidateSetMonsterIntent(
+            RitsuDebugActionContext context,
+            MonsterIntentPayload payload)
+        {
+            if (!TryResolveMonsterActionTarget(payload.CombatId, out var creature, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (string.IsNullOrWhiteSpace(payload.MoveId) || payload.MoveId.Length > 128)
+                return RitsuDebugActionCheck.Fail(
+                    "combat.monsterIntentIdInvalid",
+                    "The selected monster intent is invalid.");
+
+            return payload.MoveId is not ("UNSET_MOVE" or "STUNNED") &&
+                   creature.Monster!.MoveStateMachine!.States.TryGetValue(payload.MoveId, out var state) &&
+                   state is MoveState
+                ? RitsuDebugActionCheck.Ok
+                : RitsuDebugActionCheck.Fail(
+                    "combat.monsterIntentUnavailable",
+                    "The selected intent is not available for this monster.");
+        }
+
+        private static RitsuDebugActionCheck ValidateStunMonster(
+            RitsuDebugActionContext context,
+            MonsterActionPayload payload)
+        {
+            if (!TryResolveMonsterActionTarget(payload.CombatId, out var creature, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (creature.IsStunned)
+                return RitsuDebugActionCheck.Fail(
+                    "combat.monsterAlreadyStunned",
+                    "The selected monster is already stunned.");
+            return creature.Monster!.NextMove.CanTransitionAway
+                ? RitsuDebugActionCheck.Ok
+                : RitsuDebugActionCheck.Fail(
+                    "combat.monsterIntentLocked",
+                    "The selected monster's current intent cannot be interrupted.");
+        }
+
+        private static RitsuDebugActionCheck ValidateRandomMonsterIntent(
+            RitsuDebugActionContext context,
+            MonsterIntentGroupPayload payload)
+        {
+            if (!TryResolveMonsterActionTarget(payload.CombatId, out var creature, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (string.IsNullOrWhiteSpace(payload.GroupId) || payload.GroupId.Length > 128)
+                return RitsuDebugActionCheck.Fail(
+                    "combat.monsterIntentGroupInvalid",
+                    "The selected intent group is invalid.");
+            var machine = creature.Monster!.MoveStateMachine!;
+            if (!machine.States.TryGetValue(payload.GroupId, out var state) ||
+                state is not RandomBranchState { States.Count: > 0 and <= 128 } group ||
+                group.States.Any(branch => string.IsNullOrWhiteSpace(branch.stateId) ||
+                                           !machine.States.ContainsKey(branch.stateId)))
+                return RitsuDebugActionCheck.Fail(
+                    "combat.monsterIntentGroupUnavailable",
+                    "The selected random intent group is not available for this monster.");
+            return RitsuDebugActionCheck.Ok;
+        }
+
+        private static RitsuDebugActionCheck ValidatePerformMonsterIntent(
+            RitsuDebugActionContext context,
+            MonsterActionPayload payload)
+        {
+            if (!TryResolveMonsterActionTarget(payload.CombatId, out var creature, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            return creature.Monster!.NextMove.Id == "UNSET_MOVE"
+                ? RitsuDebugActionCheck.Fail(
+                    "combat.monsterIntentUnavailable",
+                    "The selected monster does not currently have an intent to perform.")
+                : RitsuDebugActionCheck.Ok;
+        }
+
         private static async Task<string> ExecuteModifyCreatureAsync(
             RitsuDebugActionContext context,
             ModifyCreaturePayload payload)
@@ -523,6 +698,71 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
 
             return DescribeCreatureResult(payload.Operation);
+        }
+
+        private static Task<string> ExecuteSetMonsterIntentAsync(
+            RitsuDebugActionContext context,
+            MonsterIntentPayload payload)
+        {
+            var creature = FindCreature(payload.CombatId)!;
+            var monster = creature.Monster!;
+            var move = (MoveState)monster.MoveStateMachine!.States[payload.MoveId];
+            monster.SetMoveImmediate(move, true);
+            return Task.FromResult($"Changed the selected monster's intent to {payload.MoveId}.");
+        }
+
+        private static async Task<string> ExecuteStunMonsterAsync(
+            RitsuDebugActionContext context,
+            MonsterActionPayload payload)
+        {
+            var creature = FindCreature(payload.CombatId)!;
+            await CreatureCmd.Stun(creature, creature.Monster!.NextMove.Id);
+            return "Stunned the selected monster.";
+        }
+
+        private static Task<string> ExecuteRandomMonsterIntentAsync(
+            RitsuDebugActionContext context,
+            MonsterIntentGroupPayload payload)
+        {
+            var creature = FindCreature(payload.CombatId)!;
+            var monster = creature.Monster!;
+            var group = (RandomBranchState)monster.MoveStateMachine!.States[payload.GroupId];
+            try
+            {
+                var move = ResolveRandomGroupMove(creature, group);
+                monster.SetMoveImmediate(move, true);
+                return Task.FromResult($"Randomly changed the selected monster's intent to {move.Id}.");
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[DebugTools] Could not select an intent from group '{payload.GroupId}': {ex}");
+                throw new RitsuDebugActionExecutionException(RitsuDebugActionFeedback.Create(
+                    "combat.monsterIntentGroupUnavailable",
+                    "The selected random intent group is not available for this monster."));
+            }
+        }
+
+        private static async Task<string> ExecutePerformMonsterIntentAsync(
+            RitsuDebugActionContext context,
+            MonsterActionPayload payload)
+        {
+            var creature = FindCreature(payload.CombatId)!;
+            var monster = creature.Monster!;
+            var moveId = monster.NextMove.Id;
+            var creatureNode = NCombatRoom.Instance?.GetCreatureNode(creature);
+            if (creatureNode != null)
+                await creatureNode.PerformIntent();
+            await monster.PerformMove();
+
+            if (!await CombatManager.Instance.CheckWinCondition())
+            {
+                var combatState = CombatManager.Instance.DebugOnlyGetState();
+                if (combatState != null && combatState.ContainsCreature(creature) && !creature.IsDead)
+                    creature.PrepareForNextTurn(combatState.PlayerCreatures);
+            }
+
+            return $"Performed the selected monster's current intent ({moveId}).";
         }
 
         private static async Task<string> ExecuteAddMonsterAsync(
@@ -778,6 +1018,75 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
         }
 
+        private static bool TryResolveMonsterActionTarget(
+            uint combatId,
+            out Creature creature,
+            out RitsuDebugActionFeedback feedback)
+        {
+            creature = null!;
+            if (!TryRequireCombat(out feedback))
+                return false;
+            var candidate = FindCreature(combatId);
+            if (candidate?.Monster?.MoveStateMachine == null || candidate.IsPlayer || candidate.IsDead)
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "combat.monsterIntentTargetRequired",
+                    "Select a living enemy monster with available intents.");
+                return false;
+            }
+
+            if (!TryValidateMonsterActionTarget(candidate, out feedback))
+                return false;
+
+            creature = candidate;
+            return true;
+        }
+
+        private static MoveState ResolveRandomGroupMove(Creature creature, RandomBranchState group)
+        {
+            var monster = creature.Monster!;
+            var machine = monster.MoveStateMachine!;
+            MonsterState state = group;
+            var visited = new HashSet<string>(StringComparer.Ordinal);
+            while (state is not MoveState)
+            {
+                if (!visited.Add(state.Id) || visited.Count > machine.States.Count)
+                    throw new InvalidOperationException($"Intent group '{group.Id}' contains a branch cycle.");
+                var nextStateId = state.GetNextState(creature, monster.RunRng.MonsterAi);
+                if (string.IsNullOrWhiteSpace(nextStateId) ||
+                    !machine.States.TryGetValue(nextStateId, out var nextState))
+                    throw new InvalidOperationException(
+                        $"Intent group '{group.Id}' resolved to unknown state '{nextStateId}'.");
+                state = nextState;
+            }
+
+            return (MoveState)state;
+        }
+
+        private static bool TryValidateMonsterActionTarget(
+            Creature creature,
+            out RitsuDebugActionFeedback feedback)
+        {
+            if (creature.IsPlayer || creature.Monster?.MoveStateMachine == null || creature.IsDead)
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "combat.monsterIntentTargetRequired",
+                    "Select a living enemy monster with available intents.");
+                return false;
+            }
+
+            if (creature.CombatState?.CurrentSide != CombatSide.Player || creature.Monster.IsPerformingMove)
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "combat.monsterActionPlayerTurnRequired",
+                    "Monster intent actions are available during the player turn while the monster is idle.");
+                return false;
+            }
+
+            feedback = default;
+            return true;
+        }
+
         internal readonly record struct ModifyCreaturePayload(
             uint CombatId,
             RitsuDebugCreatureOperation Operation,
@@ -786,6 +1095,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal readonly record struct PowerPayload(uint CombatId, string PowerId, int Amount);
 
         internal readonly record struct PowerGroupPayload(uint[] CombatIds, string PowerId, int Amount);
+
+        internal readonly record struct MonsterIntentPayload(uint CombatId, string MoveId);
+
+        internal readonly record struct MonsterIntentGroupPayload(uint CombatId, string GroupId);
+
+        internal readonly record struct MonsterActionPayload(uint CombatId);
 
         internal readonly record struct ConfirmedPayload(bool Confirmed);
     }

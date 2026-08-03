@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using STS2RitsuLib.Diagnostics.DebugTools;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -895,6 +896,8 @@ namespace STS2RitsuLib.Settings
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.GainBlock, "1", 0,
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.execute", "Execute"));
+            if (creature is { IsPlayer: false, Monster.MoveStateMachine: not null })
+                AddMonsterIntentManager(root, creature);
             AddCreaturePresetManager(root, creature);
             AddCurrentPowerManager(root, () => combatId, true);
 
@@ -935,6 +938,32 @@ namespace STS2RitsuLib.Settings
             }
 
             return root;
+        }
+
+        private void AddMonsterIntentManager(RitsuDebugLiveDetailContainer root, Creature creature)
+        {
+            var combatId = creature.CombatId!.Value;
+            AddSectionTitle(root, L("ritsulib.debugTools.action.monsterIntent", "Intent"));
+            var picker = new RitsuDebugMonsterIntentPicker(creature);
+            picker.OpenRequested += () => OpenMonsterIntentWindow(combatId);
+            root.AddChild(picker);
+
+            root.AddChild(ActionGrid([
+                (L("ritsulib.debugTools.action.performMonsterIntent", "Perform current intent"),
+                    ModSettingsButtonTone.Accent,
+                    () => SubmitPerformMonsterIntent(combatId)),
+                (L("ritsulib.debugTools.action.stunMonster", "Stun"),
+                    ModSettingsButtonTone.Normal,
+                    () => SubmitStunMonster(combatId)),
+            ]));
+            AddHint(root, L("ritsulib.debugTools.monsterIntentHint",
+                "Open the floating intent map to watch transitions and switch intents while viewing combat."));
+
+            root.RegisterRefresh(() =>
+            {
+                if (RitsuDebugCombatActions.FindCreature(combatId) is { Monster: not null } current)
+                    picker.Refresh(current);
+            });
         }
 
         private void AddCurrentPowerManager(
@@ -1152,6 +1181,33 @@ namespace STS2RitsuLib.Settings
                 combatId,
                 operation,
                 value));
+        }
+
+        private void SubmitStunMonster(uint combatId)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
+                return;
+            RunAction(() => RitsuDebugCombatActions.SubmitStunMonster(requester, target, combatId));
+        }
+
+        private void OpenMonsterIntentWindow(uint combatId)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
+                return;
+            if (RitsuOverlayHostService.TryOpenMonsterIntentWindow(
+                    combatId,
+                    requester.NetId,
+                    target.NetId,
+                    out var error))
+                return;
+            SetStatus(error, true);
+        }
+
+        private void SubmitPerformMonsterIntent(uint combatId)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
+                return;
+            RunAction(() => RitsuDebugCombatActions.SubmitPerformMonsterIntent(requester, target, combatId));
         }
 
         private void AddCreatureOperationEditor(
