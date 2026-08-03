@@ -39,6 +39,8 @@ namespace STS2RitsuLib.Ui.Overlay
             Panel = panel;
             Panel.PagesChanged += RebuildPageButtons;
             Panel.PageChanged += OnPageChanged;
+            Panel.CreaturePickingStarted += OnCreaturePickingStarted;
+            Panel.CreaturePickingFinished += OnCreaturePickingFinished;
         }
 
         internal bool Expanded { get; private set; }
@@ -71,12 +73,24 @@ namespace STS2RitsuLib.Ui.Overlay
                 viewport.SizeChanged -= OnViewportSizeChanged;
             Panel.PagesChanged -= RebuildPageButtons;
             Panel.PageChanged -= OnPageChanged;
+            Panel.CreaturePickingStarted -= OnCreaturePickingStarted;
+            Panel.CreaturePickingFinished -= OnCreaturePickingFinished;
             _railTween?.Kill();
             _railTween = null;
             ReleaseQuickTooltipTiming();
             _workspaceTween?.Kill();
             _workspaceTween = null;
             base._ExitTree();
+        }
+
+        private void OnCreaturePickingStarted()
+        {
+            Collapse(true);
+        }
+
+        private void OnCreaturePickingFinished()
+        {
+            Expand();
         }
 
         internal void SetAvailable(bool available)
@@ -86,6 +100,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 return;
             if (!available)
             {
+                Panel.CancelCreaturePicking();
                 SessionVisible = false;
                 Collapse(true);
             }
@@ -99,7 +114,10 @@ namespace STS2RitsuLib.Ui.Overlay
             if (!_layoutBuilt)
                 return;
             if (suppressed)
+            {
+                Panel.CancelCreaturePicking();
                 Collapse(true);
+            }
             SyncAvailability();
         }
 
@@ -107,6 +125,7 @@ namespace STS2RitsuLib.Ui.Overlay
         {
             if (!_available || _suppressed || !_layoutBuilt)
                 return;
+            Panel.CancelCreaturePicking();
             SessionVisible = true;
             SyncAvailability();
             if (!string.IsNullOrWhiteSpace(pageId))
@@ -139,6 +158,7 @@ namespace STS2RitsuLib.Ui.Overlay
 
         internal void HideForSession()
         {
+            Panel.CancelCreaturePicking();
             SessionVisible = false;
             Collapse(true);
             SyncAvailability();

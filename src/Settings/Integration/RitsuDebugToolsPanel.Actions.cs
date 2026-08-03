@@ -281,7 +281,7 @@ namespace STS2RitsuLib.Settings
                 upgradeButton));
             var replay = CreateIntegerEdit(entry.Card.BaseReplayCount.ToString());
             var replayButton = ActionButton(
-                L("ritsulib.debugTools.action.setReplay", "Set replay"),
+                L("ritsulib.debugTools.action.apply", "Apply"),
                 ModSettingsButtonTone.Normal,
                 () =>
                 {
@@ -608,7 +608,11 @@ namespace STS2RitsuLib.Settings
                 return root;
             }
 
-            var combatId = creatures[0].CombatId!.Value;
+            var combatId = _selectedCreatureCombatId.HasValue &&
+                           creatures.Any(creature => creature.CombatId == _selectedCreatureCombatId)
+                ? _selectedCreatureCombatId.Value
+                : creatures[0].CombatId!.Value;
+            _selectedCreatureCombatId = combatId;
             root.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.creature", "Creature"),
                 [
@@ -619,7 +623,12 @@ namespace STS2RitsuLib.Settings
                             creature.Name))),
                 ],
                 combatId,
-                value => combatId = value));
+                value =>
+                {
+                    combatId = value;
+                    _selectedCreatureCombatId = value;
+                    root.RefreshState();
+                }));
             var amount = IntField(root, L("ritsulib.debugTools.field.amount", "Stack amount"), "1");
             var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             row.AddThemeConstantOverride("separation", 8);
@@ -650,8 +659,9 @@ namespace STS2RitsuLib.Settings
                         target,
                         combatId,
                         power.Id.ToString()));
-                }));
+            }));
             root.AddChild(row);
+            AddCurrentPowerManager(root, () => combatId, false);
             return root;
         }
 
@@ -701,6 +711,11 @@ namespace STS2RitsuLib.Settings
                     combatState.Stars.ToString(), 0, RitsuDebugPlayerActions.MaxCombatResource);
                 AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.Draw, "1", 1,
                     RitsuDebugPlayerActions.MaxDrawCount);
+                if (player.Creature.CombatId is { } combatId)
+                {
+                    _selectedCreatureCombatId = combatId;
+                    AddCurrentPowerManager(root, () => combatId, true);
+                }
             }
 
             AddSectionTitle(root, L("ritsulib.debugTools.action.cardPiles", "Card piles"));
@@ -762,6 +777,11 @@ namespace STS2RitsuLib.Settings
 
         private Control CreateCreatureDetail(Creature creature)
         {
+            if (!creature.CombatId.HasValue)
+                return EmptyBrowser(L("ritsulib.debugTools.targetChanged",
+                    "The selected target is no longer available."));
+            var combatId = creature.CombatId.Value;
+            _selectedCreatureCombatId = combatId;
             var root = DetailShell(
                 string.Format(
                     L("ritsulib.debugTools.creatureIdentity", "Creature #{0} · {1}"),
@@ -782,11 +802,9 @@ namespace STS2RitsuLib.Settings
                 creature.CurrentHp.ToString(), creature.IsPlayer ? 1 : 0, creature.MaxHp);
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.SetMaxHp,
                 creature.MaxHp.ToString(), Math.Max(1, creature.CurrentHp), RitsuDebugCombatActions.MaxAmount);
-            var directActions = new List<(string Text, ModSettingsButtonTone Tone, Action Action)>
-            {
-                (OperationLabel(RitsuDebugCreatureOperation.ClearPowers), ModSettingsButtonTone.Normal,
-                    () => SubmitCreatureOperation(creature, RitsuDebugCreatureOperation.ClearPowers, 0)),
-            };
+            AddCurrentPowerManager(root, () => combatId, true);
+
+            var directActions = new List<(string Text, ModSettingsButtonTone Tone, Action Action)>();
             if (!creature.IsPlayer)
             {
                 if (creature.Monster != null)
@@ -818,8 +836,173 @@ namespace STS2RitsuLib.Settings
                 ));
             }
 
-            root.AddChild(ActionGrid(directActions));
+            if (directActions.Count > 0)
+            {
+                AddSectionTitle(root, L("ritsulib.debugTools.action.enemyActions", "Enemy actions"));
+                root.AddChild(ActionGrid(directActions));
+            }
             return root;
+        }
+
+        private void AddCurrentPowerManager(
+            RitsuDebugLiveDetailContainer root,
+            Func<uint?> combatIdFactory,
+            bool includePowerLibraryButton)
+        {
+            AddSectionTitle(root, L("ritsulib.debugTools.action.powers", "Powers"));
+            var toolbar = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            toolbar.AddThemeConstantOverride("separation", 8);
+            if (includePowerLibraryButton)
+            {
+                toolbar.AddChild(ActionButton(
+                    L("ritsulib.debugTools.action.addPower", "Add Power"),
+                    ModSettingsButtonTone.Accent,
+                    () =>
+                    {
+                        if (!combatIdFactory().HasValue)
+                            return;
+                        _selectedCreatureCombatId = combatIdFactory();
+                        SelectPage($"{Const.ModId}:powers");
+                    }));
+            }
+
+            var clearButton = ActionButton(
+                L("ritsulib.debugTools.action.clearPowers", "Clear all"),
+                ModSettingsButtonTone.Danger,
+                () =>
+                {
+                    if (combatIdFactory() is not { } combatId)
+                        return;
+                    SubmitCreatureOperation(combatId, RitsuDebugCreatureOperation.ClearPowers, 0);
+                });
+            toolbar.AddChild(clearButton);
+            root.AddChild(toolbar);
+
+            var list = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            list.AddThemeConstantOverride("separation", 6);
+            root.AddChild(list);
+
+            RefreshPowerList();
+            root.RegisterRefresh(RefreshPowerList);
+            return;
+
+            void RefreshPowerList()
+            {
+                foreach (var child in list.GetChildren())
+                {
+                    list.RemoveChild(child);
+                    child.QueueFree();
+                }
+
+                var currentCombatId = combatIdFactory();
+                var creature = currentCombatId.HasValue
+                    ? RitsuDebugCombatActions.FindCreature(currentCombatId.Value)
+                    : null;
+                var powers = creature?.Powers.ToArray() ?? [];
+                clearButton.Disabled = powers.Length == 0;
+                if (powers.Length == 0)
+                {
+                    list.AddChild(CreatePowerListHint(creature == null
+                        ? L("ritsulib.debugTools.targetChanged", "The selected target is no longer available.")
+                        : L("ritsulib.debugTools.noActivePowers", "No active Powers.")));
+                    return;
+                }
+
+                foreach (var power in powers)
+                    list.AddChild(CreateCurrentPowerRow(currentCombatId!.Value, power));
+            }
+        }
+
+        private Control CreateCurrentPowerRow(uint combatId, PowerModel power)
+        {
+            var panel = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListItemCardStyle());
+            var margin = new MarginContainer();
+            margin.AddThemeConstantOverride("margin_left", 8);
+            margin.AddThemeConstantOverride("margin_top", 6);
+            margin.AddThemeConstantOverride("margin_right", 8);
+            margin.AddThemeConstantOverride("margin_bottom", 6);
+            panel.AddChild(margin);
+            var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            row.AddThemeConstantOverride("separation", 8);
+            margin.AddChild(row);
+
+            Texture2D? icon = null;
+            try
+            {
+                icon = power.Icon;
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[DebugToolsUi] Could not load active Power icon for '{power.Id}': {ex.Message}");
+            }
+
+            row.AddChild(new TextureRect
+            {
+                Texture = icon,
+                CustomMinimumSize = new(32f, 32f),
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                Visible = icon != null,
+                MouseFilter = MouseFilterEnum.Ignore,
+            });
+            var identity = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            identity.AddThemeConstantOverride("separation", 1);
+            row.AddChild(identity);
+            var title = new Label
+            {
+                Text = $"{SafeTitle(power)}  ×{power.Amount}",
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            };
+            title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            title.AddThemeFontSizeOverride("font_size", DetailMetadataFontSize);
+            title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            identity.AddChild(title);
+            var id = new Label
+            {
+                Text = power.Id.ToString(),
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            };
+            id.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            id.AddThemeFontSizeOverride("font_size", DetailIdentifierFontSize);
+            id.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
+            identity.AddChild(id);
+
+            var remove = new ModSettingsTextButton(
+                L("ritsulib.debugTools.action.remove", "Remove"),
+                ModSettingsButtonTone.Danger,
+                () => SubmitRemovePower(combatId, power.Id.ToString()))
+            {
+                SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                CustomMinimumSize = new(84f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+            };
+            row.AddChild(remove);
+            return panel;
+        }
+
+        private static Label CreatePowerListHint(string text)
+        {
+            var label = new Label
+            {
+                Text = text,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            label.AddThemeFontSizeOverride("font_size", DetailMetadataFontSize);
+            label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Hint);
+            return label;
+        }
+
+        private void SubmitRemovePower(uint combatId, string powerId)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
+                return;
+            RunAction(() => RitsuDebugCombatActions.SubmitRemovePower(
+                requester,
+                target,
+                combatId,
+                powerId));
         }
 
         private void AddPlayerOperationEditor(
@@ -858,13 +1041,22 @@ namespace STS2RitsuLib.Settings
             RitsuDebugCreatureOperation operation,
             int value)
         {
-            if (!TryGetActionContext(out var requester, out var target) ||
-                !creature.CombatId.HasValue)
+            if (!creature.CombatId.HasValue)
+                return;
+            SubmitCreatureOperation(creature.CombatId.Value, operation, value);
+        }
+
+        private void SubmitCreatureOperation(
+            uint combatId,
+            RitsuDebugCreatureOperation operation,
+            int value)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
                 return;
             RunAction(() => RitsuDebugCombatActions.SubmitModifyCreature(
                 requester,
                 target,
-                creature.CombatId.Value,
+                combatId,
                 operation,
                 value));
         }

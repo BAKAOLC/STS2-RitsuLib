@@ -192,7 +192,8 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.search.powers", "Search powers by name or ID"),
                 item => CreatePowerDetail(byId[item.Id]),
                 [filter],
-                RitsuCatalogPresentation.Grid);
+                RitsuCatalogPresentation.Grid,
+                detailWidth: 480f);
             browser.SetItems([
                 .. models.Select(model => ModelItem(
                     model,
@@ -212,7 +213,7 @@ namespace STS2RitsuLib.Settings
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 220f,
                 gridTileHeight: 84f,
-                detailWidth: 420f);
+                detailWidth: 480f);
             browser.SetItems(CreatePlayerCatalogItems(players));
             return browser;
         }
@@ -243,7 +244,7 @@ namespace STS2RitsuLib.Settings
                 RitsuCatalogPresentation.Grid,
                 220f,
                 84f,
-                detailWidth: 440f);
+                detailWidth: 520f);
             browser.SetItems(CreateCreatureCatalogItems(creatures));
             return browser;
         }
@@ -315,7 +316,7 @@ namespace STS2RitsuLib.Settings
                     $"{creature.ModelId} {creature.LogName}",
                     badge: creature.IsPlayer
                         ? L("ritsulib.debugTools.player", "Player")
-                        : L("ritsulib.debugTools.creature", "Creature"))),
+                        : L("ritsulib.debugTools.enemy", "Enemy"))),
             ];
         }
 

@@ -1,6 +1,9 @@
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
@@ -29,8 +32,11 @@ namespace STS2RitsuLib.Settings
         private const int DetailMetadataFontSize = 15;
         private const int DetailIdentifierFontSize = 14;
         private const int DetailSectionFontSize = 16;
+        private readonly Dictionary<Control, GuiInputEventHandler> _creaturePickHandlers = [];
         private readonly HashSet<string> _pageFailures = new(StringComparer.Ordinal);
         private Control? _browserHost;
+        private Button? _creaturePickButton;
+        private bool _creaturePicking;
         private Control? _currentBrowser;
         private RitsuDebugToolsPageView[] _pages = [];
         private bool _refreshScheduled;
@@ -39,6 +45,7 @@ namespace STS2RitsuLib.Settings
         private ModSettingsDropdownChoiceControl<ulong>? _targetDropdown;
         private ulong[] _targetPlayerIds = [];
         private ulong? _targetPlayerNetId;
+        private uint? _selectedCreatureCombatId;
 
         internal string CurrentPageId { get; private set; } = $"{Const.ModId}:cards";
 
@@ -49,6 +56,10 @@ namespace STS2RitsuLib.Settings
         internal event Action<IReadOnlyList<RitsuDebugToolsPageView>>? PagesChanged;
 
         internal event Action<RitsuDebugToolsPageView>? PageChanged;
+
+        internal event Action? CreaturePickingStarted;
+
+        internal event Action? CreaturePickingFinished;
 
         public override void _Ready()
         {
@@ -79,6 +90,7 @@ namespace STS2RitsuLib.Settings
 
         public override void _ExitTree()
         {
+            FinishCreaturePicking(false);
             RitsuDebugActionProtocol.ActionExecuted -= OnDebugActionExecuted;
             RitsuDebugToolsPageRegistry.Changed -= OnPageRegistryChanged;
             CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
@@ -86,11 +98,28 @@ namespace STS2RitsuLib.Settings
             base._ExitTree();
         }
 
+        public override void _UnhandledInput(InputEvent @event)
+        {
+            if (!_creaturePicking || @event.IsEcho() ||
+                !(@event.IsActionPressed(MegaInput.cancel) ||
+                  @event.IsActionPressed(MegaInput.pauseAndBack) ||
+                  @event is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Right }))
+                return;
+
+            FinishCreaturePicking(true);
+            GetViewport().SetInputAsHandled();
+        }
+
         internal void Refresh()
         {
             if (!IsInsideTree())
                 return;
             RefreshAll();
+        }
+
+        internal void CancelCreaturePicking()
+        {
+            FinishCreaturePicking(false);
         }
 
         private void BuildHeader()
@@ -140,6 +169,20 @@ namespace STS2RitsuLib.Settings
                 CustomMinimumSize = new(300f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
             toolbar.AddChild(_targetDropdown);
+
+            _creaturePickButton = new ModSettingsTextButton(
+                L("ritsulib.debugTools.action.pickCreature", "Pick creature"),
+                ModSettingsButtonTone.Accent,
+                ToggleCreaturePicking)
+            {
+                SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                CustomMinimumSize = new(136f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
+                TooltipText = L(
+                    "ritsulib.debugTools.pickCreature.description",
+                    "Close the workspace for one click, then reopen the selected creature's quick editor."),
+            };
+            toolbar.AddChild(_creaturePickButton);
+            RefreshCreaturePickButton();
         }
 
         private void BuildWorkspace()
@@ -230,11 +273,11 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugToolsGlyph.Relics, CreateRelicCatalog);
             Add("potions", "ritsulib.debugTools.category.potions", "Potions", 30, 0.68f,
                 RitsuDebugToolsGlyph.Potions, CreatePotionCatalog);
-            Add("powers", "ritsulib.debugTools.category.powers", "Powers", 40, 0.68f,
+            Add("powers", "ritsulib.debugTools.category.powers", "Powers", 40, 0.72f,
                 RitsuDebugToolsGlyph.Powers, CreatePowerCatalog);
-            Add("players", "ritsulib.debugTools.category.players", "Players", 50, 0.55f,
+            Add("players", "ritsulib.debugTools.category.players", "Players", 50, 0.65f,
                 RitsuDebugToolsGlyph.Players, CreatePlayerCatalog);
-            Add("creatures", "ritsulib.debugTools.category.creatures", "Combat creatures", 60, 0.62f,
+            Add("creatures", "ritsulib.debugTools.category.creatures", "Combat creatures", 60, 0.72f,
                 RitsuDebugToolsGlyph.Creatures, CreateCreatureCatalog);
             Add("monsters", "ritsulib.debugTools.category.monsters", "Add monster", 70, 0.62f,
                 RitsuDebugToolsGlyph.Monsters, CreateMonsterCatalog);
@@ -488,6 +531,7 @@ namespace STS2RitsuLib.Settings
 
         private void OnCombatEnded(CombatRoom _)
         {
+            FinishCreaturePicking(false);
             ScheduleStateRefresh();
         }
 
@@ -507,6 +551,7 @@ namespace STS2RitsuLib.Settings
         private void RefreshCurrentState()
         {
             var players = GetPlayers();
+            RefreshCreaturePickButton();
             var previousTarget = _targetPlayerNetId;
             if (players.All(player => player.NetId != _targetPlayerNetId))
                 _targetPlayerNetId = players.FirstOrDefault()?.NetId;
@@ -538,6 +583,9 @@ namespace STS2RitsuLib.Settings
                         .Where(static creature => creature.CombatId.HasValue)
                         .OrderBy(static creature => creature.CombatId)
                         .ToArray() ?? [];
+                    if (_selectedCreatureCombatId.HasValue &&
+                        creatures.All(creature => creature.CombatId != _selectedCreatureCombatId))
+                        _selectedCreatureCombatId = null;
                     RefreshCatalogItems(CreateCreatureCatalogItems(creatures));
                     break;
                 default:
@@ -649,6 +697,118 @@ namespace STS2RitsuLib.Settings
         private static string L(string key, string fallback)
         {
             return ModSettingsLocalization.Get(key, fallback);
+        }
+
+        private void ToggleCreaturePicking()
+        {
+            if (_creaturePicking)
+            {
+                FinishCreaturePicking(true);
+                return;
+            }
+
+            BeginCreaturePicking();
+        }
+
+        private void BeginCreaturePicking()
+        {
+            var room = NCombatRoom.Instance;
+            if (!CombatManager.Instance.IsInProgress || CombatManager.Instance.IsOverOrEnding ||
+                room == null || NTargetManager.Instance.IsInSelection || room.Ui.Hand.InCardPlay)
+            {
+                ShowActionWarning(L(
+                    "ritsulib.debugTools.pickCreature.unavailable",
+                    "Creature picking is available during combat while no card or target selection is active."));
+                return;
+            }
+
+            foreach (var creature in CurrentCreatures())
+            {
+                if (!creature.CombatId.HasValue || room.GetCreatureNode(creature) is not { } node ||
+                    !IsInstanceValid(node.Hitbox) || node.Hitbox.MouseFilter == MouseFilterEnum.Ignore)
+                    continue;
+
+                var combatId = creature.CombatId.Value;
+                var hitbox = node.Hitbox;
+                GuiInputEventHandler handler = input => OnCreaturePickInput(combatId, hitbox, input);
+                _creaturePickHandlers.Add(hitbox, handler);
+                hitbox.GuiInput += handler;
+            }
+
+            if (_creaturePickHandlers.Count == 0)
+            {
+                ShowActionWarning(L(
+                    "ritsulib.debugTools.pickCreature.none",
+                    "No selectable combat creature is currently available."));
+                return;
+            }
+
+            _creaturePicking = true;
+            SetProcessUnhandledInput(true);
+            RefreshCreaturePickButton();
+            CreaturePickingStarted?.Invoke();
+            RitsuToastService.ShowInfo(
+                L("ritsulib.debugTools.pickCreature.prompt", "Click a creature to edit it. Press Esc to cancel."),
+                L("ritsulib.debugTools.toastTitle", "Developer tools"));
+        }
+
+        private void OnCreaturePickInput(uint combatId, Control hitbox, InputEvent input)
+        {
+            if (!_creaturePicking ||
+                input is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } ||
+                NTargetManager.Instance.IsInSelection ||
+                NCombatRoom.Instance is not { } room || room.Ui.Hand.InCardPlay)
+                return;
+
+            hitbox.AcceptEvent();
+            hitbox.GetViewport()?.SetInputAsHandled();
+            FinishCreaturePicking(false);
+            OpenCreatureDetail(combatId);
+            CreaturePickingFinished?.Invoke();
+        }
+
+        private void OpenCreatureDetail(uint combatId)
+        {
+            _selectedCreatureCombatId = combatId;
+            SelectPage($"{Const.ModId}:creatures");
+            if (_currentBrowser is RitsuCatalogBrowser browser &&
+                browser.SelectItem(combatId.ToString()))
+                return;
+
+            SetStatus(L("ritsulib.debugTools.targetChanged", "The selected target is no longer available."), true);
+        }
+
+        private void FinishCreaturePicking(bool reopenWorkspace)
+        {
+            if (!_creaturePicking && _creaturePickHandlers.Count == 0)
+                return;
+
+            foreach (var (hitbox, handler) in _creaturePickHandlers)
+            {
+                if (IsInstanceValid(hitbox))
+                    hitbox.GuiInput -= handler;
+            }
+
+            _creaturePickHandlers.Clear();
+            _creaturePicking = false;
+            SetProcessUnhandledInput(false);
+            RefreshCreaturePickButton();
+            if (reopenWorkspace)
+                CreaturePickingFinished?.Invoke();
+        }
+
+        private void RefreshCreaturePickButton()
+        {
+            if (_creaturePickButton == null)
+                return;
+
+            _creaturePickButton.Text = _creaturePicking
+                ? L("ritsulib.debugTools.action.cancelPickCreature", "Cancel picking")
+                : L("ritsulib.debugTools.action.pickCreature", "Pick creature");
+            _creaturePickButton.Disabled = !_creaturePicking &&
+                                           (!CombatManager.Instance.IsInProgress ||
+                                            CombatManager.Instance.IsOverOrEnding);
+            ModSettingsUiControlTheming.RefreshAdaptiveButtonText(_creaturePickButton);
         }
 
         private static void SyncScrollGutter(ScrollContainer scroll, MarginContainer frame)
