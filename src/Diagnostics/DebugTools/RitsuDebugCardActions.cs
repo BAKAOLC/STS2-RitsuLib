@@ -447,8 +447,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 }
                 else
                 {
-                    await CardPileCmd.RemoveFromCombat(cards, true);
-                    NotifySilentPileRemovals(pile, cards.Length);
+                    await CardPileCmd.RemoveFromCombat(cards);
                 }
 
                 return cards.Length == 1
@@ -470,15 +469,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return upgradedCards == 1
                 ? $"Upgraded 1 card in {pileType}."
                 : $"Upgraded {upgradedCards} cards in {pileType}.";
-        }
-
-        private static void NotifySilentPileRemovals(CardPile pile, int removedCardCount)
-        {
-            if (removedCardCount == 0)
-                return;
-            pile.InvokeContentsChanged();
-            for (var index = 0; index < removedCardCount; index++)
-                pile.InvokeCardRemoveFinished();
         }
 
         internal static RitsuDebugActionCheck ValidateCreateCard(
