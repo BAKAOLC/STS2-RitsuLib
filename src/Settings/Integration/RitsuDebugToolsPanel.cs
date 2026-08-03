@@ -219,6 +219,8 @@ namespace STS2RitsuLib.Settings
         private void AddBuiltInPages(List<RitsuDebugToolsPageView> pages)
         {
             var tint = RitsuShellTheme.Current.Text.LabelPrimary;
+            Add("state-presets", "ritsulib.debugTools.category.statePresets", "State presets", -10, 0.78f,
+                RitsuDebugToolsGlyph.PileCards, CreateStatePresetEditor);
             Add("cards", "ritsulib.debugTools.category.cards", "Card library", 0, 0.74f,
                 RitsuDebugToolsGlyph.Cards, CreateCardCatalog);
             Add("pile-cards", "ritsulib.debugTools.category.pileCards", "Player cards", 10, 0.74f,
@@ -430,6 +432,22 @@ namespace STS2RitsuLib.Settings
                 RitsuToastService.ShowError(message, L("ritsulib.debugTools.toastTitle", "Developer tools"));
                 return false;
             }
+        }
+
+        private Control CreateStatePresetEditor()
+        {
+            return new RitsuDebugStatePresetEditor(
+                preset =>
+                {
+                    if (!TryGetActionContext(out var requester, out var target))
+                        return false;
+                    return RunAction(() => RitsuDebugStatePresetActions.SubmitApplyPreset(
+                        requester,
+                        target,
+                        preset));
+                },
+                () => TryGetTargetPlayer(out var target) ? target : null,
+                SetStatus);
         }
 
         private void ShowActionWarning(string message)

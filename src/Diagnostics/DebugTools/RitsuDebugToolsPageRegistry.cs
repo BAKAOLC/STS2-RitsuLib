@@ -227,6 +227,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             $"{Const.ModId}:rooms",
             $"{Const.ModId}:encounters",
             $"{Const.ModId}:events",
+            $"{Const.ModId}:state-presets",
         };
         private static readonly Lock SyncRoot = new();
 
