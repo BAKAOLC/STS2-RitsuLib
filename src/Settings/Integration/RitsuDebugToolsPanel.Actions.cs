@@ -608,58 +608,102 @@ namespace STS2RitsuLib.Settings
                 return root;
             }
 
-            var combatId = PreferredCreatureCombatId(creatures);
-            _selectedCreatureCombatId = combatId;
-            root.AddChild(DropdownField(
-                L("ritsulib.debugTools.field.creature", "Creature"),
-                [
-                    .. creatures.Select(creature =>
-                        (creature.CombatId!.Value, string.Format(
-                            L("ritsulib.debugTools.creatureChoice", "#{0} · {1}"),
-                            creature.CombatId.Value,
-                            creature.Name))),
-                ],
-                combatId,
-                value =>
-                {
-                    combatId = value;
-                    _selectedCreatureCombatId = value;
-                    root.RefreshState();
-                }));
+            _selectedCreatureCombatId = PreferredCreatureCombatId(creatures);
             var amount = IntField(root, L("ritsulib.debugTools.field.amount", "Stack amount"), "1");
-            var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            row.AddThemeConstantOverride("separation", 8);
-            row.AddChild(ActionButton(
-                L("ritsulib.debugTools.action.apply", "Apply"),
-                ModSettingsButtonTone.Accent,
-                () =>
-                {
-                    if (!TryReadInt(amount, 1, RitsuDebugCombatActions.MaxAmount, out var value) ||
-                        !TryGetActionContext(out var requester, out var target))
-                        return;
-                    RunAction(() => RitsuDebugCombatActions.SubmitApplyPower(
-                        requester,
-                        target,
-                        combatId,
-                        power.Id.ToString(),
-                        value));
-                }));
-            row.AddChild(ActionButton(
-                L("ritsulib.debugTools.action.remove", "Remove"),
-                ModSettingsButtonTone.Danger,
-                () =>
-                {
-                    if (!TryGetActionContext(out var requester, out var target))
-                        return;
-                    RunAction(() => RitsuDebugCombatActions.SubmitRemovePower(
-                        requester,
-                        target,
-                        combatId,
-                        power.Id.ToString()));
-            }));
-            root.AddChild(row);
-            AddCurrentPowerManager(root, () => combatId, false);
+            root.AddChild(ActionGrid(
+            [
+                (L("ritsulib.debugTools.action.applySelectedCreature", "Apply to selected"),
+                    ModSettingsButtonTone.Accent,
+                    ApplySelected),
+                (L("ritsulib.debugTools.action.applyAllCreatures", "Apply to all creatures"),
+                    ModSettingsButtonTone.Normal,
+                    () => ApplyMany(static creature => !creature.IsDead)),
+                (L("ritsulib.debugTools.action.applyAllPlayers", "Apply to all players"),
+                    ModSettingsButtonTone.Normal,
+                    () => ApplyMany(static creature => creature is { IsPlayer: true, IsDead: false })),
+                (L("ritsulib.debugTools.action.applyAllEnemies", "Apply to all enemies"),
+                    ModSettingsButtonTone.Normal,
+                    () => ApplyMany(static creature => creature is { IsPlayer: false, IsDead: false })),
+                (L("ritsulib.debugTools.action.removeSelectedCreature", "Remove from selected"),
+                    ModSettingsButtonTone.Danger,
+                    RemoveSelected),
+            ]));
+            AddCurrentPowerManager(root, SelectedCombatId, false);
             return root;
+
+            uint? SelectedCombatId()
+            {
+                var currentCreatures = CurrentCreatures();
+                if (currentCreatures.Length == 0)
+                    return null;
+                var combatId = PreferredCreatureCombatId(currentCreatures);
+                _selectedCreatureCombatId = combatId;
+                return combatId;
+            }
+
+            void ApplySelected()
+            {
+                if (!TryReadInt(amount, 1, RitsuDebugCombatActions.MaxAmount, out var value) ||
+                    !TryGetActionContext(out var requester, out var target))
+                    return;
+                if (SelectedCombatId() is not { } combatId)
+                {
+                    SetStatus(L("ritsulib.debugTools.targetChanged",
+                        "The selected target is no longer available."), true);
+                    return;
+                }
+
+                RunAction(() => RitsuDebugCombatActions.SubmitApplyPower(
+                    requester,
+                    target,
+                    combatId,
+                    power.Id.ToString(),
+                    value));
+            }
+
+            void ApplyMany(Func<Creature, bool> matches)
+            {
+                if (!TryReadInt(amount, 1, RitsuDebugCombatActions.MaxAmount, out var value) ||
+                    !TryGetActionContext(out var requester, out var target))
+                    return;
+                uint[] combatIds =
+                [
+                    .. CurrentCreatures()
+                        .Where(matches)
+                        .Select(static creature => creature.CombatId!.Value),
+                ];
+                if (combatIds.Length == 0)
+                {
+                    SetStatus(L("ritsulib.debugTools.noMatchingCreatures",
+                        "No matching creatures are available."), true);
+                    return;
+                }
+
+                RunAction(() => RitsuDebugCombatActions.SubmitApplyPowerToCreatures(
+                    requester,
+                    target,
+                    combatIds,
+                    power.Id.ToString(),
+                    value));
+            }
+
+            void RemoveSelected()
+            {
+                if (!TryGetActionContext(out var requester, out var target))
+                    return;
+                if (SelectedCombatId() is not { } combatId)
+                {
+                    SetStatus(L("ritsulib.debugTools.targetChanged",
+                        "The selected target is no longer available."), true);
+                    return;
+                }
+
+                RunAction(() => RitsuDebugCombatActions.SubmitRemovePower(
+                    requester,
+                    target,
+                    combatId,
+                    power.Id.ToString()));
+            }
         }
 
         private Control CreatePlayerDetail(Player player)
@@ -867,6 +911,7 @@ namespace STS2RitsuLib.Settings
                 AddSectionTitle(root, L("ritsulib.debugTools.action.enemyActions", "Enemy actions"));
                 root.AddChild(ActionGrid(directActions));
             }
+
             return root;
         }
 
@@ -879,7 +924,6 @@ namespace STS2RitsuLib.Settings
             var toolbar = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             toolbar.AddThemeConstantOverride("separation", 8);
             if (includePowerLibraryButton)
-            {
                 toolbar.AddChild(ActionButton(
                     L("ritsulib.debugTools.action.addPower", "Add Power"),
                     ModSettingsButtonTone.Accent,
@@ -890,7 +934,6 @@ namespace STS2RitsuLib.Settings
                         _selectedCreatureCombatId = combatIdFactory();
                         SelectPage($"{Const.ModId}:powers");
                     }));
-            }
 
             var clearButton = ActionButton(
                 L("ritsulib.debugTools.action.clearPowers", "Clear all"),

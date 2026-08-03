@@ -30,8 +30,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const string AddEncounterActionId = "combat.encounter.add";
         internal const string DefeatAllEnemiesActionId = "combat.enemies.defeat-all";
         internal const string ApplyPowerActionId = "combat.power.apply";
+        internal const string ApplyPowerToCreaturesActionId = "combat.power.apply-many";
         internal const string RemovePowerActionId = "combat.power.remove";
         internal const int MaxAmount = 999_999;
+        internal const int MaxCreatureTargetCount = 128;
         internal const int MaxEnemyCount = 64;
 
         internal static void RegisterBuiltInActions()
@@ -56,6 +58,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 ApplyPowerActionId,
                 ValidateApplyPower,
                 ExecuteApplyPowerAsync);
+            RitsuDebugActionProtocol.Register<PowerGroupPayload>(
+                ApplyPowerToCreaturesActionId,
+                ValidateApplyPowerToCreatures,
+                ExecuteApplyPowerToCreaturesAsync);
             RitsuDebugActionProtocol.Register<PowerPayload>(
                 RemovePowerActionId,
                 ValidateRemovePower,
@@ -86,6 +92,22 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             int amount)
         {
             return SubmitPower(requester, actionTarget, ApplyPowerActionId, combatId, powerId, amount);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitApplyPowerToCreatures(
+            Player requester,
+            Player actionTarget,
+            IReadOnlyCollection<uint> combatIds,
+            string powerId,
+            int amount)
+        {
+            ArgumentNullException.ThrowIfNull(combatIds);
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                ApplyPowerToCreaturesActionId,
+                requester,
+                actionTarget,
+                new PowerGroupPayload([.. combatIds], powerId, amount));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
         internal static RitsuDebugActionSubmission SubmitAddMonster(
@@ -397,6 +419,45 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 : RitsuDebugActionCheck.Ok;
         }
 
+        private static RitsuDebugActionCheck ValidateApplyPowerToCreatures(
+            RitsuDebugActionContext context,
+            PowerGroupPayload payload)
+        {
+            if (!TryRequireCombat(out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (payload.CombatIds == null || payload.CombatIds.Length is < 1 or > MaxCreatureTargetCount)
+                return RitsuDebugActionCheck.Fail(
+                    "combat.powerTargetCountRange",
+                    "Select between 1 and {0} creatures.",
+                    MaxCreatureTargetCount);
+            if (payload.CombatIds.Distinct().Count() != payload.CombatIds.Length)
+                return RitsuDebugActionCheck.Fail(
+                    "combat.duplicatePowerTargets",
+                    "A creature can appear only once in a batch Power action.");
+            if (!TryResolvePower(payload.PowerId, out _, out feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (payload.Amount is < 1 or > MaxAmount)
+                return RitsuDebugActionCheck.Fail(
+                    "combat.powerAmountRange",
+                    "Power amount must be between 1 and {0}.",
+                    MaxAmount);
+
+            foreach (var combatId in payload.CombatIds)
+            {
+                var creature = FindCreature(combatId);
+                if (creature == null)
+                    return RitsuDebugActionCheck.Fail(
+                        "combat.creatureUnavailable",
+                        "A selected creature is no longer available.");
+                if (!creature.CanReceivePowers)
+                    return RitsuDebugActionCheck.Fail(
+                        "combat.cannotReceivePowers",
+                        "A selected creature cannot receive powers right now.");
+            }
+
+            return RitsuDebugActionCheck.Ok;
+        }
+
         private static RitsuDebugActionCheck ValidateRemovePower(
             RitsuDebugActionContext context,
             PowerPayload payload)
@@ -537,6 +598,21 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             await PowerCmd.Apply(choiceContext, canonical.ToMutable(), creature, payload.Amount, null, null);
 
             return $"Applied {canonical.Id} to the selected creature.";
+        }
+
+        private static async Task<string> ExecuteApplyPowerToCreaturesAsync(
+            RitsuDebugActionContext context,
+            PowerGroupPayload payload)
+        {
+            _ = TryResolvePower(payload.PowerId, out var canonical, out _);
+            var choiceContext = new BlockingPlayerChoiceContext();
+            foreach (var combatId in payload.CombatIds)
+            {
+                var creature = FindCreature(combatId)!;
+                await PowerCmd.Apply(choiceContext, canonical.ToMutable(), creature, payload.Amount, null, null);
+            }
+
+            return $"Applied {canonical.Id} to {payload.CombatIds.Length} creatures.";
         }
 
         private static async Task<string> ExecuteRemovePowerAsync(
@@ -708,6 +784,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             int Value);
 
         internal readonly record struct PowerPayload(uint CombatId, string PowerId, int Amount);
+
+        internal readonly record struct PowerGroupPayload(uint[] CombatIds, string PowerId, int Amount);
 
         internal readonly record struct ConfirmedPayload(bool Confirmed);
     }
