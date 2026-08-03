@@ -185,6 +185,7 @@ namespace STS2RitsuLib.Settings
                 Closable = true,
                 StartCentered = true,
                 ConstrainToViewport = true,
+                FitInitialSizeToContent = false,
             })
             {
                 ZIndex = 1,

@@ -39,6 +39,7 @@ namespace STS2RitsuLib.Settings
         private Control? _browserHost;
         private Button? _creaturePickButton;
         private bool _creaturePicking;
+        private RitsuToastHandle? _creaturePickingToast;
         private ModSettingsDropdownChoiceControl<uint>? _creatureTargetDropdown;
         private Control? _currentBrowser;
         private RitsuDebugToolsPageView[] _pages = [];
@@ -622,10 +623,7 @@ namespace STS2RitsuLib.Settings
                     if (_selectedCreatureCombatId.HasValue &&
                         creatures.All(creature => creature.CombatId != _selectedCreatureCombatId))
                         _selectedCreatureCombatId = null;
-                    if (_currentBrowser is RitsuCatalogBrowser creatureBrowser)
-                        creatureBrowser.SetItems(CreateCreatureCatalogItems(creatures));
-                    else
-                        RebuildBrowser();
+                    RefreshCatalogItems(CreateCreatureCatalogItems(creatures));
                     break;
                 default:
                     RefreshLiveDetails(_currentBrowser);
@@ -799,7 +797,7 @@ namespace STS2RitsuLib.Settings
             return ModSettingsLocalization.Get(key, fallback);
         }
 
-        private void ToggleCreaturePicking()
+        internal void ToggleCreaturePicking()
         {
             if (_creaturePicking)
             {
@@ -847,9 +845,13 @@ namespace STS2RitsuLib.Settings
             SetProcessUnhandledInput(true);
             RefreshCreaturePickButton();
             CreaturePickingStarted?.Invoke();
-            RitsuToastService.ShowInfo(
-                L("ritsulib.debugTools.pickCreature.prompt", "Click a creature to edit it. Press Esc to cancel."),
-                L("ritsulib.debugTools.toastTitle", "Developer tools"));
+            _creaturePickingToast = RitsuToastService.ShowTracked(
+                new RitsuToastRequest(
+                        L("ritsulib.debugTools.pickCreature.prompt",
+                            "Click a creature to edit it. Press the picker shortcut again or Esc to cancel."),
+                        L("ritsulib.debugTools.toastTitle", "Developer tools"))
+                    .Persistent()
+                    .WithDismissOnClick(false));
         }
 
         private void OnCreaturePickInput(uint combatId, Control hitbox, InputEvent input)
@@ -880,6 +882,8 @@ namespace STS2RitsuLib.Settings
 
         private void FinishCreaturePicking(bool reopenWorkspace)
         {
+            _creaturePickingToast?.Dismiss(true);
+            _creaturePickingToast = null;
             if (!_creaturePicking && _creaturePickHandlers.Count == 0)
                 return;
 

@@ -90,6 +90,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         string ActionId,
         ulong RequestedByNetId,
         ulong TargetPlayerNetId,
+        string PayloadJson,
         bool Success,
         RitsuDebugActionFeedback Feedback)
     {
@@ -197,7 +198,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static void Register<TPayload>(
             string actionId,
             Func<RitsuDebugActionContext, TPayload, RitsuDebugActionCheck> validate,
-            Func<RitsuDebugActionContext, TPayload, Task<string>> execute)
+            Func<RitsuDebugActionContext, TPayload, Task<string>> execute,
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures = RitsuLibSidecarPeerFeatures.DeveloperActionsV1)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(actionId);
             ArgumentNullException.ThrowIfNull(validate);
@@ -217,7 +219,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         $"Debug action '{actionId}' is already registered with payload type {existing.PayloadType}.");
                 }
 
-                Registrations[actionId] = new Registration<TPayload>(actionId, validate, execute);
+                Registrations[actionId] = new Registration<TPayload>(
+                    actionId,
+                    validate,
+                    execute,
+                    requiredPeerFeatures | RitsuLibSidecarPeerFeatures.DeveloperActionsV1);
             }
         }
 
@@ -250,7 +256,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "RitsuLib developer tools are disabled in settings.");
 
             envelope = envelope with { RequestedByNetId = requester.NetId };
-            if (!TryValidateEnvelope(envelope, out _, out var validationError))
+            if (!TryValidateEnvelope(envelope, out var prepared, out var validationError))
                 return RitsuDebugActionSubmission.Reject(validationError);
 
             var runManager = RunManager.Instance;
@@ -263,10 +269,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return netService switch
             {
                 { Type: NetGameType.Singleplayer } => RequestManagedAction(runManager, envelope),
-                NetHostGameService host => !CanHostSynchronize(host, out var hostError)
+                NetHostGameService host => !CanHostSynchronize(
+                    host,
+                    prepared.Registration.RequiredPeerFeatures,
+                    out var hostError)
                     ? RitsuDebugActionSubmission.Reject(hostError)
                     : RequestManagedAction(runManager, envelope),
-                NetClientGameService client => SubmitClientRequest(runManager, client, requester, envelope),
+                NetClientGameService client => SubmitClientRequest(
+                    runManager,
+                    client,
+                    requester,
+                    envelope,
+                    prepared.Registration.RequiredPeerFeatures),
                 _ => RitsuDebugActionSubmission.Reject(
                     "protocol.unsupportedGameMode",
                     "Developer tools cannot change state in the current game mode."),
@@ -275,6 +289,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal static bool CanHostSynchronize(
             NetHostGameService host,
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures,
             out RitsuDebugActionFeedback feedback)
         {
             foreach (var peer in host.ConnectedPeers)
@@ -287,7 +302,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return false;
                 }
 
-                if (!PeerSupportsDeveloperActions(peer.peerId))
+                if (!PeerSupportsFeatures(peer.peerId, requiredPeerFeatures))
                 {
                     feedback = RitsuDebugActionFeedback.Create(
                         "protocol.connectedPlayerUnsupported",
@@ -304,9 +319,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RunManager runManager,
             NetClientGameService client,
             Player requester,
-            RitsuDebugActionEnvelope envelope)
+            RitsuDebugActionEnvelope envelope,
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures)
         {
-            if (!PeerSupportsDeveloperActions(client.HostNetId))
+            if (!PeerSupportsFeatures(client.HostNetId, requiredPeerFeatures))
                 return RitsuDebugActionSubmission.Reject(
                     "protocol.hostUnsupported",
                     "The host does not support these RitsuLib developer tools; no state was changed.");
@@ -369,10 +385,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 decision = RitsuDebugActionSubmission.Reject(
                     "protocol.clientRequestsDisabled",
                     "The host does not allow other players to request state changes.");
-            else if (!CanHostSynchronize(host, out var capabilityError))
-                decision = RitsuDebugActionSubmission.Reject(capabilityError);
-            else if (!TryValidateEnvelope(action, out _, out var validationError))
+            else if (!TryValidateEnvelope(action, out var prepared, out var validationError))
                 decision = RitsuDebugActionSubmission.Reject(validationError);
+            else if (!CanHostSynchronize(host, prepared.Registration.RequiredPeerFeatures,
+                         out var capabilityError))
+                decision = RitsuDebugActionSubmission.Reject(capabilityError);
             else
                 decision = RequestManagedAction(runManager, action);
 
@@ -507,6 +524,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 envelope.ActionId,
                 envelope.RequestedByNetId,
                 envelope.TargetPlayerNetId,
+                envelope.PayloadJson,
                 success,
                 feedback);
             foreach (var handler in handlers.GetInvocationList().OfType<Action<RitsuDebugActionExecutionResult>>())
@@ -619,8 +637,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private static bool PeerSupportsDeveloperActions(ulong peerNetId)
         {
+            return PeerSupportsFeatures(peerNetId, RitsuLibSidecarPeerFeatures.DeveloperActionsV1);
+        }
+
+        private static bool PeerSupportsFeatures(
+            ulong peerNetId,
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures)
+        {
             return RitsuLibSidecarSessionManager.TryGetPeerFeatures(peerNetId, out var features) &&
-                   (features & RitsuLibSidecarPeerFeatures.DeveloperActionsV1) != 0;
+                   (features & requiredPeerFeatures) == requiredPeerFeatures;
         }
 
         private static bool IsValidRequestId(string? requestId)
@@ -699,10 +724,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             ulong SenderNetId,
             string RequestId);
 
-        private abstract class RegistrationBase(string actionId, Type payloadType)
+        private abstract class RegistrationBase(
+            string actionId,
+            Type payloadType,
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures)
         {
             internal string ActionId { get; } = actionId;
             internal Type PayloadType { get; } = payloadType;
+            internal RitsuLibSidecarPeerFeatures RequiredPeerFeatures { get; } = requiredPeerFeatures;
 
             internal abstract RitsuDebugActionCheck Validate(
                 RitsuDebugActionContext context,
@@ -716,8 +745,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         private sealed class Registration<TPayload>(
             string actionId,
             Func<RitsuDebugActionContext, TPayload, RitsuDebugActionCheck> validate,
-            Func<RitsuDebugActionContext, TPayload, Task<string>> execute)
-            : RegistrationBase(actionId, typeof(TPayload))
+            Func<RitsuDebugActionContext, TPayload, Task<string>> execute,
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures)
+            : RegistrationBase(actionId, typeof(TPayload), requiredPeerFeatures)
         {
             internal override RitsuDebugActionCheck Validate(
                 RitsuDebugActionContext context,

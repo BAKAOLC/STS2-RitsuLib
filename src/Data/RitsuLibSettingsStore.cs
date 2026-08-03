@@ -60,6 +60,7 @@ namespace STS2RitsuLib.Data
                                 new RitsuLibSettingsV13ToV14Migration(),
                                 new RitsuLibSettingsV14ToV15Migration(),
                                 new RitsuLibSettingsV15ToV16Migration(),
+                                new RitsuLibSettingsV16ToV17Migration(),
                             ]);
                         Store.Register<RitsuDebugStatePresetCollection>(
                             RitsuDebugStatePresetStore.DataKey,
@@ -333,6 +334,14 @@ namespace STS2RitsuLib.Data
             return RuntimeHotkeyService.NormalizeOrDefault(
                 GetSettings().DebugToolsOpenHotkey,
                 RitsuLibSettings.DefaultDebugToolsOpenHotkey);
+        }
+
+        internal static string GetCreaturePickerHotkey()
+        {
+            Initialize();
+            return RuntimeHotkeyService.NormalizeOrDefault(
+                GetSettings().CreaturePickerHotkey,
+                RitsuLibSettings.DefaultCreaturePickerHotkey);
         }
 
         internal static string GetSettingsOpenHotkey()

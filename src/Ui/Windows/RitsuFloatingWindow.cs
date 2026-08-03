@@ -321,6 +321,7 @@ namespace STS2RitsuLib.Ui.Windows
         private void BuildLayout()
         {
             _layoutInitialized = true;
+            var compact = Options.CompactChrome;
             AddThemeStyleboxOverride("panel", RitsuShellPanelStyles.CreateFramedSurface(
                 RitsuShellTheme.Current.Surface.Content, RitsuShellTheme.Current.Metric.Radius.Default));
 
@@ -334,17 +335,17 @@ namespace STS2RitsuLib.Ui.Windows
 
             _header = new()
             {
-                CustomMinimumSize = new(0f, HeaderHeight),
+                CustomMinimumSize = new(0f, compact ? 36f : HeaderHeight),
                 MouseFilter = MouseFilterEnum.Stop,
             };
-            _header.AddThemeConstantOverride("separation", 10);
+            _header.AddThemeConstantOverride("separation", compact ? 6 : 10);
             _header.GuiInput += OnHeaderInput;
             root.AddChild(_header);
 
             var titleMargin = new MarginContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            titleMargin.AddThemeConstantOverride("margin_left", 16);
-            titleMargin.AddThemeConstantOverride("margin_top", 8);
-            titleMargin.AddThemeConstantOverride("margin_bottom", 8);
+            titleMargin.AddThemeConstantOverride("margin_left", compact ? 10 : 16);
+            titleMargin.AddThemeConstantOverride("margin_top", compact ? 4 : 8);
+            titleMargin.AddThemeConstantOverride("margin_bottom", compact ? 4 : 8);
             _header.AddChild(titleMargin);
             var title = new Label
             {
@@ -356,7 +357,9 @@ namespace STS2RitsuLib.Ui.Windows
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             };
             title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            title.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.OverlayTitle);
+            title.AddThemeFontSizeOverride("font_size", compact
+                ? RitsuShellTheme.Current.Metric.FontSize.HintSmall
+                : RitsuShellTheme.Current.Metric.FontSize.OverlayTitle);
             title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
             titleMargin.AddChild(title);
 
@@ -364,8 +367,10 @@ namespace STS2RitsuLib.Ui.Windows
             {
                 var close = new ModSettingsTextButton("×", ModSettingsButtonTone.Normal, Close)
                 {
-                    CustomMinimumSize = new(44f, 40f),
+                    CustomMinimumSize = compact ? new(34f, 30f) : new(44f, 40f),
                 };
+                if (compact)
+                    close.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HintSmall);
                 _header.AddChild(close);
             }
 
@@ -374,10 +379,10 @@ namespace STS2RitsuLib.Ui.Windows
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
             };
-            _contentHost.AddThemeConstantOverride("margin_left", 14);
-            _contentHost.AddThemeConstantOverride("margin_top", 10);
-            _contentHost.AddThemeConstantOverride("margin_right", 14);
-            _contentHost.AddThemeConstantOverride("margin_bottom", 14);
+            _contentHost.AddThemeConstantOverride("margin_left", compact ? 10 : 14);
+            _contentHost.AddThemeConstantOverride("margin_top", compact ? 6 : 10);
+            _contentHost.AddThemeConstantOverride("margin_right", compact ? 10 : 14);
+            _contentHost.AddThemeConstantOverride("margin_bottom", compact ? 10 : 14);
             root.AddChild(_contentHost);
             if (_content != null)
                 _contentHost.AddChild(_content);
@@ -560,7 +565,10 @@ namespace STS2RitsuLib.Ui.Windows
         {
             if (!IsInsideTree())
                 return;
-            Size = ClampSize(Size);
+            var requestedSize = center && Options.FitInitialSizeToContent
+                ? GetCombinedMinimumSize()
+                : Size;
+            Size = ClampSize(requestedSize);
             var viewport = GetViewportRectInParentCoordinates();
             Position = center && Options.StartCentered
                 ? ClampPosition(viewport.Position + (viewport.Size - Size * GetEffectiveScale()) / 2f, Size)

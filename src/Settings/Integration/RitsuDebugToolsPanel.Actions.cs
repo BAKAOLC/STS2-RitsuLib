@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using STS2RitsuLib.Diagnostics.DebugTools;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -368,7 +369,7 @@ namespace STS2RitsuLib.Settings
             foreach (var (key, dynamicVar) in entry.Card.DynamicVars.OrderBy(static pair => pair.Key,
                          StringComparer.OrdinalIgnoreCase))
             {
-                if (dynamicVar.BaseValue is < 0 or > 999_999 ||
+                if (dynamicVar.BaseValue is < 0 or > RitsuDebugCardActions.MaxCardEditValue ||
                     dynamicVar.BaseValue != decimal.Truncate(dynamicVar.BaseValue))
                     continue;
                 AddCardValueEditor(
@@ -413,7 +414,8 @@ namespace STS2RitsuLib.Settings
                     ModSettingsButtonTone.Accent,
                     () =>
                     {
-                        if (!TryReadInt(enchantmentAmount, 1, 999_999, out var amount) ||
+                        if (!TryReadInt(enchantmentAmount, 1, RitsuDebugCardActions.MaxCardEditValue,
+                                out var amount) ||
                             enchantmentPicker.SelectedId == null ||
                             !TryGetActionContext(out var requester, out var target))
                             return;
@@ -537,7 +539,7 @@ namespace STS2RitsuLib.Settings
             LineEdit edit,
             string? dynamicVarKey)
         {
-            if (!TryReadInt(edit, 0, 999_999, out var value))
+            if (!TryReadInt(edit, 0, RitsuDebugCardActions.MaxCardEditValue, out var value))
                 return;
             SubmitCardEdit(entry, field, value, dynamicVarKey);
         }
@@ -721,13 +723,21 @@ namespace STS2RitsuLib.Settings
                     player.MaxEnergy,
                     player.MaxPotionCount));
             AddSectionTitle(root, L("ritsulib.debugTools.action.playerState", "Player state"));
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.AddGold, "100", -999_999, 999_999);
+            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.AddGold, "100",
+                -RitsuDebugPlayerActions.MaxGold, RitsuDebugPlayerActions.MaxGold);
             AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetGold, player.Gold.ToString(), 0,
                 RitsuDebugPlayerActions.MaxGold);
             AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.Heal, "1", 0,
                 RitsuDebugPlayerActions.MaxHitPoints);
             AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetCurrentHp,
-                player.Creature.CurrentHp.ToString(), 1, RitsuDebugPlayerActions.MaxHitPoints);
+                player.Creature.CurrentHp.ToString(), 1, RitsuDebugPlayerActions.MaxHitPoints,
+                ActionButton(
+                    L("ritsulib.debugTools.action.fullHeal", "Restore full HP"),
+                    ModSettingsButtonTone.Accent,
+                    () => SubmitPlayerOperation(
+                        player.NetId,
+                        RitsuDebugPlayerOperation.Heal,
+                        player.Creature.MaxHp)));
             AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetMaxHp,
                 player.Creature.MaxHp.ToString(), 1, RitsuDebugPlayerActions.MaxHitPoints);
             AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetMaxEnergy,
@@ -862,6 +872,21 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.action.set", "Set"));
 
             AddSectionTitle(root, L("ritsulib.debugTools.action.creatureActions", "Quick actions"));
+            var quickActions = new List<(string Text, ModSettingsButtonTone Tone, Action Action)>
+            {
+                (L("ritsulib.debugTools.action.fullHeal", "Restore full HP"),
+                    ModSettingsButtonTone.Accent,
+                    () => SubmitCreatureOperation(creature, RitsuDebugCreatureOperation.Heal, creature.MaxHp)),
+            };
+            if (!creature.IsPlayer)
+            {
+                quickActions.Add((
+                    OperationLabel(RitsuDebugCreatureOperation.Kill),
+                    ModSettingsButtonTone.Danger,
+                    () => SubmitCreatureOperation(creature, RitsuDebugCreatureOperation.Kill, 0)));
+            }
+
+            root.AddChild(ActionGrid(quickActions));
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.Damage, "1", 0,
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.execute", "Execute"));
@@ -871,6 +896,8 @@ namespace STS2RitsuLib.Settings
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.GainBlock, "1", 0,
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.execute", "Execute"));
+            if (creature is { IsPlayer: false, Monster.MoveStateMachine: not null })
+                AddMonsterIntentManager(root, creature);
             AddCreaturePresetManager(root, creature);
             AddCurrentPowerManager(root, () => combatId, true);
 
@@ -892,8 +919,6 @@ namespace STS2RitsuLib.Settings
                         }
                     ));
 
-                directActions.Add((OperationLabel(RitsuDebugCreatureOperation.Kill), ModSettingsButtonTone.Danger,
-                    () => SubmitCreatureOperation(creature, RitsuDebugCreatureOperation.Kill, 0)));
                 directActions.Add((
                     L("ritsulib.debugTools.action.defeatAllEnemies", "Defeat all enemies"),
                     ModSettingsButtonTone.Danger,
@@ -913,6 +938,32 @@ namespace STS2RitsuLib.Settings
             }
 
             return root;
+        }
+
+        private void AddMonsterIntentManager(RitsuDebugLiveDetailContainer root, Creature creature)
+        {
+            var combatId = creature.CombatId!.Value;
+            AddSectionTitle(root, L("ritsulib.debugTools.action.monsterIntent", "Intent"));
+            var picker = new RitsuDebugMonsterIntentPicker(creature);
+            picker.OpenRequested += () => OpenMonsterIntentWindow(combatId);
+            root.AddChild(picker);
+
+            root.AddChild(ActionGrid([
+                (L("ritsulib.debugTools.action.performMonsterIntent", "Perform current intent"),
+                    ModSettingsButtonTone.Accent,
+                    () => SubmitPerformMonsterIntent(combatId)),
+                (L("ritsulib.debugTools.action.stunMonster", "Stun"),
+                    ModSettingsButtonTone.Normal,
+                    () => SubmitStunMonster(combatId)),
+            ]));
+            AddHint(root, L("ritsulib.debugTools.monsterIntentHint",
+                "Open the floating intent map to watch transitions and switch intents while viewing combat."));
+
+            root.RegisterRefresh(() =>
+            {
+                if (RitsuDebugCombatActions.FindCreature(combatId) is { Monster: not null } current)
+                    picker.Refresh(current);
+            });
         }
 
         private void AddCurrentPowerManager(
@@ -1080,7 +1131,8 @@ namespace STS2RitsuLib.Settings
             RitsuDebugPlayerOperation operation,
             string initialValue,
             int minimum,
-            int maximum)
+            int maximum,
+            Button? secondaryAction = null)
         {
             AddIntegerActionRow(
                 root,
@@ -1088,7 +1140,8 @@ namespace STS2RitsuLib.Settings
                 initialValue,
                 minimum,
                 maximum,
-                value => SubmitPlayerOperation(player.NetId, operation, value));
+                value => SubmitPlayerOperation(player.NetId, operation, value),
+                secondaryAction: secondaryAction);
         }
 
         private void SubmitPlayerOperation(ulong playerNetId, RitsuDebugPlayerOperation operation, int value)
@@ -1128,6 +1181,33 @@ namespace STS2RitsuLib.Settings
                 combatId,
                 operation,
                 value));
+        }
+
+        private void SubmitStunMonster(uint combatId)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
+                return;
+            RunAction(() => RitsuDebugCombatActions.SubmitStunMonster(requester, target, combatId));
+        }
+
+        private void OpenMonsterIntentWindow(uint combatId)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
+                return;
+            if (RitsuOverlayHostService.TryOpenMonsterIntentWindow(
+                    combatId,
+                    requester.NetId,
+                    target.NetId,
+                    out var error))
+                return;
+            SetStatus(error, true);
+        }
+
+        private void SubmitPerformMonsterIntent(uint combatId)
+        {
+            if (!TryGetActionContext(out var requester, out var target))
+                return;
+            RunAction(() => RitsuDebugCombatActions.SubmitPerformMonsterIntent(requester, target, combatId));
         }
 
         private void AddCreatureOperationEditor(
@@ -1550,7 +1630,8 @@ namespace STS2RitsuLib.Settings
             int minimum,
             int maximum,
             Action<int> submit,
-            string? actionText = null)
+            string? actionText = null,
+            Button? secondaryAction = null)
         {
             var edit = ModSettingsUiControlTheming.CreateStyledLineEdit(
                 initialValue,
@@ -1566,6 +1647,8 @@ namespace STS2RitsuLib.Settings
                     if (TryReadInt(edit, minimum, maximum, out var value))
                         submit(value);
                 }));
+            if (secondaryAction != null)
+                row.AddChild(secondaryAction);
             root.AddChild(row);
         }
 

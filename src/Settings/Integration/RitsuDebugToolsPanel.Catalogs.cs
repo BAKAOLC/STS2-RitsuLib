@@ -244,7 +244,7 @@ namespace STS2RitsuLib.Settings
                 RitsuCatalogPresentation.Grid,
                 220f,
                 84f,
-                detailWidth: 520f);
+                detailWidth: 640f);
             browser.SetItems(CreateCreatureCatalogItems(creatures));
             return browser;
 
@@ -331,9 +331,19 @@ namespace STS2RitsuLib.Settings
         {
             var models = ModelDb.AllEncounters.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
             var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
+            var acts = OrderedActs();
+            var tierItemIds = BuildEncounterTierItemIds(
+                models,
+                static encounter => [encounter.Id.ToString()]);
             var browser = Browser(
                 L("ritsulib.debugTools.search.encounters", "Search encounters by name or ID"),
                 item => CreateEncounterDetail(byId[item.Id]),
+                [
+                    CreateActFilter(
+                        acts,
+                        static act => act.AllEncounters.Select(encounter => encounter.Id.ToString())),
+                    CreateEncounterTierFilter(tierItemIds),
+                ],
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 240f,
                 gridTileHeight: 88f,
@@ -372,9 +382,19 @@ namespace STS2RitsuLib.Settings
                 .OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase)
                 .ToArray();
             var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
+            var acts = OrderedActs();
+            var tierItemIds = BuildEncounterTierItemIds(
+                ModelDb.AllEncounters,
+                encounter => GetEncounterMonsters(encounter).Select(monster => monster.Id.ToString()));
             var browser = Browser(
                 L("ritsulib.debugTools.search.monsters", "Search monsters by name or ID"),
                 item => CreateMonsterDetail(byId[item.Id]),
+                [
+                    CreateActFilter(
+                        acts,
+                        static act => act.AllMonsters.Select(monster => monster.Id.ToString())),
+                    CreateEncounterTierFilter(tierItemIds),
+                ],
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 220f,
                 gridTileHeight: 84f,
@@ -391,6 +411,88 @@ namespace STS2RitsuLib.Settings
                         MonsterVitals(model)))),
             ]);
             return browser;
+        }
+
+        private static ActModel[] OrderedActs()
+        {
+            return
+            [
+                .. ModelDb.Acts
+                    .OrderBy(static act => act.Index)
+                    .ThenBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase),
+            ];
+        }
+
+        private static RitsuCatalogFilter CreateActFilter(
+            IEnumerable<ActModel> acts,
+            Func<ActModel, IEnumerable<string>> itemIdsFactory)
+        {
+            return new(
+                "act",
+                L("ritsulib.debugTools.filter.act", "Act"),
+                L("ritsulib.debugTools.filter.allActs", "All acts"),
+                [
+                    .. acts.Select(act =>
+                    {
+                        var itemIds = itemIdsFactory(act).ToHashSet(StringComparer.Ordinal);
+                        return new RitsuCatalogFilterOption(
+                            act.Id.ToString(),
+                            SafeTitle(act),
+                            item => itemIds.Contains(item.Id));
+                    }),
+                ]);
+        }
+
+        private static Dictionary<EncounterTier, HashSet<string>> BuildEncounterTierItemIds(
+            IEnumerable<EncounterModel> encounters,
+            Func<EncounterModel, IEnumerable<string>> itemIdsFactory)
+        {
+            var itemIdsByTier = Enum.GetValues<EncounterTier>()
+                .ToDictionary(static tier => tier, static _ => new HashSet<string>(StringComparer.Ordinal));
+            foreach (var encounter in encounters)
+            {
+                var tier = EncounterTierFor(encounter);
+                if (!tier.HasValue)
+                    continue;
+                itemIdsByTier[tier.Value].UnionWith(itemIdsFactory(encounter));
+            }
+
+            return itemIdsByTier;
+        }
+
+        private static EncounterTier? EncounterTierFor(EncounterModel encounter)
+        {
+            return encounter.RoomType switch
+            {
+                RoomType.Monster when encounter.IsWeak => EncounterTier.Weak,
+                RoomType.Monster => EncounterTier.Strong,
+                RoomType.Elite => EncounterTier.Elite,
+                RoomType.Boss => EncounterTier.Boss,
+                _ => null,
+            };
+        }
+
+        private static RitsuCatalogFilter CreateEncounterTierFilter(
+            IReadOnlyDictionary<EncounterTier, HashSet<string>> itemIdsByTier)
+        {
+            return new(
+                "encounterTier",
+                L("ritsulib.debugTools.filter.encounterTier", "Enemy tier"),
+                L("ritsulib.debugTools.filter.allTiers", "All tiers"),
+                [
+                    TierOption(EncounterTier.Weak, "weak", "Weak"),
+                    TierOption(EncounterTier.Strong, "strong", "Strong"),
+                    TierOption(EncounterTier.Elite, "elite", "Elite"),
+                    TierOption(EncounterTier.Boss, "boss", "Boss"),
+                ]);
+
+            RitsuCatalogFilterOption TierOption(EncounterTier tier, string id, string fallback)
+            {
+                return new(
+                    id,
+                    L($"ritsulib.debugTools.filter.{id}", fallback),
+                    item => itemIdsByTier[tier].Contains(item.Id));
+            }
         }
 
         private RitsuCatalogBrowser CreateRoomCatalog()
@@ -423,7 +525,7 @@ namespace STS2RitsuLib.Settings
                 .OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase)
                 .ToArray();
             var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
-            var filter = new RitsuCatalogFilter(
+            var kindFilter = new RitsuCatalogFilter(
                 "eventKind",
                 L("ritsulib.debugTools.filter.eventKind", "Event kind"),
                 L("ritsulib.debugTools.filter.all", "All"),
@@ -436,7 +538,14 @@ namespace STS2RitsuLib.Settings
             var browser = Browser(
                 L("ritsulib.debugTools.search.events", "Search events by name or ID"),
                 item => CreateEventDetail(byId[item.Id]),
-                [filter],
+                [
+                    CreateActFilter(
+                        OrderedActs(),
+                        static act => act.AllEvents
+                            .Select(model => model.Id.ToString())
+                            .Concat(act.AllAncients.Select(model => model.Id.ToString()))),
+                    kindFilter,
+                ],
                 RitsuCatalogPresentation.Grid,
                 180f,
                 90f);
@@ -652,6 +761,14 @@ namespace STS2RitsuLib.Settings
             if (card.CanonicalStarCost >= 0)
                 return $"★{card.CanonicalStarCost}";
             return "—";
+        }
+
+        private enum EncounterTier
+        {
+            Weak,
+            Strong,
+            Elite,
+            Boss,
         }
 
         private readonly record struct PileCardEntry(

@@ -7,6 +7,8 @@ The following names are listed in lexicographic order by display name. Ordering 
 - AKULA ([PhotonSPK](https://github.com/PhotonSPK))
 - Alchyr ([Alchyr](https://github.com/Alchyr))
 - alkaid616 ([alkaid616](https://github.com/alkaid616))
+- Chaofan ([chaofan-stsmods](https://github.com/chaofan-stsmods))
+- hotwords123 ([hotwords123](https://github.com/hotwords123))
 - LingkongSky ([LingkongSky](https://github.com/LingkongSky))
 - mugongzi520 ([mugongzi520](https://github.com/mugongzi520))
 - Reme ([GlitchedReme](https://github.com/GlitchedReme))

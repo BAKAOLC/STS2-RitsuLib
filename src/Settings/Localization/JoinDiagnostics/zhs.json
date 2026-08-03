@@ -65,7 +65,7 @@
   "value.sortMode.compact.existing": "既有",
   "value.sortModes.joinSnapshot": "ModelDb {0} / SavedProperty {1}",
   "solution.sortMods.title": "排序 Mod 加载顺序",
-  "solution.sortMods.description": "打开内容 Mod 加载顺序排序。这会改写已保存的相关 Mod 顺序；重启游戏后再加入才会生效。",
+  "solution.sortMods.description": "打开内容 Mod 加载顺序排序。这会改写已保存的相关 Mod 顺序。重启游戏后再加入才会生效。",
   "solution.sortMods.button": "打开 Mod 顺序排序",
   "solution.sortModelDb.title": "排序本次会话的 ModelDb",
   "solution.sortModelDb.description": "打开手动 ModelDb 确定性排序。这只会重建当前会话的 ModelDb 网络缓存，重启后不会保留。",
