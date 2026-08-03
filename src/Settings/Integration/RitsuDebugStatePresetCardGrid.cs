@@ -8,6 +8,7 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
+    // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugStatePresetCardGrid : ScrollContainer
     {
         private const float TileWidth = 232f;

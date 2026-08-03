@@ -280,7 +280,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     : ModelDb.AllPotions.Select(static model => model.Id.Entry);
                 var result = CompleteArgument(
                     ids,
-                    args.Take(args.Length - 1).ToArray(),
+                    [.. args.Take(args.Length - 1)],
                     args[^1],
                     matchPredicate: DevConsoleAutocompleteMatchExtensions.WithLocalizedModelTitleMatch());
                 DevConsoleAutocompleteMatchExtensions.ApplyLocalizedDisplayLabels(ref result);

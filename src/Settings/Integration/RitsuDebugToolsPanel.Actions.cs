@@ -39,19 +39,15 @@ namespace STS2RitsuLib.Settings
                 $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · {L("ritsulib.debugTools.cost", "Cost")} {CardCost(card)}",
                 SafeCardDescription(card));
             AddSectionTitle(root, L("ritsulib.debugTools.action.createCard", "Create card"));
-            var destinationPiles = TryGetTargetPlayer(out var target) && HasActiveCombatState(target)
-                ? RitsuDebugCardActions.GetMutablePileNames()
-                    .Select(static name => Enum.Parse<PileType>(name))
-                    .ToArray()
+            PileType[] destinationPiles = TryGetTargetPlayer(out var target) && HasActiveCombatState(target)
+                ? [.. RitsuDebugCardActions.GetMutablePileNames().Select(static name => Enum.Parse<PileType>(name))]
                 : [PileType.Deck];
             var selectedPile = destinationPiles.Contains(PileType.Hand)
                 ? PileType.Hand
                 : destinationPiles[0];
             root.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.pile", "Destination pile"),
-                destinationPiles
-                    .Select(static pile => (pile, EnumLabel(pile)))
-                    .ToArray(),
+                [.. destinationPiles.Select(pile => (pile, EnumLabel(pile)))],
                 selectedPile,
                 value => selectedPile = value));
             AddHint(root, L("ritsulib.debugTools.fullHandPlacement",
@@ -307,17 +303,15 @@ namespace STS2RitsuLib.Settings
                 replayButton));
 
             AddSectionTitle(root, L("ritsulib.debugTools.action.cardPlacement", "Copies and pile placement"));
-            var destinationPiles = HasActiveCombatState(entry.Card.Owner)
-                ? RitsuDebugCardActions.GetMutablePileNames()
-                    .Select(static name => Enum.Parse<PileType>(name))
-                    .ToArray()
+            PileType[] destinationPiles = HasActiveCombatState(entry.Card.Owner)
+                ? [.. RitsuDebugCardActions.GetMutablePileNames().Select(static name => Enum.Parse<PileType>(name))]
                 : [PileType.Deck];
             var destinationPile = entry.PileType == PileType.Deck
                 ? PileType.Deck
                 : destinationPiles.FirstOrDefault(pile => pile != entry.PileType, PileType.Hand);
             root.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.destinationPile", "Destination pile"),
-                destinationPiles.Select(static pile => (pile, EnumLabel(pile))).ToArray(),
+                [.. destinationPiles.Select(pile => (pile, EnumLabel(pile)))],
                 destinationPile,
                 value => destinationPile = value));
             AddHint(root, L("ritsulib.debugTools.fullHandPlacement",
@@ -530,6 +524,8 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugCardEditField.Exhaust => CardKeyword.Exhaust,
                 RitsuDebugCardEditField.Ethereal => CardKeyword.Ethereal,
                 RitsuDebugCardEditField.Unplayable => CardKeyword.Unplayable,
+                RitsuDebugCardEditField.Cost or RitsuDebugCardEditField.DynamicVar =>
+                    throw new ArgumentOutOfRangeException(nameof(field), field, "The field is not a card flag."),
                 _ => throw new ArgumentOutOfRangeException(nameof(field)),
             };
             return card.GetKeywordsWithSources(KeywordSources.Local).Contains(keyword);
@@ -615,12 +611,13 @@ namespace STS2RitsuLib.Settings
             var combatId = creatures[0].CombatId!.Value;
             root.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.creature", "Creature"),
-                creatures.Select(creature =>
+                [
+                    .. creatures.Select(creature =>
                         (creature.CombatId!.Value, string.Format(
                             L("ritsulib.debugTools.creatureChoice", "#{0} · {1}"),
                             creature.CombatId.Value,
-                            creature.Name)))
-                    .ToArray(),
+                            creature.Name))),
+                ],
                 combatId,
                 value => combatId = value));
             var amount = IntField(root, L("ritsulib.debugTools.field.amount", "Stack amount"), "1");
@@ -988,12 +985,15 @@ namespace STS2RitsuLib.Settings
                         target,
                         out var availableOptions,
                         out optionFeedback))
-                    options = availableOptions.Select(option =>
-                    {
-                        var token = RitsuDebugRunActions.GetAncientOptionToken(option);
-                        var title = SafeDescription(() => option.Title?.GetFormattedText());
-                        return (token, string.IsNullOrWhiteSpace(title) ? token : title);
-                    }).ToArray();
+                    options =
+                    [
+                        .. availableOptions.Select(option =>
+                        {
+                            var token = RitsuDebugRunActions.GetAncientOptionToken(option);
+                            var title = SafeDescription(() => option.Title?.GetFormattedText());
+                            return (token, string.IsNullOrWhiteSpace(title) ? token : title);
+                        }),
+                    ];
 
                 if (optionFeedback.IsValid())
                 {
@@ -1156,36 +1156,36 @@ namespace STS2RitsuLib.Settings
                 root.RegisterRefresh(() => metaLabel.Text = metadataRefreshFactory());
             header.AddChild(identity);
             root.AddChild(header);
-            if (!string.IsNullOrWhiteSpace(description))
+            if (string.IsNullOrWhiteSpace(description))
+                return root;
+
+            var descriptionLabel = new MegaRichTextLabel
             {
-                var descriptionLabel = new MegaRichTextLabel
-                {
-                    BbcodeEnabled = true,
-                    AutoSizeEnabled = false,
-                    FitContent = true,
-                    ScrollActive = false,
-                    FocusMode = FocusModeEnum.None,
-                    MouseFilter = MouseFilterEnum.Ignore,
-                    AutowrapMode = TextServer.AutowrapMode.WordSmart,
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    Theme = ModSettingsUiResources.SettingsLineTheme,
-                    IsHorizontallyBound = true,
-                    MinFontSize = DetailBodyFontSize,
-                    MaxFontSize = DetailBodyFontSize,
-                };
-                descriptionLabel.AddThemeFontOverride("normal_font", RitsuShellTheme.Current.Font.Body);
-                descriptionLabel.AddThemeFontOverride("bold_font", RitsuShellTheme.Current.Font.BodyBold);
-                descriptionLabel.AddThemeFontSizeOverride("normal_font_size", DetailBodyFontSize);
-                descriptionLabel.AddThemeFontSizeOverride("bold_font_size", DetailBodyFontSize);
-                descriptionLabel.AddThemeFontSizeOverride("italics_font_size", DetailBodyFontSize);
-                descriptionLabel.AddThemeFontSizeOverride("bold_italics_font_size", DetailBodyFontSize);
-                descriptionLabel.AddThemeFontSizeOverride("mono_font_size", DetailBodyFontSize);
-                descriptionLabel.AddThemeColorOverride("default_color", RitsuShellTheme.Current.Text.RichBody);
-                descriptionLabel.SetTextAutoSize(description);
-                root.AddChild(descriptionLabel);
-                if (descriptionRefreshFactory != null)
-                    root.RegisterRefresh(() => descriptionLabel.SetTextAutoSize(descriptionRefreshFactory()));
-            }
+                BbcodeEnabled = true,
+                AutoSizeEnabled = false,
+                FitContent = true,
+                ScrollActive = false,
+                FocusMode = FocusModeEnum.None,
+                MouseFilter = MouseFilterEnum.Ignore,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                Theme = ModSettingsUiResources.SettingsLineTheme,
+                IsHorizontallyBound = true,
+                MinFontSize = DetailBodyFontSize,
+                MaxFontSize = DetailBodyFontSize,
+            };
+            descriptionLabel.AddThemeFontOverride("normal_font", RitsuShellTheme.Current.Font.Body);
+            descriptionLabel.AddThemeFontOverride("bold_font", RitsuShellTheme.Current.Font.BodyBold);
+            descriptionLabel.AddThemeFontSizeOverride("normal_font_size", DetailBodyFontSize);
+            descriptionLabel.AddThemeFontSizeOverride("bold_font_size", DetailBodyFontSize);
+            descriptionLabel.AddThemeFontSizeOverride("italics_font_size", DetailBodyFontSize);
+            descriptionLabel.AddThemeFontSizeOverride("bold_italics_font_size", DetailBodyFontSize);
+            descriptionLabel.AddThemeFontSizeOverride("mono_font_size", DetailBodyFontSize);
+            descriptionLabel.AddThemeColorOverride("default_color", RitsuShellTheme.Current.Text.RichBody);
+            descriptionLabel.SetTextAutoSize(description);
+            root.AddChild(descriptionLabel);
+            if (descriptionRefreshFactory != null)
+                root.RegisterRefresh(() => descriptionLabel.SetTextAutoSize(descriptionRefreshFactory()));
 
             return root;
         }

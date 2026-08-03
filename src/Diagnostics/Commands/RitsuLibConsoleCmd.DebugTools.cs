@@ -313,162 +313,171 @@ namespace STS2RitsuLib.Diagnostics.Commands
 
         private CompletionResult CompleteCreateCardArguments(Player? player, string[] args)
         {
-            if (args.Length == 4)
+            switch (args.Length)
             {
-                var completed = args.Take(args.Length - 1).ToArray();
-                var partial = args[^1];
-                var result = CompleteArgument(
-                    ModelDb.AllCards.Select(static card => card.Id.Entry),
-                    completed,
-                    partial,
-                    matchPredicate: DevConsoleAutocompleteMatchExtensions.WithLocalizedModelTitleMatch());
-                DevConsoleAutocompleteMatchExtensions.ApplyLocalizedDisplayLabels(ref result);
-                return result;
+                case 4:
+                {
+                    var completed = args.Take(args.Length - 1).ToArray();
+                    var partial = args[^1];
+                    var result = CompleteArgument(
+                        ModelDb.AllCards.Select(static card => card.Id.Entry),
+                        completed,
+                        partial,
+                        matchPredicate: DevConsoleAutocompleteMatchExtensions.WithLocalizedModelTitleMatch());
+                    DevConsoleAutocompleteMatchExtensions.ApplyLocalizedDisplayLabels(ref result);
+                    return result;
+                }
+                case 5:
+                    return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
+                case 6:
+                {
+                    var maxLevel = RitsuDebugCardActions.TryResolveCanonicalCard(
+                        DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]),
+                        out var card,
+                        out _)
+                        ? card.MaxUpgradeLevel
+                        : 1;
+                    return CompleteCurrentArgument(
+                        Enumerable.Range(0, Math.Max(0, maxLevel) + 1).Select(static value => value.ToString()),
+                        args);
+                }
+                case 7:
+                    return CompletePlayerIndex(player, args);
+                default:
+                    return base.GetArgumentCompletions(player, args);
             }
-
-            if (args.Length == 5)
-                return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
-
-            if (args.Length == 6)
-            {
-                var maxLevel = RitsuDebugCardActions.TryResolveCanonicalCard(
-                    DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[3]),
-                    out var card,
-                    out _)
-                    ? card.MaxUpgradeLevel
-                    : 1;
-                return CompleteCurrentArgument(
-                    Enumerable.Range(0, Math.Max(0, maxLevel) + 1).Select(static value => value.ToString()),
-                    args);
-            }
-
-            return args.Length == 7
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
         }
 
         private CompletionResult CompleteSetReplayArguments(Player? player, string[] args)
         {
-            if (args.Length == 4)
-                return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
-
-            if (args.Length == 5 && player != null &&
-                RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType))
+            switch (args.Length)
             {
-                var pile = RitsuDebugCardActions.GetPile(player, pileType);
-                var candidates = pile == null
-                    ? []
-                    : Enumerable.Range(0, pile.Cards.Count).Select(static value => value.ToString());
-                return CompleteCurrentArgument(candidates, args);
+                case 4:
+                    return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
+                case 5 when player != null &&
+                            RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType):
+                {
+                    var pile = RitsuDebugCardActions.GetPile(player, pileType);
+                    var candidates = pile == null
+                        ? []
+                        : Enumerable.Range(0, pile.Cards.Count).Select(static value => value.ToString());
+                    return CompleteCurrentArgument(candidates, args);
+                }
+                case 6:
+                    return CompleteCurrentArgument(["0", "1", "2", "3"], args);
+                case 7:
+                    return CompletePlayerIndex(player, args);
+                default:
+                    return base.GetArgumentCompletions(player, args);
             }
-
-            if (args.Length == 6)
-                return CompleteCurrentArgument(["0", "1", "2", "3"], args);
-
-            return args.Length == 7
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
         }
 
         private CompletionResult CompleteCardLocationArguments(Player? player, string[] args, int playerLength)
         {
-            if (args.Length == 4)
-                return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
-            if (args.Length == 5 && player != null &&
-                RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType))
+            switch (args.Length)
             {
-                var pile = RitsuDebugCardActions.GetPile(player, pileType);
-                return CompleteCurrentArgument(
-                    pile == null ? [] : Enumerable.Range(0, pile.Cards.Count).Select(static index => index.ToString()),
-                    args);
+                case 4:
+                    return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
+                case 5 when player != null &&
+                            RitsuDebugCardActions.TryParseMutablePileType(args[3], out var pileType):
+                {
+                    var pile = RitsuDebugCardActions.GetPile(player, pileType);
+                    return CompleteCurrentArgument(
+                        pile == null
+                            ? []
+                            : Enumerable.Range(0, pile.Cards.Count).Select(static index => index.ToString()),
+                        args);
+                }
+                default:
+                    return args.Length == playerLength
+                        ? CompletePlayerIndex(player, args)
+                        : base.GetArgumentCompletions(player, args);
             }
-
-            return args.Length == playerLength
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
         }
 
         private CompletionResult CompleteEditCardArguments(Player? player, string[] args)
         {
-            if (args.Length <= 5)
-                return CompleteCardLocationArguments(player, args, -1);
-            if (args.Length == 6)
-                return CompleteCurrentArgument(GetCardEditFieldNames(), args);
+            switch (args.Length)
+            {
+                case <= 5:
+                    return CompleteCardLocationArguments(player, args, -1);
+                case 6:
+                    return CompleteCurrentArgument(GetCardEditFieldNames(), args);
+            }
+
             if (!TryParseCardEditField(args[5], out var field))
                 return base.GetArgumentCompletions(player, args);
             if (field == RitsuDebugCardEditField.DynamicVar)
-            {
-                if (args.Length == 7 && player != null &&
-                    TryGetCardAt(player, args[3], args[4], out var card))
-                    return CompleteCurrentArgument(card.DynamicVars.Keys, args);
-                if (args.Length == 8)
-                    return CompleteCurrentArgument(["0", "1", "2", "3", "5", "10"], args);
-                return args.Length == 9
-                    ? CompletePlayerIndex(player, args)
-                    : base.GetArgumentCompletions(player, args);
-            }
+                return args.Length switch
+                {
+                    7 when player != null && TryGetCardAt(player, args[3], args[4], out var card) =>
+                        CompleteCurrentArgument(card.DynamicVars.Keys, args),
+                    8 => CompleteCurrentArgument(["0", "1", "2", "3", "5", "10"], args),
+                    9 => CompletePlayerIndex(player, args),
+                    _ => base.GetArgumentCompletions(player, args),
+                };
 
-            if (args.Length == 7)
-                return CompleteCurrentArgument(
+            return args.Length switch
+            {
+                7 => CompleteCurrentArgument(
                     field is RitsuDebugCardEditField.Exhaust or RitsuDebugCardEditField.Ethereal or
                         RitsuDebugCardEditField.Unplayable
                         ? ["0", "1"]
                         : ["0", "1", "2", "3", "5", "10"],
-                    args);
-            return args.Length == 8
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
+                    args),
+                8 => CompletePlayerIndex(player, args),
+                _ => base.GetArgumentCompletions(player, args),
+            };
         }
 
         private CompletionResult CompleteEnchantCardArguments(Player? player, string[] args)
         {
-            if (args.Length <= 5)
-                return CompleteCardLocationArguments(player, args, -1);
-            if (args.Length == 6)
-                return CompleteModelIds(ModelDb.DebugEnchantments, args);
-            if (args.Length == 7)
-                return CompleteCurrentArgument(["1", "2", "3", "5", "10"], args);
-            return args.Length == 8
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
+            return args.Length switch
+            {
+                <= 5 => CompleteCardLocationArguments(player, args, -1),
+                6 => CompleteModelIds(ModelDb.DebugEnchantments, args),
+                7 => CompleteCurrentArgument(["1", "2", "3", "5", "10"], args),
+                8 => CompletePlayerIndex(player, args),
+                _ => base.GetArgumentCompletions(player, args),
+            };
         }
 
         private CompletionResult CompleteUpgradeCardArguments(Player? player, string[] args)
         {
-            if (args.Length <= 5)
-                return CompleteCardLocationArguments(player, args, -1);
-            if (args.Length == 6)
-                return CompleteCurrentArgument(["1", "2", "3"], args);
-            return args.Length == 7
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
+            return args.Length switch
+            {
+                <= 5 => CompleteCardLocationArguments(player, args, -1),
+                6 => CompleteCurrentArgument(["1", "2", "3"], args),
+                7 => CompletePlayerIndex(player, args),
+                _ => base.GetArgumentCompletions(player, args),
+            };
         }
 
         private CompletionResult CompleteEventArguments(Player? player, string[] args)
         {
-            if (args.Length == 3)
-                return CompleteModelIds(
-                    ModelDb.AllEvents.Concat(ModelDb.AllAncients).DistinctBy(static model => model.Id),
-                    args);
-            if (args.Length == 4 &&
-                RitsuDebugRunActions.TryResolveEvent(
-                    DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[2]),
-                    out var eventModel,
-                    out _) &&
-                eventModel is AncientEventModel ancient &&
-                player != null)
+            switch (args.Length)
             {
-                var tokens = player.RunState.Players
-                    .SelectMany(target => GetAvailableAncientOptionTokens(ancient, target))
-                    .Distinct(StringComparer.OrdinalIgnoreCase);
-                return CompleteCurrentArgument(
-                    tokens,
-                    args);
+                case 3:
+                    return CompleteModelIds(
+                        ModelDb.AllEvents.Concat(ModelDb.AllAncients).DistinctBy(static model => model.Id),
+                        args);
+                case 4 when player != null &&
+                            RitsuDebugRunActions.TryResolveEvent(
+                                DevConsoleAutocompleteDisplay.StripLocalizedSuffix(args[2]),
+                                out var eventModel,
+                                out _) &&
+                            eventModel is AncientEventModel ancient:
+                {
+                    var tokens = player.RunState.Players
+                        .SelectMany(target => GetAvailableAncientOptionTokens(ancient, target))
+                        .Distinct(StringComparer.OrdinalIgnoreCase);
+                    return CompleteCurrentArgument(tokens, args);
+                }
+                case 5:
+                    return CompletePlayerIndex(player, args);
+                default:
+                    return base.GetArgumentCompletions(player, args);
             }
-
-            return args.Length == 5
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
 
             static IEnumerable<string> GetAvailableAncientOptionTokens(
                 AncientEventModel ancient,
@@ -489,7 +498,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
         {
             var result = CompleteArgument(
                 models.Select(static model => model.Id.Entry),
-                args.Take(args.Length - 1).ToArray(),
+                [.. args.Take(args.Length - 1)],
                 args[^1],
                 matchPredicate: DevConsoleAutocompleteMatchExtensions.WithLocalizedModelTitleMatch());
             DevConsoleAutocompleteMatchExtensions.ApplyLocalizedDisplayLabels(ref result);
@@ -599,7 +608,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
         {
             return CompleteArgument(
                 candidates,
-                args.Take(args.Length - 1).ToArray(),
+                [.. args.Take(args.Length - 1)],
                 args[^1],
                 completionType);
         }

@@ -6,6 +6,7 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
+    // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugCreaturePreview : PanelContainer
     {
         private const int MaximumVisualCount = 3;
@@ -17,11 +18,13 @@ namespace STS2RitsuLib.Settings
         internal RitsuDebugCreaturePreview(IEnumerable<MonsterModel> monsters)
         {
             ArgumentNullException.ThrowIfNull(monsters);
-            _monsters = monsters
-                .Where(static monster => monster != null)
-                .DistinctBy(static monster => monster.Id)
-                .Take(MaximumVisualCount)
-                .ToArray();
+            _monsters =
+            [
+                .. monsters
+                    .Where(static monster => monster != null)
+                    .DistinctBy(static monster => monster.Id)
+                    .Take(MaximumVisualCount),
+            ];
         }
 
         public override void _Ready()

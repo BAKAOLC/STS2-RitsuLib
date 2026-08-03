@@ -6,6 +6,7 @@ using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Ui.Overlay
 {
+    // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugToolsDock : Control
     {
         private const float RailLeft = 24f;

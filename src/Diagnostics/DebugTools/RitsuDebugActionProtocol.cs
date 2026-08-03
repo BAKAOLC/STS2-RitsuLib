@@ -260,21 +260,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "protocol.startRun",
                     "Start a run before changing its state.");
 
-            switch (netService)
+            return netService switch
             {
-                case { Type: NetGameType.Singleplayer }:
-                    return RequestManagedAction(runManager, envelope);
-                case NetHostGameService host:
-                    return !CanHostSynchronize(host, out var hostError)
-                        ? RitsuDebugActionSubmission.Reject(hostError)
-                        : RequestManagedAction(runManager, envelope);
-                case NetClientGameService client:
-                    return SubmitClientRequest(runManager, client, requester, envelope);
-                default:
-                    return RitsuDebugActionSubmission.Reject(
-                        "protocol.unsupportedGameMode",
-                        "Developer tools cannot change state in the current game mode.");
-            }
+                { Type: NetGameType.Singleplayer } => RequestManagedAction(runManager, envelope),
+                NetHostGameService host => !CanHostSynchronize(host, out var hostError)
+                    ? RitsuDebugActionSubmission.Reject(hostError)
+                    : RequestManagedAction(runManager, envelope),
+                NetClientGameService client => SubmitClientRequest(runManager, client, requester, envelope),
+                _ => RitsuDebugActionSubmission.Reject(
+                    "protocol.unsupportedGameMode",
+                    "Developer tools cannot change state in the current game mode."),
+            };
         }
 
         internal static bool CanHostSynchronize(
@@ -667,15 +663,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return false;
                 }
 
-                if (RecentHostClientRequests.Count >= MaxRecentHostClientRequests)
-                {
-                    feedback = RitsuDebugActionFeedback.Create(
-                        "protocol.rateLimited",
-                        "Too many changes were requested recently. Try again in a few seconds.");
-                    return false;
-                }
-
-                if (RecentHostClientRequests.Count(pair =>
+                if (RecentHostClientRequests.Count >= MaxRecentHostClientRequests ||
+                    RecentHostClientRequests.Count(pair =>
                         pair.Key.SenderNetId == senderNetId && pair.Value >= rateCutoff) >=
                     MaxClientRequestsPerWindow)
                 {

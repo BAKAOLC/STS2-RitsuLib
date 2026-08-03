@@ -130,9 +130,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return false;
                 }
 
-                options = candidates
-                    .DistinctBy(GetAncientOptionToken, StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
+                options = [.. candidates.DistinctBy(GetAncientOptionToken, StringComparer.OrdinalIgnoreCase)];
                 feedback = default;
                 return true;
             }
@@ -177,9 +175,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionContext context,
             EventPayload payload)
         {
-            if (!TryRequireActiveRun(out var feedback))
-                return RitsuDebugActionCheck.Fail(feedback);
-            if (!TryResolveEvent(payload.EventId, out var eventModel, out feedback))
+            if (!TryRequireActiveRun(out var feedback) ||
+                !TryResolveEvent(payload.EventId, out var eventModel, out feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
             if (payload.AncientOption == null)
                 return RitsuDebugActionCheck.Ok;
@@ -278,17 +275,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return false;
             }
 
-            var candidateArray = candidates as TModel[] ?? candidates.ToArray();
+            var candidateArray = candidates as TModel[] ?? [.. candidates];
             var full = candidateArray
                 .Where(candidate => candidate.Id.ToString().Equals(input, StringComparison.OrdinalIgnoreCase))
                 .Take(2)
                 .ToArray();
             var matches = full.Length > 0
                 ? full
-                : candidateArray
-                    .Where(candidate => candidate.Id.Entry.Equals(input, StringComparison.OrdinalIgnoreCase))
-                    .Take(2)
-                    .ToArray();
+                :
+                [
+                    .. candidateArray
+                        .Where(candidate => candidate.Id.Entry.Equals(input, StringComparison.OrdinalIgnoreCase))
+                        .Take(2),
+                ];
             if (matches.Length == 1)
             {
                 model = matches[0];

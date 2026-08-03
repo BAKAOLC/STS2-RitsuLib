@@ -125,13 +125,13 @@ namespace STS2RitsuLib.Diagnostics.Commands
 
         private CompletionResult CompleteApplyPower(Player? player, string[] args)
         {
-            if (args.Length == 4)
-                return CompletePowerModel(args);
-            if (args.Length == 5)
-                return CompleteCurrentArgument(["1", "2", "3", "5", "10"], args);
-            return args.Length == 6
-                ? CompleteCombatCreature(args)
-                : base.GetArgumentCompletions(player, args);
+            return args.Length switch
+            {
+                4 => CompletePowerModel(args),
+                5 => CompleteCurrentArgument(["1", "2", "3", "5", "10"], args),
+                6 => CompleteCombatCreature(args),
+                _ => base.GetArgumentCompletions(player, args),
+            };
         }
 
         private CompletionResult CompleteRemovePower(Player? player, string[] args)
@@ -147,7 +147,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
         {
             var result = CompleteArgument(
                 ModelDb.AllPowers.Select(static model => model.Id.Entry),
-                args.Take(args.Length - 1).ToArray(),
+                [.. args.Take(args.Length - 1)],
                 args[^1],
                 matchPredicate: DevConsoleAutocompleteMatchExtensions.WithLocalizedModelTitleMatch());
             DevConsoleAutocompleteMatchExtensions.ApplyLocalizedDisplayLabels(ref result);

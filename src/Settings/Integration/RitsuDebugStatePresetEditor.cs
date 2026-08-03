@@ -9,6 +9,7 @@ using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
+    // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugStatePresetEditor : HBoxContainer
     {
         private const float PresetListWidth = 220f;

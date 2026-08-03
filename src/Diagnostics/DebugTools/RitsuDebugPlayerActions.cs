@@ -88,40 +88,37 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     validRange.Item1,
                     validRange.Item2);
 
-            if (payload.Operation == RitsuDebugPlayerOperation.AddGold &&
-                (long)context.Target.Gold + payload.Value is < 0 or > MaxGold)
-                return RitsuDebugActionCheck.Fail(
-                    "player.goldResultRange",
-                    "The resulting gold amount must be between 0 and {0}.",
-                    MaxGold);
-
-            if (payload.Operation is RitsuDebugPlayerOperation.AddEnergy or
-                RitsuDebugPlayerOperation.SetEnergy or
-                RitsuDebugPlayerOperation.AddStars or
-                RitsuDebugPlayerOperation.SetStars or
-                RitsuDebugPlayerOperation.GainBlock or
-                RitsuDebugPlayerOperation.Draw)
-                if (!CombatManager.Instance.IsInProgress || CombatManager.Instance.IsOverOrEnding ||
-                    context.Target.PlayerCombatState == null)
-                    return RitsuDebugActionCheck.Fail(
+            return payload.Operation switch
+            {
+                RitsuDebugPlayerOperation.AddGold
+                    when (long)context.Target.Gold + payload.Value is < 0 or > MaxGold =>
+                    RitsuDebugActionCheck.Fail(
+                        "player.goldResultRange",
+                        "The resulting gold amount must be between 0 and {0}.",
+                        MaxGold),
+                RitsuDebugPlayerOperation.AddEnergy or
+                    RitsuDebugPlayerOperation.SetEnergy or
+                    RitsuDebugPlayerOperation.AddStars or
+                    RitsuDebugPlayerOperation.SetStars or
+                    RitsuDebugPlayerOperation.GainBlock or
+                    RitsuDebugPlayerOperation.Draw
+                    when !CombatManager.Instance.IsInProgress || CombatManager.Instance.IsOverOrEnding ||
+                         context.Target.PlayerCombatState == null =>
+                    RitsuDebugActionCheck.Fail(
                         "player.activeCombatRequired",
-                        "This player operation requires an active combat.");
-
-            if (payload.Operation == RitsuDebugPlayerOperation.SetCurrentHp &&
-                payload.Value > context.Target.Creature.MaxHp)
-                return RitsuDebugActionCheck.Fail(
-                    "player.currentHpExceedsMax",
-                    "Current HP cannot exceed the target's max HP ({0}).",
-                    context.Target.Creature.MaxHp);
-
-            if (payload.Operation == RitsuDebugPlayerOperation.SetMaxHp &&
-                payload.Value < context.Target.Creature.CurrentHp)
-                return RitsuDebugActionCheck.Fail(
-                    "player.maxHpBelowCurrent",
-                    "Max HP cannot be lower than the target's current HP ({0}).",
-                    context.Target.Creature.CurrentHp);
-
-            return RitsuDebugActionCheck.Ok;
+                        "This player operation requires an active combat."),
+                RitsuDebugPlayerOperation.SetCurrentHp when payload.Value > context.Target.Creature.MaxHp =>
+                    RitsuDebugActionCheck.Fail(
+                        "player.currentHpExceedsMax",
+                        "Current HP cannot exceed the target's max HP ({0}).",
+                        context.Target.Creature.MaxHp),
+                RitsuDebugPlayerOperation.SetMaxHp when payload.Value < context.Target.Creature.CurrentHp =>
+                    RitsuDebugActionCheck.Fail(
+                        "player.maxHpBelowCurrent",
+                        "Max HP cannot be lower than the target's current HP ({0}).",
+                        context.Target.Creature.CurrentHp),
+                _ => RitsuDebugActionCheck.Ok,
+            };
         }
 
         internal static async Task<string> ExecuteModifyPlayerAsync(

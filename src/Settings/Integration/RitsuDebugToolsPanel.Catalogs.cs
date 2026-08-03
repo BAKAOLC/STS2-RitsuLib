@@ -39,16 +39,18 @@ namespace STS2RitsuLib.Settings
             };
             return new RitsuDebugCardCatalog(
                 L("ritsulib.debugTools.search.cards", "Search cards by name or ID"),
-                cards.Select(card => new RitsuDebugCardCatalogEntry(
-                    new(
-                        card.Id.ToString(),
-                        SafeTitle(card),
-                        $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · {card.Id}",
-                        $"{card.Type} {card.Rarity}",
-                        badge: CardCost(card)),
-                    CreateCardPreviewModel(card),
-                    card,
-                    () => CreateCardDetail(card))).ToArray(),
+                [
+                    .. cards.Select(card => new RitsuDebugCardCatalogEntry(
+                        new(
+                            card.Id.ToString(),
+                            SafeTitle(card),
+                            $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · {card.Id}",
+                            $"{card.Type} {card.Rarity}",
+                            badge: CardCost(card)),
+                        CreateCardPreviewModel(card),
+                        card,
+                        () => CreateCardDetail(card))),
+                ],
                 filters,
                 defaultFilterId: defaultPoolOptionId == null ? null : poolFilter.Id,
                 defaultFilterOptionId: defaultPoolOptionId);
@@ -90,10 +92,12 @@ namespace STS2RitsuLib.Settings
                 "pool",
                 L("ritsulib.debugTools.filter.pool", "Card pool"),
                 L("ritsulib.debugTools.filter.all", "All"),
-                pools.Select(pool => new RitsuCatalogFilterOption(
-                    pool.Id,
-                    pool.Label,
-                    item => pool.Model.AllCardIds.Contains(cardsById[item.Id].Id))).ToArray());
+                [
+                    .. pools.Select(pool => new RitsuCatalogFilterOption(
+                        pool.Id,
+                        pool.Label,
+                        item => pool.Model.AllCardIds.Contains(cardsById[item.Id].Id))),
+                ]);
         }
 
         private static string CardPoolLabel(string poolTitle)
@@ -141,10 +145,12 @@ namespace STS2RitsuLib.Settings
                 item => CreateRelicDetail(byId[item.Id]),
                 [filter],
                 RitsuCatalogPresentation.Grid);
-            browser.SetItems(models.Select(model => ModelItem(
-                model,
-                EnumLabel(model.Rarity),
-                () => model.Icon)).ToArray());
+            browser.SetItems([
+                .. models.Select(model => ModelItem(
+                    model,
+                    EnumLabel(model.Rarity),
+                    () => model.Icon)),
+            ]);
             return browser;
         }
 
@@ -163,10 +169,12 @@ namespace STS2RitsuLib.Settings
                 item => CreatePotionDetail(byId[item.Id]),
                 [filter],
                 RitsuCatalogPresentation.Grid);
-            browser.SetItems(models.Select(model => ModelItem(
-                model,
-                EnumLabel(model.Rarity),
-                () => model.Image)).ToArray());
+            browser.SetItems([
+                .. models.Select(model => ModelItem(
+                    model,
+                    EnumLabel(model.Rarity),
+                    () => model.Image)),
+            ]);
             return browser;
         }
 
@@ -185,10 +193,12 @@ namespace STS2RitsuLib.Settings
                 item => CreatePowerDetail(byId[item.Id]),
                 [filter],
                 RitsuCatalogPresentation.Grid);
-            browser.SetItems(models.Select(model => ModelItem(
-                model,
-                EnumLabel(model.Type),
-                () => model.Icon)).ToArray());
+            browser.SetItems([
+                .. models.Select(model => ModelItem(
+                    model,
+                    EnumLabel(model.Type),
+                    () => model.Icon)),
+            ]);
             return browser;
         }
 
@@ -264,40 +274,49 @@ namespace STS2RitsuLib.Settings
         private RitsuDebugCardCatalogEntry[] CreatePileCardCatalogEntries(
             IEnumerable<PileCardEntry> entries)
         {
-            return entries.Select(entry => new RitsuDebugCardCatalogEntry(
-                new(
-                    entry.StableId,
-                    SafeTitle(entry.Card),
-                    $"{EnumLabel(entry.PileType)} #{entry.Index + 1} · {entry.Card.Id}",
-                    $"{entry.PileType} {entry.Card.Type} {entry.Card.Rarity}",
-                    badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null),
-                CreateCardPreviewModel(entry.Card),
-                entry.Card,
-                () => CreatePileCardDetail(entry))).ToArray();
+            return
+            [
+                .. entries.Select(entry => new RitsuDebugCardCatalogEntry(
+                    new(
+                        entry.StableId,
+                        SafeTitle(entry.Card),
+                        $"{EnumLabel(entry.PileType)} #{entry.Index + 1} · {entry.Card.Id}",
+                        $"{entry.PileType} {entry.Card.Type} {entry.Card.Rarity}",
+                        badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null),
+                    CreateCardPreviewModel(entry.Card),
+                    entry.Card,
+                    () => CreatePileCardDetail(entry))),
+            ];
         }
 
         private static RitsuCatalogItem[] CreatePlayerCatalogItems(IReadOnlyList<Player> players)
         {
-            return players.Select((player, index) => new RitsuCatalogItem(
-                player.NetId.ToString(),
-                PlayerLabel(player, index),
-                PlayerVitals(player),
-                player.Character.Id.ToString(),
-                badge: player.NetId == RunManager.Instance.NetService?.NetId
-                    ? L("ritsulib.debugTools.local", "Local")
-                    : null)).ToArray();
+            return
+            [
+                .. players.Select((player, index) => new RitsuCatalogItem(
+                    player.NetId.ToString(),
+                    PlayerLabel(player, index),
+                    PlayerVitals(player),
+                    player.Character.Id.ToString(),
+                    badge: player.NetId == RunManager.Instance.NetService?.NetId
+                        ? L("ritsulib.debugTools.local", "Local")
+                        : null)),
+            ];
         }
 
         private static RitsuCatalogItem[] CreateCreatureCatalogItems(IEnumerable<Creature> creatures)
         {
-            return creatures.Select(creature => new RitsuCatalogItem(
-                creature.CombatId!.Value.ToString(),
-                creature.Name,
-                CreatureVitals(creature),
-                $"{creature.ModelId} {creature.LogName}",
-                badge: creature.IsPlayer
-                    ? L("ritsulib.debugTools.player", "Player")
-                    : L("ritsulib.debugTools.creature", "Creature"))).ToArray();
+            return
+            [
+                .. creatures.Select(creature => new RitsuCatalogItem(
+                    creature.CombatId!.Value.ToString(),
+                    creature.Name,
+                    CreatureVitals(creature),
+                    $"{creature.ModelId} {creature.LogName}",
+                    badge: creature.IsPlayer
+                        ? L("ritsulib.debugTools.player", "Player")
+                        : L("ritsulib.debugTools.creature", "Creature"))),
+            ];
         }
 
         private RitsuCatalogBrowser CreateEncounterCatalog()
@@ -311,28 +330,30 @@ namespace STS2RitsuLib.Settings
                 gridTileMinimumWidth: 240f,
                 gridTileHeight: 88f,
                 detailWidth: 460f);
-            browser.SetItems(models.Select(model =>
-            {
-                var monsters = GetEncounterMonsters(model);
-                var monsterNames = monsters.Select(SafeTitle).ToArray();
-                var summary = monsterNames.Length == 0
-                    ? RoomLabel(model.RoomType)
-                    : $"{RoomLabel(model.RoomType)} · {string.Join(", ", monsterNames.Take(2))}";
-                return new RitsuCatalogItem(
-                    model.Id.ToString(),
-                    SafeTitle(model),
-                    summary,
-                    $"{model.Id.Category} {string.Join(' ', monsterNames)}",
-                    tooltip: BuildCatalogTooltip(
-                        SafeTitle(model),
+            browser.SetItems([
+                .. models.Select(model =>
+                {
+                    var monsters = GetEncounterMonsters(model);
+                    var monsterNames = monsters.Select(SafeTitle).ToArray();
+                    var summary = monsterNames.Length == 0
+                        ? RoomLabel(model.RoomType)
+                        : $"{RoomLabel(model.RoomType)} · {string.Join(", ", monsterNames.Take(2))}";
+                    return new RitsuCatalogItem(
                         model.Id.ToString(),
-                        RoomLabel(model.RoomType),
-                        monsterNames.Length == 0
-                            ? null
-                            : string.Format(
-                                L("ritsulib.debugTools.possibleMonsters", "Possible enemies: {0}"),
-                                string.Join(", ", monsterNames))));
-            }).ToArray());
+                        SafeTitle(model),
+                        summary,
+                        $"{model.Id.Category} {string.Join(' ', monsterNames)}",
+                        tooltip: BuildCatalogTooltip(
+                            SafeTitle(model),
+                            model.Id.ToString(),
+                            RoomLabel(model.RoomType),
+                            monsterNames.Length == 0
+                                ? null
+                                : string.Format(
+                                    L("ritsulib.debugTools.possibleMonsters", "Possible enemies: {0}"),
+                                    string.Join(", ", monsterNames))));
+                }),
+            ]);
             return browser;
         }
 
@@ -350,15 +371,17 @@ namespace STS2RitsuLib.Settings
                 gridTileMinimumWidth: 220f,
                 gridTileHeight: 84f,
                 detailWidth: 440f);
-            browser.SetItems(models.Select(model => new RitsuCatalogItem(
-                model.Id.ToString(),
-                SafeTitle(model),
-                MonsterVitals(model),
-                model.Id.Category,
-                tooltip: BuildCatalogTooltip(
-                    SafeTitle(model),
+            browser.SetItems([
+                .. models.Select(model => new RitsuCatalogItem(
                     model.Id.ToString(),
-                    MonsterVitals(model)))).ToArray());
+                    SafeTitle(model),
+                    MonsterVitals(model),
+                    model.Id.Category,
+                    tooltip: BuildCatalogTooltip(
+                        SafeTitle(model),
+                        model.Id.ToString(),
+                        MonsterVitals(model)))),
+            ]);
             return browser;
         }
 
@@ -374,12 +397,14 @@ namespace STS2RitsuLib.Settings
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 150f,
                 gridTileHeight: 86f);
-            browser.SetItems(roomTypes.Select(roomType => new RitsuCatalogItem(
-                roomType.ToString(),
-                RoomLabel(roomType),
-                null,
-                roomType.ToString(),
-                tooltip: BuildCatalogTooltip(RoomLabel(roomType), roomType.ToString()))).ToArray());
+            browser.SetItems([
+                .. roomTypes.Select(roomType => new RitsuCatalogItem(
+                    roomType.ToString(),
+                    RoomLabel(roomType),
+                    null,
+                    roomType.ToString(),
+                    tooltip: BuildCatalogTooltip(RoomLabel(roomType), roomType.ToString()))),
+            ]);
             return browser;
         }
 
@@ -407,12 +432,14 @@ namespace STS2RitsuLib.Settings
                 RitsuCatalogPresentation.Grid,
                 180f,
                 90f);
-            browser.SetItems(models.Select(model => ModelItem(
-                model,
-                model is AncientEventModel
-                    ? L("ritsulib.debugTools.ancient", "Ancient")
-                    : L("ritsulib.debugTools.event", "Event"),
-                null)).ToArray());
+            browser.SetItems([
+                .. models.Select(model => ModelItem(
+                    model,
+                    model is AncientEventModel
+                        ? L("ritsulib.debugTools.ancient", "Ancient")
+                        : L("ritsulib.debugTools.event", "Event"),
+                    null)),
+            ]);
             return browser;
         }
 
@@ -465,11 +492,13 @@ namespace STS2RitsuLib.Settings
         {
             try
             {
-                return encounter.AllPossibleMonsters
-                    .Where(static monster => monster != null)
-                    .DistinctBy(static monster => monster.Id)
-                    .Take(12)
-                    .ToArray();
+                return
+                [
+                    .. encounter.AllPossibleMonsters
+                        .Where(static monster => monster != null)
+                        .DistinctBy(static monster => monster.Id)
+                        .Take(12),
+                ];
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
@@ -496,12 +525,13 @@ namespace STS2RitsuLib.Settings
                 id,
                 label,
                 L("ritsulib.debugTools.filter.all", "All"),
-                values.OrderBy(static value => Convert.ToInt32(value))
-                    .Select(value => new RitsuCatalogFilterOption(
-                        value.ToString(),
-                        labelFactory(value),
-                        item => matches(item, value)))
-                    .ToArray());
+                [
+                    .. values.OrderBy(static value => Convert.ToInt32(value))
+                        .Select(value => new RitsuCatalogFilterOption(
+                            value.ToString(),
+                            labelFactory(value),
+                            item => matches(item, value))),
+                ]);
         }
 
         private static string EnumLabel<TValue>(TValue value)

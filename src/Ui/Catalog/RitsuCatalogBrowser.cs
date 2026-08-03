@@ -106,7 +106,7 @@ namespace STS2RitsuLib.Ui.Catalog
         ///     <para xml:lang="en">Gets an immutable snapshot of all items supplied to the browser.</para>
         ///     <para xml:lang="zh-CN">获取提供给浏览器的全部目录项的不可变快照。</para>
         /// </summary>
-        public IReadOnlyList<RitsuCatalogItem> Items { get; private set; } = Array.Empty<RitsuCatalogItem>();
+        public IReadOnlyList<RitsuCatalogItem> Items { get; private set; } = [];
 
         /// <summary>
         ///     <para xml:lang="en">Gets the selected item, or null when no current item has the selected stable ID.</para>
@@ -544,7 +544,7 @@ namespace STS2RitsuLib.Ui.Catalog
             var terms = (_search?.Text ?? string.Empty).Split(
                 (char[]?)null,
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            _filteredItems = _items.Where(item => item.Matches(terms) && MatchesFilters(item)).ToArray();
+            _filteredItems = [.. _items.Where(item => item.Matches(terms) && MatchesFilters(item))];
             if (_resultCount != null)
                 _resultCount.Text = _filteredItems.Length == _items.Length
                     ? _items.Length.ToString()
@@ -758,20 +758,20 @@ namespace STS2RitsuLib.Ui.Catalog
             _selectedItemId = itemId;
             RebuildDetail();
             RefreshVirtualRows();
-            if (notify && SelectionChanged is { } handlers)
-            {
-                var eventArgs = new RitsuCatalogSelectionChangedEventArgs(SelectedItem);
-                foreach (var handler in handlers.GetInvocationList()
-                             .OfType<EventHandler<RitsuCatalogSelectionChangedEventArgs>>())
-                    try
-                    {
-                        handler(this, eventArgs);
-                    }
-                    catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
-                    {
-                        RitsuLibFramework.Logger.Warn($"[Catalog] Selection callback failed: {ex}");
-                    }
-            }
+            if (!notify || SelectionChanged is not { } handlers)
+                return;
+
+            var eventArgs = new RitsuCatalogSelectionChangedEventArgs(SelectedItem);
+            foreach (var handler in handlers.GetInvocationList()
+                         .OfType<EventHandler<RitsuCatalogSelectionChangedEventArgs>>())
+                try
+                {
+                    handler(this, eventArgs);
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    RitsuLibFramework.Logger.Warn($"[Catalog] Selection callback failed: {ex}");
+                }
         }
 
         private void CloseDetailDrawer(bool notify)

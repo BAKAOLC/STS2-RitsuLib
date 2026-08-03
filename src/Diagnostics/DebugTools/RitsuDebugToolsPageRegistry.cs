@@ -310,12 +310,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             lock (SyncRoot)
             {
-                return Array.AsReadOnly(Pages.Values
-                    .Select(static registration => registration.Definition)
-                    .OrderBy(static definition => definition.SortOrder)
-                    .ThenBy(static definition => definition.ModId, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(static definition => definition.Id, StringComparer.OrdinalIgnoreCase)
-                    .ToArray());
+                return Array.AsReadOnly<RitsuDebugToolsPageDefinition>(
+                [
+                    .. Pages.Values
+                        .Select(static registration => registration.Definition)
+                        .OrderBy(static definition => definition.SortOrder)
+                        .ThenBy(static definition => definition.ModId, StringComparer.OrdinalIgnoreCase)
+                        .ThenBy(static definition => definition.Id, StringComparer.OrdinalIgnoreCase),
+                ]);
             }
         }
 

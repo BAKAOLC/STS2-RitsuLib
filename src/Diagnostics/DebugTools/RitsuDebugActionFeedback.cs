@@ -70,7 +70,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return string.Format(
                     CultureInfo.CurrentCulture,
                     format,
-                    [.. Arguments.Select(static argument => (object)ResolveArgument(argument, true))]);
+                    [.. Arguments.Select(static object (argument) => ResolveArgument(argument, true))]);
             }
             catch (FormatException)
             {
@@ -83,7 +83,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return string.Format(
                 CultureInfo.InvariantCulture,
                 Fallback,
-                [.. Arguments.Select(static argument => (object)ResolveArgument(argument, false))]);
+                [.. Arguments.Select(static object (argument) => ResolveArgument(argument, false))]);
         }
 
         private static string SerializeArgument(object? argument)

@@ -296,10 +296,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 .ToArray();
             var matches = full.Length > 0
                 ? full
-                : ModelDb.DebugEnchantments
-                    .Where(candidate => candidate.Id.Entry.Equals(input, StringComparison.OrdinalIgnoreCase))
-                    .Take(2)
-                    .ToArray();
+                :
+                [
+                    .. ModelDb.DebugEnchantments
+                        .Where(candidate => candidate.Id.Entry.Equals(input, StringComparison.OrdinalIgnoreCase))
+                        .Take(2),
+                ];
             if (matches.Length == 1)
             {
                 enchantment = matches[0];
@@ -459,11 +461,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 var initialLevel = card.CurrentUpgradeLevel;
                 ApplyAvailableUpgradeLevels(card, payload.Levels);
-                if (card.CurrentUpgradeLevel > initialLevel)
-                {
-                    upgradedCards++;
-                    RefreshVisibleCardNode(card, pileType);
-                }
+                if (card.CurrentUpgradeLevel <= initialLevel)
+                    continue;
+                upgradedCards++;
+                RefreshVisibleCardNode(card, pileType);
             }
 
             return upgradedCards == 1
@@ -635,7 +636,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     : RitsuDebugActionCheck.Fail(
                         "card.enchantmentUnexpectedAmount",
                         "An enchantment amount requires an enchantment.");
-            if (!state.EnchantmentAmount.HasValue || state.EnchantmentAmount is < 1 or > MaxCardEditValue)
+            if (state.EnchantmentAmount is null or < 1 or > MaxCardEditValue)
                 return RitsuDebugActionCheck.Fail(
                     "card.enchantmentAmountRange",
                     "Enchantment amount must be between 1 and 999999.");
@@ -758,15 +759,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 copies[index].RemoveFromState();
             }
 
-            if (actualPiles.Count == 0)
-                throw new RitsuDebugActionExecutionException(
-                    RitsuDebugActionFeedback.Create(
-                        "card.copyFailed",
-                        "The card could not be copied to {0}.",
-                        destinationPile));
-
-            if (actualPiles.Count == 1)
-                return $"Copied {source.Id} to {actualPiles[0]}.";
+            switch (actualPiles.Count)
+            {
+                case 0:
+                    throw new RitsuDebugActionExecutionException(
+                        RitsuDebugActionFeedback.Create(
+                            "card.copyFailed",
+                            "The card could not be copied to {0}.",
+                            destinationPile));
+                case 1:
+                    return $"Copied {source.Id} to {actualPiles[0]}.";
+            }
 
             var placement = string.Join(", ", actualPiles
                 .GroupBy(static pile => pile)
@@ -899,34 +902,36 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return RitsuDebugActionCheck.Fail(
                     "card.editValueRange",
                     "Card edit values must be between 0 and 999999.");
-            if (payload.Field is RitsuDebugCardEditField.Exhaust or
+            switch (payload.Field)
+            {
+                case RitsuDebugCardEditField.Exhaust or
                     RitsuDebugCardEditField.Ethereal or
-                    RitsuDebugCardEditField.Unplayable && payload.Value is not (0 or 1))
-                return RitsuDebugActionCheck.Fail(
-                    "card.flagValue",
-                    "Card flag values must be 0 or 1.");
-            if (payload.Field == RitsuDebugCardEditField.Cost && card.EnergyCost.CostsX)
-                return RitsuDebugActionCheck.Fail(
-                    "card.xCostCannotReplace",
-                    "The base cost of an X-cost card cannot be replaced.");
-            if (payload.Field == RitsuDebugCardEditField.DynamicVar)
-            {
-                if (string.IsNullOrWhiteSpace(payload.DynamicVarKey) || payload.DynamicVarKey.Length > 64)
+                    RitsuDebugCardEditField.Unplayable when payload.Value is not (0 or 1):
                     return RitsuDebugActionCheck.Fail(
-                        "card.dynamicVarKeyRequired",
-                        "A valid dynamic-variable key is required.");
-                if (!card.DynamicVars.ContainsKey(payload.DynamicVarKey))
+                        "card.flagValue",
+                        "Card flag values must be 0 or 1.");
+                case RitsuDebugCardEditField.Cost when card.EnergyCost.CostsX:
                     return RitsuDebugActionCheck.Fail(
-                        "card.dynamicVarMissing",
-                        "Card {0} has no dynamic variable named '{1}'.",
-                        card.Id,
-                        payload.DynamicVarKey);
-            }
-            else if (payload.DynamicVarKey != null)
-            {
-                return RitsuDebugActionCheck.Fail(
-                    "card.dynamicVarUnexpected",
-                    "A dynamic-variable key is valid only for DynamicVar edits.");
+                        "card.xCostCannotReplace",
+                        "The base cost of an X-cost card cannot be replaced.");
+                case RitsuDebugCardEditField.DynamicVar:
+                    if (string.IsNullOrWhiteSpace(payload.DynamicVarKey) || payload.DynamicVarKey.Length > 64)
+                        return RitsuDebugActionCheck.Fail(
+                            "card.dynamicVarKeyRequired",
+                            "A valid dynamic-variable key is required.");
+                    if (!card.DynamicVars.ContainsKey(payload.DynamicVarKey))
+                        return RitsuDebugActionCheck.Fail(
+                            "card.dynamicVarMissing",
+                            "Card {0} has no dynamic variable named '{1}'.",
+                            card.Id,
+                            payload.DynamicVarKey);
+                    break;
+                default:
+                    if (payload.DynamicVarKey != null)
+                        return RitsuDebugActionCheck.Fail(
+                            "card.dynamicVarUnexpected",
+                            "A dynamic-variable key is valid only for DynamicVar edits.");
+                    break;
             }
 
             return RitsuDebugActionCheck.Ok;
@@ -978,9 +983,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     payload.Location,
                     out _,
                     out var card,
-                    out var feedback))
-                return RitsuDebugActionCheck.Fail(feedback);
-            if (!TryResolveEnchantment(payload.EnchantmentId, out var enchantment, out feedback))
+                    out var feedback) ||
+                !TryResolveEnchantment(payload.EnchantmentId, out var enchantment, out feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
             if (payload.Amount is < 1 or > 999_999)
                 return RitsuDebugActionCheck.Fail(

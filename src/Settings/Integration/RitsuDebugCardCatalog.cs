@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Settings
         CardModel SourceCard,
         Func<Control> DetailFactory);
 
+    // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugCardCatalog : Control
     {
         internal const string HolderMetaKey = "ritsulib_debug_card_catalog_holder";
@@ -111,20 +112,20 @@ namespace STS2RitsuLib.Settings
 
             if (defaultFilterId == null != (defaultFilterOptionId == null))
                 throw new ArgumentException("The default filter ID and option ID must be supplied together.");
-            if (defaultFilterId != null)
-            {
-                var defaultFilter = _filters.SingleOrDefault(filter => filter.Id == defaultFilterId)
-                                    ?? throw new ArgumentException(
-                                        "The default filter ID must identify one supplied filter.",
-                                        nameof(defaultFilterId));
-                var defaultIndex = defaultFilter.Options.ToList()
-                    .FindIndex(option => option.Id == defaultFilterOptionId);
-                if (defaultIndex < 0)
-                    throw new ArgumentException(
-                        "The default filter option ID must identify an option in the default filter.",
-                        nameof(defaultFilterOptionId));
-                _filterSelections[defaultFilter.Id] = defaultIndex;
-            }
+            if (defaultFilterId == null)
+                return;
+
+            var defaultFilter = _filters.SingleOrDefault(filter => filter.Id == defaultFilterId)
+                                ?? throw new ArgumentException(
+                                    "The default filter ID must identify one supplied filter.",
+                                    nameof(defaultFilterId));
+            var defaultFilterIndex = defaultFilter.Options.ToList()
+                .FindIndex(option => option.Id == defaultFilterOptionId);
+            if (defaultFilterIndex < 0)
+                throw new ArgumentException(
+                    "The default filter option ID must identify an option in the default filter.",
+                    nameof(defaultFilterOptionId));
+            _filterSelections[defaultFilter.Id] = defaultFilterIndex;
         }
 
         private string SearchPlaceholder { get; }
@@ -178,11 +179,13 @@ namespace STS2RitsuLib.Settings
             ArgumentNullException.ThrowIfNull(entries);
             if (entries.Count > RitsuCatalogBrowser.MaximumItemCount)
                 throw new ArgumentException("The card catalog contains too many entries.", nameof(entries));
-            if (entries.Any(static entry => entry == null ||
-                                            entry.Item == null ||
-                                            entry.VisualCard == null ||
-                                            entry.SourceCard == null ||
-                                            entry.DetailFactory == null))
+            // ReSharper disable once MergeSequentialChecks
+            if (entries.Any(static entry =>
+                    ReferenceEquals(entry, null) ||
+                    ReferenceEquals(entry.Item, null) ||
+                    ReferenceEquals(entry.VisualCard, null) ||
+                    ReferenceEquals(entry.SourceCard, null) ||
+                    ReferenceEquals(entry.DetailFactory, null)))
                 throw new ArgumentException("Card catalog entries cannot contain null.", nameof(entries));
             if (entries.Select(static entry => entry.Item.Id).Distinct(StringComparer.Ordinal).Count() != entries.Count)
                 throw new ArgumentException("Card catalog item IDs must be unique.", nameof(entries));
@@ -583,7 +586,7 @@ namespace STS2RitsuLib.Settings
         {
             var terms = _search.Text.Split((char[]?)null,
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            _filtered = _entries.Where(entry => entry.Item.Matches(terms) && MatchesFilters(entry.Item)).ToArray();
+            _filtered = [.. _entries.Where(entry => entry.Item.Matches(terms) && MatchesFilters(entry.Item))];
             Array.Sort(_filtered, CompareEntries);
             _resultCount.Text = _filtered.Length == _entries.Length
                 ? _entries.Length.ToString()
@@ -678,7 +681,7 @@ namespace STS2RitsuLib.Settings
                 UpdateCanvasMinimumSize();
             }
 
-            var rowHeight = CardHeight + CardVerticalGap;
+            const float rowHeight = CardHeight + CardVerticalGap;
             var totalRows = Mathf.CeilToInt(_filtered.Length / (float)_gridColumns);
             var firstVisibleRow = totalRows == 0
                 ? 0

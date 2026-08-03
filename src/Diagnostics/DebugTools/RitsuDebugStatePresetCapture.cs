@@ -102,7 +102,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 preset.Relics = new()
                 {
                     ApplyMode = RitsuDebugStatePresetApplyMode.Replace,
-                    ModelIds = player.Relics.Select(static relic => relic.Id.ToString()).ToList(),
+                    ModelIds = [.. player.Relics.Select(static relic => relic.Id.ToString())],
                 };
             }
 
@@ -110,16 +110,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 preset.Potions = new()
                 {
                     ApplyMode = RitsuDebugStatePresetApplyMode.Replace,
-                    Items = player.PotionSlots
-                        .Select(static (potion, slot) => potion == null
-                            ? null
-                            : new RitsuDebugStatePresetPotion
-                            {
-                                PotionId = potion.Id.ToString(),
-                                SlotIndex = slot,
-                            })
-                        .OfType<RitsuDebugStatePresetPotion>()
-                        .ToList(),
+                    Items =
+                    [
+                        .. player.PotionSlots
+                            .Select(static (potion, slot) => potion == null
+                                ? null
+                                : new RitsuDebugStatePresetPotion
+                                {
+                                    PotionId = potion.Id.ToString(),
+                                    SlotIndex = slot,
+                                })
+                            .OfType<RitsuDebugStatePresetPotion>(),
+                    ],
                 };
 
             if (scope.HasFlag(RitsuDebugStatePresetCaptureScope.Powers))

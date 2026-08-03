@@ -164,41 +164,40 @@ namespace STS2RitsuLib.Diagnostics.Commands
 
         private CompletionResult CompleteUpgradePile(Player? player, string[] args)
         {
-            if (args.Length == 4)
-                return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
-            if (args.Length == 5)
-                return CompleteCurrentArgument(["1", "2", "3"], args);
-            return args.Length == 6
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
+            return args.Length switch
+            {
+                4 => CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args),
+                5 => CompleteCurrentArgument(["1", "2", "3"], args),
+                6 => CompletePlayerIndex(player, args),
+                _ => base.GetArgumentCompletions(player, args),
+            };
         }
 
         private CompletionResult CompleteCopyCardArguments(Player? player, string[] args)
         {
-            if (args.Length <= 5)
-                return CompleteCardLocationArguments(player, args, -1);
-            if (args.Length == 6)
-                return CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args);
-            if (args.Length == 7)
-                return CompleteCurrentArgument(["1", "2", "3", "5", "10"], args);
-            return args.Length == 8
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
+            return args.Length switch
+            {
+                <= 5 => CompleteCardLocationArguments(player, args, -1),
+                6 => CompleteCurrentArgument(RitsuDebugCardActions.GetMutablePileNames(), args),
+                7 => CompleteCurrentArgument(["1", "2", "3", "5", "10"], args),
+                8 => CompletePlayerIndex(player, args),
+                _ => base.GetArgumentCompletions(player, args),
+            };
         }
 
         private CompletionResult CompleteMoveCardArguments(Player? player, string[] args)
         {
-            if (args.Length <= 5)
-                return CompleteCardLocationArguments(player, args, -1);
-            if (args.Length == 6)
-                return CompleteCurrentArgument(
+            return args.Length switch
+            {
+                <= 5 => CompleteCardLocationArguments(player, args, -1),
+                6 => CompleteCurrentArgument(
                     RitsuDebugCardActions.GetMutablePileNames()
                         .Where(static name => !name.Equals(nameof(PileType.Deck),
                             StringComparison.OrdinalIgnoreCase)),
-                    args);
-            return args.Length == 7
-                ? CompletePlayerIndex(player, args)
-                : base.GetArgumentCompletions(player, args);
+                    args),
+                7 => CompletePlayerIndex(player, args),
+                _ => base.GetArgumentCompletions(player, args),
+            };
         }
     }
 }

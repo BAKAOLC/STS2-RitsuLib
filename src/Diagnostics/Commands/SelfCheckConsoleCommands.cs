@@ -66,18 +66,25 @@ namespace STS2RitsuLib.Diagnostics.Commands
         /// <inheritdoc />
         public override CmdResult Process(Player? issuingPlayer, string[] args)
         {
-            if (args.Length >= 1 && args[0].Equals("debug", StringComparison.OrdinalIgnoreCase))
-                return RitsuLibSettingsStore.AreDeveloperToolsEnabled()
-                    ? ProcessDebug(issuingPlayer, args)
-                    : new(false, ModSettingsLocalization.Get(
-                        "ritsulib.debugTools.feedback.protocol.toolsDisabled",
-                        "RitsuLib developer tools are disabled in settings."));
-
-            if (args.Length >= 1 && args[0].Equals("settings", StringComparison.OrdinalIgnoreCase))
-                return ProcessSettings(args);
-
-            if (args.Length < 2 || !args[0].Equals("selfcheck", StringComparison.OrdinalIgnoreCase))
+            if (args.Length == 0)
                 return new(false, UsageText());
+
+            switch (args[0])
+            {
+                case var command when command.Equals("debug", StringComparison.OrdinalIgnoreCase):
+                    return RitsuLibSettingsStore.AreDeveloperToolsEnabled()
+                        ? ProcessDebug(issuingPlayer, args)
+                        : new(false, ModSettingsLocalization.Get(
+                            "ritsulib.debugTools.feedback.protocol.toolsDisabled",
+                            "RitsuLib developer tools are disabled in settings."));
+                case var command when command.Equals("settings", StringComparison.OrdinalIgnoreCase):
+                    return ProcessSettings(args);
+                case var command when command.Equals("selfcheck", StringComparison.OrdinalIgnoreCase) &&
+                                      args.Length >= 2:
+                    break;
+                default:
+                    return new(false, UsageText());
+            }
 
             if (args.Length == 2 && args[1].Equals("run", StringComparison.OrdinalIgnoreCase))
             {

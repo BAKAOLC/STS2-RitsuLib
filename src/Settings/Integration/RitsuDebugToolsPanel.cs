@@ -125,7 +125,7 @@ namespace STS2RitsuLib.Settings
             var targetOptions = players
                 .Select((player, index) => (player.NetId, PlayerLabel(player, index)))
                 .ToArray();
-            _targetPlayerIds = players.Select(static player => player.NetId).ToArray();
+            _targetPlayerIds = [.. players.Select(static player => player.NetId)];
             _targetDropdown = new(
                 targetOptions,
                 _targetPlayerNetId ?? 0,
@@ -203,10 +203,12 @@ namespace STS2RitsuLib.Settings
                     () => CreateExternalPage(definition)));
             }
 
-            _pages = pages
-                .OrderBy(static page => page.SortOrder)
-                .ThenBy(static page => page.Id, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+            _pages =
+            [
+                .. pages
+                    .OrderBy(static page => page.SortOrder)
+                    .ThenBy(static page => page.Id, StringComparer.OrdinalIgnoreCase),
+            ];
             if (_pages.All(page => !page.Id.Equals(CurrentPageId, StringComparison.OrdinalIgnoreCase)))
                 CurrentPageId = _pages.FirstOrDefault()?.Id ?? string.Empty;
             PagesChanged?.Invoke(Array.AsReadOnly(_pages));
@@ -551,7 +553,7 @@ namespace STS2RitsuLib.Settings
                 return;
             _targetPlayerIds = playerIds;
             _targetDropdown?.SetOptions(
-                players.Select((player, index) => (player.NetId, PlayerLabel(player, index))).ToArray(),
+                [.. players.Select((player, index) => (player.NetId, PlayerLabel(player, index)))],
                 _targetPlayerNetId ?? 0);
         }
 

@@ -316,17 +316,19 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return false;
             }
 
-            var candidateArray = candidates as TModel[] ?? candidates.ToArray();
+            var candidateArray = candidates as TModel[] ?? [.. candidates];
             var fullMatches = candidateArray
                 .Where(candidate => candidate.Id.ToString().Equals(input, StringComparison.OrdinalIgnoreCase))
                 .Take(2)
                 .ToArray();
             var matches = fullMatches.Length > 0
                 ? fullMatches
-                : candidateArray
-                    .Where(candidate => candidate.Id.Entry.Equals(input, StringComparison.OrdinalIgnoreCase))
-                    .Take(2)
-                    .ToArray();
+                :
+                [
+                    .. candidateArray
+                        .Where(candidate => candidate.Id.Entry.Equals(input, StringComparison.OrdinalIgnoreCase))
+                        .Take(2),
+                ];
             if (matches.Length == 1)
             {
                 model = matches[0];

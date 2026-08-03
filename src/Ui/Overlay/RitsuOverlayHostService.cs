@@ -289,11 +289,10 @@ namespace STS2RitsuLib.Ui.Overlay
                 return;
             }
 
-            if (_debugToolsDock is { Expanded: true })
-            {
-                _debugToolsDock.Collapse();
-                GetViewport().SetInputAsHandled();
-            }
+            if (_debugToolsDock is not { Expanded: true })
+                return;
+            _debugToolsDock.Collapse();
+            GetViewport().SetInputAsHandled();
         }
 
         internal RitsuModSettingsSubmenu OpenSettings()

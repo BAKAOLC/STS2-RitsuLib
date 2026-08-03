@@ -186,8 +186,10 @@ namespace STS2RitsuLib.Ui.Windows
         public Control? SetContent(Control content)
         {
             ArgumentNullException.ThrowIfNull(content);
+#pragma warning disable CA1513 // Preserve the public API's parameter-based ObjectName.
             if (!IsInstanceValid(content))
                 throw new ObjectDisposedException(nameof(content));
+#pragma warning restore CA1513
             if (content.GetParent() != null)
                 throw new InvalidOperationException("Floating window content must not already have a parent.");
 

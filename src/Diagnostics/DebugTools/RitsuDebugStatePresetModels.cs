@@ -98,7 +98,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 Pile = Pile,
                 ApplyMode = ApplyMode,
-                Cards = Cards.Select(static card => card.Clone()).ToList(),
+                Cards = [.. Cards.Select(static card => card.Clone())],
             };
         }
     }
@@ -140,7 +140,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return new()
             {
                 ApplyMode = ApplyMode,
-                Items = Items.Select(static potion => potion.Clone()).ToList(),
+                Items = [.. Items.Select(static potion => potion.Clone())],
             };
         }
     }
@@ -168,7 +168,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return new()
             {
                 ApplyMode = ApplyMode,
-                Items = Items.Select(static power => power.Clone()).ToList(),
+                Items = [.. Items.Select(static power => power.Clone())],
             };
         }
     }
@@ -260,7 +260,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 Id = assignNewId ? Guid.NewGuid().ToString("N") : Id,
                 Name = Name,
-                CardPiles = CardPiles.Select(static pile => pile.Clone()).ToList(),
+                CardPiles = [.. CardPiles.Select(static pile => pile.Clone())],
                 Relics = Relics?.Clone(),
                 Potions = Potions?.Clone(),
                 Powers = Powers?.Clone(),
@@ -300,11 +300,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             RitsuLibSettingsStore.Initialize();
             var data = Store.Get<RitsuDebugStatePresetCollection>(DataKey);
-            return Array.AsReadOnly((data.Presets ?? [])
-                .Where(IsReadable)
-                .Take(MaximumPresetCount)
-                .Select(static preset => preset.Clone())
-                .ToArray());
+            return Array.AsReadOnly<RitsuDebugStatePreset>(
+            [
+                .. (data.Presets ?? []).Where(IsReadable).Take(MaximumPresetCount)
+                .Select(static preset => preset.Clone()),
+            ]);
         }
 
         internal static bool TrySave(RitsuDebugStatePreset preset, out RitsuDebugActionFeedback feedback)

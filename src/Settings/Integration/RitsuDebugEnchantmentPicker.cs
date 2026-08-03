@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Settings
         string Title,
         Func<Texture2D?> IconFactory);
 
+    // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugEnchantmentPicker : VBoxContainer
     {
         private const float TileMinimumWidth = 80f;
@@ -182,11 +183,10 @@ namespace STS2RitsuLib.Settings
             _expanded = !_expanded;
             _expandedBody.Visible = _expanded;
             RefreshHeader();
-            if (_expanded)
-            {
-                QueueGridLayout();
-                Callable.From(ScrollExpandedBodyIntoView).CallDeferred();
-            }
+            if (!_expanded)
+                return;
+            QueueGridLayout();
+            Callable.From(ScrollExpandedBodyIntoView).CallDeferred();
         }
 
         private void ScrollExpandedBodyIntoView()

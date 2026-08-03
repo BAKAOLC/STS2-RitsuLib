@@ -133,8 +133,10 @@ namespace STS2RitsuLib.Ui.Catalog
             if (icon != null && iconFactory != null)
                 throw new ArgumentException("Provide either an icon or an icon factory, not both.",
                     nameof(iconFactory));
+#pragma warning disable CA1513 // Preserve the public API's parameter-based ObjectName.
             if (icon != null && !GodotObject.IsInstanceValid(icon))
                 throw new ObjectDisposedException(nameof(icon));
+#pragma warning restore CA1513
             Icon = icon;
             IconFactory = iconFactory;
         }

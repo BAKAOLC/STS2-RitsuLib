@@ -1,5 +1,3 @@
-droot = true
-
 root = true
 
 [*]
@@ -198,6 +196,11 @@ resharper_async_void_method_highlighting = none
 resharper_built_in_type_reference_style_for_member_access_highlighting = hint
 resharper_built_in_type_reference_style_highlighting = hint
 resharper_check_namespace_highlighting = none
+# Guard clauses and imperative loops are preferred when conditional expressions or LINQ would obscure control flow.
+resharper_convert_if_statement_to_return_statement_highlighting = none
+resharper_foreach_can_be_partly_converted_to_query_using_another_get_enumerator_highlighting = none
+resharper_invert_if_highlighting = none
+resharper_loop_can_be_converted_to_query_highlighting = none
 # Runtime game, Godot, reflection, and deserialization boundaries can violate declared nullable contracts.
 resharper_condition_is_always_true_or_false_according_to_nullable_api_contract_highlighting = none
 resharper_conditional_access_qualifier_is_non_nullable_according_to_api_contract_highlighting = none
