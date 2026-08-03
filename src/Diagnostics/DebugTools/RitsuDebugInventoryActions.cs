@@ -123,7 +123,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
-        private static RitsuDebugActionCheck ValidateAddRelic(
+        internal static RitsuDebugActionCheck ValidateAddRelic(
             RitsuDebugActionContext context,
             ModelPayload payload)
         {
@@ -153,7 +153,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     relic.Id);
         }
 
-        private static RitsuDebugActionCheck ValidateAddPotion(
+        internal static RitsuDebugActionCheck ValidateAddPotion(
             RitsuDebugActionContext context,
             ModelPayload payload)
         {
@@ -192,7 +192,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     payload.SlotIndex);
         }
 
-        private static RitsuDebugActionCheck ValidateClearInventory(
+        internal static RitsuDebugActionCheck ValidateClearInventory(
             RitsuDebugActionContext context,
             ClearInventoryPayload payload)
         {
@@ -214,7 +214,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "The selected inventory is already empty.");
         }
 
-        private static async Task<string> ExecuteAddRelicAsync(
+        internal static async Task<string> ExecuteAddRelicAsync(
             RitsuDebugActionContext context,
             ModelPayload payload)
         {
@@ -233,12 +233,20 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return $"Removed relic {relic.Id} from the selected player.";
         }
 
-        private static async Task<string> ExecuteAddPotionAsync(
+        internal static async Task<string> ExecuteAddPotionAsync(
             RitsuDebugActionContext context,
             ModelPayload payload)
         {
+            return await ExecuteAddPotionAtSlotAsync(context, payload, -1);
+        }
+
+        internal static async Task<string> ExecuteAddPotionAtSlotAsync(
+            RitsuDebugActionContext context,
+            ModelPayload payload,
+            int slotIndex)
+        {
             _ = TryResolvePotion(payload.ModelId, out var potion, out _);
-            var result = await PotionCmd.TryToProcure(potion.ToMutable(), context.Target);
+            var result = await PotionCmd.TryToProcure(potion.ToMutable(), context.Target, slotIndex);
             if (!result.success)
                 throw new RitsuDebugActionExecutionException(
                     RitsuDebugActionFeedback.Create(
@@ -257,7 +265,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return $"Discarded potion {potion.Id} from slot {payload.SlotIndex + 1}.";
         }
 
-        private static async Task<string> ExecuteClearInventoryAsync(
+        internal static async Task<string> ExecuteClearInventoryAsync(
             RitsuDebugActionContext context,
             ClearInventoryPayload payload)
         {

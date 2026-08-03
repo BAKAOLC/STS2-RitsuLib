@@ -55,7 +55,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
-        private static RitsuDebugActionCheck ValidateModifyPlayer(
+        internal static RitsuDebugActionCheck ValidateModifyPlayer(
             RitsuDebugActionContext context,
             ModifyPlayerPayload payload)
         {
@@ -124,7 +124,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return RitsuDebugActionCheck.Ok;
         }
 
-        private static async Task<string> ExecuteModifyPlayerAsync(
+        internal static async Task<string> ExecuteModifyPlayerAsync(
             RitsuDebugActionContext context,
             ModifyPlayerPayload payload)
         {

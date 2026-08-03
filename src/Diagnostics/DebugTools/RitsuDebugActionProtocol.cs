@@ -112,7 +112,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const int CurrentProtocolVersion = 1;
 
         private const int MaxActionIdLength = 64;
-        private const int MaxActionPayloadCharacters = 8 * 1024;
+        internal const int MaxActionPayloadCharacters = 8 * 1024;
         private const int MaxPendingClientRequests = 32;
         private const int MaxRecentHostClientRequests = 256;
         private const int MaxClientRequestsPerWindow = 16;
@@ -168,6 +168,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugInventoryActions.RegisterBuiltInActions();
             RitsuDebugCombatActions.RegisterBuiltInActions();
             RitsuDebugRunActions.RegisterBuiltInActions();
+            RitsuDebugStatePresetActions.RegisterBuiltInActions();
             lock (Gate)
             {
                 if (_requestSubscription != null && _decisionSubscription != null)

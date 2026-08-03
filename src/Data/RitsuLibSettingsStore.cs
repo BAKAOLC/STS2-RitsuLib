@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using STS2RitsuLib.Data.Migrations;
 using STS2RitsuLib.Data.Models;
+using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.RuntimeInput;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -60,6 +61,17 @@ namespace STS2RitsuLib.Data
                                 new RitsuLibSettingsV14ToV15Migration(),
                                 new RitsuLibSettingsV15ToV16Migration(),
                             ]);
+                        Store.Register<RitsuDebugStatePresetCollection>(
+                            RitsuDebugStatePresetStore.DataKey,
+                            RitsuDebugStatePresetStore.FileName,
+                            SaveScope.Global,
+                            static () => new(),
+                            true,
+                            new()
+                            {
+                                CurrentDataVersion = RitsuDebugStatePresetCollection.CurrentSchemaVersion,
+                                MinimumSupportedDataVersion = RitsuDebugStatePresetCollection.CurrentSchemaVersion,
+                            });
                     }
 
                     _initialized = true;

@@ -390,7 +390,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return false;
         }
 
-        private static RitsuDebugActionCheck ValidateModifyPile(
+        internal static RitsuDebugActionCheck ValidateModifyPile(
             RitsuDebugActionContext context,
             ModifyPilePayload payload)
         {
@@ -430,7 +430,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             };
         }
 
-        private static async Task<string> ExecuteModifyPileAsync(
+        internal static async Task<string> ExecuteModifyPileAsync(
             RitsuDebugActionContext context,
             ModifyPilePayload payload)
         {
@@ -465,7 +465,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 : $"Upgraded {upgradedCards} cards in {pileType}.";
         }
 
-        private static RitsuDebugActionCheck ValidateCreateCard(
+        internal static RitsuDebugActionCheck ValidateCreateCard(
             RitsuDebugActionContext context,
             CreateCardPayload payload)
         {
@@ -509,7 +509,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return RitsuDebugActionCheck.Ok;
         }
 
-        private static async Task<string> ExecuteCreateCardAsync(
+        internal static async Task<string> ExecuteCreateCardAsync(
             RitsuDebugActionContext context,
             CreateCardPayload payload)
         {
@@ -1247,7 +1247,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 CardCmd.Upgrade(card, CardPreviewStyle.None);
         }
 
-        private static void ApplyAvailableUpgradeLevels(CardModel card, int levels)
+        internal static void ApplyAvailableUpgradeLevels(CardModel card, int levels)
         {
             for (var level = 0; level < levels && card.IsUpgradable; level++)
                 CardCmd.Upgrade(card, CardPreviewStyle.None);
