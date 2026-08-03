@@ -13,6 +13,7 @@ namespace STS2RitsuLib.Compat
     internal static class Sts2ModManagerCompat
     {
         private const string RitsuLibManifestId = "STS2-RitsuLib";
+
         private const BindingFlags InstanceMemberFlags =
             BindingFlags.Instance |
             BindingFlags.Public |

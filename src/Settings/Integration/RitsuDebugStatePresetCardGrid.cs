@@ -12,8 +12,8 @@ namespace STS2RitsuLib.Settings
     {
         private const float TileWidth = 232f;
         private const float TileHeight = 324f;
-        private readonly Action<int> _selected;
         private readonly HFlowContainer _flow;
+        private readonly Action<int> _selected;
         private IReadOnlyList<RitsuDebugStatePresetCard> _cards = [];
         private int _selectedIndex = -1;
 
@@ -72,6 +72,7 @@ namespace STS2RitsuLib.Settings
                 _flow.RemoveChild(child);
                 child.QueueFree();
             }
+
             for (var index = 0; index < _cards.Count; index++)
                 _flow.AddChild(CreateTile(_cards[index], index));
         }

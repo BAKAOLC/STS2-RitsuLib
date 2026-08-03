@@ -69,6 +69,7 @@ namespace STS2RitsuLib.Settings
                         ShowCollectionLimit(RitsuDebugPlayerActions.MaxPotionSlots);
                         return false;
                     }
+
                     var slot = potions.ApplyMode == RitsuDebugStatePresetApplyMode.Replace
                         ? Enumerable.Range(0, RitsuDebugPlayerActions.MaxPotionSlots)
                             .First(index => potions.Items.All(item => item.SlotIndex != index))
@@ -142,9 +143,11 @@ namespace STS2RitsuLib.Settings
                 ClearChildren(flow);
                 var normalized = query.Trim();
                 var allMatches = models.Where(model => (available == null || available(model)) &&
-                        (normalized.Length == 0 ||
-                        SafeTitle(model).Contains(normalized, StringComparison.CurrentCultureIgnoreCase) ||
-                        model.Id.ToString().Contains(normalized, StringComparison.OrdinalIgnoreCase)))
+                                                       (normalized.Length == 0 ||
+                                                        SafeTitle(model).Contains(normalized,
+                                                            StringComparison.CurrentCultureIgnoreCase) ||
+                                                        model.Id.ToString().Contains(normalized,
+                                                            StringComparison.OrdinalIgnoreCase)))
                     .ToArray();
                 var matches = allMatches.Take(120).ToArray();
                 result.Text = allMatches.Length == matches.Length

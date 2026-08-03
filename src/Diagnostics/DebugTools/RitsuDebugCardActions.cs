@@ -440,7 +440,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (payload.Operation == RitsuDebugCardPileOperation.Clear)
             {
                 if (pileType == PileType.Deck)
+                {
                     await CardPileCmd.RemoveFromDeck(cards, false);
+                }
                 else
                 {
                     await CardPileCmd.RemoveFromCombat(cards, true);

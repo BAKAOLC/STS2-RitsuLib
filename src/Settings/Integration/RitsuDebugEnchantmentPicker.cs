@@ -17,13 +17,13 @@ namespace STS2RitsuLib.Settings
         private const float GridGap = 10f;
         private const float MaximumGridHeight = 220f;
         private readonly VBoxContainer _expandedBody;
-        private readonly MarginContainer _gridFrame;
         private readonly GridContainer _grid;
+        private readonly MarginContainer _gridFrame;
         private readonly ScrollContainer _gridScroll;
         private readonly Button _header;
         private readonly Dictionary<string, Button> _tiles = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, string> _titles = new(StringComparer.Ordinal);
         private readonly string _title;
+        private readonly Dictionary<string, string> _titles = new(StringComparer.Ordinal);
         private bool _expanded;
         private bool _gridLayoutQueued;
 

@@ -456,7 +456,10 @@ namespace STS2RitsuLib.Settings
                     }));
             }
             else
+            {
                 AddHint(root, L("ritsulib.debugTools.noEnchantments", "No enchantments are available."));
+            }
+
             root.AddChild(ActionButton(
                 L("ritsulib.debugTools.action.remove", "Remove"),
                 ModSettingsButtonTone.Danger,
@@ -488,9 +491,9 @@ namespace STS2RitsuLib.Settings
                 label,
                 edit,
                 ActionButton(
-                L("ritsulib.debugTools.action.apply", "Apply"),
-                ModSettingsButtonTone.Normal,
-                () => SubmitCardEdit(entry, field, edit, dynamicVarKey))));
+                    L("ritsulib.debugTools.action.apply", "Apply"),
+                    ModSettingsButtonTone.Normal,
+                    () => SubmitCardEdit(entry, field, edit, dynamicVarKey))));
         }
 
         private Control CardFlagField(

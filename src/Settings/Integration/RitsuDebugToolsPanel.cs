@@ -31,7 +31,6 @@ namespace STS2RitsuLib.Settings
         private const int DetailSectionFontSize = 16;
         private readonly HashSet<string> _pageFailures = new(StringComparer.Ordinal);
         private Control? _browserHost;
-        private string _currentPageId = $"{Const.ModId}:cards";
         private Control? _currentBrowser;
         private RitsuDebugToolsPageView[] _pages = [];
         private bool _refreshScheduled;
@@ -41,15 +40,15 @@ namespace STS2RitsuLib.Settings
         private ulong[] _targetPlayerIds = [];
         private ulong? _targetPlayerNetId;
 
+        internal string CurrentPageId { get; private set; } = $"{Const.ModId}:cards";
+
+        internal float CurrentPageWidthFraction => GetCurrentPage()?.PreferredWidthFraction ?? 0.62f;
+
         public Control? DefaultFocusedControl => _targetDropdown;
 
         internal event Action<IReadOnlyList<RitsuDebugToolsPageView>>? PagesChanged;
 
         internal event Action<RitsuDebugToolsPageView>? PageChanged;
-
-        internal string CurrentPageId => _currentPageId;
-
-        internal float CurrentPageWidthFraction => GetCurrentPage()?.PreferredWidthFraction ?? 0.62f;
 
         public override void _Ready()
         {
@@ -166,9 +165,9 @@ namespace STS2RitsuLib.Settings
                 page.Id.Equals(pageId, StringComparison.OrdinalIgnoreCase));
             if (selected == null)
                 return false;
-            if (_currentPageId.Equals(selected.Id, StringComparison.OrdinalIgnoreCase))
+            if (CurrentPageId.Equals(selected.Id, StringComparison.OrdinalIgnoreCase))
                 return true;
-            _currentPageId = selected.Id;
+            CurrentPageId = selected.Id;
             RebuildBrowser();
             PageChanged?.Invoke(selected);
             return true;
@@ -208,8 +207,8 @@ namespace STS2RitsuLib.Settings
                 .OrderBy(static page => page.SortOrder)
                 .ThenBy(static page => page.Id, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
-            if (_pages.All(page => !page.Id.Equals(_currentPageId, StringComparison.OrdinalIgnoreCase)))
-                _currentPageId = _pages.FirstOrDefault()?.Id ?? string.Empty;
+            if (_pages.All(page => !page.Id.Equals(CurrentPageId, StringComparison.OrdinalIgnoreCase)))
+                CurrentPageId = _pages.FirstOrDefault()?.Id ?? string.Empty;
             PagesChanged?.Invoke(Array.AsReadOnly(_pages));
             var current = GetCurrentPage();
             if (current != null)
@@ -394,7 +393,7 @@ namespace STS2RitsuLib.Settings
         private RitsuDebugToolsPageView? GetCurrentPage()
         {
             return _pages.FirstOrDefault(page =>
-                page.Id.Equals(_currentPageId, StringComparison.OrdinalIgnoreCase));
+                page.Id.Equals(CurrentPageId, StringComparison.OrdinalIgnoreCase));
         }
 
         private static RitsuCatalogBrowser EmptyBrowser(string message)
@@ -520,7 +519,7 @@ namespace STS2RitsuLib.Settings
             if (_currentBrowser == null || !IsInstanceValid(_currentBrowser))
                 return;
 
-            switch (_currentPageId)
+            switch (CurrentPageId)
             {
                 case $"{Const.ModId}:pile-cards":
                     if (_currentBrowser is RitsuDebugCardCatalog pileCatalog &&

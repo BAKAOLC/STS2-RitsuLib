@@ -98,7 +98,7 @@ namespace STS2RitsuLib.Interop
         private static bool IsFieldTypeResolutionFailure(Exception exception)
         {
             return exception is TypeLoadException or FileNotFoundException or FileLoadException or
-                   BadImageFormatException;
+                BadImageFormatException;
         }
     }
 }

@@ -126,7 +126,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
             using var output = new MemoryStream();
             using (var compressor = new BrotliStream(output, CompressionLevel.Optimal, true))
+            {
                 compressor.Write(serialized);
+            }
+
             payload = new(
                 CompressedPayloadEncoding,
                 Convert.ToBase64String(output.GetBuffer(), 0, (int)output.Length));
@@ -207,7 +210,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 }
             }
             catch (Exception exception) when (exception is FormatException or IOException or JsonException or
-                                              DecoderFallbackException or NotSupportedException)
+                                                  DecoderFallbackException or NotSupportedException)
             {
                 // Rejected below with a stable protocol error.
             }
@@ -254,9 +257,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                             "The target player does not have enough empty potion slots.");
                 }
                 else if (preset.Potions.Items.Any(item => item.SlotIndex >= potionSlotCount))
+                {
                     return RitsuDebugActionCheck.Fail(
                         "statePreset.potionSlots",
                         "The target player does not have enough potion slots for this preset.");
+                }
             }
 
             if (preset.Powers != null &&
@@ -316,7 +321,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (preset.Powers != null)
                 await ApplyPowers(context, preset.Powers);
             if (preset.Player != null)
-                await ApplyPlayer(context, preset.Player, potionSlotsAlreadyApplied: true);
+                await ApplyPlayer(context, preset.Player, true);
             return $"Applied state preset '{preset.Name}'.";
         }
 
@@ -368,9 +373,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 }
                 else if (potion.SlotIndex is not { } slot ||
                          slot is < 0 or >= RitsuDebugPlayerActions.MaxPotionSlots || !slots.Add(slot))
+                {
                     return RitsuDebugActionCheck.Fail(
                         "statePreset.potionsInvalid",
                         "Replace-mode potion slots must be unique and valid.");
+                }
             }
 
             return RitsuDebugActionCheck.Ok;
@@ -499,9 +506,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     await SetPlayerValue(context, RitsuDebugPlayerOperation.SetCurrentHp, currentHp);
             }
             else if (state.CurrentHp.HasValue)
+            {
                 await SetPlayerValue(context, RitsuDebugPlayerOperation.SetCurrentHp, state.CurrentHp.Value);
+            }
             else if (state.MaxHp.HasValue)
+            {
                 await SetPlayerValue(context, RitsuDebugPlayerOperation.SetMaxHp, state.MaxHp.Value);
+            }
+
             if (state.MaxEnergy.HasValue)
                 await SetPlayerValue(context, RitsuDebugPlayerOperation.SetMaxEnergy, state.MaxEnergy.Value);
             if (!potionSlotsAlreadyApplied && state.PotionSlots.HasValue)
@@ -543,7 +555,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         }
 
         internal readonly record struct RitsuDebugStatePresetWirePayload(
-            [property: JsonPropertyName("encoding")] int Encoding,
+            [property: JsonPropertyName("encoding")]
+            int Encoding,
             [property: JsonPropertyName("data")] string Data);
     }
 }

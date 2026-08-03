@@ -11,25 +11,16 @@ namespace STS2RitsuLib.Settings
 {
     internal sealed partial class RitsuDebugStatePresetEditor : HBoxContainer
     {
-        private enum PresetPage
-        {
-            Cards,
-            Relics,
-            Potions,
-            Powers,
-            Player,
-        }
-
         private const float PresetListWidth = 220f;
         private const float DetailDrawerWidth = 440f;
         private readonly Func<RitsuDebugStatePreset, bool> _apply;
         private readonly Func<Player?> _getTarget;
         private readonly Dictionary<string, string> _modelTitles = new(StringComparer.Ordinal);
         private readonly Action<string, bool> _setStatus;
-        private VBoxContainer _contentBody = null!;
         private RitsuDebugStatePresetCardGrid? _cardGrid;
-        private RitsuDebugStatePreset? _draft;
+        private VBoxContainer _contentBody = null!;
         private bool _dirty;
+        private RitsuDebugStatePreset? _draft;
         private VBoxContainer _drawerBody = null!;
         private Control _drawerLayer = null!;
         private PanelContainer _drawerPanel = null!;
@@ -257,7 +248,8 @@ namespace STS2RitsuLib.Settings
                 _presetList.AddChild(button);
             }
 
-            if (_draft == null || presets.Any(preset => preset.Id.Equals(_draft.Id, StringComparison.OrdinalIgnoreCase)))
+            if (_draft == null ||
+                presets.Any(preset => preset.Id.Equals(_draft.Id, StringComparison.OrdinalIgnoreCase)))
                 return;
             var draft = new ModSettingsMiniButton(
                 $"{_draft.Name} · {L("ritsulib.debugTools.statePresets.unsaved", "Unsaved")}",
@@ -463,6 +455,15 @@ namespace STS2RitsuLib.Settings
             _dirty = true;
             if (rebuild)
                 RebuildMain();
+        }
+
+        private enum PresetPage
+        {
+            Cards,
+            Relics,
+            Potions,
+            Powers,
+            Player,
         }
     }
 }

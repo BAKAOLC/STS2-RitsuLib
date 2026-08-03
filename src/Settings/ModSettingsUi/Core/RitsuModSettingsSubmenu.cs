@@ -129,7 +129,6 @@ namespace STS2RitsuLib.Settings
 
         private FileSystemWatcher? _shellThemeWatcher;
         private bool _shellThemeWatcherQueued;
-        private IDisposable? _tooltipTimingScope;
         private PanelContainer? _sidebarHeaderCard;
         private Label? _sidebarHeaderSubtitleLabel;
         private Label? _sidebarHeaderTitleLabel;
@@ -138,6 +137,7 @@ namespace STS2RitsuLib.Settings
         private MarginContainer _sidebarScrollFrame = null!;
         private bool _sidebarStructureDirty = true;
         private bool _suppressScrollSync;
+        private IDisposable? _tooltipTimingScope;
         private Callable _updatePaneHotkeyIconsCallable;
         private Callable _viewportSizeChangedCallable;
         private bool _viewportSizeSignalConnected;

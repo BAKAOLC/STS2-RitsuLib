@@ -271,6 +271,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 _debugToolsDock.Expanding -= OnDebugToolsExpanding;
                 _debugToolsDock.Collapsed -= OnDebugToolsCollapsed;
             }
+
             RitsuOverlayHostService.NotifyHostExited(this);
             base._ExitTree();
         }

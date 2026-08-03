@@ -56,6 +56,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     {
         internal static RitsuDebugActionSubmission Success => new(true, default);
 
+        internal string Message => Accepted
+            ? Feedback.IsValid()
+                ? Feedback.GetLocalizedText()
+                : ModSettingsLocalization.Get(
+                    "ritsulib.debugTools.requestAccepted",
+                    "The requested change was accepted.")
+            : Feedback.GetLocalizedText();
+
         internal static RitsuDebugActionSubmission PendingApproval(
             string code,
             string fallback,
@@ -76,14 +84,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             return new(false, feedback);
         }
-
-        internal string Message => Accepted
-            ? Feedback.IsValid()
-                ? Feedback.GetLocalizedText()
-                : ModSettingsLocalization.Get(
-                    "ritsulib.debugTools.requestAccepted",
-                    "The requested change was accepted.")
-            : Feedback.GetLocalizedText();
     }
 
     internal readonly record struct RitsuDebugActionExecutionResult(

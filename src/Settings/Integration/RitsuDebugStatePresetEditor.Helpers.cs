@@ -184,7 +184,9 @@ namespace STS2RitsuLib.Settings
             {
                 edit.Editable = on;
                 if (!on)
+                {
                     changed(null);
+                }
                 else
                 {
                     Commit();

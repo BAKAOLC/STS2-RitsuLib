@@ -2,6 +2,7 @@ using Godot;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Ui.Overlay
 {
@@ -13,12 +14,10 @@ namespace STS2RitsuLib.Ui.Overlay
         private const float PanelMaximumViewportFraction = 0.9f;
         private const double CollapseGraceMilliseconds = 320d;
         private readonly Dictionary<string, Button> _pageButtons = new(StringComparer.OrdinalIgnoreCase);
-        private readonly RitsuDebugToolsPanel _panel;
         private bool _available;
-        private double _collapseAfter;
         private Control _clickAway = null!;
         private Control _clipHost = null!;
-        private bool _expanded;
+        private double _collapseAfter;
         private bool _layoutBuilt;
         private Label _pageTitle = null!;
         private Button _peekTab = null!;
@@ -27,26 +26,27 @@ namespace STS2RitsuLib.Ui.Overlay
         private bool _railShown;
         private StyleBoxFlat _railStyle = null!;
         private Tween? _railTween;
-        private bool _sessionVisible;
         private bool _suppressed;
         private IDisposable? _tooltipTimingScope;
-        private Tween? _workspaceTween;
         private Control _workspaceMover = null!;
+        private Tween? _workspaceTween;
         private float _workspaceWidth;
 
         internal RitsuDebugToolsDock(RitsuDebugToolsPanel panel)
         {
             ArgumentNullException.ThrowIfNull(panel);
-            _panel = panel;
-            _panel.PagesChanged += RebuildPageButtons;
-            _panel.PageChanged += OnPageChanged;
+            Panel = panel;
+            Panel.PagesChanged += RebuildPageButtons;
+            Panel.PageChanged += OnPageChanged;
         }
 
-        internal bool Expanded => _expanded;
+        internal bool Expanded { get; private set; }
 
-        internal bool SessionVisible => _sessionVisible;
+        internal bool SessionVisible { get; private set; }
 
-        internal RitsuDebugToolsPanel Panel => _panel;
+        internal RitsuDebugToolsPanel Panel { get; }
+
+        private float HiddenRailLeft => -(RailLeft + RailWidth);
 
         internal event EventHandler? Expanding;
 
@@ -68,8 +68,8 @@ namespace STS2RitsuLib.Ui.Overlay
             var viewport = GetViewport();
             if (viewport != null)
                 viewport.SizeChanged -= OnViewportSizeChanged;
-            _panel.PagesChanged -= RebuildPageButtons;
-            _panel.PageChanged -= OnPageChanged;
+            Panel.PagesChanged -= RebuildPageButtons;
+            Panel.PageChanged -= OnPageChanged;
             _railTween?.Kill();
             _railTween = null;
             ReleaseQuickTooltipTiming();
@@ -85,9 +85,10 @@ namespace STS2RitsuLib.Ui.Overlay
                 return;
             if (!available)
             {
-                _sessionVisible = false;
+                SessionVisible = false;
                 Collapse(true);
             }
+
             SyncAvailability();
         }
 
@@ -105,18 +106,18 @@ namespace STS2RitsuLib.Ui.Overlay
         {
             if (!_available || _suppressed || !_layoutBuilt)
                 return;
-            _sessionVisible = true;
+            SessionVisible = true;
             SyncAvailability();
             if (!string.IsNullOrWhiteSpace(pageId))
-                _panel.SelectPage(pageId);
-            if (_expanded)
+                Panel.SelectPage(pageId);
+            if (Expanded)
             {
                 RefreshPageButtonStyles();
                 return;
             }
 
             Expanding?.Invoke(this, EventArgs.Empty);
-            _expanded = true;
+            Expanded = true;
             _clickAway.Show();
             _workspaceMover.Show();
             SetRailJoined(true);
@@ -137,16 +138,16 @@ namespace STS2RitsuLib.Ui.Overlay
 
         internal void HideForSession()
         {
-            _sessionVisible = false;
+            SessionVisible = false;
             Collapse(true);
             SyncAvailability();
         }
 
         internal void Collapse(bool immediate = false)
         {
-            if (!_expanded)
+            if (!Expanded)
                 return;
-            _expanded = false;
+            Expanded = false;
             RefreshPageButtonStyles();
             if (immediate || !_workspaceMover.IsInsideTree())
             {
@@ -180,7 +181,7 @@ namespace STS2RitsuLib.Ui.Overlay
             BuildWorkspace();
             BuildPeekTab();
 
-            var timer = new Godot.Timer
+            var timer = new Timer
             {
                 WaitTime = 0.1d,
                 Autostart = true,
@@ -307,9 +308,9 @@ namespace STS2RitsuLib.Ui.Overlay
 
             var separator = new HSeparator();
             column.AddChild(separator);
-            _panel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            _panel.SizeFlagsVertical = SizeFlags.ExpandFill;
-            column.AddChild(_panel);
+            Panel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            Panel.SizeFlagsVertical = SizeFlags.ExpandFill;
+            column.AddChild(Panel);
         }
 
         private void BuildPeekTab()
@@ -343,6 +344,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 _railButtons.RemoveChild(child);
                 child.QueueFree();
             }
+
             _pageButtons.Clear();
             foreach (var page in pages)
             {
@@ -356,32 +358,33 @@ namespace STS2RitsuLib.Ui.Overlay
                 _railButtons.AddChild(button);
                 _pageButtons.Add(page.Id, button);
             }
+
             RefreshPageButtonStyles();
         }
 
         private void ActivatePage(RitsuDebugToolsPageView page)
         {
             var wasCurrent = _pageButtons.TryGetValue(page.Id, out var button) && IsButtonSelected(button);
-            if (_expanded && wasCurrent)
+            if (Expanded && wasCurrent)
             {
                 Collapse();
                 return;
             }
 
-            _panel.SelectPage(page.Id);
+            Panel.SelectPage(page.Id);
             Expand();
         }
 
         private void OnPageChanged(RitsuDebugToolsPageView page)
         {
             _pageTitle.Text = page.Title;
-            RecalculateWorkspaceWidth(_expanded);
+            RecalculateWorkspaceWidth(Expanded);
             RefreshPageButtonStyles();
         }
 
         private void RefreshPageButtonStyles()
         {
-            var currentId = _panel.CurrentPageId;
+            var currentId = Panel.CurrentPageId;
             foreach (var (id, button) in _pageButtons)
             {
                 var selected = id.Equals(currentId, StringComparison.OrdinalIgnoreCase);
@@ -419,7 +422,7 @@ namespace STS2RitsuLib.Ui.Overlay
 
         private void PollRailHover()
         {
-            if (!_available || _suppressed || _expanded || !Visible)
+            if (!_available || _suppressed || Expanded || !Visible)
                 return;
             var mouse = GetViewport().GetMousePosition();
             var railRect = _rail.GetGlobalRect();
@@ -445,7 +448,7 @@ namespace STS2RitsuLib.Ui.Overlay
 
         private void SlideRail(bool show)
         {
-            if (_expanded)
+            if (Expanded)
                 show = true;
             if (_railShown == show || !_layoutBuilt)
                 return;
@@ -455,7 +458,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 _tooltipTimingScope ??= RitsuShellTooltipTiming.Acquire(0.12d);
             else
                 ReleaseQuickTooltipTiming();
-            _peekTab.Visible = _available && !_suppressed && !show && !_expanded;
+            _peekTab.Visible = _available && !_suppressed && !show && !Expanded;
             _railTween?.Kill();
             _railTween = _rail.CreateTween();
             _railTween.SetTrans(Tween.TransitionType.Cubic);
@@ -473,7 +476,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 return;
             var viewportWidth = GetViewport().GetVisibleRect().Size.X;
             var available = Math.Max(1f, viewportWidth - RailLeft - RailWidth - PanelRightMargin);
-            var widthFraction = Math.Min(PanelMaximumViewportFraction, _panel.CurrentPageWidthFraction);
+            var widthFraction = Math.Min(PanelMaximumViewportFraction, Panel.CurrentPageWidthFraction);
             _workspaceWidth = Math.Max(1f, Math.Min(available, viewportWidth * widthFraction));
             _workspaceMover.OffsetLeft = 0f;
             if (!animate || Math.Abs(_workspaceMover.OffsetRight - _workspaceWidth) < 0.5f)
@@ -507,14 +510,14 @@ namespace STS2RitsuLib.Ui.Overlay
             _workspaceMover.Modulate = Colors.White;
             _clickAway.Hide();
             SetRailJoined(false);
-            if (_available && _sessionVisible && !_suppressed)
+            if (_available && SessionVisible && !_suppressed)
                 SlideRail(true);
             Collapsed?.Invoke(this, EventArgs.Empty);
         }
 
         private void SyncAvailability()
         {
-            Visible = _available && _sessionVisible && !_suppressed;
+            Visible = _available && SessionVisible && !_suppressed;
             if (!Visible)
             {
                 _railShown = false;
@@ -536,7 +539,7 @@ namespace STS2RitsuLib.Ui.Overlay
 
             _rail.Show();
             RecalculateWorkspaceWidth();
-            if (_expanded)
+            if (Expanded)
             {
                 SlideRail(true);
                 _peekTab.Hide();
@@ -573,7 +576,5 @@ namespace STS2RitsuLib.Ui.Overlay
         {
             RecalculateWorkspaceWidth();
         }
-
-        private float HiddenRailLeft => -(RailLeft + RailWidth);
     }
 }

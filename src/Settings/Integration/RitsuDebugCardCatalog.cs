@@ -20,17 +20,7 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class RitsuDebugCardCatalog : Control
     {
-        private enum CardSortField
-        {
-            Type,
-            Rarity,
-            Cost,
-            Alphabet,
-        }
-
         internal const string HolderMetaKey = "ritsulib_debug_card_catalog_holder";
-        internal static readonly Vector2 HolderScale = Vector2.One * 0.7f;
-        internal static readonly Vector2 HolderHoverScale = HolderScale * 1.1f;
         private const double SearchDelaySeconds = 0.14d;
         private const float CardWidth = 210f;
         private const float CardHeight = 295.4f;
@@ -41,6 +31,9 @@ namespace STS2RitsuLib.Settings
         private const float CardSelectionFrameMargin = 7f;
         private const float DetailDrawerWidth = 400f;
         private const int OverscanRows = 2;
+        internal static readonly Vector2 HolderScale = Vector2.One * 0.7f;
+        internal static readonly Vector2 HolderHoverScale = HolderScale * 1.1f;
+
         private static readonly List<(CardSortField Field, bool Ascending)> SortPriority =
         [
             (CardSortField.Rarity, true),
@@ -48,35 +41,36 @@ namespace STS2RitsuLib.Settings
             (CardSortField.Cost, true),
             (CardSortField.Alphabet, true),
         ];
-        private RitsuDebugCardCatalogEntry[] _entries;
+
         private readonly Dictionary<string, int> _filterSelections = new(StringComparer.Ordinal);
         private readonly RitsuCatalogFilter[] _filters;
         private readonly Dictionary<NGridCardHolder, string> _holderItemIds = [];
         private readonly List<NGridCardHolder> _holders = [];
-        private readonly List<PanelContainer> _selectionFrames = [];
-        private Dictionary<string, RitsuDebugCardCatalogEntry> _itemsById;
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
-        private Dictionary<string, int> _sourceIndexes;
+        private readonly List<PanelContainer> _selectionFrames = [];
         private readonly Dictionary<CardSortField, Button> _sortButtons = [];
         private Control _canvas = null!;
         private ColorRect _detailBackdrop = null!;
         private VBoxContainer _detailHost = null!;
-        private Control _detailSlideHost = null!;
         private MarginContainer _detailScrollFrame = null!;
+        private Control _detailSlideHost = null!;
         private Label _detailTitle = null!;
         private Tween? _detailTween;
         private Label _emptyLabel = null!;
+        private RitsuDebugCardCatalogEntry[] _entries;
         private RitsuDebugCardCatalogEntry[] _filtered = [];
         private int _gridColumns = 1;
         private bool _gridRefreshQueued;
+        private Dictionary<string, RitsuDebugCardCatalogEntry> _itemsById;
         private Label _resultCount = null!;
-        private LineEdit _search = null!;
-        private int _searchRevision;
         private ScrollContainer _scroll = null!;
         private MarginContainer _scrollFrame = null!;
+        private LineEdit _search = null!;
+        private int _searchRevision;
         private string? _selectedItemId;
+        private Dictionary<string, int> _sourceIndexes;
 
         internal RitsuDebugCardCatalog(
             string searchPlaceholder,
@@ -113,7 +107,7 @@ namespace STS2RitsuLib.Settings
                 _filterSelections[primaryFilter.Id] = Math.Max(0, defaultIndex);
             }
 
-            if ((defaultFilterId == null) != (defaultFilterOptionId == null))
+            if (defaultFilterId == null != (defaultFilterOptionId == null))
                 throw new ArgumentException("The default filter ID and option ID must be supplied together.");
             if (defaultFilterId != null)
             {
@@ -446,7 +440,9 @@ namespace STS2RitsuLib.Settings
         {
             var index = SortPriority.FindIndex(priority => priority.Field == field);
             if (index == 0)
+            {
                 SortPriority[0] = (field, !SortPriority[0].Ascending);
+            }
             else
             {
                 if (index > 0)
@@ -721,7 +717,7 @@ namespace STS2RitsuLib.Settings
                 var selected = entry.Item.Id == _selectedItemId;
                 holder.Modulate = selected
                     ? Colors.White
-                    : new Color(0.9f, 0.9f, 0.93f);
+                    : new(0.9f, 0.9f, 0.93f);
                 selectionFrame.Position = holder.Position - new Vector2(
                     CardWidth * 0.5f + CardSelectionFrameMargin,
                     CardHeight * 0.5f + CardSelectionFrameMargin);
@@ -802,6 +798,7 @@ namespace STS2RitsuLib.Settings
                 AnimateDetailDrawer(false);
                 return;
             }
+
             _detailTitle.Text = selected.Item.Title;
             try
             {
@@ -823,6 +820,7 @@ namespace STS2RitsuLib.Settings
                 label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
                 _detailHost.AddChild(label);
             }
+
             AnimateDetailDrawer(true);
         }
 
@@ -917,6 +915,14 @@ namespace STS2RitsuLib.Settings
                 return;
             frame.AddThemeConstantOverride("margin_right", gutter);
             frame.QueueSort();
+        }
+
+        private enum CardSortField
+        {
+            Type,
+            Rarity,
+            Cost,
+            Alphabet,
         }
     }
 }

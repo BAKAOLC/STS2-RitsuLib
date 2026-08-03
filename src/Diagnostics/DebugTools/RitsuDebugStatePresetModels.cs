@@ -12,11 +12,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePresetCard
     {
-        [JsonPropertyName("id")]
-        public string CardId { get; set; } = string.Empty;
+        [JsonPropertyName("id")] public string CardId { get; set; } = string.Empty;
 
-        [JsonPropertyName("count")]
-        public int Count { get; set; } = 1;
+        [JsonPropertyName("count")] public int Count { get; set; } = 1;
 
         [JsonPropertyName("upgrade")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -88,14 +86,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePresetCardPile
     {
-        [JsonPropertyName("pile")]
-        public string Pile { get; set; } = string.Empty;
+        [JsonPropertyName("pile")] public string Pile { get; set; } = string.Empty;
 
-        [JsonPropertyName("mode")]
-        public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
+        [JsonPropertyName("mode")] public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
 
-        [JsonPropertyName("cards")]
-        public List<RitsuDebugStatePresetCard> Cards { get; set; } = [];
+        [JsonPropertyName("cards")] public List<RitsuDebugStatePresetCard> Cards { get; set; } = [];
 
         internal RitsuDebugStatePresetCardPile Clone()
         {
@@ -110,11 +105,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePresetInventory
     {
-        [JsonPropertyName("mode")]
-        public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
+        [JsonPropertyName("mode")] public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
 
-        [JsonPropertyName("items")]
-        public List<string> ModelIds { get; set; } = [];
+        [JsonPropertyName("items")] public List<string> ModelIds { get; set; } = [];
 
         internal RitsuDebugStatePresetInventory Clone()
         {
@@ -124,8 +117,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePresetPotion
     {
-        [JsonPropertyName("id")]
-        public string PotionId { get; set; } = string.Empty;
+        [JsonPropertyName("id")] public string PotionId { get; set; } = string.Empty;
 
         [JsonPropertyName("slot")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -139,11 +131,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePresetPotions
     {
-        [JsonPropertyName("mode")]
-        public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
+        [JsonPropertyName("mode")] public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
 
-        [JsonPropertyName("items")]
-        public List<RitsuDebugStatePresetPotion> Items { get; set; } = [];
+        [JsonPropertyName("items")] public List<RitsuDebugStatePresetPotion> Items { get; set; } = [];
 
         internal RitsuDebugStatePresetPotions Clone()
         {
@@ -157,11 +147,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePresetPower
     {
-        [JsonPropertyName("id")]
-        public string PowerId { get; set; } = string.Empty;
+        [JsonPropertyName("id")] public string PowerId { get; set; } = string.Empty;
 
-        [JsonPropertyName("amount")]
-        public int Amount { get; set; } = 1;
+        [JsonPropertyName("amount")] public int Amount { get; set; } = 1;
 
         internal RitsuDebugStatePresetPower Clone()
         {
@@ -171,11 +159,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePresetPowers
     {
-        [JsonPropertyName("mode")]
-        public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
+        [JsonPropertyName("mode")] public RitsuDebugStatePresetApplyMode ApplyMode { get; set; }
 
-        [JsonPropertyName("items")]
-        public List<RitsuDebugStatePresetPower> Items { get; set; } = [];
+        [JsonPropertyName("items")] public List<RitsuDebugStatePresetPower> Items { get; set; } = [];
 
         internal RitsuDebugStatePresetPowers Clone()
         {
@@ -243,14 +229,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
     internal sealed class RitsuDebugStatePreset
     {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        [JsonPropertyName("id")] public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
-        [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
 
-        [JsonPropertyName("card_piles")]
-        public List<RitsuDebugStatePresetCardPile> CardPiles { get; set; } = [];
+        [JsonPropertyName("card_piles")] public List<RitsuDebugStatePresetCardPile> CardPiles { get; set; } = [];
 
         [JsonPropertyName("relics")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -290,11 +273,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     {
         internal const int CurrentSchemaVersion = 1;
 
-        [JsonPropertyName("schema_version")]
-        public int SchemaVersion { get; set; } = CurrentSchemaVersion;
+        [JsonPropertyName("schema_version")] public int SchemaVersion { get; set; } = CurrentSchemaVersion;
 
-        [JsonPropertyName("presets")]
-        public List<RitsuDebugStatePreset> Presets { get; set; } = [];
+        [JsonPropertyName("presets")] public List<RitsuDebugStatePreset> Presets { get; set; } = [];
     }
 
     internal static class RitsuDebugStatePresetStore
@@ -312,6 +293,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             PropertyNameCaseInsensitive = false,
             WriteIndented = false,
         };
+
         private static readonly ModDataStore Store = ModDataStore.For(Const.ModId);
 
         internal static IReadOnlyList<RitsuDebugStatePreset> GetSnapshot()
@@ -443,12 +425,13 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                    !string.IsNullOrWhiteSpace(preset.Name) && preset.Name.Length <= MaximumNameLength &&
                    preset.CardPiles != null && preset.CardPiles.All(static pile =>
                        pile?.Cards != null && pile.Cards.All(static card => card != null)) &&
-                   (preset.Relics == null || preset.Relics.ModelIds != null &&
-                       preset.Relics.ModelIds.All(static id => id != null)) &&
-                   (preset.Potions == null || preset.Potions.Items != null &&
-                       preset.Potions.Items.All(static potion => potion != null)) &&
-                   (preset.Powers == null || preset.Powers.Items != null &&
-                       preset.Powers.Items.All(static power => power != null)) && preset.HasAnyContent;
+                   (preset.Relics == null || (preset.Relics.ModelIds != null &&
+                                              preset.Relics.ModelIds.All(static id => id != null))) &&
+                   (preset.Potions == null || (preset.Potions.Items != null &&
+                                               preset.Potions.Items.All(static potion => potion != null))) &&
+                   (preset.Powers == null || (preset.Powers.Items != null &&
+                                              preset.Powers.Items.All(static power => power != null))) &&
+                   preset.HasAnyContent;
         }
 
         private static bool IsValidId(string? id)

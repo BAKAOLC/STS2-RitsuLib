@@ -214,6 +214,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         private const int MaximumIdentityLength = 128;
         private const int MaximumSortOrder = 100_000;
         private static readonly Dictionary<string, Registration> Pages = new(StringComparer.OrdinalIgnoreCase);
+
         private static readonly HashSet<string> ReservedQualifiedIds = new(StringComparer.OrdinalIgnoreCase)
         {
             $"{Const.ModId}:cards",
@@ -229,6 +230,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             $"{Const.ModId}:events",
             $"{Const.ModId}:state-presets",
         };
+
         private static readonly Lock SyncRoot = new();
 
         internal static event Action? Changed;

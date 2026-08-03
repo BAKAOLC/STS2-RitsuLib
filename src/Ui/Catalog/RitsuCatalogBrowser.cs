@@ -20,6 +20,7 @@ namespace STS2RitsuLib.Ui.Catalog
     public sealed partial class RitsuCatalogBrowser : Control
     {
         private const float GridGap = 12f;
+
         /// <summary>
         ///     <para xml:lang="en">The maximum number of items accepted by one browser.</para>
         ///     <para xml:lang="zh-CN">单个浏览器可接受的最大目录项数量。</para>
@@ -41,23 +42,23 @@ namespace STS2RitsuLib.Ui.Catalog
         private readonly RitsuCatalogBrowserOptions _options = new();
         private readonly List<CatalogRow> _rowPool = [];
         private readonly List<CatalogTile> _tilePool = [];
-        private Control? _detailContent;
         private ColorRect? _detailBackdrop;
+        private Control? _detailContent;
         private VBoxContainer? _detailHost;
-        private Control? _detailSlideHost;
         private MarginContainer? _detailScrollFrame;
+        private Control? _detailSlideHost;
         private Label? _detailTitle;
         private Tween? _detailTween;
         private Label? _emptyLabel;
         private RitsuCatalogItem[] _filteredItems = [];
         private RitsuCatalogFilter[] _filters = [];
+        private int _gridColumns = 1;
         private RitsuCatalogItem[] _items = [];
         private Label? _resultCount;
         private Control? _rowCanvas;
         private ScrollContainer? _scroll;
         private MarginContainer? _scrollFrame;
         private LineEdit? _search;
-        private int _gridColumns = 1;
         private int _searchRevision;
         private string? _selectedItemId;
         private bool _uiBuilt;
@@ -405,7 +406,9 @@ namespace STS2RitsuLib.Ui.Catalog
             };
             detailPanel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateInsetSurfaceStyle());
             if (inlineDetails)
+            {
                 browserRow.AddChild(detailPanel);
+            }
             else
             {
                 _detailBackdrop = new()
@@ -979,13 +982,38 @@ namespace STS2RitsuLib.Ui.Catalog
             }
         }
 
+        private static ColorRect CreateSelectionIndicator()
+        {
+            var indicator = new ColorRect
+            {
+                Color = RitsuShellTheme.Current.Component.ListItem.Accent.Border,
+                MouseFilter = MouseFilterEnum.Ignore,
+                Visible = false,
+            };
+            indicator.AnchorLeft = 1f;
+            indicator.AnchorRight = 1f;
+            indicator.AnchorBottom = 1f;
+            indicator.OffsetLeft = -5f;
+            return indicator;
+        }
+
+        private static string ResolveTooltip(RitsuCatalogItem item)
+        {
+            if (!string.IsNullOrWhiteSpace(item.Tooltip))
+                return item.Tooltip;
+            if (string.IsNullOrWhiteSpace(item.Subtitle))
+                return $"{item.Title}\n{item.Id}";
+            if (item.Subtitle.Contains(item.Id, StringComparison.OrdinalIgnoreCase))
+                return $"{item.Title}\n{item.Subtitle}";
+            return $"{item.Title}\n{item.Subtitle}\n{item.Id}";
+        }
+
         private sealed partial class CatalogTile : Button
         {
             private readonly Label _badge;
             private readonly TextureRect _icon;
             private readonly ColorRect _selectionIndicator;
             private readonly Label _title;
-            private string? _itemId;
 
             internal CatalogTile()
             {
@@ -994,8 +1022,8 @@ namespace STS2RitsuLib.Ui.Catalog
                 Text = string.Empty;
                 Pressed += () =>
                 {
-                    if (_itemId != null)
-                        ItemPressed?.Invoke(_itemId);
+                    if (ItemId != null)
+                        ItemPressed?.Invoke(ItemId);
                 };
 
                 _selectionIndicator = CreateSelectionIndicator();
@@ -1054,13 +1082,13 @@ namespace STS2RitsuLib.Ui.Catalog
                 column.AddChild(_badge);
             }
 
-            internal event Action<string>? ItemPressed;
+            internal string? ItemId { get; private set; }
 
-            internal string? ItemId => _itemId;
+            internal event Action<string>? ItemPressed;
 
             internal void Bind(RitsuCatalogItem item, Texture2D? icon, bool selected)
             {
-                _itemId = item.Id;
+                ItemId = item.Id;
                 _icon.Texture = icon;
                 _icon.Visible = icon != null;
                 _title.Text = item.Title;
@@ -1089,7 +1117,6 @@ namespace STS2RitsuLib.Ui.Catalog
             private readonly ColorRect _selectionIndicator;
             private readonly Label _subtitle;
             private readonly Label _title;
-            private string? _itemId;
 
             internal CatalogRow()
             {
@@ -1099,8 +1126,8 @@ namespace STS2RitsuLib.Ui.Catalog
                 Text = string.Empty;
                 Pressed += () =>
                 {
-                    if (_itemId != null)
-                        ItemPressed?.Invoke(_itemId);
+                    if (ItemId != null)
+                        ItemPressed?.Invoke(ItemId);
                 };
 
                 _selectionIndicator = CreateSelectionIndicator();
@@ -1163,13 +1190,13 @@ namespace STS2RitsuLib.Ui.Catalog
                 row.AddChild(_badge);
             }
 
-            internal event Action<string>? ItemPressed;
+            internal string? ItemId { get; private set; }
 
-            internal string? ItemId => _itemId;
+            internal event Action<string>? ItemPressed;
 
             internal void Bind(RitsuCatalogItem item, Texture2D? icon, bool selected)
             {
-                _itemId = item.Id;
+                ItemId = item.Id;
                 _icon.Texture = icon;
                 _icon.Visible = icon != null;
                 _title.Text = item.Title;
@@ -1191,32 +1218,6 @@ namespace STS2RitsuLib.Ui.Catalog
                 AddThemeStyleboxOverride("focus", emphasis);
                 AddThemeStyleboxOverride("disabled", normal);
             }
-        }
-
-        private static ColorRect CreateSelectionIndicator()
-        {
-            var indicator = new ColorRect
-            {
-                Color = RitsuShellTheme.Current.Component.ListItem.Accent.Border,
-                MouseFilter = MouseFilterEnum.Ignore,
-                Visible = false,
-            };
-            indicator.AnchorLeft = 1f;
-            indicator.AnchorRight = 1f;
-            indicator.AnchorBottom = 1f;
-            indicator.OffsetLeft = -5f;
-            return indicator;
-        }
-
-        private static string ResolveTooltip(RitsuCatalogItem item)
-        {
-            if (!string.IsNullOrWhiteSpace(item.Tooltip))
-                return item.Tooltip;
-            if (string.IsNullOrWhiteSpace(item.Subtitle))
-                return $"{item.Title}\n{item.Id}";
-            if (item.Subtitle.Contains(item.Id, StringComparison.OrdinalIgnoreCase))
-                return $"{item.Title}\n{item.Subtitle}";
-            return $"{item.Title}\n{item.Subtitle}\n{item.Id}";
         }
     }
 }
