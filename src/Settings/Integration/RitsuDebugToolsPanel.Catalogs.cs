@@ -312,11 +312,11 @@ namespace STS2RitsuLib.Settings
                 .. creatures.Select(creature => new RitsuCatalogItem(
                     creature.CombatId!.Value.ToString(),
                     creature.Name,
-                    CreatureVitals(creature),
-                    $"{creature.ModelId} {creature.LogName}",
-                    badge: creature.IsPlayer
+                    $"{(creature.IsPlayer
                         ? L("ritsulib.debugTools.player", "Player")
-                        : L("ritsulib.debugTools.enemy", "Enemy"))),
+                        : L("ritsulib.debugTools.enemy", "Enemy"))} · {creature.ModelId}",
+                    $"{creature.ModelId} {creature.LogName}",
+                    badge: CreatureVitals(creature))),
             ];
         }
 

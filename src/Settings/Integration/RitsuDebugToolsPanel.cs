@@ -150,6 +150,9 @@ namespace STS2RitsuLib.Settings
                                      players.Any(player => player.NetId == localNetId.Value)
                     ? localNetId.Value
                     : players[0].NetId;
+                _selectedCreatureCombatId = players
+                    .First(player => player.NetId == _targetPlayerNetId)
+                    .Creature.CombatId;
             }
 
             var targetOptions = players
@@ -162,6 +165,9 @@ namespace STS2RitsuLib.Settings
                 selected =>
                 {
                     _targetPlayerNetId = selected;
+                    _selectedCreatureCombatId = GetPlayers()
+                        .FirstOrDefault(player => player.NetId == selected)
+                        ?.Creature.CombatId;
                     RefreshPages();
                     RebuildBrowser();
                 })
