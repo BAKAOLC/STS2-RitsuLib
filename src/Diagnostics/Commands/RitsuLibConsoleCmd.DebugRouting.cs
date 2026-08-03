@@ -113,6 +113,7 @@ namespace STS2RitsuLib.Diagnostics.Commands
                     CreatureAction("gain-block", RitsuDebugCreatureOperation.GainBlock, true),
                     CreatureAction("set-hp", RitsuDebugCreatureOperation.SetCurrentHp, true),
                     CreatureAction("set-max-hp", RitsuDebugCreatureOperation.SetMaxHp, true),
+                    CreatureAction("set-block", RitsuDebugCreatureOperation.SetBlock, true),
                     CreatureAction("clear-powers", RitsuDebugCreatureOperation.ClearPowers, false),
                     DebugConsoleAction.Create(
                         "duplicate",

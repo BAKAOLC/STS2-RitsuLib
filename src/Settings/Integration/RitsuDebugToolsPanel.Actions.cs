@@ -608,10 +608,7 @@ namespace STS2RitsuLib.Settings
                 return root;
             }
 
-            var combatId = _selectedCreatureCombatId.HasValue &&
-                           creatures.Any(creature => creature.CombatId == _selectedCreatureCombatId)
-                ? _selectedCreatureCombatId.Value
-                : creatures[0].CombatId!.Value;
+            var combatId = PreferredCreatureCombatId(creatures);
             _selectedCreatureCombatId = combatId;
             root.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.creature", "Creature"),
@@ -791,17 +788,45 @@ namespace STS2RitsuLib.Settings
                 CreatureVitals(creature),
                 creature.LogName,
                 () => CreatureVitals(creature));
-            AddSectionTitle(root, L("ritsulib.debugTools.action.creatureState", "Creature state"));
+            AddSectionTitle(root, L("ritsulib.debugTools.action.creatureValues", "Creature values"));
+            AddCreatureOperationEditor(
+                root,
+                creature,
+                RitsuDebugCreatureOperation.SetCurrentHp,
+                L("ritsulib.debugTools.field.currentHp", "Current HP"),
+                creature.CurrentHp.ToString(),
+                creature.IsPlayer ? 1 : 0,
+                creature.MaxHp,
+                L("ritsulib.debugTools.action.set", "Set"));
+            AddCreatureOperationEditor(
+                root,
+                creature,
+                RitsuDebugCreatureOperation.SetMaxHp,
+                L("ritsulib.debugTools.field.maxHp", "Maximum HP"),
+                creature.MaxHp.ToString(),
+                Math.Max(1, creature.CurrentHp),
+                RitsuDebugCombatActions.MaxAmount,
+                L("ritsulib.debugTools.action.set", "Set"));
+            AddCreatureOperationEditor(
+                root,
+                creature,
+                RitsuDebugCreatureOperation.SetBlock,
+                L("ritsulib.debugTools.field.block", "Block"),
+                creature.Block.ToString(),
+                0,
+                RitsuDebugCombatActions.MaxAmount,
+                L("ritsulib.debugTools.action.set", "Set"));
+
+            AddSectionTitle(root, L("ritsulib.debugTools.action.creatureActions", "Quick actions"));
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.Damage, "1", 0,
-                RitsuDebugCombatActions.MaxAmount);
+                RitsuDebugCombatActions.MaxAmount,
+                L("ritsulib.debugTools.action.execute", "Execute"));
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.Heal, "1", 0,
-                RitsuDebugCombatActions.MaxAmount);
+                RitsuDebugCombatActions.MaxAmount,
+                L("ritsulib.debugTools.action.execute", "Execute"));
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.GainBlock, "1", 0,
-                RitsuDebugCombatActions.MaxAmount);
-            AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.SetCurrentHp,
-                creature.CurrentHp.ToString(), creature.IsPlayer ? 1 : 0, creature.MaxHp);
-            AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.SetMaxHp,
-                creature.MaxHp.ToString(), Math.Max(1, creature.CurrentHp), RitsuDebugCombatActions.MaxAmount);
+                RitsuDebugCombatActions.MaxAmount,
+                L("ritsulib.debugTools.action.execute", "Execute"));
             AddCreaturePresetManager(root, creature);
             AddCurrentPowerManager(root, () => combatId, true);
 
@@ -1068,15 +1093,38 @@ namespace STS2RitsuLib.Settings
             RitsuDebugCreatureOperation operation,
             string initialValue,
             int minimum,
-            int maximum)
+            int maximum,
+            string? actionText = null)
         {
-            AddIntegerActionRow(
+            AddCreatureOperationEditor(
                 root,
+                creature,
+                operation,
                 OperationLabel(operation),
                 initialValue,
                 minimum,
                 maximum,
-                value => SubmitCreatureOperation(creature, operation, value));
+                actionText ?? L("ritsulib.debugTools.action.apply", "Apply"));
+        }
+
+        private void AddCreatureOperationEditor(
+            VBoxContainer root,
+            Creature creature,
+            RitsuDebugCreatureOperation operation,
+            string label,
+            string initialValue,
+            int minimum,
+            int maximum,
+            string actionText)
+        {
+            AddIntegerActionRow(
+                root,
+                label,
+                initialValue,
+                minimum,
+                maximum,
+                value => SubmitCreatureOperation(creature, operation, value),
+                actionText);
         }
 
         private Control CreateEncounterDetail(EncounterModel encounter)
@@ -1458,7 +1506,8 @@ namespace STS2RitsuLib.Settings
             string initialValue,
             int minimum,
             int maximum,
-            Action<int> submit)
+            Action<int> submit,
+            string? actionText = null)
         {
             var edit = ModSettingsUiControlTheming.CreateStyledLineEdit(
                 initialValue,
@@ -1467,7 +1516,7 @@ namespace STS2RitsuLib.Settings
             edit.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             var row = Field(label, edit);
             row.AddChild(ActionButton(
-                L("ritsulib.debugTools.action.apply", "Apply"),
+                actionText ?? L("ritsulib.debugTools.action.apply", "Apply"),
                 ModSettingsButtonTone.Normal,
                 () =>
                 {
@@ -1549,6 +1598,17 @@ namespace STS2RitsuLib.Settings
                 .Where(static creature => creature.CombatId.HasValue)
                 .OrderBy(static creature => creature.CombatId)
                 .ToArray() ?? [];
+        }
+
+        private uint PreferredCreatureCombatId(IReadOnlyList<Creature> creatures)
+        {
+            if (_selectedCreatureCombatId is { } selected &&
+                creatures.Any(creature => creature.CombatId == selected))
+                return selected;
+            if (TryGetTargetPlayer(out var target) && target.Creature.CombatId is { } targetCombatId &&
+                creatures.Any(creature => creature.CombatId == targetCombatId))
+                return targetCombatId;
+            return creatures[0].CombatId!.Value;
         }
 
         private static bool HasActiveCombatState(Player player)

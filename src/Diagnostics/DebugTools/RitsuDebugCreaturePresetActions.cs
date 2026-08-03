@@ -4,7 +4,6 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
-using MegaCrit.Sts2.Core.ValueProps;
 
 namespace STS2RitsuLib.Diagnostics.DebugTools
 {
@@ -186,20 +185,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (!currentHpSetFirst && creature.CurrentHp != preset.CurrentHp)
                 await CreatureCmd.SetCurrentHp(creature, preset.CurrentHp);
 
-            var blockDifference = preset.Block - creature.Block;
-            switch (blockDifference)
-            {
-                case > 0:
-                    await CreatureCmd.GainBlock(creature, blockDifference, ValueProp.Unpowered, null);
-                    break;
-                case < 0:
-#if STS2_AT_LEAST_0_109_0
-                    await CreatureCmd.LoseBlock(new BlockingPlayerChoiceContext(), creature, -blockDifference, null);
-#else
-                    await CreatureCmd.LoseBlock(creature, -blockDifference);
-#endif
-                    break;
-            }
+            await RitsuDebugCombatActions.SetCreatureBlockAsync(creature, preset.Block);
 
             foreach (var power in creature.Powers.ToArray())
                 await PowerCmd.Remove(power);

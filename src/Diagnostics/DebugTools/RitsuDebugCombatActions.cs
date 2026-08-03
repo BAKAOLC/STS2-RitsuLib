@@ -19,6 +19,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         GainBlock,
         SetCurrentHp,
         SetMaxHp,
+        SetBlock,
         ClearPowers,
     }
 
@@ -449,6 +450,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 case RitsuDebugCreatureOperation.SetMaxHp:
                     await CreatureCmd.SetMaxHp(creature, payload.Value);
                     break;
+                case RitsuDebugCreatureOperation.SetBlock:
+                    await SetCreatureBlockAsync(creature, payload.Value);
+                    break;
                 case RitsuDebugCreatureOperation.ClearPowers:
                     foreach (var power in creature.Powers.ToArray())
                         await PowerCmd.Remove(power);
@@ -626,6 +630,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 RitsuDebugCreatureOperation.GainBlock => "Granted block to the selected creature.",
                 RitsuDebugCreatureOperation.SetCurrentHp => "Updated the selected creature's current HP.",
                 RitsuDebugCreatureOperation.SetMaxHp => "Updated the selected creature's maximum HP.",
+                RitsuDebugCreatureOperation.SetBlock => "Updated the selected creature's block.",
                 RitsuDebugCreatureOperation.ClearPowers => "Removed all powers from the selected creature.",
                 _ => "Updated the selected creature.",
             };
@@ -676,6 +681,24 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     x + widths[index] * 0.5f,
                     200f - (index % 2 == 0 ? 0f : alternatingY));
                 x += widths[index] + padding;
+            }
+        }
+
+        internal static async Task SetCreatureBlockAsync(Creature creature, int block)
+        {
+            var difference = block - creature.Block;
+            switch (difference)
+            {
+                case > 0:
+                    await CreatureCmd.GainBlock(creature, difference, ValueProp.Unpowered, null);
+                    break;
+                case < 0:
+#if STS2_AT_LEAST_0_109_0
+                    await CreatureCmd.LoseBlock(new BlockingPlayerChoiceContext(), creature, -difference, null);
+#else
+                    await CreatureCmd.LoseBlock(creature, -difference);
+#endif
+                    break;
             }
         }
 
