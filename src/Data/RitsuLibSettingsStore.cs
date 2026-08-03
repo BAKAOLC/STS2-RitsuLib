@@ -72,6 +72,17 @@ namespace STS2RitsuLib.Data
                                 CurrentDataVersion = RitsuDebugStatePresetCollection.CurrentSchemaVersion,
                                 MinimumSupportedDataVersion = RitsuDebugStatePresetCollection.CurrentSchemaVersion,
                             });
+                        Store.Register<RitsuDebugCreaturePresetCollection>(
+                            RitsuDebugCreaturePresetStore.DataKey,
+                            RitsuDebugCreaturePresetStore.FileName,
+                            SaveScope.Global,
+                            static () => new(),
+                            true,
+                            new()
+                            {
+                                CurrentDataVersion = RitsuDebugCreaturePresetCollection.CurrentSchemaVersion,
+                                MinimumSupportedDataVersion = RitsuDebugCreaturePresetCollection.CurrentSchemaVersion,
+                            });
                     }
 
                     _initialized = true;

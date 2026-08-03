@@ -49,6 +49,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const int MaximumPresetCount = 64;
         internal const int MaximumNameLength = 80;
         internal const string DataKey = "debug-creature-presets";
+        internal const string FileName = "debug_creature_presets.json";
 
         private static readonly ModDataStore Store = ModDataStore.For(Const.ModId);
 
