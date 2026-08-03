@@ -321,23 +321,23 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
 
         private static void ApplyFinalFilterLayout(Node filterParent)
         {
-            if (filterParent is not GridContainer grid || grid.GetChildCount() == 0)
+            if (filterParent is not GridContainer grid)
                 return;
 
-            var columns = DefaultColumnCount;
-            var scale = 1f;
-            var height = GetFilterGridHeight(grid.GetChildCount(), columns, scale);
+            var filters = grid.GetChildren().OfType<NCardPoolFilter>().ToArray();
+            if (filters.Length == 0)
+                return;
 
-            while (height > FilterGridHeightLimit)
-            {
-                columns++;
-                scale = DefaultColumnCount / (float)columns;
-                height = GetFilterGridHeight(grid.GetChildCount(), columns, scale);
-            }
+            var visibleFilterCount = filters.Count(static filter => filter.Visible);
+            if (visibleFilterCount == 0)
+                return;
+            var (columns, scale) = FindBestFilterLayout(
+                visibleFilterCount,
+                DefaultFilterSize * DefaultColumnCount);
 
             var filterSize = Vector2.One * (DefaultFilterSize * scale);
             var imageSize = Vector2.One * (DefaultImageSize * scale);
-            foreach (var filter in grid.GetChildren().OfType<NCardPoolFilter>())
+            foreach (var filter in filters)
             {
                 filter.CustomMinimumSize = filterSize;
                 filter.Size = filterSize;
@@ -363,9 +363,24 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             grid.Columns = columns;
         }
 
-        private static float GetFilterGridHeight(int filterCount, int columns, float scale)
+        private static (int columns, float scale) FindBestFilterLayout(int filterCount, float widthLimit)
         {
-            return DefaultFilterSize * scale * MathF.Ceiling(filterCount / (float)columns);
+            var bestColumns = DefaultColumnCount;
+            var bestScale = 0f;
+            for (var columns = DefaultColumnCount; columns <= Math.Max(DefaultColumnCount, filterCount); columns++)
+            {
+                var rows = Math.Max(1, Mathf.CeilToInt(filterCount / (float)columns));
+                var widthScale = widthLimit / (DefaultFilterSize * columns);
+                var heightScale = FilterGridHeightLimit / (DefaultFilterSize * rows);
+                var scale = MathF.Min(1f, MathF.Min(widthScale, heightScale));
+                if (scale <= bestScale)
+                    continue;
+
+                bestColumns = columns;
+                bestScale = scale;
+            }
+
+            return (bestColumns, bestScale);
         }
 
         private static void ConfigureFilterReticle(NSelectionReticle reticle)
