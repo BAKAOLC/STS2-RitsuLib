@@ -26,6 +26,18 @@ namespace STS2RitsuLib.Ui.Windows
         public Vector2 InitialSize { get; init; } = new(960f, 720f);
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets whether the window uses its content's complete minimum size when it first opens. The result is
+        ///         still constrained by <see cref="MinimumSize" />, <see cref="MaximumSize" />, and the viewport.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取窗口首次打开时是否采用内容的完整最小尺寸。最终尺寸仍受 <see cref="MinimumSize" />、
+        ///         <see cref="MaximumSize" /> 及视口范围约束。
+        ///     </para>
+        /// </summary>
+        public bool FitInitialSizeToContent { get; init; } = true;
+
+        /// <summary>
         ///     <para xml:lang="en">Gets the minimum unscaled window size.</para>
         ///     <para xml:lang="zh-CN">获取窗口未经缩放的最小尺寸。</para>
         /// </summary>
@@ -76,6 +88,8 @@ namespace STS2RitsuLib.Ui.Windows
         ///     </para>
         /// </summary>
         public bool ConstrainToViewport { get; init; } = true;
+
+        internal bool CompactChrome { get; init; }
 
         internal void Validate()
         {
