@@ -71,16 +71,19 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         {
             SyncExistingFilterIcons(____cardPoolFilters);
 
+            if (!TryGetCompendiumTemplateFilter(__instance, ____cardPoolFilters, out var referenceFilter) ||
+                referenceFilter.GetParent() is not { } filterParent)
+                return;
+
             var modCharacters = ModContentRegistry.GetModCharacters()
                 .Where(character => !____cardPoolFilters.ContainsKey(character))
                 .ToArray();
             var sharedPoolFilters = ModContentRegistry.GetCardLibraryCompendiumSharedPoolFilters();
             if (modCharacters.Length == 0 && sharedPoolFilters.Count == 0)
+            {
+                QueueFinalFilterLayout(filterParent);
                 return;
-
-            if (!TryGetCompendiumTemplateFilter(__instance, ____cardPoolFilters, out var referenceFilter) ||
-                referenceFilter.GetParent() is not { } filterParent)
-                return;
+            }
 
             ShaderMaterial? referenceMat = null;
             if (referenceFilter.GetNodeOrNull<Control>("Image") is { Material: ShaderMaterial refMat })
@@ -94,7 +97,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 sharedPoolFilters,
                 RitsuLibFramework.Logger);
             if (planned.Count == 0)
+            {
+                QueueFinalFilterLayout(filterParent);
                 return;
+            }
 
             var strip = CardLibraryCompendiumStripSnapshot.Capture(filterParent);
             CardLibraryCompendiumPlacementResolver.AssignTargetsAndSort(
@@ -108,7 +114,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 TryBuildFilter(row, referenceMat, referenceIcon, referenceFilter);
 
             CardLibraryCompendiumPlacementResolver.InsertRowsInOrder(filterParent, strip, planned);
-            ApplyFinalFilterLayout(filterParent);
+            QueueFinalFilterLayout(filterParent);
 
             foreach (var row in planned)
             {
@@ -124,6 +130,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                     ____cardPoolFilters,
                     updateCallable);
             }
+        }
+
+        private static void QueueFinalFilterLayout(Node filterParent)
+        {
+            Callable.From(() => ApplyFinalFilterLayout(filterParent)).CallDeferred();
         }
 
         private static void SyncExistingFilterIcons(
