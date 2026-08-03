@@ -27,9 +27,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     internal static class RitsuDebugPlayerActions
     {
         internal const string ModifyPlayerActionId = "player.modify";
-        internal const int MaxGold = 999_999;
-        internal const int MaxHitPoints = 999_999;
-        internal const int MaxCombatResource = 999;
+        internal const int MaxGold = 999_999_999;
+        internal const int MaxHitPoints = 999_999_999;
+        internal const int MaxCombatResource = 999_999_999;
         internal const int MaxPotionSlots = 20;
         internal const int MaxDrawCount = 100;
 

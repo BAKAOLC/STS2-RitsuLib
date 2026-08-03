@@ -40,7 +40,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const int MaxBulkUpgradeLevels = 99;
         internal const int MaxCopyCount = 100;
         internal const int MaxCreateCount = 100;
-        internal const int MaxCardEditValue = 999_999;
+        internal const int MaxCardEditValue = 999_999_999;
         internal const int MaxDynamicVariableCount = 64;
 
         private static readonly PileType[] MutablePileTypes =
@@ -607,7 +607,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     if (value is < 0 or > MaxCardEditValue)
                         return RitsuDebugActionCheck.Fail(
                             "card.editValueRange",
-                            "Card edit values must be between 0 and 999999.");
+                            "Card edit values must be between 0 and {0}.",
+                            MaxCardEditValue);
                     if (!card.DynamicVars.ContainsKey(key))
                         return RitsuDebugActionCheck.Fail(
                             "card.dynamicVarMissing",
@@ -625,7 +626,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (state.EnchantmentAmount is null or < 1 or > MaxCardEditValue)
                 return RitsuDebugActionCheck.Fail(
                     "card.enchantmentAmountRange",
-                    "Enchantment amount must be between 1 and 999999.");
+                    "Enchantment amount must be between 1 and {0}.",
+                    MaxCardEditValue);
             if (!TryResolveEnchantment(state.EnchantmentId, out var enchantment, out var feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
 
@@ -884,10 +886,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     out var feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
 
-            if (payload.Value is < 0 or > 999_999)
+            if (payload.Value is < 0 or > MaxCardEditValue)
                 return RitsuDebugActionCheck.Fail(
                     "card.editValueRange",
-                    "Card edit values must be between 0 and 999999.");
+                    "Card edit values must be between 0 and {0}.",
+                    MaxCardEditValue);
             switch (payload.Field)
             {
                 case RitsuDebugCardEditField.Exhaust or
@@ -972,10 +975,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     out var feedback) ||
                 !TryResolveEnchantment(payload.EnchantmentId, out var enchantment, out feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
-            if (payload.Amount is < 1 or > 999_999)
+            if (payload.Amount is < 1 or > MaxCardEditValue)
                 return RitsuDebugActionCheck.Fail(
                     "card.enchantmentAmountRange",
-                    "Enchantment amount must be between 1 and 999999.");
+                    "Enchantment amount must be between 1 and {0}.",
+                    MaxCardEditValue);
             var preview = (CardModel)card.ClonePreservingMutability();
             CardCmd.ClearEnchantment(preview);
             return enchantment.CanEnchant(preview)

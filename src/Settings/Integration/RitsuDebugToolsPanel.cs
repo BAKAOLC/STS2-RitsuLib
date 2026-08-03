@@ -623,10 +623,7 @@ namespace STS2RitsuLib.Settings
                     if (_selectedCreatureCombatId.HasValue &&
                         creatures.All(creature => creature.CombatId != _selectedCreatureCombatId))
                         _selectedCreatureCombatId = null;
-                    if (_currentBrowser is RitsuCatalogBrowser creatureBrowser)
-                        creatureBrowser.SetItems(CreateCreatureCatalogItems(creatures));
-                    else
-                        RebuildBrowser();
+                    RefreshCatalogItems(CreateCreatureCatalogItems(creatures));
                     break;
                 default:
                     RefreshLiveDetails(_currentBrowser);
