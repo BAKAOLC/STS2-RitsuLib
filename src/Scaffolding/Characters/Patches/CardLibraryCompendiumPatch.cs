@@ -47,6 +47,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     [HarmonyPriority(Priority.Last)]
     internal class CardLibraryCompendiumPatch : IPatchMethod
     {
+        private const float DefaultFilterSize = 64f;
+        private const float DefaultImageSize = 56f;
+        private const float FilterGridHeightLimit = 192f;
+        private const int DefaultColumnCount = 4;
+
         public static string PatchId => "card_library_compendium_mod_character_filter";
 
         public static string Description =>
@@ -103,6 +108,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 TryBuildFilter(row, referenceMat, referenceIcon, referenceFilter);
 
             CardLibraryCompendiumPlacementResolver.InsertRowsInOrder(filterParent, strip, planned);
+            ApplyFinalFilterLayout(filterParent);
 
             foreach (var row in planned)
             {
@@ -215,15 +221,13 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ShaderMaterial? referenceMat,
             Texture2D? fallbackIcon)
         {
-            const float size = 64f;
-            const float imageSize = 56f;
-            const float imagePos = 4f;
+            const float imagePos = (DefaultFilterSize - DefaultImageSize) / 2f;
 
             var filter = new NCardPoolFilter
             {
                 Name = $"MOD_FILTER_{character.Id.Entry}",
-                CustomMinimumSize = new(size, size),
-                Size = new(size, size),
+                CustomMinimumSize = new(DefaultFilterSize, DefaultFilterSize),
+                Size = new(DefaultFilterSize, DefaultFilterSize),
                 FocusMode = Control.FocusModeEnum.All,
             };
 
@@ -234,10 +238,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 Name = "Image",
                 ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                Size = new(imageSize, imageSize),
+                Size = new(DefaultImageSize, DefaultImageSize),
                 Position = new(imagePos, imagePos),
                 Scale = new(0.9f, 0.9f),
-                PivotOffset = new(28f, 28f),
+                PivotOffset = Vector2.One * (DefaultImageSize / 2f),
                 Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1),
                 Texture = ResolveFilterIconTexture(character, iconTexturePath, fallbackIcon),
             };
@@ -274,15 +278,13 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ShaderMaterial? referenceMat,
             Texture2D? fallbackIcon)
         {
-            const float size = 64f;
-            const float imageSize = 56f;
-            const float imagePos = 4f;
+            const float imagePos = (DefaultFilterSize - DefaultImageSize) / 2f;
 
             var filter = new NCardPoolFilter
             {
                 Name = $"MOD_FILTER_SHARED_{registration.StableId}",
-                CustomMinimumSize = new(size, size),
-                Size = new(size, size),
+                CustomMinimumSize = new(DefaultFilterSize, DefaultFilterSize),
+                Size = new(DefaultFilterSize, DefaultFilterSize),
                 FocusMode = Control.FocusModeEnum.All,
             };
 
@@ -293,10 +295,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 Name = "Image",
                 ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                Size = new(imageSize, imageSize),
+                Size = new(DefaultImageSize, DefaultImageSize),
                 Position = new(imagePos, imagePos),
                 Scale = new(0.9f, 0.9f),
-                PivotOffset = new(28f, 28f),
+                PivotOffset = Vector2.One * (DefaultImageSize / 2f),
                 Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1),
                 Texture = ResolveSharedPoolFilterIcon(registration, fallbackIcon),
             };
@@ -315,6 +317,55 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 filter.Loc = new("card_library", id);
 
             return filter;
+        }
+
+        private static void ApplyFinalFilterLayout(Node filterParent)
+        {
+            if (filterParent is not GridContainer grid || grid.GetChildCount() == 0)
+                return;
+
+            var columns = DefaultColumnCount;
+            var scale = 1f;
+            var height = GetFilterGridHeight(grid.GetChildCount(), columns, scale);
+
+            while (height > FilterGridHeightLimit)
+            {
+                columns++;
+                scale = DefaultColumnCount / (float)columns;
+                height = GetFilterGridHeight(grid.GetChildCount(), columns, scale);
+            }
+
+            var filterSize = Vector2.One * (DefaultFilterSize * scale);
+            var imageSize = Vector2.One * (DefaultImageSize * scale);
+            foreach (var filter in grid.GetChildren().OfType<NCardPoolFilter>())
+            {
+                filter.CustomMinimumSize = filterSize;
+                filter.Size = filterSize;
+
+                if (filter.GetNodeOrNull<Control>("Image") is { } image)
+                {
+                    image.CustomMinimumSize = imageSize;
+                    image.Size = imageSize;
+                    image.PivotOffset = imageSize / 2f;
+                    image.Position = (filterSize - imageSize) / 2f;
+
+                    if (image.GetNodeOrNull<Control>("Shadow") is { } shadow)
+                    {
+                        shadow.Size = imageSize;
+                        shadow.PivotOffset = imageSize / 2f;
+                    }
+                }
+
+                if (filter.GetNodeOrNull<NSelectionReticle>("%SelectionReticle") is { } reticle)
+                    ConfigureFilterReticle(reticle);
+            }
+
+            grid.Columns = columns;
+        }
+
+        private static float GetFilterGridHeight(int filterCount, int columns, float scale)
+        {
+            return DefaultFilterSize * scale * MathF.Ceiling(filterCount / (float)columns);
         }
 
         private static void ConfigureFilterReticle(NSelectionReticle reticle)
