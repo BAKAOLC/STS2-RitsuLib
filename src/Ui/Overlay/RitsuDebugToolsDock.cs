@@ -223,15 +223,28 @@ namespace STS2RitsuLib.Ui.Overlay
                 HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
                 VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
             };
-            scroll.GetVScrollBar().CustomMinimumSize = Vector2.Zero;
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(scroll);
             margin.AddChild(scroll);
+
+            var scrollFrame = new MarginContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            scrollFrame.AddThemeConstantOverride("margin_right", 0);
+            scroll.AddChild(scrollFrame);
             _railButtons = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ShrinkBegin,
             };
             _railButtons.AddThemeConstantOverride("separation", 4);
-            scroll.AddChild(_railButtons);
+            scrollFrame.AddChild(_railButtons);
+
+            var scrollBar = scroll.GetVScrollBar();
+            scrollBar.VisibilityChanged += () => SyncRailScrollGutter(scroll, scrollFrame);
+            SyncRailScrollGutter(scroll, scrollFrame);
         }
 
         private void BuildWorkspace()
@@ -401,6 +414,17 @@ namespace STS2RitsuLib.Ui.Overlay
         private static bool IsButtonSelected(Button button)
         {
             return button.HasMeta("selected") && button.GetMeta("selected").AsBool();
+        }
+
+        private static void SyncRailScrollGutter(ScrollContainer scroll, MarginContainer frame)
+        {
+            var gutter = scroll.GetVScrollBar().Visible
+                ? ModSettingsUiControlTheming.ResolveSettingsScrollContentRightGutter(scroll)
+                : 0;
+            if (frame.GetThemeConstant("margin_right") == gutter)
+                return;
+            frame.AddThemeConstantOverride("margin_right", gutter);
+            frame.QueueSort();
         }
 
         private static Button CreateIconButton(Texture2D? icon, string tooltip, Action action)
