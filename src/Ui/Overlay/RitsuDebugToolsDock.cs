@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Ui.Overlay
         private const float PanelRightMargin = 24f;
         private const float PanelMaximumViewportFraction = 0.9f;
         private const double CollapseGraceMilliseconds = 320d;
+        private const double WorkspaceResizeDurationSeconds = 0.22d;
         private readonly Dictionary<string, Button> _pageButtons = new(StringComparer.OrdinalIgnoreCase);
         private bool _available;
         private Control _clickAway = null!;
@@ -29,7 +30,11 @@ namespace STS2RitsuLib.Ui.Overlay
         private Tween? _railTween;
         private bool _suppressed;
         private IDisposable? _tooltipTimingScope;
+        private Control _workspaceContent = null!;
         private Control _workspaceMover = null!;
+        private bool _workspaceResizeAnimating;
+        private double _workspaceResizeElapsed;
+        private float _workspaceResizeFrom;
         private Tween? _workspaceTween;
         private float _workspaceWidth;
 
@@ -62,8 +67,26 @@ namespace STS2RitsuLib.Ui.Overlay
             ZIndex = 40;
             BuildLayout();
             GetViewport().SizeChanged += OnViewportSizeChanged;
+            SetProcess(false);
             SetProcessUnhandledInput(false);
             SyncAvailability();
+        }
+
+        public override void _Process(double delta)
+        {
+            if (!_workspaceResizeAnimating)
+                return;
+            _workspaceResizeElapsed = Math.Min(
+                WorkspaceResizeDurationSeconds,
+                _workspaceResizeElapsed + delta);
+            var progress = (float)(_workspaceResizeElapsed / WorkspaceResizeDurationSeconds);
+            var easedProgress = (1f - MathF.Cos(progress * MathF.PI)) * 0.5f;
+            SetWorkspaceWidth(Mathf.Lerp(_workspaceResizeFrom, _workspaceWidth, easedProgress));
+            if (progress < 1f)
+                return;
+            SetWorkspaceWidth(_workspaceWidth);
+            _workspaceResizeAnimating = false;
+            SetProcess(false);
         }
 
         public override void _ExitTree()
@@ -80,6 +103,7 @@ namespace STS2RitsuLib.Ui.Overlay
             ReleaseQuickTooltipTiming();
             _workspaceTween?.Kill();
             _workspaceTween = null;
+            StopWorkspaceResize();
             base._ExitTree();
         }
 
@@ -118,6 +142,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 Panel.CancelCreaturePicking();
                 Collapse(true);
             }
+
             SyncAvailability();
         }
 
@@ -276,44 +301,60 @@ namespace STS2RitsuLib.Ui.Overlay
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _clipHost.AnchorLeft = 0f;
-            _clipHost.AnchorRight = 1f;
+            _clipHost.AnchorRight = 0f;
             _clipHost.AnchorTop = 0.08f;
             _clipHost.AnchorBottom = 0.92f;
             _clipHost.OffsetLeft = RailLeft + RailWidth;
-            _clipHost.OffsetRight = -PanelRightMargin;
+            _clipHost.OffsetRight = RailLeft + RailWidth + 1f;
             AddChild(_clipHost);
 
             _workspaceMover = new()
             {
+                ClipContents = true,
                 MouseFilter = MouseFilterEnum.Ignore,
                 Visible = false,
             };
             _workspaceMover.AnchorLeft = 0f;
-            _workspaceMover.AnchorRight = 0f;
+            _workspaceMover.AnchorRight = 1f;
             _workspaceMover.AnchorTop = 0f;
             _workspaceMover.AnchorBottom = 1f;
+            _workspaceMover.OffsetLeft = 0f;
+            _workspaceMover.OffsetRight = 0f;
             _clipHost.AddChild(_workspaceMover);
 
-            var workspace = new PanelContainer
+            var workspaceSurface = new Panel
             {
                 MouseFilter = MouseFilterEnum.Stop,
             };
-            workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            workspaceSurface.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             var workspaceStyle = RitsuShellPanelStyles.CreateFramedSurface(
                 RitsuShellTheme.Current.Surface.Content,
                 RitsuShellTheme.Current.Metric.Radius.Default);
             workspaceStyle.CornerRadiusTopLeft = 0;
             workspaceStyle.CornerRadiusBottomLeft = 0;
             workspaceStyle.BorderWidthLeft = 0;
-            workspace.AddThemeStyleboxOverride("panel", workspaceStyle);
-            _workspaceMover.AddChild(workspace);
+            workspaceSurface.AddThemeStyleboxOverride("panel", workspaceStyle);
+            _workspaceMover.AddChild(workspaceSurface);
+
+            _workspaceContent = new()
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            _workspaceContent.AnchorLeft = 0f;
+            _workspaceContent.AnchorRight = 0f;
+            _workspaceContent.AnchorTop = 0f;
+            _workspaceContent.AnchorBottom = 1f;
+            _workspaceContent.OffsetLeft = 0f;
+            _workspaceContent.OffsetRight = 1f;
+            _workspaceMover.AddChild(_workspaceContent);
 
             var margin = new MarginContainer();
+            margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             margin.AddThemeConstantOverride("margin_left", 14);
             margin.AddThemeConstantOverride("margin_top", 10);
             margin.AddThemeConstantOverride("margin_right", 14);
             margin.AddThemeConstantOverride("margin_bottom", 10);
-            workspace.AddChild(margin);
+            _workspaceContent.AddChild(margin);
             var column = new VBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -412,7 +453,7 @@ namespace STS2RitsuLib.Ui.Overlay
         private void OnPageChanged(RitsuDebugToolsPageView page)
         {
             _pageTitle.Text = page.Title;
-            RecalculateWorkspaceWidth(Expanded);
+            RecalculateWorkspaceWidth(_workspaceMover.Visible);
             RefreshPageButtonStyles();
         }
 
@@ -522,20 +563,42 @@ namespace STS2RitsuLib.Ui.Overlay
             var viewportWidth = GetViewport().GetVisibleRect().Size.X;
             var available = Math.Max(1f, viewportWidth - RailLeft - RailWidth - PanelRightMargin);
             var widthFraction = Math.Min(PanelMaximumViewportFraction, Panel.CurrentPageWidthFraction);
-            _workspaceWidth = Math.Max(1f, Math.Min(available, viewportWidth * widthFraction));
-            _workspaceMover.OffsetLeft = 0f;
-            if (!animate || Math.Abs(_workspaceMover.OffsetRight - _workspaceWidth) < 0.5f)
+            var targetWidth = Math.Max(1f, Math.Min(available, viewportWidth * widthFraction));
+            var currentWidth = Math.Max(1f, _clipHost.Size.X);
+            SetWorkspaceContentWidth(targetWidth);
+            if (!animate && _workspaceResizeAnimating &&
+                Math.Abs(_workspaceWidth - targetWidth) < 0.5f)
+                return;
+
+            _workspaceWidth = targetWidth;
+            if (!animate || Math.Abs(currentWidth - targetWidth) < 0.5f)
             {
-                _workspaceMover.OffsetRight = _workspaceWidth;
+                StopWorkspaceResize();
+                SetWorkspaceWidth(targetWidth);
                 return;
             }
 
-            _workspaceTween?.Kill();
-            _workspaceTween = _workspaceMover.CreateTween();
-            _workspaceTween.SetTrans(Tween.TransitionType.Cubic);
-            _workspaceTween.SetEase(Tween.EaseType.Out);
-            _workspaceTween.TweenProperty(_workspaceMover, "offset_right", _workspaceWidth, 0.2f);
-            _workspaceTween.TweenCallback(Callable.From(() => _workspaceTween = null));
+            SetWorkspaceWidth(currentWidth);
+            _workspaceResizeFrom = currentWidth;
+            _workspaceResizeElapsed = 0d;
+            _workspaceResizeAnimating = true;
+            SetProcess(true);
+        }
+
+        private void SetWorkspaceWidth(float width)
+        {
+            _clipHost.OffsetRight = _clipHost.OffsetLeft + width;
+        }
+
+        private void SetWorkspaceContentWidth(float width)
+        {
+            _workspaceContent.OffsetRight = _workspaceContent.OffsetLeft + width;
+        }
+
+        private void StopWorkspaceResize()
+        {
+            _workspaceResizeAnimating = false;
+            SetProcess(false);
         }
 
         private void SetRailJoined(bool joined)
@@ -572,6 +635,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 _railTween = null;
                 _workspaceTween?.Kill();
                 _workspaceTween = null;
+                StopWorkspaceResize();
                 _peekTab.Hide();
                 _rail.Hide();
                 _clickAway.Hide();
