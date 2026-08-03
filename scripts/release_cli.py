@@ -74,12 +74,14 @@ def _git_tag_command(
     if force:
         cmd.append("-f")
     if sign and message_file is not None:
-        cmd.extend(["-s", "-a", tag, "-F", str(message_file)])
+        cmd.extend(
+            ["--cleanup=verbatim", "-s", "-a", tag, "-F", str(message_file)]
+        )
     elif sign:
         # Keep this non-interactive when no tag message file is configured.
         cmd.extend(["-s", "-a", tag, "-m", tag])
     elif message_file is not None:
-        cmd.extend(["-a", tag, "-F", str(message_file)])
+        cmd.extend(["--cleanup=verbatim", "-a", tag, "-F", str(message_file)])
     else:
         cmd.append(tag)
     return cmd
@@ -891,9 +893,15 @@ def _print_git_plan(
     if sign_tag and tag_message_file is not None:
         fp = str(tag_message_file).replace('"', '\\"')
         if args.force_tag:
-            step(f'git tag -f -s -a {tag} -F "{fp}"', step_id="")
+            step(
+                f'git tag -f --cleanup=verbatim -s -a {tag} -F "{fp}"',
+                step_id="",
+            )
         else:
-            step(f'git tag -s -a {tag} -F "{fp}"', step_id=plan_analysis.TAG)
+            step(
+                f'git tag --cleanup=verbatim -s -a {tag} -F "{fp}"',
+                step_id=plan_analysis.TAG,
+            )
     elif sign_tag:
         if args.force_tag:
             step(f"git tag -f -s -a {tag} -m {tag}", step_id="")
@@ -902,9 +910,15 @@ def _print_git_plan(
     elif tag_message_file is not None:
         fp = str(tag_message_file).replace('"', '\\"')
         if args.force_tag:
-            step(f'git tag -f -a {tag} -F "{fp}"', step_id="")
+            step(
+                f'git tag -f --cleanup=verbatim -a {tag} -F "{fp}"',
+                step_id="",
+            )
         else:
-            step(f'git tag -a {tag} -F "{fp}"', step_id=plan_analysis.TAG)
+            step(
+                f'git tag --cleanup=verbatim -a {tag} -F "{fp}"',
+                step_id=plan_analysis.TAG,
+            )
     elif args.force_tag:
         step(f"git tag -f {tag}", step_id="")
     else:
