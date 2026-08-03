@@ -12,7 +12,9 @@ namespace STS2RitsuLib.Settings
     {
         private const float TileWidth = 232f;
         private const float TileHeight = 324f;
+        private const int ContentEdgePadding = 18;
         private readonly HFlowContainer _flow;
+        private readonly MarginContainer _frame;
         private readonly Action<int> _selected;
         private IReadOnlyList<RitsuDebugStatePresetCard> _cards = [];
         private int _selectedIndex = -1;
@@ -24,6 +26,18 @@ namespace STS2RitsuLib.Settings
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             SizeFlagsVertical = SizeFlags.ExpandFill;
             HorizontalScrollMode = ScrollMode.Disabled;
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(this);
+            _frame = new()
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            _frame.AddThemeConstantOverride("margin_left", ContentEdgePadding);
+            _frame.AddThemeConstantOverride("margin_top", ContentEdgePadding);
+            _frame.AddThemeConstantOverride("margin_right", ContentEdgePadding);
+            _frame.AddThemeConstantOverride("margin_bottom", ContentEdgePadding);
+            AddChild(_frame);
             _flow = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -32,7 +46,9 @@ namespace STS2RitsuLib.Settings
             };
             _flow.AddThemeConstantOverride("h_separation", 14);
             _flow.AddThemeConstantOverride("v_separation", 18);
-            AddChild(_flow);
+            _frame.AddChild(_flow);
+            GetVScrollBar().VisibilityChanged += SyncScrollGutter;
+            SyncScrollGutter();
         }
 
         internal void SetCards(IReadOnlyList<RitsuDebugStatePresetCard> cards, int selectedIndex)
@@ -110,7 +126,8 @@ namespace STS2RitsuLib.Settings
 
             holder.SetMeta(RitsuDebugCardCatalog.HolderMetaKey, true);
             holder.Scale = holder.SmallScale;
-            holder.Position = new(TileWidth * 0.5f, 148f);
+            var visualCenter = RitsuDebugCardCatalog.HolderVisualBounds.GetCenter() * holder.Scale;
+            holder.Position = new Vector2(TileWidth * 0.5f, TileHeight * 0.5f) - visualCenter;
             holder.MouseFilter = MouseFilterEnum.Pass;
             holder.Pressed += _ => _selected(index);
             canvas.AddChild(holder);
@@ -164,6 +181,17 @@ namespace STS2RitsuLib.Settings
         private static string L(string key, string fallback)
         {
             return ModSettingsLocalization.Get(key, fallback);
+        }
+
+        private void SyncScrollGutter()
+        {
+            var gutter = ContentEdgePadding;
+            if (GetVScrollBar().Visible)
+                gutter += ModSettingsUiControlTheming.ResolveSettingsScrollContentRightGutter(this);
+            if (_frame.GetThemeConstant("margin_right") == gutter)
+                return;
+            _frame.AddThemeConstantOverride("margin_right", gutter);
+            _frame.QueueSort();
         }
     }
 }

@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Ui.Catalog;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -26,13 +27,14 @@ namespace STS2RitsuLib.Settings
         private const float CardHeight = 295.4f;
         private const float CardHorizontalGap = 24f;
         private const float CardVerticalGap = 32f;
-        private const float CardHorizontalPadding = 12f;
-        private const float CardVerticalPadding = 16f;
-        private const float CardSelectionFrameMargin = 7f;
+        private const float CardHorizontalPadding = 32f;
+        private const float CardVerticalPadding = 36f;
+        private const float CardSelectionFrameMargin = 10f;
         private const float DetailDrawerWidth = 400f;
         private const int OverscanRows = 2;
         internal static readonly Vector2 HolderScale = Vector2.One * 0.7f;
         internal static readonly Vector2 HolderHoverScale = HolderScale * 1.1f;
+        internal static readonly Rect2 HolderVisualBounds = new(-166f, -227f, 330f, 450f);
 
         private static readonly List<(CardSortField Field, bool Ascending)> SortPriority =
         [
@@ -371,7 +373,7 @@ namespace STS2RitsuLib.Settings
             detailHeader.AddChild(new ModSettingsTextButton(
                 "×",
                 ModSettingsButtonTone.Normal,
-                CloseDetailDrawer)
+                () => CloseDetailDrawer(Sts2InputCompat.IsUsingDirectionalNavigation))
             {
                 TooltipText = ModSettingsLocalization.Get("ritsulib.catalog.closeDetails", "Close details"),
                 CustomMinimumSize = new(42f, 38f),
@@ -718,12 +720,6 @@ namespace STS2RitsuLib.Settings
                 holder.Modulate = selected
                     ? Colors.White
                     : new(0.9f, 0.9f, 0.93f);
-                selectionFrame.Position = holder.Position - new Vector2(
-                    CardWidth * 0.5f + CardSelectionFrameMargin,
-                    CardHeight * 0.5f + CardSelectionFrameMargin);
-                selectionFrame.Size = new(
-                    CardWidth + CardSelectionFrameMargin * 2f,
-                    CardHeight + CardSelectionFrameMargin * 2f);
                 selectionFrame.Visible = selected;
                 holder.Show();
             }
@@ -755,7 +751,11 @@ namespace STS2RitsuLib.Settings
                 };
                 selectionFrame.AddThemeStyleboxOverride("panel",
                     RitsuShellChromeStyles.CreateSelectedListItemCardStyle());
-                _canvas.AddChild(selectionFrame);
+                var selectionBounds = HolderVisualBounds.Grow(CardSelectionFrameMargin);
+                selectionFrame.Position = selectionBounds.Position;
+                selectionFrame.Size = selectionBounds.Size;
+                holder.AddChild(selectionFrame);
+                holder.MoveChild(selectionFrame, 0);
                 _canvas.AddChild(holder);
                 card.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
                 _selectionFrames.Add(selectionFrame);
@@ -824,12 +824,18 @@ namespace STS2RitsuLib.Settings
             AnimateDetailDrawer(true);
         }
 
-        private void CloseDetailDrawer()
+        private void CloseDetailDrawer(bool restoreFocus = true)
         {
             var itemId = _selectedItemId;
             _selectedItemId = null;
             RebuildDetail();
             RefreshGrid();
+            if (!restoreFocus)
+            {
+                GetViewport().GuiReleaseFocus();
+                return;
+            }
+
             if (itemId == null)
                 return;
             Callable.From(() =>
@@ -894,7 +900,7 @@ namespace STS2RitsuLib.Settings
         {
             if (inputEvent is not InputEventMouseButton { Pressed: true })
                 return;
-            CloseDetailDrawer();
+            CloseDetailDrawer(false);
             GetViewport().SetInputAsHandled();
         }
 
