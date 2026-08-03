@@ -46,6 +46,7 @@ namespace STS2RitsuLib.Settings
         private ulong[] _targetPlayerIds = [];
         private ulong? _targetPlayerNetId;
         private uint? _selectedCreatureCombatId;
+        private string? _selectedCreaturePresetId;
 
         internal string CurrentPageId { get; private set; } = $"{Const.ModId}:cards";
 

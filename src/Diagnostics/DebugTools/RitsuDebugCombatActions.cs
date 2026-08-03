@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const string ApplyPowerActionId = "combat.power.apply";
         internal const string RemovePowerActionId = "combat.power.remove";
         internal const int MaxAmount = 999_999;
-        private const int MaxEnemyCount = 64;
+        internal const int MaxEnemyCount = 64;
 
         internal static void RegisterBuiltInActions()
         {
@@ -59,6 +59,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 RemovePowerActionId,
                 ValidateRemovePower,
                 ExecuteRemovePowerAsync);
+            RitsuDebugCreaturePresetActions.RegisterBuiltInActions();
         }
 
         internal static RitsuDebugActionSubmission SubmitModifyCreature(
@@ -594,13 +595,13 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
         }
 
-        private static void PreloadMonsterAssets(MonsterModel monster)
+        internal static void PreloadMonsterAssets(MonsterModel monster)
         {
             foreach (var path in monster.AssetPaths)
                 _ = PreloadManager.Cache.GetAsset<Resource>(path);
         }
 
-        private static bool TryRequireCombat(out RitsuDebugActionFeedback feedback)
+        internal static bool TryRequireCombat(out RitsuDebugActionFeedback feedback)
         {
             if (CombatManager.Instance.IsInProgress && !CombatManager.Instance.IsOverOrEnding &&
                 CombatManager.Instance.DebugOnlyGetState() != null)
@@ -630,7 +631,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             };
         }
 
-        private static void RepositionSlotlessEnemies(ICombatState combatState)
+        internal static void RepositionSlotlessEnemies(ICombatState combatState)
         {
             var combatRoom = NCombatRoom.Instance;
             if (combatRoom == null)

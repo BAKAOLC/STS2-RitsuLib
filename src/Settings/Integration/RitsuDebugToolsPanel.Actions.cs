@@ -802,6 +802,7 @@ namespace STS2RitsuLib.Settings
                 creature.CurrentHp.ToString(), creature.IsPlayer ? 1 : 0, creature.MaxHp);
             AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.SetMaxHp,
                 creature.MaxHp.ToString(), Math.Max(1, creature.CurrentHp), RitsuDebugCombatActions.MaxAmount);
+            AddCreaturePresetManager(root, creature);
             AddCurrentPowerManager(root, () => combatId, true);
 
             var directActions = new List<(string Text, ModSettingsButtonTone Tone, Action Action)>();
