@@ -97,11 +97,11 @@ namespace STS2RitsuLib.Settings
                         ? (MonsterModel)monster.MutableClone()
                         : monster.ToMutable();
                     previewMonster.Rng = Rng.Chaotic;
-                    previewMonster.RunRng = new(Rng.Chaotic);
+                    previewMonster.RunRng = new(string.Empty);
                     previewMonster.SetUpForCombat();
                     var entity = new Creature(previewMonster, CombatSide.Enemy, null)
                     {
-                        CombatState = NullCombatState.Instance,
+                        CombatState = new NullCombatState(),
                     };
                     var creature = NCreature.Create(entity);
                     if (creature == null || !IsInstanceValid(creature))
