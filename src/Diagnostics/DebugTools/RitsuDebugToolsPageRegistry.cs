@@ -6,10 +6,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Supplies the current player selection and refresh capability to a registered developer-tools page.
+    ///         Supplies player selection, refresh, and page navigation to a registered developer-tools page.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         向已注册的开发者工具页面提供当前玩家选择与刷新能力。
+    ///         向已注册的开发者工具页面提供玩家选择、刷新与页面导航能力。
     ///     </para>
     /// </summary>
     /// <remarks>
@@ -25,15 +25,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     public sealed class RitsuDebugToolsPageContext
     {
         private readonly Action _requestRefresh;
+        private readonly Func<string, bool> _tryNavigateToPage;
 
         internal RitsuDebugToolsPageContext(
             Player? targetPlayer,
             IReadOnlyList<Player> players,
-            Action requestRefresh)
+            Action requestRefresh,
+            Func<string, bool> tryNavigateToPage)
         {
             TargetPlayer = targetPlayer;
             Players = players;
             _requestRefresh = requestRefresh;
+            _tryNavigateToPage = tryNavigateToPage;
         }
 
         /// <summary>
@@ -60,6 +63,39 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         public void RequestRefresh()
         {
             _requestRefresh();
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Opens another currently available developer-tools page by its qualified
+        ///         <c>modId:pageId</c> identity.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         通过 <c>modId:pageId</c> 全局标识打开另一个当前可用的开发者工具页面。
+        ///     </para>
+        /// </summary>
+        /// <param name="qualifiedPageId">
+        ///     <para xml:lang="en">The qualified identity of the destination page.</para>
+        ///     <para xml:lang="zh-CN">目标页面的全局标识。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         <see langword="true" /> when the destination is currently available and was opened; otherwise,
+        ///         <see langword="false" />. Opening the current page also returns <see langword="true" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当目标页面当前可用且已打开时返回 <see langword="true" />，否则返回 <see langword="false" />；
+        ///         打开当前页面同样返回 <see langword="true" />。
+        ///     </para>
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">Thrown when <paramref name="qualifiedPageId" /> is blank.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="qualifiedPageId" /> 为空时抛出。</para>
+        /// </exception>
+        public bool TryNavigateToPage(string qualifiedPageId)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(qualifiedPageId);
+            return _tryNavigateToPage(qualifiedPageId);
         }
     }
 

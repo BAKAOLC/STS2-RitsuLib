@@ -315,7 +315,7 @@ namespace STS2RitsuLib.Settings
             var target = _targetPlayerNetId.HasValue
                 ? players.FirstOrDefault(player => player.NetId == _targetPlayerNetId.Value)
                 : null;
-            return new(target, Array.AsReadOnly(players), ScheduleRefresh);
+            return new(target, Array.AsReadOnly(players), ScheduleRefresh, SelectPage);
         }
 
         private bool IsExternalPageVisible(
