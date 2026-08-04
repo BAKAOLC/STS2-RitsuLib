@@ -62,6 +62,7 @@ namespace STS2RitsuLib.Data
                                 new RitsuLibSettingsV15ToV16Migration(),
                                 new RitsuLibSettingsV16ToV17Migration(),
                             ]);
+                        RitsuDebugToolsInterfaceStateStore.Register(Store);
                         Store.Register<RitsuDebugStatePresetCollection>(
                             RitsuDebugStatePresetStore.DataKey,
                             RitsuDebugStatePresetStore.FileName,

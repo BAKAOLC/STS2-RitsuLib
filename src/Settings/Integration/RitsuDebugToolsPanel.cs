@@ -43,6 +43,7 @@ namespace STS2RitsuLib.Settings
         private RitsuToastHandle? _creaturePickingToast;
         private ModSettingsDropdownChoiceControl<uint>? _creatureTargetDropdown;
         private Control? _currentBrowser;
+        private IDisposable? _modelRegistryInitializedSubscription;
         private RitsuDebugToolsPageView[] _pages = [];
         private bool _refreshScheduled;
         private uint? _selectedCreatureCombatId;
@@ -76,6 +77,8 @@ namespace STS2RitsuLib.Settings
         {
             RitsuDebugActionProtocol.ActionExecuted += OnDebugActionExecuted;
             RitsuDebugToolsPageRegistry.Changed += OnPageRegistryChanged;
+            _modelRegistryInitializedSubscription =
+                RitsuLibFramework.SubscribeLifecycle<ModelRegistryInitializedEvent>(_ => ScheduleRefresh());
             CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
             CombatManager.Instance.CombatEnded += OnCombatEnded;
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -104,6 +107,8 @@ namespace STS2RitsuLib.Settings
             FinishCreaturePicking(false);
             RitsuDebugActionProtocol.ActionExecuted -= OnDebugActionExecuted;
             RitsuDebugToolsPageRegistry.Changed -= OnPageRegistryChanged;
+            _modelRegistryInitializedSubscription?.Dispose();
+            _modelRegistryInitializedSubscription = null;
             CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
             CombatManager.Instance.CombatEnded -= OnCombatEnded;
             base._ExitTree();

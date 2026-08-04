@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -67,9 +68,11 @@ namespace STS2RitsuLib.Ui.Overlay
             ZIndex = 40;
             BuildLayout();
             GetViewport().SizeChanged += OnViewportSizeChanged;
+            RitsuDebugToolsInterfaceStateStore.StateRestored += OnInterfaceStateRestored;
             SetProcess(false);
             SetProcessUnhandledInput(false);
             SyncAvailability();
+            RestoreSessionVisibility(RitsuDebugToolsInterfaceStateStore.IsVisible());
         }
 
         public override void _Process(double delta)
@@ -98,6 +101,7 @@ namespace STS2RitsuLib.Ui.Overlay
             Panel.PageChanged -= OnPageChanged;
             Panel.CreaturePickingStarted -= OnCreaturePickingStarted;
             Panel.CreaturePickingFinished -= OnCreaturePickingFinished;
+            RitsuDebugToolsInterfaceStateStore.StateRestored -= OnInterfaceStateRestored;
             _railTween?.Kill();
             _railTween = null;
             ReleaseQuickTooltipTiming();
@@ -130,6 +134,8 @@ namespace STS2RitsuLib.Ui.Overlay
             }
 
             SyncAvailability();
+            if (available)
+                RestoreSessionVisibility(RitsuDebugToolsInterfaceStateStore.IsVisible());
         }
 
         internal void SetSuppressed(bool suppressed)
@@ -146,12 +152,15 @@ namespace STS2RitsuLib.Ui.Overlay
             SyncAvailability();
         }
 
-        internal void Expand(string? pageId = null)
+        internal void Expand(string? pageId = null, bool remember = true)
         {
             if (!_available || _suppressed || !_layoutBuilt)
                 return;
             Panel.CancelCreaturePicking();
+            var wasSessionVisible = SessionVisible;
             SessionVisible = true;
+            if (remember && !wasSessionVisible)
+                RitsuDebugToolsInterfaceStateStore.RememberVisibility(true);
             SyncAvailability();
             if (!string.IsNullOrWhiteSpace(pageId))
                 Panel.SelectPage(pageId);
@@ -181,10 +190,13 @@ namespace STS2RitsuLib.Ui.Overlay
             _workspaceTween.TweenCallback(Callable.From(() => _workspaceTween = null));
         }
 
-        internal void HideForSession()
+        internal void HideForSession(bool remember = true)
         {
             Panel.CancelCreaturePicking();
+            var wasSessionVisible = SessionVisible;
             SessionVisible = false;
+            if (remember && wasSessionVisible)
+                RitsuDebugToolsInterfaceStateStore.RememberVisibility(false);
             Collapse(true);
             SyncAvailability();
         }
@@ -455,6 +467,28 @@ namespace STS2RitsuLib.Ui.Overlay
             _pageTitle.Text = page.Title;
             RecalculateWorkspaceWidth(_workspaceMover.Visible);
             RefreshPageButtonStyles();
+        }
+
+        private void OnInterfaceStateRestored(bool isVisible)
+        {
+            Callable.From(() =>
+            {
+                if (IsInstanceValid(this) && IsInsideTree())
+                    RestoreSessionVisibility(isVisible);
+            }).CallDeferred();
+        }
+
+        private void RestoreSessionVisibility(bool isVisible)
+        {
+            if (!isVisible)
+            {
+                HideForSession(false);
+                return;
+            }
+
+            SessionVisible = true;
+            Collapse(true);
+            SyncAvailability();
         }
 
         private void RefreshPageButtonStyles()

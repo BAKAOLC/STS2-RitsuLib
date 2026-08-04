@@ -472,7 +472,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 {
                     existing.Show();
                     existing.MoveToFront();
-                    _debugToolsDock?.HideForSession();
+                    _debugToolsDock?.HideForSession(false);
                     RefreshCombatFloatingLayerVisibility();
                     return;
                 }
@@ -506,7 +506,7 @@ namespace STS2RitsuLib.Ui.Overlay
             window.Closed += OnMonsterIntentWindowClosed;
             _combatFloatingLayer.AddChild(window);
             _monsterIntentWindows[combatId] = window;
-            _debugToolsDock?.HideForSession();
+            _debugToolsDock?.HideForSession(false);
             RefreshCombatFloatingLayerVisibility();
             Callable.From(() => PositionMonsterIntentWindow(window, combatId)).CallDeferred();
         }
