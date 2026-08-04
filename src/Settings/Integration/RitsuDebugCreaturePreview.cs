@@ -61,7 +61,7 @@ namespace STS2RitsuLib.Settings
             };
             _viewportContainer.AddChild(_viewport);
 
-            var names = new Label
+            var names = new RitsuShellTooltipLabel
             {
                 Text = _monsters.Length == 0
                     ? ModSettingsLocalization.Get("ritsulib.debugTools.previewUnavailable", "Preview unavailable")
@@ -69,7 +69,7 @@ namespace STS2RitsuLib.Settings
                 HorizontalAlignment = HorizontalAlignment.Center,
                 ClipText = true,
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-                TooltipText = string.Join('\n', _monsters.Select(monster => $"{ResolveTitle(monster)}\n{monster.Id}")),
+                TooltipText = BuildTooltip(_monsters),
                 MouseFilter = MouseFilterEnum.Pass,
             };
             names.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
@@ -86,6 +86,16 @@ namespace STS2RitsuLib.Settings
         {
             _creatures.Clear();
             base._ExitTree();
+        }
+
+        private static string BuildTooltip(IReadOnlyList<MonsterModel> monsters)
+        {
+            if (monsters.Count == 0)
+                return ModSettingsLocalization.Get("ritsulib.debugTools.previewUnavailable", "Preview unavailable");
+
+            var title = string.Join(" · ", monsters.Select(ResolveTitle));
+            var identities = monsters.Select(monster => $"{ResolveTitle(monster)} · {monster.Id}");
+            return $"{title}\n{string.Join('\n', identities)}";
         }
 
         private void BuildVisuals()

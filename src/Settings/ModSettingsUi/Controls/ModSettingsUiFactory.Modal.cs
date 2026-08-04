@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Ui;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -11,7 +12,7 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public static partial class ModSettingsUiFactory
     {
-        private const int ModalCanvasLayer = 120;
+        private const int ModalCanvasLayer = RitsuUiLayer.Modal;
 
         /// <summary>
         ///     <para xml:lang="en">

@@ -243,7 +243,7 @@ namespace STS2RitsuLib.Settings
                     Alignment = HorizontalAlignment.Left,
                     CustomMinimumSize = new(0f, 36f),
                     SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                    TooltipText = PresetSummary(preset),
+                    TooltipText = $"{preset.Name}\n{PresetSummary(preset)}",
                 };
                 ApplySelectionStyle(button, selected);
                 _presetList.AddChild(button);

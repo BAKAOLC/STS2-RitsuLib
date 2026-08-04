@@ -1,5 +1,6 @@
 using Godot;
 using STS2RitsuLib.Platform.Steam;
+using STS2RitsuLib.Ui;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -7,8 +8,6 @@ namespace STS2RitsuLib.Settings
 {
     internal sealed partial class SteamWorkshopImportDialog : CanvasLayer
     {
-        private const int ModalLayer = 132;
-
         private readonly IReadOnlyList<ulong> _itemIds = null!;
         private readonly Dictionary<ulong, RitsuSteamWorkshopItem> _itemsById = [];
         private readonly Action? _onSubscriptionsChanged;
@@ -22,8 +21,8 @@ namespace STS2RitsuLib.Settings
         {
             _itemIds = itemIds;
             _onSubscriptionsChanged = onSubscriptionsChanged;
-            Layer = ModalLayer;
-            Name = "SteamWorkshopImportDialog";
+            Layer = RitsuUiLayer.Dialog;
+            Name = "RitsuModSettingsSteamWorkshopImportDialog";
         }
 
         public SteamWorkshopImportDialog()

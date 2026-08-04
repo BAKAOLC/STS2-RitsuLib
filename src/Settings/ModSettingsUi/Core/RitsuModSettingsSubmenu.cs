@@ -312,7 +312,7 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.None;
             ApplySettingsFocusBehavior();
             ProcessMode = ProcessModeEnum.Inherit;
-            _tooltipTimingScope ??= RitsuShellTooltipTiming.Acquire(0.16d);
+            _tooltipTimingScope ??= RitsuShellTooltipTiming.Acquire(RitsuShellTooltipTiming.StandardDelaySeconds);
             _lastVisibleMirrorRefreshPageKey = null;
             TryStartShellThemeWatcher();
             SyncBirthdayLabelVisibility();

@@ -1,12 +1,11 @@
 using Godot;
+using STS2RitsuLib.Ui;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
     internal static class ModSettingsNativeFileDialogChrome
     {
-        private const int FileDialogLayer = 132;
-
         internal static void Popup(FileDialog dialog)
         {
             var tree = Engine.GetMainLoop() as SceneTree;
@@ -23,7 +22,7 @@ namespace STS2RitsuLib.Settings
             var layer = new CanvasLayer
             {
                 Name = "RitsuModSettingsNativeFileDialogModal",
-                Layer = FileDialogLayer,
+                Layer = RitsuUiLayer.Dialog,
             };
             tree.Root.AddChild(layer);
 
