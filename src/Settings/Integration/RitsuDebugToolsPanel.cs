@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Catalog;
@@ -468,6 +469,10 @@ namespace STS2RitsuLib.Settings
                 return EmptyBrowser(
                     L("ritsulib.debugTools.disabled",
                         "Enable developer tools in RitsuLib settings before opening this workspace."));
+            if (ResolvedModelCache.Phase < ContentRegistryPhase.Resolved)
+                return EmptyBrowser(
+                    L("ritsulib.debugTools.notAvailableYet",
+                        "RitsuLib developer tools are not available yet. Try again after the current screen finishes loading."));
 
             return GetCurrentPage()?.ContentFactory()
                    ?? EmptyBrowser(L("ritsulib.debugTools.noMatches", "No matching items"));
