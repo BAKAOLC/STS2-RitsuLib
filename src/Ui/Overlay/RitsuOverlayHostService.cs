@@ -339,9 +339,8 @@ namespace STS2RitsuLib.Ui.Overlay
         }
     }
 
-    internal sealed partial class RitsuOverlayHost : CanvasLayer
+    internal sealed partial class RitsuOverlayHost : Node
     {
-        private const int OverlayLayer = 180;
         private readonly Dictionary<uint, RitsuFloatingWindow> _monsterIntentWindows = [];
         private bool _backgroundFocusCaptured;
         private Control _combatFloatingLayer = null!;
@@ -367,7 +366,6 @@ namespace STS2RitsuLib.Ui.Overlay
 
         public override void _Ready()
         {
-            Layer = OverlayLayer;
             BuildLayout();
             ActiveScreenContext.Instance.Updated += RefreshCombatFloatingLayerVisibility;
             RefreshCombatFloatingLayerVisibility();
@@ -550,17 +548,27 @@ namespace STS2RitsuLib.Ui.Overlay
 
         private void BuildLayout()
         {
-            var root = new Control { MouseFilter = Control.MouseFilterEnum.Ignore };
-            root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-            AddChild(root);
+            var combatCanvasLayer = new CanvasLayer
+            {
+                Name = "CombatCanvasLayer",
+                Layer = RitsuUiLayer.CombatOverlay,
+            };
+            AddChild(combatCanvasLayer);
 
             _combatFloatingLayer = CreateFullRectLayer("CombatFloatingLayer");
-            root.AddChild(_combatFloatingLayer);
+            combatCanvasLayer.AddChild(_combatFloatingLayer);
             _combatHoverTipLayer = CreateFullRectLayer("CombatHoverTipLayer", 30);
             _combatFloatingLayer.AddChild(_combatHoverTipLayer);
 
+            var workspaceCanvasLayer = new CanvasLayer
+            {
+                Name = "WorkspaceCanvasLayer",
+                Layer = RitsuUiLayer.Workspace,
+            };
+            AddChild(workspaceCanvasLayer);
+
             _workspaceLayer = CreateFullRectLayer("WorkspaceLayer");
-            root.AddChild(_workspaceLayer);
+            workspaceCanvasLayer.AddChild(_workspaceLayer);
             EnsureDebugToolsDock().SetAvailable(RitsuLibSettingsStore.AreDeveloperToolsEnabled());
 
             _fixedBackdrop = new()
@@ -570,7 +578,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 ZIndex = 60,
             };
             _fixedBackdrop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-            root.AddChild(_fixedBackdrop);
+            workspaceCanvasLayer.AddChild(_fixedBackdrop);
 
             _fixedStack = new()
             {
@@ -578,13 +586,13 @@ namespace STS2RitsuLib.Ui.Overlay
                 ZIndex = 70,
             };
             _fixedStack.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-            root.AddChild(_fixedStack);
+            workspaceCanvasLayer.AddChild(_fixedStack);
             _fixedStack.StackModified += OnFixedStackModified;
             _fixedBackdrop.Hide();
             _fixedStack.Hide();
 
             _overlayHoverTipLayer = CreateFullRectLayer("OverlayHoverTipLayer", 100);
-            root.AddChild(_overlayHoverTipLayer);
+            workspaceCanvasLayer.AddChild(_overlayHoverTipLayer);
             SetProcessUnhandledInput(true);
         }
 

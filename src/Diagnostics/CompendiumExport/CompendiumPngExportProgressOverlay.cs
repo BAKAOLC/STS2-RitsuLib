@@ -1,5 +1,6 @@
 using Godot;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Ui;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Diagnostics.CompendiumExport
@@ -13,7 +14,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
 
         private CompendiumPngExportProgressOverlay(int totalSteps, string title)
         {
-            Layer = 128;
+            Layer = RitsuUiLayer.BlockingProgress;
             Name = "RitsuCompendiumPngExportProgress";
 
             var dim = new ColorRect

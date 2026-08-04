@@ -22,7 +22,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         public RitsuToastHost()
         {
-            Layer = 160;
+            Layer = RitsuUiLayer.Toast;
             Name = "RitsuToastHost";
             ProcessMode = ProcessModeEnum.Always;
         }

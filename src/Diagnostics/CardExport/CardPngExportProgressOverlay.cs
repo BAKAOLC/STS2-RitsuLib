@@ -1,5 +1,6 @@
 using Godot;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Ui;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Diagnostics.CardExport
@@ -21,7 +22,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         private CardPngExportProgressOverlay(int totalSteps)
         {
-            Layer = 128;
+            Layer = RitsuUiLayer.BlockingProgress;
             Name = "RitsuCardPngExportProgress";
 
             var dim = new ColorRect
