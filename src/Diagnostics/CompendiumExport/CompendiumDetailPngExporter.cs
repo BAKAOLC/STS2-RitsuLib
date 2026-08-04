@@ -161,6 +161,30 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 request.Relics ? BuildRelicExportList(idFilter) : Array.Empty<RelicModel>();
             IReadOnlyList<PotionModel> potionList =
                 request.Potions ? BuildPotionExportList(idFilter) : Array.Empty<PotionModel>();
+            IReadOnlyList<RelicModel> relicFileNameModels =
+                request.Relics ? BuildRelicExportList(null) : Array.Empty<RelicModel>();
+            IReadOnlyList<PotionModel> potionFileNameModels =
+                request.Potions ? BuildPotionExportList(null) : Array.Empty<PotionModel>();
+            var relicFileStems = CardPngExporter.BuildSafeFileStemLookup(
+                relicFileNameModels,
+                relic => relic.Id.Entry,
+                relic =>
+                {
+                    var title = relic.Title;
+                    return title.Exists() ? title.GetFormattedText() : "";
+                },
+                request.UseLocalizedFileNames,
+                "relic");
+            var potionFileStems = CardPngExporter.BuildSafeFileStemLookup(
+                potionFileNameModels,
+                potion => potion.Id.Entry,
+                potion =>
+                {
+                    var title = potion.Title;
+                    return title.Exists() ? title.GetFormattedText() : "";
+                },
+                request.UseLocalizedFileNames,
+                "potion");
             if (request.Potions && potionList.Count == 0)
             {
                 var (allPotions, deprecated, poolEntries) = GetPotionModelDbDiagnostics();
@@ -206,7 +230,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                         }
 
                         progressUi.SetProgress(done, relic.Id.Entry);
-                        var fileName = CardPngExporter.BuildSafeFileStem(relic.Id.Entry, "relic") + "_relic.png";
+                        var fileName = relicFileStems[relic.Id.Entry] + "_relic.png";
                         var filePath = Path.Combine(outDir, fileName);
                         if (await TryCaptureRelicWithRetriesAsync(tree, relic, filePath, scale, includeRelicHover, log,
                                 fileName))
@@ -240,7 +264,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                         }
 
                         progressUi.SetProgress(done, potion.Id.Entry);
-                        var fileName = CardPngExporter.BuildSafeFileStem(potion.Id.Entry, "potion") + "_potion.png";
+                        var fileName = potionFileStems[potion.Id.Entry] + "_potion.png";
                         var filePath = Path.Combine(outDir, fileName);
                         if (await TryCapturePotionWithRetriesAsync(tree, potion, filePath, scale, log, fileName))
                         {

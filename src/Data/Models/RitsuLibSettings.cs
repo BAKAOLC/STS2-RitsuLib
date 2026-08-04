@@ -402,6 +402,15 @@ namespace STS2RitsuLib.Data.Models
 
         /// <summary>
         ///     <para xml:lang="en">
+        ///         Gets or sets whether card export filenames use localized titles instead of model IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置卡牌导出文件名是否使用本地化标题而非模型 ID。</para>
+        /// </summary>
+        [JsonPropertyName("card_png_export_use_localized_file_names")]
+        public bool CardPngExportUseLocalizedFileNames { get; set; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
         ///         Gets or sets whether card exports include an approximate hover-tip-style column on the right.
         ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置卡牌导出是否包含位于右侧的近似悬停提示样式栏。</para>
@@ -452,6 +461,15 @@ namespace STS2RitsuLib.Data.Models
         public string RelicDetailPngExportOutputPath { get; set; } = "";
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether relic export filenames use localized titles instead of model IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置遗物导出文件名是否使用本地化标题而非模型 ID。</para>
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_use_localized_file_names")]
+        public bool RelicDetailPngExportUseLocalizedFileNames { get; set; }
+
+        /// <summary>
         ///     <para xml:lang="en">Gets or sets the render scale for relic-detail exports.</para>
         ///     <para xml:lang="zh-CN">获取或设置遗物详情导出的渲染缩放比例。</para>
         /// </summary>
@@ -478,6 +496,15 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("potion_detail_png_export_output_path")]
         public string PotionDetailPngExportOutputPath { get; set; } = "";
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether potion export filenames use localized titles instead of model IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置药水导出文件名是否使用本地化标题而非模型 ID。</para>
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_use_localized_file_names")]
+        public bool PotionDetailPngExportUseLocalizedFileNames { get; set; }
 
         /// <summary>
         ///     <para xml:lang="en">Gets or sets the render scale for potion-detail exports.</para>

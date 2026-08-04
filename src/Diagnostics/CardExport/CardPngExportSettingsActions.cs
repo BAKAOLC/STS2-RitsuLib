@@ -18,7 +18,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             IModSettingsValueBinding<bool> includeUpgradesBinding,
             IModSettingsValueBinding<double> scaleBinding,
             IModSettingsValueBinding<string> filterBinding,
-            IModSettingsValueBinding<bool> includeHiddenFromLibraryBinding)
+            IModSettingsValueBinding<bool> includeHiddenFromLibraryBinding,
+            IModSettingsValueBinding<bool> useLocalizedFileNamesBinding)
         {
             var rawPath = pathBinding.Read().Trim();
             if (string.IsNullOrWhiteSpace(rawPath))
@@ -45,6 +46,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                     : CardPngExportCaptureMode.CardOnly,
                 IncludeUpgradedVariants = includeUpgradesBinding.Read(),
                 IncludeCardsHiddenFromLibrary = includeHiddenFromLibraryBinding.Read(),
+                UseLocalizedFileNames = useLocalizedFileNamesBinding.Read(),
                 Scale = scale,
                 IdFilterSubstring = string.IsNullOrEmpty(filter) ? null : filter,
                 MaxBaseCards = 0,

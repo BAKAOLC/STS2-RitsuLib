@@ -37,6 +37,12 @@ namespace STS2RitsuLib.Settings
                                 "ritsulib.cardPngExport.browseTitle",
                                 "Choose card PNG export folder"))
                         .AddToggle(
+                            "card_png_export_use_localized_file_names",
+                            T("ritsulib.cardPngExport.localizedFileNames.label", "Use localized filenames"),
+                            ui.CardPngExportUseLocalizedFileNames,
+                            T("ritsulib.cardPngExport.localizedFileNames.description",
+                                "Use card titles in the current game language. Missing titles fall back to model IDs; duplicate titles receive a stable suffix."))
+                        .AddToggle(
                             "card_png_export_include_hover",
                             T("ritsulib.cardPngExport.hover.label", "Include hover-tip panel"),
                             ui.CardPngExportIncludeHover)
@@ -74,7 +80,8 @@ namespace STS2RitsuLib.Settings
                                 ui.CardPngExportIncludeUpgrades,
                                 ui.CardPngExportScale,
                                 ui.CardPngExportIdFilter,
-                                ui.CardPngExportIncludeHiddenFromLibrary),
+                                ui.CardPngExportIncludeHiddenFromLibrary,
+                                ui.CardPngExportUseLocalizedFileNames),
                             ModSettingsButtonTone.Accent))
                     .AddSection("image_export_relics", section => section
                         .WithTitle(T("ritsulib.section.imagePngExport.relics", "Relics"))
@@ -96,6 +103,12 @@ namespace STS2RitsuLib.Settings
                                 "RelicDetailPngExport",
                                 "ritsulib.relicDetailPngExport.browseTitle",
                                 "Choose relic detail PNG export folder"))
+                        .AddToggle(
+                            "relic_detail_png_export_use_localized_file_names",
+                            T("ritsulib.relicDetailPngExport.localizedFileNames.label", "Use localized filenames"),
+                            ui.RelicDetailPngExportUseLocalizedFileNames,
+                            T("ritsulib.relicDetailPngExport.localizedFileNames.description",
+                                "Use relic titles in the current game language. Missing titles fall back to model IDs; duplicate titles receive a stable suffix."))
                         .AddSlider(
                             "relic_detail_png_export_scale",
                             T("ritsulib.relicDetailPngExport.scale.label", "Render scale"),
@@ -126,7 +139,8 @@ namespace STS2RitsuLib.Settings
                                 ui.RelicDetailPngExportOutputPath,
                                 ui.RelicDetailPngExportScale,
                                 ui.RelicDetailPngExportIdFilter,
-                                ui.RelicDetailPngExportIncludeHover),
+                                ui.RelicDetailPngExportIncludeHover,
+                                ui.RelicDetailPngExportUseLocalizedFileNames),
                             ModSettingsButtonTone.Accent))
                     .AddSection("image_export_potions", section => section
                         .WithTitle(T("ritsulib.section.imagePngExport.potions", "Potions"))
@@ -148,6 +162,12 @@ namespace STS2RitsuLib.Settings
                                 "PotionDetailPngExport",
                                 "ritsulib.potionDetailPngExport.browseTitle",
                                 "Choose potion detail PNG export folder"))
+                        .AddToggle(
+                            "potion_detail_png_export_use_localized_file_names",
+                            T("ritsulib.potionDetailPngExport.localizedFileNames.label", "Use localized filenames"),
+                            ui.PotionDetailPngExportUseLocalizedFileNames,
+                            T("ritsulib.potionDetailPngExport.localizedFileNames.description",
+                                "Use potion titles in the current game language. Missing titles fall back to model IDs; duplicate titles receive a stable suffix."))
                         .AddSlider(
                             "potion_detail_png_export_scale",
                             T("ritsulib.potionDetailPngExport.scale.label", "Render scale"),
@@ -171,7 +191,8 @@ namespace STS2RitsuLib.Settings
                             () => CompendiumPngExportSettingsActions.TryBeginPotionDetailFromSettings(
                                 ui.PotionDetailPngExportOutputPath,
                                 ui.PotionDetailPngExportScale,
-                                ui.PotionDetailPngExportIdFilter),
+                                ui.PotionDetailPngExportIdFilter,
+                                ui.PotionDetailPngExportUseLocalizedFileNames),
                             ModSettingsButtonTone.Accent)),
                 "image-png-export");
         }

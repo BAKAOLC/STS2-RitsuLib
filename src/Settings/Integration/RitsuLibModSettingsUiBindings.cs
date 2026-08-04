@@ -74,6 +74,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<double> ToastDurationSeconds { get; private init; } = null!;
         public IModSettingsValueBinding<string> ToastAnimation { get; private init; } = null!;
         public IModSettingsValueBinding<string> CardPngExportOutputPath { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> CardPngExportUseLocalizedFileNames { get; private init; } = null!;
         public IModSettingsValueBinding<bool> CardPngExportIncludeHover { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> CardPngExportIncludeUpgrades { get; private init; } =
@@ -88,6 +89,9 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<string> RelicDetailPngExportOutputPath { get; private init; } =
             null!;
 
+        public IModSettingsValueBinding<bool> RelicDetailPngExportUseLocalizedFileNames { get; private init; } =
+            null!;
+
         public IModSettingsValueBinding<double> RelicDetailPngExportScale { get; private init; } =
             null!;
 
@@ -98,6 +102,9 @@ namespace STS2RitsuLib.Settings
             null!;
 
         public IModSettingsValueBinding<string> PotionDetailPngExportOutputPath { get; private init; } =
+            null!;
+
+        public IModSettingsValueBinding<bool> PotionDetailPngExportUseLocalizedFileNames { get; private init; } =
             null!;
 
         public IModSettingsValueBinding<double> PotionDetailPngExportScale { get; private init; } =
@@ -531,6 +538,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.CardPngExportOutputPath,
                         (settings, value) => settings.CardPngExportOutputPath = value),
                     () => defaults.CardPngExportOutputPath),
+                CardPngExportUseLocalizedFileNames = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.CardPngExportUseLocalizedFileNames,
+                        (settings, value) => settings.CardPngExportUseLocalizedFileNames = value),
+                    () => defaults.CardPngExportUseLocalizedFileNames),
                 CardPngExportIncludeHover = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
@@ -573,6 +587,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.RelicDetailPngExportOutputPath,
                         (settings, value) => settings.RelicDetailPngExportOutputPath = value),
                     () => defaults.RelicDetailPngExportOutputPath),
+                RelicDetailPngExportUseLocalizedFileNames = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.RelicDetailPngExportUseLocalizedFileNames,
+                        (settings, value) => settings.RelicDetailPngExportUseLocalizedFileNames = value),
+                    () => defaults.RelicDetailPngExportUseLocalizedFileNames),
                 RelicDetailPngExportScale = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, double>(
                         Const.ModId,
@@ -601,6 +622,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.PotionDetailPngExportOutputPath,
                         (settings, value) => settings.PotionDetailPngExportOutputPath = value),
                     () => defaults.PotionDetailPngExportOutputPath),
+                PotionDetailPngExportUseLocalizedFileNames = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.PotionDetailPngExportUseLocalizedFileNames,
+                        (settings, value) => settings.PotionDetailPngExportUseLocalizedFileNames = value),
+                    () => defaults.PotionDetailPngExportUseLocalizedFileNames),
                 PotionDetailPngExportScale = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, double>(
                         Const.ModId,
