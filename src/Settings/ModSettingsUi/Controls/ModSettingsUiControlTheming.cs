@@ -260,7 +260,7 @@ namespace STS2RitsuLib.Settings
         /// </returns>
         public static Button CreateSettingsToggleButton(string text, bool pressed)
         {
-            var button = new Button
+            var button = new ModSettingsGamepadCompatibleButton
             {
                 Text = text,
                 ToggleMode = true,
@@ -301,7 +301,7 @@ namespace STS2RitsuLib.Settings
         /// </returns>
         public static Button CreateCompactSettingsToggleButton(string text, bool pressed)
         {
-            var button = new Button
+            var button = new ModSettingsGamepadCompatibleButton
             {
                 Text = text,
                 ToggleMode = true,

@@ -417,8 +417,10 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugToolsGlyph.Search,
                 18,
                 RitsuShellTheme.Current.Text.LabelPrimary);
-            _quickSearchButton.TooltipText = ModSettingsLocalization.Get("search.buttonTooltip",
-                "Search all settings (double-tap Shift)");
+            _quickSearchButton.TooltipText =
+                $"{ModSettingsLocalization.Get("search.buttonTooltip", "Search all settings")}\n" +
+                ModSettingsLocalization.Get("search.buttonShortcut",
+                    "Shortcut: double-tap Shift");
         }
 
         private bool IsQuickSearchShortcutClaimedByFocusedControl()

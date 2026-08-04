@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Settings
 
         private Control CreateTile(RitsuDebugStatePresetCard saved, int index)
         {
-            var tile = new PanelContainer
+            var tile = new RitsuShellTooltipPanelContainer
             {
                 CustomMinimumSize = new(TileWidth, TileHeight),
                 MouseFilter = MouseFilterEnum.Stop,

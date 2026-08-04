@@ -1008,7 +1008,7 @@ namespace STS2RitsuLib.Ui.Catalog
             return $"{item.Title}\n{item.Subtitle}\n{item.Id}";
         }
 
-        private sealed partial class CatalogTile : Button
+        private sealed partial class CatalogTile : ModSettingsGamepadCompatibleButton
         {
             private readonly Label _badge;
             private readonly TextureRect _icon;
@@ -1110,7 +1110,7 @@ namespace STS2RitsuLib.Ui.Catalog
             }
         }
 
-        private sealed partial class CatalogRow : Button
+        private sealed partial class CatalogRow : ModSettingsGamepadCompatibleButton
         {
             private readonly Label _badge;
             private readonly TextureRect _icon;

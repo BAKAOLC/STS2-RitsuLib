@@ -114,7 +114,7 @@ namespace STS2RitsuLib.Settings
 
         private Button CreateTile(RitsuDebugEnchantmentOption option)
         {
-            var tile = new Button
+            var tile = new ModSettingsGamepadCompatibleButton
             {
                 CustomMinimumSize = new(TileMinimumWidth, TileHeight),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -234,7 +234,7 @@ namespace STS2RitsuLib.Settings
                 ? selectedTitle
                 : ModSettingsLocalization.Get("ritsulib.debugTools.noEnchantment", "None selected");
             _header.Text = $"{_title} · {selection}  {(_expanded ? "▾" : "▸")}";
-            _header.TooltipText = selection;
+            _header.TooltipText = $"{_title}\n{selection}";
             ModSettingsUiControlTheming.RefreshAdaptiveButtonText(_header);
         }
 

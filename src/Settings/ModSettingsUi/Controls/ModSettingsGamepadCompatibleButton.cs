@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Ui.Shell;
 
 namespace STS2RitsuLib.Settings
 {
@@ -17,6 +18,12 @@ namespace STS2RitsuLib.Settings
         public ModSettingsGamepadCompatibleButton()
         {
             ClipContents = false;
+        }
+
+        /// <inheritdoc />
+        public override Control _MakeCustomTooltip(string forText)
+        {
+            return RitsuShellTooltipCard.Create(forText);
         }
 
         /// <summary>

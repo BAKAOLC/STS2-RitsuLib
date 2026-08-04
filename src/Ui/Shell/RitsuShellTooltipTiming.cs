@@ -6,6 +6,7 @@ namespace STS2RitsuLib.Ui.Shell
     {
         private const double DefaultDelaySeconds = 0.5d;
         private const string TooltipDelaySetting = "gui/timers/tooltip_delay_sec";
+        internal const double StandardDelaySeconds = 0.18d;
         private static readonly Dictionary<long, double> Requests = [];
         private static readonly Lock SyncRoot = new();
         private static double _baselineDelay;

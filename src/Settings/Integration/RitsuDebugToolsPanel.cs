@@ -203,16 +203,18 @@ namespace STS2RitsuLib.Settings
             };
             toolbar.AddChild(_creatureTargetDropdown);
 
+            var pickCreatureLabel = L("ritsulib.debugTools.action.pickCreature", "Pick creature");
             _creaturePickButton = new ModSettingsTextButton(
-                L("ritsulib.debugTools.action.pickCreature", "Pick creature"),
+                pickCreatureLabel,
                 ModSettingsButtonTone.Accent,
                 ToggleCreaturePicking)
             {
                 SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
                 CustomMinimumSize = new(136f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
-                TooltipText = L(
-                    "ritsulib.debugTools.pickCreature.description",
-                    "Close the workspace for one click, then reopen the selected creature's quick editor."),
+                TooltipText = $"{pickCreatureLabel}\n" +
+                              L(
+                                  "ritsulib.debugTools.pickCreature.description",
+                                  "Close the workspace for one click, then reopen the selected creature's quick editor."),
             };
             toolbar.AddChild(_creaturePickButton);
             RefreshCreaturePickButton();

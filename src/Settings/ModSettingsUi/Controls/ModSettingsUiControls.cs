@@ -2075,8 +2075,9 @@ namespace STS2RitsuLib.Settings
 
                 if (optIndex == _selectedIndex)
                 {
-                    row.TooltipText = ModSettingsLocalization.Get("choice.dropdown.currentRow",
-                        "This option is the active setting (shown on the closed control).");
+                    row.TooltipText = $"{row.Text}\n" +
+                                      ModSettingsLocalization.Get("choice.dropdown.currentRow",
+                                          "This option is the active setting (shown on the closed control).");
                     row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
                     row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
                     row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
@@ -2215,10 +2216,11 @@ namespace STS2RitsuLib.Settings
                 ? label
                 : label + ModSettingsLocalization.Get("choice.dropdown.chevronGap", "  ") +
                   ModSettingsLocalization.Get("choice.dropdown.chevron", "\u25be");
-            _faceButton.TooltipText = string.Format(
-                ModSettingsLocalization.Get("choice.dropdown.tooltip",
-                    "Opens a list to choose a value. Current: {0}"),
-                label);
+            _faceButton.TooltipText = $"{ModSettingsLocalization.Get("choice.dropdown.title", "Choose a value")}\n" +
+                                      string.Format(
+                                          ModSettingsLocalization.Get("choice.dropdown.tooltip",
+                                              "Opens a list to choose a value. Current: {0}"),
+                                          label);
             ModSettingsUiControlTheming.RefreshAdaptiveButtonText(_faceButton);
         }
 

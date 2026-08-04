@@ -4,7 +4,9 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
+using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -161,20 +163,39 @@ namespace STS2RitsuLib.Settings
             if (hoverTip == null)
                 return;
 
+            var timer = new Timer
+            {
+                OneShot = true,
+                WaitTime = RitsuShellTooltipTiming.StandardDelaySeconds,
+            };
+            owner.AddChild(timer);
+            var hovered = false;
+
             owner.Connect(Control.SignalName.MouseEntered, Callable.From(OnHovered));
             owner.Connect(Control.SignalName.MouseExited, Callable.From(OnUnhovered));
             owner.Connect(Node.SignalName.TreeExiting, Callable.From(OnUnhovered));
+            timer.Timeout += ShowHoverTip;
 
             return;
 
             void OnHovered()
             {
+                hovered = true;
+                timer.Start();
+            }
+
+            void ShowHoverTip()
+            {
+                if (!hovered || !owner.IsInsideTree())
+                    return;
                 NHoverTipSet.CreateAndShow(owner, hoverTip)
                     ?.SetGlobalPosition(owner.GlobalPosition + NSettingsScreen.settingTipsOffset);
             }
 
             void OnUnhovered()
             {
+                hovered = false;
+                timer.Stop();
                 NHoverTipSet.Remove(owner);
             }
         }

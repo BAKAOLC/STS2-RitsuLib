@@ -8,7 +8,9 @@ using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -25,6 +27,7 @@ namespace STS2RitsuLib.Settings
         private static readonly Color LabelColor = new(0.96f, 0.94f, 0.87f);
         private readonly bool _graphMode;
         private readonly Control _hoverAnchor;
+        private readonly Timer _hoverTimer;
         private readonly Dictionary<string, Rect2> _nodeRects = new(StringComparer.Ordinal);
         private readonly List<RitsuDebugIntentGraphNode> _nodes = [];
         private string? _currentMoveId;
@@ -33,6 +36,7 @@ namespace STS2RitsuLib.Settings
         private string? _hoveredNodeId;
         private Font? _intentValueFont;
         private bool _layoutQueued;
+        private RitsuDebugIntentGraphNode? _pendingHoverNode;
         private string? _unavailableText;
 
         internal RitsuDebugMonsterIntentCanvas(bool graphMode)
@@ -51,6 +55,13 @@ namespace STS2RitsuLib.Settings
                 FocusMode = FocusModeEnum.None,
             };
             AddChild(_hoverAnchor);
+            _hoverTimer = new()
+            {
+                OneShot = true,
+                WaitTime = RitsuShellTooltipTiming.StandardDelaySeconds,
+            };
+            _hoverTimer.Timeout += ShowPendingHoverTip;
+            AddChild(_hoverTimer);
         }
 
         internal string CurrentMoveTitle { get; private set; } = string.Empty;
@@ -344,7 +355,10 @@ namespace STS2RitsuLib.Settings
             HideHoverTip();
             _hoveredNodeId = nodeId;
             if (node != null)
-                ShowNodeHoverTip(node);
+            {
+                _pendingHoverNode = node;
+                _hoverTimer.Start();
+            }
 
             MouseDefaultCursorShape = _graphMode && node != null
                 ? CursorShape.PointingHand
@@ -372,8 +386,18 @@ namespace STS2RitsuLib.Settings
 
         private void HideHoverTip()
         {
+            _hoverTimer.Stop();
+            _pendingHoverNode = null;
             if (IsInstanceValid(_hoverAnchor))
                 NHoverTipSet.Remove(_hoverAnchor);
+        }
+
+        private void ShowPendingHoverTip()
+        {
+            if (_pendingHoverNode is not { } node || node.Id != _hoveredNodeId)
+                return;
+
+            ShowNodeHoverTip(node);
         }
 
         private void ClearHover()

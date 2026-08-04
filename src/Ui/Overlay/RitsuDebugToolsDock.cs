@@ -491,7 +491,7 @@ namespace STS2RitsuLib.Ui.Overlay
 
         private static Button CreateIconButton(Texture2D? icon, string tooltip, Action action)
         {
-            var button = new Button
+            var button = new ModSettingsGamepadCompatibleButton
             {
                 Icon = icon,
                 TooltipText = tooltip,
@@ -541,7 +541,7 @@ namespace STS2RitsuLib.Ui.Overlay
             _railShown = show;
             _collapseAfter = 0d;
             if (show)
-                _tooltipTimingScope ??= RitsuShellTooltipTiming.Acquire(0.12d);
+                _tooltipTimingScope ??= RitsuShellTooltipTiming.Acquire(RitsuShellTooltipTiming.StandardDelaySeconds);
             else
                 ReleaseQuickTooltipTiming();
             _peekTab.Visible = _available && !_suppressed && !show && !Expanded;
