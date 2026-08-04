@@ -4272,7 +4272,10 @@ namespace STS2RitsuLib.Settings
                 return;
 
             foreach (var child in _bindingsList.GetChildren())
+            {
+                _bindingsList.RemoveChild(child);
                 child.QueueFree();
+            }
 
             if (_values.Count == 0)
             {
@@ -4323,6 +4326,12 @@ namespace STS2RitsuLib.Settings
                 BeginAddCapture,
                 ModSettingsLocalization.Get("button.clear", "Clear all"),
                 () => ApplyBindings([], true)));
+
+            _bindingsList.UpdateMinimumSize();
+            _bindingsList.QueueSort();
+            UpdateMinimumSize();
+            QueueSort();
+            ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(this);
         }
 
         private HBoxContainer CreateBindingRow(string primaryText, Action primaryAction, string secondaryText,

@@ -763,7 +763,10 @@ namespace STS2RitsuLib.Settings
             RegisterRefreshWhenAlive(context, bindingsColumn, () =>
             {
                 foreach (var child in bindingsColumn.GetChildren())
+                {
+                    bindingsColumn.RemoveChild(child);
                     child.QueueFree();
+                }
 
                 foreach (var binding in entry.Bindings)
                 {
@@ -788,6 +791,10 @@ namespace STS2RitsuLib.Settings
                     chip.AddChild(chipLabel);
                     bindingsColumn.AddChild(chip);
                 }
+
+                bindingsColumn.UpdateMinimumSize();
+                bindingsColumn.QueueSort();
+                FastVerticalStack.RequestAncestorLayouts(bindingsColumn);
             }, ModSettingsUiRefreshSpec.AnyBindingDirty);
 
             return line;

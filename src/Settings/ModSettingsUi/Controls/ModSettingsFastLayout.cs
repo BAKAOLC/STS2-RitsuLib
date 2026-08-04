@@ -273,11 +273,13 @@ namespace STS2RitsuLib.Settings
                 _label = CreateHeaderLabel(string.Empty, RitsuShellTheme.Current.Metric.FontSize.SettingLineTitle,
                     HorizontalAlignment.Left, null, RitsuShellTheme.Current.Text.RichTitle);
                 _label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                _label.MinimumSizeChanged += OnChildMinimumSizeChanged;
                 AddChild(_label);
 
                 _valueControl = valueControl;
                 if (_valueControl == null) return;
                 PrepareValueControl(_valueControl);
+                _valueControl.MinimumSizeChanged += OnChildMinimumSizeChanged;
                 AddChild(_valueControl);
             }
 
@@ -434,12 +436,18 @@ namespace STS2RitsuLib.Settings
 
             protected void ReplaceValueControl(Control? next)
             {
-                if (_valueControl != null && IsInstanceValid(_valueControl) && _valueControl.GetParent() == this)
-                    RemoveChild(_valueControl);
+                if (_valueControl != null && IsInstanceValid(_valueControl))
+                {
+                    _valueControl.MinimumSizeChanged -= OnChildMinimumSizeChanged;
+                    if (_valueControl.GetParent() == this)
+                        RemoveChild(_valueControl);
+                }
+
                 _valueControl = next;
                 if (_valueControl != null)
                 {
                     PrepareValueControl(_valueControl);
+                    _valueControl.MinimumSizeChanged += OnChildMinimumSizeChanged;
                     if (_valueControl.GetParent() != this)
                         AddChild(_valueControl);
                 }
@@ -451,6 +459,7 @@ namespace STS2RitsuLib.Settings
             {
                 if (_actionControl != null && IsInstanceValid(_actionControl))
                 {
+                    _actionControl.MinimumSizeChanged -= OnChildMinimumSizeChanged;
                     if (_actionControl.GetParent() == this)
                         RemoveChild(_actionControl);
                     _actionControl.QueueFree();
@@ -464,6 +473,7 @@ namespace STS2RitsuLib.Settings
                 }
 
                 _actionControl.SizeFlagsVertical = SizeFlags.ShrinkCenter;
+                _actionControl.MinimumSizeChanged += OnChildMinimumSizeChanged;
                 AddChild(_actionControl);
                 RequestLayout();
             }
@@ -523,6 +533,7 @@ namespace STS2RitsuLib.Settings
                     HorizontalAlignment.Left, null, RitsuShellTheme.Current.Text.RichTitle);
                 ResetSettingTitleLabelLayout(_label);
                 _label.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                _label.MinimumSizeChanged += OnChildMinimumSizeChanged;
                 AddChild(_label);
                 return _label;
             }
@@ -542,8 +553,14 @@ namespace STS2RitsuLib.Settings
                     return _descriptionLabel;
 
                 _descriptionLabel = CreateDescriptionLabel(string.Empty);
+                _descriptionLabel.MinimumSizeChanged += OnChildMinimumSizeChanged;
                 AddChild(_descriptionLabel);
                 return _descriptionLabel;
+            }
+
+            private void OnChildMinimumSizeChanged()
+            {
+                RequestLayout();
             }
 
             private void RequestLayout()
