@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 EditRelicActionId,
                 ValidateEditRelic,
                 ExecuteEditRelicAsync);
-            RitsuDebugActionProtocol.Register<ModelPayload>(
+            RitsuDebugActionProtocol.Register<RelicInstancePayload>(
                 RemoveRelicActionId,
                 ValidateRemoveRelic,
                 ExecuteRemoveRelicAsync);
@@ -72,23 +72,30 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             Player requester,
             Player target,
             string relicId,
-            IReadOnlyDictionary<string, int> dynamicVars)
+            IReadOnlyDictionary<string, int> dynamicVars,
+            int? relicIndex = null)
         {
             ArgumentNullException.ThrowIfNull(dynamicVars);
             var envelope = RitsuDebugActionProtocol.CreateEnvelope(
                 EditRelicActionId,
                 requester,
                 target,
-                new RelicEditPayload(relicId, CopyOverrides(dynamicVars)!));
+                new RelicEditPayload(relicId, relicIndex, CopyOverrides(dynamicVars)!));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
         internal static RitsuDebugActionSubmission SubmitRemoveRelic(
             Player requester,
             Player target,
-            string relicId)
+            string relicId,
+            int? relicIndex = null)
         {
-            return SubmitModel(requester, target, RemoveRelicActionId, relicId);
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                RemoveRelicActionId,
+                requester,
+                target,
+                new RelicInstancePayload(relicId, relicIndex));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
         internal static RitsuDebugActionSubmission SubmitAddPotion(
@@ -198,12 +205,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (!valuesCheck.Success)
                 return valuesCheck;
 
-            return context.Target.GetRelicById(relic.Id) == null
-                ? RitsuDebugActionCheck.Ok
-                : RitsuDebugActionCheck.Fail(
-                    "inventory.relicAlreadyOwned",
-                    "The target player already owns {0}.",
-                    relic.Id);
+            return RitsuDebugActionCheck.Ok;
         }
 
         private static RitsuDebugActionCheck ValidateEditRelic(
@@ -216,7 +218,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "Change at least one model value before applying the edit.");
             if (!TryResolveRelic(payload.ModelId, out var canonical, out var error))
                 return RitsuDebugActionCheck.Fail(error);
-            var relic = context.Target.GetRelicById(canonical.Id);
+            var relic = GetOwnedRelic(context.Target, canonical, payload.RelicIndex);
             return relic == null
                 ? RitsuDebugActionCheck.Fail(
                     "inventory.relicNotOwned",
@@ -227,12 +229,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private static RitsuDebugActionCheck ValidateRemoveRelic(
             RitsuDebugActionContext context,
-            ModelPayload payload)
+            RelicInstancePayload payload)
         {
             if (!TryResolveRelic(payload.ModelId, out var relic, out var error))
                 return RitsuDebugActionCheck.Fail(error);
 
-            return context.Target.GetRelicById(relic.Id) != null
+            return GetOwnedRelic(context.Target, relic, payload.RelicIndex) != null
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(
                     "inventory.relicNotOwned",
@@ -340,7 +342,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RelicEditPayload payload)
         {
             _ = TryResolveRelic(payload.ModelId, out var canonical, out _);
-            var relic = context.Target.GetRelicById(canonical.Id)!;
+            var relic = GetOwnedRelic(context.Target, canonical, payload.RelicIndex)!;
             RitsuDebugModelValueOverrides.Apply(relic.DynamicVars, payload.DynamicVars);
             relic.InvokeExecutionFinished();
             return Task.FromResult($"Updated values for relic {relic.Id}.");
@@ -348,10 +350,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private static async Task<string> ExecuteRemoveRelicAsync(
             RitsuDebugActionContext context,
-            ModelPayload payload)
+            RelicInstancePayload payload)
         {
             _ = TryResolveRelic(payload.ModelId, out var relic, out _);
-            var ownedRelic = context.Target.GetRelicById(relic.Id)!;
+            var ownedRelic = GetOwnedRelic(context.Target, relic, payload.RelicIndex)!;
             await RelicCmd.Remove(ownedRelic);
             return $"Removed relic {relic.Id} from the selected player.";
         }
@@ -445,6 +447,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return index;
 
             return -1;
+        }
+
+        private static RelicModel? GetOwnedRelic(Player player, RelicModel canonical, int? relicIndex)
+        {
+            if (!relicIndex.HasValue)
+                return player.GetRelicById(canonical.Id);
+            return relicIndex.Value >= 0 &&
+                   relicIndex.Value < player.Relics.Count &&
+                   player.Relics[relicIndex.Value].Id == canonical.Id
+                ? player.Relics[relicIndex.Value]
+                : null;
         }
 
         private static bool TryResolvePotionSlot(
@@ -558,7 +571,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal readonly record struct RelicEditPayload(
             string ModelId,
+            int? RelicIndex,
             Dictionary<string, int> DynamicVars);
+
+        internal readonly record struct RelicInstancePayload(string ModelId, int? RelicIndex);
 
         internal readonly record struct PotionSlotPayload(int SlotIndex, string ExpectedPotionId);
 

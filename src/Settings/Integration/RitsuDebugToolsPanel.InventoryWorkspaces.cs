@@ -23,6 +23,7 @@ namespace STS2RitsuLib.Settings
             RitsuCatalogBrowser libraryBrowser)
         {
             var ownedByItemId = new Dictionary<string, RelicModel>(StringComparer.Ordinal);
+            var relicIndexesByItemId = new Dictionary<string, int>(StringComparer.Ordinal);
             var rarityFilter = EnumFilter(
                 "rarity",
                 L("ritsulib.debugTools.filter.rarity", "Rarity"),
@@ -31,8 +32,9 @@ namespace STS2RitsuLib.Settings
                 (item, value) => ownedByItemId.TryGetValue(item.Id, out var model) && model.Rarity == value);
             var ownedBrowser = Browser(
                 L("ritsulib.debugTools.search.ownedRelics", "Search owned relics"),
-                item => ownedByItemId.TryGetValue(item.Id, out var relic)
-                    ? CreateOwnedRelicDetail(relic)
+                item => ownedByItemId.TryGetValue(item.Id, out var relic) &&
+                        relicIndexesByItemId.TryGetValue(item.Id, out var relicIndex)
+                    ? CreateOwnedRelicDetail(relic, relicIndex)
                     : EmptyBrowser(L("ritsulib.debugTools.targetChanged",
                         "The selected target is no longer available.")),
                 [rarityFilter, CreateContentSourceFilter(models, ownedByItemId)],
@@ -81,6 +83,7 @@ namespace STS2RitsuLib.Settings
             {
                 var relics = TryGetTargetPlayer(out var target) ? target.Relics.ToArray() : [];
                 ownedByItemId.Clear();
+                relicIndexesByItemId.Clear();
                 var trashIcon = RitsuDebugToolsIcons.Get(
                     RitsuDebugToolsGlyph.Trash,
                     18,
@@ -89,6 +92,7 @@ namespace STS2RitsuLib.Settings
                 {
                     var itemId = $"{index}:{relic.Id}";
                     ownedByItemId[itemId] = relic;
+                    relicIndexesByItemId[itemId] = index;
                     var source = ContentSourceResolver.Resolve(relic);
                     RitsuCatalogItemAction? quickAction = trashIcon == null
                         ? null
@@ -99,7 +103,8 @@ namespace STS2RitsuLib.Settings
                                 RitsuDebugInventoryActions.SubmitRemoveRelic(
                                     requester,
                                     actionTarget,
-                                    relic.Id.ToString())),
+                                    relic.Id.ToString(),
+                                    index)),
                             RitsuCatalogItemActionTone.Danger);
                     return new RitsuCatalogItem(
                         itemId,
@@ -753,7 +758,7 @@ namespace STS2RitsuLib.Settings
                     : EnumLabel(potion.Rarity));
         }
 
-        private Control CreateOwnedRelicDetail(RelicModel relic)
+        private Control CreateOwnedRelicDetail(RelicModel relic, int relicIndex)
         {
             var source = ContentSourceResolver.Resolve(relic);
             var root = DetailShell(
@@ -766,7 +771,11 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.action.removeRelic", "Remove this relic"),
                 ModSettingsButtonTone.Danger,
                 () => SubmitInventoryAction((requester, target) =>
-                    RitsuDebugInventoryActions.SubmitRemoveRelic(requester, target, relic.Id.ToString()))));
+                    RitsuDebugInventoryActions.SubmitRemoveRelic(
+                        requester,
+                        target,
+                        relic.Id.ToString(),
+                        relicIndex))));
             var settings = CreateAdjustmentContent();
             var dynamicVariables = CreateDynamicVariableEditors(settings, relic.DynamicVars);
             if (dynamicVariables.HasEditors)
@@ -797,7 +806,8 @@ namespace STS2RitsuLib.Settings
                     requester,
                     target,
                     relic.Id.ToString(),
-                    overrides));
+                    overrides,
+                    relicIndex));
             }
         }
 
