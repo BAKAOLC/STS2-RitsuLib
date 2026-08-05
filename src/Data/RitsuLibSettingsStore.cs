@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using GodotColor = Godot.Color;
 using STS2RitsuLib.Data.Migrations;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics.DebugTools;
@@ -172,6 +173,62 @@ namespace STS2RitsuLib.Data
                 ContentSourceDisplayStyle.Id => "id",
                 _ => "name_and_id",
             };
+        }
+
+        internal static ContentSourcePlacement GetModSourceHoverTipsPlacement()
+        {
+            Initialize();
+            return ParseContentSourcePlacement(GetSettings().ModSourceHoverTipsPlacement);
+        }
+
+        internal static string NormalizeModSourceHoverTipsPlacement(string? value)
+        {
+            return ParseContentSourcePlacement(value) == ContentSourcePlacement.Bottom
+                ? "bottom"
+                : RitsuLibSettings.DefaultModSourceHoverTipsPlacement;
+        }
+
+        internal static string GetModSourceHoverTipsColor()
+        {
+            Initialize();
+            return NormalizeModSourceHoverTipsColor(GetSettings().ModSourceHoverTipsColor);
+        }
+
+        internal static string NormalizeModSourceHoverTipsColor(string? value)
+        {
+            var trimmed = value?.Trim();
+            return trimmed != null && GodotColor.HtmlIsValid(trimmed)
+                ? trimmed
+                : RitsuLibSettings.DefaultModSourceHoverTipsColor;
+        }
+
+        internal static bool ShouldSeparateModSourceHoverTipsFromBody()
+        {
+            Initialize();
+            return GetSettings().ModSourceHoverTipsSeparateFromBody;
+        }
+
+        internal static string GetModSourceHoverTipsFormat()
+        {
+            Initialize();
+            return NormalizeModSourceHoverTipsFormat(GetSettings().ModSourceHoverTipsFormat);
+        }
+
+        internal static string NormalizeModSourceHoverTipsFormat(string? value)
+        {
+            var singleLine = PrepareModSourceHoverTipsFormatForEditing(value).Trim();
+            if (singleLine.Length == 0)
+                return RitsuLibSettings.DefaultModSourceHoverTipsFormat;
+
+            return singleLine;
+        }
+
+        internal static string PrepareModSourceHoverTipsFormatForEditing(string? value)
+        {
+            var singleLine = (value ?? string.Empty).Replace('\r', ' ').Replace('\n', ' ');
+            return singleLine.Length <= RitsuLibSettings.MaxModSourceHoverTipsFormatLength
+                ? singleLine
+                : singleLine[..RitsuLibSettings.MaxModSourceHoverTipsFormatLength];
         }
 
         internal static bool ShouldIncludeVanillaModSourceHoverTips()
@@ -500,6 +557,13 @@ namespace STS2RitsuLib.Data
                 _ => ContentSourceDisplayStyle.NameAndId,
             };
         }
+
+        private static ContentSourcePlacement ParseContentSourcePlacement(string? value)
+        {
+            return value?.Trim().ToLowerInvariant() == "bottom"
+                ? ContentSourcePlacement.Bottom
+                : ContentSourcePlacement.Top;
+        }
     }
 
     internal enum ContentSourceDisplayStyle
@@ -507,5 +571,11 @@ namespace STS2RitsuLib.Data
         NameAndId,
         Name,
         Id,
+    }
+
+    internal enum ContentSourcePlacement
+    {
+        Top,
+        Bottom,
     }
 }

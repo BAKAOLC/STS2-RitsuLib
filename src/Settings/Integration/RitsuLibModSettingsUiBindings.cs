@@ -35,6 +35,10 @@ namespace STS2RitsuLib.Settings
 
         public IModSettingsValueBinding<bool> ModSourceHoverTipsEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ModSourceHoverTipsDisplayStyle { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModSourceHoverTipsPlacement { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModSourceHoverTipsColor { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsSeparateFromBody { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModSourceHoverTipsFormat { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeVanilla { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeNonDetails { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsCards { get; private init; } = null!;
@@ -297,6 +301,43 @@ namespace STS2RitsuLib.Settings
                             settings.ModSourceHoverTipsDisplayStyle =
                                 RitsuLibSettingsStore.NormalizeModSourceHoverTipsDisplayStyle(value)),
                     () => defaults.ModSourceHoverTipsDisplayStyle),
+                ModSourceHoverTipsPlacement = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.NormalizeModSourceHoverTipsPlacement(
+                            settings.ModSourceHoverTipsPlacement),
+                        (settings, value) =>
+                            settings.ModSourceHoverTipsPlacement =
+                                RitsuLibSettingsStore.NormalizeModSourceHoverTipsPlacement(value)),
+                    () => defaults.ModSourceHoverTipsPlacement),
+                ModSourceHoverTipsColor = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.NormalizeModSourceHoverTipsColor(
+                            settings.ModSourceHoverTipsColor),
+                        (settings, value) =>
+                            settings.ModSourceHoverTipsColor =
+                                RitsuLibSettingsStore.NormalizeModSourceHoverTipsColor(value)),
+                    () => defaults.ModSourceHoverTipsColor),
+                ModSourceHoverTipsSeparateFromBody = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ModSourceHoverTipsSeparateFromBody,
+                        (settings, value) => settings.ModSourceHoverTipsSeparateFromBody = value),
+                    () => defaults.ModSourceHoverTipsSeparateFromBody),
+                ModSourceHoverTipsFormat = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.PrepareModSourceHoverTipsFormatForEditing(
+                            settings.ModSourceHoverTipsFormat),
+                        (settings, value) =>
+                            settings.ModSourceHoverTipsFormat =
+                                RitsuLibSettingsStore.PrepareModSourceHoverTipsFormatForEditing(value)),
+                    () => defaults.ModSourceHoverTipsFormat),
                 ModSourceHoverTipsIncludeVanilla = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,

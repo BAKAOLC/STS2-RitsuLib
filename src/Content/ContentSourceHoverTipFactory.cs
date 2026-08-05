@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using System.Text;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -79,7 +80,7 @@ namespace STS2RitsuLib.Content
 
         private static HoverTip CreateTip(ContentSourceInfo source)
         {
-            return new(GetTitle(), source.FormatForBbCode())
+            return new(GetTitle(), source.FormatLineForBbCode())
             {
                 Id = TipIdPrefix + source.Id,
             };
@@ -260,7 +261,54 @@ namespace STS2RitsuLib.Content
 
             public string FormatForBbCode()
             {
-                return Format().EscapeBbcodeTags();
+                return ApplyFormatTemplate(
+                        RitsuLibSettingsStore.GetModSourceHoverTipsFormat(),
+                        Format(),
+                        DisplayName,
+                        Id)
+                    .EscapeBbcodeTags();
+            }
+
+            public string FormatLineForBbCode()
+            {
+                return $"[color={RitsuLibSettingsStore.GetModSourceHoverTipsColor()}]{FormatForBbCode()}[/color]";
+            }
+
+            private static string ApplyFormatTemplate(
+                string template,
+                string source,
+                string displayName,
+                string id)
+            {
+                var result = new StringBuilder(template.Length + source.Length);
+                for (var index = 0; index < template.Length;)
+                {
+                    if (template.AsSpan(index).StartsWith("{source}", StringComparison.Ordinal))
+                    {
+                        result.Append(source);
+                        index += "{source}".Length;
+                        continue;
+                    }
+
+                    if (template.AsSpan(index).StartsWith("{name}", StringComparison.Ordinal))
+                    {
+                        result.Append(displayName);
+                        index += "{name}".Length;
+                        continue;
+                    }
+
+                    if (template.AsSpan(index).StartsWith("{id}", StringComparison.Ordinal))
+                    {
+                        result.Append(id);
+                        index += "{id}".Length;
+                        continue;
+                    }
+
+                    result.Append(template[index]);
+                    index++;
+                }
+
+                return result.ToString();
             }
         }
 
