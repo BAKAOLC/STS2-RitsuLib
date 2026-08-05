@@ -6,6 +6,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Networking.StateDivergence;
 using STS2RitsuLib.Platform;
 using STS2RitsuLib.Utils.Persistence;
 using Environment = System.Environment;
@@ -15,8 +16,22 @@ namespace STS2RitsuLib.Diagnostics
 {
     internal static partial class SelfCheckBundleWriter
     {
-        private const long MaxLogFileBytes = 8_388_608L;
         private const long MaxLinuxCoreDumpBytes = 209_715_200L;
+
+        private static readonly HashSet<string> TextLogExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".csv",
+            ".json",
+            ".jsonl",
+            ".log",
+            ".md",
+            ".tsv",
+            ".txt",
+            ".xml",
+            ".yaml",
+            ".yml",
+        };
+
         private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
         private static ArtifactCollectionResult CollectSupportArtifacts(string bundleDir)
@@ -69,8 +84,13 @@ namespace STS2RitsuLib.Diagnostics
             {
                 var relative = Path.GetRelativePath(userDir, source);
                 var entryName = NormalizeEntryName(relative);
-                CopyTextArtifact(source, GetBundlePath(bundleDir, entryName), entryName, "log", MaxLogFileBytes, true,
-                    artifacts, warnings);
+                var target = GetBundlePath(bundleDir, entryName);
+                if (StateDivergenceLogBundleWriter.IsPublishedBundlePath(source))
+                    CopyStateDivergenceBundleArtifact(source, target, entryName, artifacts, warnings);
+                else if (IsTextLogArtifact(source))
+                    CopyTextArtifact(source, target, entryName, "log", true, artifacts, warnings);
+                else
+                    CopyBinaryArtifact(source, target, entryName, "log", artifacts, warnings);
             }
         }
 
@@ -132,7 +152,7 @@ namespace STS2RitsuLib.Diagnostics
                 var relative = Path.GetRelativePath(accountBasePath, source);
                 var entryName = NormalizeEntryName(Path.Combine("saves", relative));
                 if (Path.GetExtension(source).Equals(".json", StringComparison.OrdinalIgnoreCase))
-                    CopyTextArtifact(source, GetBundlePath(bundleDir, entryName), entryName, "save", 0, true,
+                    CopyTextArtifact(source, GetBundlePath(bundleDir, entryName), entryName, "save", true,
                         artifacts, warnings);
                 else
                     CopyBinaryArtifact(source, GetBundlePath(bundleDir, entryName), entryName, "save",
@@ -151,7 +171,7 @@ namespace STS2RitsuLib.Diagnostics
                     continue;
 
                 CopyTextArtifact(source, GetBundlePath(bundleDir, "release_info.json"), "release_info.json",
-                    "release-info", 0, true, artifacts, warnings);
+                    "release-info", true, artifacts, warnings);
                 return;
             }
 
@@ -382,7 +402,6 @@ namespace STS2RitsuLib.Diagnostics
             string target,
             string entryName,
             string kind,
-            long maxBytes,
             bool sanitize,
             ICollection<ArtifactEntry> artifacts,
             ICollection<string> warnings)
@@ -391,12 +410,12 @@ namespace STS2RitsuLib.Diagnostics
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 using var stream = new FileStream(source, FileMode.Open, IOFileAccess.Read, FileShare.ReadWrite);
-                var text = ReadTailText(stream, maxBytes);
+                using var reader = new StreamReader(stream, Encoding.UTF8, true);
+                var text = reader.ReadToEnd();
                 if (sanitize)
                     text = SanitizeForReport(text);
                 File.WriteAllText(target, text, Utf8NoBom);
-                artifacts.Add(CreateCopiedArtifact(entryName, source, target, kind,
-                    maxBytes > 0 && stream.Length > maxBytes ? $"tail {FormatByteCount(maxBytes)}" : null));
+                artifacts.Add(CreateCopiedArtifact(entryName, source, target, kind, null));
             }
             catch (Exception ex)
             {
@@ -426,35 +445,29 @@ namespace STS2RitsuLib.Diagnostics
             }
         }
 
-        private static string ReadTailText(Stream stream, long maxBytes)
+        private static void CopyStateDivergenceBundleArtifact(
+            string source,
+            string target,
+            string entryName,
+            ICollection<ArtifactEntry> artifacts,
+            ICollection<string> warnings)
         {
-            var truncated = false;
-            if (maxBytes > 0 && stream.Length > maxBytes)
+            try
             {
-                stream.Seek(stream.Length - maxBytes, SeekOrigin.Begin);
-                while (stream.Position < stream.Length)
-                {
-                    var b = stream.ReadByte();
-                    if (b == -1)
-                        break;
-
-                    if ((b & 0xC0) == 0x80) continue;
-                    stream.Seek(-1, SeekOrigin.Current);
-                    break;
-                }
-
-                truncated = true;
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.WriteAllBytes(target, StateDivergenceLogBundleWriter.BuildSanitizedSubmissionBundle(source));
+                artifacts.Add(CreateCopiedArtifact(entryName, source, target, "log", "sanitized archive"));
             }
+            catch (Exception ex)
+            {
+                warnings.Add($"failed to copy state divergence archive {SanitizeForReport(source)}: {ex.Message}");
+            }
+        }
 
-            using var reader = new StreamReader(stream, Encoding.UTF8, true, 4096, true);
-            var text = reader.ReadToEnd();
-            if (!truncated)
-                return text;
-
-            var newline = text.IndexOf('\n', StringComparison.Ordinal);
-            if (newline >= 0)
-                text = text[(newline + 1)..];
-            return $"[...truncated, showing last ~{maxBytes / 1_048_576} MB...]\n{text}";
+        private static bool IsTextLogArtifact(string path)
+        {
+            return TextLogExtensions.Contains(Path.GetExtension(path)) ||
+                   Path.GetFileName(path).Contains(".log.", StringComparison.OrdinalIgnoreCase);
         }
 
         private static IEnumerable<string> EnumerateReleaseInfoPaths()

@@ -1,17 +1,18 @@
 ﻿using System.IO.Compression;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
+using STS2RitsuLib.Networking.StateDivergence;
 using STS2RitsuLib.Patching.Models;
 
-namespace STS2RitsuLib.Networking.StateDivergence.Patches
+namespace STS2RitsuLib.Diagnostics.Patches
 {
-    internal sealed class StateDivergenceGetLogsArchivePatch : IPatchMethod
+    internal sealed class RitsuLibGetLogsArchivePatch : IPatchMethod
     {
-        public static string PatchId => "state_divergence_get_logs_archive";
+        public static string PatchId => "ritsulib_get_logs_archive";
         public static bool IsCritical => false;
 
         public static string Description =>
-            "Sanitize and preserve RitsuLib state divergence archives when the game collects logs and feedback.";
+            "Preserve RitsuLib diagnostic archives when the game collects logs and feedback.";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -27,18 +28,30 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
         [HarmonyPriority(Priority.First)]
         public static bool Prefix(string file, ZipArchive archive, string entryName)
         {
-            if (!StateDivergenceLogBundleWriter.IsPublishedBundlePath(file))
+            Func<string, byte[]>? readBundle = null;
+            if (StateDivergenceLogBundleWriter.IsPublishedBundlePath(file))
+                readBundle = StateDivergenceLogBundleWriter.BuildSanitizedSubmissionBundle;
+            else if (SelfCheckBundleWriter.IsPublishedBundlePath(file))
+                readBundle = SelfCheckBundleWriter.ReadPublishedBundle;
+
+            if (readBundle == null)
                 return true;
 
             byte[] submissionBundle;
             try
             {
-                submissionBundle = StateDivergenceLogBundleWriter.BuildSanitizedSubmissionBundle(file);
+                submissionBundle = readBundle(file);
             }
             catch (FileNotFoundException)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[State divergence diagnostics] Diagnostic bundle disappeared before log collection: {file}");
+                    $"[Diagnostics] Diagnostic bundle disappeared before log collection: {file}");
+                return false;
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Diagnostics] Diagnostic bundle could not be collected intact and was skipped: {file}: {ex.Message}");
                 return false;
             }
 
