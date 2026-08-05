@@ -342,6 +342,45 @@ namespace STS2RitsuLib.Settings
                 ShowManagementDrawer,
                 64f));
             _mainBody.AddChild(toolbar);
+
+            var valuePolicy = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            valuePolicy.AddThemeConstantOverride("h_separation", 8);
+            valuePolicy.AddThemeConstantOverride("v_separation", 6);
+            valuePolicy.AddChild(ValuePolicyToggle(
+                L("ritsulib.debugTools.statePresets.recordInternalValues", "Record internal values when filling"),
+                L("ritsulib.debugTools.statePresets.recordInternalValuesHint",
+                    "When enabled, Fill also copies upgrades, model dynamic values, relic stacks, and current Power amounts."),
+                _draft.RecordInternalValues,
+                enabled =>
+                {
+                    _draft.RecordInternalValues = enabled;
+                    MarkDirty();
+                }));
+            valuePolicy.AddChild(ValuePolicyToggle(
+                L("ritsulib.debugTools.statePresets.applyInternalValues", "Use saved internal values when applying"),
+                L("ritsulib.debugTools.statePresets.applyInternalValuesHint",
+                    "When disabled, cards, relics, potions, and Powers use their normal defaults even if the preset stores adjustments."),
+                _draft.ApplyInternalValues,
+                enabled =>
+                {
+                    _draft.ApplyInternalValues = enabled;
+                    MarkDirty();
+                }));
+            _mainBody.AddChild(valuePolicy);
+        }
+
+        private static Button ValuePolicyToggle(
+            string text,
+            string tooltip,
+            bool selected,
+            Action<bool> changed)
+        {
+            var toggle = ModSettingsUiControlTheming.CreateCompactSettingsToggleButton(text, selected);
+            toggle.CustomMinimumSize = new(310f, 36f);
+            toggle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            toggle.TooltipText = tooltip;
+            toggle.Toggled += enabled => changed(enabled);
+            return toggle;
         }
 
         private void BuildPageNavigation()

@@ -349,6 +349,8 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugToolsGlyph.Potions, CreatePotionCatalog);
             Add("powers", "ritsulib.debugTools.category.powers", "Powers", 40, 0.72f,
                 RitsuDebugToolsGlyph.Powers, CreatePowerCatalog);
+            Add("orbs", "ritsulib.debugTools.category.orbs", "Orbs", 45, 0.72f,
+                RitsuDebugToolsGlyph.Orbs, CreateOrbCatalog);
             Add("creatures", "ritsulib.debugTools.category.combatants", "Players and combat creatures", 50, 0.72f,
                 RitsuDebugToolsGlyph.Creatures, CreateCombatantCatalog);
             Add("monsters", "ritsulib.debugTools.category.monsters", "Add monster", 70, 0.62f,

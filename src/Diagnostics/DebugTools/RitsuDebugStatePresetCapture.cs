@@ -1,6 +1,7 @@
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Diagnostics.DebugTools
@@ -99,37 +100,59 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return false;
                 }
 
+                Dictionary<string, RitsuDebugStatePresetRelicValues>? internalValues = null;
+                if (preset.RecordInternalValues)
+                {
+                    internalValues = new(StringComparer.Ordinal);
+                    foreach (var relic in player.Relics)
+                        internalValues.Add(
+                            relic.Id.ToString(),
+                            new()
+                            {
+                                StackCount = relic.StackCount,
+                                DynamicVars = CaptureDynamicVars(relic.DynamicVars, ref skipped),
+                            });
+                }
+
                 preset.Relics = new()
                 {
                     ApplyMode = RitsuDebugStatePresetApplyMode.Replace,
                     ModelIds = [.. player.Relics.Select(static relic => relic.Id.ToString())],
+                    InternalValues = internalValues,
                 };
             }
 
             if (scope.HasFlag(RitsuDebugStatePresetCaptureScope.Potions))
+            {
+                var potions = new List<RitsuDebugStatePresetPotion>();
+                for (var slot = 0; slot < player.PotionSlots.Count; slot++)
+                {
+                    if (player.PotionSlots[slot] is not { } potion)
+                        continue;
+                    potions.Add(new()
+                    {
+                        PotionId = potion.Id.ToString(),
+                        SlotIndex = slot,
+                        DynamicVars = preset.RecordInternalValues
+                            ? CaptureDynamicVars(potion.DynamicVars, ref skipped)
+                            : null,
+                    });
+                }
+
                 preset.Potions = new()
                 {
                     ApplyMode = RitsuDebugStatePresetApplyMode.Replace,
-                    Items =
-                    [
-                        .. player.PotionSlots
-                            .Select(static (potion, slot) => potion == null
-                                ? null
-                                : new RitsuDebugStatePresetPotion
-                                {
-                                    PotionId = potion.Id.ToString(),
-                                    SlotIndex = slot,
-                                })
-                            .OfType<RitsuDebugStatePresetPotion>(),
-                    ],
+                    Items = potions,
                 };
+            }
 
             if (scope.HasFlag(RitsuDebugStatePresetCaptureScope.Powers))
             {
                 var powers = new List<RitsuDebugStatePresetPower>();
                 foreach (var power in player.Creature.Powers)
                 {
-                    if (power.Amount is < 1 or > RitsuDebugCombatActions.MaxAmount)
+                    if (preset.RecordInternalValues &&
+                        power.Amount is < 1 or > RitsuDebugCombatActions.MaxAmount)
                     {
                         skipped++;
                         continue;
@@ -145,7 +168,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         return false;
                     }
 
-                    powers.Add(new() { PowerId = power.Id.ToString(), Amount = power.Amount });
+                    powers.Add(new()
+                    {
+                        PowerId = power.Id.ToString(),
+                        Amount = preset.RecordInternalValues ? power.Amount : 1,
+                        DynamicVars = preset.RecordInternalValues
+                            ? CaptureDynamicVars(power.DynamicVars, ref skipped)
+                            : null,
+                    });
                 }
 
                 preset.Powers = new()
@@ -216,7 +246,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var cards = new List<RitsuDebugStatePresetCard>();
             foreach (var card in pile.Cards)
             {
-                var captured = CaptureCard(card, ref skipped);
+                var captured = CaptureCard(card, preset.RecordInternalValues, ref skipped);
                 if (cards.LastOrDefault() is { } previous && HaveSameState(previous, captured) &&
                     previous.Count < RitsuDebugCardActions.MaxCreateCount)
                     previous.Count++;
@@ -236,8 +266,13 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return true;
         }
 
-        private static RitsuDebugStatePresetCard CaptureCard(CardModel card, ref int skipped)
+        private static RitsuDebugStatePresetCard CaptureCard(
+            CardModel card,
+            bool recordInternalValues,
+            ref int skipped)
         {
+            if (!recordInternalValues)
+                return new() { CardId = card.Id.ToString() };
             var dynamicVars = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var (key, dynamicVar) in card.DynamicVars)
             {
@@ -302,6 +337,29 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (left == null || right == null || left.Count != right.Count)
                 return false;
             return left.All(pair => right.TryGetValue(pair.Key, out var value) && value == pair.Value);
+        }
+
+        private static Dictionary<string, int>? CaptureDynamicVars(DynamicVarSet dynamicVars, ref int skipped)
+        {
+            var values = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var (key, dynamicVar) in dynamicVars)
+            {
+                if (!RitsuDebugModelValueOverrides.IsEditable(dynamicVar))
+                {
+                    skipped++;
+                    continue;
+                }
+
+                if (values.Count >= RitsuDebugModelValueOverrides.MaximumDynamicVariableCount)
+                {
+                    skipped++;
+                    continue;
+                }
+
+                values.Add(key, decimal.ToInt32(dynamicVar.BaseValue));
+            }
+
+            return values.Count == 0 ? null : values;
         }
 
         private static RitsuDebugStatePresetCaptureScope ScopeForPile(PileType pileType)

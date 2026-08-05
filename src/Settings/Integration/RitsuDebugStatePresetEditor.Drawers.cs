@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Shell.Theme;
@@ -417,6 +418,13 @@ namespace STS2RitsuLib.Settings
                         potion.SlotIndex = value;
                         MarkDirty();
                     }));
+            var canonical = ModelDb.AllPotions.FirstOrDefault(model =>
+                model.Id.ToString().Equals(potion.PotionId, StringComparison.Ordinal));
+            if (canonical != null)
+                AddInternalValueEditors(
+                    canonical.DynamicVars,
+                    () => potion.DynamicVars,
+                    values => potion.DynamicVars = values);
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.remove", "Remove"),
                 ModSettingsButtonTone.Danger,
@@ -446,6 +454,13 @@ namespace STS2RitsuLib.Settings
                     power.Amount = value;
                     MarkDirty();
                 }));
+            var canonical = ModelDb.AllPowers.FirstOrDefault(model =>
+                model.Id.ToString().Equals(power.PowerId, StringComparison.Ordinal));
+            if (canonical != null)
+                AddInternalValueEditors(
+                    canonical.DynamicVars,
+                    () => power.DynamicVars,
+                    values => power.DynamicVars = values);
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.remove", "Remove"),
                 ModSettingsButtonTone.Danger,
@@ -457,6 +472,98 @@ namespace STS2RitsuLib.Settings
                 },
                 88f));
             OpenDrawer();
+        }
+
+        private void ShowRelicEditor(RitsuDebugStatePresetInventory relics, string relicId)
+        {
+            _drawerTitle.Text = ModelLabel(relicId);
+            ClearChildren(_drawerBody);
+            var state = relics.InternalValues?.GetValueOrDefault(relicId) ?? new();
+            _drawerBody.AddChild(IntegerField(
+                L("ritsulib.debugTools.field.stackCount", "Stack count"),
+                state.StackCount,
+                1,
+                RitsuDebugInventoryActions.MaxRelicStackCount,
+                value =>
+                {
+                    state.StackCount = value;
+                    StoreValues();
+                }));
+            var canonical = ModelDb.AllRelics.FirstOrDefault(model =>
+                model.Id.ToString().Equals(relicId, StringComparison.Ordinal));
+            if (canonical != null)
+                AddInternalValueEditors(
+                    canonical.DynamicVars,
+                    () => state.DynamicVars,
+                    values =>
+                    {
+                        state.DynamicVars = values;
+                        StoreValues();
+                    });
+            _drawerBody.AddChild(CompactButton(
+                L("ritsulib.debugTools.statePresets.remove", "Remove"),
+                ModSettingsButtonTone.Danger,
+                () =>
+                {
+                    relics.ModelIds.Remove(relicId);
+                    relics.InternalValues?.Remove(relicId);
+                    MarkDirty();
+                    CloseDrawer();
+                },
+                88f));
+            OpenDrawer();
+            return;
+
+            void StoreValues()
+            {
+                relics.InternalValues ??= new(StringComparer.Ordinal);
+                relics.InternalValues[relicId] = state;
+                MarkDirty();
+            }
+        }
+
+        private void AddInternalValueEditors(
+            DynamicVarSet dynamicVars,
+            Func<Dictionary<string, int>?> getValues,
+            Action<Dictionary<string, int>?> setValues)
+        {
+            var keys = dynamicVars
+                .Where(static pair => RitsuDebugModelValueOverrides.IsEditable(pair.Value))
+                .Select(static pair => pair.Key)
+                .OrderBy(static key => key, StringComparer.Ordinal)
+                .ToArray();
+            if (keys.Length == 0)
+                return;
+            _drawerBody.AddChild(SectionTitle(L(
+                "ritsulib.debugTools.action.dynamicValues",
+                "Dynamic values")));
+            foreach (var key in keys)
+            {
+                var capturedKey = key;
+                _drawerBody.AddChild(OptionalIntegerField(
+                    key,
+                    getValues()?.GetValueOrDefault(key),
+                    RitsuDebugModelValueOverrides.MinimumValue,
+                    RitsuDebugModelValueOverrides.MaximumValue,
+                    value =>
+                    {
+                        var values = getValues();
+                        if (value.HasValue)
+                        {
+                            values ??= new(StringComparer.Ordinal);
+                            values[capturedKey] = value.Value;
+                        }
+                        else if (values != null)
+                        {
+                            values.Remove(capturedKey);
+                            if (values.Count == 0)
+                                values = null;
+                        }
+
+                        setValues(values);
+                        MarkDirty();
+                    }));
+            }
         }
 
         private void ShowRemoveItemDrawer(string title, Action remove)

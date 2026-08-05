@@ -70,8 +70,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             };
         }
 
-        internal RitsuDebugCardActions.CardStatePayload ToCardState()
+        internal RitsuDebugCardActions.CardStatePayload ToCardState(bool includeInternalValues = true)
         {
+            if (!includeInternalValues)
+                return new(null, null, null, null, null, null, null, null);
             return new(
                 BaseCost,
                 ReplayCount,
@@ -109,9 +111,39 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         [JsonPropertyName("items")] public List<string> ModelIds { get; set; } = [];
 
+        [JsonPropertyName("internal_values")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, RitsuDebugStatePresetRelicValues>? InternalValues { get; set; }
+
         internal RitsuDebugStatePresetInventory Clone()
         {
-            return new() { ApplyMode = ApplyMode, ModelIds = [.. ModelIds] };
+            return new()
+            {
+                ApplyMode = ApplyMode,
+                ModelIds = [.. ModelIds],
+                InternalValues = InternalValues?.ToDictionary(
+                    static pair => pair.Key,
+                    static pair => pair.Value.Clone(),
+                    StringComparer.Ordinal),
+            };
+        }
+    }
+
+    internal sealed class RitsuDebugStatePresetRelicValues
+    {
+        [JsonPropertyName("stacks")] public int StackCount { get; set; } = 1;
+
+        [JsonPropertyName("vars")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, int>? DynamicVars { get; set; }
+
+        internal RitsuDebugStatePresetRelicValues Clone()
+        {
+            return new()
+            {
+                StackCount = StackCount,
+                DynamicVars = DynamicVars == null ? null : new(DynamicVars, StringComparer.Ordinal),
+            };
         }
     }
 
@@ -123,9 +155,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? SlotIndex { get; set; }
 
+        [JsonPropertyName("vars")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, int>? DynamicVars { get; set; }
+
         internal RitsuDebugStatePresetPotion Clone()
         {
-            return new() { PotionId = PotionId, SlotIndex = SlotIndex };
+            return new()
+            {
+                PotionId = PotionId,
+                SlotIndex = SlotIndex,
+                DynamicVars = DynamicVars == null ? null : new(DynamicVars, StringComparer.Ordinal),
+            };
         }
     }
 
@@ -151,9 +192,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         [JsonPropertyName("amount")] public int Amount { get; set; } = 1;
 
+        [JsonPropertyName("vars")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, int>? DynamicVars { get; set; }
+
         internal RitsuDebugStatePresetPower Clone()
         {
-            return new() { PowerId = PowerId, Amount = Amount };
+            return new()
+            {
+                PowerId = PowerId,
+                Amount = Amount,
+                DynamicVars = DynamicVars == null ? null : new(DynamicVars, StringComparer.Ordinal),
+            };
         }
     }
 
@@ -233,6 +283,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
 
+        [JsonPropertyName("record_internal_values")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool RecordInternalValues { get; set; }
+
+        [JsonPropertyName("apply_internal_values")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool ApplyInternalValues { get; set; }
+
         [JsonPropertyName("card_piles")] public List<RitsuDebugStatePresetCardPile> CardPiles { get; set; } = [];
 
         [JsonPropertyName("relics")]
@@ -260,6 +318,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 Id = assignNewId ? Guid.NewGuid().ToString("N") : Id,
                 Name = Name,
+                RecordInternalValues = RecordInternalValues,
+                ApplyInternalValues = ApplyInternalValues,
                 CardPiles = [.. CardPiles.Select(static pile => pile.Clone())],
                 Relics = Relics?.Clone(),
                 Potions = Potions?.Clone(),

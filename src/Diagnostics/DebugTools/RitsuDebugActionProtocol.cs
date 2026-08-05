@@ -167,6 +167,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugCardActions.RegisterBuiltInActions();
             RitsuDebugPlayerActions.RegisterBuiltInActions();
             RitsuDebugInventoryActions.RegisterBuiltInActions();
+            RitsuDebugOrbActions.RegisterBuiltInActions();
             RitsuDebugCombatActions.RegisterBuiltInActions();
             RitsuDebugRunActions.RegisterBuiltInActions();
             RitsuDebugStatePresetActions.RegisterBuiltInActions();

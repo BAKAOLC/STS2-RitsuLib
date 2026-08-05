@@ -304,7 +304,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 foreach (var card in pile.Cards)
                     await RitsuDebugCardActions.ExecuteCreateCardAsync(
                         context,
-                        new(card.CardId, pile.Pile, card.Count, card.UpgradeLevels, card.ToCardState()),
+                        new(
+                            card.CardId,
+                            pile.Pile,
+                            card.Count,
+                            preset.ApplyInternalValues ? card.UpgradeLevels : 0,
+                            card.ToCardState(preset.ApplyInternalValues)),
                         false);
                 if (pileType != PileType.Deck ||
                     RitsuDebugCardActions.GetPile(context.Target, pileType) is not { } deck)
@@ -315,11 +320,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
 
             if (preset.Relics != null)
-                await ApplyRelics(context, preset.Relics);
+                await ApplyRelics(context, preset.Relics, preset.ApplyInternalValues);
             if (preset.Potions != null)
-                await ApplyPotions(context, preset.Potions);
+                await ApplyPotions(context, preset.Potions, preset.ApplyInternalValues);
             if (preset.Powers != null)
-                await ApplyPowers(context, preset.Powers);
+                await ApplyPowers(context, preset.Powers, preset.ApplyInternalValues);
             if (preset.Player != null)
                 await ApplyPlayer(context, preset.Player, true);
             return $"Applied state preset '{preset.Name}'.";
@@ -337,8 +342,25 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "statePreset.relicsInvalid",
                     "The saved relic collection is invalid.");
             foreach (var modelId in relics.ModelIds)
-                if (!RitsuDebugInventoryActions.TryResolveRelic(modelId, out _, out var feedback))
+            {
+                if (!RitsuDebugInventoryActions.TryResolveRelic(modelId, out var canonical, out var feedback))
                     return RitsuDebugActionCheck.Fail(feedback);
+                if (relics.InternalValues?.GetValueOrDefault(modelId) is not { } values)
+                    continue;
+                if (values.StackCount is < 1 or > RitsuDebugInventoryActions.MaxRelicStackCount)
+                    return RitsuDebugActionCheck.Fail(
+                        "statePreset.relicsInvalid",
+                        "The saved relic collection is invalid.");
+                var valueCheck = RitsuDebugModelValueOverrides.Validate(canonical.DynamicVars, values.DynamicVars);
+                if (!valueCheck.Success)
+                    return valueCheck;
+            }
+
+            if (relics.InternalValues != null &&
+                relics.InternalValues.Keys.Any(id => !relics.ModelIds.Contains(id, StringComparer.Ordinal)))
+                return RitsuDebugActionCheck.Fail(
+                    "statePreset.relicsInvalid",
+                    "The saved relic collection is invalid.");
             return RitsuDebugActionCheck.Ok;
         }
 
@@ -361,9 +383,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         "The saved potion collection is invalid.");
                 if (!RitsuDebugInventoryActions.TryResolvePotion(
                         potion.PotionId,
-                        out _,
+                        out var canonical,
                         out var feedback))
                     return RitsuDebugActionCheck.Fail(feedback);
+                var valueCheck = RitsuDebugModelValueOverrides.Validate(canonical.DynamicVars, potion.DynamicVars);
+                if (!valueCheck.Success)
+                    return valueCheck;
                 if (potions.ApplyMode == RitsuDebugStatePresetApplyMode.Add)
                 {
                     if (potion.SlotIndex.HasValue)
@@ -404,9 +429,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         "The saved power collection is invalid.");
                 if (!RitsuDebugCombatActions.TryResolvePower(
                         power.PowerId,
-                        out _,
+                        out var canonical,
                         out var feedback))
                     return RitsuDebugActionCheck.Fail(feedback);
+                var valueCheck = RitsuDebugModelValueOverrides.Validate(canonical.DynamicVars, power.DynamicVars);
+                if (!valueCheck.Success)
+                    return valueCheck;
             }
 
             return RitsuDebugActionCheck.Ok;
@@ -438,7 +466,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private static async Task ApplyRelics(
             RitsuDebugActionContext context,
-            RitsuDebugStatePresetInventory relics)
+            RitsuDebugStatePresetInventory relics,
+            bool applyInternalValues)
         {
             if (relics.ApplyMode == RitsuDebugStatePresetApplyMode.Replace)
                 await RitsuDebugInventoryActions.ExecuteClearInventoryAsync(
@@ -448,15 +477,21 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 _ = RitsuDebugInventoryActions.TryResolveRelic(modelId, out var model, out _);
                 if (context.Target.GetRelicById(model.Id) == null)
+                {
+                    var values = applyInternalValues
+                        ? relics.InternalValues?.GetValueOrDefault(modelId)
+                        : null;
                     await RitsuDebugInventoryActions.ExecuteAddRelicAsync(
                         context,
-                        new(modelId, 1, null));
+                        new(modelId, values?.StackCount ?? 1, values?.DynamicVars));
+                }
             }
         }
 
         private static async Task ApplyPotions(
             RitsuDebugActionContext context,
-            RitsuDebugStatePresetPotions potions)
+            RitsuDebugStatePresetPotions potions,
+            bool applyInternalValues)
         {
             if (potions.ApplyMode == RitsuDebugStatePresetApplyMode.Replace)
                 await RitsuDebugInventoryActions.ExecuteClearInventoryAsync(
@@ -465,7 +500,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             foreach (var potion in potions.Items)
                 await RitsuDebugInventoryActions.ExecuteAddPotionAtSlotAsync(
                     context,
-                    new RitsuDebugInventoryActions.ModelPayload(potion.PotionId),
+                    new RitsuDebugInventoryActions.ModelValuesPayload(
+                        potion.PotionId,
+                        applyInternalValues ? potion.DynamicVars : null),
                     potions.ApplyMode == RitsuDebugStatePresetApplyMode.Replace
                         ? potion.SlotIndex!.Value
                         : -1);
@@ -473,7 +510,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private static async Task ApplyPowers(
             RitsuDebugActionContext context,
-            RitsuDebugStatePresetPowers powers)
+            RitsuDebugStatePresetPowers powers,
+            bool applyInternalValues)
         {
             if (powers.ApplyMode == RitsuDebugStatePresetApplyMode.Replace)
                 foreach (var power in context.Target.Creature.Powers.ToArray())
@@ -481,11 +519,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             foreach (var saved in powers.Items)
             {
                 _ = RitsuDebugCombatActions.TryResolvePower(saved.PowerId, out var canonical, out _);
+                var mutable = canonical.ToMutable();
+                if (applyInternalValues)
+                    RitsuDebugModelValueOverrides.Apply(mutable.DynamicVars, saved.DynamicVars);
                 await PowerCmd.Apply(
                     new BlockingPlayerChoiceContext(),
-                    canonical.ToMutable(),
+                    mutable,
                     context.Target.Creature,
-                    saved.Amount,
+                    applyInternalValues ? saved.Amount : 1,
                     null,
                     null);
             }

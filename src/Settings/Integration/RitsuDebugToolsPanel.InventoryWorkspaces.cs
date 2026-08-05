@@ -15,6 +15,7 @@ namespace STS2RitsuLib.Settings
         private RelicCatalogMode _relicCatalogMode = RelicCatalogMode.Library;
         private PotionCatalogMode _potionCatalogMode = PotionCatalogMode.Library;
         private PowerCatalogMode _powerCatalogMode = PowerCatalogMode.Library;
+        private OrbCatalogMode _orbCatalogMode = OrbCatalogMode.Library;
 
         private Control CreateRelicWorkspace(
             IReadOnlyList<RelicModel> models,
@@ -404,6 +405,323 @@ namespace STS2RitsuLib.Settings
                 var combatId = PreferredCreatureCombatId(creatures);
                 _selectedCreatureCombatId = combatId;
                 return creatures.FirstOrDefault(creature => creature.CombatId == combatId);
+            }
+        }
+
+        private Control CreateOrbWorkspace(IReadOnlyList<OrbModel> models, RitsuCatalogBrowser libraryBrowser)
+        {
+            var root = new RitsuDebugLiveDetailContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+            };
+            root.AddThemeConstantOverride("separation", 10);
+            var currentView = new VBoxContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+            };
+            currentView.AddThemeConstantOverride("separation", 10);
+            var currentButton = ModeButton(
+                RitsuDebugToolsGlyph.Orbs,
+                L("ritsulib.debugTools.orbs.current", "Current orbs"),
+                static () => { });
+            var libraryButton = ModeButton(
+                RitsuDebugToolsGlyph.Library,
+                L("ritsulib.debugTools.orbs.library", "Orb library"),
+                static () => { });
+            currentButton.Pressed += () => SetMode(OrbCatalogMode.Current);
+            libraryButton.Pressed += () => SetMode(OrbCatalogMode.Library);
+            root.AddChild(CreateWorkspaceToolbar(
+                libraryButton,
+                currentButton,
+                L("ritsulib.debugTools.orbs.workspaceHint",
+                    "Browse all orb types by default; switch to the current queue for live changes.")));
+            root.AddChild(currentView);
+
+            var summary = new Label { VerticalAlignment = VerticalAlignment.Center };
+            summary.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            summary.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            var slotEdit = CreateIntegerEdit("0");
+            var slotApply = IconTextButton(
+                RitsuDebugToolsGlyph.Sliders,
+                L("ritsulib.debugTools.action.setOrbSlots", "Set slots"),
+                ModSettingsButtonTone.Normal,
+                SetSlots);
+            var toolbar = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            toolbar.AddThemeConstantOverride("separation", 10);
+            summary.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            toolbar.AddChild(summary);
+            var slotField = ActionField(
+                L("ritsulib.debugTools.field.orbSlots", "Orb slots"),
+                slotEdit,
+                slotApply);
+            slotField.CustomMinimumSize = new(390f, 0f);
+            toolbar.AddChild(slotField);
+            currentView.AddChild(toolbar);
+            AddHint(currentView, L("ritsulib.debugTools.orbs.slotReduction",
+                "Reducing slots removes orbs from the back of the queue without evoking them."));
+
+            var scroll = new ScrollContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            };
+            ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(scroll);
+            currentView.AddChild(scroll);
+            var cards = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            cards.AddThemeConstantOverride("h_separation", 10);
+            cards.AddThemeConstantOverride("v_separation", 10);
+            scroll.AddChild(cards);
+            root.AddChild(libraryBrowser);
+            root.RegisterRefresh(RefreshCurrentOrbs);
+
+            if (!TryGetTargetPlayer(out var initialPlayer) || !HasActiveCombatState(initialPlayer))
+                _orbCatalogMode = OrbCatalogMode.Library;
+            RefreshCurrentOrbs();
+            SetMode(_orbCatalogMode);
+            return root;
+
+            void SetMode(OrbCatalogMode mode)
+            {
+                _orbCatalogMode = mode;
+                var current = mode == OrbCatalogMode.Current;
+                currentView.Visible = current;
+                libraryBrowser.Visible = !current;
+                currentButton.SetSelected(current);
+                libraryButton.SetSelected(!current);
+            }
+
+            void SetSlots()
+            {
+                if (!TryReadInt(slotEdit, 0, RitsuDebugOrbActions.MaximumOrbSlots, out var capacity) ||
+                    !TryGetActionContext(out var requester, out var target))
+                    return;
+                RunAction(() => RitsuDebugOrbActions.SubmitSetOrbSlots(requester, target, capacity));
+            }
+
+            void RefreshCurrentOrbs()
+            {
+                foreach (var child in cards.GetChildren())
+                {
+                    cards.RemoveChild(child);
+                    child.QueueFree();
+                }
+
+                if (!TryGetTargetPlayer(out var player) || !HasActiveCombatState(player) ||
+                    player.PlayerCombatState?.OrbQueue is not { } queue)
+                {
+                    cards.AddChild(CreatePowerListHint(L(
+                        "ritsulib.debugTools.orbs.combatRequired",
+                        "Start combat to channel or manage orbs.")));
+                    summary.Text = L("ritsulib.debugTools.orbs.unavailable", "Orb queue unavailable");
+                    slotEdit.Text = "0";
+                    slotApply.Disabled = true;
+                    currentButton.Text = L("ritsulib.debugTools.orbs.current", "Current orbs");
+                    ModSettingsUiControlTheming.RefreshAdaptiveButtonText(currentButton);
+                    return;
+                }
+
+                var orbs = queue.Orbs.ToArray();
+                for (var index = 0; index < orbs.Length; index++)
+                    cards.AddChild(CreateCurrentOrbCard(index, orbs[index], models));
+                for (var index = orbs.Length; index < queue.Capacity; index++)
+                    cards.AddChild(CreateEmptyOrbSlotCard(index));
+                if (queue.Capacity == 0)
+                    cards.AddChild(CreatePowerListHint(L(
+                        "ritsulib.debugTools.orbs.noSlots",
+                        "This player has no orb slots. Set a slot count to begin.")));
+
+                summary.Text = string.Format(
+                    L("ritsulib.debugTools.orbs.queueSummary", "{0} orbs · {1} slots"),
+                    orbs.Length,
+                    queue.Capacity);
+                slotEdit.Text = queue.Capacity.ToString();
+                slotApply.Disabled = false;
+                currentButton.Text = string.Format(
+                    L("ritsulib.debugTools.orbs.currentCount", "Current ({0}/{1})"),
+                    orbs.Length,
+                    queue.Capacity);
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(currentButton);
+            }
+        }
+
+        private Control CreateCurrentOrbCard(int index, OrbModel orb, IReadOnlyList<OrbModel> models)
+        {
+            var panel = new PanelContainer { CustomMinimumSize = new(278f, 150f) };
+            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListItemCardStyle());
+            var panelContent = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            panelContent.AddThemeConstantOverride("separation", 0);
+            panel.AddChild(panelContent);
+            panelContent.AddChild(new ColorRect
+            {
+                Color = orb.DarkenedColor,
+                CustomMinimumSize = new(0f, 4f),
+                MouseFilter = MouseFilterEnum.Ignore,
+            });
+            var margin = new MarginContainer();
+            margin.AddThemeConstantOverride("margin_left", 10);
+            margin.AddThemeConstantOverride("margin_top", 9);
+            margin.AddThemeConstantOverride("margin_right", 10);
+            margin.AddThemeConstantOverride("margin_bottom", 9);
+            panelContent.AddChild(margin);
+            var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            column.AddThemeConstantOverride("separation", 8);
+            margin.AddChild(column);
+
+            var identityRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            identityRow.AddThemeConstantOverride("separation", 9);
+            column.AddChild(identityRow);
+            identityRow.AddChild(new TextureRect
+            {
+                Texture = orb.Icon,
+                CustomMinimumSize = new(42f, 42f),
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                MouseFilter = MouseFilterEnum.Ignore,
+            });
+            var identity = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            identity.AddThemeConstantOverride("separation", 1);
+            identityRow.AddChild(identity);
+            var title = new Label
+            {
+                Text = SafeTitle(orb),
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            };
+            title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            identity.AddChild(title);
+            var metadata = new Label
+            {
+                Text = string.Format(
+                    L("ritsulib.debugTools.orbs.values", "Passive {0} · Evoke {1}"),
+                    SafeOrbValue(() => orb.PassiveVal),
+                    SafeOrbValue(() => orb.EvokeVal)),
+                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            };
+            metadata.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            metadata.AddThemeFontSizeOverride("font_size", DetailIdentifierFontSize);
+            metadata.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
+            identity.AddChild(metadata);
+            var position = new Label
+            {
+                Text = $"#{index + 1}",
+                CustomMinimumSize = new(42f, 0f),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            position.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            position.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
+            identityRow.AddChild(position);
+
+            var editorContent = CreateAdjustmentContent();
+            var replacement = orb.Id.ToString();
+            editorContent.AddChild(DropdownField(
+                L("ritsulib.debugTools.field.orbType", "Orb type"),
+                models.Select(model => (model.Id.ToString(), SafeTitle(model))).ToArray(),
+                replacement,
+                value => replacement = value));
+            editorContent.AddChild(ActionButton(
+                L("ritsulib.debugTools.action.replaceOrb", "Replace orb"),
+                ModSettingsButtonTone.Normal,
+                Replace));
+            AddHint(editorContent, L("ritsulib.debugTools.orbs.computedValuesHint",
+                "Passive and evoke values are computed by each orb and the current combat state."));
+            var editorPanel = CreateAdjustmentPanel(editorContent);
+            editorPanel.Visible = false;
+
+            var actions = new HBoxContainer
+            {
+                Alignment = AlignmentMode.End,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            actions.AddThemeConstantOverride("separation", 6);
+            column.AddChild(actions);
+            actions.AddChild(IconButton(
+                RitsuDebugToolsGlyph.Sliders,
+                L("ritsulib.debugTools.action.adjustOrb", "Adjust orb"),
+                ModSettingsButtonTone.Normal,
+                () => editorPanel.Visible = !editorPanel.Visible));
+            actions.AddChild(IconButton(
+                RitsuDebugToolsGlyph.Trash,
+                L("ritsulib.debugTools.action.removeOrb", "Remove orb"),
+                ModSettingsButtonTone.Danger,
+                Remove));
+            column.AddChild(editorPanel);
+            panel.TooltipText = BuildCatalogTooltip(
+                SafeTitle(orb),
+                orb.Id.ToString(),
+                SafeDescription(() => orb.Description.GetFormattedText()));
+            return panel;
+
+            void Replace()
+            {
+                if (!TryGetActionContext(out var requester, out var target))
+                    return;
+                RunAction(() => RitsuDebugOrbActions.SubmitReplaceOrb(
+                    requester,
+                    target,
+                    index,
+                    orb.Id.ToString(),
+                    replacement));
+            }
+
+            void Remove()
+            {
+                if (!TryGetActionContext(out var requester, out var target))
+                    return;
+                RunAction(() => RitsuDebugOrbActions.SubmitRemoveOrb(
+                    requester,
+                    target,
+                    index,
+                    orb.Id.ToString()));
+            }
+        }
+
+        private static Control CreateEmptyOrbSlotCard(int index)
+        {
+            var panel = new PanelContainer { CustomMinimumSize = new(278f, 76f) };
+            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateInsetSurfaceStyle());
+            var margin = new MarginContainer();
+            margin.AddThemeConstantOverride("margin_left", 12);
+            margin.AddThemeConstantOverride("margin_top", 10);
+            margin.AddThemeConstantOverride("margin_right", 12);
+            margin.AddThemeConstantOverride("margin_bottom", 10);
+            panel.AddChild(margin);
+            var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            row.AddThemeConstantOverride("separation", 10);
+            margin.AddChild(row);
+            var label = new Label
+            {
+                Text = $"#{index + 1}",
+                CustomMinimumSize = new(42f, 0f),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Hint);
+            row.AddChild(label);
+            var empty = new Label
+            {
+                Text = L("ritsulib.debugTools.orbs.emptySlot", "Empty orb slot"),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            empty.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            empty.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
+            row.AddChild(empty);
+            return panel;
+        }
+
+        private static string SafeOrbValue(Func<decimal> valueFactory)
+        {
+            try
+            {
+                return valueFactory().ToString("0.##");
+            }
+            catch (Exception exception) when (RitsuLibExceptionPolicy.IsRecoverable(exception))
+            {
+                return "—";
             }
         }
 
@@ -799,6 +1117,12 @@ namespace STS2RitsuLib.Settings
         }
 
         private enum PowerCatalogMode
+        {
+            Current,
+            Library,
+        }
+
+        private enum OrbCatalogMode
         {
             Current,
             Library,

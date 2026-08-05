@@ -771,6 +771,41 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        private Control CreateOrbDetail(OrbModel orb)
+        {
+            var source = ContentSourceResolver.Resolve(orb);
+            var root = DetailShell(
+                orb.Id.ToString(),
+                () => orb.Icon,
+                ContentSourceDisplayLabel(source),
+                SafeDescription(() => orb.Description.GetFormattedText()));
+            if (!TryGetTargetPlayer(out var player) || !HasActiveCombatState(player))
+            {
+                AddHint(root, L("ritsulib.debugTools.orbs.combatRequired",
+                    "Start combat to channel or manage orbs."));
+                return root;
+            }
+
+            root.AddChild(IconTextButton(
+                RitsuDebugToolsGlyph.Plus,
+                L("ritsulib.debugTools.action.channelOrb", "Channel orb"),
+                ModSettingsButtonTone.Accent,
+                Channel));
+            AddHint(root, L("ritsulib.debugTools.orbs.libraryHint",
+                "Use Current orbs to inspect the queue, replace or remove an orb, and adjust orb slots."));
+            return root;
+
+            void Channel()
+            {
+                if (!TryGetActionContext(out var requester, out var target))
+                    return;
+                RunAction(() => RitsuDebugOrbActions.SubmitChannelOrb(
+                    requester,
+                    target,
+                    orb.Id.ToString()));
+            }
+        }
+
         private Control CreatePlayerDetail(Player player)
         {
             var root = DetailShell(
@@ -1228,6 +1263,10 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugToolsGlyph.Powers,
                 L("ritsulib.debugTools.navigation.currentPowers", "Current Powers"),
                 PlayerContentDestination.Powers);
+            Add(
+                RitsuDebugToolsGlyph.Orbs,
+                L("ritsulib.debugTools.navigation.currentOrbs", "Orbs and slots"),
+                PlayerContentDestination.Orbs);
             root.AddChild(grid);
             return;
 
@@ -1251,6 +1290,7 @@ namespace STS2RitsuLib.Settings
                 PlayerContentDestination.Relics => "relics",
                 PlayerContentDestination.Potions => "potions",
                 PlayerContentDestination.Powers => "powers",
+                PlayerContentDestination.Orbs => "orbs",
                 _ => throw new ArgumentOutOfRangeException(nameof(destination)),
             };
             if (destination == PlayerContentDestination.Relics)
@@ -1259,6 +1299,8 @@ namespace STS2RitsuLib.Settings
                 _potionCatalogMode = PotionCatalogMode.Owned;
             else if (destination == PlayerContentDestination.Powers)
                 _powerCatalogMode = PowerCatalogMode.Current;
+            else if (destination == PlayerContentDestination.Orbs)
+                _orbCatalogMode = OrbCatalogMode.Current;
             UpdateTargetDropdown(GetPlayers(), true);
             _contextualPageSelection = true;
             try
@@ -1905,6 +1947,7 @@ namespace STS2RitsuLib.Settings
             Relics,
             Potions,
             Powers,
+            Orbs,
         }
 
         private sealed class DynamicVariableEditorState

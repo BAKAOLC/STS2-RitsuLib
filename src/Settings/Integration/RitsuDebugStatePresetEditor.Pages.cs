@@ -145,13 +145,7 @@ namespace STS2RitsuLib.Settings
                 id => ModelDb.AllRelics.FirstOrDefault(model => model.Id.ToString() == id),
                 static model => model.Icon,
                 relics.ApplyMode,
-                id => ShowRemoveItemDrawer(
-                    ModelLabel(id),
-                    () =>
-                    {
-                        relics.ModelIds.Remove(id);
-                        MarkDirty(true);
-                    }));
+                id => ShowRelicEditor(relics, id));
         }
 
         private void BuildPotionsPage()

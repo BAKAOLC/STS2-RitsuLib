@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Ui.Overlay
         Relics,
         Potions,
         Powers,
+        Orbs,
         Players,
         Paw,
         Creatures,
@@ -78,6 +79,8 @@ namespace STS2RitsuLib.Ui.Overlay
                     "<path d='M9 3h6M10 3v5l-4 6.5A4 4 0 0 0 9.4 21h5.2a4 4 0 0 0 3.4-6.5L14 8V3M7.7 13h8.6'/>",
                 RitsuDebugToolsGlyph.Powers =>
                     "<path d='M13.5 2L5 13h6l-1 9 9-12h-6z'/>",
+                RitsuDebugToolsGlyph.Orbs =>
+                    "<circle cx='12' cy='12' r='5'/><path d='M3 12c2.5-4.5 5.5-7 9-7s6.5 2.5 9 7c-2.5 4.5-5.5 7-9 7s-6.5-2.5-9-7z'/><path d='M12 3c3 2.5 4.5 5.5 4.5 9S15 18.5 12 21c-3-2.5-4.5-5.5-4.5-9S9 5.5 12 3z'/>",
                 RitsuDebugToolsGlyph.Players =>
                     "<circle cx='12' cy='8' r='4'/><path d='M4.5 21c.7-5 3.2-7.5 7.5-7.5s6.8 2.5 7.5 7.5'/>",
                 RitsuDebugToolsGlyph.Paw =>

@@ -211,6 +211,25 @@ namespace STS2RitsuLib.Settings
             return CreatePowerWorkspace(browser);
         }
 
+        private Control CreateOrbCatalog()
+        {
+            var models = ModelDb.Orbs.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
+            var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
+            var browser = Browser(
+                L("ritsulib.debugTools.search.orbs", "Search orbs by name or ID"),
+                item => CreateOrbDetail(byId[item.Id]),
+                [CreateContentSourceFilter(models, byId)],
+                RitsuCatalogPresentation.Grid,
+                detailWidth: 520f);
+            browser.SetItems([
+                .. models.Select(model => ModelItem(
+                    model,
+                    L("ritsulib.debugTools.orbs.model", "Orb"),
+                    () => model.Icon)),
+            ]);
+            return CreateOrbWorkspace(models, browser);
+        }
+
         private RitsuCatalogBrowser CreateCombatantCatalog()
         {
             var players = GetPlayers();
