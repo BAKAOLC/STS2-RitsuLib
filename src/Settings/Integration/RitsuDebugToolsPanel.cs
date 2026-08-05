@@ -685,10 +685,11 @@ namespace STS2RitsuLib.Settings
                     }
                     else
                         RebuildBrowser();
+
                     break;
                 case $"{Const.ModId}:creatures":
                     var creatures = CombatManager.Instance.DebugOnlyGetState()?.Creatures
-                        .Where(static creature => creature.CombatId.HasValue)
+                        .Where(IsVisibleCombatant)
                         .OrderBy(static creature => creature.CombatId)
                         .ToArray() ?? [];
                     if (_selectedCreatureCombatId.HasValue &&

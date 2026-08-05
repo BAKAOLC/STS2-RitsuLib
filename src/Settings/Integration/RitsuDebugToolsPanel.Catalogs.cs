@@ -240,7 +240,7 @@ namespace STS2RitsuLib.Settings
         {
             var players = GetPlayers();
             var creatures = CombatManager.Instance.DebugOnlyGetState()?.Creatures
-                .Where(static creature => creature.CombatId.HasValue)
+                .Where(IsVisibleCombatant)
                 .OrderBy(static creature => creature.CombatId)
                 .ToArray() ?? [];
             var filter = new RitsuCatalogFilter(
@@ -822,6 +822,8 @@ namespace STS2RitsuLib.Settings
 
         private static string RoomLabel(RoomType roomType)
         {
+            if (roomType == RoomType.Map)
+                return L("ritsulib.debugTools.room.map", "Map");
             var key = roomType switch
             {
                 RoomType.Monster => "ROOM_ENEMY",
@@ -831,12 +833,16 @@ namespace STS2RitsuLib.Settings
                 RoomType.Shop => "ROOM_MERCHANT",
                 RoomType.Event => "ROOM_EVENT",
                 RoomType.RestSite => "ROOM_REST",
-                RoomType.Map => "ROOM_MAP",
                 _ => null,
             };
             return key == null
                 ? roomType.ToString()
                 : new LocString("static_hover_tips", $"{key}.title").GetFormattedText();
+        }
+
+        private static bool IsVisibleCombatant(Creature creature)
+        {
+            return creature.CombatId.HasValue && (creature.IsPlayer || !creature.IsDead);
         }
 
         private static string SafeTitle(AbstractModel model)

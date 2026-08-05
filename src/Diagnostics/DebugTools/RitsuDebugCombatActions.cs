@@ -805,6 +805,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 case RitsuDebugCreatureOperation.Kill:
                     await CreatureCmd.Kill(creature, true);
+                    if (creature.IsPet &&
+                        creature.CombatState is { } petCombatState &&
+                        petCombatState.ContainsCreature(creature))
+                    {
+                        CombatManager.Instance.RemoveCreature(creature);
+                        petCombatState.RemoveCreature(creature);
+                    }
+
                     break;
                 case RitsuDebugCreatureOperation.Damage:
                     await CreatureCmd.Damage(
@@ -915,9 +923,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var combatState = CombatManager.Instance.DebugOnlyGetState()!;
             PreloadMonsterAssets(canonical);
 
-            var slot = combatState.Encounter?.GetNextSlot(combatState);
-            if (string.IsNullOrEmpty(slot))
-                slot = null;
+            var slot = GetAvailableEncounterSlot(combatState);
             _ = await CreatureCmd.Add(canonical.ToMutable(), combatState, CombatSide.Enemy, slot);
             if (slot == null)
                 RepositionSlotlessEnemies(combatState);
@@ -935,14 +941,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 PreloadMonsterAssets(monster);
 
             var combatState = CombatManager.Instance.DebugOnlyGetState()!;
-            var currentEncounter = combatState.Encounter;
             var addedWithoutSlot = false;
             foreach (var monster in monsters)
             {
-                var slot = currentEncounter?.GetNextSlot(combatState);
-                if (string.IsNullOrEmpty(slot))
+                var slot = GetAvailableEncounterSlot(combatState);
+                if (slot == null)
                 {
-                    slot = null;
                     addedWithoutSlot = true;
                 }
 
@@ -1243,6 +1247,17 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     200f - (index % 2 == 0 ? 0f : alternatingY));
                 x += widths[index] + padding;
             }
+        }
+
+        private static string? GetAvailableEncounterSlot(ICombatState combatState)
+        {
+            var slot = combatState.Encounter?.GetNextSlot(combatState);
+            var encounterSlots = NCombatRoom.Instance?.EncounterSlots;
+            return !string.IsNullOrEmpty(slot) &&
+                   encounterSlots != null &&
+                   encounterSlots.HasNode(slot)
+                ? slot
+                : null;
         }
 
         internal static async Task SetCreatureBlockAsync(Creature creature, int block)

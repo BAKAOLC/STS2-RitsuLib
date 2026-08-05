@@ -2012,7 +2012,7 @@ namespace STS2RitsuLib.Settings
         private static Creature[] CurrentCreatures()
         {
             return CombatManager.Instance.DebugOnlyGetState()?.Creatures
-                .Where(static creature => creature.CombatId.HasValue)
+                .Where(IsVisibleCombatant)
                 .OrderBy(static creature => creature.CombatId)
                 .ToArray() ?? [];
         }
