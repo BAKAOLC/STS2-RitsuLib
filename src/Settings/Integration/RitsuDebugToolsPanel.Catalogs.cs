@@ -116,6 +116,7 @@ namespace STS2RitsuLib.Settings
             if (!TryGetTargetPlayer(out var player))
                 return EmptyBrowser(L("ritsulib.debugTools.noRun", "Start a run to use state tools."));
             var entries = GetPileCardEntries(player);
+            _pileCardSnapshotHash = GetPileCardSnapshotHash(entries);
 
             if (entries.Length == 0)
                 return EmptyBrowser(L("ritsulib.debugTools.empty.pileCards",
@@ -131,9 +132,14 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.search.pileCards", "Search the target player's cards"),
                 CreatePileCardCatalogEntries(entries),
                 [filter],
-                filter.Id,
-                nameof(PileType.Hand),
-                nameof(PileType.Deck));
+                primaryFilterId: filter.Id,
+                primaryFilterBreakBeforeOptionId: nameof(PileType.Deck),
+                primaryDefaultsToAll: true,
+                primaryAllMatches: static item =>
+                    item.Id.StartsWith($"{PileType.Hand}:", StringComparison.Ordinal) ||
+                    item.Id.StartsWith($"{PileType.Draw}:", StringComparison.Ordinal) ||
+                    item.Id.StartsWith($"{PileType.Discard}:", StringComparison.Ordinal) ||
+                    item.Id.StartsWith($"{PileType.Exhaust}:", StringComparison.Ordinal));
         }
 
         private Control CreateRelicCatalog()
@@ -321,8 +327,45 @@ namespace STS2RitsuLib.Settings
                         badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null),
                     CreateCardPreviewModel(entry.Card),
                     entry.Card,
-                    () => CreatePileCardDetail(entry))),
+                    () => CreatePileCardDetail(entry),
+                    GetCardStateHash(entry.Card))),
             ];
+        }
+
+        private static int GetPileCardSnapshotHash(IReadOnlyList<PileCardEntry> entries)
+        {
+            var hash = new HashCode();
+            foreach (var entry in entries)
+            {
+                hash.Add(entry.StableId, StringComparer.Ordinal);
+                hash.Add(GetCardStateHash(entry.Card));
+            }
+
+            return hash.ToHashCode();
+        }
+
+        private static int GetCardStateHash(CardModel card)
+        {
+            var hash = new HashCode();
+            hash.Add(card.CurrentUpgradeLevel);
+            hash.Add(card.BaseReplayCount);
+            hash.Add(card.EnergyCost.CostsX);
+            hash.Add(card.EnergyCost.Canonical);
+            hash.Add(card.EnergyCost.GetWithModifiers(CostModifiers.None));
+            hash.Add(card.CanonicalStarCost);
+            hash.Add(card.Enchantment?.Id.ToString(), StringComparer.Ordinal);
+            hash.Add(card.Enchantment?.Amount);
+            var localKeywords = card.GetKeywordsWithSources(KeywordSources.Local);
+            hash.Add(localKeywords.Contains(CardKeyword.Exhaust));
+            hash.Add(localKeywords.Contains(CardKeyword.Ethereal));
+            hash.Add(localKeywords.Contains(CardKeyword.Unplayable));
+            foreach (var (key, value) in card.DynamicVars.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
+            {
+                hash.Add(key, StringComparer.Ordinal);
+                hash.Add(value.BaseValue);
+            }
+
+            return hash.ToHashCode();
         }
 
         private static RitsuCatalogItem[] CreateCombatantCatalogItems(

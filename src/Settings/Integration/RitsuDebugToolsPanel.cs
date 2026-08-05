@@ -34,6 +34,7 @@ namespace STS2RitsuLib.Settings
         private const int DetailMetadataFontSize = 15;
         private const int DetailIdentifierFontSize = 14;
         private const int DetailSectionFontSize = 16;
+        private const double PileCardPollIntervalSeconds = 0.35d;
         private const float HeaderTargetWidth = 320f;
         private readonly Dictionary<Control, GuiInputEventHandler> _creaturePickHandlers = [];
         private readonly HashSet<string> _pageFailures = new(StringComparer.Ordinal);
@@ -45,6 +46,8 @@ namespace STS2RitsuLib.Settings
         private bool _contextualPageSelection;
         private Control? _currentBrowser;
         private IDisposable? _modelRegistryInitializedSubscription;
+        private double _pileCardPollElapsed;
+        private int? _pileCardSnapshotHash;
         private RitsuDebugToolsPageView[] _pages = [];
         private bool _refreshScheduled;
         private uint? _selectedCreatureCombatId;
@@ -113,6 +116,31 @@ namespace STS2RitsuLib.Settings
             CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
             CombatManager.Instance.CombatEnded -= OnCombatEnded;
             base._ExitTree();
+        }
+
+        public override void _Process(double delta)
+        {
+            if (!CurrentPageId.Equals($"{Const.ModId}:pile-cards", StringComparison.OrdinalIgnoreCase) ||
+                !TryGetTargetPlayer(out var target))
+            {
+                _pileCardPollElapsed = 0d;
+                return;
+            }
+
+            _pileCardPollElapsed += delta;
+            if (_pileCardPollElapsed < PileCardPollIntervalSeconds)
+                return;
+            _pileCardPollElapsed = 0d;
+
+            var entries = GetPileCardEntries(target);
+            var snapshotHash = GetPileCardSnapshotHash(entries);
+            if (_pileCardSnapshotHash == snapshotHash)
+                return;
+            _pileCardSnapshotHash = snapshotHash;
+            if (_currentBrowser is RitsuDebugCardCatalog pileCatalog)
+                pileCatalog.UpdateEntries(CreatePileCardCatalogEntries(entries));
+            else
+                RebuildBrowser();
         }
 
         public override void _UnhandledInput(InputEvent @event)
@@ -650,7 +678,11 @@ namespace STS2RitsuLib.Settings
                 case $"{Const.ModId}:pile-cards":
                     if (_currentBrowser is RitsuDebugCardCatalog pileCatalog &&
                         TryGetTargetPlayer(out var target))
-                        pileCatalog.UpdateEntries(CreatePileCardCatalogEntries(GetPileCardEntries(target)));
+                    {
+                        var entries = GetPileCardEntries(target);
+                        _pileCardSnapshotHash = GetPileCardSnapshotHash(entries);
+                        pileCatalog.UpdateEntries(CreatePileCardCatalogEntries(entries));
+                    }
                     else
                         RebuildBrowser();
                     break;

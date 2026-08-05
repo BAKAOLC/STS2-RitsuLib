@@ -3,6 +3,7 @@ using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
@@ -18,7 +19,8 @@ namespace STS2RitsuLib.Settings
         RitsuCatalogItem Item,
         CardModel VisualCard,
         CardModel SourceCard,
-        Func<Control> DetailFactory);
+        Func<Control> DetailFactory,
+        int StateHash = 0);
 
     // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugCardCatalog : Control
@@ -53,6 +55,7 @@ namespace STS2RitsuLib.Settings
         private readonly RitsuCatalogFilter[] _filters;
         private readonly Dictionary<NGridCardHolder, string> _holderItemIds = [];
         private readonly List<NGridCardHolder> _holders = [];
+        private readonly Func<RitsuCatalogItem, bool>? _primaryAllMatches;
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
@@ -88,7 +91,9 @@ namespace STS2RitsuLib.Settings
             string? primaryDefaultOptionId = null,
             string? primaryFilterBreakBeforeOptionId = null,
             string? defaultFilterId = null,
-            string? defaultFilterOptionId = null)
+            string? defaultFilterOptionId = null,
+            bool primaryDefaultsToAll = false,
+            Func<RitsuCatalogItem, bool>? primaryAllMatches = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
             ValidateEntries(entries);
@@ -109,10 +114,11 @@ namespace STS2RitsuLib.Settings
                                         nameof(primaryFilterId));
                 _primaryFilterId = primaryFilter.Id;
                 _primaryFilterBreakBeforeOptionId = primaryFilterBreakBeforeOptionId;
+                _primaryAllMatches = primaryAllMatches;
                 var defaultIndex = primaryDefaultOptionId == null
                     ? 0
                     : primaryFilter.Options.ToList().FindIndex(option => option.Id == primaryDefaultOptionId);
-                _filterSelections[primaryFilter.Id] = Math.Max(0, defaultIndex);
+                _filterSelections[primaryFilter.Id] = primaryDefaultsToAll ? -1 : Math.Max(0, defaultIndex);
             }
 
             if (defaultFilterId == null != (defaultFilterOptionId == null))
@@ -143,6 +149,8 @@ namespace STS2RitsuLib.Settings
         internal void UpdateEntries(IReadOnlyList<RitsuDebugCardCatalogEntry> entries)
         {
             ValidateEntries(entries);
+            if (EntriesMatch(entries))
+                return;
             var rebuildDetail = false;
             if (_selectedItemId != null)
             {
@@ -160,6 +168,26 @@ namespace STS2RitsuLib.Settings
                 .ToDictionary(static pair => pair.Id, static pair => pair.Index, StringComparer.Ordinal);
             ApplyFilter(rebuildDetail);
             RefreshState();
+        }
+
+        private bool EntriesMatch(IReadOnlyList<RitsuDebugCardCatalogEntry> entries)
+        {
+            if (_entries.Length != entries.Count)
+                return false;
+            for (var index = 0; index < _entries.Length; index++)
+            {
+                var previous = _entries[index];
+                var current = entries[index];
+                if (!string.Equals(previous.Item.Id, current.Item.Id, StringComparison.Ordinal) ||
+                    !ReferenceEquals(previous.SourceCard, current.SourceCard) ||
+                    previous.StateHash != current.StateHash ||
+                    !string.Equals(previous.Item.Title, current.Item.Title, StringComparison.Ordinal) ||
+                    !string.Equals(previous.Item.Subtitle, current.Item.Subtitle, StringComparison.Ordinal) ||
+                    !string.Equals(previous.Item.Badge, current.Item.Badge, StringComparison.Ordinal))
+                    return false;
+            }
+
+            return true;
         }
 
         internal void RefreshState()
@@ -634,9 +662,9 @@ namespace STS2RitsuLib.Settings
                     CardSortField.Type => left.VisualCard.Type.CompareTo(right.VisualCard.Type),
                     CardSortField.Rarity => GetRarityOrder(left.VisualCard.Rarity)
                         .CompareTo(GetRarityOrder(right.VisualCard.Rarity)),
-                    CardSortField.Cost => (left.VisualCard.EnergyCost?.Canonical ?? 0)
-                        .CompareTo(right.VisualCard.EnergyCost?.Canonical ?? 0),
-                    CardSortField.Alphabet => StringComparer.CurrentCultureIgnoreCase.Compare(
+                    CardSortField.Cost => GetCostOrder(left.VisualCard)
+                        .CompareTo(GetCostOrder(right.VisualCard)),
+                    CardSortField.Alphabet => LocManager.Instance.StringComparer.Compare(
                         left.Item.Title, right.Item.Title),
                     _ => 0,
                 };
@@ -662,11 +690,25 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        private static int GetCostOrder(CardModel card)
+        {
+            if (card.EnergyCost.CostsX)
+                return int.MaxValue - 2;
+            if (card.EnergyCost.Canonical >= 0)
+                return card.EnergyCost.Canonical;
+            if (card.CanonicalStarCost >= 0)
+                return int.MaxValue - 3;
+            return int.MaxValue - 1;
+        }
+
         private bool MatchesFilters(RitsuCatalogItem item)
         {
             foreach (var filter in _filters)
             {
                 var index = _filterSelections.GetValueOrDefault(filter.Id, -1);
+                if (index < 0 && filter.Id == _primaryFilterId &&
+                    _primaryAllMatches != null && !_primaryAllMatches(item))
+                    return false;
                 if (index >= 0 && (index >= filter.Options.Count || !filter.Options[index].Matches(item)))
                     return false;
             }

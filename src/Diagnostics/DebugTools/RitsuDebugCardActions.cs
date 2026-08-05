@@ -35,6 +35,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const string EditCardActionId = "cards.edit";
         internal const string EnchantCardActionId = "cards.enchant";
         internal const string ClearCardEnchantmentActionId = "cards.enchantment.clear";
+        internal const string SetUpgradeLevelActionId = "cards.upgrade.set";
         internal const string UpgradeCardActionId = "cards.upgrade";
         internal const int MaxReplayCount = 99;
         internal const int MaxBulkUpgradeLevels = 99;
@@ -88,6 +89,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 UpgradeCardActionId,
                 ValidateUpgradeCard,
                 ExecuteUpgradeCardAsync);
+            RitsuDebugActionProtocol.Register<UpgradeCardPayload>(
+                SetUpgradeLevelActionId,
+                ValidateSetUpgradeLevel,
+                ExecuteSetUpgradeLevelAsync);
         }
 
         internal static RitsuDebugActionSubmission SubmitModifyPile(
@@ -273,6 +278,25 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 new UpgradeCardPayload(
                     CreateCardLocationPayload(target, pileType, cardIndex, expectedCardId, combatCardId),
                     levels));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitSetUpgradeLevel(
+            Player requester,
+            Player target,
+            PileType pileType,
+            int cardIndex,
+            string expectedCardId,
+            int level,
+            uint? combatCardId = null)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                SetUpgradeLevelActionId,
+                requester,
+                target,
+                new UpgradeCardPayload(
+                    CreateCardLocationPayload(target, pileType, cardIndex, expectedCardId, combatCardId),
+                    level));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -639,8 +663,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 : RitsuDebugActionCheck.Fail(
                     "card.enchantmentIncompatible",
                     "Enchantment {0} cannot be applied to {1}.",
-                    enchantment.Id,
-                    card.Id);
+                    DisplayTitle(enchantment),
+                    DisplayTitle(card));
         }
 
         internal static void ApplyCardState(CardModel card, CardStatePayload state)
@@ -656,8 +680,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     RitsuDebugActionFeedback.Create(
                         "card.enchantmentApplyFailed",
                         "The game did not apply enchantment {0} to card {1}.",
-                        enchantment.Id,
-                        card.Id));
+                        DisplayTitle(enchantment),
+                        DisplayTitle(card)));
         }
 
         private static void ApplyCardStateWithoutEnchantment(CardModel card, CardStatePayload state)
@@ -982,13 +1006,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     MaxCardEditValue);
             var preview = (CardModel)card.ClonePreservingMutability();
             CardCmd.ClearEnchantment(preview);
+            ResetCardToUpgradeLevel(preview, card.CurrentUpgradeLevel);
             return enchantment.CanEnchant(preview)
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(
                     "card.enchantmentIncompatible",
                     "Enchantment {0} cannot be applied to {1}.",
-                    enchantment.Id,
-                    card.Id);
+                    DisplayTitle(enchantment),
+                    DisplayTitle(card));
         }
 
         private static Task<string> ExecuteEnchantCardAsync(
@@ -1004,7 +1029,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             _ = TryResolveEnchantment(payload.EnchantmentId, out var enchantment, out _);
             var previousEnchantment = card.Enchantment?.CanonicalInstance;
             var previousAmount = card.Enchantment?.Amount ?? 0;
+            var upgradeLevel = card.CurrentUpgradeLevel;
             CardCmd.ClearEnchantment(card);
+            ResetCardToUpgradeLevel(card, upgradeLevel);
             try
             {
                 if (CardCmd.Enchant(enchantment.ToMutable(), card, payload.Amount) == null)
@@ -1012,11 +1039,13 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         RitsuDebugActionFeedback.Create(
                             "card.enchantmentApplyFailed",
                             "The game did not apply enchantment {0} to card {1}.",
-                            enchantment.Id,
-                            card.Id));
+                            DisplayTitle(enchantment),
+                            DisplayTitle(card)));
             }
             catch (Exception applyException) when (RitsuLibExceptionPolicy.IsRecoverable(applyException))
             {
+                CardCmd.ClearEnchantment(card);
+                ResetCardToUpgradeLevel(card, upgradeLevel);
                 if (previousEnchantment != null)
                     try
                     {
@@ -1025,8 +1054,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                                 RitsuDebugActionFeedback.Create(
                                     "card.enchantmentRestoreFailed",
                                     "The previous enchantment {0} could not be restored to card {1}.",
-                                    previousEnchantment.Id,
-                                    card.Id));
+                                    DisplayTitle(previousEnchantment),
+                                    DisplayTitle(card)));
                     }
                     catch (Exception restoreException) when (RitsuLibExceptionPolicy.IsRecoverable(restoreException))
                     {
@@ -1066,7 +1095,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             _ = TryGetLocatedCard(context.Target, payload, out var pileType, out var card, out _);
             var enchantmentId = card.Enchantment!.Id;
+            var upgradeLevel = card.CurrentUpgradeLevel;
             CardCmd.ClearEnchantment(card);
+            ResetCardToUpgradeLevel(card, upgradeLevel);
             RefreshVisibleCardNode(card, pileType);
             return Task.FromResult(
                 $"Cleared enchantment {enchantmentId} from {card.Id} in {pileType}.");
@@ -1113,6 +1144,74 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return Task.FromResult(
                 $"Upgraded {card.Id} in {pileType} from {initialLevel} " +
                 $"to {card.CurrentUpgradeLevel}.");
+        }
+
+        private static RitsuDebugActionCheck ValidateSetUpgradeLevel(
+            RitsuDebugActionContext context,
+            UpgradeCardPayload payload)
+        {
+            if (!TryGetLocatedCard(
+                    context.Target,
+                    payload.Location,
+                    out _,
+                    out var card,
+                    out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            return payload.Levels is >= 0 && payload.Levels <= card.MaxUpgradeLevel
+                ? RitsuDebugActionCheck.Ok
+                : RitsuDebugActionCheck.Fail(
+                    "card.upgradeLevelRange",
+                    "Upgrade level must be between 0 and {0}.",
+                    card.MaxUpgradeLevel);
+        }
+
+        private static Task<string> ExecuteSetUpgradeLevelAsync(
+            RitsuDebugActionContext context,
+            UpgradeCardPayload payload)
+        {
+            _ = TryGetLocatedCard(
+                context.Target,
+                payload.Location,
+                out var pileType,
+                out var card,
+                out _);
+            var initialLevel = card.CurrentUpgradeLevel;
+            if (initialLevel != payload.Levels)
+                ResetCardToUpgradeLevel(card, payload.Levels);
+            RefreshVisibleCardNode(card, pileType);
+            return Task.FromResult(
+                $"Set {card.Id} in {pileType} from upgrade level {initialLevel} " +
+                $"to {card.CurrentUpgradeLevel}.");
+        }
+
+        private static void ResetCardToUpgradeLevel(CardModel card, int upgradeLevel)
+        {
+            card.DowngradeInternal();
+            for (var level = 0; level < upgradeLevel && card.IsUpgradable; level++)
+                CardCmd.Upgrade(card, CardPreviewStyle.None);
+        }
+
+        private static string DisplayTitle(CardModel card)
+        {
+            return ResolveDisplayTitle(card.Id.ToString(), () => card.Title);
+        }
+
+        private static string DisplayTitle(EnchantmentModel enchantment)
+        {
+            return ResolveDisplayTitle(enchantment.Id.ToString(), () => enchantment.Title.GetFormattedText());
+        }
+
+        private static string ResolveDisplayTitle(string fallback, Func<string> titleFactory)
+        {
+            try
+            {
+                var title = titleFactory().Trim();
+                return string.IsNullOrWhiteSpace(title) ? fallback : title;
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                return fallback;
+            }
         }
 
         private static void RefreshVisibleCardNode(CardModel card, PileType pileType)

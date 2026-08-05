@@ -264,26 +264,26 @@ namespace STS2RitsuLib.Settings
                 SafeCardDescription(entry.Card),
                 descriptionRefreshFactory: () => SafeCardDescription(entry.Card));
             AddSectionTitle(root, L("ritsulib.debugTools.action.cardState", "Card state"));
-            var upgrades = CreateIntegerEdit("1");
+            var upgrades = CreateIntegerEdit(entry.Card.CurrentUpgradeLevel.ToString());
             var upgradeButton = ActionButton(
-                L("ritsulib.debugTools.action.upgrade", "Upgrade"),
+                L("ritsulib.debugTools.action.set", "Set"),
                 ModSettingsButtonTone.Accent,
                 () =>
                 {
-                    if (!TryReadInt(upgrades, 1, RitsuDebugCardActions.MaxBulkUpgradeLevels, out var levels) ||
+                    if (!TryReadInt(upgrades, 0, entry.Card.MaxUpgradeLevel, out var level) ||
                         !TryGetActionContext(out var requester, out var target))
                         return;
-                    RunAction(() => RitsuDebugCardActions.SubmitUpgradeCard(
+                    RunAction(() => RitsuDebugCardActions.SubmitSetUpgradeLevel(
                         requester,
                         target,
                         entry.PileType,
                         entry.Index,
                         entry.Card.Id.ToString(),
-                        levels,
+                        level,
                         entry.CombatCardId));
                 });
             root.AddChild(ActionField(
-                L("ritsulib.debugTools.field.upgrades", "Upgrade levels"),
+                L("ritsulib.debugTools.field.upgradeLevel", "Upgrade level"),
                 upgrades,
                 upgradeButton));
             var replay = CreateIntegerEdit(entry.Card.BaseReplayCount.ToString());
@@ -456,6 +456,9 @@ namespace STS2RitsuLib.Settings
                             entry.Card.Id.ToString(),
                             entry.CombatCardId));
                     }));
+                enchantmentPicker.AddExpandedControl(CreateHintLabel(L(
+                    "ritsulib.debugTools.enchantmentResetHint",
+                    "Replacing or clearing an enchantment restores the card's standard state at its current upgrade level.")));
             }
             else
             {
@@ -1973,6 +1976,11 @@ namespace STS2RitsuLib.Settings
 
         private static void AddHint(VBoxContainer root, string text)
         {
+            root.AddChild(CreateHintLabel(text));
+        }
+
+        private static Label CreateHintLabel(string text)
+        {
             var label = new Label
             {
                 Text = text,
@@ -1981,7 +1989,7 @@ namespace STS2RitsuLib.Settings
             label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             label.AddThemeFontSizeOverride("font_size", DetailMetadataFontSize);
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Hint);
-            root.AddChild(label);
+            return label;
         }
 
         private static void AddTransitionNotice(VBoxContainer root)
