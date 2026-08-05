@@ -41,6 +41,112 @@ namespace STS2RitsuLib.Ui.Catalog
     }
 
     /// <summary>
+    ///     <para xml:lang="en">Selects the visual tone of a catalog item's explicit quick action.</para>
+    ///     <para xml:lang="zh-CN">选择目录项显式快捷操作的视觉色调。</para>
+    /// </summary>
+    public enum RitsuCatalogItemActionTone
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Uses the normal neutral action style.</para>
+        ///     <para xml:lang="zh-CN">使用普通的中性操作样式。</para>
+        /// </summary>
+        Normal,
+
+        /// <summary>
+        ///     <para xml:lang="en">Uses the destructive-action style.</para>
+        ///     <para xml:lang="zh-CN">使用破坏性操作样式。</para>
+        /// </summary>
+        Danger,
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Describes one discoverable icon action rendered directly on a catalog item. Selecting the item remains a
+    ///         separate operation.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">描述直接呈现在目录项上的一个易发现图标操作；选择目录项仍是独立操作。</para>
+    /// </summary>
+    public sealed class RitsuCatalogItemAction
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Creates an icon action.</para>
+        ///     <para xml:lang="zh-CN">创建图标操作。</para>
+        /// </summary>
+        /// <param name="icon">
+        ///     <para xml:lang="en">The live icon texture. The caller retains ownership.</para>
+        ///     <para xml:lang="zh-CN">仍然有效的图标纹理；调用方保留所有权。</para>
+        /// </param>
+        /// <param name="tooltip">
+        ///     <para xml:lang="en">The non-empty accessible action description.</para>
+        ///     <para xml:lang="zh-CN">非空的无障碍操作说明。</para>
+        /// </param>
+        /// <param name="action">
+        ///     <para xml:lang="en">The synchronous action invoked on the Godot main thread.</para>
+        ///     <para xml:lang="zh-CN">在 Godot 主线程同步调用的操作。</para>
+        /// </param>
+        /// <param name="tone">
+        ///     <para xml:lang="en">The visual tone; the default is neutral.</para>
+        ///     <para xml:lang="zh-CN">视觉色调；默认为中性。</para>
+        /// </param>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">Thrown when <paramref name="tooltip" /> is empty or too long.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="tooltip" /> 为空或过长时抛出。</para>
+        /// </exception>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">Thrown when <paramref name="action" /> is null.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="action" /> 为 null 时抛出。</para>
+        /// </exception>
+        /// <exception cref="ObjectDisposedException">
+        ///     <para xml:lang="en">Thrown when <paramref name="icon" /> is no longer valid.</para>
+        ///     <para xml:lang="zh-CN">当 <paramref name="icon" /> 不再有效时抛出。</para>
+        /// </exception>
+        public RitsuCatalogItemAction(
+            Texture2D icon,
+            string tooltip,
+            Action action,
+            RitsuCatalogItemActionTone tone = RitsuCatalogItemActionTone.Normal)
+        {
+            ArgumentNullException.ThrowIfNull(icon);
+            ArgumentException.ThrowIfNullOrWhiteSpace(tooltip);
+            ArgumentNullException.ThrowIfNull(action);
+            if (!GodotObject.IsInstanceValid(icon))
+                throw new ObjectDisposedException(nameof(icon));
+            if (tooltip.Length > RitsuCatalogItem.MaximumTextLength)
+                throw new ArgumentException("The action tooltip is too long.", nameof(tooltip));
+            if (!Enum.IsDefined(tone))
+                throw new ArgumentOutOfRangeException(nameof(tone));
+            Icon = icon;
+            Tooltip = tooltip;
+            Action = action;
+            Tone = tone;
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the action icon.</para>
+        ///     <para xml:lang="zh-CN">获取操作图标。</para>
+        /// </summary>
+        public Texture2D Icon { get; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the accessible action description.</para>
+        ///     <para xml:lang="zh-CN">获取无障碍操作说明。</para>
+        /// </summary>
+        public string Tooltip { get; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the synchronous main-thread action.</para>
+        ///     <para xml:lang="zh-CN">获取同步的主线程操作。</para>
+        /// </summary>
+        public Action Action { get; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the action tone.</para>
+        ///     <para xml:lang="zh-CN">获取操作色调。</para>
+        /// </summary>
+        public RitsuCatalogItemActionTone Tone { get; }
+    }
+
+    /// <summary>
     ///     <para xml:lang="en">
     ///         Describes one immutable item displayed by a <see cref="RitsuCatalogBrowser" />.
     ///     </para>
@@ -106,9 +212,33 @@ namespace STS2RitsuLib.Ui.Catalog
         ///     </para>
         ///     <para xml:lang="zh-CN">可选的完整悬浮提示文本；省略时浏览器会根据标题、副标题和 ID 生成提示。</para>
         /// </param>
+        /// <param name="quickAction">
+        ///     <para xml:lang="en">
+        ///         Optional explicit icon action rendered on the item. The browser does not treat it as item selection.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">呈现在目录项上的可选显式图标操作；浏览器不会将其视为目录项选择。</para>
+        /// </param>
+        /// <param name="accentColor">
+        ///     <para xml:lang="en">
+        ///         Optional normalized color for the item's non-text accent marker. Text and icons should still identify
+        ///         the item's meaning without relying on color alone.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         目录项非文本强调标记使用的可选标准化颜色。文字和图标仍应在不依赖颜色的情况下表达目录项含义。
+        ///     </para>
+        /// </param>
         /// <exception cref="ArgumentException">
         ///     <para xml:lang="en">Thrown when an ID or required title is invalid, or text exceeds its limit.</para>
         ///     <para xml:lang="zh-CN">ID、必需标题无效或文本超过限制时抛出。</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">
+        ///         Thrown when <paramref name="accentColor" /> contains a non-finite component, a component outside zero
+        ///         through one, or a fully transparent alpha value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当 <paramref name="accentColor" /> 包含非有限分量、超出零至一范围的分量或完全透明的 Alpha 值时抛出。
+        ///     </para>
         /// </exception>
         /// <exception cref="ObjectDisposedException">
         ///     <para xml:lang="en">Thrown when <paramref name="icon" /> is no longer a valid Godot object.</para>
@@ -122,7 +252,9 @@ namespace STS2RitsuLib.Ui.Catalog
             Texture2D? icon = null,
             string? badge = null,
             Func<Texture2D?>? iconFactory = null,
-            string? tooltip = null)
+            string? tooltip = null,
+            RitsuCatalogItemAction? quickAction = null,
+            Color? accentColor = null)
         {
             Id = ValidateRequired(id, nameof(id), MaximumIdLength);
             Title = ValidateRequired(title, nameof(title), MaximumTextLength);
@@ -130,6 +262,18 @@ namespace STS2RitsuLib.Ui.Catalog
             SearchText = ValidateOptional(searchText, nameof(searchText));
             Badge = ValidateOptional(badge, nameof(badge));
             Tooltip = ValidateOptional(tooltip, nameof(tooltip));
+            QuickAction = quickAction;
+            if (accentColor is { } color &&
+                (!float.IsFinite(color.R) ||
+                 !float.IsFinite(color.G) ||
+                 !float.IsFinite(color.B) ||
+                 !float.IsFinite(color.A) ||
+                 color.R is < 0f or > 1f ||
+                 color.G is < 0f or > 1f ||
+                 color.B is < 0f or > 1f ||
+                 color.A is <= 0f or > 1f))
+                throw new ArgumentOutOfRangeException(nameof(accentColor));
+            AccentColor = accentColor;
             if (icon != null && iconFactory != null)
                 throw new ArgumentException("Provide either an icon or an icon factory, not both.",
                     nameof(iconFactory));
@@ -193,6 +337,18 @@ namespace STS2RitsuLib.Ui.Catalog
         ///     <para xml:lang="zh-CN">获取可选的完整悬浮提示文本。</para>
         /// </summary>
         public string? Tooltip { get; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the optional color used by the browser's non-text accent marker.</para>
+        ///     <para xml:lang="zh-CN">获取浏览器非文本强调标记使用的可选颜色。</para>
+        /// </summary>
+        public Color? AccentColor { get; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the optional explicit icon action displayed directly on the item.</para>
+        ///     <para xml:lang="zh-CN">获取直接显示在目录项上的可选显式图标操作。</para>
+        /// </summary>
+        public RitsuCatalogItemAction? QuickAction { get; }
 
         internal bool Matches(string[] terms)
         {
@@ -453,6 +609,39 @@ namespace STS2RitsuLib.Ui.Catalog
         public float DetailMinimumWidth { get; init; } = 360f;
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the maximum drawer width, from 320 through 960 pixels. The value must not be
+        ///         smaller than <see cref="DetailMinimumWidth" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化详情抽屉的最大宽度，范围为 320 至 960 像素；该值不得小于 <see cref="DetailMinimumWidth" />。
+        ///     </para>
+        /// </summary>
+        public float DetailMaximumWidth { get; init; } = 640f;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the preferred fraction of available width used by a detail drawer, from 0.3
+        ///         through 0.75. The browser still applies the configured minimum, maximum, and catalog reservation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化详情抽屉优先使用的可用宽度比例，范围为 0.3 至 0.75；浏览器仍会应用配置的最小值、最大值和目录预留宽度。
+        ///     </para>
+        /// </summary>
+        public float DetailPreferredWidthFraction { get; init; } = 0.44f;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or initializes the width kept visible for the catalog beside a drawer, from 220 through 720
+        ///         pixels, whenever the workspace is large enough.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或初始化详情抽屉旁为目录保留的可见宽度；范围为 220 至 720 像素，并在工作区足够宽时生效。
+        ///     </para>
+        /// </summary>
+        public float MinimumVisibleCatalogWidth { get; init; } = 300f;
+
+        /// <summary>
         ///     <para xml:lang="en">Gets or initializes each catalog item's row height, from 48 through 120 pixels.</para>
         ///     <para xml:lang="zh-CN">获取或初始化每个目录项的行高，范围为 48 至 120 像素。</para>
         /// </summary>
@@ -498,6 +687,14 @@ namespace STS2RitsuLib.Ui.Catalog
                 throw new ArgumentOutOfRangeException(nameof(CatalogWidth));
             if (DetailMinimumWidth is < 280f or > 720f || !float.IsFinite(DetailMinimumWidth))
                 throw new ArgumentOutOfRangeException(nameof(DetailMinimumWidth));
+            if (DetailMaximumWidth is < 320f or > 960f || !float.IsFinite(DetailMaximumWidth) ||
+                DetailMaximumWidth < DetailMinimumWidth)
+                throw new ArgumentOutOfRangeException(nameof(DetailMaximumWidth));
+            if (DetailPreferredWidthFraction is < 0.3f or > 0.75f ||
+                !float.IsFinite(DetailPreferredWidthFraction))
+                throw new ArgumentOutOfRangeException(nameof(DetailPreferredWidthFraction));
+            if (MinimumVisibleCatalogWidth is < 220f or > 720f || !float.IsFinite(MinimumVisibleCatalogWidth))
+                throw new ArgumentOutOfRangeException(nameof(MinimumVisibleCatalogWidth));
             if (RowHeight is < 48f or > 120f || !float.IsFinite(RowHeight))
                 throw new ArgumentOutOfRangeException(nameof(RowHeight));
             if (!Enum.IsDefined(Presentation))

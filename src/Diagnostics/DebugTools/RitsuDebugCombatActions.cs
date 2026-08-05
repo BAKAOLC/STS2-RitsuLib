@@ -35,6 +35,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const string ApplyPowerActionId = "combat.power.apply";
         internal const string ApplyPowerToCreaturesActionId = "combat.power.apply-many";
         internal const string RemovePowerActionId = "combat.power.remove";
+        internal const string AdjustPowerInstanceActionId = "combat.power.adjust-instance";
+        internal const string RemovePowerInstanceActionId = "combat.power.remove-instance";
         internal const string StunMonsterActionId = "combat.monster.stun";
         internal const string SetMonsterIntentActionId = "combat.monster.intent.set";
         internal const string RandomMonsterIntentActionId = "combat.monster.intent.random-group";
@@ -96,6 +98,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 RemovePowerActionId,
                 ValidateRemovePower,
                 ExecuteRemovePowerAsync);
+            RitsuDebugActionProtocol.Register<PowerInstancePayload>(
+                AdjustPowerInstanceActionId,
+                ValidateAdjustPowerInstance,
+                ExecuteAdjustPowerInstanceAsync);
+            RitsuDebugActionProtocol.Register<PowerInstancePayload>(
+                RemovePowerInstanceActionId,
+                ValidateRemovePowerInstance,
+                ExecuteRemovePowerInstanceAsync);
             RitsuDebugActionProtocol.Register<MonsterActionPayload>(
                 StunMonsterActionId,
                 ValidateStunMonster,
@@ -218,6 +228,37 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string powerId)
         {
             return SubmitPower(requester, actionTarget, RemovePowerActionId, combatId, powerId, 0);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitAdjustPowerInstance(
+            Player requester,
+            Player actionTarget,
+            uint combatId,
+            int index,
+            string powerId,
+            int offset)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                AdjustPowerInstanceActionId,
+                requester,
+                actionTarget,
+                new PowerInstancePayload(combatId, index, powerId, offset));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitRemovePowerInstance(
+            Player requester,
+            Player actionTarget,
+            uint combatId,
+            int index,
+            string powerId)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                RemovePowerInstanceActionId,
+                requester,
+                actionTarget,
+                new PowerInstancePayload(combatId, index, powerId, 0));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
         internal static RitsuDebugActionSubmission SubmitSetMonsterIntent(
@@ -583,6 +624,34 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     canonical.Id);
         }
 
+        private static RitsuDebugActionCheck ValidateAdjustPowerInstance(
+            RitsuDebugActionContext context,
+            PowerInstancePayload payload)
+        {
+            if (payload.Offset is 0 or < -MaxAmount or > MaxAmount)
+                return RitsuDebugActionCheck.Fail(
+                    "combat.powerOffsetRange",
+                    "Power adjustment must be between {0} and {1}, excluding zero.",
+                    -MaxAmount,
+                    MaxAmount);
+            if (!TryResolvePowerInstance(payload, out var creature, out _, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            return creature.CanReceivePowers
+                ? RitsuDebugActionCheck.Ok
+                : RitsuDebugActionCheck.Fail(
+                    "combat.cannotReceivePowers",
+                    "The selected creature cannot receive power changes right now.");
+        }
+
+        private static RitsuDebugActionCheck ValidateRemovePowerInstance(
+            RitsuDebugActionContext context,
+            PowerInstancePayload payload)
+        {
+            return TryResolvePowerInstance(payload, out _, out _, out var feedback)
+                ? RitsuDebugActionCheck.Ok
+                : RitsuDebugActionCheck.Fail(feedback);
+        }
+
         private static RitsuDebugActionCheck ValidateSetMonsterIntent(
             RitsuDebugActionContext context,
             MonsterIntentPayload payload)
@@ -866,6 +935,69 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return $"Removed {canonical.Id} from the selected creature.";
         }
 
+        private static async Task<string> ExecuteAdjustPowerInstanceAsync(
+            RitsuDebugActionContext context,
+            PowerInstancePayload payload)
+        {
+            _ = TryResolvePowerInstance(payload, out _, out var power, out _);
+            await PowerCmd.ModifyAmount(
+                new BlockingPlayerChoiceContext(),
+                power,
+                payload.Offset,
+                null,
+                null);
+            return $"Adjusted {power.Id} by {payload.Offset}.";
+        }
+
+        private static async Task<string> ExecuteRemovePowerInstanceAsync(
+            RitsuDebugActionContext context,
+            PowerInstancePayload payload)
+        {
+            _ = TryResolvePowerInstance(payload, out _, out var power, out _);
+            await PowerCmd.Remove(power);
+            return $"Removed {power.Id} from the selected creature.";
+        }
+
+        private static bool TryResolvePowerInstance(
+            PowerInstancePayload payload,
+            out Creature creature,
+            out PowerModel power,
+            out RitsuDebugActionFeedback feedback)
+        {
+            creature = null!;
+            power = null!;
+            if (!TryRequireCombat(out feedback))
+                return false;
+            creature = FindCreature(payload.CombatId)!;
+            if (creature == null)
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "combat.creatureUnavailable",
+                    "The selected creature is no longer available.");
+                return false;
+            }
+
+            if (payload.Index < 0 || payload.Index >= creature.Powers.Count)
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "combat.powerInstanceChanged",
+                    "The selected Power instance is no longer available.");
+                return false;
+            }
+
+            power = creature.Powers[payload.Index];
+            if (!string.Equals(power.Id.ToString(), payload.PowerId, StringComparison.Ordinal))
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "combat.powerInstanceChanged",
+                    "The selected Power instance has changed. Refresh and try again.");
+                return false;
+            }
+
+            feedback = default;
+            return true;
+        }
+
         private static bool TryCreateEncounterMonsters(
             EncounterModel canonical,
             Player target,
@@ -1093,6 +1225,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             int Value);
 
         internal readonly record struct PowerPayload(uint CombatId, string PowerId, int Amount);
+
+        internal readonly record struct PowerInstancePayload(uint CombatId, int Index, string PowerId, int Offset);
 
         internal readonly record struct PowerGroupPayload(uint[] CombatIds, string PowerId, int Amount);
 

@@ -1,5 +1,7 @@
 using System.Globalization;
 using Godot;
+using STS2RitsuLib.Settings;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Ui.Overlay
 {
@@ -11,6 +13,7 @@ namespace STS2RitsuLib.Ui.Overlay
         Potions,
         Powers,
         Players,
+        Paw,
         Creatures,
         Monsters,
         Rooms,
@@ -18,6 +21,13 @@ namespace STS2RitsuLib.Ui.Overlay
         Events,
         Search,
         Puzzle,
+        Inventory,
+        Library,
+        Plus,
+        Minus,
+        Trash,
+        Close,
+        Heart,
         ChevronLeft,
         ChevronRight,
     }
@@ -69,6 +79,8 @@ namespace STS2RitsuLib.Ui.Overlay
                     "<path d='M13.5 2L5 13h6l-1 9 9-12h-6z'/>",
                 RitsuDebugToolsGlyph.Players =>
                     "<circle cx='12' cy='8' r='4'/><path d='M4.5 21c.7-5 3.2-7.5 7.5-7.5s6.8 2.5 7.5 7.5'/>",
+                RitsuDebugToolsGlyph.Paw =>
+                    "<circle cx='6.5' cy='8.5' r='2'/><circle cx='10.3' cy='5.5' r='2'/><circle cx='14.5' cy='5.5' r='2'/><circle cx='18' cy='8.5' r='2'/><path d='M7 16.8c0-3.2 2.3-5.7 5.2-5.7s5.3 2.5 5.3 5.7c0 2-1.4 3.5-3.4 3.5-.7 0-1.4-.3-1.9-.7-.5.4-1.2.7-1.9.7-1.9 0-3.3-1.5-3.3-3.5z'/>",
                 RitsuDebugToolsGlyph.Creatures =>
                     "<path d='M4 4l6.5 6.5M14 14l6 6M20 4l-6.5 6.5M10 14l-6 6M3 3l4 1-3 3zM21 3l-4 1 3 3z'/>",
                 RitsuDebugToolsGlyph.Monsters =>
@@ -81,12 +93,23 @@ namespace STS2RitsuLib.Ui.Overlay
                     "<path d='M12 3l2.2 5.1 5.5.5-4.2 3.7 1.3 5.4-4.8-2.8-4.8 2.8 1.3-5.4-4.2-3.7 5.5-.5z'/><path d='M12 8v3.5M12 13.8v.2'/>",
                 RitsuDebugToolsGlyph.Search =>
                     "<circle cx='10.5' cy='10.5' r='6.5'/><path d='M15.5 15.5L21 21'/>",
+                RitsuDebugToolsGlyph.Inventory =>
+                    "<path d='M4 7.5h16v12H4zM7 7.5V5h10v2.5M8 12h8'/>",
+                RitsuDebugToolsGlyph.Library =>
+                    "<rect x='3.5' y='3.5' width='7' height='7' rx='1.2'/><rect x='13.5' y='3.5' width='7' height='7' rx='1.2'/><rect x='3.5' y='13.5' width='7' height='7' rx='1.2'/><rect x='13.5' y='13.5' width='7' height='7' rx='1.2'/>",
+                RitsuDebugToolsGlyph.Plus => "<path d='M12 5v14M5 12h14'/>",
+                RitsuDebugToolsGlyph.Minus => "<path d='M5 12h14'/>",
+                RitsuDebugToolsGlyph.Trash =>
+                    "<path d='M4.5 7h15M9 3.5h6L16 7M7 7l.8 13.5h8.4L17 7M10 10.5v6.5M14 10.5v6.5'/>",
+                RitsuDebugToolsGlyph.Close => "<path d='M6 6l12 12M18 6L6 18'/>",
+                RitsuDebugToolsGlyph.Heart =>
+                    "<path d='M12 20S4 15.2 4 9.2C4 6.4 5.9 4.5 8.4 4.5c1.6 0 2.9.8 3.6 2 0.7-1.2 2-2 3.6-2C18.1 4.5 20 6.4 20 9.2c0 6-8 10.8-8 10.8z'/>",
                 RitsuDebugToolsGlyph.ChevronLeft => "<path d='M15 5l-7 7 7 7'/>",
                 RitsuDebugToolsGlyph.ChevronRight => "<path d='M9 5l7 7-7 7'/>",
                 _ =>
                     "<path d='M9 3h4v4h4v4h4v4h-4v4h-4v-4H9v4H5v-4H3v-4h2V7h4z'/>",
             };
-            var fill = glyph is RitsuDebugToolsGlyph.Powers or RitsuDebugToolsGlyph.Events
+            var fill = glyph is RitsuDebugToolsGlyph.Powers or RitsuDebugToolsGlyph.Paw or RitsuDebugToolsGlyph.Events
                 ? rgb
                 : "none";
             return $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>" +
@@ -97,6 +120,70 @@ namespace STS2RitsuLib.Ui.Overlay
         private static byte ToByte(float value)
         {
             return (byte)Mathf.Clamp(Mathf.RoundToInt(value * 255f), 0, 255);
+        }
+    }
+
+    internal partial class RitsuDebugToolsIconButton : ModSettingsGamepadCompatibleButton
+    {
+        internal RitsuDebugToolsIconButton()
+            : this(36f, 36f)
+        {
+        }
+
+        internal RitsuDebugToolsIconButton(float width, float height)
+        {
+            CustomMinimumSize = new(width, height);
+            SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+            SizeFlagsVertical = SizeFlags.ShrinkCenter;
+            FocusMode = FocusModeEnum.All;
+            MouseFilter = MouseFilterEnum.Stop;
+            IconAlignment = HorizontalAlignment.Center;
+            ExpandIcon = false;
+            ClipText = true;
+            ClipContents = true;
+            Text = string.Empty;
+        }
+
+        internal void Configure(Texture2D? icon, string tooltip, ModSettingsButtonTone tone)
+        {
+            Icon = icon;
+            TooltipText = tooltip;
+            var normal = CreateStyle(tone, false, false);
+            var hovered = CreateStyle(tone, true, false);
+            AddThemeStyleboxOverride("normal", normal);
+            AddThemeStyleboxOverride("hover", hovered);
+            AddThemeStyleboxOverride("pressed", hovered);
+            AddThemeStyleboxOverride("focus", CreateStyle(tone, true, true));
+            AddThemeStyleboxOverride("disabled", normal);
+        }
+
+        private static StyleBoxFlat CreateStyle(ModSettingsButtonTone tone, bool hovered, bool focused)
+        {
+            var colors = tone switch
+            {
+                ModSettingsButtonTone.Accent => RitsuShellTheme.Current.Component.TextButton.Accent,
+                ModSettingsButtonTone.Danger => RitsuShellTheme.Current.Component.TextButton.Danger,
+                _ => RitsuShellTheme.Current.Component.TextButton.Neutral,
+            };
+            var borderWidth = focused ? 2 : 1;
+            var radius = RitsuShellTheme.Current.Metric.Radius.Default;
+            return new()
+            {
+                BgColor = hovered ? colors.BgHover : colors.Bg,
+                BorderColor = colors.Fg,
+                BorderWidthLeft = borderWidth,
+                BorderWidthTop = borderWidth,
+                BorderWidthRight = borderWidth,
+                BorderWidthBottom = borderWidth,
+                CornerRadiusTopLeft = radius,
+                CornerRadiusTopRight = radius,
+                CornerRadiusBottomRight = radius,
+                CornerRadiusBottomLeft = radius,
+                ContentMarginLeft = 5f,
+                ContentMarginTop = 5f,
+                ContentMarginRight = 5f,
+                ContentMarginBottom = 5f,
+            };
         }
     }
 }

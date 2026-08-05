@@ -42,6 +42,7 @@ namespace STS2RitsuLib.Settings
         private bool _creaturePicking;
         private RitsuToastHandle? _creaturePickingToast;
         private ModSettingsDropdownChoiceControl<uint>? _creatureTargetDropdown;
+        private bool _contextualPageSelection;
         private Control? _currentBrowser;
         private IDisposable? _modelRegistryInitializedSubscription;
         private RitsuDebugToolsPageView[] _pages = [];
@@ -250,13 +251,42 @@ namespace STS2RitsuLib.Settings
                 page.Id.Equals(pageId, StringComparison.OrdinalIgnoreCase));
             if (selected == null)
                 return false;
+            var resetCatalogMode = !_contextualPageSelection && ResetBuiltInCatalogMode(selected.Id);
             if (CurrentPageId.Equals(selected.Id, StringComparison.OrdinalIgnoreCase))
+            {
+                if (resetCatalogMode)
+                    RebuildBrowser();
                 return true;
+            }
+
             CurrentPageId = selected.Id;
             RefreshHeaderTarget();
             RebuildBrowser();
             PageChanged?.Invoke(selected);
             return true;
+        }
+
+        private bool ResetBuiltInCatalogMode(string pageId)
+        {
+            if (pageId.Equals($"{Const.ModId}:relics", StringComparison.OrdinalIgnoreCase))
+            {
+                var changed = _relicCatalogMode != RelicCatalogMode.Library;
+                _relicCatalogMode = RelicCatalogMode.Library;
+                return changed;
+            }
+
+            if (pageId.Equals($"{Const.ModId}:potions", StringComparison.OrdinalIgnoreCase))
+            {
+                var changed = _potionCatalogMode != PotionCatalogMode.Library;
+                _potionCatalogMode = PotionCatalogMode.Library;
+                return changed;
+            }
+
+            if (!pageId.Equals($"{Const.ModId}:powers", StringComparison.OrdinalIgnoreCase))
+                return false;
+            var powerChanged = _powerCatalogMode != PowerCatalogMode.Library;
+            _powerCatalogMode = PowerCatalogMode.Library;
+            return powerChanged;
         }
 
         private void RefreshAll()
@@ -319,10 +349,8 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugToolsGlyph.Potions, CreatePotionCatalog);
             Add("powers", "ritsulib.debugTools.category.powers", "Powers", 40, 0.72f,
                 RitsuDebugToolsGlyph.Powers, CreatePowerCatalog);
-            Add("players", "ritsulib.debugTools.category.players", "Players", 50, 0.65f,
-                RitsuDebugToolsGlyph.Players, CreatePlayerCatalog);
-            Add("creatures", "ritsulib.debugTools.category.creatures", "Combat creatures", 60, 0.72f,
-                RitsuDebugToolsGlyph.Creatures, CreateCreatureCatalog);
+            Add("creatures", "ritsulib.debugTools.category.combatants", "Players and combat creatures", 50, 0.72f,
+                RitsuDebugToolsGlyph.Creatures, CreateCombatantCatalog);
             Add("monsters", "ritsulib.debugTools.category.monsters", "Add monster", 70, 0.62f,
                 RitsuDebugToolsGlyph.Monsters, CreateMonsterCatalog);
             Add("rooms", "ritsulib.debugTools.category.rooms", "Rooms", 80, 0.48f,
@@ -624,9 +652,6 @@ namespace STS2RitsuLib.Settings
                     else
                         RebuildBrowser();
                     break;
-                case $"{Const.ModId}:players":
-                    RefreshCatalogItems(CreatePlayerCatalogItems(players));
-                    break;
                 case $"{Const.ModId}:creatures":
                     var creatures = CombatManager.Instance.DebugOnlyGetState()?.Creatures
                         .Where(static creature => creature.CombatId.HasValue)
@@ -635,7 +660,7 @@ namespace STS2RitsuLib.Settings
                     if (_selectedCreatureCombatId.HasValue &&
                         creatures.All(creature => creature.CombatId != _selectedCreatureCombatId))
                         _selectedCreatureCombatId = null;
-                    RefreshCatalogItems(CreateCreatureCatalogItems(creatures));
+                    RefreshCatalogItems(CreateCombatantCatalogItems(players, creatures));
                     break;
                 default:
                     RefreshLiveDetails(_currentBrowser);
@@ -694,8 +719,7 @@ namespace STS2RitsuLib.Settings
             return CurrentPageId switch
             {
                 $"{Const.ModId}:powers" => HeaderTargetMode.Creature,
-                $"{Const.ModId}:players" or
-                    $"{Const.ModId}:creatures" or
+                $"{Const.ModId}:creatures" or
                     $"{Const.ModId}:monsters" or
                     $"{Const.ModId}:rooms" or
                     $"{Const.ModId}:encounters" => HeaderTargetMode.None,
@@ -884,9 +908,13 @@ namespace STS2RitsuLib.Settings
         private void OpenCreatureDetail(uint combatId)
         {
             _selectedCreatureCombatId = combatId;
+            var creature = RitsuDebugCombatActions.FindCreature(combatId);
+            var itemId = creature?.Player is { } player
+                ? $"player:{player.NetId}"
+                : $"creature:{combatId}";
             SelectPage($"{Const.ModId}:creatures");
             if (_currentBrowser is RitsuCatalogBrowser browser &&
-                browser.SelectItem(combatId.ToString()))
+                browser.SelectItem(itemId))
                 return;
 
             SetStatus(L("ritsulib.debugTools.targetChanged", "The selected target is no longer available."), true);

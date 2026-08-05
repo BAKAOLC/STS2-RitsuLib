@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Ui.Catalog;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -31,7 +32,10 @@ namespace STS2RitsuLib.Settings
         private const float CardHorizontalPadding = 32f;
         private const float CardVerticalPadding = 36f;
         private const float CardSelectionFrameMargin = 10f;
-        private const float DetailDrawerWidth = 400f;
+        private const float DetailDrawerMinimumWidth = 400f;
+        private const float DetailDrawerMaximumWidth = 640f;
+        private const float DetailDrawerPreferredWidthFraction = 0.44f;
+        private const float MinimumVisibleCatalogWidth = 300f;
         private const int OverscanRows = 2;
         internal static readonly Vector2 HolderScale = Vector2.One * 0.7f;
         internal static readonly Vector2 HolderHoverScale = HolderScale * 1.1f;
@@ -74,6 +78,7 @@ namespace STS2RitsuLib.Settings
         private int _searchRevision;
         private string? _selectedItemId;
         private Dictionary<string, int> _sourceIndexes;
+        private Control _workspace = null!;
 
         internal RitsuDebugCardCatalog(
             string searchPlaceholder,
@@ -240,15 +245,16 @@ namespace STS2RitsuLib.Settings
 
         private void BuildUi()
         {
-            var workspace = new Control
+            _workspace = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
                 ClipContents = true,
             };
-            AddChild(workspace);
-            workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            AddChild(_workspace);
+            _workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            _workspace.Resized += UpdateDetailDrawerWidth;
 
             var catalogPanel = new PanelContainer
             {
@@ -256,7 +262,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
             };
             catalogPanel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListShellStyle());
-            workspace.AddChild(catalogPanel);
+            _workspace.AddChild(catalogPanel);
             catalogPanel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 
             var catalog = new VBoxContainer
@@ -345,7 +351,7 @@ namespace STS2RitsuLib.Settings
             };
             _detailBackdrop.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             _detailBackdrop.GuiInput += OnDetailBackdropInput;
-            workspace.AddChild(_detailBackdrop);
+            _workspace.AddChild(_detailBackdrop);
             _detailSlideHost = new()
             {
                 Visible = false,
@@ -356,11 +362,11 @@ namespace STS2RitsuLib.Settings
             _detailSlideHost.AnchorRight = 1f;
             _detailSlideHost.AnchorTop = 0f;
             _detailSlideHost.AnchorBottom = 1f;
-            _detailSlideHost.OffsetLeft = -DetailDrawerWidth;
+            _detailSlideHost.OffsetLeft = -DetailDrawerMinimumWidth;
             _detailSlideHost.OffsetRight = 0f;
             _detailSlideHost.OffsetTop = 0f;
             _detailSlideHost.OffsetBottom = 0f;
-            workspace.AddChild(_detailSlideHost);
+            _workspace.AddChild(_detailSlideHost);
             detailPanel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             _detailSlideHost.AddChild(detailPanel);
 
@@ -387,14 +393,17 @@ namespace STS2RitsuLib.Settings
             _detailTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             _detailTitle.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
             detailHeader.AddChild(_detailTitle);
-            detailHeader.AddChild(new ModSettingsTextButton(
-                "×",
-                ModSettingsButtonTone.Normal,
-                () => CloseDetailDrawer(Sts2InputCompat.IsUsingDirectionalNavigation))
-            {
-                TooltipText = ModSettingsLocalization.Get("ritsulib.catalog.closeDetails", "Close details"),
-                CustomMinimumSize = new(42f, 38f),
-            });
+            var closeTooltip = ModSettingsLocalization.Get("ritsulib.catalog.closeDetails", "Close details");
+            var closeButton = new RitsuDebugToolsIconButton(42f, 38f);
+            closeButton.Configure(
+                RitsuDebugToolsIcons.Get(
+                    RitsuDebugToolsGlyph.Close,
+                    18,
+                    RitsuShellTheme.Current.Text.LabelPrimary),
+                closeTooltip,
+                ModSettingsButtonTone.Normal);
+            closeButton.Pressed += () => CloseDetailDrawer(Sts2InputCompat.IsUsingDirectionalNavigation);
+            detailHeader.AddChild(closeButton);
             detailColumn.AddChild(detailHeader);
 
             var detailScroll = new ScrollContainer
@@ -420,6 +429,7 @@ namespace STS2RitsuLib.Settings
             detailScroll.GetVScrollBar().VisibilityChanged += () =>
                 SyncScrollGutter(detailScroll, _detailScrollFrame);
             Callable.From(() => SyncScrollGutter(detailScroll, _detailScrollFrame)).CallDeferred();
+            Callable.From(UpdateDetailDrawerWidth).CallDeferred();
             SetProcessUnhandledInput(true);
         }
 
@@ -869,21 +879,22 @@ namespace STS2RitsuLib.Settings
         {
             _detailTween?.Kill();
             _detailTween = null;
+            var width = ResolveDetailDrawerWidth();
             if (show)
             {
                 _detailBackdrop.Show();
                 if (_detailSlideHost.Visible)
                 {
-                    SetDetailDrawerOffsets(-DetailDrawerWidth, 0f);
+                    SetDetailDrawerOffsets(-width, 0f);
                     return;
                 }
 
-                SetDetailDrawerOffsets(0f, DetailDrawerWidth);
+                SetDetailDrawerOffsets(0f, width);
                 _detailSlideHost.Show();
                 _detailTween = _detailSlideHost.CreateTween();
                 _detailTween.SetTrans(Tween.TransitionType.Cubic);
                 _detailTween.SetEase(Tween.EaseType.Out);
-                _detailTween.TweenProperty(_detailSlideHost, "offset_left", -DetailDrawerWidth, 0.22f);
+                _detailTween.TweenProperty(_detailSlideHost, "offset_left", -width, 0.22f);
                 _detailTween.Parallel().TweenProperty(_detailSlideHost, "offset_right", 0f, 0.22f);
                 _detailTween.TweenCallback(Callable.From(() => _detailTween = null));
                 return;
@@ -895,16 +906,40 @@ namespace STS2RitsuLib.Settings
             _detailTween.SetTrans(Tween.TransitionType.Cubic);
             _detailTween.SetEase(Tween.EaseType.In);
             _detailTween.TweenProperty(_detailSlideHost, "offset_left", 0f, 0.16f);
-            _detailTween.Parallel().TweenProperty(_detailSlideHost, "offset_right", DetailDrawerWidth, 0.16f);
+            _detailTween.Parallel().TweenProperty(_detailSlideHost, "offset_right", width, 0.16f);
             _detailTween.TweenCallback(Callable.From(() =>
             {
                 _detailTween = null;
                 if (!IsInstanceValid(_detailSlideHost))
                     return;
                 _detailSlideHost.Hide();
-                SetDetailDrawerOffsets(-DetailDrawerWidth, 0f);
+                SetDetailDrawerOffsets(-width, 0f);
                 _detailBackdrop.Hide();
             }));
+        }
+
+        private void UpdateDetailDrawerWidth()
+        {
+            if (!IsInstanceValid(_detailSlideHost))
+                return;
+            _detailTween?.Kill();
+            _detailTween = null;
+            var width = ResolveDetailDrawerWidth();
+            SetDetailDrawerOffsets(_detailSlideHost.Visible ? -width : 0f, _detailSlideHost.Visible ? 0f : width);
+        }
+
+        private float ResolveDetailDrawerWidth()
+        {
+            var availableWidth = _workspace.Size.X;
+            if (availableWidth <= 0f || !float.IsFinite(availableWidth))
+                return DetailDrawerMinimumWidth;
+
+            var minimum = MathF.Min(DetailDrawerMinimumWidth, availableWidth);
+            var maximum = MathF.Min(DetailDrawerMaximumWidth, availableWidth);
+            if (availableWidth >= DetailDrawerMinimumWidth + MinimumVisibleCatalogWidth)
+                maximum = MathF.Min(maximum, availableWidth - MinimumVisibleCatalogWidth);
+            maximum = MathF.Max(minimum, maximum);
+            return Math.Clamp(availableWidth * DetailDrawerPreferredWidthFraction, minimum, maximum);
         }
 
         private void SetDetailDrawerOffsets(float left, float right)
