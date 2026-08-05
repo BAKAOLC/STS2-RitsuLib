@@ -5,7 +5,6 @@ using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Catalog;
 using STS2RitsuLib.Ui.Overlay;
-using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -261,6 +260,15 @@ namespace STS2RitsuLib.Settings
 
         private Control CreatePowerWorkspace(RitsuCatalogBrowser libraryBrowser)
         {
+            var powersByItemId = new Dictionary<string, (uint CombatId, int Index, PowerModel Power)>(
+                StringComparer.Ordinal);
+            var currentBrowser = Browser(
+                L("ritsulib.debugTools.search.currentPowers", "Search current Powers"),
+                item => CreateLivePowerDetail(item.Id, powersByItemId),
+                presentation: RitsuCatalogPresentation.Grid,
+                gridTileMinimumWidth: 260f,
+                gridTileHeight: 132f,
+                detailWidth: 540f);
             var root = new RitsuDebugLiveDetailContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -310,6 +318,7 @@ namespace STS2RitsuLib.Settings
             clearButton.Pressed += OnClearPressed;
             currentToolbar.AddChild(clearButton);
             currentView.AddChild(currentToolbar);
+            currentView.AddChild(currentBrowser);
 
             void OnClearPressed()
             {
@@ -332,18 +341,6 @@ namespace STS2RitsuLib.Settings
                 SubmitCreatureOperation(combatId, RitsuDebugCreatureOperation.ClearPowers, 0);
             }
 
-            var scroll = new ScrollContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill,
-                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            };
-            ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(scroll);
-            currentView.AddChild(scroll);
-            var cards = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            cards.AddThemeConstantOverride("h_separation", 10);
-            cards.AddThemeConstantOverride("v_separation", 10);
-            scroll.AddChild(cards);
             root.AddChild(libraryBrowser);
             root.RegisterRefresh(RefreshCurrentPowers);
 
@@ -365,27 +362,54 @@ namespace STS2RitsuLib.Settings
 
             void RefreshCurrentPowers()
             {
-                foreach (var child in cards.GetChildren())
-                {
-                    cards.RemoveChild(child);
-                    child.QueueFree();
-                }
-
                 var creature = SelectedCreature();
                 var powers = creature?.Powers.ToArray() ?? [];
-                clearButton.Disabled = powers.Length == 0;
-                if (powers.Length == 0)
+                powersByItemId.Clear();
+                var trashIcon = RitsuDebugToolsIcons.Get(
+                    RitsuDebugToolsGlyph.Trash,
+                    18,
+                    RitsuShellTheme.Current.Component.TextButton.Danger.Fg);
+                var items = creature == null
+                    ? []
+                    : powers.Select((power, index) =>
+                    {
+                        var itemId = $"{creature.CombatId}:{index}";
+                        powersByItemId[itemId] = (creature.CombatId!.Value, index, power);
+                        var source = ContentSourceResolver.Resolve(power);
+                        RitsuCatalogItemAction? quickAction = trashIcon == null
+                            ? null
+                            : new(
+                                trashIcon,
+                                L("ritsulib.debugTools.action.removePower", "Remove Power"),
+                                () => SubmitPowerInstanceRemoval(
+                                    creature.CombatId.Value,
+                                    index,
+                                    power.Id.ToString()),
+                                RitsuCatalogItemActionTone.Danger);
+                        return new RitsuCatalogItem(
+                            itemId,
+                            SafeTitle(power),
+                            $"{EnumLabel(power.Type)} · {ContentSourceDisplayLabel(source)}",
+                            $"{power.Id} {source.ModId} {source.DisplayName}",
+                            iconFactory: () => power.Icon,
+                            badge: power.Amount.ToString(),
+                            tooltip: BuildCatalogTooltip(
+                                SafeTitle(power),
+                                power.Id.ToString(),
+                                SafeDescription(() => power.Description.GetFormattedText())),
+                            quickAction: quickAction,
+                            accentColor: PowerTypeAccent(power.Type));
+                    }).ToArray();
+                currentBrowser.UpdateItems(items);
+
+                if (!clearArmed)
                 {
-                    cards.AddChild(CreatePowerListHint(creature == null
-                        ? L("ritsulib.debugTools.noCombat", "Start combat to manage current Powers.")
-                        : L("ritsulib.debugTools.noActivePowers", "No active Powers.")));
-                }
-                else
-                {
-                    for (var index = 0; index < powers.Length; index++)
-                        cards.AddChild(CreateCurrentPowerCard(creature!.CombatId!.Value, index, powers[index]));
+                    clearButton.Text = L("ritsulib.debugTools.action.clearPowers", "Clear all");
+                    clearButton.SetSelected(false);
+                    ModSettingsUiControlTheming.RefreshAdaptiveButtonText(clearButton);
                 }
 
+                clearButton.Disabled = powers.Length == 0;
                 summary.Text = string.Format(
                     L("ritsulib.debugTools.powers.activeCount", "Active Powers: {0}"),
                     powers.Length);
@@ -393,13 +417,6 @@ namespace STS2RitsuLib.Settings
                     L("ritsulib.debugTools.powers.currentCount", "Current ({0})"),
                     powers.Length);
                 ModSettingsUiControlTheming.RefreshAdaptiveButtonText(currentButton);
-                if (clearArmed)
-                {
-                    clearArmed = false;
-                    clearButton.Text = L("ritsulib.debugTools.action.clearPowers", "Clear all");
-                    clearButton.SetSelected(false);
-                    ModSettingsUiControlTheming.RefreshAdaptiveButtonText(clearButton);
-                }
             }
 
             Creature? SelectedCreature()
@@ -415,6 +432,15 @@ namespace STS2RitsuLib.Settings
 
         private Control CreateOrbWorkspace(IReadOnlyList<OrbModel> models, RitsuCatalogBrowser libraryBrowser)
         {
+            var orbsByItemId = new Dictionary<string, (int Index, OrbModel Orb)>(StringComparer.Ordinal);
+            var emptySlotsByItemId = new Dictionary<string, int>(StringComparer.Ordinal);
+            var currentBrowser = Browser(
+                L("ritsulib.debugTools.search.currentOrbs", "Search current orbs"),
+                item => CreateLiveOrbSlotDetail(item.Id, orbsByItemId, emptySlotsByItemId, models),
+                presentation: RitsuCatalogPresentation.Grid,
+                gridTileMinimumWidth: 260f,
+                gridTileHeight: 132f,
+                detailWidth: 540f);
             var root = new RitsuDebugLiveDetailContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -448,6 +474,13 @@ namespace STS2RitsuLib.Settings
             summary.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             summary.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             var slotEdit = CreateIntegerEdit("0");
+            var slotEditChanged = false;
+            var updatingSlotEdit = false;
+            slotEdit.TextChanged += _ =>
+            {
+                if (!updatingSlotEdit)
+                    slotEditChanged = true;
+            };
             var slotApply = IconTextButton(
                 RitsuDebugToolsGlyph.Sliders,
                 L("ritsulib.debugTools.action.setOrbSlots", "Set slots"),
@@ -466,19 +499,7 @@ namespace STS2RitsuLib.Settings
             currentView.AddChild(toolbar);
             AddHint(currentView, L("ritsulib.debugTools.orbs.slotReduction",
                 "Reducing slots removes orbs from the back of the queue without evoking them."));
-
-            var scroll = new ScrollContainer
-            {
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                SizeFlagsVertical = SizeFlags.ExpandFill,
-                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            };
-            ModSettingsUiControlTheming.ApplySettingsScrollContainerThemeForDropdownList(scroll);
-            currentView.AddChild(scroll);
-            var cards = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            cards.AddThemeConstantOverride("h_separation", 10);
-            cards.AddThemeConstantOverride("v_separation", 10);
-            scroll.AddChild(cards);
+            currentView.AddChild(currentBrowser);
             root.AddChild(libraryBrowser);
             root.RegisterRefresh(RefreshCurrentOrbs);
 
@@ -503,25 +524,20 @@ namespace STS2RitsuLib.Settings
                 if (!TryReadInt(slotEdit, 0, RitsuDebugOrbActions.MaximumOrbSlots, out var capacity) ||
                     !TryGetActionContext(out var requester, out var target))
                     return;
-                RunAction(() => RitsuDebugOrbActions.SubmitSetOrbSlots(requester, target, capacity));
+                if (RunAction(() => RitsuDebugOrbActions.SubmitSetOrbSlots(requester, target, capacity)))
+                    slotEditChanged = false;
             }
 
             void RefreshCurrentOrbs()
             {
-                foreach (var child in cards.GetChildren())
-                {
-                    cards.RemoveChild(child);
-                    child.QueueFree();
-                }
-
                 if (!TryGetTargetPlayer(out var player) || !HasActiveCombatState(player) ||
                     player.PlayerCombatState?.OrbQueue is not { } queue)
                 {
-                    cards.AddChild(CreatePowerListHint(L(
-                        "ritsulib.debugTools.orbs.combatRequired",
-                        "Start combat to channel or manage orbs.")));
+                    orbsByItemId.Clear();
+                    emptySlotsByItemId.Clear();
+                    currentBrowser.UpdateItems([]);
                     summary.Text = L("ritsulib.debugTools.orbs.unavailable", "Orb queue unavailable");
-                    slotEdit.Text = "0";
+                    RefreshSlotEditor("0");
                     slotApply.Disabled = true;
                     currentButton.Text = L("ritsulib.debugTools.orbs.current", "Current orbs");
                     ModSettingsUiControlTheming.RefreshAdaptiveButtonText(currentButton);
@@ -529,20 +545,61 @@ namespace STS2RitsuLib.Settings
                 }
 
                 var orbs = queue.Orbs.ToArray();
+                orbsByItemId.Clear();
+                emptySlotsByItemId.Clear();
+                var trashIcon = RitsuDebugToolsIcons.Get(
+                    RitsuDebugToolsGlyph.Trash,
+                    18,
+                    RitsuShellTheme.Current.Component.TextButton.Danger.Fg);
+                var items = new List<RitsuCatalogItem>(queue.Capacity);
                 for (var index = 0; index < orbs.Length; index++)
-                    cards.AddChild(CreateCurrentOrbCard(index, orbs[index], models));
+                {
+                    var orbIndex = index;
+                    var orb = orbs[index];
+                    var itemId = $"{player.NetId}:{index}";
+                    orbsByItemId[itemId] = (orbIndex, orb);
+                    RitsuCatalogItemAction? quickAction = trashIcon == null
+                        ? null
+                        : new(
+                            trashIcon,
+                            L("ritsulib.debugTools.action.removeOrb", "Remove orb"),
+                            () => SubmitOrbRemoval(orbIndex, orb.Id.ToString()),
+                            RitsuCatalogItemActionTone.Danger);
+                    items.Add(new(
+                        itemId,
+                        SafeTitle(orb),
+                        string.Format(
+                            L("ritsulib.debugTools.orbs.values", "Passive {0} · Evoke {1}"),
+                            SafeOrbValue(() => orb.PassiveVal),
+                            SafeOrbValue(() => orb.EvokeVal)),
+                        orb.Id.ToString(),
+                        iconFactory: () => orb.Icon,
+                        badge: $"#{index + 1}",
+                        tooltip: BuildCatalogTooltip(
+                            SafeTitle(orb),
+                            orb.Id.ToString(),
+                            SafeDescription(() => orb.Description.GetFormattedText())),
+                        quickAction: quickAction,
+                        accentColor: orb.DarkenedColor));
+                }
+
                 for (var index = orbs.Length; index < queue.Capacity; index++)
-                    cards.AddChild(CreateEmptyOrbSlotCard(index));
-                if (queue.Capacity == 0)
-                    cards.AddChild(CreatePowerListHint(L(
-                        "ritsulib.debugTools.orbs.noSlots",
-                        "This player has no orb slots. Set a slot count to begin.")));
+                {
+                    var itemId = $"{player.NetId}:{index}";
+                    emptySlotsByItemId[itemId] = index;
+                    items.Add(new(
+                        itemId,
+                        L("ritsulib.debugTools.orbs.emptySlot", "Empty orb slot"),
+                        badge: $"#{index + 1}"));
+                }
+
+                currentBrowser.UpdateItems(items);
 
                 summary.Text = string.Format(
                     L("ritsulib.debugTools.orbs.queueSummary", "{0} orbs · {1} slots"),
                     orbs.Length,
                     queue.Capacity);
-                slotEdit.Text = queue.Capacity.ToString();
+                RefreshSlotEditor(queue.Capacity.ToString());
                 slotApply.Disabled = false;
                 currentButton.Text = string.Format(
                     L("ritsulib.debugTools.orbs.currentCount", "Current ({0}/{1})"),
@@ -550,76 +607,97 @@ namespace STS2RitsuLib.Settings
                     queue.Capacity);
                 ModSettingsUiControlTheming.RefreshAdaptiveButtonText(currentButton);
             }
+
+            void RefreshSlotEditor(string value)
+            {
+                if (slotEditChanged || slotEdit.HasFocus() || slotEdit.Text == value)
+                    return;
+                updatingSlotEdit = true;
+                slotEdit.Text = value;
+                updatingSlotEdit = false;
+            }
+
+            void SubmitOrbRemoval(int index, string orbId)
+            {
+                if (!TryGetActionContext(out var requester, out var target))
+                    return;
+                RunAction(() => RitsuDebugOrbActions.SubmitRemoveOrb(requester, target, index, orbId));
+            }
         }
 
-        private Control CreateCurrentOrbCard(int index, OrbModel orb, IReadOnlyList<OrbModel> models)
+        private Control CreateLiveOrbSlotDetail(
+            string itemId,
+            IReadOnlyDictionary<string, (int Index, OrbModel Orb)> orbsByItemId,
+            IReadOnlyDictionary<string, int> emptySlotsByItemId,
+            IReadOnlyList<OrbModel> models)
         {
-            var panel = new PanelContainer { CustomMinimumSize = new(278f, 150f) };
-            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListItemCardStyle());
-            var panelContent = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            panelContent.AddThemeConstantOverride("separation", 0);
-            panel.AddChild(panelContent);
-            panelContent.AddChild(new ColorRect
-            {
-                Color = orb.DarkenedColor,
-                CustomMinimumSize = new(0f, 4f),
-                MouseFilter = MouseFilterEnum.Ignore,
-            });
-            var margin = new MarginContainer();
-            margin.AddThemeConstantOverride("margin_left", 10);
-            margin.AddThemeConstantOverride("margin_top", 9);
-            margin.AddThemeConstantOverride("margin_right", 10);
-            margin.AddThemeConstantOverride("margin_bottom", 9);
-            panelContent.AddChild(margin);
-            var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            column.AddThemeConstantOverride("separation", 8);
-            margin.AddChild(column);
+            var host = new RitsuDebugLiveDetailContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            var renderedAvailable = TryResolve(out var renderedIndex, out var renderedOrb);
+            RebuildContent();
+            host.RegisterRefresh(RefreshState);
+            return host;
 
-            var identityRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            identityRow.AddThemeConstantOverride("separation", 9);
-            column.AddChild(identityRow);
-            identityRow.AddChild(new TextureRect
+            void RefreshState()
             {
-                Texture = orb.Icon,
-                CustomMinimumSize = new(42f, 42f),
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                MouseFilter = MouseFilterEnum.Ignore,
-            });
-            var identity = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            identity.AddThemeConstantOverride("separation", 1);
-            identityRow.AddChild(identity);
-            var title = new Label
-            {
-                Text = SafeTitle(orb),
-                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-            };
-            title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
-            identity.AddChild(title);
-            var metadata = new Label
-            {
-                Text = string.Format(
-                    L("ritsulib.debugTools.orbs.values", "Passive {0} · Evoke {1}"),
-                    SafeOrbValue(() => orb.PassiveVal),
-                    SafeOrbValue(() => orb.EvokeVal)),
-                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-            };
-            metadata.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
-            metadata.AddThemeFontSizeOverride("font_size", DetailIdentifierFontSize);
-            metadata.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
-            identity.AddChild(metadata);
-            var position = new Label
-            {
-                Text = $"#{index + 1}",
-                CustomMinimumSize = new(42f, 0f),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            position.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            position.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
-            identityRow.AddChild(position);
+                var available = TryResolve(out var index, out var orb);
+                if (available == renderedAvailable && index == renderedIndex && ReferenceEquals(orb, renderedOrb))
+                    return;
+                renderedAvailable = available;
+                renderedIndex = index;
+                renderedOrb = orb;
+                RebuildContent();
+            }
 
+            void RebuildContent()
+            {
+                foreach (var child in host.GetChildren())
+                {
+                    host.RemoveChild(child);
+                    child.QueueFree();
+                }
+
+                if (!renderedAvailable)
+                {
+                    AddHint(host, L("ritsulib.debugTools.targetChanged",
+                        "The selected target is no longer available."));
+                    return;
+                }
+
+                host.AddChild(renderedOrb == null
+                    ? CreateEmptyOrbSlotDetail(renderedIndex)
+                    : CreateCurrentOrbDetail(renderedIndex, renderedOrb, models));
+            }
+
+            bool TryResolve(out int index, out OrbModel? orb)
+            {
+                if (orbsByItemId.TryGetValue(itemId, out var entry))
+                {
+                    index = entry.Index;
+                    orb = entry.Orb;
+                    return true;
+                }
+
+                if (emptySlotsByItemId.TryGetValue(itemId, out index))
+                {
+                    orb = null;
+                    return true;
+                }
+
+                index = -1;
+                orb = null;
+                return false;
+            }
+        }
+
+        private Control CreateCurrentOrbDetail(int index, OrbModel orb, IReadOnlyList<OrbModel> models)
+        {
+            var root = DetailShell(
+                orb.Id.ToString(),
+                () => orb.Icon,
+                OrbMetadata(),
+                SafeDescription(() => orb.Description.GetFormattedText()),
+                OrbMetadata,
+                () => SafeDescription(() => orb.Description.GetFormattedText()));
             var editorContent = CreateAdjustmentContent();
             var replacement = orb.Id.ToString();
             editorContent.AddChild(DropdownField(
@@ -633,32 +711,27 @@ namespace STS2RitsuLib.Settings
                 Replace));
             AddHint(editorContent, L("ritsulib.debugTools.orbs.computedValuesHint",
                 "Passive and evoke values are computed by each orb and the current combat state."));
-            var editorPanel = CreateAdjustmentPanel(editorContent);
-            editorPanel.Visible = false;
-
-            var actions = new HBoxContainer
-            {
-                Alignment = AlignmentMode.End,
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            };
-            actions.AddThemeConstantOverride("separation", 6);
-            column.AddChild(actions);
-            actions.AddChild(IconButton(
-                RitsuDebugToolsGlyph.Sliders,
+            root.AddChild(AdjustmentSection(
                 L("ritsulib.debugTools.action.adjustOrb", "Adjust orb"),
-                ModSettingsButtonTone.Normal,
-                () => editorPanel.Visible = !editorPanel.Visible));
-            actions.AddChild(IconButton(
+                editorContent));
+            AddCapabilitySection(
+                root,
+                new(RitsuDebugCapabilityTargetKind.Orb, orb.Id.ToString(), index),
+                orb);
+            root.AddChild(IconTextButton(
                 RitsuDebugToolsGlyph.Trash,
                 L("ritsulib.debugTools.action.removeOrb", "Remove orb"),
                 ModSettingsButtonTone.Danger,
                 Remove));
-            column.AddChild(editorPanel);
-            panel.TooltipText = BuildCatalogTooltip(
-                SafeTitle(orb),
-                orb.Id.ToString(),
-                SafeDescription(() => orb.Description.GetFormattedText()));
-            return panel;
+            return root;
+
+            string OrbMetadata()
+            {
+                return $"#{index + 1} · {string.Format(
+                    L("ritsulib.debugTools.orbs.values", "Passive {0} · Evoke {1}"),
+                    SafeOrbValue(() => orb.PassiveVal),
+                    SafeOrbValue(() => orb.EvokeVal))}";
+            }
 
             void Replace()
             {
@@ -684,38 +757,11 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private static Control CreateEmptyOrbSlotCard(int index)
+        private static Control CreateEmptyOrbSlotDetail(int index)
         {
-            var panel = new PanelContainer { CustomMinimumSize = new(278f, 76f) };
-            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateInsetSurfaceStyle());
-            var margin = new MarginContainer();
-            margin.AddThemeConstantOverride("margin_left", 12);
-            margin.AddThemeConstantOverride("margin_top", 10);
-            margin.AddThemeConstantOverride("margin_right", 12);
-            margin.AddThemeConstantOverride("margin_bottom", 10);
-            panel.AddChild(margin);
-            var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            row.AddThemeConstantOverride("separation", 10);
-            margin.AddChild(row);
-            var label = new Label
-            {
-                Text = $"#{index + 1}",
-                CustomMinimumSize = new(42f, 0f),
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Hint);
-            row.AddChild(label);
-            var empty = new Label
-            {
-                Text = L("ritsulib.debugTools.orbs.emptySlot", "Empty orb slot"),
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            empty.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
-            empty.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
-            row.AddChild(empty);
-            return panel;
+            var root = new RitsuDebugLiveDetailContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            AddHint(root, $"#{index + 1} · {L("ritsulib.debugTools.orbs.emptySlot", "Empty orb slot")}");
+            return root;
         }
 
         private static string SafeOrbValue(Func<decimal> valueFactory)
@@ -789,6 +835,10 @@ namespace STS2RitsuLib.Settings
                     settings));
             }
 
+            AddCapabilitySection(
+                root,
+                new(RitsuDebugCapabilityTargetKind.Relic, relic.Id.ToString(), relicIndex),
+                relic);
             return root;
 
             void Apply()
@@ -842,6 +892,10 @@ namespace STS2RitsuLib.Settings
                     settings));
             }
 
+            AddCapabilitySection(
+                root,
+                new(RitsuDebugCapabilityTargetKind.Potion, potion.Id.ToString(), slot),
+                potion);
             return root;
 
             void Apply()
@@ -864,84 +918,89 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private Control CreateCurrentPowerCard(uint combatId, int index, PowerModel power)
+        private Control CreateLivePowerDetail(
+            string itemId,
+            IReadOnlyDictionary<string, (uint CombatId, int Index, PowerModel Power)> powersByItemId)
         {
-            var panel = new PanelContainer { CustomMinimumSize = new(278f, 132f) };
-            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListItemCardStyle());
-            var panelContent = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            panelContent.AddThemeConstantOverride("separation", 0);
-            panel.AddChild(panelContent);
-            panelContent.AddChild(new ColorRect
+            var host = new RitsuDebugLiveDetailContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            var renderedAvailable = TryResolve(out var renderedCombatId, out var renderedIndex, out var renderedPower);
+            RebuildContent();
+            host.RegisterRefresh(RefreshState);
+            return host;
+
+            void RefreshState()
             {
-                Color = PowerTypeAccent(power.Type),
-                CustomMinimumSize = new(0f, 4f),
-                MouseFilter = MouseFilterEnum.Ignore,
-            });
-            var margin = new MarginContainer();
-            margin.AddThemeConstantOverride("margin_left", 10);
-            margin.AddThemeConstantOverride("margin_top", 9);
-            margin.AddThemeConstantOverride("margin_right", 10);
-            margin.AddThemeConstantOverride("margin_bottom", 9);
-            panelContent.AddChild(margin);
-            var column = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            column.AddThemeConstantOverride("separation", 8);
-            margin.AddChild(column);
-            var identityRow = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            identityRow.AddThemeConstantOverride("separation", 9);
-            column.AddChild(identityRow);
-            Texture2D? icon = null;
-            try
-            {
-                icon = power.Icon;
-            }
-            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[DebugToolsUi] Could not load active Power icon for '{power.Id}': {ex.Message}");
+                var available = TryResolve(out var combatId, out var index, out var power);
+                if (available == renderedAvailable &&
+                    combatId == renderedCombatId &&
+                    index == renderedIndex &&
+                    ReferenceEquals(power, renderedPower))
+                    return;
+                renderedAvailable = available;
+                renderedCombatId = combatId;
+                renderedIndex = index;
+                renderedPower = power;
+                RebuildContent();
             }
 
-            identityRow.AddChild(new TextureRect
+            void RebuildContent()
             {
-                Texture = icon,
-                CustomMinimumSize = new(42f, 42f),
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                Visible = icon != null,
-                MouseFilter = MouseFilterEnum.Ignore,
-            });
-            var identity = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            identity.AddThemeConstantOverride("separation", 1);
-            identityRow.AddChild(identity);
-            var title = new Label
+                foreach (var child in host.GetChildren())
+                {
+                    host.RemoveChild(child);
+                    child.QueueFree();
+                }
+
+                if (!renderedAvailable || renderedPower == null)
+                {
+                    AddHint(host, L("ritsulib.debugTools.targetChanged",
+                        "The selected target is no longer available."));
+                    return;
+                }
+
+                host.AddChild(CreateCurrentPowerDetail(renderedCombatId, renderedIndex, renderedPower));
+            }
+
+            bool TryResolve(out uint combatId, out int index, out PowerModel? power)
             {
-                Text = SafeTitle(power),
-                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-            };
-            title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
-            identity.AddChild(title);
+                if (powersByItemId.TryGetValue(itemId, out var entry))
+                {
+                    combatId = entry.CombatId;
+                    index = entry.Index;
+                    power = entry.Power;
+                    return true;
+                }
+
+                combatId = 0u;
+                index = -1;
+                power = null;
+                return false;
+            }
+        }
+
+        private Control CreateCurrentPowerDetail(uint combatId, int index, PowerModel power)
+        {
             var source = ContentSourceResolver.Resolve(power);
-            var metadata = new Label
-            {
-                Text = $"{EnumLabel(power.Type)} · {ContentSourceDisplayLabel(source)}",
-                TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-            };
-            metadata.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
-            metadata.AddThemeFontSizeOverride("font_size", DetailIdentifierFontSize);
-            metadata.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
-            identity.AddChild(metadata);
-            var amount = new Label
-            {
-                Text = power.Amount.ToString(),
-                CustomMinimumSize = new(44f, 0f),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            amount.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            amount.AddThemeFontSizeOverride("font_size", 20);
-            amount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
-            identityRow.AddChild(amount);
-
+            var root = DetailShell(
+                power.Id.ToString(),
+                () => power.Icon,
+                PowerMetadata(),
+                SafeDescription(() => power.Description.GetFormattedText()),
+                PowerMetadata,
+                () => SafeDescription(() => power.Description.GetFormattedText()));
+            var quickActions = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            quickActions.AddThemeConstantOverride("separation", 8);
+            quickActions.AddChild(IconTextButton(
+                RitsuDebugToolsGlyph.Minus,
+                L("ritsulib.debugTools.action.decreasePower", "Decrease by 1"),
+                ModSettingsButtonTone.Normal,
+                () => SubmitPowerInstanceAdjustment(combatId, index, power.Id.ToString(), -1)));
+            quickActions.AddChild(IconTextButton(
+                RitsuDebugToolsGlyph.Plus,
+                L("ritsulib.debugTools.action.increasePower", "Increase by 1"),
+                ModSettingsButtonTone.Normal,
+                () => SubmitPowerInstanceAdjustment(combatId, index, power.Id.ToString(), 1)));
+            root.AddChild(quickActions);
             var editorContent = CreateAdjustmentContent();
             var amountChanged = false;
             var amountEditor = CreateIntegerEdit(power.Amount.ToString());
@@ -952,42 +1011,40 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.action.applyChanges", "Apply changes"),
                 ModSettingsButtonTone.Accent,
                 ApplyChanges));
-            var editorPanel = CreateAdjustmentPanel(editorContent);
-            editorPanel.Visible = false;
-
-            var actions = new HBoxContainer
-            {
-                Alignment = AlignmentMode.End,
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            };
-            actions.AddThemeConstantOverride("separation", 6);
-            column.AddChild(actions);
-            actions.AddChild(IconButton(
-                RitsuDebugToolsGlyph.Minus,
-                L("ritsulib.debugTools.action.decreasePower", "Decrease by 1"),
-                ModSettingsButtonTone.Normal,
-                () => SubmitPowerInstanceAdjustment(combatId, index, power.Id.ToString(), -1)));
-            actions.AddChild(IconButton(
-                RitsuDebugToolsGlyph.Plus,
-                L("ritsulib.debugTools.action.increasePower", "Increase by 1"),
-                ModSettingsButtonTone.Normal,
-                () => SubmitPowerInstanceAdjustment(combatId, index, power.Id.ToString(), 1)));
-            actions.AddChild(IconButton(
-                RitsuDebugToolsGlyph.Sliders,
+            root.AddChild(AdjustmentSection(
                 L("ritsulib.debugTools.action.adjustValues", "Adjust values"),
-                ModSettingsButtonTone.Normal,
-                () => editorPanel.Visible = !editorPanel.Visible));
-            actions.AddChild(IconButton(
+                editorContent));
+            AddCapabilitySection(
+                root,
+                new(
+                    RitsuDebugCapabilityTargetKind.Power,
+                    power.Id.ToString(),
+                    index,
+                    CreatureCombatId: combatId),
+                power);
+            root.AddChild(IconTextButton(
                 RitsuDebugToolsGlyph.Trash,
                 L("ritsulib.debugTools.action.removePower", "Remove Power"),
                 ModSettingsButtonTone.Danger,
                 () => SubmitPowerInstanceRemoval(combatId, index, power.Id.ToString())));
-            column.AddChild(editorPanel);
-            panel.TooltipText = BuildCatalogTooltip(
-                SafeTitle(power),
-                power.Id.ToString(),
-                SafeDescription(() => power.Description.GetFormattedText()));
-            return panel;
+            root.RegisterRefresh(RefreshEditors);
+            return root;
+
+            string PowerMetadata()
+            {
+                return $"#{index + 1} · {EnumLabel(power.Type)} · {ContentSourceDisplayLabel(source)} · {power.Amount}";
+            }
+
+            void RefreshEditors()
+            {
+                if (!amountChanged && !amountEditor.HasFocus())
+                {
+                    amountEditor.Text = power.Amount.ToString();
+                    amountChanged = false;
+                }
+
+                RefreshDynamicVariableEditors(dynamicVariables, power.DynamicVars);
+            }
 
             void ApplyChanges()
             {
@@ -1099,24 +1156,6 @@ namespace STS2RitsuLib.Settings
                 ExpandIcon = false,
                 TooltipText = text,
             };
-            return button;
-        }
-
-        private static Button IconButton(
-            RitsuDebugToolsGlyph glyph,
-            string tooltip,
-            ModSettingsButtonTone tone,
-            Action action)
-        {
-            var iconColor = tone switch
-            {
-                ModSettingsButtonTone.Accent => RitsuShellTheme.Current.Component.TextButton.Accent.Fg,
-                ModSettingsButtonTone.Danger => RitsuShellTheme.Current.Component.TextButton.Danger.Fg,
-                _ => RitsuShellTheme.Current.Component.TextButton.Neutral.Fg,
-            };
-            var button = new RitsuDebugToolsIconButton(38f, 36f);
-            button.Configure(RitsuDebugToolsIcons.Get(glyph, 17, iconColor), tooltip, tone);
-            button.Pressed += action;
             return button;
         }
 

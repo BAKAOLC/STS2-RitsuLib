@@ -4,8 +4,10 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.Networking.Sidecar;
+using STS2RitsuLib.Scaffolding.Content;
 
 namespace STS2RitsuLib.Diagnostics.DebugTools
 {
@@ -44,7 +46,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const int MaxCardEditValue = 999_999_999;
         internal const int MaxDynamicVariableCount = 64;
 
-        private static readonly PileType[] MutablePileTypes =
+        private static readonly PileType[] VanillaMutablePileTypes =
             [PileType.Hand, PileType.Draw, PileType.Discard, PileType.Exhaust, PileType.Deck];
 
         internal static void RegisterBuiltInActions()
@@ -52,47 +54,62 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionProtocol.Register<ModifyPilePayload>(
                 ModifyPileActionId,
                 ValidateModifyPile,
-                ExecuteModifyPileAsync);
+                ExecuteModifyPileAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Pile));
             RitsuDebugActionProtocol.Register<CreateCardPayload>(
                 CreateCardActionId,
                 ValidateCreateCard,
-                ExecuteCreateCardAsync);
+                ExecuteCreateCardAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Pile));
             RitsuDebugActionProtocol.Register<CopyCardPayload>(
                 CopyCardActionId,
                 ValidateCopyCard,
-                ExecuteCopyCardAsync);
+                ExecuteCopyCardAsync,
+                payloadPeerFeatures: static payload =>
+                    FeaturesForPileToken(payload.Location.Pile) |
+                    FeaturesForPileToken(payload.DestinationPile));
             RitsuDebugActionProtocol.Register<MoveCardPayload>(
                 MoveCardActionId,
                 ValidateMoveCard,
-                ExecuteMoveCardAsync);
+                ExecuteMoveCardAsync,
+                payloadPeerFeatures: static payload =>
+                    FeaturesForPileToken(payload.Location.Pile) |
+                    FeaturesForPileToken(payload.DestinationPile));
             RitsuDebugActionProtocol.Register<SetReplayCountPayload>(
                 SetReplayCountActionId,
                 ValidateSetReplayCount,
-                ExecuteSetReplayCountAsync);
+                ExecuteSetReplayCountAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Location.Pile));
             RitsuDebugActionProtocol.Register<CardLocationPayload>(
                 RemoveCardActionId,
                 ValidateCardLocation,
-                ExecuteRemoveCardAsync);
+                ExecuteRemoveCardAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Pile));
             RitsuDebugActionProtocol.Register<EditCardPayload>(
                 EditCardActionId,
                 ValidateEditCard,
-                ExecuteEditCardAsync);
+                ExecuteEditCardAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Location.Pile));
             RitsuDebugActionProtocol.Register<EnchantCardPayload>(
                 EnchantCardActionId,
                 ValidateEnchantCard,
-                ExecuteEnchantCardAsync);
+                ExecuteEnchantCardAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Location.Pile));
             RitsuDebugActionProtocol.Register<CardLocationPayload>(
                 ClearCardEnchantmentActionId,
                 ValidateClearCardEnchantment,
-                ExecuteClearCardEnchantmentAsync);
+                ExecuteClearCardEnchantmentAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Pile));
             RitsuDebugActionProtocol.Register<UpgradeCardPayload>(
                 UpgradeCardActionId,
                 ValidateUpgradeCard,
-                ExecuteUpgradeCardAsync);
+                ExecuteUpgradeCardAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Location.Pile));
             RitsuDebugActionProtocol.Register<UpgradeCardPayload>(
                 SetUpgradeLevelActionId,
                 ValidateSetUpgradeLevel,
-                ExecuteSetUpgradeLevelAsync);
+                ExecuteSetUpgradeLevelAsync,
+                payloadPeerFeatures: static payload => FeaturesForPileToken(payload.Location.Pile));
         }
 
         internal static RitsuDebugActionSubmission SubmitModifyPile(
@@ -106,7 +123,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 ModifyPileActionId,
                 requester,
                 target,
-                new ModifyPilePayload(pileType.ToString(), operation, levels));
+                new ModifyPilePayload(GetPileToken(pileType), operation, levels));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -126,7 +143,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 target,
                 new CopyCardPayload(
                     CreateCardLocationPayload(target, pileType, cardIndex, expectedCardId, combatCardId),
-                    destinationPile.ToString(),
+                    GetPileToken(destinationPile),
                     count));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
@@ -146,7 +163,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 target,
                 new MoveCardPayload(
                     CreateCardLocationPayload(target, pileType, cardIndex, expectedCardId, combatCardId),
-                    destinationPile.ToString()));
+                    GetPileToken(destinationPile)));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -163,7 +180,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 CreateCardActionId,
                 requester,
                 target,
-                new CreateCardPayload(cardId, pileType.ToString(), count, upgradeLevels, state));
+                new CreateCardPayload(cardId, GetPileToken(pileType), count, upgradeLevels, state));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -347,17 +364,80 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal static bool TryParseMutablePileType(string input, out PileType pileType)
         {
-            return Enum.TryParse(input, true, out pileType) && MutablePileTypes.Contains(pileType);
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                pileType = default;
+                return false;
+            }
+
+            if (Enum.TryParse(input, true, out pileType) && VanillaMutablePileTypes.Contains(pileType))
+                return true;
+            if (ModCardPileRegistry.TryGet(input, out var definition))
+            {
+                pileType = definition.PileType;
+                return true;
+            }
+
+            pileType = default;
+            return false;
         }
 
         internal static string[] GetMutablePileNames()
         {
-            return [.. MutablePileTypes.Select(static pileType => pileType.ToString())];
+            return [.. GetMutablePileTypes().Select(GetPileToken)];
+        }
+
+        internal static PileType[] GetMutablePileTypes()
+        {
+            var definitions = ModCardPileRegistry.GetDefinitionsSnapshot();
+            return
+            [
+                .. VanillaMutablePileTypes.Where(static pileType => pileType != PileType.Deck),
+                .. definitions
+                    .Where(static definition => definition.Scope == ModCardPileScope.CombatOnly)
+                    .Select(static definition => definition.PileType),
+                PileType.Deck,
+                .. definitions
+                    .Where(static definition => definition.Scope == ModCardPileScope.RunPersistent)
+                    .Select(static definition => definition.PileType),
+            ];
+        }
+
+        internal static string GetPileToken(PileType pileType)
+        {
+            return ModCardPileRegistry.TryGetId(pileType, out var id) ? id : pileType.ToString();
+        }
+
+        internal static bool IsRunStatePile(PileType pileType)
+        {
+            return pileType == PileType.Deck ||
+                   ModCardPileRegistry.TryGetByPileType(pileType, out var definition) &&
+                   definition.Scope == ModCardPileScope.RunPersistent;
         }
 
         internal static CardPile? GetPile(Player player, PileType pileType)
         {
-            return MutablePileTypes.Contains(pileType) ? CardPile.Get(pileType, player) : null;
+            return VanillaMutablePileTypes.Contains(pileType) ||
+                   ModCardPileRegistry.IsModPileType(pileType)
+                ? CardPile.Get(pileType, player)
+                : null;
+        }
+
+        internal static CardPile? GetExistingPile(Player player, PileType pileType)
+        {
+            if (VanillaMutablePileTypes.Contains(pileType))
+                return CardPile.Get(pileType, player);
+            if (!ModCardPileRegistry.TryGetByPileType(pileType, out var definition))
+                return null;
+
+            return definition.Scope switch
+            {
+                ModCardPileScope.CombatOnly when player.PlayerCombatState is { } state =>
+                    ModCardPileStorage.GetCombatPiles(state).FirstOrDefault(pile => pile.Type == pileType),
+                ModCardPileScope.RunPersistent =>
+                    ModCardPileStorage.GetRunPiles(player).FirstOrDefault(pile => pile.Type == pileType),
+                _ => null,
+            };
         }
 
         internal static uint? GetCombatCardId(CardModel card)
@@ -467,6 +547,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 if (pileType == PileType.Deck)
                     await CardPileCmd.RemoveFromDeck(cards, false);
+                else if (IsRunStatePile(pileType))
+                    RemoveRunStateCards(cards);
                 else
                     await CardPileCmd.RemoveFromCombat(cards);
 
@@ -483,7 +565,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 if (card.CurrentUpgradeLevel <= initialLevel)
                     continue;
                 upgradedCards++;
-                RefreshVisibleCardNode(card, pileType);
+                card.RequestVisualReload();
             }
 
             return upgradedCards == 1
@@ -523,7 +605,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (!stateCheck.Success)
                 return stateCheck;
 
-            if (pileType != PileType.Deck && !TryRequireActiveCombat(context.Target, out var combatFeedback))
+            if (!IsRunStatePile(pileType) && !TryRequireActiveCombat(context.Target, out var combatFeedback))
                 return RitsuDebugActionCheck.Fail(combatFeedback);
 
             var pile = GetPile(context.Target, pileType);
@@ -550,7 +632,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             _ = TryParseMutablePileType(payload.Pile, out var pileType);
             _ = TryResolveCanonicalCard(payload.CardId, out var canonical, out _);
 
-            if (pileType == PileType.Deck)
+            if (IsRunStatePile(pileType))
             {
                 for (var index = 0; index < payload.Count; index++)
                 {
@@ -565,13 +647,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                                 "The game did not add {0} to the deck.",
                                 canonical.Id));
 
-                    if (previewDeckAdds)
+                    if (previewDeckAdds && pileType == PileType.Deck)
                         CardCmd.PreviewCardPileAdd(result);
                 }
 
+                var pileName = GetPileToken(pileType);
                 return payload.Count == 1
-                    ? $"Created {canonical.Id} in the deck."
-                    : $"Created {payload.Count} copies of {canonical.Id} in the deck.";
+                    ? $"Created {canonical.Id} in {pileName}."
+                    : $"Created {payload.Count} copies of {canonical.Id} in {pileName}.";
             }
 
             var combatState = context.Target.Creature.CombatState!;
@@ -717,7 +800,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "card.unsupportedDestinationPile",
                     "Unsupported destination pile '{0}'.",
                     payload.DestinationPile);
-            if (destinationPile != PileType.Deck &&
+            if (!IsRunStatePile(destinationPile) &&
                 !TryRequireActiveCombat(context.Target, out var combatFeedback))
                 return RitsuDebugActionCheck.Fail(combatFeedback);
 
@@ -739,17 +822,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             _ = TryParseMutablePileType(payload.DestinationPile, out var destinationPile);
             var copies = new CardModel[payload.Count];
             for (var index = 0; index < copies.Length; index++)
-                copies[index] = destinationPile == PileType.Deck
+                copies[index] = IsRunStatePile(destinationPile)
                     ? context.Target.RunState.CloneCard(source)
                     : source.Pile?.IsCombatPile == true
                         ? source.CreateClone()
                         : context.Target.Creature.CombatState!.CloneCard(source);
 
             IReadOnlyList<CardPileAddResult> results;
-            if (destinationPile == PileType.Deck)
+            if (IsRunStatePile(destinationPile))
             {
-                results = await CardPileCmd.Add(copies, PileType.Deck);
-                CardCmd.PreviewCardPileAdd(results);
+                results = await CardPileCmd.Add(copies, destinationPile);
+                if (destinationPile == PileType.Deck)
+                    CardCmd.PreviewCardPileAdd(results);
             }
             else
             {
@@ -804,11 +888,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     out var feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
             if (!TryParseMutablePileType(payload.DestinationPile, out var destinationPile) ||
-                !destinationPile.IsCombatPile())
+                IsRunStatePile(destinationPile))
                 return RitsuDebugActionCheck.Fail(
                     "card.moveCombatOnly",
                     "Cards can be moved only between combat piles; use Copy to cross the deck boundary.");
-            if (!sourcePile.IsCombatPile())
+            if (IsRunStatePile(sourcePile))
                 return RitsuDebugActionCheck.Fail(
                     "card.deckMoveRequiresCopy",
                     "Deck cards cannot be moved directly into combat; copy the card instead.");
@@ -867,7 +951,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             _ = TryGetLocatedCard(context.Target, payload.Location, out var pileType, out var card, out _);
             card.BaseReplayCount = payload.ReplayCount;
-            RefreshVisibleCardNode(card, pileType);
+            card.RequestVisualReload();
             return Task.FromResult(
                 $"Set {card.Id} in {pileType} to Replay {payload.ReplayCount}.");
         }
@@ -889,6 +973,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             _ = TryGetLocatedCard(context.Target, payload, out var pileType, out var card, out _);
             if (pileType == PileType.Deck)
                 await CardPileCmd.RemoveFromDeck(card);
+            else if (IsRunStatePile(pileType))
+                RemoveRunStateCards([card]);
             else
                 await CardPileCmd.RemoveFromCombat(card);
             return $"Removed {card.Id} from {pileType}.";
@@ -981,7 +1067,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     throw new ArgumentOutOfRangeException(nameof(payload.Field));
             }
 
-            RefreshVisibleCardNode(card, pileType);
+            card.RequestVisualReload();
 
             return Task.FromResult(
                 $"Set {payload.Field} on {card.Id} in {pileType} to {payload.Value}.");
@@ -1068,7 +1154,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 throw;
             }
 
-            RefreshVisibleCardNode(card, pileType);
+            card.RequestVisualReload();
 
             return Task.FromResult(
                 $"Set {card.Id} in {pileType} to enchantment {enchantment.Id} " +
@@ -1098,7 +1184,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var upgradeLevel = card.CurrentUpgradeLevel;
             CardCmd.ClearEnchantment(card);
             ResetCardToUpgradeLevel(card, upgradeLevel);
-            RefreshVisibleCardNode(card, pileType);
+            card.RequestVisualReload();
             return Task.FromResult(
                 $"Cleared enchantment {enchantmentId} from {card.Id} in {pileType}.");
         }
@@ -1140,7 +1226,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var initialLevel = card.CurrentUpgradeLevel;
             for (var level = 0; level < payload.Levels && card.IsUpgradable; level++)
                 CardCmd.Upgrade(card, CardPreviewStyle.None);
-            RefreshVisibleCardNode(card, pileType);
+            card.RequestVisualReload();
             return Task.FromResult(
                 $"Upgraded {card.Id} in {pileType} from {initialLevel} " +
                 $"to {card.CurrentUpgradeLevel}.");
@@ -1178,7 +1264,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var initialLevel = card.CurrentUpgradeLevel;
             if (initialLevel != payload.Levels)
                 ResetCardToUpgradeLevel(card, payload.Levels);
-            RefreshVisibleCardNode(card, pileType);
+            card.RequestVisualReload();
             return Task.FromResult(
                 $"Set {card.Id} in {pileType} from upgrade level {initialLevel} " +
                 $"to {card.CurrentUpgradeLevel}.");
@@ -1214,11 +1300,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
         }
 
-        private static void RefreshVisibleCardNode(CardModel card, PileType pileType)
-        {
-            NCard.FindOnTable(card, pileType)?.UpdateVisuals(pileType, CardPreviewMode.Normal);
-        }
-
         private static bool TryGetLocatedCard(
             Player target,
             CardLocationPayload payload,
@@ -1245,7 +1326,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return false;
             }
 
-            if (pileType != PileType.Deck && !TryRequireActiveCombat(target, out feedback))
+            if (!IsRunStatePile(pileType) && !TryRequireActiveCombat(target, out feedback))
                 return false;
 
             var pile = GetPile(target, pileType);
@@ -1258,7 +1339,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return false;
             }
 
-            if (pileType != PileType.Deck)
+            if (!IsRunStatePile(pileType))
             {
                 if (!payload.CombatCardId.HasValue ||
                     !NetCombatCardDb.Instance.TryGetCard(payload.CombatCardId.Value, out var locatedCard) ||
@@ -1311,7 +1392,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string expectedCardId,
             uint? combatCardId)
         {
-            if (pileType != PileType.Deck && !combatCardId.HasValue)
+            if (!IsRunStatePile(pileType) && !combatCardId.HasValue)
             {
                 var pile = GetPile(target, pileType);
                 if (pile != null && cardIndex >= 0 && cardIndex < pile.Cards.Count)
@@ -1319,10 +1400,16 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
 
             return new(
-                pileType.ToString(),
+                GetPileToken(pileType),
                 cardIndex,
                 expectedCardId,
                 combatCardId);
+        }
+
+        private static void RemoveRunStateCards(IEnumerable<CardModel> cards)
+        {
+            foreach (var card in cards)
+                card.RemoveFromState();
         }
 
         private static void SetDynamicVar(CardModel card, string key, int value)
@@ -1368,6 +1455,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             for (var level = 0; level < levels && card.IsUpgradable; level++)
                 CardCmd.Upgrade(card, CardPreviewStyle.None);
+        }
+
+        private static RitsuLibSidecarPeerFeatures FeaturesForPileToken(string pileToken)
+        {
+            return TryParseMutablePileType(pileToken, out var pileType) &&
+                   ModCardPileRegistry.IsModPileType(pileType)
+                ? RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1
+                : RitsuLibSidecarPeerFeatures.None;
         }
 
         internal readonly record struct ModifyPilePayload(

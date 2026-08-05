@@ -396,6 +396,8 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugToolsGlyph.Potions);
             AddPage(PresetPage.Powers, "ritsulib.debugTools.category.powers", "Powers",
                 RitsuDebugToolsGlyph.Powers);
+            AddPage(PresetPage.Extensions, "ritsulib.debugTools.category.extensions",
+                "RitsuLib extensions", RitsuDebugToolsGlyph.Puzzle);
             AddPage(PresetPage.Player, "ritsulib.debugTools.category.players", "Player",
                 RitsuDebugToolsGlyph.Players);
             _mainBody.AddChild(navigation);
@@ -440,6 +442,9 @@ namespace STS2RitsuLib.Settings
                     break;
                 case PresetPage.Powers:
                     BuildPowersPage();
+                    break;
+                case PresetPage.Extensions:
+                    BuildExtensionsPage();
                     break;
                 case PresetPage.Player:
                     BuildPlayerPage();
@@ -503,6 +508,7 @@ namespace STS2RitsuLib.Settings
             Relics,
             Potions,
             Powers,
+            Extensions,
             Player,
         }
     }

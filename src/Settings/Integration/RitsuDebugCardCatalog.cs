@@ -328,6 +328,7 @@ namespace STS2RitsuLib.Settings
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             summary.AddChild(label);
             _resultCount = new() { HorizontalAlignment = HorizontalAlignment.Right };
+            _resultCount.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _resultCount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             summary.AddChild(_resultCount);
             catalog.AddChild(summary);
@@ -360,6 +361,7 @@ namespace STS2RitsuLib.Settings
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
+            _emptyLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _emptyLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             catalogPanel.AddChild(_emptyLabel);
             _emptyLabel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -468,6 +470,7 @@ namespace STS2RitsuLib.Settings
                 Text = ModSettingsLocalization.Get("ritsulib.debugTools.sort", "Sort"),
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             tools.AddChild(label);
 
@@ -886,6 +889,7 @@ namespace STS2RitsuLib.Settings
                         "Details are unavailable for this item."),
                     AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 };
+                label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
                 label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
                 _detailHost.AddChild(label);
             }

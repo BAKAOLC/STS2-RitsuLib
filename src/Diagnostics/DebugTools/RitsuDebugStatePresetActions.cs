@@ -8,6 +8,10 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.ValueProps;
+using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.Combat.SecondaryResources;
+using STS2RitsuLib.Models.Capabilities;
+using STS2RitsuLib.Networking.Sidecar;
 
 namespace STS2RitsuLib.Diagnostics.DebugTools
 {
@@ -25,7 +29,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugActionProtocol.Register<RitsuDebugStatePresetWirePayload>(
                 ApplyPresetActionId,
                 ValidateWirePreset,
-                ExecuteWirePresetAsync);
+                ExecuteWirePresetAsync,
+                payloadPeerFeatures: RequiredFeaturesForPresetPayload);
         }
 
         internal static RitsuDebugActionSubmission SubmitApplyPreset(
@@ -104,6 +109,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var playerCheck = ValidatePlayer(preset.Player, false);
             if (!playerCheck.Success)
                 return playerCheck;
+            var resourceCheck = ValidateSecondaryResources(preset.SecondaryResources);
+            if (!resourceCheck.Success)
+                return resourceCheck;
+            var capabilityCheck = ValidateCapabilityTargets(preset.CapabilityTargets);
+            if (!capabilityCheck.Success)
+                return capabilityCheck;
             return TryEncodePreset(preset, out _, out var encodeFeedback)
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(encodeFeedback);
@@ -162,6 +173,21 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (!TryDecodePreset(payload, out var preset, out var feedback))
                 throw new RitsuDebugActionExecutionException(feedback);
             return await ExecutePresetAsync(context, preset);
+        }
+
+        private static RitsuLibSidecarPeerFeatures RequiredFeaturesForPresetPayload(
+            RitsuDebugStatePresetWirePayload payload)
+        {
+            if (!TryDecodePreset(payload, out var preset, out _))
+                return RitsuLibSidecarPeerFeatures.None;
+            if (preset.SecondaryResources is { Count: > 0 } ||
+                preset.CapabilityTargets is { Count: > 0 })
+                return RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1;
+            foreach (var pile in preset.CardPiles)
+                if (RitsuDebugCardActions.TryParseMutablePileType(pile.Pile, out var pileType) &&
+                    ModCardPileRegistry.IsModPileType(pileType))
+                    return RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1;
+            return RitsuLibSidecarPeerFeatures.None;
         }
 
         private static bool TryDecodePreset(
@@ -270,6 +296,16 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return RitsuDebugActionCheck.Fail(
                     "player.activeCombatRequired",
                     "The saved powers require an active combat in which the target can receive powers.");
+            if (preset.SecondaryResources != null)
+                foreach (var (resourceId, amount) in preset.SecondaryResources)
+                {
+                    var resourceCheck = RitsuDebugSecondaryResourceActions.ValidateModify(
+                        context,
+                        new(resourceId, RitsuDebugSecondaryResourceOperation.Set, amount));
+                    if (!resourceCheck.Success)
+                        return resourceCheck;
+                }
+
             var playerCheck = ValidatePlayer(preset.Player, true);
             if (!playerCheck.Success || preset.Player == null)
                 return playerCheck;
@@ -325,8 +361,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 await ApplyPotions(context, preset.Potions, preset.ApplyInternalValues);
             if (preset.Powers != null)
                 await ApplyPowers(context, preset.Powers, preset.ApplyInternalValues);
+            if (preset.SecondaryResources != null)
+                foreach (var (resourceId, amount) in preset.SecondaryResources)
+                    await RitsuDebugSecondaryResourceActions.ExecuteModifyAsync(
+                        context,
+                        new(resourceId, RitsuDebugSecondaryResourceOperation.Set, amount));
             if (preset.Player != null)
                 await ApplyPlayer(context, preset.Player, true);
+            if (preset.CapabilityTargets != null)
+                ApplyCapabilityTargets(context.Target, preset.CapabilityTargets);
             return $"Applied state preset '{preset.Name}'.";
         }
 
@@ -440,6 +483,70 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return RitsuDebugActionCheck.Ok;
         }
 
+        private static RitsuDebugActionCheck ValidateSecondaryResources(
+            IReadOnlyDictionary<string, int>? resources)
+        {
+            if (resources == null)
+                return RitsuDebugActionCheck.Ok;
+            if (resources.Count is 0 or > RitsuDebugStatePresetStore.MaximumSecondaryResources)
+                return RitsuDebugActionCheck.Fail(
+                    "statePreset.secondaryResourcesInvalid",
+                    "The saved secondary-resource collection is empty or exceeds a supported limit.");
+            foreach (var (resourceId, amount) in resources)
+                if (string.IsNullOrWhiteSpace(resourceId) || resourceId.Length > 256 ||
+                    !ModSecondaryResourceRegistry.TryGet(resourceId, out var definition) ||
+                    amount < definition.MinAmount || amount > definition.HardMaxAmount)
+                    return RitsuDebugActionCheck.Fail(
+                        "statePreset.secondaryResourceInvalid",
+                        "A saved secondary-resource value is invalid or its resource is not registered.");
+            return RitsuDebugActionCheck.Ok;
+        }
+
+        private static RitsuDebugActionCheck ValidateCapabilityTargets(
+            IReadOnlyList<RitsuDebugStatePresetCapabilityTarget>? targets)
+        {
+            if (targets == null)
+                return RitsuDebugActionCheck.Ok;
+            if (targets.Count > RitsuDebugStatePresetStore.MaximumCapabilityTargets)
+                return RitsuDebugActionCheck.Fail(
+                    "statePreset.capabilityLimit",
+                    "The capability state exceeds the supported preset limits.");
+            var uniqueTargets = new HashSet<RitsuDebugCapabilityTarget>();
+            foreach (var target in targets)
+            {
+                if (target == null ||
+                    !IsStableCapabilityTargetKind(target.Target.Kind) ||
+                    !RitsuDebugCapabilityActions.IsValidTargetReference(target.Target) ||
+                    !uniqueTargets.Add(target.Target) ||
+                    target.Capabilities?.Capabilities == null ||
+                    target.Capabilities.Capabilities.Count >
+                    RitsuDebugCapabilityActions.MaximumCapabilitiesPerModel)
+                    return RitsuDebugActionCheck.Fail(
+                        "statePreset.capabilityInvalid",
+                        "A saved model-capability target or entry is invalid.");
+                foreach (var capability in target.Capabilities.Capabilities)
+                    if (capability == null ||
+                        string.IsNullOrWhiteSpace(capability.Id) ||
+                        capability.Id.Length > 128 ||
+                        capability.Schema < 1)
+                        return RitsuDebugActionCheck.Fail(
+                            "statePreset.capabilityInvalid",
+                            "A saved model-capability target or entry is invalid.");
+            }
+
+            return RitsuDebugActionCheck.Ok;
+        }
+
+        internal static bool IsStableCapabilityTargetKind(RitsuDebugCapabilityTargetKind kind)
+        {
+            return kind is RitsuDebugCapabilityTargetKind.Character or
+                RitsuDebugCapabilityTargetKind.Card or
+                RitsuDebugCapabilityTargetKind.Relic or
+                RitsuDebugCapabilityTargetKind.Potion or
+                RitsuDebugCapabilityTargetKind.Power or
+                RitsuDebugCapabilityTargetKind.Orb;
+        }
+
         private static RitsuDebugActionCheck ValidatePlayer(RitsuDebugStatePresetPlayer? player, bool requireCombat)
         {
             if (player == null)
@@ -462,6 +569,24 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "player.activeCombatRequired",
                     "The saved combat values require an active combat.");
             return RitsuDebugActionCheck.Ok;
+        }
+
+        private static void ApplyCapabilityTargets(
+            Player player,
+            IReadOnlyList<RitsuDebugStatePresetCapabilityTarget> targets)
+        {
+            foreach (var target in targets)
+            {
+                if (!RitsuDebugCapabilityActions.TryResolveTarget(
+                        player,
+                        target.Target,
+                        out var model,
+                        out var feedback))
+                    throw new RitsuDebugActionExecutionException(feedback);
+                var capabilities = ModelCapabilities.Get(model);
+                capabilities.Load(target.Capabilities);
+                capabilities.MarkDirty();
+            }
         }
 
         private static async Task ApplyRelics(

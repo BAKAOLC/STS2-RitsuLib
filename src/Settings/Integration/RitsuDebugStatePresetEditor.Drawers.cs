@@ -1,6 +1,8 @@
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -593,6 +595,10 @@ namespace STS2RitsuLib.Settings
             }
 
             var combat = RitsuDebugStatePresetCapture.HasActiveCombat(target);
+            var customPiles = ModCardPileRegistry.GetDefinitionsSnapshot();
+            var canCaptureCustomPiles = customPiles.Length > 0 &&
+                                        (combat || customPiles.All(static definition =>
+                                            definition.Scope == ModCardPileScope.RunPersistent));
             var scope = RitsuDebugStatePresetCaptureScope.Deck |
                         RitsuDebugStatePresetCaptureScope.Relics |
                         RitsuDebugStatePresetCaptureScope.Potions |
@@ -613,6 +619,9 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.statePresets.deck", "Deck"), true, true);
             AddScope(RitsuDebugStatePresetCaptureScope.CombatPiles,
                 L("ritsulib.debugTools.statePresets.combatPiles", "Combat piles"), false, combat);
+            AddScope(RitsuDebugStatePresetCaptureScope.CustomPiles,
+                L("ritsulib.debugTools.statePresets.customPiles", "Custom piles"), false,
+                canCaptureCustomPiles);
             AddScope(RitsuDebugStatePresetCaptureScope.Relics,
                 L("ritsulib.debugTools.category.relics", "Relics"), true, true);
             AddScope(RitsuDebugStatePresetCaptureScope.Potions,
@@ -623,6 +632,10 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.statePresets.playerValues", "Player values"), true, true);
             AddScope(RitsuDebugStatePresetCaptureScope.CombatValues,
                 L("ritsulib.debugTools.statePresets.combatValues", "Combat values"), false, combat);
+            AddScope(RitsuDebugStatePresetCaptureScope.SecondaryResources,
+                L("ritsulib.debugTools.category.secondaryResources", "Secondary resources"), false, combat);
+            AddScope(RitsuDebugStatePresetCaptureScope.Capabilities,
+                L("ritsulib.debugTools.category.capabilities", "Capabilities"), false, true);
             _drawerBody.AddChild(grid);
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.fillSelected", "Fill selected pages"),
@@ -682,6 +695,41 @@ namespace STS2RitsuLib.Settings
                         "Preset pages filled; {0} unsupported values were omitted."),
                     result.SkippedValueCount), false);
             CloseDrawer();
+            if (!_drawerLayer.Visible)
+                RebuildMain();
+        }
+
+        private void CapturePile(PileType pileType)
+        {
+            var target = _getTarget();
+            if (_draft == null || target == null)
+            {
+                _setStatus(L("ritsulib.debugTools.statePresets.noTarget",
+                    "No target player is available."), true);
+                return;
+            }
+
+            if (!RitsuDebugStatePresetCapture.TryCapturePileOnly(
+                    target,
+                    _draft,
+                    pileType,
+                    out var result,
+                    out var feedback))
+            {
+                _setStatus(feedback.GetLocalizedText(), true);
+                return;
+            }
+
+            _draft = result.Preset;
+            _dirty = true;
+            _setStatus(result.SkippedValueCount == 0
+                ? L("ritsulib.debugTools.statePresets.filled", "Preset pages filled from the current state.")
+                : string.Format(
+                    L("ritsulib.debugTools.statePresets.filledSkipped",
+                        "Preset pages filled; {0} unsupported values were omitted."),
+                    result.SkippedValueCount), false);
+            CloseDrawer();
+            RebuildMain();
         }
 
         private void ShowManagementDrawer()

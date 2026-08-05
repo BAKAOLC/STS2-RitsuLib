@@ -3,6 +3,9 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.Combat.SecondaryResources;
+using STS2RitsuLib.Models.Capabilities;
 
 namespace STS2RitsuLib.Diagnostics.DebugTools
 {
@@ -21,6 +24,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         Powers = 1 << 7,
         Player = 1 << 8,
         CombatValues = 1 << 9,
+        SecondaryResources = 1 << 10,
+        CustomPiles = 1 << 11,
+        Capabilities = 1 << 12,
     }
 
     internal readonly record struct RitsuDebugStatePresetCaptureResult(
@@ -59,7 +65,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
             var needsCombat = (scope & RitsuDebugStatePresetCaptureScope.CombatPiles) != 0 ||
                               scope.HasFlag(RitsuDebugStatePresetCaptureScope.Powers) ||
-                              scope.HasFlag(RitsuDebugStatePresetCaptureScope.CombatValues);
+                              scope.HasFlag(RitsuDebugStatePresetCaptureScope.CombatValues) ||
+                              scope.HasFlag(RitsuDebugStatePresetCaptureScope.SecondaryResources) ||
+                              scope.HasFlag(RitsuDebugStatePresetCaptureScope.CustomPiles) &&
+                              ModCardPileRegistry.GetDefinitionsSnapshot()
+                                  .Any(static definition => definition.Scope == ModCardPileScope.CombatOnly);
             if (needsCombat && !HasActiveCombat(player))
             {
                 result = default;
@@ -87,6 +97,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 result = default;
                 return false;
             }
+
+            if (scope.HasFlag(RitsuDebugStatePresetCaptureScope.CustomPiles))
+                foreach (var definition in ModCardPileRegistry.GetDefinitionsSnapshot())
+                    if (!TryCapturePile(player, definition.PileType, preset, ref skipped, out feedback))
+                    {
+                        result = default;
+                        return false;
+                    }
 
             if (scope.HasFlag(RitsuDebugStatePresetCaptureScope.Relics))
             {
@@ -202,8 +220,115 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 preset.Player.Block = player.Creature.Block;
             }
 
+            if (scope.HasFlag(RitsuDebugStatePresetCaptureScope.SecondaryResources))
+                preset.SecondaryResources = ModSecondaryResourceRegistry.GetDefinitionsSnapshot()
+                    .Take(RitsuDebugStatePresetStore.MaximumSecondaryResources)
+                    .ToDictionary(
+                        static definition => definition.Id,
+                        definition => SecondaryResourceCmd.Get(player, definition.Id),
+                        StringComparer.Ordinal);
+
+            if (scope.HasFlag(RitsuDebugStatePresetCaptureScope.Capabilities))
+            {
+                var capabilityTargets = new List<RitsuDebugStatePresetCapabilityTarget>();
+                foreach (var target in RitsuDebugCapabilityActions.GetTargets(player)
+                             .Where(target =>
+                                 RitsuDebugStatePresetActions.IsStableCapabilityTargetKind(target.Reference.Kind) &&
+                                 (target.Reference.Kind != RitsuDebugCapabilityTargetKind.Power ||
+                                  target.Reference.CreatureCombatId == player.Creature.CombatId)))
+                {
+                    if (!ModelCapabilities.TryGet(target.Model, out var capabilities) &&
+                        !ModelCapabilityDefaults.HasDefaultCapabilitySource(target.Model))
+                        continue;
+                    capabilities ??= ModelCapabilities.Get(target.Model);
+                    if (!capabilities.ShouldSave())
+                        continue;
+                    if (capabilities.Count > RitsuDebugCapabilityActions.MaximumCapabilitiesPerModel ||
+                        capabilityTargets.Count >= RitsuDebugStatePresetStore.MaximumCapabilityTargets)
+                    {
+                        result = default;
+                        feedback = RitsuDebugActionFeedback.Create(
+                            "statePreset.capabilityLimit",
+                            "The capability state exceeds the supported preset limits.");
+                        return false;
+                    }
+
+                    try
+                    {
+                        var document = capabilities.Save();
+                        if (document == null)
+                            continue;
+                        if (document.Capabilities.Count >
+                            RitsuDebugCapabilityActions.MaximumCapabilitiesPerModel)
+                        {
+                            result = default;
+                            feedback = RitsuDebugActionFeedback.Create(
+                                "statePreset.capabilityLimit",
+                                "The capability state exceeds the supported preset limits.");
+                            return false;
+                        }
+
+                        capabilityTargets.Add(new()
+                        {
+                            Target = target.Reference,
+                            Capabilities = document,
+                        });
+                    }
+                    catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[DebugTools] Could not capture capabilities for '{target.Model.Id}': {ex.Message}");
+                        skipped++;
+                    }
+                }
+
+                preset.CapabilityTargets = capabilityTargets;
+            }
+
             if (preset.Player is { HasAnyValue: false })
                 preset.Player = null;
+            var check = RitsuDebugStatePresetActions.ValidateStoredPreset(preset);
+            if (!check.Success)
+            {
+                result = default;
+                feedback = check.Feedback;
+                return false;
+            }
+
+            result = new(preset, skipped);
+            feedback = default;
+            return true;
+        }
+
+        internal static bool TryCapturePileOnly(
+            Player player,
+            RitsuDebugStatePreset source,
+            PileType pileType,
+            out RitsuDebugStatePresetCaptureResult result,
+            out RitsuDebugActionFeedback feedback)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            ArgumentNullException.ThrowIfNull(source);
+            if (!RitsuDebugCardActions.TryParseMutablePileType(
+                    RitsuDebugCardActions.GetPileToken(pileType),
+                    out _) ||
+                !RitsuDebugCardActions.IsRunStatePile(pileType) && !HasActiveCombat(player))
+            {
+                result = default;
+                feedback = RitsuDebugActionFeedback.Create(
+                    "statePreset.captureCombatRequired",
+                    "Combat piles can only be filled during an active combat.");
+                return false;
+            }
+
+            var preset = source.Clone();
+            var skipped = 0;
+            if (!TryCapturePile(player, pileType, preset, ref skipped, out feedback))
+            {
+                result = default;
+                return false;
+            }
+
             var check = RitsuDebugStatePresetActions.ValidateStoredPreset(preset);
             if (!check.Success)
             {
@@ -224,17 +349,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             ref int skipped,
             out RitsuDebugActionFeedback feedback)
         {
-            var pile = RitsuDebugCardActions.GetPile(player, pileType);
-            if (pile == null)
-            {
-                feedback = RitsuDebugActionFeedback.Create(
-                    "card.pileUnavailable",
-                    "Pile '{0}' is unavailable for the selected player.",
-                    pileType);
-                return false;
-            }
+            var pile = RitsuDebugCardActions.GetExistingPile(player, pileType);
 
-            if (pile.Cards.Count > RitsuDebugStatePresetStore.MaximumCardsPerPile)
+            if (pile is { Cards.Count: > RitsuDebugStatePresetStore.MaximumCardsPerPile })
             {
                 feedback = RitsuDebugActionFeedback.Create(
                     "statePreset.cardLimit",
@@ -244,7 +361,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
 
             var cards = new List<RitsuDebugStatePresetCard>();
-            foreach (var card in pile.Cards)
+            foreach (var card in pile?.Cards ?? [])
             {
                 var captured = CaptureCard(card, preset.RecordInternalValues, ref skipped);
                 if (cards.LastOrDefault() is { } previous && HaveSameState(previous, captured) &&
@@ -255,10 +372,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             }
 
             preset.CardPiles.RemoveAll(candidate =>
-                candidate.Pile.Equals(pileType.ToString(), StringComparison.OrdinalIgnoreCase));
+                RitsuDebugCardActions.TryParseMutablePileType(candidate.Pile, out var candidatePileType) &&
+                candidatePileType == pileType);
             preset.CardPiles.Add(new()
             {
-                Pile = pileType.ToString(),
+                Pile = RitsuDebugCardActions.GetPileToken(pileType),
                 ApplyMode = RitsuDebugStatePresetApplyMode.Replace,
                 Cards = cards,
             });

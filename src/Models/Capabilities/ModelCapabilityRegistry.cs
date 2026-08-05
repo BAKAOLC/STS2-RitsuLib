@@ -2,6 +2,8 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
+    internal readonly record struct ModelCapabilityRegistration(string Id, Type CapabilityType);
+
     /// <summary>
     ///     <para xml:lang="en">Registry for capability ids and factories.</para>
     ///     <para xml:lang="zh-CN">能力 ID 与工厂的注册表。</para>
@@ -183,6 +185,32 @@ namespace STS2RitsuLib.Models.Capabilities
             {
                 return TypesById.TryGetValue(capabilityId, out capabilityType!);
             }
+        }
+
+        internal static IReadOnlyList<ModelCapabilityRegistration> GetRegistrationsSnapshot()
+        {
+            lock (SyncRoot)
+            {
+                return Array.AsReadOnly(
+                [
+                    .. TypesById
+                        .Select(static pair => new ModelCapabilityRegistration(pair.Key, pair.Value))
+                        .OrderBy(static registration => registration.Id, StringComparer.Ordinal),
+                ]);
+            }
+        }
+
+        internal static bool IsCompatibleWith(Type capabilityType, AbstractModel owner)
+        {
+            ArgumentNullException.ThrowIfNull(capabilityType);
+            ArgumentNullException.ThrowIfNull(owner);
+            var typedOwnerTypes = capabilityType.GetInterfaces()
+                .Where(static candidate => candidate.IsGenericType &&
+                                           candidate.GetGenericTypeDefinition() == typeof(IModelCapability<>))
+                .Select(static candidate => candidate.GetGenericArguments()[0])
+                .Distinct()
+                .ToArray();
+            return typedOwnerTypes.Length == 0 || typedOwnerTypes.Any(ownerType => ownerType.IsInstanceOfType(owner));
         }
 
         internal static void RegisterModelCapability(Type capabilityType, string capabilityId)

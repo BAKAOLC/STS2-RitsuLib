@@ -363,6 +363,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            _resultCount.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _resultCount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             summary.AddChild(_resultCount);
             catalog.AddChild(summary);
@@ -396,6 +397,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
+            _emptyLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _emptyLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             catalogPanel.AddChild(_emptyLabel);
             _emptyLabel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);

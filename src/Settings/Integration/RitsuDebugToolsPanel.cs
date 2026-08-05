@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Combat.SecondaryResources;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Diagnostics.DebugTools;
@@ -379,6 +380,9 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugToolsGlyph.Powers, CreatePowerCatalog);
             Add("orbs", "ritsulib.debugTools.category.orbs", "Orbs", 45, 0.72f,
                 RitsuDebugToolsGlyph.Orbs, CreateOrbCatalog);
+            if (ModSecondaryResourceRegistry.HasAny)
+                Add("secondary-resources", "ritsulib.debugTools.category.secondaryResources", "Secondary resources",
+                    47, 0.68f, RitsuDebugToolsGlyph.Sliders, CreateSecondaryResourceCatalog);
             Add("creatures", "ritsulib.debugTools.category.combatants", "Players and combat creatures", 50, 0.72f,
                 RitsuDebugToolsGlyph.Creatures, CreateCombatantCatalog);
             Add("monsters", "ritsulib.debugTools.category.monsters", "Add monster", 70, 0.62f,
@@ -696,6 +700,14 @@ namespace STS2RitsuLib.Settings
                         creatures.All(creature => creature.CombatId != _selectedCreatureCombatId))
                         _selectedCreatureCombatId = null;
                     RefreshCatalogItems(CreateCombatantCatalogItems(players, creatures));
+                    break;
+                case $"{Const.ModId}:secondary-resources":
+                    if (TryGetTargetPlayer(out var resourceTarget) && HasActiveCombatState(resourceTarget))
+                        RefreshCatalogItems(CreateSecondaryResourceItems(
+                            resourceTarget,
+                            ModSecondaryResourceRegistry.GetDefinitionsSnapshot()));
+                    else
+                        RebuildBrowser();
                     break;
                 default:
                     RefreshLiveDetails(_currentBrowser);

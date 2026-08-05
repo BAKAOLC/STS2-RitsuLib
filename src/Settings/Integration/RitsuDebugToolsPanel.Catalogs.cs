@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Models;
@@ -125,9 +126,11 @@ namespace STS2RitsuLib.Settings
             var filter = EnumFilter(
                 "pile",
                 L("ritsulib.debugTools.filter.pile", "Pile"),
-                RitsuDebugCardActions.GetMutablePileNames().Select(static name => Enum.Parse<PileType>(name)),
-                EnumLabel,
-                (item, value) => item.Id.StartsWith($"{value}:", StringComparison.Ordinal));
+                RitsuDebugCardActions.GetMutablePileTypes(),
+                PileLabel,
+                (item, value) => item.Id.StartsWith(
+                    $"{RitsuDebugCardActions.GetPileToken(value)}:",
+                    StringComparison.Ordinal));
             return new RitsuDebugCardCatalog(
                 L("ritsulib.debugTools.search.pileCards", "Search the target player's cards"),
                 CreatePileCardCatalogEntries(entries),
@@ -135,11 +138,7 @@ namespace STS2RitsuLib.Settings
                 primaryFilterId: filter.Id,
                 primaryFilterBreakBeforeOptionId: nameof(PileType.Deck),
                 primaryDefaultsToAll: true,
-                primaryAllMatches: static item =>
-                    item.Id.StartsWith($"{PileType.Hand}:", StringComparison.Ordinal) ||
-                    item.Id.StartsWith($"{PileType.Draw}:", StringComparison.Ordinal) ||
-                    item.Id.StartsWith($"{PileType.Discard}:", StringComparison.Ordinal) ||
-                    item.Id.StartsWith($"{PileType.Exhaust}:", StringComparison.Ordinal));
+                primaryAllMatches: IsDefaultPileCardEntry);
         }
 
         private Control CreateRelicCatalog()
@@ -293,10 +292,9 @@ namespace STS2RitsuLib.Settings
         private static PileCardEntry[] GetPileCardEntries(Player player)
         {
             var entries = new List<PileCardEntry>();
-            foreach (var pileType in RitsuDebugCardActions.GetMutablePileNames()
-                         .Select(static name => Enum.Parse<PileType>(name)))
+            foreach (var pileType in RitsuDebugCardActions.GetMutablePileTypes())
             {
-                var pile = RitsuDebugCardActions.GetPile(player, pileType);
+                var pile = RitsuDebugCardActions.GetExistingPile(player, pileType);
                 if (pile == null)
                     continue;
                 for (var index = 0; index < pile.Cards.Count; index++)
@@ -322,8 +320,8 @@ namespace STS2RitsuLib.Settings
                     new(
                         entry.StableId,
                         SafeTitle(entry.Card),
-                        $"{EnumLabel(entry.PileType)} #{entry.Index + 1} · {entry.Card.Id}",
-                        $"{entry.PileType} {entry.Card.Type} {entry.Card.Rarity}",
+                        $"{PileLabel(entry.PileType)} #{entry.Index + 1} · {entry.Card.Id}",
+                        $"{RitsuDebugCardActions.GetPileToken(entry.PileType)} {entry.Card.Type} {entry.Card.Rarity}",
                         badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null),
                     CreateCardPreviewModel(entry.Card),
                     entry.Card,
@@ -344,6 +342,15 @@ namespace STS2RitsuLib.Settings
             return hash.ToHashCode();
         }
 
+        private static bool IsDefaultPileCardEntry(RitsuCatalogItem item)
+        {
+            return RitsuDebugCardActions.GetMutablePileTypes()
+                .Where(static pile => !RitsuDebugCardActions.IsRunStatePile(pile))
+                .Any(pile => item.Id.StartsWith(
+                    $"{RitsuDebugCardActions.GetPileToken(pile)}:",
+                    StringComparison.Ordinal));
+        }
+
         private static int GetCardStateHash(CardModel card)
         {
             var hash = new HashCode();
@@ -355,6 +362,12 @@ namespace STS2RitsuLib.Settings
             hash.Add(card.CanonicalStarCost);
             hash.Add(card.Enchantment?.Id.ToString(), StringComparer.Ordinal);
             hash.Add(card.Enchantment?.Amount);
+            hash.Add(card.Affliction?.Id.ToString(), StringComparer.Ordinal);
+            hash.Add(card.Affliction?.Amount);
+            hash.Add(SafeCardDescription(card), StringComparer.Ordinal);
+            hash.Add(GetCapabilityStateHash(card));
+            hash.Add(GetCapabilityStateHash(card.Enchantment));
+            hash.Add(GetCapabilityStateHash(card.Affliction));
             var localKeywords = card.GetKeywordsWithSources(KeywordSources.Local);
             hash.Add(localKeywords.Contains(CardKeyword.Exhaust));
             hash.Add(localKeywords.Contains(CardKeyword.Ethereal));
@@ -820,6 +833,21 @@ namespace STS2RitsuLib.Settings
             return L($"ritsulib.debugTools.enum.{typeof(TValue).Name}.{value}", value.ToString());
         }
 
+        private static string PileLabel(PileType pileType)
+        {
+            if (!ModCardPileRegistry.TryGetByPileType(pileType, out var definition))
+                return EnumLabel(pileType);
+            try
+            {
+                var title = definition.Title.GetFormattedText()?.Trim();
+                return string.IsNullOrWhiteSpace(title) ? definition.Id : title;
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                return definition.Id;
+            }
+        }
+
         private static string RoomLabel(RoomType roomType)
         {
             if (roomType == RoomType.Map)
@@ -962,8 +990,8 @@ namespace STS2RitsuLib.Settings
             uint? CombatCardId)
         {
             internal string StableId => CombatCardId.HasValue
-                ? $"{PileType}:combat:{CombatCardId.Value}"
-                : $"{PileType}:deck:{Index}:{Card.Id}";
+                ? $"{RitsuDebugCardActions.GetPileToken(PileType)}:combat:{CombatCardId.Value}"
+                : $"{RitsuDebugCardActions.GetPileToken(PileType)}:state:{Index}:{Card.Id}";
         }
     }
 }

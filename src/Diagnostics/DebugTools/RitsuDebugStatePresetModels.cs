@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Models.Capabilities;
 
 namespace STS2RitsuLib.Diagnostics.DebugTools
 {
@@ -277,6 +278,33 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         }
     }
 
+    internal sealed class RitsuDebugStatePresetCapabilityTarget
+    {
+        [JsonPropertyName("target")] public RitsuDebugCapabilityTarget Target { get; set; }
+
+        [JsonPropertyName("capabilities")] public ModelCapabilitySaveDocument Capabilities { get; set; } = new();
+
+        internal RitsuDebugStatePresetCapabilityTarget Clone()
+        {
+            return new()
+            {
+                Target = Target,
+                Capabilities = new()
+                {
+                    Capabilities =
+                    [
+                        .. Capabilities.Capabilities.Select(static entry => new ModelCapabilitySaveEntry
+                        {
+                            Id = entry.Id,
+                            Schema = entry.Schema,
+                            Data = entry.Data?.DeepClone(),
+                        }),
+                    ],
+                },
+            };
+        }
+    }
+
     internal sealed class RitsuDebugStatePreset
     {
         [JsonPropertyName("id")] public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -309,8 +337,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RitsuDebugStatePresetPlayer? Player { get; set; }
 
+        [JsonPropertyName("secondary_resources")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, int>? SecondaryResources { get; set; }
+
+        [JsonPropertyName("model_capabilities")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<RitsuDebugStatePresetCapabilityTarget>? CapabilityTargets { get; set; }
+
         internal bool HasAnyContent => CardPiles.Count > 0 || Relics != null || Potions != null ||
-                                       Powers != null || Player is { HasAnyValue: true };
+                                       Powers != null || Player is { HasAnyValue: true } ||
+                                       SecondaryResources is { Count: > 0 } ||
+                                       CapabilityTargets is { Count: > 0 };
 
         internal RitsuDebugStatePreset Clone(bool assignNewId = false)
         {
@@ -325,6 +363,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 Potions = Potions?.Clone(),
                 Powers = Powers?.Clone(),
                 Player = Player?.Clone(),
+                SecondaryResources = SecondaryResources == null
+                    ? null
+                    : new(SecondaryResources, StringComparer.Ordinal),
+                CapabilityTargets = CapabilityTargets == null
+                    ? null
+                    : [.. CapabilityTargets.Select(static target => target.Clone())],
             };
         }
     }
@@ -345,6 +389,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const int MaximumCardsPerPile = 100;
         internal const int MaximumRelics = 128;
         internal const int MaximumPowers = 128;
+        internal const int MaximumSecondaryResources = 128;
+        internal const int MaximumCapabilityTargets = 512;
         internal const string DataKey = "debug-state-presets";
         internal const string FileName = "debug_state_presets.json";
 
@@ -491,6 +537,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                                                preset.Potions.Items.All(static potion => potion != null))) &&
                    (preset.Powers == null || (preset.Powers.Items != null &&
                                               preset.Powers.Items.All(static power => power != null))) &&
+                   (preset.SecondaryResources == null ||
+                    preset.SecondaryResources.Keys.All(static id => id != null)) &&
+                   (preset.CapabilityTargets == null ||
+                    preset.CapabilityTargets.All(static target =>
+                        target?.Capabilities?.Capabilities != null &&
+                        target.Capabilities.Capabilities.All(static capability => capability != null))) &&
                    preset.HasAnyContent;
         }
 
