@@ -13,25 +13,36 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     internal static class RitsuDebugInventoryActions
     {
         internal const string AddRelicActionId = "inventory.relic.add";
+        internal const string EditRelicActionId = "inventory.relic.edit";
         internal const string RemoveRelicActionId = "inventory.relic.remove";
         internal const string AddPotionActionId = "inventory.potion.add";
+        internal const string EditPotionActionId = "inventory.potion.edit";
         internal const string DiscardPotionActionId = "inventory.potion.discard";
         internal const string ClearInventoryActionId = "inventory.clear";
+        internal const int MaxRelicStackCount = 9_999;
 
         internal static void RegisterBuiltInActions()
         {
-            RitsuDebugActionProtocol.Register<ModelPayload>(
+            RitsuDebugActionProtocol.Register<RelicValuesPayload>(
                 AddRelicActionId,
                 ValidateAddRelic,
                 ExecuteAddRelicAsync);
+            RitsuDebugActionProtocol.Register<RelicEditPayload>(
+                EditRelicActionId,
+                ValidateEditRelic,
+                ExecuteEditRelicAsync);
             RitsuDebugActionProtocol.Register<ModelPayload>(
                 RemoveRelicActionId,
                 ValidateRemoveRelic,
                 ExecuteRemoveRelicAsync);
-            RitsuDebugActionProtocol.Register<ModelPayload>(
+            RitsuDebugActionProtocol.Register<ModelValuesPayload>(
                 AddPotionActionId,
                 ValidateAddPotion,
                 ExecuteAddPotionAsync);
+            RitsuDebugActionProtocol.Register<PotionValuesPayload>(
+                EditPotionActionId,
+                ValidateEditPotion,
+                ExecuteEditPotionAsync);
             RitsuDebugActionProtocol.Register<PotionSlotPayload>(
                 DiscardPotionActionId,
                 ValidateDiscardPotion,
@@ -45,9 +56,31 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static RitsuDebugActionSubmission SubmitAddRelic(
             Player requester,
             Player target,
-            string relicId)
+            string relicId,
+            int stackCount = 1,
+            IReadOnlyDictionary<string, int>? dynamicVars = null)
         {
-            return SubmitModel(requester, target, AddRelicActionId, relicId);
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                AddRelicActionId,
+                requester,
+                target,
+                new RelicValuesPayload(relicId, stackCount, CopyOverrides(dynamicVars)));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitEditRelic(
+            Player requester,
+            Player target,
+            string relicId,
+            IReadOnlyDictionary<string, int> dynamicVars)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                EditRelicActionId,
+                requester,
+                target,
+                new RelicEditPayload(relicId, CopyOverrides(dynamicVars)!));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
         internal static RitsuDebugActionSubmission SubmitRemoveRelic(
@@ -61,9 +94,31 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static RitsuDebugActionSubmission SubmitAddPotion(
             Player requester,
             Player target,
-            string potionId)
+            string potionId,
+            IReadOnlyDictionary<string, int>? dynamicVars = null)
         {
-            return SubmitModel(requester, target, AddPotionActionId, potionId);
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                AddPotionActionId,
+                requester,
+                target,
+                new ModelValuesPayload(potionId, CopyOverrides(dynamicVars)));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitEditPotion(
+            Player requester,
+            Player target,
+            int slotIndex,
+            string expectedPotionId,
+            IReadOnlyDictionary<string, int> dynamicVars)
+        {
+            ArgumentNullException.ThrowIfNull(dynamicVars);
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                EditPotionActionId,
+                requester,
+                target,
+                new PotionValuesPayload(slotIndex, expectedPotionId, CopyOverrides(dynamicVars)!));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
         internal static RitsuDebugActionSubmission SubmitDiscardPotion(
@@ -125,10 +180,23 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal static RitsuDebugActionCheck ValidateAddRelic(
             RitsuDebugActionContext context,
-            ModelPayload payload)
+            RelicValuesPayload payload)
         {
             if (!TryResolveRelic(payload.ModelId, out var relic, out var error))
                 return RitsuDebugActionCheck.Fail(error);
+            if (payload.StackCount is < 1 or > MaxRelicStackCount)
+                return RitsuDebugActionCheck.Fail(
+                    "inventory.relicStackRange",
+                    "Relic stack count must be between 1 and {0}.",
+                    MaxRelicStackCount);
+            if (!relic.IsStackable && payload.StackCount != 1)
+                return RitsuDebugActionCheck.Fail(
+                    "inventory.relicNotStackable",
+                    "Relic {0} does not support multiple stacks.",
+                    relic.Id);
+            var valuesCheck = RitsuDebugModelValueOverrides.Validate(relic.DynamicVars, payload.DynamicVars);
+            if (!valuesCheck.Success)
+                return valuesCheck;
 
             return context.Target.GetRelicById(relic.Id) == null
                 ? RitsuDebugActionCheck.Ok
@@ -136,6 +204,25 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "inventory.relicAlreadyOwned",
                     "The target player already owns {0}.",
                     relic.Id);
+        }
+
+        private static RitsuDebugActionCheck ValidateEditRelic(
+            RitsuDebugActionContext context,
+            RelicEditPayload payload)
+        {
+            if (payload.DynamicVars == null || payload.DynamicVars.Count == 0)
+                return RitsuDebugActionCheck.Fail(
+                    "model.dynamicVarEditEmpty",
+                    "Change at least one model value before applying the edit.");
+            if (!TryResolveRelic(payload.ModelId, out var canonical, out var error))
+                return RitsuDebugActionCheck.Fail(error);
+            var relic = context.Target.GetRelicById(canonical.Id);
+            return relic == null
+                ? RitsuDebugActionCheck.Fail(
+                    "inventory.relicNotOwned",
+                    "The target player does not own {0}.",
+                    canonical.Id)
+                : RitsuDebugModelValueOverrides.Validate(relic.DynamicVars, payload.DynamicVars);
         }
 
         private static RitsuDebugActionCheck ValidateRemoveRelic(
@@ -155,16 +242,37 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal static RitsuDebugActionCheck ValidateAddPotion(
             RitsuDebugActionContext context,
-            ModelPayload payload)
+            ModelValuesPayload payload)
         {
-            if (!TryResolvePotion(payload.ModelId, out _, out var error))
+            if (!TryResolvePotion(payload.ModelId, out var potion, out var error))
                 return RitsuDebugActionCheck.Fail(error);
+            var valuesCheck = RitsuDebugModelValueOverrides.Validate(potion.DynamicVars, payload.DynamicVars);
+            if (!valuesCheck.Success)
+                return valuesCheck;
 
             return FindEmptyPotionSlot(context.Target) >= 0
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(
                     "inventory.potionBeltFull",
                     "The target player's potion belt is full.");
+        }
+
+        private static RitsuDebugActionCheck ValidateEditPotion(
+            RitsuDebugActionContext context,
+            PotionValuesPayload payload)
+        {
+            if (payload.DynamicVars == null || payload.DynamicVars.Count == 0)
+                return RitsuDebugActionCheck.Fail(
+                    "model.dynamicVarEditEmpty",
+                    "Change at least one model value before applying the edit.");
+            if (!TryResolvePotionSlot(
+                    context.Target,
+                    payload.SlotIndex,
+                    payload.ExpectedPotionId,
+                    out var potion,
+                    out var error))
+                return RitsuDebugActionCheck.Fail(error);
+            return RitsuDebugModelValueOverrides.Validate(potion.DynamicVars, payload.DynamicVars);
         }
 
         private static RitsuDebugActionCheck ValidateDiscardPotion(
@@ -216,11 +324,26 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal static async Task<string> ExecuteAddRelicAsync(
             RitsuDebugActionContext context,
-            ModelPayload payload)
+            RelicValuesPayload payload)
         {
             _ = TryResolveRelic(payload.ModelId, out var relic, out _);
-            await RelicCmd.Obtain(relic.ToMutable(), context.Target);
+            var mutableRelic = relic.ToMutable();
+            RitsuDebugModelValueOverrides.Apply(mutableRelic.DynamicVars, payload.DynamicVars);
+            for (var stack = 1; stack < payload.StackCount; stack++)
+                mutableRelic.IncrementStackCount();
+            await RelicCmd.Obtain(mutableRelic, context.Target);
             return $"Added relic {relic.Id} to the selected player.";
+        }
+
+        private static Task<string> ExecuteEditRelicAsync(
+            RitsuDebugActionContext context,
+            RelicEditPayload payload)
+        {
+            _ = TryResolveRelic(payload.ModelId, out var canonical, out _);
+            var relic = context.Target.GetRelicById(canonical.Id)!;
+            RitsuDebugModelValueOverrides.Apply(relic.DynamicVars, payload.DynamicVars);
+            relic.InvokeExecutionFinished();
+            return Task.FromResult($"Updated values for relic {relic.Id}.");
         }
 
         private static async Task<string> ExecuteRemoveRelicAsync(
@@ -235,18 +358,28 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal static async Task<string> ExecuteAddPotionAsync(
             RitsuDebugActionContext context,
-            ModelPayload payload)
+            ModelValuesPayload payload)
         {
             return await ExecuteAddPotionAtSlotAsync(context, payload, -1);
         }
 
-        internal static async Task<string> ExecuteAddPotionAtSlotAsync(
+        internal static Task<string> ExecuteAddPotionAtSlotAsync(
             RitsuDebugActionContext context,
             ModelPayload payload,
             int slotIndex)
         {
+            return ExecuteAddPotionAtSlotAsync(context, new ModelValuesPayload(payload.ModelId, null), slotIndex);
+        }
+
+        internal static async Task<string> ExecuteAddPotionAtSlotAsync(
+            RitsuDebugActionContext context,
+            ModelValuesPayload payload,
+            int slotIndex)
+        {
             _ = TryResolvePotion(payload.ModelId, out var potion, out _);
-            var result = await PotionCmd.TryToProcure(potion.ToMutable(), context.Target, slotIndex);
+            var mutablePotion = potion.ToMutable();
+            RitsuDebugModelValueOverrides.Apply(mutablePotion.DynamicVars, payload.DynamicVars);
+            var result = await PotionCmd.TryToProcure(mutablePotion, context.Target, slotIndex);
             if (!result.success)
                 throw new RitsuDebugActionExecutionException(
                     RitsuDebugActionFeedback.Create(
@@ -254,6 +387,21 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         "The game did not add potion {0} to the selected player.",
                         potion.Id));
             return $"Added potion {potion.Id} to the selected player.";
+        }
+
+        private static Task<string> ExecuteEditPotionAsync(
+            RitsuDebugActionContext context,
+            PotionValuesPayload payload)
+        {
+            _ = TryResolvePotionSlot(
+                context.Target,
+                payload.SlotIndex,
+                payload.ExpectedPotionId,
+                out var potion,
+                out _);
+            RitsuDebugModelValueOverrides.Apply(potion.DynamicVars, payload.DynamicVars);
+            potion.InvokeExecutionFinished();
+            return Task.FromResult($"Updated values for potion {potion.Id}.");
         }
 
         private static async Task<string> ExecuteDiscardPotionAsync(
@@ -297,6 +445,55 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return index;
 
             return -1;
+        }
+
+        private static bool TryResolvePotionSlot(
+            Player player,
+            int slotIndex,
+            string expectedPotionId,
+            out PotionModel potion,
+            out RitsuDebugActionFeedback feedback)
+        {
+            potion = null!;
+            if (slotIndex < 0 || slotIndex >= player.MaxPotionCount)
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "inventory.potionSlotRange",
+                    "Potion slot must be between 0 and {0}.",
+                    player.MaxPotionCount - 1);
+                return false;
+            }
+
+            var candidate = player.GetPotionAtSlotIndex(slotIndex);
+            if (candidate == null)
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "inventory.potionSlotEmpty",
+                    "Potion slot {0} is empty.",
+                    slotIndex);
+                return false;
+            }
+
+            if (!candidate.Id.ToString().Equals(expectedPotionId, StringComparison.Ordinal))
+            {
+                feedback = RitsuDebugActionFeedback.Create(
+                    "inventory.potionSlotChanged",
+                    "The potion in slot {0} changed before the action could run.",
+                    slotIndex);
+                return false;
+            }
+
+            potion = candidate;
+            feedback = default;
+            return true;
+        }
+
+        private static Dictionary<string, int>? CopyOverrides(IReadOnlyDictionary<string, int>? values)
+        {
+            return values?.ToDictionary(
+                static pair => pair.Key,
+                static pair => pair.Value,
+                StringComparer.Ordinal);
         }
 
         private static bool TryResolveModel<TModel>(
@@ -350,7 +547,25 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         internal readonly record struct ModelPayload(string ModelId);
 
+        internal readonly record struct ModelValuesPayload(
+            string ModelId,
+            Dictionary<string, int>? DynamicVars);
+
+        internal readonly record struct RelicValuesPayload(
+            string ModelId,
+            int StackCount,
+            Dictionary<string, int>? DynamicVars);
+
+        internal readonly record struct RelicEditPayload(
+            string ModelId,
+            Dictionary<string, int> DynamicVars);
+
         internal readonly record struct PotionSlotPayload(int SlotIndex, string ExpectedPotionId);
+
+        internal readonly record struct PotionValuesPayload(
+            int SlotIndex,
+            string ExpectedPotionId,
+            Dictionary<string, int> DynamicVars);
 
         internal readonly record struct ClearInventoryPayload(RitsuDebugInventoryKind Kind);
     }

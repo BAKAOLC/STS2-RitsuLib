@@ -36,6 +36,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const string ApplyPowerToCreaturesActionId = "combat.power.apply-many";
         internal const string RemovePowerActionId = "combat.power.remove";
         internal const string AdjustPowerInstanceActionId = "combat.power.adjust-instance";
+        internal const string EditPowerInstanceActionId = "combat.power.edit-instance";
         internal const string RemovePowerInstanceActionId = "combat.power.remove-instance";
         internal const string StunMonsterActionId = "combat.monster.stun";
         internal const string SetMonsterIntentActionId = "combat.monster.intent.set";
@@ -102,6 +103,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 AdjustPowerInstanceActionId,
                 ValidateAdjustPowerInstance,
                 ExecuteAdjustPowerInstanceAsync);
+            RitsuDebugActionProtocol.Register<PowerInstanceValuesPayload>(
+                EditPowerInstanceActionId,
+                ValidateEditPowerInstance,
+                ExecuteEditPowerInstanceAsync);
             RitsuDebugActionProtocol.Register<PowerInstancePayload>(
                 RemovePowerInstanceActionId,
                 ValidateRemovePowerInstance,
@@ -149,9 +154,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             Player actionTarget,
             uint combatId,
             string powerId,
-            int amount)
+            int amount,
+            IReadOnlyDictionary<string, int>? dynamicVars = null)
         {
-            return SubmitPower(requester, actionTarget, ApplyPowerActionId, combatId, powerId, amount);
+            return SubmitPower(requester, actionTarget, ApplyPowerActionId, combatId, powerId, amount, dynamicVars);
         }
 
         internal static RitsuDebugActionSubmission SubmitApplyPowerToCreatures(
@@ -159,14 +165,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             Player actionTarget,
             IReadOnlyCollection<uint> combatIds,
             string powerId,
-            int amount)
+            int amount,
+            IReadOnlyDictionary<string, int>? dynamicVars = null)
         {
             ArgumentNullException.ThrowIfNull(combatIds);
             var envelope = RitsuDebugActionProtocol.CreateEnvelope(
                 ApplyPowerToCreaturesActionId,
                 requester,
                 actionTarget,
-                new PowerGroupPayload([.. combatIds], powerId, amount));
+                new PowerGroupPayload([.. combatIds], powerId, amount, CopyOverrides(dynamicVars)));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -243,6 +250,28 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 requester,
                 actionTarget,
                 new PowerInstancePayload(combatId, index, powerId, offset));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitEditPowerInstance(
+            Player requester,
+            Player actionTarget,
+            uint combatId,
+            int index,
+            string powerId,
+            int? amount,
+            IReadOnlyDictionary<string, int>? dynamicVars)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                EditPowerInstanceActionId,
+                requester,
+                actionTarget,
+                new PowerInstanceValuesPayload(
+                    combatId,
+                    index,
+                    powerId,
+                    amount,
+                    CopyOverrides(dynamicVars)));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -418,14 +447,23 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string actionId,
             uint combatId,
             string powerId,
-            int amount)
+            int amount,
+            IReadOnlyDictionary<string, int>? dynamicVars = null)
         {
             var envelope = RitsuDebugActionProtocol.CreateEnvelope(
                 actionId,
                 requester,
                 actionTarget,
-                new PowerPayload(combatId, powerId, amount));
+                new PowerPayload(combatId, powerId, amount, CopyOverrides(dynamicVars)));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        private static Dictionary<string, int>? CopyOverrides(IReadOnlyDictionary<string, int>? values)
+        {
+            return values?.ToDictionary(
+                static pair => pair.Key,
+                static pair => pair.Value,
+                StringComparer.Ordinal);
         }
 
         private static RitsuDebugActionCheck ValidateModifyCreature(
@@ -554,8 +592,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return RitsuDebugActionCheck.Fail(
                     "combat.cannotReceivePowers",
                     "The selected creature cannot receive powers right now.");
-            if (!TryResolvePower(payload.PowerId, out _, out feedback))
+            if (!TryResolvePower(payload.PowerId, out var canonical, out feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
+            var overrideCheck = RitsuDebugModelValueOverrides.Validate(canonical.DynamicVars, payload.DynamicVars);
+            if (!overrideCheck.Success)
+                return overrideCheck;
             return payload.Amount is < 1 or > MaxAmount
                 ? RitsuDebugActionCheck.Fail(
                     "combat.powerAmountRange",
@@ -579,8 +620,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return RitsuDebugActionCheck.Fail(
                     "combat.duplicatePowerTargets",
                     "A creature can appear only once in a batch Power action.");
-            if (!TryResolvePower(payload.PowerId, out _, out feedback))
+            if (!TryResolvePower(payload.PowerId, out var canonical, out feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
+            var overrideCheck = RitsuDebugModelValueOverrides.Validate(canonical.DynamicVars, payload.DynamicVars);
+            if (!overrideCheck.Success)
+                return overrideCheck;
             if (payload.Amount is < 1 or > MaxAmount)
                 return RitsuDebugActionCheck.Fail(
                     "combat.powerAmountRange",
@@ -650,6 +694,35 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return TryResolvePowerInstance(payload, out _, out _, out var feedback)
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(feedback);
+        }
+
+        private static RitsuDebugActionCheck ValidateEditPowerInstance(
+            RitsuDebugActionContext context,
+            PowerInstanceValuesPayload payload)
+        {
+            if (!payload.Amount.HasValue && (payload.DynamicVars == null || payload.DynamicVars.Count == 0))
+                return RitsuDebugActionCheck.Fail(
+                    "combat.powerEditEmpty",
+                    "Change at least one Power value before applying the edit.");
+            var reference = new PowerInstancePayload(payload.CombatId, payload.Index, payload.PowerId, 0);
+            if (!TryResolvePowerInstance(reference, out var creature, out var power, out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            if (payload.Amount is { } amount)
+            {
+                var minimum = power.AllowNegative ? -MaxAmount : 0;
+                if (amount < minimum || amount > MaxAmount)
+                    return RitsuDebugActionCheck.Fail(
+                        "combat.powerValueRange",
+                        "Power amount must be between {0} and {1}.",
+                        minimum,
+                        MaxAmount);
+                if (amount != power.Amount && !creature.CanReceivePowers)
+                    return RitsuDebugActionCheck.Fail(
+                        "combat.cannotReceivePowers",
+                        "The selected creature cannot receive power changes right now.");
+            }
+
+            return RitsuDebugModelValueOverrides.Validate(power.DynamicVars, payload.DynamicVars);
         }
 
         private static RitsuDebugActionCheck ValidateSetMonsterIntent(
@@ -904,7 +977,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var creature = FindCreature(payload.CombatId)!;
             _ = TryResolvePower(payload.PowerId, out var canonical, out _);
             var choiceContext = new BlockingPlayerChoiceContext();
-            await PowerCmd.Apply(choiceContext, canonical.ToMutable(), creature, payload.Amount, null, null);
+            var mutable = canonical.ToMutable();
+            var existing = PowerCmd.FindExistingInstanceForStacking(mutable, creature, null);
+            RitsuDebugModelValueOverrides.Apply(mutable.DynamicVars, payload.DynamicVars);
+            await PowerCmd.Apply(choiceContext, mutable, creature, payload.Amount, null, null);
+            if (existing != null && payload.DynamicVars is { Count: > 0 })
+            {
+                RitsuDebugModelValueOverrides.Apply(existing.DynamicVars, payload.DynamicVars);
+                existing.InvokeExecutionFinished();
+            }
 
             return $"Applied {canonical.Id} to the selected creature.";
         }
@@ -918,7 +999,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             foreach (var combatId in payload.CombatIds)
             {
                 var creature = FindCreature(combatId)!;
-                await PowerCmd.Apply(choiceContext, canonical.ToMutable(), creature, payload.Amount, null, null);
+                var mutable = canonical.ToMutable();
+                var existing = PowerCmd.FindExistingInstanceForStacking(mutable, creature, null);
+                RitsuDebugModelValueOverrides.Apply(mutable.DynamicVars, payload.DynamicVars);
+                await PowerCmd.Apply(choiceContext, mutable, creature, payload.Amount, null, null);
+                if (existing != null && payload.DynamicVars is { Count: > 0 })
+                {
+                    RitsuDebugModelValueOverrides.Apply(existing.DynamicVars, payload.DynamicVars);
+                    existing.InvokeExecutionFinished();
+                }
             }
 
             return $"Applied {canonical.Id} to {payload.CombatIds.Length} creatures.";
@@ -956,6 +1045,30 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             _ = TryResolvePowerInstance(payload, out _, out var power, out _);
             await PowerCmd.Remove(power);
             return $"Removed {power.Id} from the selected creature.";
+        }
+
+        private static async Task<string> ExecuteEditPowerInstanceAsync(
+            RitsuDebugActionContext context,
+            PowerInstanceValuesPayload payload)
+        {
+            var reference = new PowerInstancePayload(payload.CombatId, payload.Index, payload.PowerId, 0);
+            _ = TryResolvePowerInstance(reference, out _, out var power, out _);
+            RitsuDebugModelValueOverrides.Apply(power.DynamicVars, payload.DynamicVars);
+            if (payload.Amount is { } amount && amount != power.Amount)
+            {
+                await PowerCmd.ModifyAmount(
+                    new BlockingPlayerChoiceContext(),
+                    power,
+                    amount - power.Amount,
+                    null,
+                    null);
+            }
+            else
+            {
+                power.InvokeExecutionFinished();
+            }
+
+            return $"Updated values for {power.Id}.";
         }
 
         private static bool TryResolvePowerInstance(
@@ -1224,11 +1337,26 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugCreatureOperation Operation,
             int Value);
 
-        internal readonly record struct PowerPayload(uint CombatId, string PowerId, int Amount);
+        internal readonly record struct PowerPayload(
+            uint CombatId,
+            string PowerId,
+            int Amount,
+            Dictionary<string, int>? DynamicVars);
 
         internal readonly record struct PowerInstancePayload(uint CombatId, int Index, string PowerId, int Offset);
 
-        internal readonly record struct PowerGroupPayload(uint[] CombatIds, string PowerId, int Amount);
+        internal readonly record struct PowerInstanceValuesPayload(
+            uint CombatId,
+            int Index,
+            string PowerId,
+            int? Amount,
+            Dictionary<string, int>? DynamicVars);
+
+        internal readonly record struct PowerGroupPayload(
+            uint[] CombatIds,
+            string PowerId,
+            int Amount,
+            Dictionary<string, int>? DynamicVars);
 
         internal readonly record struct MonsterIntentPayload(uint CombatId, string MoveId);
 

@@ -25,6 +25,7 @@ namespace STS2RitsuLib.Ui.Overlay
         Library,
         Plus,
         Minus,
+        Sliders,
         Trash,
         Close,
         Heart,
@@ -99,6 +100,8 @@ namespace STS2RitsuLib.Ui.Overlay
                     "<rect x='3.5' y='3.5' width='7' height='7' rx='1.2'/><rect x='13.5' y='3.5' width='7' height='7' rx='1.2'/><rect x='3.5' y='13.5' width='7' height='7' rx='1.2'/><rect x='13.5' y='13.5' width='7' height='7' rx='1.2'/>",
                 RitsuDebugToolsGlyph.Plus => "<path d='M12 5v14M5 12h14'/>",
                 RitsuDebugToolsGlyph.Minus => "<path d='M5 12h14'/>",
+                RitsuDebugToolsGlyph.Sliders =>
+                    "<path d='M4 6h5M15 6h5M4 12h10M18 12h2M4 18h2M12 18h8'/><circle cx='12' cy='6' r='2'/><circle cx='16' cy='12' r='2'/><circle cx='9' cy='18' r='2'/>",
                 RitsuDebugToolsGlyph.Trash =>
                     "<path d='M4.5 7h15M9 3.5h6L16 7M7 7l.8 13.5h8.4L17 7M10 10.5v6.5M14 10.5v6.5'/>",
                 RitsuDebugToolsGlyph.Close => "<path d='M6 6l12 12M18 6L6 18'/>",

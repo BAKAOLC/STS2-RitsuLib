@@ -449,7 +449,38 @@ namespace STS2RitsuLib.Settings
                 ModSettingsButtonTone.Danger,
                 () => SubmitInventoryAction((requester, target) =>
                     RitsuDebugInventoryActions.SubmitRemoveRelic(requester, target, relic.Id.ToString()))));
+            var settings = CreateAdjustmentContent();
+            var dynamicVariables = CreateDynamicVariableEditors(settings, relic.DynamicVars);
+            if (dynamicVariables.HasEditors)
+            {
+                settings.AddChild(ActionButton(
+                    L("ritsulib.debugTools.action.applyChanges", "Apply changes"),
+                    ModSettingsButtonTone.Accent,
+                    Apply));
+                root.AddChild(AdjustmentSection(
+                    L("ritsulib.debugTools.action.adjustValues", "Adjust values"),
+                    settings));
+            }
+
             return root;
+
+            void Apply()
+            {
+                if (!TryReadDynamicVariableOverrides(dynamicVariables, out var overrides))
+                    return;
+                if (overrides is not { Count: > 0 })
+                {
+                    SetStatus(L("ritsulib.debugTools.changeValueRequired",
+                        "Change at least one value before applying."), true);
+                    return;
+                }
+
+                SubmitInventoryAction((requester, target) => RitsuDebugInventoryActions.SubmitEditRelic(
+                    requester,
+                    target,
+                    relic.Id.ToString(),
+                    overrides));
+            }
         }
 
         private Control CreateOwnedPotionDetail(PotionModel potion, int slot)
@@ -470,7 +501,39 @@ namespace STS2RitsuLib.Settings
                         target,
                         slot,
                         potion.Id.ToString()))));
+            var settings = CreateAdjustmentContent();
+            var dynamicVariables = CreateDynamicVariableEditors(settings, potion.DynamicVars);
+            if (dynamicVariables.HasEditors)
+            {
+                settings.AddChild(ActionButton(
+                    L("ritsulib.debugTools.action.applyChanges", "Apply changes"),
+                    ModSettingsButtonTone.Accent,
+                    Apply));
+                root.AddChild(AdjustmentSection(
+                    L("ritsulib.debugTools.action.adjustValues", "Adjust values"),
+                    settings));
+            }
+
             return root;
+
+            void Apply()
+            {
+                if (!TryReadDynamicVariableOverrides(dynamicVariables, out var overrides))
+                    return;
+                if (overrides is not { Count: > 0 })
+                {
+                    SetStatus(L("ritsulib.debugTools.changeValueRequired",
+                        "Change at least one value before applying."), true);
+                    return;
+                }
+
+                SubmitInventoryAction((requester, target) => RitsuDebugInventoryActions.SubmitEditPotion(
+                    requester,
+                    target,
+                    slot,
+                    potion.Id.ToString(),
+                    overrides));
+            }
         }
 
         private Control CreateCurrentPowerCard(uint combatId, int index, PowerModel power)
@@ -551,6 +614,19 @@ namespace STS2RitsuLib.Settings
             amount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
             identityRow.AddChild(amount);
 
+            var editorContent = CreateAdjustmentContent();
+            var amountChanged = false;
+            var amountEditor = CreateIntegerEdit(power.Amount.ToString());
+            amountEditor.TextChanged += _ => amountChanged = true;
+            editorContent.AddChild(Field(L("ritsulib.debugTools.field.amount", "Stack amount"), amountEditor));
+            var dynamicVariables = CreateDynamicVariableEditors(editorContent, power.DynamicVars);
+            editorContent.AddChild(ActionButton(
+                L("ritsulib.debugTools.action.applyChanges", "Apply changes"),
+                ModSettingsButtonTone.Accent,
+                ApplyChanges));
+            var editorPanel = CreateAdjustmentPanel(editorContent);
+            editorPanel.Visible = false;
+
             var actions = new HBoxContainer
             {
                 Alignment = AlignmentMode.End,
@@ -569,15 +645,53 @@ namespace STS2RitsuLib.Settings
                 ModSettingsButtonTone.Normal,
                 () => SubmitPowerInstanceAdjustment(combatId, index, power.Id.ToString(), 1)));
             actions.AddChild(IconButton(
+                RitsuDebugToolsGlyph.Sliders,
+                L("ritsulib.debugTools.action.adjustValues", "Adjust values"),
+                ModSettingsButtonTone.Normal,
+                () => editorPanel.Visible = !editorPanel.Visible));
+            actions.AddChild(IconButton(
                 RitsuDebugToolsGlyph.Trash,
                 L("ritsulib.debugTools.action.removePower", "Remove Power"),
                 ModSettingsButtonTone.Danger,
                 () => SubmitPowerInstanceRemoval(combatId, index, power.Id.ToString())));
+            column.AddChild(editorPanel);
             panel.TooltipText = BuildCatalogTooltip(
                 SafeTitle(power),
                 power.Id.ToString(),
                 SafeDescription(() => power.Description.GetFormattedText()));
             return panel;
+
+            void ApplyChanges()
+            {
+                int? desiredAmount = null;
+                if (amountChanged)
+                {
+                    var minimum = power.AllowNegative ? -RitsuDebugCombatActions.MaxAmount : 0;
+                    if (!TryReadInt(amountEditor, minimum, RitsuDebugCombatActions.MaxAmount, out var parsedAmount))
+                        return;
+                    desiredAmount = parsedAmount;
+                }
+
+                if (!TryReadDynamicVariableOverrides(dynamicVariables, out var overrides))
+                    return;
+                if (!desiredAmount.HasValue && overrides is not { Count: > 0 })
+                {
+                    SetStatus(L("ritsulib.debugTools.changeValueRequired",
+                        "Change at least one value before applying."), true);
+                    return;
+                }
+
+                if (!TryGetActionContext(out var requester, out var target))
+                    return;
+                RunAction(() => RitsuDebugCombatActions.SubmitEditPowerInstance(
+                    requester,
+                    target,
+                    combatId,
+                    index,
+                    power.Id.ToString(),
+                    desiredAmount,
+                    overrides));
+            }
         }
 
         private void SubmitPowerInstanceAdjustment(uint combatId, int index, string powerId, int offset)

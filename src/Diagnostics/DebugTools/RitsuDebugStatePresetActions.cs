@@ -448,7 +448,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 _ = RitsuDebugInventoryActions.TryResolveRelic(modelId, out var model, out _);
                 if (context.Target.GetRelicById(model.Id) == null)
-                    await RitsuDebugInventoryActions.ExecuteAddRelicAsync(context, new(modelId));
+                    await RitsuDebugInventoryActions.ExecuteAddRelicAsync(
+                        context,
+                        new(modelId, 1, null));
             }
         }
 
@@ -463,7 +465,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             foreach (var potion in potions.Items)
                 await RitsuDebugInventoryActions.ExecuteAddPotionAtSlotAsync(
                     context,
-                    new(potion.PotionId),
+                    new RitsuDebugInventoryActions.ModelPayload(potion.PotionId),
                     potions.ApplyMode == RitsuDebugStatePresetApplyMode.Replace
                         ? potion.SlotIndex!.Value
                         : -1);
