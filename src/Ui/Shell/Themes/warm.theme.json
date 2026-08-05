@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
-  "themeVersion": 4,
+  "themeVersion": 5,
   "id": "warm",
   "displayName": "Warm",
   "inherits": "default",
@@ -649,7 +649,7 @@
     "textButton": {
       "accent": {
         "fg": {
-          "$value": "#D4A56ADB",
+          "$value": "#D4A56AF2",
           "$type": "color"
         },
         "bg": {
@@ -663,7 +663,7 @@
       },
       "danger": {
         "fg": {
-          "$value": "#E69486DB",
+          "$value": "#E69486F2",
           "$type": "color"
         },
         "bg": {
@@ -677,7 +677,7 @@
       },
       "neutral": {
         "fg": {
-          "$value": "#B89973B8",
+          "$value": "#B89973F2",
           "$type": "color"
         },
         "bg": {
