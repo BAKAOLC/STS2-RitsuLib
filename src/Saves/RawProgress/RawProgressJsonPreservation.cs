@@ -65,8 +65,7 @@ namespace STS2RitsuLib.Saves.RawProgress
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[RawProgress] Failed to preserve unknown properties during an ordinary save: {ex.Message}");
-                States.Remove(progress);
-                return knownJson;
+                throw;
             }
         }
 
@@ -116,7 +115,11 @@ namespace STS2RitsuLib.Saves.RawProgress
             }
         }
 
-        private static bool AreUnknownPropertiesPreserved(JsonNode? raw, JsonNode? baseline, JsonNode? current)
+        private static bool AreUnknownPropertiesPreserved(
+            JsonNode? raw,
+            JsonNode? baseline,
+            JsonNode? current,
+            bool allowDeletedArrayRecords = false)
         {
             if (raw is JsonObject rawObject && baseline is JsonObject baselineObject)
             {
@@ -134,7 +137,11 @@ namespace STS2RitsuLib.Saves.RawProgress
                     }
 
                     currentObject.TryGetPropertyValue(propertyName, out var currentKnownValue);
-                    if (!AreUnknownPropertiesPreserved(rawValue, baselineValue, currentKnownValue))
+                    if (!AreUnknownPropertiesPreserved(
+                            rawValue,
+                            baselineValue,
+                            currentKnownValue,
+                            allowDeletedArrayRecords))
                         return false;
                 }
 
@@ -161,8 +168,15 @@ namespace STS2RitsuLib.Saves.RawProgress
                 if (baselineItem == null)
                     return false;
 
-                var currentItem = FindByIdentity(currentArray, identityProperty, identityValue);
-                if (!AreUnknownPropertiesPreserved(rawItem, baselineItem, currentItem))
+                if (!TryFindUniqueByIdentity(currentArray, identityProperty, identityValue, out var currentItem))
+                    return false;
+                if (currentItem == null && allowDeletedArrayRecords)
+                    continue;
+                if (!AreUnknownPropertiesPreserved(
+                        rawItem,
+                        baselineItem,
+                        currentItem,
+                        allowDeletedArrayRecords))
                     return false;
             }
 
@@ -225,6 +239,26 @@ namespace STS2RitsuLib.Saves.RawProgress
             }
 
             return match;
+        }
+
+        private static bool TryFindUniqueByIdentity(
+            JsonArray array,
+            string propertyName,
+            string identityValue,
+            out JsonNode? match)
+        {
+            match = null;
+            foreach (var item in array)
+            {
+                if (!TryReadIdentity(item, propertyName, out var candidate) || candidate != identityValue)
+                    continue;
+                if (match != null)
+                    return false;
+
+                match = item;
+            }
+
+            return true;
         }
 
         private static bool TryGetIdentity(JsonNode? node, out string propertyName, out string identityValue)
@@ -304,9 +338,15 @@ namespace STS2RitsuLib.Saves.RawProgress
                 {
                     var merged = currentKnown.DeepClone();
                     MergeUnknown(_rawDocument, _knownBaseline, merged);
-                    _rawDocument = merged.DeepClone();
+                    if (!AreUnknownPropertiesPreserved(_rawDocument, _knownBaseline, merged, true))
+                        throw new JsonException(
+                            "Unknown progress properties could not be matched uniquely to the current projection.");
+
+                    var nextRawDocument = merged.DeepClone();
+                    var result = merged.ToJsonString(WriteOptions);
+                    _rawDocument = nextRawDocument;
                     _knownBaseline = currentKnown;
-                    return merged.ToJsonString(WriteOptions);
+                    return result;
                 }
             }
         }

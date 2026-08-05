@@ -80,8 +80,13 @@
         LiveProgressStateSynchronization = 1 << 11,
 
         /// <summary>
-        ///     <para xml:lang="en">Later ordinary saves retain unknown JSON properties when they can be matched safely.</para>
-        ///     <para xml:lang="zh-CN">后续普通保存会在能够安全匹配时保留未知 JSON 属性。</para>
+        ///     <para xml:lang="en">
+        ///         Later ordinary saves retain unknown JSON properties when they can be matched safely and abort the save if
+        ///         an installed preservation state cannot be applied without loss.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         后续普通保存会在能够安全匹配时保留未知 JSON 属性；若已安装的保留状态无法无损应用，则中止该次保存。
+        ///     </para>
         /// </summary>
         SubsequentSaveUnknownJsonPreservation = 1 << 12,
 
@@ -90,6 +95,14 @@
         ///     <para xml:lang="zh-CN">提供方可以捕获活动原始文档及其本地与云端代次。</para>
         /// </summary>
         ActiveProgressSnapshot = 1 << 13,
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Retained recovery journals can be enumerated and their original document can be restored conditionally.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">可以枚举保留的恢复日志，并有条件地恢复其中的原始文档。</para>
+        /// </summary>
+        RecoveryJournalManagement = 1 << 14,
     }
 
     /// <summary>
@@ -133,6 +146,17 @@
         ///     <para xml:lang="zh-CN">获取允许提交的 UTF-8 文档最大字节数。</para>
         /// </summary>
         public required long MaxDocumentUtf8Bytes { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the maximum number of recovery journals retained at once. New commits fail closed when this limit is
+        ///         reached until an existing recovery is resolved.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取同时保留的恢复日志数量上限。达到该上限后，新的提交会保守失败，直至已有恢复项得到处理。
+        ///     </para>
+        /// </summary>
+        public required int MaxRetainedRecoveryJournals { get; init; }
     }
 
     /// <summary>
@@ -184,8 +208,13 @@
         public required bool CloudAvailable { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets whether the user enabled cloud synchronization.</para>
-        ///     <para xml:lang="zh-CN">获取用户是否启用了云同步。</para>
+        ///     <para xml:lang="en">
+        ///         Gets whether the user allows the cloud copy to be synchronized back to this machine. The game still
+        ///         writes local saves to an available cloud backend when this is false.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取用户是否允许将云端副本同步回本机。即使此值为 false，只要云端后端可用，游戏仍会将本地存档写入云端。
+        ///     </para>
         /// </summary>
         public required bool CloudSyncEnabled { get; init; }
 
@@ -460,6 +489,18 @@
         RecoveryRequired,
 
         /// <summary>
+        ///     <para xml:lang="en">The requested recovery journal no longer exists.</para>
+        ///     <para xml:lang="zh-CN">请求的恢复日志已不存在。</para>
+        /// </summary>
+        RecoveryJournalNotFound,
+
+        /// <summary>
+        ///     <para xml:lang="en">The requested recovery journal is malformed or failed integrity validation.</para>
+        ///     <para xml:lang="zh-CN">请求的恢复日志格式错误或未通过完整性验证。</para>
+        /// </summary>
+        RecoveryJournalInvalid,
+
+        /// <summary>
         ///     <para xml:lang="en">Cancellation was observed before any destination mutation.</para>
         ///     <para xml:lang="zh-CN">在修改任何目标之前收到取消请求。</para>
         /// </summary>
@@ -540,13 +581,227 @@
     }
 
     /// <summary>
+    ///     <para xml:lang="en">Identifies the last durable stage recorded for a retained recovery journal.</para>
+    ///     <para xml:lang="zh-CN">标识保留恢复日志中最后持久记录的阶段。</para>
+    /// </summary>
+    public enum RawProgressRecoveryStage
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Recovery data was prepared before the destination write began.</para>
+        ///     <para xml:lang="zh-CN">恢复数据已在目标写入开始前准备完成。</para>
+        /// </summary>
+        Prepared,
+
+        /// <summary>
+        ///     <para xml:lang="en">The destination may have changed, but its local content could not be verified.</para>
+        ///     <para xml:lang="zh-CN">目标可能已经改变，但无法验证其本地内容。</para>
+        /// </summary>
+        LocalUnverified,
+
+        /// <summary>
+        ///     <para xml:lang="en">The new local content was verified, but remaining verification was not finalized.</para>
+        ///     <para xml:lang="zh-CN">新的本地内容已经验证，但其余验证尚未完成。</para>
+        /// </summary>
+        LocalVerified,
+
+        /// <summary>
+        ///     <para xml:lang="en">At least one post-write verification step remained incomplete.</para>
+        ///     <para xml:lang="zh-CN">至少有一项写入后验证未完成。</para>
+        /// </summary>
+        VerificationIncomplete,
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">Describes one validated local recovery journal without exposing its saved document.</para>
+    ///     <para xml:lang="zh-CN">描述一个已验证的本地恢复日志，但不公开其中保存的文档。</para>
+    /// </summary>
+    public sealed record RawProgressRecoveryRecord
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Gets the transaction that created the journal.</para>
+        ///     <para xml:lang="zh-CN">获取创建该日志的事务。</para>
+        /// </summary>
+        public required Guid TransactionId { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the profile ID recorded before the original commit.</para>
+        ///     <para xml:lang="zh-CN">获取原始提交前记录的档案 ID。</para>
+        /// </summary>
+        public required int ProfileId { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets whether the journal belongs to the modded save namespace.</para>
+        ///     <para xml:lang="zh-CN">获取该日志是否属于模组存档命名空间。</para>
+        /// </summary>
+        public required bool IsModded { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the stable unique ID of the progress document.</para>
+        ///     <para xml:lang="zh-CN">获取进度文档的稳定唯一 ID。</para>
+        /// </summary>
+        public required string ProgressUniqueId { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the journal's last durable stage.</para>
+        ///     <para xml:lang="zh-CN">获取日志最后持久记录的阶段。</para>
+        /// </summary>
+        public required RawProgressRecoveryStage Stage { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the lowercase SHA-256 hash of the recoverable original document.</para>
+        ///     <para xml:lang="zh-CN">获取可恢复原始文档的小写 SHA-256 哈希。</para>
+        /// </summary>
+        public required string OriginalSha256 { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the lowercase SHA-256 hash proposed by the original commit.</para>
+        ///     <para xml:lang="zh-CN">获取原始提交所提议内容的小写 SHA-256 哈希。</para>
+        /// </summary>
+        public required string ProposedSha256 { get; init; }
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">Reports whether retained recovery journals were enumerated completely.</para>
+    ///     <para xml:lang="zh-CN">报告是否完整枚举了保留的恢复日志。</para>
+    /// </summary>
+    public enum RawProgressRecoveryReadOutcome
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Every retained journal was read and validated.</para>
+        ///     <para xml:lang="zh-CN">所有保留日志均已读取并验证。</para>
+        /// </summary>
+        Succeeded,
+
+        /// <summary>
+        ///     <para xml:lang="en">Valid journals are returned, but one or more malformed entries were ignored.</para>
+        ///     <para xml:lang="zh-CN">返回有效日志，但忽略了一个或多个格式错误的条目。</para>
+        /// </summary>
+        InvalidEntriesIgnored,
+
+        /// <summary>
+        ///     <para xml:lang="en">The local recovery directory could not be inspected.</para>
+        ///     <para xml:lang="zh-CN">无法检查本地恢复目录。</para>
+        /// </summary>
+        StorageUnavailable,
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">Contains a snapshot of validated retained recovery journals.</para>
+    ///     <para xml:lang="zh-CN">包含已验证保留恢复日志的快照。</para>
+    /// </summary>
+    public sealed record RawProgressRecoveryReadResult
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Gets the enumeration outcome.</para>
+        ///     <para xml:lang="zh-CN">获取枚举结果。</para>
+        /// </summary>
+        public required RawProgressRecoveryReadOutcome Outcome { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets validated journals ordered by transaction ID.</para>
+        ///     <para xml:lang="zh-CN">获取按事务 ID 排序的已验证日志。</para>
+        /// </summary>
+        public required IReadOnlyList<RawProgressRecoveryRecord> Records { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the number of journal files ignored because validation failed.</para>
+        ///     <para xml:lang="zh-CN">获取因验证失败而被忽略的日志文件数量。</para>
+        /// </summary>
+        public required int InvalidEntryCount { get; init; }
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">Requests conditional restoration of the original document retained by one journal.</para>
+    ///     <para xml:lang="zh-CN">请求有条件地恢复一个日志中保留的原始文档。</para>
+    /// </summary>
+    public sealed record RawProgressRecoveryRequest
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Gets the transaction ID of the retained journal.</para>
+        ///     <para xml:lang="zh-CN">获取保留日志的事务 ID。</para>
+        /// </summary>
+        public required Guid TransactionId { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the current destination generation that must still match before restoration. Capture a fresh
+        ///         snapshot after receiving a recovery-required result; do not reuse the generation from the original commit.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取恢复前必须仍然匹配的当前目标代次。收到需要恢复的结果后应重新捕获快照，不要复用原始提交中的代次。
+        ///     </para>
+        /// </summary>
+        public required ProgressGeneration ExpectedGeneration { get; init; }
+    }
+
+    /// <summary>
     ///     <para xml:lang="en">
-    ///         Provides fail-closed capture and conditional commit operations for the active progress document.
+    ///         Provides fail-closed capture, conditional commit, and bounded recovery operations for the active progress
+    ///         document.
     ///     </para>
-    ///     <para xml:lang="zh-CN">为活动进度文档提供保守失败的捕获与条件提交操作。</para>
+    ///     <para xml:lang="zh-CN">为活动进度文档提供保守失败的捕获、条件提交与有界恢复操作。</para>
     /// </summary>
     public interface IRawProgressCommitBridge
     {
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Enumerates validated local recovery journals without exposing or changing their saved documents. Invalid
+        ///         entries are counted and ignored rather than returned as trusted recovery data.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         枚举已验证的本地恢复日志，但不公开或改变其中保存的文档。无效条目会被计数并忽略，不会作为可信恢复数据返回。
+        ///     </para>
+        /// </summary>
+        /// <param name="cancellationToken">
+        ///     <para xml:lang="en">Cancellation observed before enumeration completes.</para>
+        ///     <para xml:lang="zh-CN">在枚举完成前接受的取消信号。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The recovery-journal snapshot and its validation outcome.</para>
+        ///     <para xml:lang="zh-CN">恢复日志快照及其验证结果。</para>
+        /// </returns>
+        /// <exception cref="OperationCanceledException">
+        ///     <para xml:lang="en">The operation was cancelled before enumeration completed.</para>
+        ///     <para xml:lang="zh-CN">操作在枚举完成前被取消。</para>
+        /// </exception>
+        ValueTask<RawProgressRecoveryReadResult> GetPendingRecoveriesAsync(
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Restores a journal's validated original document only when the active profile and freshly captured
+        ///         destination generation still match. The same local, cloud, live-state, and preservation verification used
+        ///         by a normal raw commit applies. The journal is removed only after a fully verified restoration.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         仅当活动档案与新近捕获的目标代次仍然匹配时，恢复日志中已验证的原始文档。恢复会执行与普通原始提交相同的本地、云端、内存状态和保留机制验证，且仅在恢复得到完整验证后删除日志。
+        ///     </para>
+        /// </summary>
+        /// <param name="request">
+        ///     <para xml:lang="en">The journal identity and current destination generation.</para>
+        ///     <para xml:lang="zh-CN">日志身份与当前目标代次。</para>
+        /// </param>
+        /// <param name="cancellationToken">
+        ///     <para xml:lang="en">Cancellation observed only before destination mutation begins.</para>
+        ///     <para xml:lang="zh-CN">仅在目标修改开始前接受的取消信号。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         Structured verification evidence. <see cref="RawProgressCommitOutcome.CommittedVerified" /> means the
+        ///         original document was restored and the journal was removed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         结构化验证证据。<see cref="RawProgressCommitOutcome.CommittedVerified" /> 表示原始文档已恢复且日志已删除。
+        ///     </para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="request" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="request" /> 为 <see langword="null" />。</para>
+        /// </exception>
+        ValueTask<RawProgressCommitResult> RestoreRecoveryAsync(
+            RawProgressRecoveryRequest request,
+            CancellationToken cancellationToken = default);
+
         /// <summary>
         ///     <para xml:lang="en">Returns immutable provider capability metadata without reading or changing a profile.</para>
         ///     <para xml:lang="zh-CN">返回不可变的提供方能力元数据，不读取或改变任何档案。</para>
