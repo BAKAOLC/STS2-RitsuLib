@@ -105,9 +105,6 @@ namespace STS2RitsuLib.Platform.Steam
                     WorkshopUpdateProgressToast? progressToast = null;
                     try
                     {
-                        if (source == CheckSource.Manual)
-                            ClearAutoDownloadNotification();
-
                         RitsuLibFramework.Logger.Info(
                             $"[SteamWorkshopUpdate] Starting {source} check. SteamInitialized={SteamInitializer.Initialized}.");
                         if (ShouldShowProgressToast(source, deferToastToMainMenu))
@@ -138,6 +135,21 @@ namespace STS2RitsuLib.Platform.Steam
                             $"Triggered={result.TriggeredCount}, AlreadyQueued={result.AlreadyQueuedCount}, " +
                             $"Failed={result.FailedCount}, Error={result.ErrorMessage ?? "<none>"}.");
                         LogCheckSummary(source, result);
+                        if (source == CheckSource.Manual &&
+                            result is { Available: true, NeedsUpdateCount: 0 } &&
+                            TakeFinishedAutoDownloadNotification() is { } completedAutoUpdate)
+                        {
+                            RitsuLibFramework.Logger.Info(
+                                "[SteamWorkshopUpdate] Manual check found no missing downloads, but automatic Workshop updates completed during this session; reporting that a restart is required.");
+                            CompleteOrShowResult(
+                                completedAutoUpdate.Result,
+                                source,
+                                deferToastToMainMenu,
+                                progressToast,
+                                true);
+                            return;
+                        }
+
                         if (source == CheckSource.Auto && result.MonitorItems is { Count: > 0 })
                         {
                             StartAutoDownloadNotification(result, deferToastToMainMenu);
@@ -537,11 +549,15 @@ namespace STS2RitsuLib.Platform.Steam
             }
         }
 
-        private static void ClearAutoDownloadNotification()
+        private static AutoDownloadNotification? TakeFinishedAutoDownloadNotification()
         {
             lock (AutoDownloadNotificationSyncRoot)
             {
+                if (_autoDownloadNotification is not { DownloadFinished: true } notification)
+                    return null;
+
                 _autoDownloadNotification = null;
+                return notification;
             }
         }
 
