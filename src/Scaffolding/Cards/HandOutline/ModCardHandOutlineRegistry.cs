@@ -202,9 +202,10 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandOutline
                     "Cannot register card hand outline rules after content registration has been frozen. " +
                     "Register from your mod initializer before ModelDb initializes.");
 
-            if (!typeof(CardModel).IsAssignableFrom(cardType))
+            if (cardType.IsInterface || cardType.ContainsGenericParameters ||
+                !typeof(CardModel).IsAssignableFrom(cardType))
                 throw new ArgumentException(
-                    $"Type '{cardType.FullName}' must be a subtype of {typeof(CardModel).FullName}.",
+                    $"Type '{cardType.FullName}' must be a closed subtype of {typeof(CardModel).FullName}.",
                     nameof(cardType));
         }
 

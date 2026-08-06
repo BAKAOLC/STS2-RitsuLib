@@ -28,9 +28,8 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterTrashHeapCard(Type cardType)
         {
-            ArgumentNullException.ThrowIfNull(cardType);
-            EnsureMutable($"register Trash Heap card '{cardType.Name}'");
             EnsureModelType(cardType, typeof(CardModel), nameof(cardType));
+            EnsureMutable($"register Trash Heap card '{cardType.Name}'");
 
             if (!TrashHeapContentRegistry.RegisterCard(cardType, ModId))
             {
@@ -67,9 +66,8 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterTrashHeapRelic(Type relicType)
         {
-            ArgumentNullException.ThrowIfNull(relicType);
-            EnsureMutable($"register Trash Heap relic '{relicType.Name}'");
             EnsureModelType(relicType, typeof(RelicModel), nameof(relicType));
+            EnsureMutable($"register Trash Heap relic '{relicType.Name}'");
 
             if (!TrashHeapContentRegistry.RegisterRelic(relicType, ModId))
             {

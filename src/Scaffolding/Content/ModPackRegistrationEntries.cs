@@ -18,23 +18,11 @@ namespace STS2RitsuLib.Scaffolding.Content
         internal static void ApplyExplicitTypes(Type epochType, ModContentPackContext context,
             IReadOnlyList<Type> cardTypes, IReadOnlyList<Type> relicTypes)
         {
-            var cards = cardTypes ?? [];
-            var relics = relicTypes ?? [];
+            var cards = SnapshotConcreteModelTypes<CardModel>(cardTypes ?? [], nameof(cardTypes));
+            var relics = SnapshotConcreteModelTypes<RelicModel>(relicTypes ?? [], nameof(relicTypes));
             if (cards.Count == 0 && relics.Count == 0)
                 throw new ArgumentException(
                     $"Epoch gated content for '{epochType.Name}' needs at least one card or relic type.");
-
-            foreach (var type in cards)
-                if (type == null || !typeof(CardModel).IsAssignableFrom(type))
-                    throw new ArgumentException(
-                        $"Type '{type?.Name ?? "<null>"}' must derive from CardModel.",
-                        nameof(cardTypes));
-
-            foreach (var type in relics)
-                if (type == null || !typeof(RelicModel).IsAssignableFrom(type))
-                    throw new ArgumentException(
-                        $"Type '{type?.Name ?? "<null>"}' must derive from RelicModel.",
-                        nameof(relicTypes));
 
             var epochId = ModTimelineRegistry.GetEpochId(epochType);
             ModEpochGatedContentRegistry.Register(context.ModId, epochId, cards, relics);
@@ -142,21 +130,35 @@ namespace STS2RitsuLib.Scaffolding.Content
         internal static void ApplyExplicitPotions(Type epochType, ModContentPackContext context,
             IReadOnlyList<Type> types)
         {
-            ArgumentNullException.ThrowIfNull(types);
-            if (types.Count == 0)
+            var potions = SnapshotConcreteModelTypes<PotionModel>(types, nameof(types));
+            if (potions.Count == 0)
                 throw new ArgumentException(
                     $"Epoch potion gating for '{epochType.Name}' needs at least one potion type.");
 
             var epochId = ModTimelineRegistry.GetEpochId(epochType);
-            foreach (var t in types)
-            {
-                if (t == null || !typeof(PotionModel).IsAssignableFrom(t))
-                    throw new ArgumentException(
-                        $"Type '{t?.Name ?? "<null>"}' must derive from PotionModel.",
-                        nameof(types));
-
+            foreach (var t in potions)
                 context.Unlocks.RequireEpoch(t, epochId);
+        }
+
+        private static IReadOnlyList<Type> SnapshotConcreteModelTypes<TModel>(
+            IReadOnlyList<Type> types,
+            string paramName)
+            where TModel : AbstractModel
+        {
+            ArgumentNullException.ThrowIfNull(types, paramName);
+
+            var snapshot = types.ToArray();
+            foreach (var type in snapshot)
+            {
+                if (type == null || type.IsAbstract || type.IsInterface || type.ContainsGenericParameters ||
+                    !typeof(TModel).IsAssignableFrom(type))
+                    throw new ArgumentException(
+                        $"Type '{type?.FullName ?? "<null>"}' must be a closed concrete " +
+                        $"{typeof(TModel).Name} subtype.",
+                        paramName);
             }
+
+            return Array.AsReadOnly(snapshot);
         }
     }
 

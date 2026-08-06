@@ -423,7 +423,13 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterCard(Type poolType, Type cardType, ModelPublicEntryOptions publicEntry)
         {
-            RegisterPoolModel(poolType, cardType, "card", publicEntry);
+            RegisterPoolModel(
+                poolType,
+                cardType,
+                typeof(CardPoolModel),
+                typeof(CardModel),
+                "card",
+                publicEntry);
         }
 
         /// <summary>
@@ -481,7 +487,13 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterRelic(Type poolType, Type relicType, ModelPublicEntryOptions publicEntry)
         {
-            RegisterPoolModel(poolType, relicType, "relic", publicEntry);
+            RegisterPoolModel(
+                poolType,
+                relicType,
+                typeof(RelicPoolModel),
+                typeof(RelicModel),
+                "relic",
+                publicEntry);
         }
 
         /// <summary>
@@ -539,7 +551,13 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterPotion(Type poolType, Type potionType, ModelPublicEntryOptions publicEntry)
         {
-            RegisterPoolModel(poolType, potionType, "potion", publicEntry);
+            RegisterPoolModel(
+                poolType,
+                potionType,
+                typeof(PotionPoolModel),
+                typeof(PotionModel),
+                "potion",
+                publicEntry);
         }
 
         /// <summary>
@@ -863,8 +881,8 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterModelCapability(Type capabilityType, ModelPublicEntryOptions publicEntry)
         {
-            EnsureMutable($"register model capability '{capabilityType.Name}'");
             EnsureModelType(capabilityType, typeof(ModelCapability), nameof(capabilityType));
+            EnsureMutable($"register model capability '{capabilityType.Name}'");
             ModelCapabilities.EnsureInitialized();
             PrimeOwnedType(capabilityType);
             ApplyFixedPublicEntryForModel(capabilityType, publicEntry);
@@ -897,8 +915,10 @@ namespace STS2RitsuLib.Content
             Action<AbstractModel, ModelCapabilityList> modifier,
             int order = 0)
         {
-            EnsureMutable($"configure default model capabilities '{modelType.Name}/{modifierId}'");
             EnsureModelFamilyType(modelType, nameof(modelType));
+            ArgumentException.ThrowIfNullOrWhiteSpace(modifierId);
+            ArgumentNullException.ThrowIfNull(modifier);
+            EnsureMutable($"configure default model capabilities '{modelType.Name}/{modifierId}'");
             ModelCapabilities.EnsureInitialized();
             ModelCapabilityDefaults.Modify(ModId, modifierId, modelType, modifier, order);
             _logger.Info($"[Content] Registered default model capability modifier: {modelType.Name}/{modifierId}");
@@ -914,6 +934,8 @@ namespace STS2RitsuLib.Content
             int order = 0)
             where TModel : AbstractModel
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(modifierId);
+            ArgumentNullException.ThrowIfNull(modifier);
             EnsureMutable($"configure default model capabilities '{typeof(TModel).Name}/{modifierId}'");
             ModelCapabilities.EnsureInitialized();
             ModelCapabilityDefaults.Modify(ModId, modifierId, modifier, order);
@@ -1033,8 +1055,8 @@ namespace STS2RitsuLib.Content
         /// </summary>
         public void RegisterBadge(Type badgeType)
         {
-            EnsureMutable($"register badge '{badgeType.Name}'");
             EnsureBadgeType(badgeType, nameof(badgeType));
+            EnsureMutable($"register badge '{badgeType.Name}'");
             PrimeOwnedType(badgeType);
 
             lock (SyncRoot)
@@ -1158,7 +1180,6 @@ namespace STS2RitsuLib.Content
         {
             ArgumentNullException.ThrowIfNull(modifierTypes);
 
-            EnsureMutable("register mutually exclusive modifier group");
             if (modifierTypes.Count < 2)
                 throw new ArgumentException(
                     "At least two modifier types are required for a mutually exclusive group.",
@@ -1176,6 +1197,7 @@ namespace STS2RitsuLib.Content
                     "At least two distinct modifier types are required for a mutually exclusive group.",
                     nameof(modifierTypes));
 
+            EnsureMutable("register mutually exclusive modifier group");
             foreach (var modifierType in members)
             {
                 PrimeOwnedType(modifierType);
@@ -1875,12 +1897,17 @@ namespace STS2RitsuLib.Content
                 ModelDb.Inject(type);
         }
 
-        private void RegisterPoolModel(Type poolType, Type modelType, string contentKind,
+        private void RegisterPoolModel(
+            Type poolType,
+            Type modelType,
+            Type expectedPoolBaseType,
+            Type expectedModelBaseType,
+            string contentKind,
             ModelPublicEntryOptions publicEntry = default)
         {
+            EnsureModelType(poolType, expectedPoolBaseType, nameof(poolType));
+            EnsureModelType(modelType, expectedModelBaseType, nameof(modelType));
             EnsureMutable($"register {contentKind} '{modelType.Name}' into pool '{poolType.Name}'");
-            EnsureModelType(poolType, typeof(AbstractModel), nameof(poolType));
-            EnsureModelType(modelType, typeof(AbstractModel), nameof(modelType));
             PrimeOwnedType(modelType);
             ApplyFixedPublicEntryForModel(modelType, publicEntry);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(poolType);
@@ -1909,10 +1936,10 @@ namespace STS2RitsuLib.Content
             if (count <= 0)
                 throw new ArgumentOutOfRangeException(nameof(count), count, "Starter content count must be positive.");
 
-            EnsureMutable(
-                $"register starter {kind.ToString().ToLowerInvariant()} '{modelType.Name}' for '{characterType.Name}'");
             EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             EnsureModelType(modelType, expectedModelBaseType, nameof(modelType));
+            EnsureMutable(
+                $"register starter {kind.ToString().ToLowerInvariant()} '{modelType.Name}' for '{characterType.Name}'");
             RegistrationConflictDetector.ThrowIfModelIdConflicts(characterType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
             var modelLabel = FormatModelForLog(modelType);
@@ -1932,8 +1959,8 @@ namespace STS2RitsuLib.Content
             Type expectedBaseType,
             string contentKind)
         {
-            EnsureMutable($"register {contentKind} '{modelType.Name}'");
             EnsureModelType(modelType, expectedBaseType, nameof(modelType));
+            EnsureMutable($"register {contentKind} '{modelType.Name}'");
             PrimeOwnedType(modelType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
             var modelLabel = FormatModelForLog(modelType);
@@ -1958,8 +1985,8 @@ namespace STS2RitsuLib.Content
             int modifierListSortOrder,
             string contentKind)
         {
-            EnsureMutable($"register {contentKind} '{modifierType.Name}'");
             EnsureModelType(modifierType, typeof(ModifierModel), nameof(modifierType));
+            EnsureMutable($"register {contentKind} '{modifierType.Name}'");
             PrimeOwnedType(modifierType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modifierType);
             var modifierLabel = FormatModelForLog(modifierType);
@@ -1987,9 +2014,9 @@ namespace STS2RitsuLib.Content
             Type expectedModelBaseType,
             string contentKind)
         {
-            EnsureMutable($"register {contentKind} '{modelType.Name}' for '{scopeType.Name}'");
             EnsureModelType(scopeType, expectedScopeType, nameof(scopeType));
             EnsureModelType(modelType, expectedModelBaseType, nameof(modelType));
+            EnsureMutable($"register {contentKind} '{modelType.Name}' for '{scopeType.Name}'");
             PrimeOwnedType(modelType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(scopeType);
             RegistrationConflictDetector.ThrowIfModelIdConflicts(modelType);
@@ -2028,27 +2055,36 @@ namespace STS2RitsuLib.Content
 
         private static void EnsureModelType(Type type, Type expectedBaseType, string paramName)
         {
-            if (type.IsAbstract || type.IsInterface || !expectedBaseType.IsAssignableFrom(type))
+            ArgumentNullException.ThrowIfNull(type, paramName);
+            ArgumentNullException.ThrowIfNull(expectedBaseType);
+
+            if (type.IsAbstract || type.IsInterface || type.ContainsGenericParameters ||
+                !expectedBaseType.IsAssignableFrom(type))
                 throw new ArgumentException(
-                    $"Type '{type.FullName}' must be a concrete subtype of '{expectedBaseType.FullName}'.",
+                    $"Type '{type.FullName}' must be a closed concrete subtype of '{expectedBaseType.FullName}'.",
                     paramName
                 );
         }
 
         private static void EnsureModelFamilyType(Type type, string paramName)
         {
+            ArgumentNullException.ThrowIfNull(type, paramName);
+
             if (type.IsInterface || type.ContainsGenericParameters || !typeof(AbstractModel).IsAssignableFrom(type))
                 throw new ArgumentException(
-                    $"Type '{type.FullName}' must be an abstract model type or a concrete model type.",
+                    $"Type '{type.FullName}' must be a closed abstract or concrete model type.",
                     paramName
                 );
         }
 
         private static void EnsureBadgeType(Type type, string paramName)
         {
-            if (type.IsAbstract || type.IsInterface || !typeof(ModBadgeTemplate).IsAssignableFrom(type))
+            ArgumentNullException.ThrowIfNull(type, paramName);
+
+            if (type.IsAbstract || type.IsInterface || type.ContainsGenericParameters ||
+                !typeof(ModBadgeTemplate).IsAssignableFrom(type))
                 throw new ArgumentException(
-                    $"Type '{type.FullName}' must be a concrete subtype of '{typeof(ModBadgeTemplate).FullName}'.",
+                    $"Type '{type.FullName}' must be a closed concrete subtype of '{typeof(ModBadgeTemplate).FullName}'.",
                     paramName
                 );
         }

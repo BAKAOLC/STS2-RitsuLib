@@ -7,6 +7,7 @@ using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
 using STS2RitsuLib.Combat.HealthBars;
 using STS2RitsuLib.Content;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Localization.SmartFormat;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
@@ -1852,6 +1853,8 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     <para xml:lang="zh-CN">
         ///         安排所有队列中的注册步骤在框架发现窗口执行，并返回已创建的上下文。
         ///     </para>
+        ///     <para xml:lang="en">A failed step is reported and skipped without preventing later steps from running.</para>
+        ///     <para xml:lang="zh-CN">失败的步骤会被报告并跳过，不会阻止后续步骤继续执行。</para>
         /// </summary>
         public ModContentPackContext Apply()
         {
@@ -1861,11 +1864,29 @@ namespace STS2RitsuLib.Scaffolding.Content
                 _modId,
                 ctx =>
                 {
-                    foreach (var step in steps)
-                        step(ctx);
+                    var logger = RitsuLibFramework.CreateLogger(_modId);
+                    var succeeded = 0;
+                    var failed = 0;
+                    for (var i = 0; i < steps.Length; i++)
+                    {
+                        try
+                        {
+                            steps[i](ctx);
+                            succeeded++;
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            var description = $"deferred content pack step {i + 1} of {steps.Length}";
+                            RegistrationFreezeDiagnostics.RecordFailure("ContentPack", _modId, description, ex);
+                            logger.ErrorNoTrace(
+                                $"[ContentPack] Failed {description} for mod '{_modId}': " +
+                                $"{ex.GetType().Name}: {ex.Message}");
+                        }
+                    }
 
-                    RitsuLibFramework.CreateLogger(_modId)
-                        .Info($"[ContentPack] Applied {steps.Length} deferred registration step(s).");
+                    logger.Info(
+                        $"[ContentPack] Applied {succeeded} deferred registration step(s); {failed} failed.");
                 },
                 $"{_modId}:{steps.Length} step(s)");
             return context;

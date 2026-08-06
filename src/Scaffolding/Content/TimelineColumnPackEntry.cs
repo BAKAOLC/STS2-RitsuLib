@@ -1,5 +1,6 @@
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Unlocks.Patches;
@@ -56,8 +57,27 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         internal void Run()
         {
-            foreach (var step in _steps)
-                step();
+            var logger = RitsuLibFramework.CreateLogger(_context.ModId);
+            for (var i = 0; i < _steps.Count; i++)
+            {
+                try
+                {
+                    _steps[i]();
+                }
+                catch (Exception ex)
+                {
+                    var description =
+                        $"timeline column '{typeof(TStory).FullName}' step {i + 1} of {_steps.Count}";
+                    RegistrationFreezeDiagnostics.RecordFailure(
+                        "ContentPack",
+                        _context.ModId,
+                        description,
+                        ex);
+                    logger.ErrorNoTrace(
+                        $"[ContentPack] Failed {description} for mod '{_context.ModId}': " +
+                        $"{ex.GetType().Name}: {ex.Message}");
+                }
+            }
         }
 
         /// <summary>

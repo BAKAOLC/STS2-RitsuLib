@@ -182,9 +182,11 @@ namespace STS2RitsuLib.Timeline
             var seen = new HashSet<Type>();
             foreach (var type in snapshot)
             {
-                if (type == null || type.IsAbstract || !typeof(TModel).IsAssignableFrom(type))
+                if (type == null || type.IsAbstract || type.IsInterface || type.ContainsGenericParameters ||
+                    !typeof(TModel).IsAssignableFrom(type))
                     throw new ArgumentException(
-                        $"Type '{type?.FullName ?? "<null>"}' must be a concrete {typeof(TModel).Name} subtype.",
+                        $"Type '{type?.FullName ?? "<null>"}' must be a closed concrete " +
+                        $"{typeof(TModel).Name} subtype.",
                         paramName);
                 if (!seen.Add(type))
                     throw new ArgumentException(

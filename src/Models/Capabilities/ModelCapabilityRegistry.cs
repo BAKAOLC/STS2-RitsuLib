@@ -30,8 +30,11 @@ namespace STS2RitsuLib.Models.Capabilities
             ArgumentNullException.ThrowIfNull(capabilityType);
             ArgumentNullException.ThrowIfNull(factory);
 
-            if (!typeof(IModelCapability).IsAssignableFrom(capabilityType))
-                throw new ArgumentException("Capability type must implement IModelCapability.", nameof(capabilityType));
+            if (capabilityType.ContainsGenericParameters ||
+                !typeof(IModelCapability).IsAssignableFrom(capabilityType))
+                throw new ArgumentException(
+                    "Capability type must be closed and implement IModelCapability.",
+                    nameof(capabilityType));
 
             lock (SyncRoot)
             {

@@ -230,9 +230,10 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(localId);
             ArgumentNullException.ThrowIfNull(characterType);
-            if (!typeof(CharacterModel).IsAssignableFrom(characterType))
+            if (characterType.IsInterface || characterType.ContainsGenericParameters ||
+                !typeof(CharacterModel).IsAssignableFrom(characterType))
                 throw new ArgumentException(
-                    $"Type '{characterType.FullName}' is not a character model.",
+                    $"Type '{characterType.FullName}' must be a closed character model subtype.",
                     nameof(characterType));
 
             RegisterCombatUiAlwaysVisibleWhen(

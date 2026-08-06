@@ -76,9 +76,8 @@ namespace STS2RitsuLib.Timeline
         /// </summary>
         public void RegisterEpoch(Type epochType)
         {
-            ArgumentNullException.ThrowIfNull(epochType);
-            EnsureMutable($"register epoch '{epochType.Name}'");
             EnsureSubtype(epochType, typeof(EpochModel), nameof(epochType));
+            EnsureMutable($"register epoch '{epochType.Name}'");
 
             var epochId = GetEpochId(epochType);
 
@@ -144,9 +143,8 @@ namespace STS2RitsuLib.Timeline
         /// </summary>
         public void RegisterStory(Type storyType)
         {
-            ArgumentNullException.ThrowIfNull(storyType);
-            EnsureMutable($"register story '{storyType.Name}'");
             EnsureSubtype(storyType, typeof(StoryModel), nameof(storyType));
+            EnsureMutable($"register story '{storyType.Name}'");
 
             var storyId = GetStoryId(storyType);
 
@@ -199,11 +197,9 @@ namespace STS2RitsuLib.Timeline
         /// </summary>
         public void RegisterStoryEpoch(Type storyType, Type epochType)
         {
-            ArgumentNullException.ThrowIfNull(storyType);
-            ArgumentNullException.ThrowIfNull(epochType);
-            EnsureMutable($"register story-epoch binding '{storyType.Name}' ← '{epochType.Name}'");
             EnsureSubtype(storyType, typeof(StoryModel), nameof(storyType));
             EnsureSubtype(epochType, typeof(EpochModel), nameof(epochType));
+            EnsureMutable($"register story-epoch binding '{storyType.Name}' ← '{epochType.Name}'");
 
             RegisterEpoch(epochType);
             ModStoryEpochBindings.Append(storyType, epochType);
@@ -277,9 +273,14 @@ namespace STS2RitsuLib.Timeline
         private static void EnsureSubtype(Type type, Type expectedBaseType, string paramName)
         {
             ArgumentNullException.ThrowIfNull(type, paramName);
-            if (type.IsAbstract || type.IsInterface || !expectedBaseType.IsAssignableFrom(type))
+            ArgumentNullException.ThrowIfNull(expectedBaseType);
+
+            if (type.IsAbstract || type.IsInterface || type.ContainsGenericParameters ||
+                type.GetConstructor(Type.EmptyTypes) == null ||
+                !expectedBaseType.IsAssignableFrom(type))
                 throw new ArgumentException(
-                    $"Type '{type.FullName}' must be a concrete subtype of '{expectedBaseType.FullName}'.",
+                    $"Type '{type.FullName}' must be a closed concrete subtype of '{expectedBaseType.FullName}' " +
+                    "with a public parameterless constructor.",
                     paramName);
         }
 
