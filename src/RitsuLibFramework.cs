@@ -434,6 +434,8 @@ namespace STS2RitsuLib
                     () => HarmonyPatchAllTypeLoadGuard.Install(message => Logger.Warn(message)));
                 RitsuLibStartupAudit.Measure("harmonyInitSetterCompat", HarmonyInitSetterCompat.Install);
                 RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
+                RitsuLibStartupAudit.Measure("legacyGeneratedDataCleanup",
+                    RitsuLibLegacyGeneratedDataCleanup.RunOnce);
                 RitsuLibStartupAudit.Measure("searchExpansion", RitsuSearchService.Initialize);
                 RitsuLibStartupAudit.Measure("debugLogViewer",
                     () => RitsuDebugLogPipeline.Initialize(RitsuLibSettingsStore.GetDebugLogViewerOptions()));
