@@ -33,6 +33,7 @@ namespace STS2RitsuLib.Saves.RawProgress
         private static readonly UTF8Encoding StrictUtf8 = new(false, true);
         private static readonly Dictionary<RecoveryTransactionKey, CompletedTransaction> CompletedTransactions = [];
         private static readonly Queue<RecoveryTransactionKey> CompletedTransactionOrder = [];
+        private static int _observedRuntimeSchema;
 
         private static readonly JsonSerializerOptions JournalJsonOptions = new()
         {
@@ -78,13 +79,15 @@ namespace STS2RitsuLib.Saves.RawProgress
 
         public RawProgressBridgeDescriptor Describe()
         {
-            var supportedSchema = GetSupportedSchema(SaveManager.Instance);
+            var supportedSchema = Volatile.Read(ref _observedRuntimeSchema);
             return new()
             {
                 ProviderId = Const.ModId,
                 ProviderVersion = Version.Parse(Const.Version),
                 ProtocolVersion = ProtocolVersion,
-                SupportedSchemas = new[] { supportedSchema }.ToFrozenSet(),
+                SupportedSchemas = supportedSchema > 0
+                    ? new[] { supportedSchema }.ToFrozenSet()
+                    : FrozenSet<int>.Empty,
                 Features = _features,
                 MaxDocumentUtf8Bytes = MaxDocumentUtf8Bytes,
                 MaxRetainedRecoveryJournals = MaxRetainedRecoveryJournals,
@@ -166,7 +169,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                 {
                     var progress = manager.Progress;
                     var serializable = progress.ToSerializable();
-                    serializable.SchemaVersion = MigrationManager(manager).GetLatestVersion<SerializableProgress>();
+                    serializable.SchemaVersion = GetSupportedSchema(manager);
                     var knownJson = JsonSerializationUtility.ToJson(serializable);
                     var content = RawProgressJsonPreservation.PreserveAndAdvance(progress, knownJson);
                     SaveStore(manager).WriteFile(
@@ -209,7 +212,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                 if (capture == null || result is not { Success: true, SaveData: not null })
                     return;
 
-                var supportedSchema = MigrationManager(manager).GetLatestVersion<SerializableProgress>();
+                var supportedSchema = GetSupportedSchema(manager);
                 if (!TryReadSchema(capture.RawJson, out var rawSchema) || rawSchema != supportedSchema)
                     return;
 
@@ -1007,7 +1010,20 @@ namespace STS2RitsuLib.Saves.RawProgress
 
         private static int GetSupportedSchema(SaveManager saveManager)
         {
-            return saveManager.GetLatestSchemaVersion<SerializableProgress>();
+            return ObserveSupportedSchema(saveManager.GetLatestSchemaVersion<SerializableProgress>());
+        }
+
+        private static int GetSupportedSchema(ProgressSaveManager saveManager)
+        {
+            return ObserveSupportedSchema(MigrationManager(saveManager).GetLatestVersion<SerializableProgress>());
+        }
+
+        private static int ObserveSupportedSchema(int supportedSchema)
+        {
+            if (supportedSchema > 0)
+                Volatile.Write(ref _observedRuntimeSchema, supportedSchema);
+
+            return supportedSchema;
         }
 
         private static bool TryGetSupportedSchema(out int supportedSchema)

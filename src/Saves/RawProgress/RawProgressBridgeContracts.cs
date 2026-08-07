@@ -151,11 +151,12 @@
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets the progress schemas currently accepted by the active game's migration manager. Callers should use
-        ///         the schema returned by the snapshot they intend to replace.
+        ///         Gets the progress schemas currently available for raw-progress operations. The set is empty when no game
+        ///         runtime schema is available. Callers should use the schema returned by the snapshot they intend to replace.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取当前游戏迁移管理器所接受的进度 schema。调用方应使用待替换快照所返回的 schema。
+        ///         获取当前可用于原始进度操作的进度 schema。游戏运行时 schema 不可用时，该集合为空。调用方应使用待替换快照
+        ///         所返回的 schema。
         ///     </para>
         /// </summary>
         public required IReadOnlySet<int> SupportedSchemas { get; init; }
@@ -1033,8 +1034,14 @@
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        ///     <para xml:lang="en">Returns immutable provider capability metadata without reading or changing a profile.</para>
-        ///     <para xml:lang="zh-CN">返回不可变的提供方能力元数据，不读取或改变任何档案。</para>
+        ///     <para xml:lang="en">
+        ///         Returns immutable point-in-time provider metadata without requiring an initialized game runtime or reading
+        ///         or changing a profile. Schema availability may change between calls.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         返回不可变的时点提供方元数据，无需游戏运行时完成初始化，也不会读取或改变任何档案。schema 可用性可能在
+        ///         多次调用之间变化。
+        ///     </para>
         /// </summary>
         /// <returns>
         ///     <para xml:lang="en">The provider descriptor.</para>
