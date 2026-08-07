@@ -17,6 +17,7 @@ namespace STS2RitsuLib.Settings
         private ModSettingsSection? _sectionBuildSection;
 
         internal object? PageEnableGate => pageEnableGate;
+        internal Node ModalHost => submenu;
 
         public void MarkDirty(IModSettingsBinding binding)
         {

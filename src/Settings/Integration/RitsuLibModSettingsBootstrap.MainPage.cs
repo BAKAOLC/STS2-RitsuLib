@@ -37,6 +37,13 @@ namespace STS2RitsuLib.Settings
                 T("ritsulib.category.core.description",
                     "Interface theme and main menu shortcut."));
             section.AddSubpage(
+                "category_search_extensions_open",
+                T("ritsulib.page.searchExtensions.title", "Search and transliteration"),
+                "search-expansions",
+                T("button.open", "Open"),
+                T("ritsulib.page.searchExtensions.description",
+                    "Manage optional local-search expansions and their downloaded language data."));
+            section.AddSubpage(
                 "category_content_source_open",
                 T("ritsulib.modSourceHoverTips.pageLink.label", "Content source display"),
                 "content-source-hover-tips",

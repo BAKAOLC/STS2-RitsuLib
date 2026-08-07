@@ -2,6 +2,8 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Graphics;
 using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Search;
+using STS2RitsuLib.Search.Pinyin;
 using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
@@ -67,6 +69,9 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<double> UpdateCheckIntervalMinutes { get; private init; } = null!;
         public IModSettingsValueBinding<bool> UpdateCheckSkipInCombat { get; private init; } = null!;
         public IModSettingsValueBinding<bool> SteamWorkshopAutoUpdateCheckEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> PinyinSearchEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> PinyinAutomaticDownloads { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> PinyinKeepSourceArchive { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> MainMenuModSettingsButtonEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ModelDbDeterministicSortMode { get; private init; } = null!;
@@ -148,6 +153,25 @@ namespace STS2RitsuLib.Settings
                         settings => settings.SyncModDataToSteamCloud,
                         (settings, value) => settings.SyncModDataToSteamCloud = value),
                     () => defaults.SyncModDataToSteamCloud),
+                PinyinSearchEnabled = CreateSearchSettingBinding(
+                    "pinyin_search_enabled",
+                    () => RitsuSearchSettingsStore.IsProviderEnabled(
+                        PinyinSearchExpansionProvider.ProviderId,
+                        false),
+                    value => RitsuSearchSettingsStore.SetProviderEnabled(
+                        PinyinSearchExpansionProvider.ProviderId,
+                        value),
+                    false),
+                PinyinAutomaticDownloads = CreateSearchSettingBinding(
+                    "pinyin_automatic_downloads",
+                    RitsuSearchSettingsStore.GetAutomaticPinyinDataDownloads,
+                    RitsuSearchSettingsStore.SetAutomaticPinyinDataDownloads,
+                    false),
+                PinyinKeepSourceArchive = CreateSearchSettingBinding(
+                    "pinyin_keep_source_archive",
+                    RitsuSearchSettingsStore.GetKeepPinyinSourceArchive,
+                    RitsuSearchSettingsStore.SetKeepPinyinSourceArchive,
+                    false),
                 DebugCompatibility = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
@@ -725,6 +749,22 @@ namespace STS2RitsuLib.Settings
             return ModSettingsBindings.WithDefault(
                 ModSettingsBindings.Global(Const.ModId, Const.SettingsKey, getter, setter),
                 defaultValue);
+        }
+
+        private static IModSettingsValueBinding<bool> CreateSearchSettingBinding(
+            string dataKey,
+            Func<bool> read,
+            Action<bool> write,
+            bool defaultValue)
+        {
+            return ModSettingsBindings.WithDefault(
+                ModSettingsBindings.Callback(
+                    Const.ModId,
+                    dataKey,
+                    read,
+                    write,
+                    static () => { }),
+                () => defaultValue);
         }
 
         private static string NormalizeToastAnchor(string? value)
