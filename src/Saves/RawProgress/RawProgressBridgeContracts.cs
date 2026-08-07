@@ -103,6 +103,26 @@
         ///     <para xml:lang="zh-CN">可以枚举保留的恢复日志，并有条件地恢复其中的原始文档。</para>
         /// </summary>
         RecoveryJournalManagement = 1 << 14,
+
+        /// <summary>
+        ///     <para xml:lang="en">Recovery journals are scoped by a validated stable owner identifier.</para>
+        ///     <para xml:lang="zh-CN">恢复日志按经过验证的稳定所有者标识进行隔离。</para>
+        /// </summary>
+        RecoveryJournalOwnership = 1 << 15,
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         A caller can explicitly accept a freshly captured destination and discard its matching retained journal.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">调用方可以显式接受新近捕获的目标，并放弃与之匹配的保留日志。</para>
+        /// </summary>
+        RecoveryJournalDisposition = 1 << 16,
+
+        /// <summary>
+        ///     <para xml:lang="en">Invalid recovery files are isolated under bounded provider-owned storage.</para>
+        ///     <para xml:lang="zh-CN">无效恢复文件会被隔离到提供方管理且有界的存储中。</para>
+        /// </summary>
+        InvalidRecoveryJournalQuarantine = 1 << 17,
     }
 
     /// <summary>
@@ -130,8 +150,13 @@
         public required int ProtocolVersion { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the progress schemas accepted by this game-compatibility build.</para>
-        ///     <para xml:lang="zh-CN">获取此游戏兼容构建接受的进度 schema。</para>
+        ///     <para xml:lang="en">
+        ///         Gets the progress schemas currently accepted by the active game's migration manager. Callers should use
+        ///         the schema returned by the snapshot they intend to replace.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取当前游戏迁移管理器所接受的进度 schema。调用方应使用待替换快照所返回的 schema。
+        ///     </para>
         /// </summary>
         public required IReadOnlySet<int> SupportedSchemas { get; init; }
 
@@ -149,14 +174,20 @@
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets the maximum number of recovery journals retained at once. New commits fail closed when this limit is
-        ///         reached until an existing recovery is resolved.
+        ///         Gets the maximum number of recovery journals retained at once across all owners. New commits fail closed
+        ///         when this limit is reached until an existing recovery is resolved.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取同时保留的恢复日志数量上限。达到该上限后，新的提交会保守失败，直至已有恢复项得到处理。
+        ///         获取所有所有者合计同时保留的恢复日志数量上限。达到该上限后，新的提交会保守失败，直至已有恢复项得到处理。
         ///     </para>
         /// </summary>
         public required int MaxRetainedRecoveryJournals { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the largest accepted UTF-8 owner identifier size in bytes.</para>
+        ///     <para xml:lang="zh-CN">获取允许使用的 UTF-8 所有者标识最大字节数。</para>
+        /// </summary>
+        public required int MaxRecoveryOwnerIdUtf8Bytes { get; init; }
     }
 
     /// <summary>
@@ -349,8 +380,27 @@
         public required int SchemaVersion { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the caller-generated transaction ID used for duplicate suppression and recovery.</para>
-        ///     <para xml:lang="zh-CN">获取调用方生成的事务 ID，用于抑制重复提交和恢复。</para>
+        ///     <para xml:lang="en">
+        ///         Gets the stable caller identifier used to isolate duplicate suppression and recovery journals. It must be
+        ///         non-blank, contain no leading or trailing whitespace, and fit the provider's advertised UTF-8 limit. Use a
+        ///         stable manifest mod ID. This is a cooperative namespace for avoiding accidental cross-mod operations, not
+        ///         an authorization boundary against code running in the same process.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取用于隔离重复提交抑制与恢复日志的稳定调用方标识。该值不得为空，不得包含首尾空白，且必须符合提供方声明的 UTF-8 大小上限。应使用稳定的 manifest 模组 ID。该值用于协作式命名以避免模组间误操作，并非针对同进程代码的授权边界。
+        ///     </para>
+        /// </summary>
+        public required string OwnerId { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the caller-generated transaction ID used for duplicate suppression and recovery. It must be unique
+        ///         within <see cref="OwnerId" />. Reuse the same owner and transaction only to replay the identical proposed
+        ///         payload; reusing it with different content is rejected.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取调用方生成的事务 ID，用于抑制重复提交和恢复。该值在 <see cref="OwnerId" /> 内必须唯一；仅可使用相同所有者与事务重试完全相同的拟提交内容，若内容不同则会被拒绝。
+        ///     </para>
         /// </summary>
         public required Guid TransactionId { get; init; }
 
@@ -501,6 +551,12 @@
         RecoveryJournalInvalid,
 
         /// <summary>
+        ///     <para xml:lang="en">The requested recovery journal changed after the caller enumerated it.</para>
+        ///     <para xml:lang="zh-CN">请求的恢复日志在调用方枚举后发生了变化。</para>
+        /// </summary>
+        RecoveryJournalChanged,
+
+        /// <summary>
         ///     <para xml:lang="en">Cancellation was observed before any destination mutation.</para>
         ///     <para xml:lang="zh-CN">在修改任何目标之前收到取消请求。</para>
         /// </summary>
@@ -618,6 +674,23 @@
     public sealed record RawProgressRecoveryRecord
     {
         /// <summary>
+        ///     <para xml:lang="en">Gets the stable owner identifier recorded by the original commit.</para>
+        ///     <para xml:lang="zh-CN">获取原始提交记录的稳定所有者标识。</para>
+        /// </summary>
+        public required string OwnerId { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the progress schema of the original document retained by this journal. A journal remains
+        ///         enumerable after the active game's schema changes, but restoration fails closed until its schema matches.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取此日志所保留原始文档的进度 schema。活动游戏的 schema 发生变化后，该日志仍可枚举，但在 schema 匹配前恢复操作会保守失败。
+        ///     </para>
+        /// </summary>
+        public required int SchemaVersion { get; init; }
+
+        /// <summary>
         ///     <para xml:lang="en">Gets the transaction that created the journal.</para>
         ///     <para xml:lang="zh-CN">获取创建该日志的事务。</para>
         /// </summary>
@@ -658,6 +731,15 @@
         ///     <para xml:lang="zh-CN">获取原始提交所提议内容的小写 SHA-256 哈希。</para>
         /// </summary>
         public required string ProposedSha256 { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets an opaque token for detecting journal changes before restoration or explicit discard. Callers must
+        ///         not parse or derive this value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取用于在恢复或显式放弃前检测日志变化的不透明 token。调用方不得解析或推导该值。</para>
+        /// </summary>
+        public required string RecoveryToken { get; init; }
     }
 
     /// <summary>
@@ -692,6 +774,12 @@
     public sealed record RawProgressRecoveryReadResult
     {
         /// <summary>
+        ///     <para xml:lang="en">Gets the validated owner whose journals were requested.</para>
+        ///     <para xml:lang="zh-CN">获取本次请求恢复日志所对应的已验证所有者。</para>
+        /// </summary>
+        public required string OwnerId { get; init; }
+
+        /// <summary>
         ///     <para xml:lang="en">Gets the enumeration outcome.</para>
         ///     <para xml:lang="zh-CN">获取枚举结果。</para>
         /// </summary>
@@ -704,18 +792,27 @@
         public required IReadOnlyList<RawProgressRecoveryRecord> Records { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the number of journal files ignored because validation failed.</para>
-        ///     <para xml:lang="zh-CN">获取因验证失败而被忽略的日志文件数量。</para>
+        ///     <para xml:lang="en">Gets the number of journal entries ignored because validation failed.</para>
+        ///     <para xml:lang="zh-CN">获取因验证失败而被忽略的日志条目数量。</para>
         /// </summary>
         public required int InvalidEntryCount { get; init; }
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Requests conditional restoration of the original document retained by one journal.</para>
-    ///     <para xml:lang="zh-CN">请求有条件地恢复一个日志中保留的原始文档。</para>
+    ///     <para xml:lang="en">
+    ///         Selects one retained journal for conditional restoration or an explicit decision to accept the current
+    ///         destination and discard the journal.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">选择一个保留日志，以有条件地恢复原始文档，或显式接受当前目标并放弃该日志。</para>
     /// </summary>
     public sealed record RawProgressRecoveryRequest
     {
+        /// <summary>
+        ///     <para xml:lang="en">Gets the stable owner identifier used by the original commit.</para>
+        ///     <para xml:lang="zh-CN">获取原始提交使用的稳定所有者标识。</para>
+        /// </summary>
+        public required string OwnerId { get; init; }
+
         /// <summary>
         ///     <para xml:lang="en">Gets the transaction ID of the retained journal.</para>
         ///     <para xml:lang="zh-CN">获取保留日志的事务 ID。</para>
@@ -723,15 +820,108 @@
         public required Guid TransactionId { get; init; }
 
         /// <summary>
+        ///     <para xml:lang="en">Gets the opaque token returned by the latest recovery enumeration.</para>
+        ///     <para xml:lang="zh-CN">获取最近一次恢复枚举返回的不透明 token。</para>
+        /// </summary>
+        public required string RecoveryToken { get; init; }
+
+        /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets the current destination generation that must still match before restoration. Capture a fresh
-        ///         snapshot after receiving a recovery-required result; do not reuse the generation from the original commit.
+        ///         Gets the current destination generation that must still match before restoration or discard. Capture a
+        ///         fresh snapshot after receiving a recovery-required result; do not reuse the generation from the original
+        ///         commit.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取恢复前必须仍然匹配的当前目标代次。收到需要恢复的结果后应重新捕获快照，不要复用原始提交中的代次。
+        ///         获取恢复或放弃前必须仍然匹配的当前目标代次。收到需要恢复的结果后应重新捕获快照，不要复用原始提交中的代次。
         ///     </para>
         /// </summary>
         public required ProgressGeneration ExpectedGeneration { get; init; }
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">Reports the result of explicitly discarding one retained recovery journal.</para>
+    ///     <para xml:lang="zh-CN">报告显式放弃一个保留恢复日志的结果。</para>
+    /// </summary>
+    public enum RawProgressRecoveryDiscardOutcome
+    {
+        /// <summary>
+        ///     <para xml:lang="en">The destination still matched and the journal was removed completely.</para>
+        ///     <para xml:lang="zh-CN">目标仍然匹配，且日志已被完整移除。</para>
+        /// </summary>
+        Discarded,
+
+        /// <summary>
+        ///     <para xml:lang="en">The request owner, transaction, token, or generation was malformed.</para>
+        ///     <para xml:lang="zh-CN">请求中的所有者、事务、token 或代次格式错误。</para>
+        /// </summary>
+        ValidationFailed,
+
+        /// <summary>
+        ///     <para xml:lang="en">No journal exists for the requested owner and transaction.</para>
+        ///     <para xml:lang="zh-CN">请求的所有者与事务不存在对应日志。</para>
+        /// </summary>
+        RecoveryJournalNotFound,
+
+        /// <summary>
+        ///     <para xml:lang="en">The journal is malformed or failed integrity validation.</para>
+        ///     <para xml:lang="zh-CN">日志格式错误或未通过完整性验证。</para>
+        /// </summary>
+        RecoveryJournalInvalid,
+
+        /// <summary>
+        ///     <para xml:lang="en">The journal changed after the caller enumerated it.</para>
+        ///     <para xml:lang="zh-CN">日志在调用方枚举后发生了变化。</para>
+        /// </summary>
+        RecoveryJournalChanged,
+
+        /// <summary>
+        ///     <para xml:lang="en">The active profile or modded save namespace changed.</para>
+        ///     <para xml:lang="zh-CN">活动档案或模组存档命名空间已改变。</para>
+        /// </summary>
+        ActiveProfileChanged,
+
+        /// <summary>
+        ///     <para xml:lang="en">The active destination no longer matches the freshly captured generation.</para>
+        ///     <para xml:lang="zh-CN">活动目标不再匹配新近捕获的代次。</para>
+        /// </summary>
+        GenerationConflict,
+
+        /// <summary>
+        ///     <para xml:lang="en">The destination could not be captured and validated for the discard decision.</para>
+        ///     <para xml:lang="zh-CN">无法为本次放弃决定捕获并验证目标。</para>
+        /// </summary>
+        DestinationUnavailable,
+
+        /// <summary>
+        ///     <para xml:lang="en">Cancellation was observed before the journal could be removed.</para>
+        ///     <para xml:lang="zh-CN">在日志开始移除前收到了取消请求。</para>
+        /// </summary>
+        Cancelled,
+
+        /// <summary>
+        ///     <para xml:lang="en">At least one journal file could not be removed.</para>
+        ///     <para xml:lang="zh-CN">至少有一个日志文件无法移除。</para>
+        /// </summary>
+        StorageFailure,
+    }
+
+    /// <summary>
+    ///     <para xml:lang="en">Contains the outcome and retained-state evidence for an explicit recovery discard.</para>
+    ///     <para xml:lang="zh-CN">包含显式放弃恢复日志的结果及其保留状态证据。</para>
+    /// </summary>
+    public sealed record RawProgressRecoveryDiscardResult
+    {
+        /// <summary>
+        ///     <para xml:lang="en">Gets the discard outcome.</para>
+        ///     <para xml:lang="zh-CN">获取放弃结果。</para>
+        /// </summary>
+        public required RawProgressRecoveryDiscardOutcome Outcome { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets whether any recoverable copy of the requested journal remains.</para>
+        ///     <para xml:lang="zh-CN">获取请求日志是否仍保留任何可恢复副本。</para>
+        /// </summary>
+        public required bool RecoveryJournalRetained { get; init; }
     }
 
     /// <summary>
@@ -745,13 +935,18 @@
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Enumerates validated local recovery journals without exposing or changing their saved documents. Invalid
-        ///         entries are counted and ignored rather than returned as trusted recovery data.
+        ///         Enumerates validated local recovery journals belonging to one stable owner without exposing or changing
+        ///         their saved documents. Invalid entries in that owner scope are counted and ignored rather than returned as
+        ///         trusted recovery data.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         枚举已验证的本地恢复日志，但不公开或改变其中保存的文档。无效条目会被计数并忽略，不会作为可信恢复数据返回。
+        ///         枚举属于一个稳定所有者的已验证本地恢复日志，但不公开或改变其中保存的文档。该所有者范围内的无效条目会被计数并忽略，不会作为可信恢复数据返回。
         ///     </para>
         /// </summary>
+        /// <param name="ownerId">
+        ///     <para xml:lang="en">The stable owner identifier used by commit requests.</para>
+        ///     <para xml:lang="zh-CN">提交请求所使用的稳定所有者标识。</para>
+        /// </param>
         /// <param name="cancellationToken">
         ///     <para xml:lang="en">Cancellation observed before enumeration completes.</para>
         ///     <para xml:lang="zh-CN">在枚举完成前接受的取消信号。</para>
@@ -764,7 +959,12 @@
         ///     <para xml:lang="en">The operation was cancelled before enumeration completed.</para>
         ///     <para xml:lang="zh-CN">操作在枚举完成前被取消。</para>
         /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en"><paramref name="ownerId" /> does not satisfy the advertised owner-ID limits.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="ownerId" /> 不符合提供方声明的所有者标识限制。</para>
+        /// </exception>
         ValueTask<RawProgressRecoveryReadResult> GetPendingRecoveriesAsync(
+            string ownerId,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -799,6 +999,36 @@
         ///     <para xml:lang="zh-CN"><paramref name="request" /> 为 <see langword="null" />。</para>
         /// </exception>
         ValueTask<RawProgressCommitResult> RestoreRecoveryAsync(
+            RawProgressRecoveryRequest request,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Explicitly accepts the current destination and removes a matching retained journal without changing
+        ///         progress data. The owner, opaque token, active profile, and freshly captured destination generation must
+        ///         still match inside the exclusive window. No journal is removed on a mismatch.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         显式接受当前目标，并在不改变进度数据的情况下移除匹配的保留日志。所有者、不透明 token、活动档案及新近捕获的目标代次必须在独占窗口内仍然匹配；任何不匹配都不会移除日志。
+        ///     </para>
+        /// </summary>
+        /// <param name="request">
+        ///     <para xml:lang="en">The latest enumerated journal identity and freshly captured destination generation.</para>
+        ///     <para xml:lang="zh-CN">最近枚举得到的日志身份及新近捕获的目标代次。</para>
+        /// </param>
+        /// <param name="cancellationToken">
+        ///     <para xml:lang="en">Cancellation observed only before journal removal begins.</para>
+        ///     <para xml:lang="zh-CN">仅在日志开始移除前接受的取消信号。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The discard outcome and whether a recoverable journal remains.</para>
+        ///     <para xml:lang="zh-CN">放弃结果及是否仍保留可恢复日志。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="request" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="request" /> 为 <see langword="null" />。</para>
+        /// </exception>
+        ValueTask<RawProgressRecoveryDiscardResult> DiscardRecoveryAsync(
             RawProgressRecoveryRequest request,
             CancellationToken cancellationToken = default);
 
@@ -876,6 +1106,6 @@
         ///     <para xml:lang="en">Gets the shared provider instance.</para>
         ///     <para xml:lang="zh-CN">获取共享的提供方实例。</para>
         /// </summary>
-        public static IRawProgressCommitBridge Instance { get; } = RawProgressCommitBridge.Instance;
+        public static IRawProgressCommitBridge Instance => RawProgressCommitBridge.Instance;
     }
 }

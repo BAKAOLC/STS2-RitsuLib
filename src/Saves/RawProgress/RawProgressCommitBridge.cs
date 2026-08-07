@@ -20,23 +20,19 @@ namespace STS2RitsuLib.Saves.RawProgress
     {
         internal const int ProtocolVersion = 1;
         internal const long MaxDocumentUtf8Bytes = 16 * 1024 * 1024;
+        internal const int MaxRecoveryOwnerIdUtf8Bytes = 256;
         private const int MaxRetainedRecoveryJournals = 8;
+        private const int MaxRecoveryDirectoryFiles = 128;
+        private const int MaxQuarantinedRecoveryFiles = 64;
+        private const long MaxQuarantinedRecoveryBytes = 64 * 1024 * 1024;
         private const string RecoveryLogContext = "RawProgressRecovery";
         private const string RecoveryDirectoryName = "recovery/raw-progress";
-
-#if STS2_AT_LEAST_0_110_0
-        internal const int SupportedSchema = 24;
-#elif STS2_AT_LEAST_0_108_0
-        internal const int SupportedSchema = 22;
-#else
-        internal const int SupportedSchema = 21;
-#endif
+        private const string RecoveryQuarantineDirectoryName = "recovery/raw-progress-quarantine";
 
         private static readonly object SaveWindow = new();
         private static readonly UTF8Encoding StrictUtf8 = new(false, true);
-        private static readonly FrozenSet<int> SupportedSchemas = new[] { SupportedSchema }.ToFrozenSet();
-        private static readonly Dictionary<Guid, CompletedTransaction> CompletedTransactions = [];
-        private static readonly Queue<Guid> CompletedTransactionOrder = [];
+        private static readonly Dictionary<RecoveryTransactionKey, CompletedTransaction> CompletedTransactions = [];
+        private static readonly Queue<RecoveryTransactionKey> CompletedTransactionOrder = [];
 
         private static readonly JsonSerializerOptions JournalJsonOptions = new()
         {
@@ -45,50 +41,55 @@ namespace STS2RitsuLib.Saves.RawProgress
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         };
 
-        [ThreadStatic] private static bool _isPreparingCommitProjection;
+        [field: ThreadStatic] internal static bool IsPreparingCommitProjection { get; private set; }
 
-        private readonly RawProgressBridgeDescriptor _descriptor;
+        private readonly RawProgressBridgeFeature _features;
 
         private RawProgressCommitBridge()
         {
-            var features = RawProgressBridgeFeature.UnknownJsonPassThrough |
-                           RawProgressBridgeFeature.LiveGameStoreCommit |
-                           RawProgressBridgeFeature.DurableLocalReplacement |
-                           RawProgressBridgeFeature.CloudSaveBatch |
-                           RawProgressBridgeFeature.ConditionalGenerationCheck |
-                           RawProgressBridgeFeature.ExclusiveSaveWindow |
-                           RawProgressBridgeFeature.LocalOnlyRecoveryJournal |
-                           RawProgressBridgeFeature.StructuredRecoveryOutcome |
-                           RawProgressBridgeFeature.StablePublicContract |
-                           RawProgressBridgeFeature.CloudReadBackVerification |
-                           RawProgressBridgeFeature.LiveProgressStateSynchronization |
-                           RawProgressBridgeFeature.SubsequentSaveUnknownJsonPreservation |
-                           RawProgressBridgeFeature.ActiveProgressSnapshot |
-                           RawProgressBridgeFeature.RecoveryJournalManagement;
-
 #if !STS2_AT_LEAST_0_108_0
-            features |= RawProgressBridgeFeature.RawSchema21Document;
+            const RawProgressBridgeFeature schemaFeatures = RawProgressBridgeFeature.RawSchema21Document;
+#else
+            const RawProgressBridgeFeature schemaFeatures = 0;
 #endif
+            const RawProgressBridgeFeature features = RawProgressBridgeFeature.UnknownJsonPassThrough |
+                                                      RawProgressBridgeFeature.LiveGameStoreCommit |
+                                                      RawProgressBridgeFeature.DurableLocalReplacement |
+                                                      RawProgressBridgeFeature.CloudSaveBatch |
+                                                      RawProgressBridgeFeature.ConditionalGenerationCheck |
+                                                      RawProgressBridgeFeature.ExclusiveSaveWindow |
+                                                      RawProgressBridgeFeature.LocalOnlyRecoveryJournal |
+                                                      RawProgressBridgeFeature.StructuredRecoveryOutcome |
+                                                      RawProgressBridgeFeature.StablePublicContract |
+                                                      RawProgressBridgeFeature.CloudReadBackVerification |
+                                                      RawProgressBridgeFeature.LiveProgressStateSynchronization |
+                                                      RawProgressBridgeFeature.SubsequentSaveUnknownJsonPreservation |
+                                                      RawProgressBridgeFeature.ActiveProgressSnapshot |
+                                                      RawProgressBridgeFeature.RecoveryJournalManagement |
+                                                      RawProgressBridgeFeature.RecoveryJournalOwnership |
+                                                      RawProgressBridgeFeature.RecoveryJournalDisposition |
+                                                      RawProgressBridgeFeature.InvalidRecoveryJournalQuarantine |
+                                                      schemaFeatures;
 
-            _descriptor = new()
-            {
-                ProviderId = Const.ModId,
-                ProviderVersion = Version.Parse(Const.Version),
-                ProtocolVersion = ProtocolVersion,
-                SupportedSchemas = SupportedSchemas,
-                Features = features,
-                MaxDocumentUtf8Bytes = MaxDocumentUtf8Bytes,
-                MaxRetainedRecoveryJournals = MaxRetainedRecoveryJournals,
-            };
+            _features = features;
         }
 
         internal static RawProgressCommitBridge Instance { get; } = new();
 
-        internal static bool IsPreparingCommitProjection => _isPreparingCommitProjection;
-
         public RawProgressBridgeDescriptor Describe()
         {
-            return _descriptor;
+            var supportedSchema = GetSupportedSchema(SaveManager.Instance);
+            return new()
+            {
+                ProviderId = Const.ModId,
+                ProviderVersion = Version.Parse(Const.Version),
+                ProtocolVersion = ProtocolVersion,
+                SupportedSchemas = new[] { supportedSchema }.ToFrozenSet(),
+                Features = _features,
+                MaxDocumentUtf8Bytes = MaxDocumentUtf8Bytes,
+                MaxRetainedRecoveryJournals = MaxRetainedRecoveryJournals,
+                MaxRecoveryOwnerIdUtf8Bytes = MaxRecoveryOwnerIdUtf8Bytes,
+            };
         }
 
         public ValueTask<RawProgressReadResult> CaptureAsync(CancellationToken cancellationToken = default)
@@ -110,19 +111,25 @@ namespace STS2RitsuLib.Saves.RawProgress
         {
             ArgumentNullException.ThrowIfNull(request);
 
-            return new(RitsuMainThread.InvokeAsync(() => CommitOnMainThread(request, cancellationToken)));
+            return new(RitsuMainThread.InvokeAsync(
+                () => CommitOnMainThread(request, cancellationToken),
+                cancellationToken));
         }
 
         public ValueTask<RawProgressRecoveryReadResult> GetPendingRecoveriesAsync(
+            string ownerId,
             CancellationToken cancellationToken = default)
         {
+            if (!IsValidOwnerId(ownerId))
+                throw new ArgumentException("The recovery owner identifier is invalid.", nameof(ownerId));
+
             return new(RitsuMainThread.InvokeAsync(() =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 lock (SaveWindow)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    return RecoveryJournal.ReadAll();
+                    return RecoveryJournal.ReadAll(ownerId);
                 }
             }, cancellationToken));
         }
@@ -133,7 +140,20 @@ namespace STS2RitsuLib.Saves.RawProgress
         {
             ArgumentNullException.ThrowIfNull(request);
 
-            return new(RitsuMainThread.InvokeAsync(() => RestoreRecoveryOnMainThread(request, cancellationToken)));
+            return new(RitsuMainThread.InvokeAsync(
+                () => RestoreRecoveryOnMainThread(request, cancellationToken),
+                cancellationToken));
+        }
+
+        public ValueTask<RawProgressRecoveryDiscardResult> DiscardRecoveryAsync(
+            RawProgressRecoveryRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+
+            return new(RitsuMainThread.InvokeAsync(
+                () => DiscardRecoveryOnMainThread(request, cancellationToken),
+                cancellationToken));
         }
 
         internal static void SaveOrdinaryProgress(ProgressSaveManager manager)
@@ -189,14 +209,15 @@ namespace STS2RitsuLib.Saves.RawProgress
                 if (capture == null || result is not { Success: true, SaveData: not null })
                     return;
 
-                if (!TryReadSchema(capture.RawJson, out var rawSchema) || rawSchema != SupportedSchema)
+                var supportedSchema = MigrationManager(manager).GetLatestVersion<SerializableProgress>();
+                if (!TryReadSchema(capture.RawJson, out var rawSchema) || rawSchema != supportedSchema)
                     return;
 
                 var rawReadResult = JsonSerializationUtility.FromJson<SerializableProgress>(capture.RawJson);
                 if (rawReadResult is not { Success: true, SaveData: not null })
                     return;
 
-                rawReadResult.SaveData.SchemaVersion = SupportedSchema;
+                rawReadResult.SaveData.SchemaVersion = supportedSchema;
                 var knownJson = JsonSerializationUtility.ToJson(rawReadResult.SaveData);
                 if (!RawProgressJsonPreservation.TryAttach(manager.Progress, capture.RawJson, knownJson))
                     RitsuLibFramework.Logger.Warn(
@@ -229,9 +250,9 @@ namespace STS2RitsuLib.Saves.RawProgress
             RawProgressCommitRequest request,
             CancellationToken cancellationToken)
         {
-            if (request.ProtocolVersion != ProtocolVersion)
+            if (request.ProtocolVersion != ProtocolVersion || !TryGetSupportedSchema(out var supportedSchema))
                 return CreateResult(RawProgressCommitOutcome.ProviderIncompatible);
-            if (request.SchemaVersion != SupportedSchema)
+            if (request.SchemaVersion != supportedSchema)
                 return CreateResult(RawProgressCommitOutcome.SchemaUnsupported);
             if (cancellationToken.IsCancellationRequested)
                 return CreateResult(RawProgressCommitOutcome.CancelledBeforeCommit);
@@ -289,7 +310,7 @@ namespace STS2RitsuLib.Saves.RawProgress
             RawProgressRecoveryRequest request,
             CancellationToken cancellationToken)
         {
-            if (request.TransactionId == Guid.Empty || request.ExpectedGeneration == null)
+            if (!IsValidRecoveryRequest(request))
                 return CreateResult(RawProgressCommitOutcome.ValidationFailed);
             if (cancellationToken.IsCancellationRequested)
                 return CreateResult(RawProgressCommitOutcome.CancelledBeforeCommit);
@@ -299,13 +320,29 @@ namespace STS2RitsuLib.Saves.RawProgress
                 if (cancellationToken.IsCancellationRequested)
                     return CreateResult(RawProgressCommitOutcome.CancelledBeforeCommit);
 
-                var loadOutcome = RecoveryJournal.TryLoad(request.TransactionId, out var journal);
+                var loadOutcome = RecoveryJournal.TryLoad(request.OwnerId, request.TransactionId, out var journal);
                 if (loadOutcome == RecoveryJournalLoadOutcome.NotFound)
                     return CreateResult(RawProgressCommitOutcome.RecoveryJournalNotFound);
                 if (loadOutcome != RecoveryJournalLoadOutcome.Succeeded || journal == null)
                     return CreateResult(RawProgressCommitOutcome.RecoveryJournalInvalid);
+                if (!HashEquals(journal.RecoveryToken, request.RecoveryToken))
+                    return CreateResult(
+                        RawProgressCommitOutcome.RecoveryJournalChanged,
+                        verifiedBackupAvailable: true,
+                        recoveryJournalRetained: journal.Exists);
 
                 var data = journal.Data;
+                if (!TryGetSupportedSchema(out var supportedSchema))
+                    return CreateResult(
+                        RawProgressCommitOutcome.ProviderIncompatible,
+                        verifiedBackupAvailable: true,
+                        recoveryJournalRetained: journal.Exists);
+                if (data.SchemaVersion != supportedSchema)
+                    return CreateResult(
+                        RawProgressCommitOutcome.SchemaUnsupported,
+                        verifiedBackupAvailable: true,
+                        recoveryJournalRetained: journal.Exists);
+
                 var expected = request.ExpectedGeneration;
                 if (data.ProfileId != expected.ProfileId || data.IsModded != expected.IsModded ||
                     !string.Equals(data.ProgressUniqueId, expected.ProgressUniqueId, StringComparison.Ordinal))
@@ -348,7 +385,8 @@ namespace STS2RitsuLib.Saves.RawProgress
                 var validationRequest = new RawProgressCommitRequest
                 {
                     ProtocolVersion = ProtocolVersion,
-                    SchemaVersion = SupportedSchema,
+                    SchemaVersion = data.SchemaVersion,
+                    OwnerId = data.OwnerId,
                     TransactionId = data.TransactionId,
                     ExpectedGeneration = expected,
                     ProposedRawJson = data.OriginalRawJson,
@@ -370,6 +408,70 @@ namespace STS2RitsuLib.Saves.RawProgress
             }
         }
 
+        private static RawProgressRecoveryDiscardResult DiscardRecoveryOnMainThread(
+            RawProgressRecoveryRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!IsValidRecoveryRequest(request))
+                return CreateDiscardResult(RawProgressRecoveryDiscardOutcome.ValidationFailed);
+            if (cancellationToken.IsCancellationRequested)
+                return CreateDiscardResult(RawProgressRecoveryDiscardOutcome.Cancelled);
+
+            lock (SaveWindow)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    return CreateDiscardResult(RawProgressRecoveryDiscardOutcome.Cancelled);
+
+                var loadOutcome = RecoveryJournal.TryLoad(request.OwnerId, request.TransactionId, out var journal);
+                if (loadOutcome == RecoveryJournalLoadOutcome.NotFound)
+                    return CreateDiscardResult(RawProgressRecoveryDiscardOutcome.RecoveryJournalNotFound);
+                if (loadOutcome != RecoveryJournalLoadOutcome.Succeeded || journal == null)
+                    return CreateDiscardResult(RawProgressRecoveryDiscardOutcome.RecoveryJournalInvalid);
+                if (!HashEquals(journal.RecoveryToken, request.RecoveryToken))
+                    return CreateDiscardResult(
+                        RawProgressRecoveryDiscardOutcome.RecoveryJournalChanged,
+                        journal.Exists);
+
+                var data = journal.Data;
+                var expected = request.ExpectedGeneration;
+                if (data.ProfileId != expected.ProfileId || data.IsModded != expected.IsModded ||
+                    !string.Equals(data.ProgressUniqueId, expected.ProgressUniqueId, StringComparison.Ordinal))
+                    return CreateDiscardResult(
+                        RawProgressRecoveryDiscardOutcome.ActiveProfileChanged,
+                        journal.Exists);
+
+                var current = CaptureCore();
+                if (current.Result.Outcome != RawProgressReadOutcome.Succeeded || current.Result.Snapshot == null)
+                    return CreateDiscardResult(
+                        current.Result.Outcome == RawProgressReadOutcome.ActiveProfileUnavailable
+                            ? RawProgressRecoveryDiscardOutcome.ActiveProfileChanged
+                            : RawProgressRecoveryDiscardOutcome.DestinationUnavailable,
+                        journal.Exists);
+
+                var currentGeneration = current.Result.Snapshot.Generation;
+                if (currentGeneration.ProfileId != data.ProfileId || currentGeneration.IsModded != data.IsModded ||
+                    !string.Equals(currentGeneration.ProgressUniqueId, data.ProgressUniqueId, StringComparison.Ordinal))
+                    return CreateDiscardResult(
+                        RawProgressRecoveryDiscardOutcome.ActiveProfileChanged,
+                        journal.Exists);
+                if (!GenerationMatches(currentGeneration, expected))
+                    return CreateDiscardResult(
+                        RawProgressRecoveryDiscardOutcome.GenerationConflict,
+                        journal.Exists);
+                if (cancellationToken.IsCancellationRequested)
+                    return CreateDiscardResult(
+                        RawProgressRecoveryDiscardOutcome.Cancelled,
+                        journal.Exists);
+
+                var discarded = journal.TryDelete();
+                return CreateDiscardResult(
+                    discarded
+                        ? RawProgressRecoveryDiscardOutcome.Discarded
+                        : RawProgressRecoveryDiscardOutcome.StorageFailure,
+                    journal.Exists);
+            }
+        }
+
         private static RawProgressCommitResult CommitPrepared(
             string proposedRawJson,
             string proposedSha256,
@@ -380,7 +482,7 @@ namespace STS2RitsuLib.Saves.RawProgress
             var destinationMayHaveChanged = false;
             var localVerified = false;
             var batchFailure = false;
-            var localReadBackHash = (string?)null;
+            string? localReadBackHash = null;
             var cloudStatus = CloudReadBackStatus.NotRequired;
             var saveManager = current.SaveManager!;
             var saveStore = current.Store!;
@@ -432,11 +534,13 @@ namespace STS2RitsuLib.Saves.RawProgress
             }
 
             journal.TryUpdate("local_verified", localReadBackHash, null, null);
-            var cloudReadBack = VerifyCloudReadBack(saveStore, path, proposedSha256, batchFailure);
-            cloudStatus = cloudReadBack.Status;
-            var cloudReadBackHash = cloudReadBack.Hash;
+            (cloudStatus, var cloudReadBackHash) = VerifyCloudReadBack(
+                saveStore,
+                path,
+                proposedSha256,
+                batchFailure);
 
-            var liveProjectionHash = (string?)null;
+            string? liveProjectionHash = null;
             var continuationInstalled = false;
             try
             {
@@ -447,7 +551,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                     proposed.KnownProjectionJson);
 
                 var liveSerializable = saveManager.Progress.ToSerializable();
-                liveSerializable.SchemaVersion = SupportedSchema;
+                liveSerializable.SchemaVersion = current.Result.Snapshot!.SchemaVersion;
                 liveProjectionHash = ComputeSha256(JsonSerializationUtility.ToJson(liveSerializable));
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
@@ -456,17 +560,19 @@ namespace STS2RitsuLib.Saves.RawProgress
                     $"[RawProgress] Failed to synchronize the live progress projection: {ex.Message}");
             }
 
-            RawProgressCommitOutcome outcome;
-            if (!HashEquals(liveProjectionHash, proposed.KnownProjectionSha256))
-                outcome = RawProgressCommitOutcome.LiveProgressStateUnverified;
-            else if (!continuationInstalled)
-                outcome = RawProgressCommitOutcome.UnknownJsonContinuationUnverified;
-            else if (cloudStatus is CloudReadBackStatus.Unavailable or CloudReadBackStatus.FailureObserved)
-                outcome = RawProgressCommitOutcome.CloudReadBackUnverifiedLocalPreserved;
-            else if (cloudStatus == CloudReadBackStatus.Mismatch)
-                outcome = RawProgressCommitOutcome.CloudReadBackMismatchLocalPreserved;
-            else
-                outcome = RawProgressCommitOutcome.CommittedVerified;
+            var outcome = (
+                    LiveProjectionMatches: HashEquals(liveProjectionHash, proposed.KnownProjectionSha256),
+                    ContinuationInstalled: continuationInstalled,
+                    CloudStatus: cloudStatus) switch
+                {
+                    { LiveProjectionMatches: false } => RawProgressCommitOutcome.LiveProgressStateUnverified,
+                    { ContinuationInstalled: false } => RawProgressCommitOutcome.UnknownJsonContinuationUnverified,
+                    { CloudStatus: CloudReadBackStatus.Unavailable or CloudReadBackStatus.FailureObserved } =>
+                        RawProgressCommitOutcome.CloudReadBackUnverifiedLocalPreserved,
+                    { CloudStatus: CloudReadBackStatus.Mismatch } =>
+                        RawProgressCommitOutcome.CloudReadBackMismatchLocalPreserved,
+                    _ => RawProgressCommitOutcome.CommittedVerified,
+                };
 
             if (outcome == RawProgressCommitOutcome.CommittedVerified)
             {
@@ -496,10 +602,12 @@ namespace STS2RitsuLib.Saves.RawProgress
         {
             SaveManager saveManager;
             int profileId;
+            int supportedSchema;
             try
             {
                 saveManager = SaveManager.Instance;
                 profileId = saveManager.CurrentProfileId;
+                supportedSchema = GetSupportedSchema(saveManager);
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
@@ -533,7 +641,7 @@ namespace STS2RitsuLib.Saves.RawProgress
 
             if (!TryInspectExistingDocument(rawJson, out var schema, out var uniqueId, out var localBytes))
                 return new(new() { Outcome = RawProgressReadOutcome.ValidationFailed });
-            if (schema != SupportedSchema)
+            if (schema != supportedSchema)
                 return new(new() { Outcome = RawProgressReadOutcome.SchemaUnsupported });
 
             try
@@ -610,7 +718,8 @@ namespace STS2RitsuLib.Saves.RawProgress
             out ValidatedDocument proposed)
         {
             proposed = null!;
-            if (request.TransactionId == Guid.Empty ||
+            if (!IsValidOwnerId(request.OwnerId) ||
+                request.TransactionId == Guid.Empty ||
                 request.ExpectedGeneration == null ||
                 request.ProposedRawJson == null ||
                 request.ProposedSha256 == null ||
@@ -638,7 +747,7 @@ namespace STS2RitsuLib.Saves.RawProgress
 
             try
             {
-                _isPreparingCommitProjection = true;
+                IsPreparingCommitProjection = true;
                 var context = new DeserializationContext();
                 var progress = ProgressState.FromSerializable(readResult.SaveData, context);
                 if (context.Errors.Any(static error => error.IsFatal))
@@ -661,7 +770,7 @@ namespace STS2RitsuLib.Saves.RawProgress
             }
             finally
             {
-                _isPreparingCommitProjection = false;
+                IsPreparingCommitProjection = false;
             }
         }
 
@@ -723,12 +832,14 @@ namespace STS2RitsuLib.Saves.RawProgress
                 case JsonValueKind.Object:
                 {
                     var propertyNames = new HashSet<string>(StringComparer.Ordinal);
+                    // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var property in element.EnumerateObject())
                         if (!propertyNames.Add(property.Name) || !HasUniquePropertyNames(property.Value))
                             return false;
                     break;
                 }
                 case JsonValueKind.Array:
+                    // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var item in element.EnumerateArray())
                         if (!HasUniquePropertyNames(item))
                             return false;
@@ -845,11 +956,23 @@ namespace STS2RitsuLib.Saves.RawProgress
             };
         }
 
+        private static RawProgressRecoveryDiscardResult CreateDiscardResult(
+            RawProgressRecoveryDiscardOutcome outcome,
+            bool recoveryJournalRetained = false)
+        {
+            return new()
+            {
+                Outcome = outcome,
+                RecoveryJournalRetained = recoveryJournalRetained,
+            };
+        }
+
         private static bool TryGetCompletedTransaction(
             RawProgressCommitRequest request,
             out RawProgressCommitResult result)
         {
-            if (!CompletedTransactions.TryGetValue(request.TransactionId, out var completed))
+            var key = new RecoveryTransactionKey(request.OwnerId, request.TransactionId);
+            if (!CompletedTransactions.TryGetValue(key, out var completed))
             {
                 result = null!;
                 return false;
@@ -865,10 +988,11 @@ namespace STS2RitsuLib.Saves.RawProgress
             RawProgressCommitRequest request,
             RawProgressCommitResult result)
         {
-            if (!CompletedTransactions.ContainsKey(request.TransactionId))
+            var key = new RecoveryTransactionKey(request.OwnerId, request.TransactionId);
+            if (!CompletedTransactions.ContainsKey(key))
             {
-                CompletedTransactions.Add(request.TransactionId, new(request.ProposedSha256, result));
-                CompletedTransactionOrder.Enqueue(request.TransactionId);
+                CompletedTransactions.Add(key, new(request.ProposedSha256, result));
+                CompletedTransactionOrder.Enqueue(key);
                 while (CompletedTransactionOrder.Count > 256)
                     CompletedTransactions.Remove(CompletedTransactionOrder.Dequeue());
             }
@@ -879,6 +1003,27 @@ namespace STS2RitsuLib.Saves.RawProgress
         private static ISaveStore GetLocalStore(ISaveStore saveStore)
         {
             return saveStore is CloudSaveStore cloudSaveStore ? cloudSaveStore.LocalStore : saveStore;
+        }
+
+        private static int GetSupportedSchema(SaveManager saveManager)
+        {
+            return saveManager.GetLatestSchemaVersion<SerializableProgress>();
+        }
+
+        private static bool TryGetSupportedSchema(out int supportedSchema)
+        {
+            try
+            {
+                supportedSchema = GetSupportedSchema(SaveManager.Instance);
+                return supportedSchema > 0;
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RawProgress] Could not resolve the active progress schema: {ex.Message}");
+                supportedSchema = 0;
+                return false;
+            }
         }
 
         private static string GetProgressPath(int profileId, bool isModded)
@@ -902,6 +1047,30 @@ namespace STS2RitsuLib.Saves.RawProgress
                 bytes = [];
                 return false;
             }
+        }
+
+        private static bool IsValidOwnerId(string? ownerId)
+        {
+            return !string.IsNullOrWhiteSpace(ownerId) &&
+                   ownerId.Length <= MaxRecoveryOwnerIdUtf8Bytes &&
+                   string.Equals(ownerId, ownerId.Trim(), StringComparison.Ordinal) &&
+                   TryGetUtf8Bytes(ownerId, out var bytes) &&
+                   bytes.Length is > 0 and <= MaxRecoveryOwnerIdUtf8Bytes;
+        }
+
+        private static bool IsValidRecoveryRequest(RawProgressRecoveryRequest request)
+        {
+            return IsValidOwnerId(request.OwnerId) &&
+                   request.TransactionId != Guid.Empty &&
+                   request.RecoveryToken != null &&
+                   IsSha256(request.RecoveryToken) &&
+                   request.ExpectedGeneration is
+                   {
+                       ProfileId: >= 1 and <= 3,
+                   } expected &&
+                   !string.IsNullOrWhiteSpace(expected.ProgressUniqueId) &&
+                   expected.ProgressUniqueId.Length <= 256 &&
+                   IsSha256(expected.LocalSha256);
         }
 
         private static string ComputeSha256(string value)
@@ -928,6 +1097,26 @@ namespace STS2RitsuLib.Saves.RawProgress
         private static string GetRecoveryDirectory()
         {
             return $"{ProfileManager.GetAccountBasePath()}/{RecoveryDirectoryName}";
+        }
+
+        private static string ComputeOwnerStorageId(string ownerId)
+        {
+            return ComputeSha256(ownerId);
+        }
+
+        private static string GetRecoveryPath(string ownerId, Guid transactionId)
+        {
+            return GetRecoveryPath(new(ComputeOwnerStorageId(ownerId), transactionId));
+        }
+
+        private static string GetRecoveryPath(RecoveryJournalKey key)
+        {
+            return $"{GetRecoveryDirectory()}/{key.OwnerStorageId}-{key.TransactionId:N}.json";
+        }
+
+        private static string GetRecoveryQuarantineDirectory()
+        {
+            return $"{ProfileManager.GetAccountBasePath()}/{RecoveryQuarantineDirectoryName}";
         }
 
         [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_saveStore")]
@@ -958,6 +1147,10 @@ namespace STS2RitsuLib.Saves.RawProgress
 
         private sealed record CompletedTransaction(string ProposedSha256, RawProgressCommitResult Result);
 
+        private readonly record struct RecoveryTransactionKey(string OwnerId, Guid TransactionId);
+
+        private readonly record struct RecoveryJournalKey(string OwnerStorageId, Guid TransactionId);
+
         private enum RecoveryJournalLoadOutcome
         {
             Succeeded,
@@ -968,6 +1161,8 @@ namespace STS2RitsuLib.Saves.RawProgress
         private sealed record RecoveryJournalData
         {
             public required int JournalProtocolVersion { get; init; }
+            public required string OwnerId { get; init; }
+            public required int SchemaVersion { get; init; }
             public required Guid TransactionId { get; init; }
             public required int ProfileId { get; init; }
             public required bool IsModded { get; init; }
@@ -1000,16 +1195,20 @@ namespace STS2RitsuLib.Saves.RawProgress
             private bool CanUpdate { get; }
             internal RecoveryJournalData Data { get; private set; }
 
+            internal string RecoveryToken => ComputeSha256(JsonSerializer.Serialize(Data, JournalJsonOptions));
+
             internal bool Exists => FileOperations.FileExists(BasePath) ||
                                     FileOperations.FileExists(BasePath + ".backup") ||
                                     FileOperations.FileExists(BasePath + ".backup.backup");
 
             internal static RecoveryJournal Create(RawProgressCommitRequest request, string originalRawJson)
             {
-                var path = $"{GetRecoveryDirectory()}/{request.TransactionId:N}.json";
+                var path = GetRecoveryPath(request.OwnerId, request.TransactionId);
                 return new(path, path, new()
                 {
                     JournalProtocolVersion = ProtocolVersion,
+                    OwnerId = request.OwnerId,
+                    SchemaVersion = request.SchemaVersion,
                     TransactionId = request.TransactionId,
                     ProfileId = request.ExpectedGeneration.ProfileId,
                     IsModded = request.ExpectedGeneration.IsModded,
@@ -1021,20 +1220,26 @@ namespace STS2RitsuLib.Saves.RawProgress
                 });
             }
 
-            internal static RawProgressRecoveryReadResult ReadAll()
+            internal static RawProgressRecoveryReadResult ReadAll(string ownerId)
             {
-                if (!TryEnumerateTransactionIds(out var transactionIds, out var invalidEntryCount))
+                var ownerStorageId = ComputeOwnerStorageId(ownerId);
+                if (!TryEnumerateJournalKeys(out var journalKeys, out var invalidFiles))
                     return new()
                     {
+                        OwnerId = ownerId,
                         Outcome = RawProgressRecoveryReadOutcome.StorageUnavailable,
                         Records = [],
-                        InvalidEntryCount = invalidEntryCount,
+                        InvalidEntryCount = CountInvalidOwnerFiles(invalidFiles, ownerStorageId),
                     };
 
-                var records = new List<RawProgressRecoveryRecord>(transactionIds.Count);
-                foreach (var transactionId in transactionIds)
+                var ownerKeys = journalKeys
+                    .Where(key => string.Equals(key.OwnerStorageId, ownerStorageId, StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+                var invalidEntryCount = CountInvalidOwnerFiles(invalidFiles, ownerStorageId);
+                var records = new List<RawProgressRecoveryRecord>(ownerKeys.Length);
+                foreach (var key in ownerKeys)
                 {
-                    var outcome = TryLoad(transactionId, out var journal);
+                    var outcome = TryLoadKey(key, ownerId, out var journal);
                     if (outcome != RecoveryJournalLoadOutcome.Succeeded || journal == null)
                     {
                         invalidEntryCount++;
@@ -1047,6 +1252,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                 records.Sort(static (left, right) => left.TransactionId.CompareTo(right.TransactionId));
                 return new()
                 {
+                    OwnerId = ownerId,
                     Outcome = invalidEntryCount == 0
                         ? RawProgressRecoveryReadOutcome.Succeeded
                         : RawProgressRecoveryReadOutcome.InvalidEntriesIgnored,
@@ -1056,35 +1262,50 @@ namespace STS2RitsuLib.Saves.RawProgress
             }
 
             internal static RecoveryJournalLoadOutcome TryLoad(
+                string ownerId,
                 Guid transactionId,
                 out RecoveryJournal? journal)
             {
-                journal = null;
-                if (transactionId == Guid.Empty)
+                if (!IsValidOwnerId(ownerId) || transactionId == Guid.Empty)
+                {
+                    journal = null;
                     return RecoveryJournalLoadOutcome.Invalid;
+                }
 
-                var basePath = $"{GetRecoveryDirectory()}/{transactionId:N}.json";
+                var key = new RecoveryJournalKey(ComputeOwnerStorageId(ownerId), transactionId);
+                return TryLoadKey(key, ownerId, out journal);
+            }
+
+            private static RecoveryJournalLoadOutcome TryLoadKey(
+                RecoveryJournalKey key,
+                string? expectedOwnerId,
+                out RecoveryJournal? journal)
+            {
+                journal = null;
+                var basePath = GetRecoveryPath(key);
                 var primaryExists = FileOperations.FileExists(basePath);
                 var backupPath = basePath + ".backup";
                 var backupExists = FileOperations.FileExists(backupPath);
                 var secondBackupPath = backupPath + ".backup";
                 var secondBackupExists = FileOperations.FileExists(secondBackupPath);
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
                 if (!primaryExists && !backupExists && !secondBackupExists)
                     return RecoveryJournalLoadOutcome.NotFound;
 
-                if (primaryExists && TryReadData(basePath, transactionId, out var primaryData))
+                if (primaryExists && TryReadData(basePath, key, expectedOwnerId, out var primaryData))
                 {
                     journal = new(basePath, basePath, primaryData);
                     return RecoveryJournalLoadOutcome.Succeeded;
                 }
 
-                if (backupExists && TryReadData(backupPath, transactionId, out var backupData))
+                if (backupExists && TryReadData(backupPath, key, expectedOwnerId, out var backupData))
                 {
                     journal = new(basePath, backupPath, backupData);
                     return RecoveryJournalLoadOutcome.Succeeded;
                 }
 
-                if (secondBackupExists && TryReadData(secondBackupPath, transactionId, out var secondBackupData))
+                if (secondBackupExists && TryReadData(secondBackupPath, key, expectedOwnerId,
+                        out var secondBackupData))
                 {
                     journal = new(basePath, secondBackupPath, secondBackupData, false);
                     return RecoveryJournalLoadOutcome.Succeeded;
@@ -1095,7 +1316,9 @@ namespace STS2RitsuLib.Saves.RawProgress
 
             internal bool TryPrepare()
             {
-                if (Exists || CountRetainedJournals() >= MaxRetainedRecoveryJournals)
+                if (!TryMaintainAndCountRetainedJournals(out var retainedJournalCount) ||
+                    Exists ||
+                    retainedJournalCount >= MaxRetainedRecoveryJournals)
                     return false;
 
                 return TryWrite();
@@ -1153,18 +1376,13 @@ namespace STS2RitsuLib.Saves.RawProgress
                 }
             }
 
-            private static int CountRetainedJournals()
-            {
-                return TryEnumerateTransactionIds(out var transactionIds, out var invalidEntryCount)
-                    ? transactionIds.Count + invalidEntryCount
-                    : MaxRetainedRecoveryJournals;
-            }
-
             private RawProgressRecoveryRecord ToRecord()
             {
                 _ = TryParseStage(Data.Stage, out var stage);
                 return new()
                 {
+                    OwnerId = Data.OwnerId,
+                    SchemaVersion = Data.SchemaVersion,
                     TransactionId = Data.TransactionId,
                     ProfileId = Data.ProfileId,
                     IsModded = Data.IsModded,
@@ -1172,12 +1390,167 @@ namespace STS2RitsuLib.Saves.RawProgress
                     Stage = stage,
                     OriginalSha256 = Data.OriginalSha256,
                     ProposedSha256 = Data.ProposedSha256,
+                    RecoveryToken = RecoveryToken,
                 };
+            }
+
+            private static bool TryMaintainAndCountRetainedJournals(out int retainedJournalCount)
+            {
+                retainedJournalCount = 0;
+                if (!TryEnumerateJournalKeys(out var journalKeys, out var invalidFiles))
+                    return false;
+
+                var recoveryDirectory = GetRecoveryDirectory();
+                foreach (var invalidFile in invalidFiles)
+                    _ = TryQuarantineFile($"{recoveryDirectory}/{invalidFile}");
+
+                foreach (var key in journalKeys)
+                {
+                    var outcome = TryLoadKey(key, null, out _);
+                    switch (outcome)
+                    {
+                        case RecoveryJournalLoadOutcome.Succeeded:
+                            retainedJournalCount++;
+                            break;
+                        case RecoveryJournalLoadOutcome.Invalid:
+                            TryQuarantineJournal(key);
+                            break;
+                    }
+                }
+
+                return true;
+            }
+
+            private static void TryQuarantineJournal(RecoveryJournalKey key)
+            {
+                var basePath = GetRecoveryPath(key);
+                var paths = new[]
+                {
+                    basePath,
+                    basePath + ".backup",
+                    basePath + ".tmp",
+                    basePath + ".backup.backup",
+                    basePath + ".backup.tmp",
+                    basePath + ".backup.backup.backup",
+                    basePath + ".backup.backup.tmp",
+                };
+                foreach (var path in paths)
+                    _ = TryQuarantineFile(path);
+            }
+
+            private static bool TryQuarantineFile(string sourcePath)
+            {
+                if (!FileOperations.FileExists(sourcePath))
+                    return true;
+                if (!TryGetFileLength(sourcePath, out var sourceLength) ||
+                    !TryGetQuarantineUsage(out var quarantineFileCount, out var quarantineBytes) ||
+                    quarantineFileCount >= MaxQuarantinedRecoveryFiles ||
+                    sourceLength > MaxQuarantinedRecoveryBytes - quarantineBytes)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RawProgress] Could not quarantine invalid recovery data at '{sourcePath}' within limits.");
+                    return false;
+                }
+
+                var quarantineDirectory = GetRecoveryQuarantineDirectory();
+                if (!DirAccess.DirExistsAbsolute(quarantineDirectory))
+                {
+                    var createError = DirAccess.MakeDirRecursiveAbsolute(quarantineDirectory);
+                    if (createError != Error.Ok)
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[RawProgress] Could not create the recovery quarantine (Error: {createError}).");
+                        return false;
+                    }
+                }
+
+                var destinationPath =
+                    $"{quarantineDirectory}/{DateTime.UtcNow.Ticks}-{Guid.NewGuid():N}.invalid";
+                var renameError = DirAccess.RenameAbsolute(sourcePath, destinationPath);
+                if (renameError != Error.Ok)
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RawProgress] Could not quarantine invalid recovery data at '{sourcePath}' " +
+                        $"(Error: {renameError}).");
+                    return false;
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[RawProgress] Quarantined invalid recovery data from '{sourcePath}'.");
+                return true;
+            }
+
+            private static bool TryGetQuarantineUsage(out int fileCount, out long totalBytes)
+            {
+                fileCount = 0;
+                totalBytes = 0;
+                var quarantineDirectory = GetRecoveryQuarantineDirectory();
+                if (!DirAccess.DirExistsAbsolute(quarantineDirectory))
+                    return true;
+
+                try
+                {
+                    using var directory = DirAccess.Open(quarantineDirectory);
+                    if (directory == null)
+                        return false;
+
+                    foreach (var file in directory.GetFiles())
+                    {
+                        fileCount++;
+                        if (fileCount > MaxQuarantinedRecoveryFiles ||
+                            !TryGetFileLength($"{quarantineDirectory}/{file}", out var length) ||
+                            length > MaxQuarantinedRecoveryBytes - totalBytes)
+                            return false;
+
+                        totalBytes += length;
+                    }
+
+                    return true;
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RawProgress] Could not inspect the recovery quarantine: {ex.Message}");
+                    return false;
+                }
+            }
+
+            private static bool TryGetFileLength(string path, out long length)
+            {
+                length = 0;
+                try
+                {
+                    using var file = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
+                    if (file == null)
+                        return false;
+
+                    var rawLength = file.GetLength();
+                    if (rawLength > long.MaxValue)
+                        return false;
+
+                    length = (long)rawLength;
+                    return true;
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[RawProgress] Could not inspect recovery data at '{path}': {ex.Message}");
+                    return false;
+                }
+            }
+
+            private static int CountInvalidOwnerFiles(IEnumerable<string> invalidFiles, string ownerStorageId)
+            {
+                var ownerPrefix = ownerStorageId + "-";
+                return invalidFiles.Count(file =>
+                    TryStripRecoverySuffix(file, out var stem) &&
+                    stem.StartsWith(ownerPrefix, StringComparison.OrdinalIgnoreCase));
             }
 
             private static bool TryReadData(
                 string path,
-                Guid expectedTransactionId,
+                RecoveryJournalKey key,
+                string? expectedOwnerId,
                 out RecoveryJournalData data)
             {
                 data = null!;
@@ -1188,7 +1561,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                 try
                 {
                     var candidate = JsonSerializer.Deserialize<RecoveryJournalData>(read.Content, JournalJsonOptions);
-                    if (!IsValid(candidate, expectedTransactionId))
+                    if (!IsValid(candidate, key, expectedOwnerId))
                         return false;
 
                     data = candidate!;
@@ -1202,11 +1575,19 @@ namespace STS2RitsuLib.Saves.RawProgress
                 }
             }
 
-            private static bool IsValid(RecoveryJournalData? data, Guid expectedTransactionId)
+            private static bool IsValid(
+                RecoveryJournalData? data,
+                RecoveryJournalKey key,
+                string? expectedOwnerId)
             {
-                if (data == null ||
-                    data.JournalProtocolVersion != ProtocolVersion ||
-                    data.TransactionId != expectedTransactionId ||
+                if (data is not { JournalProtocolVersion: ProtocolVersion } ||
+                    !IsValidOwnerId(data.OwnerId) ||
+                    !string.Equals(ComputeOwnerStorageId(data.OwnerId), key.OwnerStorageId,
+                        StringComparison.OrdinalIgnoreCase) ||
+                    expectedOwnerId != null &&
+                    !string.Equals(data.OwnerId, expectedOwnerId, StringComparison.Ordinal) ||
+                    data.SchemaVersion < 1 ||
+                    data.TransactionId != key.TransactionId ||
                     data.ProfileId is < 1 or > 3 ||
                     string.IsNullOrWhiteSpace(data.ProgressUniqueId) ||
                     data.ProgressUniqueId.Length > 256 ||
@@ -1223,7 +1604,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                         out var schema,
                         out var uniqueId,
                         out var originalBytes) ||
-                    schema != SupportedSchema ||
+                    schema != data.SchemaVersion ||
                     originalBytes.LongLength > MaxDocumentUtf8Bytes ||
                     !HashEquals(ComputeSha256(originalBytes), data.OriginalSha256) ||
                     !string.Equals(uniqueId, data.ProgressUniqueId, StringComparison.Ordinal))
@@ -1246,13 +1627,51 @@ namespace STS2RitsuLib.Saves.RawProgress
                     "verification_incomplete";
             }
 
-            private static bool TryEnumerateTransactionIds(
-                out HashSet<Guid> transactionIds,
-                out int invalidEntryCount)
+            private static bool TryStripRecoverySuffix(string fileName, out string stem)
             {
-                transactionIds = [];
-                invalidEntryCount = 0;
-                var invalidNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var suffix in new[]
+                         {
+                             ".json.backup.backup.backup",
+                             ".json.backup.backup.tmp",
+                             ".json.backup.backup",
+                             ".json.backup.tmp",
+                             ".json.backup",
+                             ".json.tmp",
+                             ".json",
+                         })
+                {
+                    if (!fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    stem = fileName[..^suffix.Length];
+                    return true;
+                }
+
+                stem = string.Empty;
+                return false;
+            }
+
+            private static bool TryParseJournalKey(string stem, out RecoveryJournalKey key)
+            {
+                key = default;
+                if (stem.Length != 97 || stem[64] != '-')
+                    return false;
+
+                var ownerStorageId = stem[..64];
+                if (!IsSha256(ownerStorageId) ||
+                    !Guid.TryParseExact(stem[65..], "N", out var transactionId))
+                    return false;
+
+                key = new(ownerStorageId.ToLowerInvariant(), transactionId);
+                return true;
+            }
+
+            private static bool TryEnumerateJournalKeys(
+                out HashSet<RecoveryJournalKey> journalKeys,
+                out HashSet<string> invalidFiles)
+            {
+                journalKeys = [];
+                invalidFiles = new(StringComparer.OrdinalIgnoreCase);
                 var recoveryDirectory = GetRecoveryDirectory();
                 try
                 {
@@ -1263,32 +1682,31 @@ namespace STS2RitsuLib.Saves.RawProgress
                     if (directory == null)
                         return false;
 
+                    var fileCount = 0;
                     foreach (var file in directory.GetFiles())
                     {
-                        string? transactionText = null;
-                        if (file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                            transactionText = file[..^".json".Length];
-                        else if (file.EndsWith(".json.backup", StringComparison.OrdinalIgnoreCase))
-                            transactionText = file[..^".json.backup".Length];
-                        else if (file.EndsWith(".json.backup.backup", StringComparison.OrdinalIgnoreCase))
-                            transactionText = file[..^".json.backup.backup".Length];
+                        fileCount++;
+                        if (fileCount > MaxRecoveryDirectoryFiles)
+                            return false;
 
-                        if (transactionText == null)
+                        if (!TryStripRecoverySuffix(file, out var stem))
+                        {
+                            invalidFiles.Add(file);
                             continue;
-                        if (Guid.TryParseExact(transactionText, "N", out var transactionId))
-                            transactionIds.Add(transactionId);
+                        }
+
+                        if (TryParseJournalKey(stem, out var key))
+                            journalKeys.Add(key);
                         else
-                            invalidNames.Add(transactionText);
+                            invalidFiles.Add(file);
                     }
 
-                    invalidEntryCount = invalidNames.Count;
                     return true;
                 }
                 catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     RitsuLibFramework.Logger.Warn(
                         $"[RawProgress] Failed to enumerate retained recovery journals: {ex.Message}");
-                    invalidEntryCount = invalidNames.Count;
                     return false;
                 }
             }

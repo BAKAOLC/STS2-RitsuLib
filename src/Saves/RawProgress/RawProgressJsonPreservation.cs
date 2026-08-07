@@ -71,15 +71,15 @@ namespace STS2RitsuLib.Saves.RawProgress
 
         private static void MergeUnknown(JsonNode? raw, JsonNode? baseline, JsonNode? current)
         {
-            if (raw is JsonObject rawObject && baseline is JsonObject baselineObject &&
-                current is JsonObject currentObject)
+            switch (raw, baseline, current)
             {
-                MergeUnknownObject(rawObject, baselineObject, currentObject);
-                return;
+                case (JsonObject rawObject, JsonObject baselineObject, JsonObject currentObject):
+                    MergeUnknownObject(rawObject, baselineObject, currentObject);
+                    break;
+                case (JsonArray rawArray, JsonArray baselineArray, JsonArray currentArray):
+                    MergeUnknownArray(rawArray, baselineArray, currentArray);
+                    break;
             }
-
-            if (raw is JsonArray rawArray && baseline is JsonArray baselineArray && current is JsonArray currentArray)
-                MergeUnknownArray(rawArray, baselineArray, currentArray);
         }
 
         private static void MergeUnknownObject(
@@ -300,7 +300,7 @@ namespace STS2RitsuLib.Saves.RawProgress
 
         private sealed class PreservationState
         {
-            private readonly object _syncRoot = new();
+            private readonly Lock _syncRoot = new();
             private JsonNode _knownBaseline;
             private JsonNode _rawDocument;
 
