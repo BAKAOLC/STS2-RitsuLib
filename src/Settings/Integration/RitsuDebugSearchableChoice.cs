@@ -1,4 +1,5 @@
 ﻿using Godot;
+using STS2RitsuLib.Search;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -6,7 +7,11 @@ namespace STS2RitsuLib.Settings
     internal sealed record RitsuDebugSearchableChoiceOption(
         string Id,
         string Label,
-        string? SearchText = null);
+        string? SearchText = null)
+    {
+        internal string CombinedSearchText { get; } = $"{Label} {Id} {SearchText}";
+        internal RitsuSearchPreparedText PreparedSearchText { get; } = new($"{Label} {Id} {SearchText}");
+    }
 
     // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugSearchableChoice : VBoxContainer
@@ -171,8 +176,8 @@ namespace STS2RitsuLib.Settings
             foreach (var (id, button) in _optionButtons)
             {
                 var option = _options[id];
-                var searchText = $"{option.Label} {option.Id} {option.SearchText}";
-                var visible = terms.All(term => searchText.Contains(term, StringComparison.CurrentCultureIgnoreCase));
+                var visible = terms.All(term =>
+                    RitsuSearchMatcher.Contains(option.CombinedSearchText, term, option.PreparedSearchText));
                 button.Visible = visible;
                 if (visible)
                     visibleCount++;

@@ -5,6 +5,7 @@ using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Diagnostics.Logging;
 using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Search;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Utils.Persistence;
@@ -64,6 +65,7 @@ namespace STS2RitsuLib.Data
                                 new RitsuLibSettingsV16ToV17Migration(),
                             ]);
                         RitsuDebugToolsInterfaceStateStore.Register(Store);
+                        RitsuSearchSettingsStore.Register(Store);
                         Store.Register<RitsuDebugStatePresetCollection>(
                             RitsuDebugStatePresetStore.DataKey,
                             RitsuDebugStatePresetStore.FileName,

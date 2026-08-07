@@ -114,10 +114,10 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         /// <summary>
         ///     <para xml:lang="en">
         ///         Returns whether <paramref name="partial" /> matches a resource ID, an unambiguous local ID, or a
-        ///         localized title.
+        ///         localized title or one of its enabled search expansions.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         返回 <paramref name="partial" /> 是否匹配资源 ID、无歧义的本地 ID 或本地化标题。
+        ///         返回 <paramref name="partial" /> 是否匹配资源 ID、无歧义的本地 ID、本地化标题或已启用搜索扩展。
         ///     </para>
         /// </summary>
         public static bool MatchesResourceIdOrTitle(string resourceId, string partial)
@@ -132,8 +132,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             var title = TryGetLocalizedTitle(definition);
             return definition.Id.StartsWith(normalizedPartial, StringComparison.OrdinalIgnoreCase) ||
                    definition.LocalId.StartsWith(normalizedPartial, StringComparison.OrdinalIgnoreCase) ||
-                   (!string.IsNullOrWhiteSpace(title) &&
-                    title.Contains(normalizedPartial, StringComparison.OrdinalIgnoreCase));
+                   DevConsoleAutocompleteMatchExtensions.MatchesLocalizedText(title, normalizedPartial);
         }
     }
 }

@@ -1,3 +1,5 @@
+using STS2RitsuLib.Search;
+
 namespace STS2RitsuLib.Settings
 {
     internal sealed record ModSettingsSearchResult(
@@ -5,7 +7,12 @@ namespace STS2RitsuLib.Settings
         string Path,
         string SearchText,
         ModSettingsLocation Location,
-        int Order);
+        int Order)
+    {
+        internal RitsuSearchPreparedText PreparedTitle { get; } = new(Title);
+        internal RitsuSearchPreparedText PreparedPath { get; } = new(Path);
+        internal RitsuSearchPreparedText PreparedSearchText { get; } = new(SearchText);
+    }
 
     internal static class ModSettingsSearchIndex
     {
@@ -158,9 +165,30 @@ namespace STS2RitsuLib.Settings
                 }
 
                 var searchIndex = result.SearchText.IndexOf(term, StringComparison.OrdinalIgnoreCase);
-                if (searchIndex < 0)
+                if (searchIndex >= 0)
+                {
+                    score += 80 + searchIndex;
+                    continue;
+                }
+
+                var expandedTitleScore = result.PreparedTitle.ScoreExpansion(term);
+                if (expandedTitleScore >= 0)
+                {
+                    score += 100 + expandedTitleScore;
+                    continue;
+                }
+
+                var expandedPathScore = result.PreparedPath.ScoreExpansion(term);
+                if (expandedPathScore >= 0)
+                {
+                    score += 140 + expandedPathScore;
+                    continue;
+                }
+
+                var expandedSearchScore = result.PreparedSearchText.ScoreExpansion(term);
+                if (expandedSearchScore < 0)
                     return -1;
-                score += 80 + searchIndex;
+                score += 180 + expandedSearchScore;
             }
 
             return score;

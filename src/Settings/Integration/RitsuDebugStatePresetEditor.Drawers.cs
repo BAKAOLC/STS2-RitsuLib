@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Diagnostics.DebugTools;
+using STS2RitsuLib.Search;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -120,6 +121,9 @@ namespace STS2RitsuLib.Settings
             _drawerTitle.Text = title;
             ClearChildren(_drawerBody);
             var models = source.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
+            var searchIndexes = models.ToDictionary(
+                static model => model,
+                model => new RitsuSearchPreparedText($"{SafeTitle(model)} {model.Id}"));
             var search = new LineEdit
             {
                 PlaceholderText = L("ritsulib.debugTools.statePresets.search", "Search by name or ID"),
@@ -150,7 +154,8 @@ namespace STS2RitsuLib.Settings
                                                         SafeTitle(model).Contains(normalized,
                                                             StringComparison.CurrentCultureIgnoreCase) ||
                                                         model.Id.ToString().Contains(normalized,
-                                                            StringComparison.OrdinalIgnoreCase)))
+                                                            StringComparison.OrdinalIgnoreCase) ||
+                                                        searchIndexes[model].ScoreExpansion(normalized) >= 0))
                     .ToArray();
                 var matches = allMatches.Take(120).ToArray();
                 result.Text = allMatches.Length == matches.Length

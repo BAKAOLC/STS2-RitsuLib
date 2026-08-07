@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Search;
 
 namespace STS2RitsuLib.Ui.Catalog
 {
@@ -154,6 +155,8 @@ namespace STS2RitsuLib.Ui.Catalog
     /// </summary>
     public sealed class RitsuCatalogItem
     {
+        private RitsuSearchPreparedText? _preparedSearchText;
+
         /// <summary>
         ///     <para xml:lang="en">The maximum supported length of an item ID.</para>
         ///     <para xml:lang="zh-CN">目录项 ID 支持的最大长度。</para>
@@ -357,10 +360,21 @@ namespace STS2RitsuLib.Ui.Catalog
 
         private bool Matches(string term)
         {
-            return Title.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                   (Subtitle?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                   (SearchText?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
-                   Id.Contains(term, StringComparison.OrdinalIgnoreCase);
+            if (Title.Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
+                (Subtitle?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                (SearchText?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false) ||
+                Id.Contains(term, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var prepared = Volatile.Read(ref _preparedSearchText);
+            if (prepared == null)
+            {
+                var created = new RitsuSearchPreparedText(
+                    string.Join('\n', [Title, Subtitle ?? string.Empty, SearchText ?? string.Empty, Id]));
+                prepared = Interlocked.CompareExchange(ref _preparedSearchText, created, null) ?? created;
+            }
+
+            return prepared.ScoreExpansion(term) >= 0;
         }
 
         private static string ValidateRequired(string value, string parameterName, int maximumLength)
