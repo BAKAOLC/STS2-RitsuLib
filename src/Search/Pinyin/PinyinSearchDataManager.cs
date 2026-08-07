@@ -607,7 +607,7 @@ namespace STS2RitsuLib.Search.Pinyin
             internal void CompleteSuccess()
             {
                 Complete(new RitsuToastRequest(
-                        L("ritsulib.searchExtensions.operation.success", "Pinyin data operation completed."),
+                        L("ritsulib.searchExtensions.operation.success", "Pinyin search is ready."),
                         L("ritsulib.searchExtensions.pinyin.toast.title", "Mandarin pinyin"))
                     .WithProgress(1f)
                     .Persistent(false));
@@ -616,7 +616,7 @@ namespace STS2RitsuLib.Search.Pinyin
             internal void CompleteFailure(Exception exception)
             {
                 var body = string.Format(
-                    L("ritsulib.searchExtensions.operation.failed", "Pinyin data operation failed: {0}"),
+                    L("ritsulib.searchExtensions.operation.failed", "Pinyin search could not be prepared: {0}"),
                     exception.Message);
                 Complete(RitsuToastRequest.Warning(
                         body,
@@ -651,16 +651,16 @@ namespace STS2RitsuLib.Search.Pinyin
                 {
                     PinyinSearchDataState.Downloading => string.Format(
                         L("ritsulib.searchExtensions.pinyin.toast.downloading",
-                            "Downloading Unicode {0}: {1} / {2}"),
+                            "Downloading: {1} / {2}"),
                         status.UnicodeVersion,
                         FormatBytes(status.BytesReceived),
                         FormatBytes(status.TotalBytes)),
                     PinyinSearchDataState.Generating =>
                         L("ritsulib.searchExtensions.pinyin.toast.generating",
-                            "Verifying the download and generating the local search cache..."),
+                            "Finishing setup..."),
                     PinyinSearchDataState.Loading =>
-                        L("ritsulib.searchExtensions.pinyin.toast.loading", "Loading the local search cache..."),
-                    _ => L("ritsulib.searchExtensions.pinyin.toast.preparing", "Preparing pinyin search data..."),
+                        L("ritsulib.searchExtensions.pinyin.toast.loading", "Loading pinyin search..."),
+                    _ => L("ritsulib.searchExtensions.pinyin.toast.preparing", "Preparing pinyin search..."),
                 };
 
                 var progress = status.State switch

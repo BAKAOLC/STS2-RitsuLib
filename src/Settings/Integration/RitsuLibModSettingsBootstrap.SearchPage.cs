@@ -13,13 +13,13 @@ namespace STS2RitsuLib.Settings
                 page => page
                     .AsChildOf(Const.ModId)
                     .WithSortOrder(-985)
-                    .WithTitle(T("ritsulib.page.searchExtensions.title", "Search providers"))
+                    .WithTitle(T("ritsulib.page.searchExtensions.title", "Search matching"))
                     .WithDescription(T("ritsulib.page.searchExtensions.description",
-                        "Choose optional local-search transliteration providers. Each built-in provider manages its own data and behavior."))
+                        "Enable optional ways to find text, such as Mandarin pinyin."))
                     .AddSection("built_in_search_providers", section => section
-                        .WithTitle(T("ritsulib.searchExtensions.builtIn.title", "Built-in providers"))
+                        .WithTitle(T("ritsulib.searchExtensions.builtIn.title", "Built-in options"))
                         .WithDescription(T("ritsulib.searchExtensions.builtIn.description",
-                            "Open a provider to initialize it and manage its settings."))
+                            "Choose an option to set it up or change its settings."))
                         .AddButton(
                             "pinyin_provider_open",
                             T("ritsulib.searchProviders.pinyin.name", "Mandarin pinyin"),
@@ -33,13 +33,13 @@ namespace STS2RitsuLib.Settings
                             "pinyin_provider_open",
                             static () => !PinyinSearchDataManager.GetStatus().IsBusy))
                     .AddSection("additional_search_providers", section => section
-                        .WithTitle(T("ritsulib.searchExtensions.additional.title", "Additional providers"))
+                        .WithTitle(T("ritsulib.searchExtensions.additional.title", "Added by mods"))
                         .WithDescription(T("ritsulib.searchExtensions.additional.description",
-                            "Providers registered by other mods can be enabled independently."))
+                            "Enable additional search options provided by other mods."))
                         .WithVisibleWhen(HasAdditionalSearchProviders)
                         .AddCustom(
                             "additional_provider_toggles",
-                            T("ritsulib.searchExtensions.additional.label", "Registered providers"),
+                            T("ritsulib.searchExtensions.additional.label", "Available options"),
                             CreateAdditionalProviderControls)),
                 "search-expansions");
 
@@ -81,7 +81,7 @@ namespace STS2RitsuLib.Settings
                         host.RequestRefresh();
                     });
                 container.AddChild(ModSettingsUiControlTheming.CreateCompactToggleField(
-                    $"{provider.DisplayName}\n{provider.Id} · {provider.ModId}",
+                    $"{provider.DisplayName}\n{FormatSearchProviderAudit(provider.Id, provider.ModId)}",
                     toggle));
             }
 
@@ -91,20 +91,26 @@ namespace STS2RitsuLib.Settings
         private static string FormatPinyinOverview()
         {
             var status = PinyinSearchDataManager.GetStatus();
+            string summary;
             if (status.IsBusy)
-                return L("ritsulib.searchExtensions.pinyin.overview.busy",
-                    "Initialization or maintenance is in progress.");
-            if (PinyinSearchDataManager.Data == null)
-                return L("ritsulib.searchExtensions.pinyin.overview.uninitialized",
-                    "Not initialized. Open to review the source and download the required data.");
+                summary = L("ritsulib.searchExtensions.pinyin.overview.busy",
+                    "Working...");
+            else if (PinyinSearchDataManager.Data == null)
+                summary = L("ritsulib.searchExtensions.pinyin.overview.uninitialized",
+                    "Not set up. Select Initialize to use pinyin search.");
+            else
+                summary = RitsuSearchSettingsStore.IsProviderEnabled(PinyinSearchExpansionProvider.ProviderId, false)
+                    ? L("ritsulib.searchExtensions.pinyin.overview.enabled", "Ready and enabled")
+                    : L("ritsulib.searchExtensions.pinyin.overview.disabled", "Ready but disabled");
 
-            return RitsuSearchSettingsStore.IsProviderEnabled(PinyinSearchExpansionProvider.ProviderId, false)
-                ? string.Format(
-                    L("ritsulib.searchExtensions.pinyin.overview.enabled", "Enabled · Unicode {0}"),
-                    status.UnicodeVersion)
-                : string.Format(
-                    L("ritsulib.searchExtensions.pinyin.overview.disabled", "Ready but disabled · Unicode {0}"),
-                    status.UnicodeVersion);
+            return $"{summary}\n{FormatSearchProviderAudit(PinyinSearchExpansionProvider.ProviderId, Const.ModId)}";
+        }
+
+        private static string FormatSearchProviderAudit(string providerId, string ownerModId)
+        {
+            return
+                $"{L("ritsulib.searchExtensions.audit.providerId", "Provider ID")}: {providerId} · " +
+                $"{L("ritsulib.searchExtensions.audit.ownerModId", "Mod ID")}: {ownerModId}";
         }
     }
 }

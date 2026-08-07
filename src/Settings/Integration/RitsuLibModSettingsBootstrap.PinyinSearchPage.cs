@@ -16,7 +16,7 @@ namespace STS2RitsuLib.Settings
                     .WithSortOrder(-1000)
                     .WithTitle(T("ritsulib.searchExtensions.pinyin.page.title", "Mandarin pinyin"))
                     .WithDescription(T("ritsulib.searchExtensions.pinyin.page.description",
-                        "Initialize and configure pinyin matching for RitsuLib local searches."))
+                        "Find Chinese text using full pinyin or initials."))
                     .AddSection("pinyin_status", section => section
                         .WithTitle(T("ritsulib.searchExtensions.pinyin.status.title", "Status"))
                         .AddParagraph(
@@ -31,7 +31,7 @@ namespace STS2RitsuLib.Settings
                             RequestPinyinInitialization,
                             ModSettingsButtonTone.Accent,
                             T("ritsulib.searchExtensions.pinyin.initialize.description",
-                                "Downloads the verified Unicode source and generates the local search cache after confirmation."))
+                                "Downloads the data needed for pinyin search."))
                         .WithEntryVisibleWhen("pinyin_initialize", static () => PinyinSearchDataManager.Data == null)
                         .WithEntryEnabledWhen("pinyin_initialize",
                             static () => !PinyinSearchDataManager.GetStatus().IsBusy)
@@ -40,58 +40,58 @@ namespace STS2RitsuLib.Settings
                             T("ritsulib.searchExtensions.pinyin.enabled.label", "Use pinyin in local searches"),
                             ui.PinyinSearchEnabled,
                             T("ritsulib.searchExtensions.pinyin.enabled.description",
-                                "Adds full pinyin, alternate readings, and initials without changing original-text matching."))
+                                "Matches Chinese text by full pinyin, alternate readings, or initials."))
                         .WithEntryVisibleWhen("pinyin_search_enabled",
                             static () => PinyinSearchDataManager.Data != null))
                     .AddSection("pinyin_acquisition", section => section
-                        .WithTitle(T("ritsulib.searchExtensions.pinyin.acquisition.title", "Data acquisition"))
+                        .WithTitle(T("ritsulib.searchExtensions.pinyin.acquisition.title", "Downloads"))
                         .WithDescription(T("ritsulib.searchExtensions.pinyin.acquisition.description",
-                            "The reading table is never bundled with RitsuLib. Downloads use the pinned source shown below."))
+                            "Choose how pinyin search data is downloaded and kept."))
                         .AddToggle(
                             "pinyin_automatic_downloads",
-                            T("ritsulib.searchExtensions.autoDownload.label", "Automatically restore missing data"),
+                            T("ritsulib.searchExtensions.autoDownload.label", "Restore missing data automatically"),
                             ui.PinyinAutomaticDownloads,
                             T("ritsulib.searchExtensions.autoDownload.description",
-                                "When pinyin search is enabled, fetch and regenerate its data on startup if the local cache is missing."))
+                                "Redownload it on startup when pinyin search is enabled and its data is missing."))
                         .AddToggle(
                             "pinyin_keep_source",
-                            T("ritsulib.searchExtensions.keepSource.label", "Keep downloaded Unicode source archive"),
+                            T("ritsulib.searchExtensions.keepSource.label", "Keep download for offline repair"),
                             ui.PinyinKeepSourceArchive,
                             T("ritsulib.searchExtensions.keepSource.description",
-                                "Retain the verified source archive so the compact cache can be regenerated without another download."))
+                                "Lets you repair pinyin search later without downloading again."))
                         .AddParagraph(
                             "pinyin_source",
                             ModSettingsText.Dynamic(FormatPinyinSource))
                         .AddButton(
                             "pinyin_open_source",
-                            T("ritsulib.searchExtensions.source.label", "Official Unicode source"),
-                            T("ritsulib.searchExtensions.openSource.button", "Open source"),
+                            T("ritsulib.searchExtensions.source.label", "Official download"),
+                            T("ritsulib.searchExtensions.openSource.button", "Open"),
                             () => OS.ShellOpen(source.SourceUri.AbsoluteUri),
                             ModSettingsButtonTone.Normal,
                             T("ritsulib.searchExtensions.source.openDescription",
-                                "Opens the exact source URL in your browser.")))
+                                "Opens the exact Unicode download URL in your browser.")))
                     .AddSection("pinyin_maintenance", section => section
-                        .WithTitle(T("ritsulib.searchExtensions.pinyin.maintenance.title", "Data maintenance"))
+                        .WithTitle(T("ritsulib.searchExtensions.pinyin.maintenance.title", "Repair or remove"))
                         .WithDescription(T("ritsulib.searchExtensions.pinyin.maintenance.description",
-                            "Reload, regenerate, or remove data after initialization."))
+                            "Repair pinyin search or remove its downloaded data."))
                         .WithVisibleWhen(HasPinyinCache)
                         .AddButton(
                             "pinyin_reload",
-                            T("ritsulib.searchExtensions.pinyin.reload.label", "Reload pinyin data"),
-                            T("ritsulib.searchExtensions.pinyin.reload.button", "Reload..."),
+                            T("ritsulib.searchExtensions.pinyin.reload.label", "Repair with a fresh download"),
+                            T("ritsulib.searchExtensions.pinyin.reload.button", "Repair..."),
                             RequestPinyinReload,
                             ModSettingsButtonTone.Normal,
                             T("ritsulib.searchExtensions.pinyin.reload.description",
-                                "Verifies the retained source or downloads it again, then replaces the generated cache."))
+                                "Downloads a fresh copy and restores pinyin search."))
                         .WithEntryEnabledWhen("pinyin_reload", static () => !PinyinSearchDataManager.GetStatus().IsBusy)
                         .AddButton(
                             "pinyin_rebuild",
-                            T("ritsulib.searchExtensions.pinyin.rebuild.label", "Regenerate from retained source"),
-                            T("ritsulib.searchExtensions.rebuild.button", "Regenerate"),
+                            T("ritsulib.searchExtensions.pinyin.rebuild.label", "Repair without downloading"),
+                            T("ritsulib.searchExtensions.rebuild.button", "Repair"),
                             host => RunPinyinOperation(host, PinyinSearchDataManager.RebuildFromCachedSourceAsync),
                             ModSettingsButtonTone.Normal,
                             T("ritsulib.searchExtensions.pinyin.rebuild.description",
-                                "Rebuilds the generated cache without downloading the source again."))
+                                "Uses the saved download to restore pinyin search."))
                         .WithEntryVisibleWhen("pinyin_rebuild",
                             static () => PinyinSearchDataManager.GetStatus().SourceArchiveCached)
                         .WithEntryEnabledWhen("pinyin_rebuild",
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Settings
                             RequestPinyinRemoval,
                             ModSettingsButtonTone.Danger,
                             T("ritsulib.searchExtensions.pinyin.remove.description",
-                                "Disables pinyin search and removes its generated cache and retained source."))
+                                "Turns off pinyin search and deletes its downloaded data."))
                         .WithEntryEnabledWhen("pinyin_remove",
                             static () => !PinyinSearchDataManager.GetStatus().IsBusy)),
                 "search-expansions-pinyin");
@@ -117,10 +117,10 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.searchExtensions.pinyin.initialize.dialog.title", "Initialize Mandarin pinyin?"),
                 string.Format(
                     L("ritsulib.searchExtensions.pinyin.initialize.dialog.body",
-                        "RitsuLib will download Unicode {0} Unihan.zip ({1}) from unicode.org, verify it, and generate a local search cache. Continue?"),
+                        "Download {1} of official Unicode {0} data to enable pinyin search?"),
                     source.UnicodeVersion,
                     FormatBytes(source.ExpectedLength)),
-                L("ritsulib.searchExtensions.pinyin.initialize.dialog.confirm", "Download and initialize"),
+                L("ritsulib.searchExtensions.pinyin.initialize.dialog.confirm", "Download and enable"),
                 false,
                 () => RunPinyinOperation(
                     host,
@@ -134,10 +134,10 @@ namespace STS2RitsuLib.Settings
         {
             ShowPinyinConfirmation(
                 host,
-                L("ritsulib.searchExtensions.pinyin.reload.dialog.title", "Reload Mandarin pinyin data?"),
+                L("ritsulib.searchExtensions.pinyin.reload.dialog.title", "Repair pinyin search?"),
                 L("ritsulib.searchExtensions.pinyin.reload.dialog.body",
-                    "The current generated cache will be replaced after the pinned source is verified or downloaded again."),
-                L("ritsulib.searchExtensions.pinyin.reload.dialog.confirm", "Reload data"),
+                    "Download a fresh copy of the required data?"),
+                L("ritsulib.searchExtensions.pinyin.reload.dialog.confirm", "Download and repair"),
                 false,
                 () => RunPinyinOperation(
                     host,
@@ -148,9 +148,9 @@ namespace STS2RitsuLib.Settings
         {
             ShowPinyinConfirmation(
                 host,
-                L("ritsulib.searchExtensions.pinyin.remove.dialog.title", "Remove Mandarin pinyin data?"),
+                L("ritsulib.searchExtensions.pinyin.remove.dialog.title", "Remove pinyin search data?"),
                 L("ritsulib.searchExtensions.pinyin.remove.dialog.body",
-                    "Pinyin matching will be disabled. The generated cache and any retained Unicode source archive will be removed."),
+                    "Pinyin search will be turned off and its downloaded data will be deleted."),
                 L("ritsulib.searchExtensions.pinyin.remove.dialog.confirm", "Remove data"),
                 true,
                 () => RunPinyinOperation(
@@ -225,21 +225,19 @@ namespace STS2RitsuLib.Settings
             var state = status.State switch
             {
                 PinyinSearchDataState.NotInstalled =>
-                    L("ritsulib.searchExtensions.status.notInstalled", "Uninitialized"),
+                    L("ritsulib.searchExtensions.status.notInstalled", "Not set up"),
                 PinyinSearchDataState.Loading =>
-                    L("ritsulib.searchExtensions.status.loading", "Loading local cache"),
+                    L("ritsulib.searchExtensions.status.loading", "Loading"),
                 PinyinSearchDataState.Downloading => string.Format(
                     L("ritsulib.searchExtensions.status.downloading", "Downloading: {0} / {1}"),
                     FormatBytes(status.BytesReceived),
                     FormatBytes(status.TotalBytes)),
                 PinyinSearchDataState.Generating =>
-                    L("ritsulib.searchExtensions.status.generating", "Generating local search cache"),
-                PinyinSearchDataState.Ready => string.Format(
-                    L("ritsulib.searchExtensions.status.ready", "Ready · Unicode {0} · cached {1}"),
-                    status.UnicodeVersion,
-                    FormatBytes(status.CacheBytes)),
+                    L("ritsulib.searchExtensions.status.generating", "Finishing setup"),
+                PinyinSearchDataState.Ready =>
+                    L("ritsulib.searchExtensions.status.ready", "Ready"),
                 PinyinSearchDataState.Failed => string.Format(
-                    L("ritsulib.searchExtensions.status.failed", "Needs attention: {0}"),
+                    L("ritsulib.searchExtensions.status.failed", "Unavailable: {0}"),
                     status.Error ?? L("ritsulib.searchExtensions.status.unknownError", "unknown error")),
                 _ => status.State.ToString(),
             };
@@ -247,24 +245,20 @@ namespace STS2RitsuLib.Settings
                           RitsuSearchSettingsStore.IsProviderEnabled(
                               PinyinSearchExpansionProvider.ProviderId,
                               false)
-                ? L("ritsulib.searchExtensions.status.searchEnabled", "Pinyin matching is enabled.")
-                : L("ritsulib.searchExtensions.status.searchDisabled", "Pinyin matching is disabled.");
+                ? L("ritsulib.searchExtensions.status.searchEnabled", "Enabled")
+                : L("ritsulib.searchExtensions.status.searchDisabled", "Disabled");
             return $"{state}\n{enabled}";
         }
 
         private static string FormatPinyinSource()
         {
             var source = PinyinSearchDataSource.Current;
-            var retained = PinyinSearchDataManager.GetStatus().SourceArchiveCached
-                ? L("ritsulib.searchExtensions.status.sourceRetained", "Source archive retained")
-                : L("ritsulib.searchExtensions.status.sourceNotRetained", "Source archive not retained");
             return string.Format(
                 L("ritsulib.searchExtensions.source.description",
-                    "Unicode {0} Unihan.zip · {1}\nPinned SHA-256: {2}\n{3}"),
+                    "Unicode {0} · Unihan.zip · {1}\n{2} · Integrity checked automatically"),
                 source.UnicodeVersion,
                 FormatBytes(source.ExpectedLength),
-                source.ExpectedSha256,
-                retained);
+                source.SourceUri.Host);
         }
 
         private static string FormatBytes(long bytes)
