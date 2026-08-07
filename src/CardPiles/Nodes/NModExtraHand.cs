@@ -34,10 +34,19 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 "SetCard", typeof(NCard));
 
         private readonly HashSet<CardModel> _arrivingCards = [];
+
+        private readonly Control _cardLayer = new()
+        {
+            Name = "Cards",
+            MouseFilter = MouseFilterEnum.Pass,
+        };
+
         private readonly Dictionary<CardModel, NHandCardHolder> _holders = [];
+        private Tween? _disabledTween;
         private NHandCardHolder? _focusedHolder;
         private bool _invalidBuiltInLayoutWarningLogged;
         private bool _invalidLayoutResolverWarningLogged;
+        private bool _isDisabled;
         private ModCardPile? _pile;
         private Player? _player;
         private double _visualRefreshElapsed;
@@ -58,7 +67,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             ArgumentNullException.ThrowIfNull(definition);
 
-            return new()
+            var hand = new NModExtraHand
             {
                 Definition = definition,
                 Name = $"ModExtraHand_{definition.Id}",
@@ -67,6 +76,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 Size = DefaultChromeSize,
                 PivotOffset = new(DefaultChromeWidth * 0.5f, DefaultChromeHeight * 0.5f),
             };
+            hand.AddChild(hand._cardLayer);
+            return hand;
         }
 
         /// <summary>
@@ -82,6 +93,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
             ArgumentNullException.ThrowIfNull(player);
             _player = player;
             AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
+            if (player.Creature.CombatState is { } state)
+                UpdateDisabledState(state);
         }
 
         /// <summary>
@@ -119,6 +132,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
         public override void _EnterTree()
         {
             base._EnterTree();
+            CombatManager.Instance.PlayerActionsDisabledChanged += OnPlayerActionsDisabledChanged;
+            CombatManager.Instance.PlayerUnendedTurn += OnPlayerUnendedTurn;
+            CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
             ModCardPileButtonRegistry.RegisterExtraHand(Definition, this);
         }
 
@@ -126,6 +142,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
         public override void _ExitTree()
         {
             base._ExitTree();
+            _disabledTween?.Kill();
+            CombatManager.Instance.PlayerActionsDisabledChanged -= OnPlayerActionsDisabledChanged;
+            CombatManager.Instance.PlayerUnendedTurn -= OnPlayerUnendedTurn;
+            CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
             ModExtraHandPlayCoordinator.DetachContainer(this);
             ModCardPileButtonRegistry.UnregisterExtraHand(Definition, this);
             DetachPile();
@@ -162,11 +182,12 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return;
             }
 
-            if (holder.GetParent() != this)
-                holder.Reparent(this);
+            if (holder.GetParent() != _cardLayer)
+                holder.Reparent(_cardLayer);
             holder.CancelDrag();
             holder.SetIndexLabel(0);
             holder.Hitbox.MouseFilter = MouseFilterEnum.Stop;
+            holder.FocusMode = _isDisabled ? FocusModeEnum.None : FocusModeEnum.All;
             _holders[card] = holder;
             ArrangeCards();
         }
@@ -294,9 +315,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             var holder = NHandCardHolder.Create(ncard, hand);
             _holders[card] = holder;
-            AddChild(holder);
+            _cardLayer.AddChild(holder);
             holder.SetIndexLabel(0);
             holder.SetClickable(Definition.ExtraHand.AllowCardPlay);
+            holder.FocusMode = _isDisabled ? FocusModeEnum.None : FocusModeEnum.All;
             holder.Connect(NCardHolder.SignalName.Pressed,
                 Callable.From<NCardHolder>(OnHolderPressed));
             holder.Connect(NHandCardHolder.SignalName.HolderMouseClicked,
@@ -351,6 +373,93 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 && !CombatManager.Instance.PlayersTakingExtraTurn.Contains(_player))
                 return false;
             return !ModExtraHandPlayCoordinator.IsPlaying;
+        }
+
+        private void OnPlayerActionsDisabledChanged(CombatState state)
+        {
+            UpdateDisabledState(state);
+        }
+
+        private void OnPlayerUnendedTurn(Player _)
+        {
+            if (_player?.Creature.CombatState is { } state)
+                UpdateDisabledState(state);
+        }
+
+        private void OnCombatStateChanged(CombatState state)
+        {
+            UpdateDisabledState(state);
+        }
+
+        private void UpdateDisabledState(ICombatState state)
+        {
+            if (_player == null)
+                return;
+
+            var disabled = CombatManager.Instance.PlayerActionsDisabled;
+            if (!disabled
+                && CombatManager.Instance.PlayersTakingExtraTurn.Count > 0
+                && !CombatManager.Instance.PlayersTakingExtraTurn.Contains(_player))
+                disabled = true;
+
+            if (!disabled)
+            {
+                AnimEnable();
+                return;
+            }
+
+            var anotherPlayerIsNotReady = state.Players
+                .Where(player => !ReferenceEquals(player, _player))
+                .Any(player => !CombatManager.Instance.IsPlayerReadyToEndTurn(player));
+            if (state.CurrentSide == CombatSide.Enemy || anotherPlayerIsNotReady)
+                AnimDisable();
+        }
+
+        private void AnimDisable()
+        {
+            if (_isDisabled)
+                return;
+
+            _isDisabled = true;
+            SetControllerNavigationEnabled(false);
+            AnimateDisabledStyle(Definition.ExtraHand.DisabledOffset, Definition.ExtraHand.DisabledModulate);
+        }
+
+        private void AnimEnable()
+        {
+            if (!_isDisabled)
+                return;
+
+            _isDisabled = false;
+            SetControllerNavigationEnabled(true);
+            AnimateDisabledStyle(Vector2.Zero, Colors.White);
+        }
+
+        private void AnimateDisabledStyle(Vector2 position, Color modulate)
+        {
+            _disabledTween?.Kill();
+            var duration = Definition.ExtraHand.DisabledTransitionDuration;
+            if (duration == 0.0)
+            {
+                _cardLayer.Position = position;
+                _cardLayer.Modulate = modulate;
+                return;
+            }
+
+            _disabledTween = CreateTween().SetParallel();
+            _disabledTween.TweenProperty(_cardLayer, "position", position, duration)
+                .SetEase(Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Cubic);
+            _disabledTween.TweenProperty(_cardLayer, "modulate", modulate, duration)
+                .SetEase(Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Cubic);
+        }
+
+        private void SetControllerNavigationEnabled(bool enabled)
+        {
+            var mode = enabled ? FocusModeEnum.All : FocusModeEnum.None;
+            foreach (var holder in _holders.Values.Where(IsInstanceValid))
+                holder.FocusMode = mode;
         }
 
         private void RefreshHolderVisuals(NHandCardHolder holder)
