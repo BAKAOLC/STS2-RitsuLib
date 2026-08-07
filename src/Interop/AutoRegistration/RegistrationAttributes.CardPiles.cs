@@ -217,11 +217,13 @@ namespace STS2RitsuLib.Interop.AutoRegistration
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Whether extra-hand cards can be manually played through the vanilla pipeline. Defaults to
+        ///         Whether the extra-hand pile has manual-card-play capability through the vanilla pipeline. This
+        ///         also determines each new container's initial runtime availability. Defaults to
         ///         <see langword="true" />.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         额外手牌卡牌是否可通过原版流程手动打出。默认为 <see langword="true" />。
+        ///         额外手牌牌堆是否具备通过原版流程手动出牌的能力；该值也决定每个新容器的运行时可用性
+        ///         初始值。默认为 <see langword="true" />。
         ///     </para>
         /// </summary>
         public bool ExtraHandAllowCardPlay { get; set; } = true;

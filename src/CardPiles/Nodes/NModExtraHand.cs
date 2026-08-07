@@ -42,13 +42,16 @@ namespace STS2RitsuLib.CardPiles.Nodes
         };
 
         private readonly Dictionary<CardModel, NHandCardHolder> _holders = [];
+        private bool _cardPlayEnabled;
         private Tween? _disabledTween;
         private NHandCardHolder? _focusedHolder;
         private bool _invalidBuiltInLayoutWarningLogged;
         private bool _invalidLayoutResolverWarningLogged;
         private bool _isDisabled;
+        private bool _turnPresentationDisabled;
         private ModCardPile? _pile;
         private Player? _player;
+        private NPlayerHand? _vanillaHand;
         private double _visualRefreshElapsed;
 
         /// <summary>
@@ -56,6 +59,30 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     <para xml:lang="zh-CN">获取此容器所表示的已注册定义。</para>
         /// </summary>
         public ModCardPileDefinition Definition { get; private init; } = null!;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the runtime manual-card-play setting requested for this container. A
+        ///         <see langword="true" /> value still requires the surrounding combat and base-game hand state to
+        ///         permit play. Querying this property does not change container state.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取此容器请求的运行时手动出牌设置。即使值为 <see langword="true" />，实际出牌仍要求周围
+        ///         战斗状态与游戏原有手牌状态同时允许。查询此属性不会改变容器状态。
+        ///     </para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         A new container starts with <see cref="ModCardPileExtraHandSpec.AllowCardPlay" />. Runtime changes
+        ///         apply only to this container and do not persist when combat creates another container. Runtime
+        ///         availability cannot grant card-play capability when the definition disallows it.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         新容器使用 <see cref="ModCardPileExtraHandSpec.AllowCardPlay" /> 作为初始值。运行时更改仅作用于
+        ///         当前容器，不会在战斗创建新容器后保留；定义未允许出牌时，运行时可用性不能授予出牌能力。
+        ///     </para>
+        /// </remarks>
+        public bool CardPlayEnabled => _cardPlayEnabled;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -70,6 +97,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var hand = new NModExtraHand
             {
                 Definition = definition,
+                _cardPlayEnabled = definition.ExtraHand.AllowCardPlay,
                 Name = $"ModExtraHand_{definition.Id}",
                 MouseFilter = MouseFilterEnum.Pass,
                 CustomMinimumSize = DefaultChromeSize,
@@ -92,9 +120,58 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             ArgumentNullException.ThrowIfNull(player);
             _player = player;
+            AttachVanillaHand(NPlayerHand.Instance ?? NCombatRoom.Instance?.Ui?.Hand);
             AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
             if (player.Creature.CombatState is { } state)
                 UpdateDisabledState(state);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Enables or disables current manual-card-play availability for this container at runtime. The last
+        ///         completed call determines the state. Repeating the current value has no effect.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在运行时启用或禁用此容器当前的手动出牌可用性。最后完成的调用决定当前状态；重复设置当前值
+        ///         不会产生额外效果。
+        ///     </para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Disabling updates existing and future holders, playable highlights, controller navigation, and
+        ///         disabled presentation. Active uncommitted targeting is canceled and restored to this hand;
+        ///         already queued card actions are not canceled. Base-game hand selection modes temporarily keep
+        ///         this hand unavailable independently of the requested runtime value.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         禁用时会同步现有与后续卡牌容器、可打出高亮、手柄导航及禁用表现。尚未提交的活动目标选择
+        ///         会被取消并将卡牌恢复到此手牌区；已经进入队列的卡牌行动不会被取消。游戏原有手牌进入选牌
+        ///         模式时，也会独立于所请求的运行时值而临时保持此手牌区不可用。
+        ///     </para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">
+        ///     <para xml:lang="en">
+        ///         <paramref name="enabled" /> is <see langword="true" />, but this container's definition does not
+        ///         grant <see cref="ModCardPileExtraHandSpec.AllowCardPlay" /> capability.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="enabled" /> 为 <see langword="true" />，但此容器的定义未授予
+        ///         <see cref="ModCardPileExtraHandSpec.AllowCardPlay" /> 能力。
+        ///     </para>
+        /// </exception>
+        public void SetCardPlayEnabled(bool enabled)
+        {
+            if (enabled && !Definition.ExtraHand.AllowCardPlay)
+                throw new InvalidOperationException(
+                    $"Extra hand '{Definition.Id}' does not allow manual card play.");
+            if (_cardPlayEnabled == enabled)
+                return;
+
+            _cardPlayEnabled = enabled;
+            if (!enabled)
+                ModExtraHandPlayCoordinator.CancelActiveTargeting(this);
+            RefreshCardPlayAvailability();
+            UpdateDisabledPresentation();
         }
 
         /// <summary>
@@ -143,6 +220,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             base._ExitTree();
             _disabledTween?.Kill();
+            DetachVanillaHand();
             CombatManager.Instance.PlayerActionsDisabledChanged -= OnPlayerActionsDisabledChanged;
             CombatManager.Instance.PlayerUnendedTurn -= OnPlayerUnendedTurn;
             CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
@@ -187,7 +265,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             holder.CancelDrag();
             holder.SetIndexLabel(0);
             holder.Hitbox.MouseFilter = MouseFilterEnum.Stop;
-            holder.FocusMode = _isDisabled ? FocusModeEnum.None : FocusModeEnum.All;
+            ApplyCardPlayAvailability(holder);
             _holders[card] = holder;
             ArrangeCards();
         }
@@ -312,13 +390,13 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var ncard = existingCard ?? NCard.Create(card);
             if (hand == null || ncard == null)
                 return;
+            AttachVanillaHand(hand);
 
             var holder = NHandCardHolder.Create(ncard, hand);
             _holders[card] = holder;
             _cardLayer.AddChild(holder);
             holder.SetIndexLabel(0);
-            holder.SetClickable(Definition.ExtraHand.AllowCardPlay);
-            holder.FocusMode = _isDisabled ? FocusModeEnum.None : FocusModeEnum.All;
+            ApplyCardPlayAvailability(holder);
             holder.Connect(NCardHolder.SignalName.Pressed,
                 Callable.From<NCardHolder>(OnHolderPressed));
             holder.Connect(NHandCardHolder.SignalName.HolderMouseClicked,
@@ -359,7 +437,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private bool CanStartCardPlay(NHandCardHolder holder)
         {
-            if (!Definition.ExtraHand.AllowCardPlay || holder.CardModel == null || _player == null)
+            if (!IsCardPlayAvailable || holder.CardModel == null || _player == null)
                 return false;
             if (!CombatManager.Instance.IsInProgress || CombatManager.Instance.IsOverOrEnding)
                 return false;
@@ -373,6 +451,36 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 && !CombatManager.Instance.PlayersTakingExtraTurn.Contains(_player))
                 return false;
             return !ModExtraHandPlayCoordinator.IsPlaying;
+        }
+
+        private bool IsCardPlayAvailable => _cardPlayEnabled
+                                            && _vanillaHand?.CurrentMode is null or NPlayerHand.Mode.Play;
+
+        private void AttachVanillaHand(NPlayerHand? hand)
+        {
+            if (ReferenceEquals(_vanillaHand, hand))
+                return;
+
+            DetachVanillaHand();
+            _vanillaHand = hand;
+            if (_vanillaHand == null)
+                return;
+
+            _vanillaHand.ModeChanged += OnVanillaHandModeChanged;
+            OnVanillaHandModeChanged();
+        }
+
+        private void DetachVanillaHand()
+        {
+            if (_vanillaHand != null && IsInstanceValid(_vanillaHand))
+                _vanillaHand.ModeChanged -= OnVanillaHandModeChanged;
+            _vanillaHand = null;
+        }
+
+        private void OnVanillaHandModeChanged()
+        {
+            RefreshCardPlayAvailability();
+            UpdateDisabledPresentation();
         }
 
         private void OnPlayerActionsDisabledChanged(CombatState state)
@@ -404,7 +512,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             if (!disabled)
             {
-                AnimEnable();
+                _turnPresentationDisabled = false;
+                UpdateDisabledPresentation();
                 return;
             }
 
@@ -412,7 +521,18 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 .Where(player => !ReferenceEquals(player, _player))
                 .Any(player => !CombatManager.Instance.IsPlayerReadyToEndTurn(player));
             if (state.CurrentSide == CombatSide.Enemy || anotherPlayerIsNotReady)
+            {
+                _turnPresentationDisabled = true;
+                UpdateDisabledPresentation();
+            }
+        }
+
+        private void UpdateDisabledPresentation()
+        {
+            if (_turnPresentationDisabled || !IsCardPlayAvailable)
                 AnimDisable();
+            else
+                AnimEnable();
         }
 
         private void AnimDisable()
@@ -439,7 +559,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             _disabledTween?.Kill();
             var duration = Definition.ExtraHand.DisabledTransitionDuration;
-            if (duration == 0.0)
+            if (duration == 0.0 || !IsInsideTree())
             {
                 _cardLayer.Position = position;
                 _cardLayer.Modulate = modulate;
@@ -457,9 +577,23 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void SetControllerNavigationEnabled(bool enabled)
         {
-            var mode = enabled ? FocusModeEnum.All : FocusModeEnum.None;
             foreach (var holder in _holders.Values.Where(IsInstanceValid))
-                holder.FocusMode = mode;
+                holder.FocusMode = enabled && IsCardPlayAvailable ? FocusModeEnum.All : FocusModeEnum.None;
+        }
+
+        private void RefreshCardPlayAvailability()
+        {
+            foreach (var holder in _holders.Values.Where(IsInstanceValid))
+            {
+                ApplyCardPlayAvailability(holder);
+                RefreshHolderVisuals(holder);
+            }
+        }
+
+        private void ApplyCardPlayAvailability(NHandCardHolder holder)
+        {
+            holder.SetClickable(IsCardPlayAvailable);
+            holder.FocusMode = !_isDisabled && IsCardPlayAvailable ? FocusModeEnum.All : FocusModeEnum.None;
         }
 
         private void RefreshHolderVisuals(NHandCardHolder holder)
@@ -468,7 +602,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return;
 
             holder.UpdateCard();
-            if (!Definition.ExtraHand.ShowPlayableGlow)
+            if (!Definition.ExtraHand.ShowPlayableGlow || !IsCardPlayAvailable)
                 holder.CardNode.CardHighlight.AnimHide();
         }
 

@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.CardPiles.Nodes;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -74,13 +75,17 @@ namespace STS2RitsuLib.CardPiles
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets whether cards can be manually played through the base-game targeting, action queue,
-        ///         resource payment, card hooks, and destination-pile flow. The default is
-        ///         <see langword="true" />.
+        ///         Gets whether this pile has manual-card-play capability through the base-game targeting, action
+        ///         queue, resource payment, card hooks, and destination-pile flow. This value also initializes
+        ///         <see cref="NModExtraHand.CardPlayEnabled" /> for each new container. The default is
+        ///         <see langword="true" />. Runtime availability can temporarily disable and restore granted
+        ///         capability, but cannot enable a definition that disallows card play.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取卡牌是否可通过游戏原有的目标选择、行动队列、资源支付、卡牌钩子与目标牌堆流程手动打出。
-        ///         默认值为 <see langword="true" />。
+        ///         获取此牌堆是否具备通过游戏原有目标选择、行动队列、资源支付、卡牌钩子与目标牌堆流程手动
+        ///         出牌的能力。该值也会初始化每个新容器的 <see cref="NModExtraHand.CardPlayEnabled" />。默认值为
+        ///         <see langword="true" />。运行时可用性可以临时禁用并恢复已授予的能力，但不能启用定义中未
+        ///         允许出牌的牌堆。
         ///     </para>
         /// </summary>
         public bool AllowCardPlay { get; init; } = true;
