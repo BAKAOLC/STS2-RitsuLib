@@ -123,22 +123,31 @@ namespace STS2RitsuLib.Settings
                 return EmptyBrowser(L("ritsulib.debugTools.empty.pileCards",
                     "The selected player has no cards in a supported pile."));
 
-            var filter = EnumFilter(
+            var pileTypes = RitsuDebugCardActions.GetMutablePileTypes();
+            var filter = new RitsuCatalogFilter(
                 "pile",
                 L("ritsulib.debugTools.filter.pile", "Pile"),
-                RitsuDebugCardActions.GetMutablePileTypes(),
-                PileLabel,
-                (item, value) => item.Id.StartsWith(
-                    $"{RitsuDebugCardActions.GetPileToken(value)}:",
-                    StringComparison.Ordinal));
+                L("ritsulib.debugTools.filter.all", "All"),
+                [
+                    .. pileTypes.Select(pileType => new RitsuCatalogFilterOption(
+                        RitsuDebugCardActions.GetPileToken(pileType),
+                        PileLabel(pileType),
+                        item => item.Id.StartsWith(
+                            $"{RitsuDebugCardActions.GetPileToken(pileType)}:",
+                            StringComparison.Ordinal))),
+                ]);
+            var customPileOptionIds = ModCardPileRegistry.GetDefinitionsSnapshot()
+                .Select(static definition => RitsuDebugCardActions.GetPileToken(definition.PileType))
+                .ToHashSet(StringComparer.Ordinal);
             return new RitsuDebugCardCatalog(
                 L("ritsulib.debugTools.search.pileCards", "Search the target player's cards"),
                 CreatePileCardCatalogEntries(entries),
                 [filter],
                 primaryFilterId: filter.Id,
-                primaryFilterBreakBeforeOptionId: nameof(PileType.Deck),
+                primaryFilterBreakBeforeOptionId: RitsuDebugCardActions.GetPileToken(PileType.Deck),
                 primaryDefaultsToAll: true,
-                primaryAllMatches: IsDefaultPileCardEntry);
+                primaryAllMatches: IsDefaultPileCardEntry,
+                primaryOverflowOptionIds: customPileOptionIds);
         }
 
         private Control CreateRelicCatalog()

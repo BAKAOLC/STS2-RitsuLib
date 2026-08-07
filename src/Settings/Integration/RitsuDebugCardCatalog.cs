@@ -59,6 +59,7 @@ namespace STS2RitsuLib.Settings
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
+        private readonly HashSet<string> _primaryOverflowOptionIds;
         private readonly List<PanelContainer> _selectionFrames = [];
         private readonly Dictionary<CardSortField, Button> _sortButtons = [];
         private Control _canvas = null!;
@@ -82,6 +83,7 @@ namespace STS2RitsuLib.Settings
         private string? _selectedItemId;
         private Dictionary<string, int> _sourceIndexes;
         private Control _workspace = null!;
+        private RitsuDebugSearchableChoice? _primaryOverflowPicker;
 
         internal RitsuDebugCardCatalog(
             string searchPlaceholder,
@@ -93,7 +95,8 @@ namespace STS2RitsuLib.Settings
             string? defaultFilterId = null,
             string? defaultFilterOptionId = null,
             bool primaryDefaultsToAll = false,
-            Func<RitsuCatalogItem, bool>? primaryAllMatches = null)
+            Func<RitsuCatalogItem, bool>? primaryAllMatches = null,
+            IReadOnlyCollection<string>? primaryOverflowOptionIds = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
             ValidateEntries(entries);
@@ -104,6 +107,9 @@ namespace STS2RitsuLib.Settings
             _sourceIndexes = _entries.Select((entry, index) => (entry.Item.Id, Index: index))
                 .ToDictionary(static pair => pair.Id, static pair => pair.Index, StringComparer.Ordinal);
             _filters = filters == null ? [] : [.. filters];
+            _primaryOverflowOptionIds = primaryOverflowOptionIds == null
+                ? []
+                : new(primaryOverflowOptionIds, StringComparer.Ordinal);
             foreach (var filter in _filters)
                 _filterSelections.Add(filter.Id, -1);
             if (primaryFilterId != null)
@@ -115,6 +121,10 @@ namespace STS2RitsuLib.Settings
                 _primaryFilterId = primaryFilter.Id;
                 _primaryFilterBreakBeforeOptionId = primaryFilterBreakBeforeOptionId;
                 _primaryAllMatches = primaryAllMatches;
+                if (_primaryOverflowOptionIds.Any(id => primaryFilter.Options.All(option => option.Id != id)))
+                    throw new ArgumentException(
+                        "Every primary overflow option ID must identify an option in the primary filter.",
+                        nameof(primaryOverflowOptionIds));
                 var defaultIndex = primaryDefaultOptionId == null
                     ? 0
                     : primaryFilter.Options.ToList().FindIndex(option => option.Id == primaryDefaultOptionId);
@@ -575,13 +585,16 @@ namespace STS2RitsuLib.Settings
             if (_primaryFilterId == null)
                 return;
             var filter = _filters.Single(candidate => candidate.Id == _primaryFilterId);
-            var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            row.AddThemeConstantOverride("separation", 4);
+            var row = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            row.AddThemeConstantOverride("h_separation", 4);
+            row.AddThemeConstantOverride("v_separation", 6);
             catalog.AddChild(row);
             AddOptionButton(-1, filter.AllLabel);
             for (var index = 0; index < filter.Options.Count; index++)
             {
                 var option = filter.Options[index];
+                if (_primaryOverflowOptionIds.Contains(option.Id))
+                    continue;
                 if (option.Id == _primaryFilterBreakBeforeOptionId)
                 {
                     var separator = new VSeparator { CustomMinimumSize = new(12f, 0f) };
@@ -591,7 +604,32 @@ namespace STS2RitsuLib.Settings
                 AddOptionButton(index, option.Label);
             }
 
-            row.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+            var overflowOptions = filter.Options
+                .Where(option => _primaryOverflowOptionIds.Contains(option.Id))
+                .Select(option => new RitsuDebugSearchableChoiceOption(option.Id, option.Label))
+                .ToArray();
+            if (overflowOptions.Length > 0)
+            {
+                _primaryOverflowPicker = new(
+                    ModSettingsLocalization.Get("ritsulib.debugTools.filter.customPiles", "Custom piles"),
+                    ModSettingsLocalization.Get("ritsulib.debugTools.search.customPiles", "Search custom piles"),
+                    ModSettingsLocalization.Get("ritsulib.debugTools.empty.customPiles", "No matching custom piles"),
+                    overflowOptions);
+                _primaryOverflowPicker.CustomMinimumSize = new(260f, 0f);
+                _primaryOverflowPicker.SelectionChanged += selectedId =>
+                {
+                    if (selectedId == null)
+                        return;
+                    var optionIndex = filter.Options.ToList().FindIndex(option => option.Id == selectedId);
+                    if (optionIndex < 0)
+                        return;
+                    _filterSelections[filter.Id] = optionIndex;
+                    RefreshPrimaryFilterButtons();
+                    ApplyFilter();
+                };
+                row.AddChild(_primaryOverflowPicker);
+            }
+
             return;
 
             void AddOptionButton(int optionIndex, string label)
@@ -625,6 +663,16 @@ namespace STS2RitsuLib.Settings
                 ModSettingsUiControlTheming.ApplySettingsToggleButtonStyle(button, index == selected, false);
                 ModSettingsUiControlTheming.RefreshAdaptiveButtonText(button);
             }
+
+            var selectedOptionId = selected >= 0 && selected < _filters
+                .Single(filter => filter.Id == _primaryFilterId)
+                .Options.Count
+                ? _filters.Single(filter => filter.Id == _primaryFilterId).Options[selected].Id
+                : null;
+            _primaryOverflowPicker?.SetSelectedId(
+                selectedOptionId != null && _primaryOverflowOptionIds.Contains(selectedOptionId)
+                    ? selectedOptionId
+                    : null);
         }
 
         private async void ScheduleSearch()

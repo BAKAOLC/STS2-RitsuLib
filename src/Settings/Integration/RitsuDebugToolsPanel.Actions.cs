@@ -931,35 +931,57 @@ namespace STS2RitsuLib.Settings
             var piles = RitsuDebugCardActions.GetMutablePileTypes()
                 .Where(pile => hasActiveCombat || RitsuDebugCardActions.IsRunStatePile(pile))
                 .ToArray();
-            var pileActions = new List<(string Text, ModSettingsButtonTone Tone, Action Action)>();
-            foreach (var pile in piles)
+            var selectedPile = piles[0];
+            var pileSettings = CreateAdjustmentContent();
+            var pilePicker = new RitsuDebugSearchableChoice(
+                L("ritsulib.debugTools.filter.pile", "Pile"),
+                L("ritsulib.debugTools.search.piles", "Search piles"),
+                L("ritsulib.debugTools.empty.piles", "No matching piles"),
+                [
+                    .. piles.Select(pile => new RitsuDebugSearchableChoiceOption(
+                        RitsuDebugCardActions.GetPileToken(pile),
+                        PileLabel(pile),
+                        pile.ToString())),
+                ],
+                RitsuDebugCardActions.GetPileToken(selectedPile));
+            pileSettings.AddChild(pilePicker);
+            var pileActions = new GridContainer
             {
-                var capturedPile = pile;
-                pileActions.Add((
-                    string.Format(L("ritsulib.debugTools.action.clearPile", "Clear {0}"), PileLabel(capturedPile)),
-                    ModSettingsButtonTone.Danger,
-                    () => SubmitTargetedAction(player.NetId, (requester, target) =>
-                        RitsuDebugCardActions.SubmitModifyPile(
-                            requester,
-                            target,
-                            capturedPile,
-                            RitsuDebugCardPileOperation.Clear))));
-                pileActions.Add((
-                    string.Format(L("ritsulib.debugTools.action.upgradePile", "Upgrade {0}"),
-                        PileLabel(capturedPile)),
-                    ModSettingsButtonTone.Normal,
-                    () => SubmitTargetedAction(player.NetId, (requester, target) =>
-                        RitsuDebugCardActions.SubmitModifyPile(
-                            requester,
-                            target,
-                            capturedPile,
-                            RitsuDebugCardPileOperation.Upgrade,
-                            1))));
-            }
+                Columns = 2,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            pileActions.AddThemeConstantOverride("h_separation", 8);
+            pileActions.AddThemeConstantOverride("v_separation", 8);
+            var clearPileButton = ActionButton(string.Empty, ModSettingsButtonTone.Danger,
+                () => SubmitTargetedAction(player.NetId, (requester, target) =>
+                    RitsuDebugCardActions.SubmitModifyPile(
+                        requester,
+                        target,
+                        selectedPile,
+                        RitsuDebugCardPileOperation.Clear)));
+            var upgradePileButton = ActionButton(string.Empty, ModSettingsButtonTone.Normal,
+                () => SubmitTargetedAction(player.NetId, (requester, target) =>
+                    RitsuDebugCardActions.SubmitModifyPile(
+                        requester,
+                        target,
+                        selectedPile,
+                        RitsuDebugCardPileOperation.Upgrade,
+                        1)));
+            pileActions.AddChild(clearPileButton);
+            pileActions.AddChild(upgradePileButton);
+            pileSettings.AddChild(pileActions);
+            RefreshPileActionLabels();
+            pilePicker.SelectionChanged += selectedId =>
+            {
+                if (selectedId == null || !RitsuDebugCardActions.TryParseMutablePileType(selectedId, out var pile))
+                    return;
+                selectedPile = pile;
+                RefreshPileActionLabels();
+            };
 
             root.AddChild(AdjustmentSection(
                 L("ritsulib.debugTools.action.cardPiles", "Card piles"),
-                ActionGrid(pileActions),
+                pileSettings,
                 RitsuDebugToolsGlyph.PileCards));
 
             var inventorySettings = CreateAdjustmentContent();
@@ -986,6 +1008,19 @@ namespace STS2RitsuLib.Settings
                 inventorySettings,
                 RitsuDebugToolsGlyph.Inventory));
             return root;
+
+            void RefreshPileActionLabels()
+            {
+                var pileLabel = PileLabel(selectedPile);
+                clearPileButton.Text = string.Format(
+                    L("ritsulib.debugTools.action.clearPile", "Clear {0}"),
+                    pileLabel);
+                upgradePileButton.Text = string.Format(
+                    L("ritsulib.debugTools.action.upgradePile", "Upgrade {0}"),
+                    pileLabel);
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(clearPileButton);
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(upgradePileButton);
+            }
         }
 
         private Control CreateCreatureDetail(Creature creature)
