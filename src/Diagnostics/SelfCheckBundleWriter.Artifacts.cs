@@ -327,7 +327,9 @@ namespace STS2RitsuLib.Diagnostics
                     artifacts.Add(CreateArtifact(entryName, target, "crash", "coredumpctl info"));
             }
 
-            var tempCorePath = Path.Combine(Path.GetTempPath(), $"sts2_coredump_{Guid.NewGuid():N}.core");
+            var tempCorePath = Path.Combine(
+                RitsuLibDataPaths.EnsureTemporaryDirectory(),
+                $"self-check-coredump-{Guid.NewGuid():N}.core");
             try
             {
                 TryRunProcessText(

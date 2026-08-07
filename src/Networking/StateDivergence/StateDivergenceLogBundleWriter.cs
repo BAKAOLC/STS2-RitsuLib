@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
+using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Networking.StateDivergence
 {
@@ -14,7 +15,6 @@ namespace STS2RitsuLib.Networking.StateDivergence
         private const string MetadataEntryName = "metadata.json";
         private const string RemoteLogsEntryName = "remote-debug-log.records.json";
         private const string ReportEntryName = "state-divergence-report.txt";
-        private const string StagingDirectoryName = ".ritsulib-state-divergence-staging";
         private static readonly Lock BundleWriteLock = new();
         private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
@@ -53,7 +53,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     var runId = DateTime.Now.ToString("yyyyMMdd_HHmmss_fffffff");
                     var baseName =
                         $"{BundlePrefix}{runId}_checksum_{report.LocalChecksum.Id}_{report.LocalChecksum.Checksum:x8}_{Guid.NewGuid():N}";
-                    stagingDir = Path.Combine(ResolveStagingDirectory(), Guid.NewGuid().ToString("N"));
+                    stagingDir = RitsuLibDataPaths.CreateTemporaryDirectory("state-divergence");
                     var payloadDir = Path.Combine(stagingDir, "payload");
                     Directory.CreateDirectory(payloadDir);
 
@@ -72,7 +72,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
                     ValidateBundle(stagedZipPath, remoteLogs != null);
 
                     var publishedZipPath = Path.Combine(logsDir, Path.GetFileName(stagedZipPath));
-                    File.Move(stagedZipPath, publishedZipPath);
+                    PublishBundle(stagedZipPath, publishedZipPath);
                     zipPath = publishedZipPath;
                     zipFileName = Path.GetFileName(publishedZipPath);
                     PruneOldBundles(logsDir, publishedZipPath);
@@ -300,9 +300,18 @@ namespace STS2RitsuLib.Networking.StateDivergence
             return Path.Combine(ResolveUserDataDirectory(), "logs");
         }
 
-        private static string ResolveStagingDirectory()
+        private static void PublishBundle(string stagedZipPath, string publishedZipPath)
         {
-            return Path.Combine(ResolveUserDataDirectory(), StagingDirectoryName);
+            try
+            {
+                File.Copy(stagedZipPath, publishedZipPath);
+            }
+            catch
+            {
+                if (File.Exists(publishedZipPath))
+                    File.Delete(publishedZipPath);
+                throw;
+            }
         }
 
         private static string ResolveUserDataDirectory()

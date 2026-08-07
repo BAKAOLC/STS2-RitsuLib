@@ -10,13 +10,13 @@ using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Utils;
+using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Diagnostics
 {
     internal static partial class SelfCheckBundleWriter
     {
         private const string BundlePrefix = "ritsulib_self_check_";
-        private const string StagingDirectoryName = ".ritsulib-self-check-staging";
         private static readonly Lock BundleWriteLock = new();
         private static readonly Regex KeywordId = KeywordIdRegex();
         private static readonly Regex PublicEntry = PublicEntryRegex();
@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Diagnostics
                     var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
                     var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
                     var bundleName = $"{BundlePrefix}{timestamp}_{uniqueSuffix}";
-                    stagingDir = Path.Combine(ResolveStagingDirectory(outputDirectory), Guid.NewGuid().ToString("N"));
+                    stagingDir = RitsuLibDataPaths.CreateTemporaryDirectory("self-check");
                     var bundleDir = Path.Combine(stagingDir, "payload");
                     Directory.CreateDirectory(bundleDir);
 
@@ -82,7 +82,7 @@ namespace STS2RitsuLib.Diagnostics
                     ValidateBundle(stagedZipPath);
 
                     zipPath = Path.Combine(outputDirectory, Path.GetFileName(stagedZipPath));
-                    File.Move(stagedZipPath, zipPath);
+                    PublishBundle(stagedZipPath, zipPath);
                     if (dumpOk) return true;
                     errorMessage = $"Harmony dump failed: {dumpErr}";
                     return false;
@@ -149,10 +149,18 @@ namespace STS2RitsuLib.Diagnostics
             }
         }
 
-        private static string ResolveStagingDirectory(string outputDirectory)
+        private static void PublishBundle(string stagedZipPath, string zipPath)
         {
-            var parentDirectory = Directory.GetParent(outputDirectory)?.FullName ?? outputDirectory;
-            return Path.Combine(parentDirectory, StagingDirectoryName);
+            try
+            {
+                File.Copy(stagedZipPath, zipPath);
+            }
+            catch
+            {
+                if (File.Exists(zipPath))
+                    File.Delete(zipPath);
+                throw;
+            }
         }
 
         private static string BuildReport(FrameworkRuntimeSnapshot runtime, bool dumpOk, string dumpPath,
