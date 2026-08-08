@@ -490,10 +490,14 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.EncounterAssetPathsPatch>();
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.EventAssetPathsPatch>();
             patcher.RegisterPatch<CardRewardToSerializablePatch>();
+            patcher.RegisterPatch<LinkedRewardSetToSerializablePatch>();
             patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
             if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                 patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
             patcher.RegisterPatch<RewardFromSerializableExtPatch>();
+            patcher.RegisterPatch<LinkedRewardSetOnSelectPatch>();
+            patcher.RegisterPatch<LinkedRewardSetSelectLocalRewardPatch>();
+            patcher.RegisterPatch<LinkedRewardSetHandleSelectedMessagePatch>();
             patcher.RegisterPatch<ModCardPileGetPatch>();
             patcher.RegisterPatch<ModCardPileIsCombatPatch>();
             patcher.RegisterPatch<ModCardPileGetTargetPositionPatch>();

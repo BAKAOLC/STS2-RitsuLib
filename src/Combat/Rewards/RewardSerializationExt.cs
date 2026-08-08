@@ -90,7 +90,7 @@ namespace STS2RitsuLib.Combat.Rewards
 
     internal sealed class RewardExtData
     {
-        internal bool HasCustomRewardData => CustomRewardJson != null;
+        internal bool HasRitsuLibData => CustomRewardJson != null || LinkedRewardSet != null;
 
         [JsonPropertyName("flags")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -115,8 +115,30 @@ namespace STS2RitsuLib.Combat.Rewards
         [JsonPropertyName("custom_reward_json")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? CustomRewardJson { get; set; }
+
+        [JsonPropertyName("linked_reward_set")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public LinkedRewardSetExtData? LinkedRewardSet { get; set; }
+    }
+
+    internal sealed class LinkedRewardSetExtData
+    {
+        [JsonPropertyName("mode")] public int Mode { get; set; }
+
+        [JsonPropertyName("children")] public List<LinkedRewardChildExtData> Children { get; set; } = [];
+    }
+
+    internal sealed class LinkedRewardChildExtData
+    {
+        [JsonPropertyName("reward")] public string RewardJson { get; set; } = string.Empty;
+
+        [JsonPropertyName("extension")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ExtensionJson { get; set; }
     }
 
     [JsonSerializable(typeof(RewardExtData))]
+    [JsonSerializable(typeof(LinkedRewardSetExtData))]
+    [JsonSerializable(typeof(LinkedRewardChildExtData))]
     internal sealed partial class RewardExtJsonContext : JsonSerializerContext;
 }
