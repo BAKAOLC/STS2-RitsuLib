@@ -2,6 +2,7 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 using MegaCrit.Sts2.Core.Saves.Validation;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Saves.RawProgress;
 
 namespace STS2RitsuLib.Saves.Patches
 {
@@ -33,7 +34,8 @@ namespace STS2RitsuLib.Saves.Patches
 
         public static void Prefix(SerializableProgress save, out PreservedProgressRecords? __state)
         {
-            ProgressMirrorStore.MergeMirrorInto(save);
+            if (!RawProgressCommitBridge.IsPreparingCommitProjection)
+                ProgressMirrorStore.MergeMirrorInto(save);
             __state = PreservedProgressRecords.Capture(save);
         }
 
@@ -70,7 +72,8 @@ namespace STS2RitsuLib.Saves.Patches
         public static void Postfix(ProgressState __instance, SerializableProgress __result)
         {
             PreservedProgressRecords.MergeInto(__instance, __result);
-            ProgressMirrorStore.SaveMirror(__result);
+            if (!RawProgressCommitBridge.IsPreparingCommitProjection)
+                ProgressMirrorStore.SaveMirror(__result);
         }
     }
 
