@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -53,6 +54,7 @@ namespace STS2RitsuLib.Ui.Catalog
         private RitsuCatalogItem[] _filteredItems = [];
         private RitsuCatalogFilter[] _filters = [];
         private int _gridColumns = 1;
+        private bool _hasVisibleQuickActions;
         private RitsuCatalogItem[] _items = [];
         private Label? _resultCount;
         private Control? _rowCanvas;
@@ -62,6 +64,7 @@ namespace STS2RitsuLib.Ui.Catalog
         private int _searchRevision;
         private string? _selectedItemId;
         private bool _uiBuilt;
+        private Control? _workspace;
         private bool _virtualRefreshQueued;
 
         /// <summary>
@@ -295,15 +298,16 @@ namespace STS2RitsuLib.Ui.Catalog
             SizeFlagsVertical = SizeFlags.ExpandFill;
             MouseFilter = MouseFilterEnum.Pass;
 
-            var workspace = new Control
+            _workspace = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
                 ClipContents = true,
             };
-            AddChild(workspace);
-            workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            AddChild(_workspace);
+            _workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            _workspace.Resized += UpdateDetailDrawerWidth;
 
             var browserRow = new HBoxContainer
             {
@@ -311,7 +315,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 SizeFlagsVertical = SizeFlags.ExpandFill,
             };
             browserRow.AddThemeConstantOverride("separation", 12);
-            workspace.AddChild(browserRow);
+            _workspace.AddChild(browserRow);
             browserRow.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 
             var inlineDetails = _options.DetailPresentation == RitsuCatalogDetailPresentation.Inline;
@@ -359,6 +363,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            _resultCount.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _resultCount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             summary.AddChild(_resultCount);
             catalog.AddChild(summary);
@@ -392,6 +397,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
+            _emptyLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _emptyLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             catalogPanel.AddChild(_emptyLabel);
             _emptyLabel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -420,7 +426,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 };
                 _detailBackdrop.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
                 _detailBackdrop.GuiInput += OnDetailBackdropInput;
-                workspace.AddChild(_detailBackdrop);
+                _workspace.AddChild(_detailBackdrop);
                 _detailSlideHost = new()
                 {
                     Visible = false,
@@ -435,7 +441,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 _detailSlideHost.OffsetRight = 0f;
                 _detailSlideHost.OffsetTop = 0f;
                 _detailSlideHost.OffsetBottom = 0f;
-                workspace.AddChild(_detailSlideHost);
+                _workspace.AddChild(_detailSlideHost);
                 detailPanel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
                 _detailSlideHost.AddChild(detailPanel);
             }
@@ -465,14 +471,17 @@ namespace STS2RitsuLib.Ui.Catalog
                 _detailTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
                 _detailTitle.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
                 detailHeader.AddChild(_detailTitle);
-                detailHeader.AddChild(new ModSettingsTextButton(
-                    "×",
-                    ModSettingsButtonTone.Normal,
-                    () => CloseDetailDrawer(true))
-                {
-                    TooltipText = ModSettingsLocalization.Get("ritsulib.catalog.closeDetails", "Close details"),
-                    CustomMinimumSize = new(42f, 38f),
-                });
+                var closeTooltip = ModSettingsLocalization.Get("ritsulib.catalog.closeDetails", "Close details");
+                var closeButton = new RitsuDebugToolsIconButton(42f, 38f);
+                closeButton.Configure(
+                    RitsuDebugToolsIcons.Get(
+                        RitsuDebugToolsGlyph.Close,
+                        18,
+                        RitsuShellTheme.Current.Text.LabelPrimary),
+                    closeTooltip,
+                    ModSettingsButtonTone.Normal);
+                closeButton.Pressed += () => CloseDetailDrawer(true);
+                detailHeader.AddChild(closeButton);
                 detailColumn.AddChild(detailHeader);
             }
 
@@ -499,6 +508,7 @@ namespace STS2RitsuLib.Ui.Catalog
             detailScroll.GetVScrollBar().VisibilityChanged += () =>
                 SyncScrollGutter(detailScroll, _detailScrollFrame);
             Callable.From(() => SyncScrollGutter(detailScroll, _detailScrollFrame)).CallDeferred();
+            Callable.From(UpdateDetailDrawerWidth).CallDeferred();
             RebuildDetail();
             SetProcessUnhandledInput(!inlineDetails);
         }
@@ -545,6 +555,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 (char[]?)null,
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             _filteredItems = [.. _items.Where(item => item.Matches(terms) && MatchesFilters(item))];
+            _hasVisibleQuickActions = _filteredItems.Any(static item => item.QuickAction != null);
             if (_resultCount != null)
                 _resultCount.Text = _filteredItems.Length == _items.Length
                     ? _items.Length.ToString()
@@ -656,8 +667,11 @@ namespace STS2RitsuLib.Ui.Catalog
                 return;
 
             var width = Math.Max(1f, _rowCanvas.Size.X > 1f ? _rowCanvas.Size.X : _scroll.Size.X);
+            var minimumTileWidth = _hasVisibleQuickActions
+                ? Math.Max(144f, _options.GridTileMinimumWidth)
+                : _options.GridTileMinimumWidth;
             var columns = Math.Max(1,
-                Mathf.FloorToInt((width + GridGap) / (_options.GridTileMinimumWidth + GridGap)));
+                Mathf.FloorToInt((width + GridGap) / (minimumTileWidth + GridGap)));
             if (_gridColumns != columns)
             {
                 _gridColumns = columns;
@@ -850,7 +864,7 @@ namespace STS2RitsuLib.Ui.Catalog
                 return;
             _detailTween?.Kill();
             _detailTween = null;
-            var width = _options.DetailMinimumWidth;
+            var width = ResolveDetailDrawerWidth();
             if (show)
             {
                 _detailBackdrop?.Show();
@@ -887,6 +901,30 @@ namespace STS2RitsuLib.Ui.Catalog
                 SetDetailDrawerOffsets(-width, 0f);
                 _detailBackdrop?.Hide();
             }));
+        }
+
+        private void UpdateDetailDrawerWidth()
+        {
+            if (_options.DetailPresentation != RitsuCatalogDetailPresentation.Drawer || _detailSlideHost == null)
+                return;
+            _detailTween?.Kill();
+            _detailTween = null;
+            var width = ResolveDetailDrawerWidth();
+            SetDetailDrawerOffsets(_detailSlideHost.Visible ? -width : 0f, _detailSlideHost.Visible ? 0f : width);
+        }
+
+        private float ResolveDetailDrawerWidth()
+        {
+            var availableWidth = _workspace?.Size.X ?? Size.X;
+            if (availableWidth <= 0f || !float.IsFinite(availableWidth))
+                return _options.DetailMinimumWidth;
+
+            var minimum = MathF.Min(_options.DetailMinimumWidth, availableWidth);
+            var maximum = MathF.Min(_options.DetailMaximumWidth, availableWidth);
+            if (availableWidth >= _options.DetailMinimumWidth + _options.MinimumVisibleCatalogWidth)
+                maximum = MathF.Min(maximum, availableWidth - _options.MinimumVisibleCatalogWidth);
+            maximum = MathF.Max(minimum, maximum);
+            return Math.Clamp(availableWidth * _options.DetailPreferredWidthFraction, minimum, maximum);
         }
 
         private void SetDetailDrawerOffsets(float left, float right)
@@ -997,6 +1035,18 @@ namespace STS2RitsuLib.Ui.Catalog
             return indicator;
         }
 
+        private static ColorRect CreateAccentIndicator()
+        {
+            var indicator = new ColorRect
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                Visible = false,
+            };
+            indicator.AnchorRight = 1f;
+            indicator.OffsetBottom = 4f;
+            return indicator;
+        }
+
         private static string ResolveTooltip(RitsuCatalogItem item)
         {
             if (!string.IsNullOrWhiteSpace(item.Tooltip))
@@ -1010,8 +1060,10 @@ namespace STS2RitsuLib.Ui.Catalog
 
         private sealed partial class CatalogTile : ModSettingsGamepadCompatibleButton
         {
+            private readonly ColorRect _accentIndicator;
             private readonly Label _badge;
             private readonly TextureRect _icon;
+            private readonly CatalogQuickActionButton _quickAction;
             private readonly ColorRect _selectionIndicator;
             private readonly Label _title;
 
@@ -1019,6 +1071,7 @@ namespace STS2RitsuLib.Ui.Catalog
             {
                 FocusMode = FocusModeEnum.All;
                 MouseFilter = MouseFilterEnum.Stop;
+                ClipContents = true;
                 Text = string.Empty;
                 Pressed += () =>
                 {
@@ -1026,8 +1079,19 @@ namespace STS2RitsuLib.Ui.Catalog
                         ItemPressed?.Invoke(ItemId);
                 };
 
+                _accentIndicator = CreateAccentIndicator();
+                AddChild(_accentIndicator);
                 _selectionIndicator = CreateSelectionIndicator();
                 AddChild(_selectionIndicator);
+
+                _quickAction = new();
+                _quickAction.AnchorLeft = 1f;
+                _quickAction.AnchorRight = 1f;
+                _quickAction.OffsetLeft = -42f;
+                _quickAction.OffsetRight = -6f;
+                _quickAction.OffsetTop = 6f;
+                _quickAction.OffsetBottom = 42f;
+                AddChild(_quickAction);
 
                 var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore };
                 margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -1094,7 +1158,10 @@ namespace STS2RitsuLib.Ui.Catalog
                 _title.Text = item.Title;
                 _badge.Text = item.Badge ?? item.Subtitle ?? string.Empty;
                 _badge.Visible = !string.IsNullOrWhiteSpace(_badge.Text);
+                _quickAction.Bind(item.QuickAction);
                 TooltipText = ResolveTooltip(item);
+                _accentIndicator.Color = item.AccentColor ?? Colors.Transparent;
+                _accentIndicator.Visible = item.AccentColor.HasValue;
                 _selectionIndicator.Visible = selected;
                 var normal = selected
                     ? RitsuShellChromeStyles.CreateSelectedListItemCardStyle()
@@ -1112,8 +1179,10 @@ namespace STS2RitsuLib.Ui.Catalog
 
         private sealed partial class CatalogRow : ModSettingsGamepadCompatibleButton
         {
+            private readonly ColorRect _accentIndicator;
             private readonly Label _badge;
             private readonly TextureRect _icon;
+            private readonly CatalogQuickActionButton _quickAction;
             private readonly ColorRect _selectionIndicator;
             private readonly Label _subtitle;
             private readonly Label _title;
@@ -1122,6 +1191,7 @@ namespace STS2RitsuLib.Ui.Catalog
             {
                 FocusMode = FocusModeEnum.All;
                 MouseFilter = MouseFilterEnum.Stop;
+                ClipContents = true;
                 SizeFlagsHorizontal = SizeFlags.ExpandFill;
                 Text = string.Empty;
                 Pressed += () =>
@@ -1130,6 +1200,8 @@ namespace STS2RitsuLib.Ui.Catalog
                         ItemPressed?.Invoke(ItemId);
                 };
 
+                _accentIndicator = CreateAccentIndicator();
+                AddChild(_accentIndicator);
                 _selectionIndicator = CreateSelectionIndicator();
                 AddChild(_selectionIndicator);
 
@@ -1178,6 +1250,8 @@ namespace STS2RitsuLib.Ui.Catalog
                 _subtitle.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
                 identity.AddChild(_subtitle);
                 row.AddChild(identity);
+                _quickAction = new();
+                row.AddChild(_quickAction);
                 _badge = new()
                 {
                     VerticalAlignment = VerticalAlignment.Center,
@@ -1204,7 +1278,10 @@ namespace STS2RitsuLib.Ui.Catalog
                 _subtitle.Visible = !string.IsNullOrWhiteSpace(item.Subtitle);
                 _badge.Text = item.Badge ?? string.Empty;
                 _badge.Visible = !string.IsNullOrWhiteSpace(item.Badge);
+                _quickAction.Bind(item.QuickAction);
                 TooltipText = ResolveTooltip(item);
+                _accentIndicator.Color = item.AccentColor ?? Colors.Transparent;
+                _accentIndicator.Visible = item.AccentColor.HasValue;
                 _selectionIndicator.Visible = selected;
                 var normal = selected
                     ? RitsuShellChromeStyles.CreateSelectedListItemCardStyle()
@@ -1217,6 +1294,49 @@ namespace STS2RitsuLib.Ui.Catalog
                 AddThemeStyleboxOverride("pressed", emphasis);
                 AddThemeStyleboxOverride("focus", emphasis);
                 AddThemeStyleboxOverride("disabled", normal);
+            }
+        }
+
+        private sealed partial class CatalogQuickActionButton : RitsuDebugToolsIconButton
+        {
+            private RitsuCatalogItemAction? _itemAction;
+
+            internal CatalogQuickActionButton()
+            {
+                Pressed += InvokeBoundAction;
+            }
+
+            internal void Bind(RitsuCatalogItemAction? itemAction)
+            {
+                _itemAction = itemAction;
+                Visible = itemAction != null;
+                if (itemAction == null)
+                {
+                    Icon = null;
+                    TooltipText = string.Empty;
+                    return;
+                }
+
+                Configure(
+                    itemAction.Icon,
+                    itemAction.Tooltip,
+                    itemAction.Tone == RitsuCatalogItemActionTone.Danger
+                        ? ModSettingsButtonTone.Danger
+                        : ModSettingsButtonTone.Normal);
+            }
+
+            private void InvokeBoundAction()
+            {
+                if (_itemAction == null)
+                    return;
+                try
+                {
+                    _itemAction.Action();
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    RitsuLibFramework.Logger.Warn($"[Catalog] Quick action failed: {ex}");
+                }
             }
         }
     }

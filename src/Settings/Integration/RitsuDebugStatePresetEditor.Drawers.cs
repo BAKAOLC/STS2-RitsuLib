@@ -1,6 +1,10 @@
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Diagnostics.DebugTools;
+using STS2RitsuLib.Search;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -117,6 +121,9 @@ namespace STS2RitsuLib.Settings
             _drawerTitle.Text = title;
             ClearChildren(_drawerBody);
             var models = source.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
+            var searchIndexes = models.ToDictionary(
+                static model => model,
+                model => new RitsuSearchPreparedText($"{SafeTitle(model)} {model.Id}"));
             var search = new LineEdit
             {
                 PlaceholderText = L("ritsulib.debugTools.statePresets.search", "Search by name or ID"),
@@ -147,7 +154,8 @@ namespace STS2RitsuLib.Settings
                                                         SafeTitle(model).Contains(normalized,
                                                             StringComparison.CurrentCultureIgnoreCase) ||
                                                         model.Id.ToString().Contains(normalized,
-                                                            StringComparison.OrdinalIgnoreCase)))
+                                                            StringComparison.OrdinalIgnoreCase) ||
+                                                        searchIndexes[model].ScoreExpansion(normalized) >= 0))
                     .ToArray();
                 var matches = allMatches.Take(120).ToArray();
                 result.Text = allMatches.Length == matches.Length
@@ -417,6 +425,13 @@ namespace STS2RitsuLib.Settings
                         potion.SlotIndex = value;
                         MarkDirty();
                     }));
+            var canonical = ModelDb.AllPotions.FirstOrDefault(model =>
+                model.Id.ToString().Equals(potion.PotionId, StringComparison.Ordinal));
+            if (canonical != null)
+                AddInternalValueEditors(
+                    canonical.DynamicVars,
+                    () => potion.DynamicVars,
+                    values => potion.DynamicVars = values);
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.remove", "Remove"),
                 ModSettingsButtonTone.Danger,
@@ -446,6 +461,13 @@ namespace STS2RitsuLib.Settings
                     power.Amount = value;
                     MarkDirty();
                 }));
+            var canonical = ModelDb.AllPowers.FirstOrDefault(model =>
+                model.Id.ToString().Equals(power.PowerId, StringComparison.Ordinal));
+            if (canonical != null)
+                AddInternalValueEditors(
+                    canonical.DynamicVars,
+                    () => power.DynamicVars,
+                    values => power.DynamicVars = values);
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.remove", "Remove"),
                 ModSettingsButtonTone.Danger,
@@ -457,6 +479,98 @@ namespace STS2RitsuLib.Settings
                 },
                 88f));
             OpenDrawer();
+        }
+
+        private void ShowRelicEditor(RitsuDebugStatePresetInventory relics, string relicId)
+        {
+            _drawerTitle.Text = ModelLabel(relicId);
+            ClearChildren(_drawerBody);
+            var state = relics.InternalValues?.GetValueOrDefault(relicId) ?? new();
+            _drawerBody.AddChild(IntegerField(
+                L("ritsulib.debugTools.field.stackCount", "Stack count"),
+                state.StackCount,
+                1,
+                RitsuDebugInventoryActions.MaxRelicStackCount,
+                value =>
+                {
+                    state.StackCount = value;
+                    StoreValues();
+                }));
+            var canonical = ModelDb.AllRelics.FirstOrDefault(model =>
+                model.Id.ToString().Equals(relicId, StringComparison.Ordinal));
+            if (canonical != null)
+                AddInternalValueEditors(
+                    canonical.DynamicVars,
+                    () => state.DynamicVars,
+                    values =>
+                    {
+                        state.DynamicVars = values;
+                        StoreValues();
+                    });
+            _drawerBody.AddChild(CompactButton(
+                L("ritsulib.debugTools.statePresets.remove", "Remove"),
+                ModSettingsButtonTone.Danger,
+                () =>
+                {
+                    relics.ModelIds.Remove(relicId);
+                    relics.InternalValues?.Remove(relicId);
+                    MarkDirty();
+                    CloseDrawer();
+                },
+                88f));
+            OpenDrawer();
+            return;
+
+            void StoreValues()
+            {
+                relics.InternalValues ??= new(StringComparer.Ordinal);
+                relics.InternalValues[relicId] = state;
+                MarkDirty();
+            }
+        }
+
+        private void AddInternalValueEditors(
+            DynamicVarSet dynamicVars,
+            Func<Dictionary<string, int>?> getValues,
+            Action<Dictionary<string, int>?> setValues)
+        {
+            var keys = dynamicVars
+                .Where(static pair => RitsuDebugModelValueOverrides.IsEditable(pair.Value))
+                .Select(static pair => pair.Key)
+                .OrderBy(static key => key, StringComparer.Ordinal)
+                .ToArray();
+            if (keys.Length == 0)
+                return;
+            _drawerBody.AddChild(SectionTitle(L(
+                "ritsulib.debugTools.action.dynamicValues",
+                "Dynamic values")));
+            foreach (var key in keys)
+            {
+                var capturedKey = key;
+                _drawerBody.AddChild(OptionalIntegerField(
+                    key,
+                    getValues()?.GetValueOrDefault(key),
+                    RitsuDebugModelValueOverrides.MinimumValue,
+                    RitsuDebugModelValueOverrides.MaximumValue,
+                    value =>
+                    {
+                        var values = getValues();
+                        if (value.HasValue)
+                        {
+                            values ??= new(StringComparer.Ordinal);
+                            values[capturedKey] = value.Value;
+                        }
+                        else if (values != null)
+                        {
+                            values.Remove(capturedKey);
+                            if (values.Count == 0)
+                                values = null;
+                        }
+
+                        setValues(values);
+                        MarkDirty();
+                    }));
+            }
         }
 
         private void ShowRemoveItemDrawer(string title, Action remove)
@@ -486,6 +600,10 @@ namespace STS2RitsuLib.Settings
             }
 
             var combat = RitsuDebugStatePresetCapture.HasActiveCombat(target);
+            var customPiles = ModCardPileRegistry.GetDefinitionsSnapshot();
+            var canCaptureCustomPiles = customPiles.Length > 0 &&
+                                        (combat || customPiles.All(static definition =>
+                                            definition.Scope == ModCardPileScope.RunPersistent));
             var scope = RitsuDebugStatePresetCaptureScope.Deck |
                         RitsuDebugStatePresetCaptureScope.Relics |
                         RitsuDebugStatePresetCaptureScope.Potions |
@@ -506,6 +624,9 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.statePresets.deck", "Deck"), true, true);
             AddScope(RitsuDebugStatePresetCaptureScope.CombatPiles,
                 L("ritsulib.debugTools.statePresets.combatPiles", "Combat piles"), false, combat);
+            AddScope(RitsuDebugStatePresetCaptureScope.CustomPiles,
+                L("ritsulib.debugTools.statePresets.customPiles", "Custom piles"), false,
+                canCaptureCustomPiles);
             AddScope(RitsuDebugStatePresetCaptureScope.Relics,
                 L("ritsulib.debugTools.category.relics", "Relics"), true, true);
             AddScope(RitsuDebugStatePresetCaptureScope.Potions,
@@ -516,6 +637,10 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.statePresets.playerValues", "Player values"), true, true);
             AddScope(RitsuDebugStatePresetCaptureScope.CombatValues,
                 L("ritsulib.debugTools.statePresets.combatValues", "Combat values"), false, combat);
+            AddScope(RitsuDebugStatePresetCaptureScope.SecondaryResources,
+                L("ritsulib.debugTools.category.secondaryResources", "Secondary resources"), false, combat);
+            AddScope(RitsuDebugStatePresetCaptureScope.Capabilities,
+                L("ritsulib.debugTools.category.capabilities", "Capabilities"), false, true);
             _drawerBody.AddChild(grid);
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.fillSelected", "Fill selected pages"),
@@ -575,6 +700,41 @@ namespace STS2RitsuLib.Settings
                         "Preset pages filled; {0} unsupported values were omitted."),
                     result.SkippedValueCount), false);
             CloseDrawer();
+            if (!_drawerLayer.Visible)
+                RebuildMain();
+        }
+
+        private void CapturePile(PileType pileType)
+        {
+            var target = _getTarget();
+            if (_draft == null || target == null)
+            {
+                _setStatus(L("ritsulib.debugTools.statePresets.noTarget",
+                    "No target player is available."), true);
+                return;
+            }
+
+            if (!RitsuDebugStatePresetCapture.TryCapturePileOnly(
+                    target,
+                    _draft,
+                    pileType,
+                    out var result,
+                    out var feedback))
+            {
+                _setStatus(feedback.GetLocalizedText(), true);
+                return;
+            }
+
+            _draft = result.Preset;
+            _dirty = true;
+            _setStatus(result.SkippedValueCount == 0
+                ? L("ritsulib.debugTools.statePresets.filled", "Preset pages filled from the current state.")
+                : string.Format(
+                    L("ritsulib.debugTools.statePresets.filledSkipped",
+                        "Preset pages filled; {0} unsupported values were omitted."),
+                    result.SkippedValueCount), false);
+            CloseDrawer();
+            RebuildMain();
         }
 
         private void ShowManagementDrawer()

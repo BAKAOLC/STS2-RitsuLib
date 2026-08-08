@@ -28,7 +28,13 @@ namespace STS2RitsuLib.Content
             where TPool : CardPoolModel
         {
             var emitted = PlaceholderModelTypeEmitter.EmitCardType(ModId, in descriptor);
-            RegisterPoolModel(typeof(TPool), emitted, "card", publicEntry);
+            RegisterPoolModel(
+                typeof(TPool),
+                emitted,
+                typeof(CardPoolModel),
+                typeof(CardModel),
+                "card",
+                publicEntry);
         }
 
         /// <summary>
@@ -59,7 +65,13 @@ namespace STS2RitsuLib.Content
             where TPool : RelicPoolModel
         {
             var emitted = PlaceholderModelTypeEmitter.EmitRelicType(ModId, in descriptor);
-            RegisterPoolModel(typeof(TPool), emitted, "relic", publicEntry);
+            RegisterPoolModel(
+                typeof(TPool),
+                emitted,
+                typeof(RelicPoolModel),
+                typeof(RelicModel),
+                "relic",
+                publicEntry);
         }
 
         /// <summary>
@@ -90,7 +102,13 @@ namespace STS2RitsuLib.Content
             where TPool : PotionPoolModel
         {
             var emitted = PlaceholderModelTypeEmitter.EmitPotionType(ModId, in descriptor);
-            RegisterPoolModel(typeof(TPool), emitted, "potion", publicEntry);
+            RegisterPoolModel(
+                typeof(TPool),
+                emitted,
+                typeof(PotionPoolModel),
+                typeof(PotionModel),
+                "potion",
+                publicEntry);
         }
     }
 }

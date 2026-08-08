@@ -9,7 +9,8 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
             IModSettingsValueBinding<string> pathBinding,
             IModSettingsValueBinding<double> scaleBinding,
             IModSettingsValueBinding<string> filterBinding,
-            IModSettingsValueBinding<bool> includeHoverBinding)
+            IModSettingsValueBinding<bool> includeHoverBinding,
+            IModSettingsValueBinding<bool> useLocalizedFileNamesBinding)
         {
             if (!TryValidatePathAndEnv(pathBinding, out var path))
                 return;
@@ -22,6 +23,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 Relics = true,
                 Potions = false,
                 IncludeRelicHoverTips = includeHoverBinding.Read(),
+                UseLocalizedFileNames = useLocalizedFileNamesBinding.Read(),
             });
             RitsuLibFramework.Logger.Info("Relic detail PNG export started.");
         }
@@ -29,7 +31,8 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
         internal static void TryBeginPotionDetailFromSettings(
             IModSettingsValueBinding<string> pathBinding,
             IModSettingsValueBinding<double> scaleBinding,
-            IModSettingsValueBinding<string> filterBinding)
+            IModSettingsValueBinding<string> filterBinding,
+            IModSettingsValueBinding<bool> useLocalizedFileNamesBinding)
         {
             if (!TryValidatePathAndEnv(pathBinding, out var path))
                 return;
@@ -42,6 +45,7 @@ namespace STS2RitsuLib.Diagnostics.CompendiumExport
                 Relics = false,
                 Potions = true,
                 IncludeRelicHoverTips = false,
+                UseLocalizedFileNames = useLocalizedFileNamesBinding.Read(),
             });
             RitsuLibFramework.Logger.Info("Potion detail PNG export started.");
         }

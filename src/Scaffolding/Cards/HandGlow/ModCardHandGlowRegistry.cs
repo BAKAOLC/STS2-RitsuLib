@@ -55,9 +55,10 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
                     "Cannot register card hand glow rules after content registration has been frozen. " +
                     "Register from your mod initializer before ModelDb initializes.");
 
-            if (cardType.IsAbstract || !typeof(CardModel).IsAssignableFrom(cardType))
+            if (cardType.IsAbstract || cardType.IsInterface || cardType.ContainsGenericParameters ||
+                !typeof(CardModel).IsAssignableFrom(cardType))
                 throw new ArgumentException(
-                    $"Type '{cardType.FullName}' must be a concrete subtype of {typeof(CardModel).FullName}.",
+                    $"Type '{cardType.FullName}' must be a closed concrete subtype of {typeof(CardModel).FullName}.",
                     nameof(cardType));
 
             var registered = new RegisteredRules(rules, Interlocked.Increment(ref _sequence));

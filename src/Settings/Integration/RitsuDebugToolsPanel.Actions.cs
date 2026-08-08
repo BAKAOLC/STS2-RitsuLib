@@ -4,8 +4,10 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
@@ -39,28 +41,31 @@ namespace STS2RitsuLib.Settings
                 () => card.Portrait,
                 $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · {L("ritsulib.debugTools.cost", "Cost")} {CardCost(card)}",
                 SafeCardDescription(card));
-            AddSectionTitle(root, L("ritsulib.debugTools.action.createCard", "Create card"));
-            PileType[] destinationPiles = TryGetTargetPlayer(out var target) && HasActiveCombatState(target)
-                ? [.. RitsuDebugCardActions.GetMutablePileNames().Select(static name => Enum.Parse<PileType>(name))]
-                : [PileType.Deck];
+            var settings = CreateAdjustmentContent();
+            var hasActiveCombat = TryGetTargetPlayer(out var target) && HasActiveCombatState(target);
+            PileType[] destinationPiles =
+            [
+                .. RitsuDebugCardActions.GetMutablePileTypes()
+                    .Where(pile => hasActiveCombat || RitsuDebugCardActions.IsRunStatePile(pile)),
+            ];
             var selectedPile = destinationPiles.Contains(PileType.Hand)
                 ? PileType.Hand
                 : destinationPiles[0];
-            root.AddChild(DropdownField(
+            settings.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.pile", "Destination pile"),
-                [.. destinationPiles.Select(pile => (pile, EnumLabel(pile)))],
+                [.. destinationPiles.Select(pile => (pile, PileLabel(pile)))],
                 selectedPile,
                 value => selectedPile = value));
-            AddHint(root, L("ritsulib.debugTools.fullHandPlacement",
+            AddHint(settings, L("ritsulib.debugTools.fullHandPlacement",
                 "Cards sent to a full hand follow the game's rules and enter the discard pile."));
-            var count = IntField(root, L("ritsulib.debugTools.field.cardCount", "Number of cards"), "1");
+            var count = IntField(settings, L("ritsulib.debugTools.field.cardCount", "Number of cards"), "1");
             var upgrades = IntField(
-                root,
+                settings,
                 L("ritsulib.debugTools.field.upgrades", "Upgrade levels"),
                 "0");
 
-            AddSectionTitle(root, L("ritsulib.debugTools.action.initialCardState", "Initial card state"));
-            AddHint(root, L(
+            AddSectionTitle(settings, L("ritsulib.debugTools.action.initialCardState", "Initial card state"));
+            AddHint(settings, L(
                 "ritsulib.debugTools.initialCardStateHint",
                 "Displayed values are the card's defaults. Only values you change override the created card."));
 
@@ -71,13 +76,13 @@ namespace STS2RitsuLib.Settings
                 baseCost = CreateIntegerEdit(
                     card.EnergyCost.GetWithModifiers(CostModifiers.None).ToString());
                 baseCost.TextChanged += _ => baseCostChanged = true;
-                root.AddChild(Field(OperationLabel(RitsuDebugCardEditField.Cost), baseCost));
+                settings.AddChild(Field(OperationLabel(RitsuDebugCardEditField.Cost), baseCost));
             }
 
             var replayChanged = false;
             var replay = CreateIntegerEdit(card.BaseReplayCount.ToString());
             replay.TextChanged += _ => replayChanged = true;
-            root.AddChild(Field(L("ritsulib.debugTools.field.replay", "Replay count"), replay));
+            settings.AddChild(Field(L("ritsulib.debugTools.field.replay", "Replay count"), replay));
 
             var changedDynamicVariables = new HashSet<string>(StringComparer.Ordinal);
             var dynamicVariableEditors = new Dictionary<string, LineEdit>(StringComparer.Ordinal);
@@ -93,14 +98,14 @@ namespace STS2RitsuLib.Settings
                 var editor = CreateIntegerEdit(decimal.ToInt32(dynamicVar.BaseValue).ToString());
                 editor.TextChanged += _ => changedDynamicVariables.Add(dynamicVariableKey);
                 dynamicVariableEditors.Add(dynamicVariableKey, editor);
-                root.AddChild(Field(dynamicVariableKey, editor));
+                settings.AddChild(Field(dynamicVariableKey, editor));
             }
 
             bool? exhaust = null;
             bool? ethereal = null;
             bool? unplayable = null;
             var localKeywords = card.GetKeywordsWithSources(KeywordSources.Local);
-            root.AddChild(ModSettingsUiControlTheming.CreateCompactEditorRow(
+            settings.AddChild(ModSettingsUiControlTheming.CreateCompactEditorRow(
                 2,
                 InitialFlagField(
                     RitsuDebugCardEditField.Exhaust,
@@ -139,20 +144,23 @@ namespace STS2RitsuLib.Settings
                     L("ritsulib.debugTools.field.enchantmentAmount", "Enchantment amount"),
                     enchantmentAmount));
                 var picker = enchantmentPicker;
-                root.AddChild(Field(
+                settings.AddChild(Field(
                     L("ritsulib.debugTools.field.specifyEnchantment", "Specify enchantment"),
                     ModSettingsUiControlTheming.CreateCompactStateToggle(false, enabled =>
                     {
                         specifyEnchantment = enabled;
                         picker.Visible = enabled;
                     })));
-                root.AddChild(enchantmentPicker);
+                settings.AddChild(enchantmentPicker);
             }
 
             root.AddChild(ActionButton(
                 L("ritsulib.debugTools.action.add", "Add"),
                 ModSettingsButtonTone.Accent,
                 Submit));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.creationSettings", "Creation settings"),
+                settings));
             return root;
 
             Control InitialFlagField(
@@ -254,30 +262,30 @@ namespace STS2RitsuLib.Settings
             var root = DetailShell(
                 entry.Card.Id.ToString(),
                 () => entry.Card.Portrait,
-                $"{EnumLabel(entry.PileType)} #{entry.Index + 1} · {EnumLabel(entry.Card.Type)} · {EnumLabel(entry.Card.Rarity)}",
+                $"{PileLabel(entry.PileType)} #{entry.Index + 1} · {EnumLabel(entry.Card.Type)} · {EnumLabel(entry.Card.Rarity)}",
                 SafeCardDescription(entry.Card),
                 descriptionRefreshFactory: () => SafeCardDescription(entry.Card));
-            AddSectionTitle(root, L("ritsulib.debugTools.action.cardState", "Card state"));
-            var upgrades = CreateIntegerEdit("1");
+            var stateSettings = CreateAdjustmentContent();
+            var upgrades = CreateIntegerEdit(entry.Card.CurrentUpgradeLevel.ToString());
             var upgradeButton = ActionButton(
-                L("ritsulib.debugTools.action.upgrade", "Upgrade"),
+                L("ritsulib.debugTools.action.set", "Set"),
                 ModSettingsButtonTone.Accent,
                 () =>
                 {
-                    if (!TryReadInt(upgrades, 1, RitsuDebugCardActions.MaxBulkUpgradeLevels, out var levels) ||
+                    if (!TryReadInt(upgrades, 0, entry.Card.MaxUpgradeLevel, out var level) ||
                         !TryGetActionContext(out var requester, out var target))
                         return;
-                    RunAction(() => RitsuDebugCardActions.SubmitUpgradeCard(
+                    RunAction(() => RitsuDebugCardActions.SubmitSetUpgradeLevel(
                         requester,
                         target,
                         entry.PileType,
                         entry.Index,
                         entry.Card.Id.ToString(),
-                        levels,
+                        level,
                         entry.CombatCardId));
                 });
-            root.AddChild(ActionField(
-                L("ritsulib.debugTools.field.upgrades", "Upgrade levels"),
+            stateSettings.AddChild(ActionField(
+                L("ritsulib.debugTools.field.upgradeLevel", "Upgrade level"),
                 upgrades,
                 upgradeButton));
             var replay = CreateIntegerEdit(entry.Card.BaseReplayCount.ToString());
@@ -298,26 +306,43 @@ namespace STS2RitsuLib.Settings
                         count,
                         entry.CombatCardId));
                 });
-            root.AddChild(ActionField(
+            stateSettings.AddChild(ActionField(
                 L("ritsulib.debugTools.field.replay", "Replay count"),
                 replay,
                 replayButton));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.cardState", "Card state"),
+                stateSettings));
 
-            AddSectionTitle(root, L("ritsulib.debugTools.action.cardPlacement", "Copies and pile placement"));
-            PileType[] destinationPiles = HasActiveCombatState(entry.Card.Owner)
-                ? [.. RitsuDebugCardActions.GetMutablePileNames().Select(static name => Enum.Parse<PileType>(name))]
-                : [PileType.Deck];
+            var placementSettings = CreateAdjustmentContent();
+            var hasActiveCombat = HasActiveCombatState(entry.Card.Owner);
+            PileType[] destinationPiles =
+            [
+                .. RitsuDebugCardActions.GetMutablePileTypes()
+                    .Where(pile => hasActiveCombat || RitsuDebugCardActions.IsRunStatePile(pile)),
+            ];
             var destinationPile = entry.PileType == PileType.Deck
                 ? PileType.Deck
                 : destinationPiles.FirstOrDefault(pile => pile != entry.PileType, PileType.Hand);
-            root.AddChild(DropdownField(
+            var moveButtonHolder = new Button?[1];
+            placementSettings.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.destinationPile", "Destination pile"),
-                [.. destinationPiles.Select(pile => (pile, EnumLabel(pile)))],
+                [.. destinationPiles.Select(pile => (pile, PileLabel(pile)))],
                 destinationPile,
-                value => destinationPile = value));
-            AddHint(root, L("ritsulib.debugTools.fullHandPlacement",
+                value =>
+                {
+                    destinationPile = value;
+                    if (moveButtonHolder[0] is { } currentMoveButton)
+                        currentMoveButton.Disabled = RitsuDebugCardActions.IsRunStatePile(entry.PileType) ||
+                                                     RitsuDebugCardActions.IsRunStatePile(destinationPile) ||
+                                                     destinationPile == entry.PileType;
+                }));
+            AddHint(placementSettings, L("ritsulib.debugTools.fullHandPlacement",
                 "Cards sent to a full hand follow the game's rules and enter the discard pile."));
-            var copyCount = IntField(root, L("ritsulib.debugTools.field.copyCount", "Number of copies"), "1");
+            var copyCount = IntField(
+                placementSettings,
+                L("ritsulib.debugTools.field.copyCount", "Number of copies"),
+                "1");
             var placementActions = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             placementActions.AddThemeConstantOverride("separation", 8);
             placementActions.AddChild(ActionButton(
@@ -354,14 +379,21 @@ namespace STS2RitsuLib.Settings
                         destinationPile,
                         entry.CombatCardId));
                 });
-            moveButton.Disabled = !entry.PileType.IsCombatPile();
+            moveButton.Disabled = RitsuDebugCardActions.IsRunStatePile(entry.PileType) ||
+                                  RitsuDebugCardActions.IsRunStatePile(destinationPile) ||
+                                  destinationPile == entry.PileType;
+            moveButtonHolder[0] = moveButton;
             placementActions.AddChild(moveButton);
-            root.AddChild(placementActions);
+            placementSettings.AddChild(placementActions);
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.cardPlacement", "Copies and pile placement"),
+                placementSettings,
+                RitsuDebugToolsGlyph.Cards));
 
-            AddSectionTitle(root, L("ritsulib.debugTools.action.cardProperties", "Card properties"));
+            var propertySettings = CreateAdjustmentContent();
             if (!entry.Card.EnergyCost.CostsX)
                 AddCardValueEditor(
-                    root,
+                    propertySettings,
                     entry,
                     OperationLabel(RitsuDebugCardEditField.Cost),
                     RitsuDebugCardEditField.Cost,
@@ -373,7 +405,7 @@ namespace STS2RitsuLib.Settings
                     dynamicVar.BaseValue != decimal.Truncate(dynamicVar.BaseValue))
                     continue;
                 AddCardValueEditor(
-                    root,
+                    propertySettings,
                     entry,
                     key,
                     RitsuDebugCardEditField.DynamicVar,
@@ -381,9 +413,14 @@ namespace STS2RitsuLib.Settings
                     key);
             }
 
-            AddSectionTitle(root, L("ritsulib.debugTools.action.cardFlags", "Card flags"));
+            if (propertySettings.GetChildCount() > 0)
+                root.AddChild(AdjustmentSection(
+                    L("ritsulib.debugTools.action.cardProperties", "Card properties"),
+                    propertySettings));
+
+            var flagSettings = CreateAdjustmentContent();
             var localKeywords = entry.Card.GetKeywordsWithSources(KeywordSources.Local);
-            root.AddChild(ModSettingsUiControlTheming.CreateCompactEditorRow(
+            flagSettings.AddChild(ModSettingsUiControlTheming.CreateCompactEditorRow(
                 2,
                 CardFlagField(root, entry, RitsuDebugCardEditField.Exhaust,
                     localKeywords.Contains(CardKeyword.Exhaust)),
@@ -391,6 +428,9 @@ namespace STS2RitsuLib.Settings
                     localKeywords.Contains(CardKeyword.Ethereal)),
                 CardFlagField(root, entry, RitsuDebugCardEditField.Unplayable,
                     localKeywords.Contains(CardKeyword.Unplayable))));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.cardFlags", "Card flags"),
+                flagSettings));
 
             var enchantments = ModelDb.DebugEnchantments
                 .OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase)
@@ -399,7 +439,7 @@ namespace STS2RitsuLib.Settings
                     SafeTitle(enchantment),
                     () => enchantment.Icon))
                 .ToArray();
-            AddSectionTitle(root, L("ritsulib.debugTools.field.enchantment", "Enchantment"));
+            var enchantmentSettings = CreateAdjustmentContent();
             if (enchantments.Length > 0)
             {
                 var currentEnchantmentId = entry.Card.Enchantment?.Id.ToString();
@@ -407,7 +447,7 @@ namespace STS2RitsuLib.Settings
                     L("ritsulib.debugTools.field.enchantment", "Enchantment"),
                     enchantments,
                     currentEnchantmentId);
-                root.AddChild(enchantmentPicker);
+                enchantmentSettings.AddChild(enchantmentPicker);
                 var enchantmentAmount = CreateIntegerEdit("1");
                 var enchantButton = ActionButton(
                     L("ritsulib.debugTools.action.enchant", "Set enchantment"),
@@ -450,11 +490,29 @@ namespace STS2RitsuLib.Settings
                             entry.Card.Id.ToString(),
                             entry.CombatCardId));
                     }));
+                enchantmentPicker.AddExpandedControl(CreateHintLabel(L(
+                    "ritsulib.debugTools.enchantmentResetHint",
+                    "Replacing or clearing an enchantment restores the card's standard state at its current upgrade level.")));
             }
             else
             {
-                AddHint(root, L("ritsulib.debugTools.noEnchantments", "No enchantments are available."));
+                AddHint(enchantmentSettings,
+                    L("ritsulib.debugTools.noEnchantments", "No enchantments are available."));
             }
+
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.field.enchantment", "Enchantment"),
+                enchantmentSettings));
+
+            var pileToken = RitsuDebugCardActions.GetPileToken(entry.PileType);
+            AddCardCapabilitySections(
+                root,
+                new(
+                    RitsuDebugCapabilityTargetKind.Card,
+                    entry.Card.Id.ToString(),
+                    entry.Index,
+                    pileToken),
+                entry.Card);
 
             root.AddChild(ActionButton(
                 L("ritsulib.debugTools.action.remove", "Remove"),
@@ -566,21 +624,54 @@ namespace STS2RitsuLib.Settings
 
         private Control CreateRelicDetail(RelicModel relic)
         {
+            var source = ContentSourceResolver.Resolve(relic);
             var root = DetailShell(
                 relic.Id.ToString(),
                 () => relic.BigIcon,
-                EnumLabel(relic.Rarity),
+                $"{EnumLabel(relic.Rarity)} · {ContentSourceDisplayLabel(source)}",
                 SafeDescription(() => relic.DynamicDescription.GetFormattedText()));
+            var settings = CreateAdjustmentContent();
+            AddHint(settings, L(
+                "ritsulib.debugTools.initialValuesHint",
+                "Displayed values are defaults. Only changed values override the created item."));
+            LineEdit? stackCount = null;
+            if (relic.IsStackable)
+                stackCount = IntField(
+                    settings,
+                    L("ritsulib.debugTools.field.stackCount", "Initial stack count"),
+                    "1");
+            var dynamicVariables = CreateDynamicVariableEditors(settings, relic.DynamicVars);
             var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             row.AddThemeConstantOverride("separation", 8);
-            row.AddChild(ActionButton(L("ritsulib.debugTools.action.add", "Add"), ModSettingsButtonTone.Accent,
-                () => SubmitInventoryAction((requester, target) =>
-                    RitsuDebugInventoryActions.SubmitAddRelic(requester, target, relic.Id.ToString()))));
-            row.AddChild(ActionButton(L("ritsulib.debugTools.action.remove", "Remove"), ModSettingsButtonTone.Danger,
+            row.AddChild(WideIconAction(RitsuDebugToolsGlyph.Plus, L("ritsulib.debugTools.action.add", "Add"),
+                ModSettingsButtonTone.Accent,
+                Add));
+            row.AddChild(WideIconAction(RitsuDebugToolsGlyph.Trash, L("ritsulib.debugTools.action.remove", "Remove"),
+                ModSettingsButtonTone.Danger,
                 () => SubmitInventoryAction((requester, target) =>
                     RitsuDebugInventoryActions.SubmitRemoveRelic(requester, target, relic.Id.ToString()))));
             root.AddChild(row);
+            if (stackCount != null || dynamicVariables.HasEditors)
+                root.AddChild(AdjustmentSection(
+                    L("ritsulib.debugTools.action.creationSettings", "Creation settings"),
+                    settings));
             return root;
+
+            void Add()
+            {
+                var stacks = 1;
+                if (stackCount != null &&
+                    !TryReadInt(stackCount, 1, RitsuDebugInventoryActions.MaxRelicStackCount, out stacks))
+                    return;
+                if (!TryReadDynamicVariableOverrides(dynamicVariables, out var overrides))
+                    return;
+                SubmitInventoryAction((requester, target) => RitsuDebugInventoryActions.SubmitAddRelic(
+                    requester,
+                    target,
+                    relic.Id.ToString(),
+                    stacks,
+                    overrides));
+            }
         }
 
         private Control CreatePotionDetail(PotionModel potion)
@@ -590,18 +681,38 @@ namespace STS2RitsuLib.Settings
                 () => PotionPreviewImage(potion),
                 EnumLabel(potion.Rarity),
                 SafeDescription(() => potion.DynamicDescription.GetFormattedText()));
+            var settings = CreateAdjustmentContent();
+            AddHint(settings, L(
+                "ritsulib.debugTools.initialValuesHint",
+                "Displayed values are defaults. Only changed values override the created item."));
+            var dynamicVariables = CreateDynamicVariableEditors(settings, potion.DynamicVars);
             root.AddChild(ActionButton(L("ritsulib.debugTools.action.add", "Add"), ModSettingsButtonTone.Accent,
-                () => SubmitInventoryAction((requester, target) =>
-                    RitsuDebugInventoryActions.SubmitAddPotion(requester, target, potion.Id.ToString()))));
+                Add));
+            if (dynamicVariables.HasEditors)
+                root.AddChild(AdjustmentSection(
+                    L("ritsulib.debugTools.action.creationSettings", "Creation settings"),
+                    settings));
             return root;
+
+            void Add()
+            {
+                if (!TryReadDynamicVariableOverrides(dynamicVariables, out var overrides))
+                    return;
+                SubmitInventoryAction((requester, target) => RitsuDebugInventoryActions.SubmitAddPotion(
+                    requester,
+                    target,
+                    potion.Id.ToString(),
+                    overrides));
+            }
         }
 
         private Control CreatePowerDetail(PowerModel power)
         {
+            var source = ContentSourceResolver.Resolve(power);
             var root = DetailShell(
                 power.Id.ToString(),
                 () => power.Icon,
-                EnumLabel(power.Type),
+                $"{EnumLabel(power.Type)} · {ContentSourceDisplayLabel(source)}",
                 SafeDescription(() => power.Description.GetFormattedText()));
             var creatures = CurrentCreatures();
             if (creatures.Length == 0)
@@ -611,26 +722,37 @@ namespace STS2RitsuLib.Settings
             }
 
             _selectedCreatureCombatId = PreferredCreatureCombatId(creatures);
-            var amount = IntField(root, L("ritsulib.debugTools.field.amount", "Stack amount"), "1");
-            root.AddChild(ActionGrid(
-            [
-                (L("ritsulib.debugTools.action.applySelectedCreature", "Apply to selected"),
-                    ModSettingsButtonTone.Accent,
-                    ApplySelected),
-                (L("ritsulib.debugTools.action.applyAllCreatures", "Apply to all creatures"),
-                    ModSettingsButtonTone.Normal,
-                    () => ApplyMany(static creature => !creature.IsDead)),
-                (L("ritsulib.debugTools.action.applyAllPlayers", "Apply to all players"),
-                    ModSettingsButtonTone.Normal,
-                    () => ApplyMany(static creature => creature is { IsPlayer: true, IsDead: false })),
-                (L("ritsulib.debugTools.action.applyAllEnemies", "Apply to all enemies"),
-                    ModSettingsButtonTone.Normal,
-                    () => ApplyMany(static creature => creature is { IsPlayer: false, IsDead: false })),
-                (L("ritsulib.debugTools.action.removeSelectedCreature", "Remove from selected"),
-                    ModSettingsButtonTone.Danger,
-                    RemoveSelected),
-            ]));
-            AddCurrentPowerManager(root, SelectedCombatId, false);
+            var settings = CreateAdjustmentContent();
+            AddHint(settings, L(
+                "ritsulib.debugTools.initialValuesHint",
+                "Displayed values are defaults. Only changed values override the created item."));
+            var amount = IntField(settings, L("ritsulib.debugTools.field.amount", "Stack amount"), "1");
+            var scope = PowerApplyScope.Selected;
+            settings.AddChild(DropdownField(
+                L("ritsulib.debugTools.field.targets", "Targets"),
+                [
+                    (PowerApplyScope.Selected,
+                        L("ritsulib.debugTools.targets.selectedCreature", "Selected creature")),
+                    (PowerApplyScope.AllCreatures,
+                        L("ritsulib.debugTools.targets.allCreatures", "All creatures")),
+                    (PowerApplyScope.AllPlayers,
+                        L("ritsulib.debugTools.targets.allPlayers", "All players")),
+                    (PowerApplyScope.AllEnemies,
+                        L("ritsulib.debugTools.targets.allEnemies", "All enemies")),
+                ],
+                scope,
+                selected => scope = selected));
+            var dynamicVariables = CreateDynamicVariableEditors(settings, power.DynamicVars);
+            root.AddChild(IconTextButton(
+                RitsuDebugToolsGlyph.Plus,
+                L("ritsulib.debugTools.action.applyPower", "Apply Power"),
+                ModSettingsButtonTone.Accent,
+                Apply));
+            AddHint(root, L("ritsulib.debugTools.powerLibraryHint",
+                "Use Current Powers for live amounts, decrementing, and removal."));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.applicationSettings", "Application settings"),
+                settings));
             return root;
 
             uint? SelectedCombatId()
@@ -643,31 +765,42 @@ namespace STS2RitsuLib.Settings
                 return combatId;
             }
 
-            void ApplySelected()
+            void Apply()
             {
                 if (!TryReadInt(amount, 1, RitsuDebugCombatActions.MaxAmount, out var value) ||
+                    !TryReadDynamicVariableOverrides(dynamicVariables, out var overrides) ||
                     !TryGetActionContext(out var requester, out var target))
                     return;
-                if (SelectedCombatId() is not { } combatId)
+                if (scope == PowerApplyScope.Selected)
                 {
-                    SetStatus(L("ritsulib.debugTools.targetChanged",
-                        "The selected target is no longer available."), true);
+                    if (SelectedCombatId() is not { } combatId)
+                    {
+                        SetStatus(L("ritsulib.debugTools.targetChanged",
+                            "The selected target is no longer available."), true);
+                        return;
+                    }
+
+                    RunAction(() => RitsuDebugCombatActions.SubmitApplyPower(
+                        requester,
+                        target,
+                        combatId,
+                        power.Id.ToString(),
+                        value,
+                        overrides));
                     return;
                 }
 
-                RunAction(() => RitsuDebugCombatActions.SubmitApplyPower(
-                    requester,
-                    target,
-                    combatId,
-                    power.Id.ToString(),
-                    value));
-            }
-
-            void ApplyMany(Func<Creature, bool> matches)
-            {
-                if (!TryReadInt(amount, 1, RitsuDebugCombatActions.MaxAmount, out var value) ||
-                    !TryGetActionContext(out var requester, out var target))
-                    return;
+                Func<Creature, bool> matches = scope switch
+                {
+                    PowerApplyScope.AllCreatures => static creature => !creature.IsDead,
+                    PowerApplyScope.AllPlayers => static creature =>
+                        creature is { IsPlayer: true, IsDead: false },
+                    PowerApplyScope.AllEnemies => static creature =>
+                        creature is { IsPlayer: false, IsDead: false },
+                    PowerApplyScope.Selected => throw new InvalidOperationException(
+                        "The selected-creature scope must be handled before building a creature predicate."),
+                    _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, null),
+                };
                 uint[] combatIds =
                 [
                     .. CurrentCreatures()
@@ -686,25 +819,43 @@ namespace STS2RitsuLib.Settings
                     target,
                     combatIds,
                     power.Id.ToString(),
-                    value));
+                    value,
+                    overrides));
+            }
+        }
+
+        private Control CreateOrbDetail(OrbModel orb)
+        {
+            var source = ContentSourceResolver.Resolve(orb);
+            var root = DetailShell(
+                orb.Id.ToString(),
+                () => orb.Icon,
+                ContentSourceDisplayLabel(source),
+                SafeDescription(() => orb.Description.GetFormattedText()));
+            if (!TryGetTargetPlayer(out var player) || !HasActiveCombatState(player))
+            {
+                AddHint(root, L("ritsulib.debugTools.orbs.combatRequired",
+                    "Start combat to channel or manage orbs."));
+                return root;
             }
 
-            void RemoveSelected()
+            root.AddChild(IconTextButton(
+                RitsuDebugToolsGlyph.Plus,
+                L("ritsulib.debugTools.action.channelOrb", "Channel orb"),
+                ModSettingsButtonTone.Accent,
+                Channel));
+            AddHint(root, L("ritsulib.debugTools.orbs.libraryHint",
+                "Use Current orbs to inspect the queue, replace or remove an orb, and adjust orb slots."));
+            return root;
+
+            void Channel()
             {
                 if (!TryGetActionContext(out var requester, out var target))
                     return;
-                if (SelectedCombatId() is not { } combatId)
-                {
-                    SetStatus(L("ritsulib.debugTools.targetChanged",
-                        "The selected target is no longer available."), true);
-                    return;
-                }
-
-                RunAction(() => RitsuDebugCombatActions.SubmitRemovePower(
+                RunAction(() => RitsuDebugOrbActions.SubmitChannelOrb(
                     requester,
                     target,
-                    combatId,
-                    power.Id.ToString()));
+                    orb.Id.ToString()));
             }
         }
 
@@ -722,89 +873,121 @@ namespace STS2RitsuLib.Settings
                     L("ritsulib.debugTools.playerSummary", "Max energy {0} · Potion slots {1}"),
                     player.MaxEnergy,
                     player.MaxPotionCount));
-            AddSectionTitle(root, L("ritsulib.debugTools.action.playerState", "Player state"));
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.AddGold, "100",
+            AddPlayerContentNavigation(root, player);
+            AddCapabilitySection(
+                root,
+                new(RitsuDebugCapabilityTargetKind.Character, player.Character.Id.ToString()),
+                player.Character,
+                L("ritsulib.debugTools.capabilities.characterSection", "Character capabilities"));
+            var playerStateSettings = CreateAdjustmentContent();
+            AddPlayerOperationEditor(playerStateSettings, player, RitsuDebugPlayerOperation.AddGold, "100",
                 -RitsuDebugPlayerActions.MaxGold, RitsuDebugPlayerActions.MaxGold);
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetGold, player.Gold.ToString(), 0,
+            AddPlayerOperationEditor(playerStateSettings, player, RitsuDebugPlayerOperation.SetGold,
+                player.Gold.ToString(), 0,
                 RitsuDebugPlayerActions.MaxGold);
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.Heal, "1", 0,
+            AddPlayerOperationEditor(playerStateSettings, player, RitsuDebugPlayerOperation.Heal, "1", 0,
                 RitsuDebugPlayerActions.MaxHitPoints);
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetCurrentHp,
-                player.Creature.CurrentHp.ToString(), 1, RitsuDebugPlayerActions.MaxHitPoints,
-                ActionButton(
-                    L("ritsulib.debugTools.action.fullHeal", "Restore full HP"),
-                    ModSettingsButtonTone.Accent,
-                    () => SubmitPlayerOperation(
-                        player.NetId,
-                        RitsuDebugPlayerOperation.Heal,
-                        player.Creature.MaxHp)));
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetMaxHp,
+            AddPlayerOperationEditor(playerStateSettings, player, RitsuDebugPlayerOperation.SetCurrentHp,
+                player.Creature.CurrentHp.ToString(), 1, RitsuDebugPlayerActions.MaxHitPoints);
+            AddPlayerOperationEditor(playerStateSettings, player, RitsuDebugPlayerOperation.SetMaxHp,
                 player.Creature.MaxHp.ToString(), 1, RitsuDebugPlayerActions.MaxHitPoints);
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetMaxEnergy,
+            playerStateSettings.AddChild(WideIconAction(
+                RitsuDebugToolsGlyph.Heart,
+                L("ritsulib.debugTools.action.fullHeal", "Restore full HP"),
+                ModSettingsButtonTone.Accent,
+                () => SubmitPlayerOperation(
+                    player.NetId,
+                    RitsuDebugPlayerOperation.Heal,
+                    player.Creature.MaxHp)));
+            AddPlayerOperationEditor(playerStateSettings, player, RitsuDebugPlayerOperation.SetMaxEnergy,
                 player.MaxEnergy.ToString(), 1, RitsuDebugPlayerActions.MaxCombatResource);
-            AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetPotionSlots,
+            AddPlayerOperationEditor(playerStateSettings, player, RitsuDebugPlayerOperation.SetPotionSlots,
                 player.MaxPotionCount.ToString(), 0, RitsuDebugPlayerActions.MaxPotionSlots);
-            AddHint(root, L("ritsulib.debugTools.potionSlotReduction",
+            AddHint(playerStateSettings, L("ritsulib.debugTools.potionSlotReduction",
                 "Reducing potion slots keeps potions that still fit and discards the rest."));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.playerState", "Player state"),
+                playerStateSettings));
             var combatState = player.PlayerCombatState;
             if (HasActiveCombatState(player) && combatState != null)
             {
-                AddSectionTitle(root, L("ritsulib.debugTools.action.combatState", "Combat state"));
-                AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.GainBlock, "1", 0,
+                var combatStateSettings = CreateAdjustmentContent();
+                AddPlayerOperationEditor(combatStateSettings, player, RitsuDebugPlayerOperation.GainBlock, "1", 0,
                     RitsuDebugPlayerActions.MaxHitPoints);
-                AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.AddEnergy, "1", 0,
+                AddPlayerOperationEditor(combatStateSettings, player, RitsuDebugPlayerOperation.AddEnergy, "1", 0,
                     RitsuDebugPlayerActions.MaxCombatResource);
-                AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetEnergy,
+                AddPlayerOperationEditor(combatStateSettings, player, RitsuDebugPlayerOperation.SetEnergy,
                     combatState.Energy.ToString(), 0, RitsuDebugPlayerActions.MaxCombatResource);
-                AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.AddStars, "1", 0,
+                AddPlayerOperationEditor(combatStateSettings, player, RitsuDebugPlayerOperation.AddStars, "1", 0,
                     RitsuDebugPlayerActions.MaxCombatResource);
-                AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.SetStars,
+                AddPlayerOperationEditor(combatStateSettings, player, RitsuDebugPlayerOperation.SetStars,
                     combatState.Stars.ToString(), 0, RitsuDebugPlayerActions.MaxCombatResource);
-                AddPlayerOperationEditor(root, player, RitsuDebugPlayerOperation.Draw, "1", 1,
+                AddPlayerOperationEditor(combatStateSettings, player, RitsuDebugPlayerOperation.Draw, "1", 1,
                     RitsuDebugPlayerActions.MaxDrawCount);
-                if (player.Creature.CombatId is { } combatId)
-                {
-                    _selectedCreatureCombatId = combatId;
-                    AddCurrentPowerManager(root, () => combatId, true);
-                }
+                root.AddChild(AdjustmentSection(
+                    L("ritsulib.debugTools.action.combatState", "Combat state"),
+                    combatStateSettings));
             }
 
-            AddSectionTitle(root, L("ritsulib.debugTools.action.cardPiles", "Card piles"));
-            var piles = HasActiveCombatState(player)
-                ? RitsuDebugCardActions.GetMutablePileNames()
-                    .Select(static name => Enum.Parse<PileType>(name))
-                    .ToArray()
-                : [PileType.Deck];
-            var pileActions = new List<(string Text, ModSettingsButtonTone Tone, Action Action)>();
-            foreach (var pile in piles)
+            var hasActiveCombat = HasActiveCombatState(player);
+            var piles = RitsuDebugCardActions.GetMutablePileTypes()
+                .Where(pile => hasActiveCombat || RitsuDebugCardActions.IsRunStatePile(pile))
+                .ToArray();
+            var selectedPile = piles[0];
+            var pileSettings = CreateAdjustmentContent();
+            var pilePicker = new RitsuDebugSearchableChoice(
+                L("ritsulib.debugTools.filter.pile", "Pile"),
+                L("ritsulib.debugTools.search.piles", "Search piles"),
+                L("ritsulib.debugTools.empty.piles", "No matching piles"),
+                [
+                    .. piles.Select(pile => new RitsuDebugSearchableChoiceOption(
+                        RitsuDebugCardActions.GetPileToken(pile),
+                        PileLabel(pile),
+                        pile.ToString())),
+                ],
+                RitsuDebugCardActions.GetPileToken(selectedPile));
+            pileSettings.AddChild(pilePicker);
+            var pileActions = new GridContainer
             {
-                var capturedPile = pile;
-                pileActions.Add((
-                    string.Format(L("ritsulib.debugTools.action.clearPile", "Clear {0}"), EnumLabel(capturedPile)),
-                    ModSettingsButtonTone.Danger,
-                    () => SubmitTargetedAction(player.NetId, (requester, target) =>
-                        RitsuDebugCardActions.SubmitModifyPile(
-                            requester,
-                            target,
-                            capturedPile,
-                            RitsuDebugCardPileOperation.Clear))));
-                pileActions.Add((
-                    string.Format(L("ritsulib.debugTools.action.upgradePile", "Upgrade {0}"),
-                        EnumLabel(capturedPile)),
-                    ModSettingsButtonTone.Normal,
-                    () => SubmitTargetedAction(player.NetId, (requester, target) =>
-                        RitsuDebugCardActions.SubmitModifyPile(
-                            requester,
-                            target,
-                            capturedPile,
-                            RitsuDebugCardPileOperation.Upgrade,
-                            1))));
-            }
+                Columns = 2,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            pileActions.AddThemeConstantOverride("h_separation", 8);
+            pileActions.AddThemeConstantOverride("v_separation", 8);
+            var clearPileButton = ActionButton(string.Empty, ModSettingsButtonTone.Danger,
+                () => SubmitTargetedAction(player.NetId, (requester, target) =>
+                    RitsuDebugCardActions.SubmitModifyPile(
+                        requester,
+                        target,
+                        selectedPile,
+                        RitsuDebugCardPileOperation.Clear)));
+            var upgradePileButton = ActionButton(string.Empty, ModSettingsButtonTone.Normal,
+                () => SubmitTargetedAction(player.NetId, (requester, target) =>
+                    RitsuDebugCardActions.SubmitModifyPile(
+                        requester,
+                        target,
+                        selectedPile,
+                        RitsuDebugCardPileOperation.Upgrade,
+                        1)));
+            pileActions.AddChild(clearPileButton);
+            pileActions.AddChild(upgradePileButton);
+            pileSettings.AddChild(pileActions);
+            RefreshPileActionLabels();
+            pilePicker.SelectionChanged += selectedId =>
+            {
+                if (selectedId == null || !RitsuDebugCardActions.TryParseMutablePileType(selectedId, out var pile))
+                    return;
+                selectedPile = pile;
+                RefreshPileActionLabels();
+            };
 
-            root.AddChild(ActionGrid(pileActions));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.cardPiles", "Card piles"),
+                pileSettings,
+                RitsuDebugToolsGlyph.PileCards));
 
-            AddSectionTitle(root, L("ritsulib.debugTools.action.inventory", "Inventory"));
-            root.AddChild(ActionGrid(
+            var inventorySettings = CreateAdjustmentContent();
+            inventorySettings.AddChild(ActionGrid(
             [
                 (L("ritsulib.debugTools.action.clearRelics", "Remove all relics"),
                     ModSettingsButtonTone.Danger,
@@ -821,9 +1004,25 @@ namespace STS2RitsuLib.Settings
                             target,
                             RitsuDebugInventoryKind.Potions))),
             ]));
-
-            AddPotionDiscardButtons(root, player);
+            AddPotionDiscardButtons(inventorySettings, player);
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.inventory", "Inventory"),
+                inventorySettings,
+                RitsuDebugToolsGlyph.Inventory));
             return root;
+
+            void RefreshPileActionLabels()
+            {
+                var pileLabel = PileLabel(selectedPile);
+                clearPileButton.Text = string.Format(
+                    L("ritsulib.debugTools.action.clearPile", "Clear {0}"),
+                    pileLabel);
+                upgradePileButton.Text = string.Format(
+                    L("ritsulib.debugTools.action.upgradePile", "Upgrade {0}"),
+                    pileLabel);
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(clearPileButton);
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(upgradePileButton);
+            }
         }
 
         private Control CreateCreatureDetail(Creature creature)
@@ -840,11 +1039,20 @@ namespace STS2RitsuLib.Settings
                     creature.ModelId),
                 null,
                 CreatureVitals(creature),
-                creature.LogName,
+                CreatureDetailDescription(creature),
                 () => CreatureVitals(creature));
-            AddSectionTitle(root, L("ritsulib.debugTools.action.creatureValues", "Creature values"));
+            if (creature.Monster != null)
+                AddCapabilitySection(
+                    root,
+                    new(
+                        RitsuDebugCapabilityTargetKind.Monster,
+                        creature.Monster.Id.ToString(),
+                        CreatureCombatId: combatId),
+                    creature.Monster,
+                    L("ritsulib.debugTools.capabilities.monsterSection", "Monster capabilities"));
+            var creatureValueSettings = CreateAdjustmentContent();
             AddCreatureOperationEditor(
-                root,
+                creatureValueSettings,
                 creature,
                 RitsuDebugCreatureOperation.SetCurrentHp,
                 L("ritsulib.debugTools.field.currentHp", "Current HP"),
@@ -853,7 +1061,7 @@ namespace STS2RitsuLib.Settings
                 creature.MaxHp,
                 L("ritsulib.debugTools.action.set", "Set"));
             AddCreatureOperationEditor(
-                root,
+                creatureValueSettings,
                 creature,
                 RitsuDebugCreatureOperation.SetMaxHp,
                 L("ritsulib.debugTools.field.maxHp", "Maximum HP"),
@@ -862,7 +1070,7 @@ namespace STS2RitsuLib.Settings
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.set", "Set"));
             AddCreatureOperationEditor(
-                root,
+                creatureValueSettings,
                 creature,
                 RitsuDebugCreatureOperation.SetBlock,
                 L("ritsulib.debugTools.field.block", "Block"),
@@ -870,8 +1078,11 @@ namespace STS2RitsuLib.Settings
                 0,
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.set", "Set"));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.creatureValues", "Creature values"),
+                creatureValueSettings));
 
-            AddSectionTitle(root, L("ritsulib.debugTools.action.creatureActions", "Quick actions"));
+            var quickActionSettings = CreateAdjustmentContent();
             var quickActions = new List<(string Text, ModSettingsButtonTone Tone, Action Action)>
             {
                 (L("ritsulib.debugTools.action.fullHeal", "Restore full HP"),
@@ -886,16 +1097,19 @@ namespace STS2RitsuLib.Settings
                     () => SubmitCreatureOperation(creature, RitsuDebugCreatureOperation.Kill, 0)));
             }
 
-            root.AddChild(ActionGrid(quickActions));
-            AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.Damage, "1", 0,
+            quickActionSettings.AddChild(ActionGrid(quickActions));
+            AddCreatureOperationEditor(quickActionSettings, creature, RitsuDebugCreatureOperation.Damage, "1", 0,
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.execute", "Execute"));
-            AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.Heal, "1", 0,
+            AddCreatureOperationEditor(quickActionSettings, creature, RitsuDebugCreatureOperation.Heal, "1", 0,
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.execute", "Execute"));
-            AddCreatureOperationEditor(root, creature, RitsuDebugCreatureOperation.GainBlock, "1", 0,
+            AddCreatureOperationEditor(quickActionSettings, creature, RitsuDebugCreatureOperation.GainBlock, "1", 0,
                 RitsuDebugCombatActions.MaxAmount,
                 L("ritsulib.debugTools.action.execute", "Execute"));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.creatureActions", "Quick actions"),
+                quickActionSettings));
             if (creature is { IsPlayer: false, Monster.MoveStateMachine: not null })
                 AddMonsterIntentManager(root, creature);
             AddCreaturePresetManager(root, creature);
@@ -932,10 +1146,10 @@ namespace STS2RitsuLib.Settings
             }
 
             if (directActions.Count > 0)
-            {
-                AddSectionTitle(root, L("ritsulib.debugTools.action.enemyActions", "Enemy actions"));
-                root.AddChild(ActionGrid(directActions));
-            }
+                root.AddChild(AdjustmentSection(
+                    L("ritsulib.debugTools.action.enemyActions", "Enemy actions"),
+                    ActionGrid(directActions),
+                    RitsuDebugToolsGlyph.Monsters));
 
             return root;
         }
@@ -943,12 +1157,12 @@ namespace STS2RitsuLib.Settings
         private void AddMonsterIntentManager(RitsuDebugLiveDetailContainer root, Creature creature)
         {
             var combatId = creature.CombatId!.Value;
-            AddSectionTitle(root, L("ritsulib.debugTools.action.monsterIntent", "Intent"));
+            var content = CreateAdjustmentContent();
             var picker = new RitsuDebugMonsterIntentPicker(creature);
             picker.OpenRequested += () => OpenMonsterIntentWindow(combatId);
-            root.AddChild(picker);
+            content.AddChild(picker);
 
-            root.AddChild(ActionGrid([
+            content.AddChild(ActionGrid([
                 (L("ritsulib.debugTools.action.performMonsterIntent", "Perform current intent"),
                     ModSettingsButtonTone.Accent,
                     () => SubmitPerformMonsterIntent(combatId)),
@@ -956,8 +1170,12 @@ namespace STS2RitsuLib.Settings
                     ModSettingsButtonTone.Normal,
                     () => SubmitStunMonster(combatId)),
             ]));
-            AddHint(root, L("ritsulib.debugTools.monsterIntentHint",
+            AddHint(content, L("ritsulib.debugTools.monsterIntentHint",
                 "Open the floating intent map to watch transitions and switch intents while viewing combat."));
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.monsterIntent", "Intent"),
+                content,
+                RitsuDebugToolsGlyph.Monsters));
 
             root.RegisterRefresh(() =>
             {
@@ -971,7 +1189,7 @@ namespace STS2RitsuLib.Settings
             Func<uint?> combatIdFactory,
             bool includePowerLibraryButton)
         {
-            AddSectionTitle(root, L("ritsulib.debugTools.action.powers", "Powers"));
+            var content = CreateAdjustmentContent();
             var toolbar = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             toolbar.AddThemeConstantOverride("separation", 8);
             if (includePowerLibraryButton)
@@ -996,11 +1214,15 @@ namespace STS2RitsuLib.Settings
                     SubmitCreatureOperation(combatId, RitsuDebugCreatureOperation.ClearPowers, 0);
                 });
             toolbar.AddChild(clearButton);
-            root.AddChild(toolbar);
+            content.AddChild(toolbar);
 
             var list = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             list.AddThemeConstantOverride("separation", 6);
-            root.AddChild(list);
+            content.AddChild(list);
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.action.powers", "Powers"),
+                content,
+                RitsuDebugToolsGlyph.Powers));
 
             RefreshPowerList();
             root.RegisterRefresh(RefreshPowerList);
@@ -1131,8 +1353,7 @@ namespace STS2RitsuLib.Settings
             RitsuDebugPlayerOperation operation,
             string initialValue,
             int minimum,
-            int maximum,
-            Button? secondaryAction = null)
+            int maximum)
         {
             AddIntegerActionRow(
                 root,
@@ -1140,8 +1361,91 @@ namespace STS2RitsuLib.Settings
                 initialValue,
                 minimum,
                 maximum,
-                value => SubmitPlayerOperation(player.NetId, operation, value),
-                secondaryAction: secondaryAction);
+                value => SubmitPlayerOperation(player.NetId, operation, value));
+        }
+
+        private void AddPlayerContentNavigation(VBoxContainer root, Player player)
+        {
+            AddSectionTitle(root, L("ritsulib.debugTools.playerContent", "Player content"));
+            var grid = new GridContainer
+            {
+                Columns = 2,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            grid.AddThemeConstantOverride("h_separation", 8);
+            grid.AddThemeConstantOverride("v_separation", 8);
+            Add(
+                RitsuDebugToolsGlyph.PileCards,
+                L("ritsulib.debugTools.navigation.cardsAndPiles", "Cards and piles"),
+                PlayerContentDestination.Cards);
+            Add(
+                RitsuDebugToolsGlyph.Relics,
+                L("ritsulib.debugTools.navigation.ownedRelics", "Owned relics"),
+                PlayerContentDestination.Relics);
+            Add(
+                RitsuDebugToolsGlyph.Potions,
+                L("ritsulib.debugTools.navigation.ownedPotions", "Owned potions"),
+                PlayerContentDestination.Potions);
+            Add(
+                RitsuDebugToolsGlyph.Powers,
+                L("ritsulib.debugTools.navigation.currentPowers", "Current Powers"),
+                PlayerContentDestination.Powers);
+            Add(
+                RitsuDebugToolsGlyph.Orbs,
+                L("ritsulib.debugTools.navigation.currentOrbs", "Orbs and slots"),
+                PlayerContentDestination.Orbs);
+            root.AddChild(grid);
+            return;
+
+            void Add(RitsuDebugToolsGlyph glyph, string label, PlayerContentDestination destination)
+            {
+                var button = IconTextButton(glyph, label, ModSettingsButtonTone.Normal,
+                    () => OpenPlayerContent(player, destination));
+                button.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                button.CustomMinimumSize = new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
+                grid.AddChild(button);
+            }
+        }
+
+        private void OpenPlayerContent(Player player, PlayerContentDestination destination)
+        {
+            _targetPlayerNetId = player.NetId;
+            _selectedCreatureCombatId = player.Creature.CombatId;
+            var pageId = destination switch
+            {
+                PlayerContentDestination.Cards => "pile-cards",
+                PlayerContentDestination.Relics => "relics",
+                PlayerContentDestination.Potions => "potions",
+                PlayerContentDestination.Powers => "powers",
+                PlayerContentDestination.Orbs => "orbs",
+                _ => throw new ArgumentOutOfRangeException(nameof(destination)),
+            };
+            switch (destination)
+            {
+                case PlayerContentDestination.Relics:
+                    _relicCatalogMode = RelicCatalogMode.Owned;
+                    break;
+                case PlayerContentDestination.Potions:
+                    _potionCatalogMode = PotionCatalogMode.Owned;
+                    break;
+                case PlayerContentDestination.Powers:
+                    _powerCatalogMode = PowerCatalogMode.Current;
+                    break;
+                case PlayerContentDestination.Orbs:
+                    _orbCatalogMode = OrbCatalogMode.Current;
+                    break;
+            }
+
+            UpdateTargetDropdown(GetPlayers(), true);
+            _contextualPageSelection = true;
+            try
+            {
+                SelectPage($"{Const.ModId}:{pageId}");
+            }
+            finally
+            {
+                _contextualPageSelection = false;
+            }
         }
 
         private void SubmitPlayerOperation(ulong playerNetId, RitsuDebugPlayerOperation operation, int value)
@@ -1439,7 +1743,6 @@ namespace STS2RitsuLib.Settings
                 .ToArray();
             if (occupied.Length == 0)
                 return;
-            AddSectionTitle(root, L("ritsulib.debugTools.action.discardPotion", "Discard potion"));
             foreach (var entry in occupied)
             {
                 var potion = entry.Potion!;
@@ -1575,6 +1878,115 @@ namespace STS2RitsuLib.Settings
             return edit;
         }
 
+        private static VBoxContainer CreateAdjustmentContent()
+        {
+            var content = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            content.AddThemeConstantOverride("separation", 8);
+            return content;
+        }
+
+        private static Control AdjustmentSection(
+            string title,
+            Control content,
+            RitsuDebugToolsGlyph glyph = RitsuDebugToolsGlyph.Sliders)
+        {
+            var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            root.AddThemeConstantOverride("separation", 6);
+            var panel = CreateAdjustmentPanel(content);
+            panel.Visible = false;
+
+            var toggle = IconTextButton(
+                glyph,
+                title,
+                ModSettingsButtonTone.Normal,
+                static () => { });
+            toggle.Pressed += () =>
+            {
+                panel.Visible = !panel.Visible;
+                toggle.SetSelected(panel.Visible);
+            };
+            toggle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            toggle.CustomMinimumSize = new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
+            root.AddChild(toggle);
+            root.AddChild(panel);
+            return root;
+        }
+
+        private static PanelContainer CreateAdjustmentPanel(Control content)
+        {
+            var panel = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateInsetSurfaceStyle());
+            var margin = new MarginContainer();
+            margin.AddThemeConstantOverride("margin_left", 10);
+            margin.AddThemeConstantOverride("margin_top", 10);
+            margin.AddThemeConstantOverride("margin_right", 10);
+            margin.AddThemeConstantOverride("margin_bottom", 10);
+            margin.AddChild(content);
+            panel.AddChild(margin);
+            return panel;
+        }
+
+        private DynamicVariableEditorState CreateDynamicVariableEditors(
+            VBoxContainer root,
+            DynamicVarSet dynamicVars)
+        {
+            var state = new DynamicVariableEditorState();
+            foreach (var (key, dynamicVar) in dynamicVars.OrderBy(
+                         static pair => pair.Key,
+                         StringComparer.OrdinalIgnoreCase))
+            {
+                if (!RitsuDebugModelValueOverrides.IsEditable(dynamicVar))
+                    continue;
+
+                var dynamicVariableKey = key;
+                var editor = CreateIntegerEdit(decimal.ToInt32(dynamicVar.BaseValue).ToString());
+                editor.TextChanged += _ => state.Changed.Add(dynamicVariableKey);
+                state.Editors.Add(dynamicVariableKey, editor);
+                root.AddChild(Field(dynamicVariableKey, editor));
+            }
+
+            return state;
+        }
+
+        private bool TryReadDynamicVariableOverrides(
+            DynamicVariableEditorState state,
+            out Dictionary<string, int>? values)
+        {
+            values = null;
+            foreach (var key in state.Changed)
+            {
+                if (!TryReadInt(
+                        state.Editors[key],
+                        RitsuDebugModelValueOverrides.MinimumValue,
+                        RitsuDebugModelValueOverrides.MaximumValue,
+                        out var value))
+                    return false;
+                values ??= new(StringComparer.Ordinal);
+                values.Add(key, value);
+            }
+
+            return true;
+        }
+
+        private static void RefreshDynamicVariableEditors(
+            DynamicVariableEditorState state,
+            DynamicVarSet dynamicVars)
+        {
+            foreach (var (key, editor) in state.Editors)
+            {
+                if (state.Changed.Contains(key) ||
+                    editor.HasFocus() ||
+                    !dynamicVars.TryGetValue(key, out var dynamicVar) ||
+                    !RitsuDebugModelValueOverrides.IsEditable(dynamicVar))
+                    continue;
+                var value = decimal.ToInt32(dynamicVar.BaseValue).ToString();
+                if (editor.Text == value)
+                    continue;
+                editor.Text = value;
+                state.Changed.Remove(key);
+            }
+        }
+
         private static LineEdit CreateIntegerEdit(string value)
         {
             var edit = ModSettingsUiControlTheming.CreateStyledLineEdit(
@@ -1630,8 +2042,7 @@ namespace STS2RitsuLib.Settings
             int minimum,
             int maximum,
             Action<int> submit,
-            string? actionText = null,
-            Button? secondaryAction = null)
+            string? actionText = null)
         {
             var edit = ModSettingsUiControlTheming.CreateStyledLineEdit(
                 initialValue,
@@ -1647,8 +2058,6 @@ namespace STS2RitsuLib.Settings
                     if (TryReadInt(edit, minimum, maximum, out var value))
                         submit(value);
                 }));
-            if (secondaryAction != null)
-                row.AddChild(secondaryAction);
             root.AddChild(row);
         }
 
@@ -1659,6 +2068,18 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 CustomMinimumSize = new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
             };
+        }
+
+        private static Button WideIconAction(
+            RitsuDebugToolsGlyph glyph,
+            string text,
+            ModSettingsButtonTone tone,
+            Action action)
+        {
+            var button = IconTextButton(glyph, text, tone, action);
+            button.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            button.CustomMinimumSize = new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
+            return button;
         }
 
         private static Control ActionGrid(
@@ -1676,6 +2097,24 @@ namespace STS2RitsuLib.Settings
             return grid;
         }
 
+        private enum PlayerContentDestination
+        {
+            Cards,
+            Relics,
+            Potions,
+            Powers,
+            Orbs,
+        }
+
+        private sealed class DynamicVariableEditorState
+        {
+            internal Dictionary<string, LineEdit> Editors { get; } = new(StringComparer.Ordinal);
+
+            internal HashSet<string> Changed { get; } = new(StringComparer.Ordinal);
+
+            internal bool HasEditors => Editors.Count > 0;
+        }
+
         private static void AddSectionTitle(VBoxContainer root, string text)
         {
             var divider = new HSeparator();
@@ -1690,6 +2129,11 @@ namespace STS2RitsuLib.Settings
 
         private static void AddHint(VBoxContainer root, string text)
         {
+            root.AddChild(CreateHintLabel(text));
+        }
+
+        private static Label CreateHintLabel(string text)
+        {
             var label = new Label
             {
                 Text = text,
@@ -1698,7 +2142,7 @@ namespace STS2RitsuLib.Settings
             label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             label.AddThemeFontSizeOverride("font_size", DetailMetadataFontSize);
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Hint);
-            root.AddChild(label);
+            return label;
         }
 
         private static void AddTransitionNotice(VBoxContainer root)
@@ -1721,7 +2165,7 @@ namespace STS2RitsuLib.Settings
         private static Creature[] CurrentCreatures()
         {
             return CombatManager.Instance.DebugOnlyGetState()?.Creatures
-                .Where(static creature => creature.CombatId.HasValue)
+                .Where(IsVisibleCombatant)
                 .OrderBy(static creature => creature.CombatId)
                 .ToArray() ?? [];
         }

@@ -157,10 +157,7 @@ namespace STS2RitsuLib.Timeline
             ArgumentNullException.ThrowIfNull(referenceEpochType);
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ThrowIfNotModEpochTemplate(epochType);
-            if (referenceEpochType.IsAbstract || !typeof(EpochModel).IsAssignableFrom(referenceEpochType))
-                throw new ArgumentException(
-                    $"Type '{referenceEpochType.Name}' must be a concrete {nameof(EpochModel)}.",
-                    nameof(referenceEpochType));
+            ThrowIfNotConcreteEpochModel(referenceEpochType, nameof(referenceEpochType));
 
             lock (Sync)
             {
@@ -213,10 +210,7 @@ namespace STS2RitsuLib.Timeline
             ArgumentNullException.ThrowIfNull(referenceEpochType);
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ThrowIfNotModEpochTemplate(epochType);
-            if (referenceEpochType.IsAbstract || !typeof(EpochModel).IsAssignableFrom(referenceEpochType))
-                throw new ArgumentException(
-                    $"Type '{referenceEpochType.Name}' must be a concrete {nameof(EpochModel)}.",
-                    nameof(referenceEpochType));
+            ThrowIfNotConcreteEpochModel(referenceEpochType, nameof(referenceEpochType));
 
             lock (Sync)
             {
@@ -252,10 +246,7 @@ namespace STS2RitsuLib.Timeline
             ArgumentNullException.ThrowIfNull(referenceEpochType);
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ThrowIfNotModEpochTemplate(epochType);
-            if (referenceEpochType.IsAbstract || !typeof(EpochModel).IsAssignableFrom(referenceEpochType))
-                throw new ArgumentException(
-                    $"Type '{referenceEpochType.Name}' must be a concrete {nameof(EpochModel)}.",
-                    nameof(referenceEpochType));
+            ThrowIfNotConcreteEpochModel(referenceEpochType, nameof(referenceEpochType));
 
             lock (Sync)
             {
@@ -314,11 +305,24 @@ namespace STS2RitsuLib.Timeline
 
         private static void ThrowIfNotModEpochTemplate(Type epochType)
         {
-            if (epochType.IsAbstract || epochType.IsInterface ||
+            if (epochType.IsAbstract || epochType.IsInterface || epochType.ContainsGenericParameters ||
+                epochType.GetConstructor(Type.EmptyTypes) == null ||
                 !typeof(ModEpochTemplate).IsAssignableFrom(epochType))
                 throw new ArgumentException(
-                    $"Type '{epochType.Name}' must be a concrete {nameof(ModEpochTemplate)} subtype to use the layout registry.",
+                    $"Type '{epochType.Name}' must be a closed concrete {nameof(ModEpochTemplate)} subtype with a " +
+                    "public parameterless constructor to use the layout registry.",
                     nameof(epochType));
+        }
+
+        private static void ThrowIfNotConcreteEpochModel(Type epochType, string paramName)
+        {
+            if (epochType.IsAbstract || epochType.IsInterface || epochType.ContainsGenericParameters ||
+                epochType.GetConstructor(Type.EmptyTypes) == null ||
+                !typeof(EpochModel).IsAssignableFrom(epochType))
+                throw new ArgumentException(
+                    $"Type '{epochType.Name}' must be a closed concrete {nameof(EpochModel)} subtype with a public " +
+                    "parameterless constructor.",
+                    paramName);
         }
 
         internal static EpochEra ResolveEra(Type epochType)

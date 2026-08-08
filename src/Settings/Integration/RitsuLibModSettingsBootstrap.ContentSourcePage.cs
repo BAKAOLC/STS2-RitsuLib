@@ -1,5 +1,6 @@
 using Godot;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Data.Models;
 
 namespace STS2RitsuLib.Settings
 {
@@ -36,9 +37,53 @@ namespace STS2RitsuLib.Settings
                                 new("id", T("ritsulib.modSourceHoverTips.displayStyle.option.id", "ID only")),
                             ],
                             T("ritsulib.modSourceHoverTips.displayStyle.description",
-                                "Controls how the source mod is identified in hover tips."))
+                                "Controls how the source mod is identified in hover tips."),
+                            ModSettingsChoicePresentation.Dropdown)
                         .WithEntryVisibleWhen(
                             "mod_source_hover_tips_display_style",
+                            RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
+                        .AddString(
+                            "mod_source_hover_tips_format",
+                            T("ritsulib.modSourceHoverTips.format.label", "Source text format"),
+                            ui.ModSourceHoverTipsFormat,
+                            ModSettingsText.Literal(RitsuLibSettings.DefaultModSourceHoverTipsFormat),
+                            RitsuLibSettings.MaxModSourceHoverTipsFormatLength,
+                            T("ritsulib.modSourceHoverTips.format.description",
+                                "Use {source}, {name}, and {id}; for example, Mod: {source}."))
+                        .WithEntryVisibleWhen(
+                            "mod_source_hover_tips_format",
+                            RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
+                        .AddChoice(
+                            "mod_source_hover_tips_placement",
+                            T("ritsulib.modSourceHoverTips.placement.label", "Source text position"),
+                            ui.ModSourceHoverTipsPlacement,
+                            [
+                                new("top", T("ritsulib.modSourceHoverTips.placement.option.top", "Top")),
+                                new("bottom",
+                                    T("ritsulib.modSourceHoverTips.placement.option.bottom",
+                                        "Bottom")),
+                            ],
+                            T("ritsulib.modSourceHoverTips.placement.description",
+                                "Places folded source text above or below the hover-tip body."),
+                            ModSettingsChoicePresentation.Dropdown)
+                        .WithEntryVisibleWhen(
+                            "mod_source_hover_tips_placement",
+                            RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
+                        .AddColor(
+                            "mod_source_hover_tips_color",
+                            T("ritsulib.modSourceHoverTips.color.label", "Source text color"),
+                            ui.ModSourceHoverTipsColor,
+                            T("ritsulib.modSourceHoverTips.color.description",
+                                "Sets the color used for source text."))
+                        .WithEntryVisibleWhen(
+                            "mod_source_hover_tips_color",
+                            RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
+                        .AddToggle(
+                            "mod_source_hover_tips_separate_from_body",
+                            T("ritsulib.modSourceHoverTips.separateFromBody.label", "Separate from body"),
+                            ui.ModSourceHoverTipsSeparateFromBody,
+                            T("ritsulib.modSourceHoverTips.separateFromBody.description",
+                                "Adds a blank line between folded source text and the hover-tip body."),
                             RitsuLibSettingsStore.IsModSourceHoverTipsEnabled)
                         .AddToggle(
                             "mod_source_hover_tips_include_vanilla",

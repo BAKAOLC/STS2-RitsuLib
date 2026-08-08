@@ -134,8 +134,8 @@ RitsuLib 自带文档偏向简明功能参考。更完整的中文《杀戮尖�
 （包名：`STS2.ModAnalyzers.RitsuLib`）已经归档，不再维护。
 
 RitsuLib 风格项目的推荐可选分析器是
-[STS2RitsuLibModAnalyzers](https://github.com/alkaid616/STS2RitsuLibModAnalyzers)
-（包名：`Nothing.STS2RitsuLib.ModAnalyzers`）。它提供 RitsuLib 本地化与资源路径相关的 Roslyn 诊断，并且包内
+[STS2RitsuLibModAnalyzers](https://github.com/Miooowo/STS2-RitsuLibModAnalyzers)
+（包名：`Miooowo.STS2RitsuLib.ModAnalyzers`）。它提供 RitsuLib 本地化与资源路径相关的 Roslyn 诊断，并且包内
 `buildTransitive` 会自动把常见项目文件传给 analyzer。
 
 该分析器由第三方提供、维护和支持；RitsuLib 不保证它与当前 RitsuLib 能力完全对齐，也不保证所有分析器行为都正确。

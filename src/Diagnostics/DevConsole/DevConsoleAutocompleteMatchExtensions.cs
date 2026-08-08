@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.DevConsole;
+using STS2RitsuLib.Search;
 
 namespace STS2RitsuLib.Diagnostics.DevConsole
 {
@@ -14,12 +15,19 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
     /// </summary>
     public static class DevConsoleAutocompleteMatchExtensions
     {
+        private const int MaximumPreparedLocalizedTexts = 8192;
+        private static readonly Lock PreparedTextLock = new();
+
+        private static readonly Dictionary<string, RitsuSearchPreparedText> PreparedLocalizedTexts =
+            new(StringComparer.Ordinal);
+
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Extends <paramref name="inner" /> with localized-title matching for model entry IDs.
+        ///         Extends <paramref name="inner" /> with localized-title and enabled search-expansion matching for
+        ///         model entry IDs.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         在 <paramref name="inner" /> 基础上添加模型条目 ID 的本地化标题匹配。
+        ///         在 <paramref name="inner" /> 基础上添加模型条目 ID 的本地化标题和已启用搜索扩展匹配。
         ///     </para>
         /// </summary>
         public static Func<string, string, bool> WithLocalizedModelTitleMatch(
@@ -33,8 +41,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                     return true;
 
                 var entryId = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
-                return titles.TryGetValue(entryId, out var title) &&
-                       title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
+                return titles.TryGetValue(entryId, out var title) && MatchesLocalizedText(title, partial);
             };
         }
 
@@ -72,10 +79,10 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Extends <paramref name="inner" /> with localized pile-title matching.
+        ///         Extends <paramref name="inner" /> with localized pile-title and enabled search-expansion matching.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         在 <paramref name="inner" /> 基础上添加本地化牌堆标题匹配。
+        ///         在 <paramref name="inner" /> 基础上添加本地化牌堆标题和已启用搜索扩展匹配。
         ///     </para>
         /// </summary>
         public static Func<string, string, bool> WithLocalizedPileTitleMatch(
@@ -89,18 +96,17 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                     return true;
 
                 var token = DevConsoleAutocompleteDisplay.StripLocalizedSuffix(candidate);
-                return titles.TryGetValue(token, out var title) &&
-                       title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
+                return titles.TryGetValue(token, out var title) && MatchesLocalizedText(title, partial);
             };
         }
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Extends <paramref name="inner" /> with localized secondary-resource title matching and
-        ///         unambiguous local-ID matching.
+        ///         Extends <paramref name="inner" /> with localized secondary-resource title matching, enabled
+        ///         search-expansion matching, and unambiguous local-ID matching.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         在 <paramref name="inner" /> 基础上添加次要资源的本地化标题匹配和无歧义本地 ID 匹配。
+        ///         在 <paramref name="inner" /> 基础上添加次要资源的本地化标题、已启用搜索扩展和无歧义本地 ID 匹配。
         ///     </para>
         /// </summary>
         public static Func<string, string, bool> WithSecondaryResourceLocalizedTitleMatch(
@@ -119,10 +125,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Extends <paramref name="inner" /> with localized ancient-event option matching for a resolved ancient-event ID.
+        ///         Extends <paramref name="inner" /> with localized ancient-event option and enabled search-expansion
+        ///         matching for a resolved ancient-event ID.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         在 <paramref name="inner" /> 基础上，为已解析的先古之民事件 ID 添加本地化选项匹配。
+        ///         在 <paramref name="inner" /> 基础上，为已解析的先古之民事件 ID 添加本地化选项和已启用搜索扩展匹配。
         ///     </para>
         /// </summary>
         public static Func<string, string, bool> WithAncientChoiceLocalizedMatch(
@@ -230,6 +237,30 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         private static bool DefaultPrefixMatch(string candidate, string partial)
         {
             return candidate.StartsWith(partial, StringComparison.OrdinalIgnoreCase);
+        }
+
+        internal static bool MatchesLocalizedText(string? text, string partial)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return false;
+
+            var term = partial.Trim();
+            if (term.Length == 0)
+                return true;
+
+            RitsuSearchPreparedText prepared;
+            lock (PreparedTextLock)
+            {
+                if (!PreparedLocalizedTexts.TryGetValue(text, out prepared!))
+                {
+                    if (PreparedLocalizedTexts.Count >= MaximumPreparedLocalizedTexts)
+                        PreparedLocalizedTexts.Clear();
+                    prepared = new(text);
+                    PreparedLocalizedTexts.Add(text, prepared);
+                }
+            }
+
+            return RitsuSearchMatcher.Contains(text, term, prepared);
         }
     }
 }

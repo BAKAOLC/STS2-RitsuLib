@@ -38,6 +38,7 @@ using STS2RitsuLib.Relics.Visibility.Patches;
 using STS2RitsuLib.RunData.Patches;
 using STS2RitsuLib.RuntimeInput.Patches;
 using STS2RitsuLib.Saves.Patches;
+using STS2RitsuLib.Saves.RawProgress.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow.Patches;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline.Patches;
 using STS2RitsuLib.Scaffolding.Characters.Patches;
@@ -168,6 +169,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ProgressStatePreserveUnknownRecordsFromSerializablePatch>();
             patcher.RegisterPatch<ProgressStatePreserveUnknownRecordsToSerializablePatch>();
             patcher.RegisterPatch<ProgressStatePreserveUnknownRecordsLoadProgressPatch>();
+            patcher.RegisterPatch<RawProgressOrdinarySavePatch>();
+            patcher.RegisterPatch<RawProgressLoadPatch>();
+            patcher.RegisterPatch<RawProgressProfileMutationPatch>();
             patcher.RegisterPatch<ModelCloneRegistryPatch>();
             patcher.RegisterPatch<CoreInitializationLifecyclePatch>();
             patcher.RegisterPatch<DevConsoleAutocompleteEnhancementPatch>();
@@ -486,10 +490,14 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.EncounterAssetPathsPatch>();
             patcher.RegisterPatch<ModelDisplayCapabilityPatches.EventAssetPathsPatch>();
             patcher.RegisterPatch<CardRewardToSerializablePatch>();
+            patcher.RegisterPatch<LinkedRewardSetToSerializablePatch>();
             patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
             if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
                 patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
             patcher.RegisterPatch<RewardFromSerializableExtPatch>();
+            patcher.RegisterPatch<LinkedRewardSetOnSelectPatch>();
+            patcher.RegisterPatch<LinkedRewardSetSelectLocalRewardPatch>();
+            patcher.RegisterPatch<LinkedRewardSetHandleSelectedMessagePatch>();
             patcher.RegisterPatch<ModCardPileGetPatch>();
             patcher.RegisterPatch<ModCardPileIsCombatPatch>();
             patcher.RegisterPatch<ModCardPileGetTargetPositionPatch>();

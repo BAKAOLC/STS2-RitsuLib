@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
-  "themeVersion": 5,
+  "themeVersion": 6,
   "id": "default",
   "displayName": "Default",
   "inherits": null,
@@ -1121,21 +1121,21 @@
       },
       "hover": {
         "bg": {
-          "$value": "{semantic.color.surface.inset.bg}",
+          "$value": "{components.chromeMenu.hover.bg}",
           "$type": "color"
         },
         "border": {
-          "$value": "{semantic.color.surface.entry.border}",
+          "$value": "{components.chromeMenu.hover.border}",
           "$type": "color"
         }
       },
       "selected": {
         "bg": {
-          "$value": "{semantic.color.surface.inset.bg}",
+          "$value": "{components.pill.hover.bg}",
           "$type": "color"
         },
         "border": {
-          "$value": "{semantic.color.surface.framed.border}",
+          "$value": "{components.pill.hover.border}",
           "$type": "color"
         }
       },
@@ -1343,7 +1343,7 @@
     "textButton": {
       "accent": {
         "fg": {
-          "$value": "#87C2DBDB",
+          "$value": "#87C2DBF2",
           "$type": "color"
         },
         "bg": {
@@ -1357,7 +1357,7 @@
       },
       "danger": {
         "fg": {
-          "$value": "#DE7A75D6",
+          "$value": "#DE7A75F2",
           "$type": "color"
         },
         "bg": {
@@ -1371,7 +1371,7 @@
       },
       "neutral": {
         "fg": {
-          "$value": "#7399B399",
+          "$value": "#7399B3F2",
           "$type": "color"
         },
         "bg": {

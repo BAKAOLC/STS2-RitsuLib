@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
-  "themeVersion": 4,
+  "themeVersion": 5,
   "id": "oled",
   "displayName": "OLED",
   "inherits": "default",
@@ -329,21 +329,21 @@
     "textButton": {
       "accent": {
         "fg": {
-          "$value": "#89BFD9DB",
+          "$value": "#89BFD9F2",
           "$type": "color"
         },
         "bg": {
-          "$value": "#12202EF7",
+          "$value": "#14283AF7",
           "$type": "color"
         },
         "bgHover": {
-          "$value": "#1A2D3EFB",
+          "$value": "#1D3549FB",
           "$type": "color"
         }
       },
       "danger": {
         "fg": {
-          "$value": "#DD7F7ADB",
+          "$value": "#DD7F7AF2",
           "$type": "color"
         },
         "bg": {
@@ -357,7 +357,7 @@
       },
       "neutral": {
         "fg": {
-          "$value": "#7F9CB5B8",
+          "$value": "#7F9CB5F2",
           "$type": "color"
         },
         "bg": {

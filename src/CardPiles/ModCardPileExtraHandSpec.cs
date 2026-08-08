@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.CardPiles.Nodes;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -13,6 +14,10 @@ namespace STS2RitsuLib.CardPiles
     /// </summary>
     public sealed record ModCardPileExtraHandSpec
     {
+        private readonly Vector2 _disabledOffset = new(0f, 100f);
+        private readonly Color _disabledModulate = new(0.5f, 0.5f, 0.5f);
+        private readonly double _disabledTransitionDuration = 0.2;
+
         /// <summary>
         ///     <para xml:lang="en">
         ///         Gets the built-in card arrangement. The default uses the base-game hand layout.
@@ -70,16 +75,98 @@ namespace STS2RitsuLib.CardPiles
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets whether cards can be manually played through the base-game targeting, action queue,
-        ///         resource payment, card hooks, and destination-pile flow. The default is
-        ///         <see langword="true" />.
+        ///         Gets whether this pile has manual-card-play capability through the base-game targeting, action
+        ///         queue, resource payment, card hooks, and destination-pile flow. This value also initializes
+        ///         <see cref="NModExtraHand.CardPlayEnabled" /> for each new container. The default is
+        ///         <see langword="true" />. Runtime availability can temporarily disable and restore granted
+        ///         capability, but cannot enable a definition that disallows card play.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取卡牌是否可通过游戏原有的目标选择、行动队列、资源支付、卡牌钩子与目标牌堆流程手动打出。
-        ///         默认值为 <see langword="true" />。
+        ///         获取此牌堆是否具备通过游戏原有目标选择、行动队列、资源支付、卡牌钩子与目标牌堆流程手动
+        ///         出牌的能力。该值也会初始化每个新容器的 <see cref="NModExtraHand.CardPlayEnabled" />。默认值为
+        ///         <see langword="true" />。运行时可用性可以临时禁用并恢复已授予的能力，但不能启用定义中未
+        ///         允许出牌的牌堆。
         ///     </para>
         /// </summary>
         public bool AllowCardPlay { get; init; } = true;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the position offset applied to the complete card layout while this hand is disabled. The
+        ///         offset is applied after the built-in layout and <see cref="LayoutResolver" />. The default is
+        ///         <c>(0, 100)</c>, matching the base-game hand.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取此手牌区禁用时应用于完整卡牌布局的位置偏移。该偏移会在内置布局与
+        ///         <see cref="LayoutResolver" /> 之后应用。默认值为 <c>(0, 100)</c>，与游戏原有手牌一致。
+        ///     </para>
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">The assigned vector contains a non-finite component.</para>
+        ///     <para xml:lang="zh-CN">所赋向量包含非有限分量。</para>
+        /// </exception>
+        public Vector2 DisabledOffset
+        {
+            get => _disabledOffset;
+            init
+            {
+                if (!IsFinite(value))
+                    throw new ArgumentOutOfRangeException(nameof(DisabledOffset), value,
+                        "The disabled offset must contain only finite components.");
+                _disabledOffset = value;
+            }
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the modulation color applied to the complete card layout while this hand is disabled. The
+        ///         default is the base-game hand's gray modulation.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取此手牌区禁用时应用于完整卡牌布局的调制颜色。默认值为游戏原有手牌使用的灰色调制。
+        ///     </para>
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">The assigned color contains a non-finite component.</para>
+        ///     <para xml:lang="zh-CN">所赋颜色包含非有限分量。</para>
+        /// </exception>
+        public Color DisabledModulate
+        {
+            get => _disabledModulate;
+            init
+            {
+                if (!IsFinite(value))
+                    throw new ArgumentOutOfRangeException(nameof(DisabledModulate), value,
+                        "The disabled modulation color must contain only finite components.");
+                _disabledModulate = value;
+            }
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the duration in seconds used to transition between enabled and disabled presentation. The
+        ///         default is <c>0.2</c>, matching the base-game hand. Zero applies the presentation immediately.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取启用与禁用表现之间过渡所用的秒数。默认值为 <c>0.2</c>，与游戏原有手牌一致；设为零时
+        ///         立即应用目标表现。
+        ///     </para>
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">The assigned duration is negative or non-finite.</para>
+        ///     <para xml:lang="zh-CN">所赋时长为负数或非有限值。</para>
+        /// </exception>
+        public double DisabledTransitionDuration
+        {
+            get => _disabledTransitionDuration;
+            init
+            {
+                if (!double.IsFinite(value) || value < 0.0)
+                    throw new ArgumentOutOfRangeException(nameof(DisabledTransitionDuration), value,
+                        "The disabled transition duration must be finite and non-negative.");
+                _disabledTransitionDuration = value;
+            }
+        }
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -115,5 +202,18 @@ namespace STS2RitsuLib.CardPiles
         ///     </para>
         /// </summary>
         public Action<ModExtraHandCardContext>? OnCardArrived { get; init; }
+
+        private static bool IsFinite(Vector2 value)
+        {
+            return float.IsFinite(value.X) && float.IsFinite(value.Y);
+        }
+
+        private static bool IsFinite(Color value)
+        {
+            return float.IsFinite(value.R)
+                   && float.IsFinite(value.G)
+                   && float.IsFinite(value.B)
+                   && float.IsFinite(value.A);
+        }
     }
 }

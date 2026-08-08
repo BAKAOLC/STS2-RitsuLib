@@ -3,14 +3,19 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.CardPiles;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Models;
 using STS2RitsuLib.Ui.Catalog;
+using STS2RitsuLib.Ui.Overlay;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -36,6 +41,7 @@ namespace STS2RitsuLib.Settings
                     cards.Select(static card => card.Rarity).Distinct(),
                     EnumLabel,
                     (item, value) => byId[item.Id].Rarity == value),
+                CreateContentSourceFilter(cards, byId),
             };
             return new RitsuDebugCardCatalog(
                 L("ritsulib.debugTools.search.cards", "Search cards by name or ID"),
@@ -44,8 +50,9 @@ namespace STS2RitsuLib.Settings
                         new(
                             card.Id.ToString(),
                             SafeTitle(card),
-                            $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · {card.Id}",
-                            $"{card.Type} {card.Rarity}",
+                            $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · " +
+                            $"{ContentSourceDisplayLabel(ContentSourceResolver.Resolve(card))} · {card.Id}",
+                            $"{card.Type} {card.Rarity} {ContentSourceSearchText(card)}",
                             badge: CardCost(card)),
                         CreateCardPreviewModel(card),
                         card,
@@ -110,31 +117,44 @@ namespace STS2RitsuLib.Settings
             if (!TryGetTargetPlayer(out var player))
                 return EmptyBrowser(L("ritsulib.debugTools.noRun", "Start a run to use state tools."));
             var entries = GetPileCardEntries(player);
+            _pileCardSnapshotHash = GetPileCardSnapshotHash(entries);
 
             if (entries.Length == 0)
                 return EmptyBrowser(L("ritsulib.debugTools.empty.pileCards",
                     "The selected player has no cards in a supported pile."));
 
-            var filter = EnumFilter(
+            var pileTypes = RitsuDebugCardActions.GetMutablePileTypes();
+            var filter = new RitsuCatalogFilter(
                 "pile",
                 L("ritsulib.debugTools.filter.pile", "Pile"),
-                RitsuDebugCardActions.GetMutablePileNames().Select(static name => Enum.Parse<PileType>(name)),
-                EnumLabel,
-                (item, value) => item.Id.StartsWith($"{value}:", StringComparison.Ordinal));
+                L("ritsulib.debugTools.filter.all", "All"),
+                [
+                    .. pileTypes.Select(pileType => new RitsuCatalogFilterOption(
+                        RitsuDebugCardActions.GetPileToken(pileType),
+                        PileLabel(pileType),
+                        item => item.Id.StartsWith(
+                            $"{RitsuDebugCardActions.GetPileToken(pileType)}:",
+                            StringComparison.Ordinal))),
+                ]);
+            var customPileOptionIds = ModCardPileRegistry.GetDefinitionsSnapshot()
+                .Select(static definition => RitsuDebugCardActions.GetPileToken(definition.PileType))
+                .ToHashSet(StringComparer.Ordinal);
             return new RitsuDebugCardCatalog(
                 L("ritsulib.debugTools.search.pileCards", "Search the target player's cards"),
                 CreatePileCardCatalogEntries(entries),
                 [filter],
-                filter.Id,
-                nameof(PileType.Hand),
-                nameof(PileType.Deck));
+                primaryFilterId: filter.Id,
+                primaryFilterBreakBeforeOptionId: RitsuDebugCardActions.GetPileToken(PileType.Deck),
+                primaryDefaultsToAll: true,
+                primaryAllMatches: IsDefaultPileCardEntry,
+                primaryOverflowOptionIds: customPileOptionIds);
         }
 
-        private RitsuCatalogBrowser CreateRelicCatalog()
+        private Control CreateRelicCatalog()
         {
             var models = ModelDb.AllRelics.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
             var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
-            var filter = EnumFilter(
+            var rarityFilter = EnumFilter(
                 "rarity",
                 L("ritsulib.debugTools.filter.rarity", "Rarity"),
                 models.Select(static model => model.Rarity).Distinct(),
@@ -143,22 +163,23 @@ namespace STS2RitsuLib.Settings
             var browser = Browser(
                 L("ritsulib.debugTools.search.relics", "Search relics by name or ID"),
                 item => CreateRelicDetail(byId[item.Id]),
-                [filter],
-                RitsuCatalogPresentation.Grid);
+                [rarityFilter, CreateContentSourceFilter(models, byId)],
+                RitsuCatalogPresentation.Grid,
+                detailWidth: 520f);
             browser.SetItems([
                 .. models.Select(model => ModelItem(
                     model,
                     EnumLabel(model.Rarity),
                     () => model.Icon)),
             ]);
-            return browser;
+            return CreateRelicWorkspace(models, byId, browser);
         }
 
-        private RitsuCatalogBrowser CreatePotionCatalog()
+        private Control CreatePotionCatalog()
         {
             var models = ModelDb.AllPotions.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
             var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
-            var filter = EnumFilter(
+            var rarityFilter = EnumFilter(
                 "rarity",
                 L("ritsulib.debugTools.filter.rarity", "Rarity"),
                 models.Select(static model => model.Rarity).Distinct(),
@@ -167,7 +188,7 @@ namespace STS2RitsuLib.Settings
             var browser = Browser(
                 L("ritsulib.debugTools.search.potions", "Search potions by name or ID"),
                 item => CreatePotionDetail(byId[item.Id]),
-                [filter],
+                [rarityFilter, CreateContentSourceFilter(models, byId)],
                 RitsuCatalogPresentation.Grid);
             browser.SetItems([
                 .. models.Select(model => ModelItem(
@@ -175,14 +196,14 @@ namespace STS2RitsuLib.Settings
                     EnumLabel(model.Rarity),
                     () => model.Image)),
             ]);
-            return browser;
+            return CreatePotionWorkspace(models, byId, browser);
         }
 
-        private RitsuCatalogBrowser CreatePowerCatalog()
+        private Control CreatePowerCatalog()
         {
             var models = ModelDb.AllPowers.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
             var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
-            var filter = EnumFilter(
+            var typeFilter = EnumFilter(
                 "type",
                 L("ritsulib.debugTools.filter.type", "Type"),
                 models.Select(static model => model.Type).Distinct(),
@@ -191,67 +212,88 @@ namespace STS2RitsuLib.Settings
             var browser = Browser(
                 L("ritsulib.debugTools.search.powers", "Search powers by name or ID"),
                 item => CreatePowerDetail(byId[item.Id]),
-                [filter],
+                [typeFilter, CreateContentSourceFilter(models, byId)],
                 RitsuCatalogPresentation.Grid,
-                detailWidth: 480f);
+                detailWidth: 520f);
             browser.SetItems([
                 .. models.Select(model => ModelItem(
                     model,
                     EnumLabel(model.Type),
+                    () => model.Icon,
+                    PowerTypeAccent(model.Type))),
+            ]);
+            return CreatePowerWorkspace(browser);
+        }
+
+        private Control CreateOrbCatalog()
+        {
+            var models = ModelDb.Orbs.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
+            var byId = models.ToDictionary(static model => model.Id.ToString(), StringComparer.Ordinal);
+            var browser = Browser(
+                L("ritsulib.debugTools.search.orbs", "Search orbs by name or ID"),
+                item => CreateOrbDetail(byId[item.Id]),
+                [CreateContentSourceFilter(models, byId)],
+                RitsuCatalogPresentation.Grid,
+                detailWidth: 520f);
+            browser.SetItems([
+                .. models.Select(model => ModelItem(
+                    model,
+                    L("ritsulib.debugTools.orbs.model", "Orb"),
                     () => model.Icon)),
             ]);
-            return browser;
+            return CreateOrbWorkspace(models, browser);
         }
 
-        private RitsuCatalogBrowser CreatePlayerCatalog()
+        private RitsuCatalogBrowser CreateCombatantCatalog()
         {
             var players = GetPlayers();
-            var byId = players.ToDictionary(static player => player.NetId.ToString(), StringComparer.Ordinal);
-            var browser = Browser(
-                L("ritsulib.debugTools.search.players", "Search players"),
-                item => CreatePlayerDetail(byId[item.Id]),
-                presentation: RitsuCatalogPresentation.Grid,
-                gridTileMinimumWidth: 220f,
-                gridTileHeight: 84f,
-                detailWidth: 480f);
-            browser.SetItems(CreatePlayerCatalogItems(players));
-            return browser;
-        }
-
-        private RitsuCatalogBrowser CreateCreatureCatalog()
-        {
             var creatures = CombatManager.Instance.DebugOnlyGetState()?.Creatures
-                .Where(static creature => creature.CombatId.HasValue)
+                .Where(IsVisibleCombatant)
                 .OrderBy(static creature => creature.CombatId)
                 .ToArray() ?? [];
             var filter = new RitsuCatalogFilter(
-                "side",
-                L("ritsulib.debugTools.filter.side", "Side"),
+                "combatantType",
+                L("ritsulib.debugTools.filter.combatantType", "Type"),
                 L("ritsulib.debugTools.filter.all", "All"),
                 [
                     new("players", L("ritsulib.debugTools.filter.players", "Players"),
-                        item => ResolveCurrentCreature(item)?.IsPlayer == true),
-                    new("nonPlayers", L("ritsulib.debugTools.filter.nonPlayers", "Enemies and summons"),
-                        item => ResolveCurrentCreature(item)?.IsPlayer == false),
+                        item => item.Id.StartsWith("player:", StringComparison.Ordinal)),
+                    new("pets", L("ritsulib.debugTools.filter.pets", "Pets"),
+                        item => ResolveCurrentCreature(item)?.IsPet == true),
+                    new("monsters", L("ritsulib.debugTools.filter.monsters", "Monsters"),
+                        item => ResolveCurrentCreature(item) is { IsPlayer: false, IsPet: false }),
                 ]);
             var browser = Browser(
-                L("ritsulib.debugTools.search.creatures", "Search combat creatures"),
-                item => ResolveCurrentCreature(item) is { } creature
-                    ? CreateCreatureDetail(creature)
-                    : EmptyBrowser(L("ritsulib.debugTools.targetChanged",
-                        "The selected target is no longer available.")),
+                L("ritsulib.debugTools.search.combatants", "Search players and combat creatures"),
+                item =>
+                {
+                    if (ResolveCurrentPlayer(item) is { } player)
+                        return CreatePlayerDetail(player);
+                    return ResolveCurrentCreature(item) is { } creature
+                        ? CreateCreatureDetail(creature)
+                        : EmptyBrowser(L("ritsulib.debugTools.targetChanged",
+                            "The selected target is no longer available."));
+                },
                 [filter],
                 RitsuCatalogPresentation.Grid,
                 220f,
-                84f,
                 detailWidth: 640f);
-            browser.SetItems(CreateCreatureCatalogItems(creatures));
+            browser.SetItems(CreateCombatantCatalogItems(players, creatures));
             return browser;
 
             static Creature? ResolveCurrentCreature(RitsuCatalogItem item)
             {
-                return uint.TryParse(item.Id, out var combatId)
+                return item.Id.StartsWith("creature:", StringComparison.Ordinal) &&
+                       uint.TryParse(item.Id.AsSpan("creature:".Length), out var combatId)
                     ? RitsuDebugCombatActions.FindCreature(combatId)
+                    : null;
+            }
+
+            static Player? ResolveCurrentPlayer(RitsuCatalogItem item)
+            {
+                return item.Id.StartsWith("player:", StringComparison.Ordinal) &&
+                       ulong.TryParse(item.Id.AsSpan("player:".Length), out var netId)
+                    ? GetPlayers().FirstOrDefault(player => player.NetId == netId)
                     : null;
             }
         }
@@ -259,10 +301,9 @@ namespace STS2RitsuLib.Settings
         private static PileCardEntry[] GetPileCardEntries(Player player)
         {
             var entries = new List<PileCardEntry>();
-            foreach (var pileType in RitsuDebugCardActions.GetMutablePileNames()
-                         .Select(static name => Enum.Parse<PileType>(name)))
+            foreach (var pileType in RitsuDebugCardActions.GetMutablePileTypes())
             {
-                var pile = RitsuDebugCardActions.GetPile(player, pileType);
+                var pile = RitsuDebugCardActions.GetExistingPile(player, pileType);
                 if (pile == null)
                     continue;
                 for (var index = 0; index < pile.Cards.Count; index++)
@@ -288,43 +329,125 @@ namespace STS2RitsuLib.Settings
                     new(
                         entry.StableId,
                         SafeTitle(entry.Card),
-                        $"{EnumLabel(entry.PileType)} #{entry.Index + 1} · {entry.Card.Id}",
-                        $"{entry.PileType} {entry.Card.Type} {entry.Card.Rarity}",
+                        $"{PileLabel(entry.PileType)} #{entry.Index + 1} · {entry.Card.Id}",
+                        $"{RitsuDebugCardActions.GetPileToken(entry.PileType)} {entry.Card.Type} {entry.Card.Rarity}",
                         badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null),
                     CreateCardPreviewModel(entry.Card),
                     entry.Card,
-                    () => CreatePileCardDetail(entry))),
+                    () => CreatePileCardDetail(entry),
+                    GetCardStateHash(entry.Card))),
             ];
         }
 
-        private static RitsuCatalogItem[] CreatePlayerCatalogItems(IReadOnlyList<Player> players)
+        private static int GetPileCardSnapshotHash(IReadOnlyList<PileCardEntry> entries)
         {
+            var hash = new HashCode();
+            foreach (var entry in entries)
+            {
+                hash.Add(entry.StableId, StringComparer.Ordinal);
+                hash.Add(GetCardStateHash(entry.Card));
+            }
+
+            return hash.ToHashCode();
+        }
+
+        private static bool IsDefaultPileCardEntry(RitsuCatalogItem item)
+        {
+            return RitsuDebugCardActions.GetMutablePileTypes()
+                .Where(static pile => !RitsuDebugCardActions.IsRunStatePile(pile))
+                .Any(pile => item.Id.StartsWith(
+                    $"{RitsuDebugCardActions.GetPileToken(pile)}:",
+                    StringComparison.Ordinal));
+        }
+
+        private static int GetCardStateHash(CardModel card)
+        {
+            var hash = new HashCode();
+            hash.Add(card.CurrentUpgradeLevel);
+            hash.Add(card.BaseReplayCount);
+            hash.Add(card.EnergyCost.CostsX);
+            hash.Add(card.EnergyCost.Canonical);
+            hash.Add(card.EnergyCost.GetWithModifiers(CostModifiers.None));
+            hash.Add(card.CanonicalStarCost);
+            hash.Add(card.Enchantment?.Id.ToString(), StringComparer.Ordinal);
+            hash.Add(card.Enchantment?.Amount);
+            hash.Add(card.Affliction?.Id.ToString(), StringComparer.Ordinal);
+            hash.Add(card.Affliction?.Amount);
+            hash.Add(SafeCardDescription(card), StringComparer.Ordinal);
+            hash.Add(GetCapabilityStateHash(card));
+            hash.Add(GetCapabilityStateHash(card.Enchantment));
+            hash.Add(GetCapabilityStateHash(card.Affliction));
+            var localKeywords = card.GetKeywordsWithSources(KeywordSources.Local);
+            hash.Add(localKeywords.Contains(CardKeyword.Exhaust));
+            hash.Add(localKeywords.Contains(CardKeyword.Ethereal));
+            hash.Add(localKeywords.Contains(CardKeyword.Unplayable));
+            foreach (var (key, value) in card.DynamicVars.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
+            {
+                hash.Add(key, StringComparer.Ordinal);
+                hash.Add(value.BaseValue);
+            }
+
+            return hash.ToHashCode();
+        }
+
+        private static RitsuCatalogItem[] CreateCombatantCatalogItems(
+            IReadOnlyList<Player> players,
+            IEnumerable<Creature> creatures)
+        {
+            var playerAccent = RitsuShellTheme.Current.Component.TextButton.Accent.Fg;
+            var petAccent = PositiveAccent();
+            var monsterAccent = RitsuShellTheme.Current.Component.TextButton.Danger.Fg;
+            var ownerLabels = players
+                .Select((player, index) => (player.NetId, Label: PlayerLabel(player, index)))
+                .ToDictionary(static entry => entry.NetId, static entry => entry.Label);
+            var nonPlayers = creatures
+                .Where(static creature => !creature.IsPlayer)
+                .OrderBy(static creature => creature.IsPet ? 0 : 1)
+                .ThenBy(creature => creature.PetOwner == null
+                    ? int.MaxValue
+                    : FindPlayerIndex(creature.PetOwner))
+                .ThenBy(static creature => creature.CombatId)
+                .ToArray();
             return
             [
                 .. players.Select((player, index) => new RitsuCatalogItem(
-                    player.NetId.ToString(),
+                    $"player:{player.NetId}",
                     PlayerLabel(player, index),
-                    PlayerVitals(player),
-                    player.Character.Id.ToString(),
+                    $"{L("ritsulib.debugTools.player", "Player")} · {PlayerVitals(player)}",
+                    $"{player.Character.Id} {player.NetId}",
+                    icon: RitsuDebugToolsIcons.Get(RitsuDebugToolsGlyph.Players, 32, playerAccent),
                     badge: player.NetId == RunManager.Instance.NetService?.NetId
                         ? L("ritsulib.debugTools.local", "Local")
-                        : null)),
-            ];
-        }
-
-        private static RitsuCatalogItem[] CreateCreatureCatalogItems(IEnumerable<Creature> creatures)
-        {
-            return
-            [
-                .. creatures.Select(creature => new RitsuCatalogItem(
-                    creature.CombatId!.Value.ToString(),
+                        : null,
+                    accentColor: playerAccent)),
+                .. nonPlayers.Select(creature => new RitsuCatalogItem(
+                    $"creature:{creature.CombatId!.Value}",
                     creature.Name,
-                    $"{(creature.IsPlayer
-                        ? L("ritsulib.debugTools.player", "Player")
-                        : L("ritsulib.debugTools.enemy", "Enemy"))} · {creature.ModelId}",
-                    $"{creature.ModelId} {creature.LogName}",
-                    badge: CreatureVitals(creature))),
+                    creature.PetOwner is { } owner
+                        ? string.Format(
+                            L("ritsulib.debugTools.petSummary", "Pet · Owner: {0} · {1}"),
+                            ownerLabels.GetValueOrDefault(owner.NetId, owner.Character.Id.ToString()),
+                            creature.ModelId)
+                        : $"{L("ritsulib.debugTools.monster", "Monster")} · {creature.ModelId}",
+                    creature.PetOwner is { } petOwner
+                        ? $"{creature.ModelId} {creature.LogName} {petOwner.NetId} " +
+                          ownerLabels.GetValueOrDefault(petOwner.NetId, petOwner.Character.Id.ToString())
+                        : $"{creature.ModelId} {creature.LogName}",
+                    icon: RitsuDebugToolsIcons.Get(
+                        creature.IsPet ? RitsuDebugToolsGlyph.Paw : RitsuDebugToolsGlyph.Monsters,
+                        32,
+                        creature.IsPet ? petAccent : monsterAccent),
+                    badge: CreatureVitals(creature),
+                    accentColor: creature.IsPet ? petAccent : monsterAccent)),
             ];
+
+            int FindPlayerIndex(Player player)
+            {
+                for (var index = 0; index < players.Count; index++)
+                    if (players[index].NetId == player.NetId)
+                        return index;
+                return int.MaxValue;
+            }
         }
 
         private RitsuCatalogBrowser CreateEncounterCatalog()
@@ -594,15 +717,77 @@ namespace STS2RitsuLib.Settings
         private static RitsuCatalogItem ModelItem(
             AbstractModel model,
             string category,
-            Func<Texture2D?>? iconFactory)
+            Func<Texture2D?>? iconFactory,
+            Color? accentColor = null)
         {
+            var source = ContentSourceResolver.Resolve(model);
             return new(
                 model.Id.ToString(),
                 SafeTitle(model),
-                $"{category} · {model.Id}",
-                model.Id.Category,
+                $"{category} · {ContentSourceDisplayLabel(source)} · {model.Id}",
+                $"{model.Id.Category} {source.ModId} {source.DisplayName}",
                 badge: category,
-                iconFactory: iconFactory);
+                iconFactory: iconFactory,
+                accentColor: accentColor);
+        }
+
+        private static Color PowerTypeAccent(PowerType type)
+        {
+            return type switch
+            {
+                PowerType.Buff => PositiveAccent(),
+                PowerType.Debuff => RitsuShellTheme.Current.Component.TextButton.Danger.Fg,
+                _ => RitsuShellTheme.Current.Text.LabelSecondary,
+            };
+        }
+
+        private static Color PositiveAccent()
+        {
+            return new(0.3f, 0.8f, 0.56f);
+        }
+
+        private static RitsuCatalogFilter CreateContentSourceFilter<TModel>(
+            IReadOnlyCollection<TModel> models,
+            IReadOnlyDictionary<string, TModel> modelsById)
+            where TModel : AbstractModel
+        {
+            var sourceByItemId = models.ToDictionary(
+                static model => model.Id.ToString(),
+                static model => ContentSourceResolver.Resolve(model),
+                StringComparer.Ordinal);
+            var sources = sourceByItemId.Values
+                .DistinctBy(static source => source.ModId, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static source => string.Equals(source.ModId, "Vanilla", StringComparison.OrdinalIgnoreCase)
+                    ? 0
+                    : 1)
+                .ThenBy(ContentSourceDisplayLabel, StringComparer.CurrentCultureIgnoreCase)
+                .ToArray();
+            return new(
+                "source",
+                L("ritsulib.debugTools.filter.source", "Source"),
+                L("ritsulib.debugTools.filter.allSources", "All sources"),
+                [
+                    .. sources.Select(source => new RitsuCatalogFilterOption(
+                        source.ModId,
+                        ContentSourceDisplayLabel(source),
+                        item => modelsById.TryGetValue(item.Id, out var model) &&
+                                string.Equals(ContentSourceResolver.Resolve(model).ModId, source.ModId,
+                                    StringComparison.OrdinalIgnoreCase))),
+                ]);
+        }
+
+        private static string ContentSourceSearchText(AbstractModel model)
+        {
+            var source = ContentSourceResolver.Resolve(model);
+            return $"{source.ModId} {source.DisplayName}";
+        }
+
+        private static string ContentSourceDisplayLabel(ContentSourceDescriptor source)
+        {
+            var displayName = string.IsNullOrWhiteSpace(source.DisplayName) ? source.ModId : source.DisplayName;
+            return string.Equals(displayName, source.ModId, StringComparison.OrdinalIgnoreCase)
+                ? displayName
+                : $"{displayName} ({source.ModId})";
         }
 
         private static MonsterModel[] GetEncounterMonsters(EncounterModel encounter)
@@ -657,8 +842,25 @@ namespace STS2RitsuLib.Settings
             return L($"ritsulib.debugTools.enum.{typeof(TValue).Name}.{value}", value.ToString());
         }
 
+        private static string PileLabel(PileType pileType)
+        {
+            if (!ModCardPileRegistry.TryGetByPileType(pileType, out var definition))
+                return EnumLabel(pileType);
+            try
+            {
+                var title = definition.Title.GetFormattedText()?.Trim();
+                return string.IsNullOrWhiteSpace(title) ? definition.Id : title;
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                return definition.Id;
+            }
+        }
+
         private static string RoomLabel(RoomType roomType)
         {
+            if (roomType == RoomType.Map)
+                return L("ritsulib.debugTools.room.map", "Map");
             var key = roomType switch
             {
                 RoomType.Monster => "ROOM_ENEMY",
@@ -668,12 +870,16 @@ namespace STS2RitsuLib.Settings
                 RoomType.Shop => "ROOM_MERCHANT",
                 RoomType.Event => "ROOM_EVENT",
                 RoomType.RestSite => "ROOM_REST",
-                RoomType.Map => "ROOM_MAP",
                 _ => null,
             };
             return key == null
                 ? roomType.ToString()
                 : new LocString("static_hover_tips", $"{key}.title").GetFormattedText();
+        }
+
+        private static bool IsVisibleCombatant(Creature creature)
+        {
+            return creature.CombatId.HasValue && (creature.IsPlayer || !creature.IsDead);
         }
 
         private static string SafeTitle(AbstractModel model)
@@ -735,6 +941,21 @@ namespace STS2RitsuLib.Settings
                 creature.Block);
         }
 
+        private static string CreatureDetailDescription(Creature creature)
+        {
+            if (creature.PetOwner is not { } owner)
+                return creature.LogName;
+            var players = GetPlayers();
+            var ownerIndex = Array.FindIndex(players, player => player.NetId == owner.NetId);
+            var ownerLabel = ownerIndex >= 0
+                ? PlayerLabel(owner, ownerIndex)
+                : owner.Character.Id.ToString();
+            return string.Format(
+                L("ritsulib.debugTools.petOwnerDetail", "Owner: {0} · {1}"),
+                ownerLabel,
+                creature.LogName);
+        }
+
         private static string MonsterVitals(MonsterModel monster)
         {
             return string.Format(
@@ -778,8 +999,8 @@ namespace STS2RitsuLib.Settings
             uint? CombatCardId)
         {
             internal string StableId => CombatCardId.HasValue
-                ? $"{PileType}:combat:{CombatCardId.Value}"
-                : $"{PileType}:deck:{Index}:{Card.Id}";
+                ? $"{RitsuDebugCardActions.GetPileToken(PileType)}:combat:{CombatCardId.Value}"
+                : $"{RitsuDebugCardActions.GetPileToken(PileType)}:state:{Index}:{Card.Id}";
         }
     }
 }

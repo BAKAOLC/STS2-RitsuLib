@@ -2,6 +2,8 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Graphics;
 using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Search;
+using STS2RitsuLib.Search.Pinyin;
 using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
@@ -35,6 +37,10 @@ namespace STS2RitsuLib.Settings
 
         public IModSettingsValueBinding<bool> ModSourceHoverTipsEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ModSourceHoverTipsDisplayStyle { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModSourceHoverTipsPlacement { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModSourceHoverTipsColor { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> ModSourceHoverTipsSeparateFromBody { get; private init; } = null!;
+        public IModSettingsValueBinding<string> ModSourceHoverTipsFormat { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeVanilla { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsIncludeNonDetails { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ModSourceHoverTipsCards { get; private init; } = null!;
@@ -63,6 +69,9 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<double> UpdateCheckIntervalMinutes { get; private init; } = null!;
         public IModSettingsValueBinding<bool> UpdateCheckSkipInCombat { get; private init; } = null!;
         public IModSettingsValueBinding<bool> SteamWorkshopAutoUpdateCheckEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> PinyinSearchEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> PinyinAutomaticDownloads { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> PinyinKeepSourceArchive { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> MainMenuModSettingsButtonEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ModelDbDeterministicSortMode { get; private init; } = null!;
@@ -74,6 +83,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<double> ToastDurationSeconds { get; private init; } = null!;
         public IModSettingsValueBinding<string> ToastAnimation { get; private init; } = null!;
         public IModSettingsValueBinding<string> CardPngExportOutputPath { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> CardPngExportUseLocalizedFileNames { get; private init; } = null!;
         public IModSettingsValueBinding<bool> CardPngExportIncludeHover { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> CardPngExportIncludeUpgrades { get; private init; } =
@@ -88,6 +98,9 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<string> RelicDetailPngExportOutputPath { get; private init; } =
             null!;
 
+        public IModSettingsValueBinding<bool> RelicDetailPngExportUseLocalizedFileNames { get; private init; } =
+            null!;
+
         public IModSettingsValueBinding<double> RelicDetailPngExportScale { get; private init; } =
             null!;
 
@@ -98,6 +111,9 @@ namespace STS2RitsuLib.Settings
             null!;
 
         public IModSettingsValueBinding<string> PotionDetailPngExportOutputPath { get; private init; } =
+            null!;
+
+        public IModSettingsValueBinding<bool> PotionDetailPngExportUseLocalizedFileNames { get; private init; } =
             null!;
 
         public IModSettingsValueBinding<double> PotionDetailPngExportScale { get; private init; } =
@@ -137,6 +153,25 @@ namespace STS2RitsuLib.Settings
                         settings => settings.SyncModDataToSteamCloud,
                         (settings, value) => settings.SyncModDataToSteamCloud = value),
                     () => defaults.SyncModDataToSteamCloud),
+                PinyinSearchEnabled = CreateSearchSettingBinding(
+                    "pinyin_search_enabled",
+                    () => RitsuSearchSettingsStore.IsProviderEnabled(
+                        PinyinSearchExpansionProvider.ProviderId,
+                        false),
+                    value => RitsuSearchSettingsStore.SetProviderEnabled(
+                        PinyinSearchExpansionProvider.ProviderId,
+                        value),
+                    false),
+                PinyinAutomaticDownloads = CreateSearchSettingBinding(
+                    "pinyin_automatic_downloads",
+                    RitsuSearchSettingsStore.GetAutomaticPinyinDataDownloads,
+                    RitsuSearchSettingsStore.SetAutomaticPinyinDataDownloads,
+                    false),
+                PinyinKeepSourceArchive = CreateSearchSettingBinding(
+                    "pinyin_keep_source_archive",
+                    RitsuSearchSettingsStore.GetKeepPinyinSourceArchive,
+                    RitsuSearchSettingsStore.SetKeepPinyinSourceArchive,
+                    false),
                 DebugCompatibility = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
@@ -290,6 +325,43 @@ namespace STS2RitsuLib.Settings
                             settings.ModSourceHoverTipsDisplayStyle =
                                 RitsuLibSettingsStore.NormalizeModSourceHoverTipsDisplayStyle(value)),
                     () => defaults.ModSourceHoverTipsDisplayStyle),
+                ModSourceHoverTipsPlacement = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.NormalizeModSourceHoverTipsPlacement(
+                            settings.ModSourceHoverTipsPlacement),
+                        (settings, value) =>
+                            settings.ModSourceHoverTipsPlacement =
+                                RitsuLibSettingsStore.NormalizeModSourceHoverTipsPlacement(value)),
+                    () => defaults.ModSourceHoverTipsPlacement),
+                ModSourceHoverTipsColor = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.NormalizeModSourceHoverTipsColor(
+                            settings.ModSourceHoverTipsColor),
+                        (settings, value) =>
+                            settings.ModSourceHoverTipsColor =
+                                RitsuLibSettingsStore.NormalizeModSourceHoverTipsColor(value)),
+                    () => defaults.ModSourceHoverTipsColor),
+                ModSourceHoverTipsSeparateFromBody = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.ModSourceHoverTipsSeparateFromBody,
+                        (settings, value) => settings.ModSourceHoverTipsSeparateFromBody = value),
+                    () => defaults.ModSourceHoverTipsSeparateFromBody),
+                ModSourceHoverTipsFormat = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, string>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => RitsuLibSettingsStore.PrepareModSourceHoverTipsFormatForEditing(
+                            settings.ModSourceHoverTipsFormat),
+                        (settings, value) =>
+                            settings.ModSourceHoverTipsFormat =
+                                RitsuLibSettingsStore.PrepareModSourceHoverTipsFormatForEditing(value)),
+                    () => defaults.ModSourceHoverTipsFormat),
                 ModSourceHoverTipsIncludeVanilla = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
@@ -531,6 +603,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.CardPngExportOutputPath,
                         (settings, value) => settings.CardPngExportOutputPath = value),
                     () => defaults.CardPngExportOutputPath),
+                CardPngExportUseLocalizedFileNames = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.CardPngExportUseLocalizedFileNames,
+                        (settings, value) => settings.CardPngExportUseLocalizedFileNames = value),
+                    () => defaults.CardPngExportUseLocalizedFileNames),
                 CardPngExportIncludeHover = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, bool>(
                         Const.ModId,
@@ -573,6 +652,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.RelicDetailPngExportOutputPath,
                         (settings, value) => settings.RelicDetailPngExportOutputPath = value),
                     () => defaults.RelicDetailPngExportOutputPath),
+                RelicDetailPngExportUseLocalizedFileNames = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.RelicDetailPngExportUseLocalizedFileNames,
+                        (settings, value) => settings.RelicDetailPngExportUseLocalizedFileNames = value),
+                    () => defaults.RelicDetailPngExportUseLocalizedFileNames),
                 RelicDetailPngExportScale = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, double>(
                         Const.ModId,
@@ -601,6 +687,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.PotionDetailPngExportOutputPath,
                         (settings, value) => settings.PotionDetailPngExportOutputPath = value),
                     () => defaults.PotionDetailPngExportOutputPath),
+                PotionDetailPngExportUseLocalizedFileNames = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.PotionDetailPngExportUseLocalizedFileNames,
+                        (settings, value) => settings.PotionDetailPngExportUseLocalizedFileNames = value),
+                    () => defaults.PotionDetailPngExportUseLocalizedFileNames),
                 PotionDetailPngExportScale = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, double>(
                         Const.ModId,
@@ -656,6 +749,22 @@ namespace STS2RitsuLib.Settings
             return ModSettingsBindings.WithDefault(
                 ModSettingsBindings.Global(Const.ModId, Const.SettingsKey, getter, setter),
                 defaultValue);
+        }
+
+        private static IModSettingsValueBinding<bool> CreateSearchSettingBinding(
+            string dataKey,
+            Func<bool> read,
+            Action<bool> write,
+            bool defaultValue)
+        {
+            return ModSettingsBindings.WithDefault(
+                ModSettingsBindings.Callback(
+                    Const.ModId,
+                    dataKey,
+                    read,
+                    write,
+                    static () => { }),
+                () => defaultValue);
         }
 
         private static string NormalizeToastAnchor(string? value)

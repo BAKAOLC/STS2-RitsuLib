@@ -10,11 +10,14 @@ using STS2RitsuLib.Content;
 using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Utils;
+using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Diagnostics
 {
     internal static partial class SelfCheckBundleWriter
     {
+        private const string BundlePrefix = "ritsulib_self_check_";
+        private static readonly Lock BundleWriteLock = new();
         private static readonly Regex KeywordId = KeywordIdRegex();
         private static readonly Regex PublicEntry = PublicEntryRegex();
 
@@ -41,60 +44,122 @@ namespace STS2RitsuLib.Diagnostics
         {
             zipPath = null;
             errorMessage = null;
-            string? bundleDir = null;
+            lock (BundleWriteLock)
+            {
+                string? stagingDir = null;
+                try
+                {
+                    outputDirectory = Path.GetFullPath(outputDirectory);
+                    Directory.CreateDirectory(outputDirectory);
+                    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
+                    var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+                    var bundleName = $"{BundlePrefix}{timestamp}_{uniqueSuffix}";
+                    stagingDir = RitsuLibDataPaths.CreateTemporaryDirectory("self-check");
+                    var bundleDir = Path.Combine(stagingDir, "payload");
+                    Directory.CreateDirectory(bundleDir);
+
+                    var reportPath = Path.Combine(bundleDir, "self_check_report.log");
+                    var dumpPath = Path.Combine(bundleDir, "harmony_patch_dump.log");
+
+                    var dumpOk = HarmonyPatchDumpWriter.TryWrite(dumpPath, out var dumpErr);
+                    var runtime = RitsuLibFramework.CaptureRuntimeSnapshot();
+                    var artifactResult = CollectSupportArtifacts(bundleDir);
+                    var keywordDefs = ModKeywordRegistry.GetDefinitionsSnapshot();
+                    var modelSnapshots = ModContentRegistry.GetRegisteredTypeSnapshots();
+                    var replacementLayerSnapshots = ModContentRegistry.GetCharacterAssetReplacementLayerSnapshots();
+                    var replacementResolvedSnapshots =
+                        ModContentRegistry.GetCharacterAssetReplacementResolvedPropertySnapshots();
+                    var charCheck = CheckCharacterAssets();
+                    var locCheck = CheckLocalization(keywordDefs, modelSnapshots);
+
+                    File.WriteAllText(reportPath,
+                        BuildReport(runtime, dumpOk, dumpPath, dumpErr, artifactResult, charCheck, locCheck,
+                            keywordDefs, modelSnapshots, replacementLayerSnapshots, replacementResolvedSnapshots),
+                        new UTF8Encoding(false));
+
+                    var stagedZipPath = Path.Combine(stagingDir, bundleName + ".zip");
+                    ZipFile.CreateFromDirectory(bundleDir, stagedZipPath, CompressionLevel.Optimal, false);
+                    ValidateBundle(stagedZipPath);
+
+                    zipPath = Path.Combine(outputDirectory, Path.GetFileName(stagedZipPath));
+                    PublishBundle(stagedZipPath, zipPath);
+                    if (dumpOk) return true;
+                    errorMessage = $"Harmony dump failed: {dumpErr}";
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = ex.Message;
+                    return false;
+                }
+                finally
+                {
+                    if (!string.IsNullOrEmpty(stagingDir) && Directory.Exists(stagingDir))
+                        try
+                        {
+                            Directory.Delete(stagingDir, true);
+                        }
+                        catch (Exception ex)
+                        {
+                            RitsuLibFramework.Logger.Warn(
+                                $"[SelfCheck] Failed to remove temporary bundle directory '{SanitizeForReport(stagingDir)}': {ex.Message}");
+                        }
+                }
+            }
+        }
+
+        internal static bool IsPublishedBundlePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            var fileName = Path.GetFileName(path);
+            return fileName.StartsWith(BundlePrefix, StringComparison.Ordinal) &&
+                   fileName.EndsWith(".zip", StringComparison.Ordinal);
+        }
+
+        internal static byte[] ReadPublishedBundle(string sourcePath)
+        {
+            using var stream = new FileStream(sourcePath, FileMode.Open, System.IO.FileAccess.Read,
+                FileShare.ReadWrite);
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, true))
+                ValidateBundleEntries(archive);
+
+            stream.Position = 0;
+            using var output = new MemoryStream();
+            stream.CopyTo(output);
+            return output.ToArray();
+        }
+
+        private static void ValidateBundle(string path)
+        {
+            using var archive = ZipFile.OpenRead(path);
+            ValidateBundleEntries(archive);
+        }
+
+        private static void ValidateBundleEntries(ZipArchive archive)
+        {
+            if (archive.GetEntry("self_check_report.log") == null)
+                throw new InvalidDataException("The self-check bundle is missing self_check_report.log.");
+
+            foreach (var entry in archive.Entries)
+            {
+                using var entryStream = entry.Open();
+                entryStream.CopyTo(Stream.Null);
+            }
+        }
+
+        private static void PublishBundle(string stagedZipPath, string zipPath)
+        {
             try
             {
-                Directory.CreateDirectory(outputDirectory);
-                var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
-                var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
-                var runId = $"{timestamp}_{uniqueSuffix}";
-                bundleDir = Path.Combine(outputDirectory, $"ritsulib_self_check_{runId}");
-                Directory.CreateDirectory(bundleDir);
-
-                var reportPath = Path.Combine(bundleDir, "self_check_report.log");
-                var dumpPath = Path.Combine(bundleDir, "harmony_patch_dump.log");
-
-                var dumpOk = HarmonyPatchDumpWriter.TryWrite(dumpPath, out var dumpErr);
-                var runtime = RitsuLibFramework.CaptureRuntimeSnapshot();
-                var artifactResult = CollectSupportArtifacts(bundleDir);
-                var keywordDefs = ModKeywordRegistry.GetDefinitionsSnapshot();
-                var modelSnapshots = ModContentRegistry.GetRegisteredTypeSnapshots();
-                var replacementLayerSnapshots = ModContentRegistry.GetCharacterAssetReplacementLayerSnapshots();
-                var replacementResolvedSnapshots =
-                    ModContentRegistry.GetCharacterAssetReplacementResolvedPropertySnapshots();
-                var charCheck = CheckCharacterAssets();
-                var locCheck = CheckLocalization(keywordDefs, modelSnapshots);
-
-                File.WriteAllText(reportPath,
-                    BuildReport(runtime, dumpOk, dumpPath, dumpErr, artifactResult, charCheck, locCheck,
-                        keywordDefs, modelSnapshots, replacementLayerSnapshots, replacementResolvedSnapshots),
-                    new UTF8Encoding(false));
-
-                zipPath = Path.Combine(outputDirectory, $"{Path.GetFileName(bundleDir)}.zip");
+                File.Copy(stagedZipPath, zipPath);
+            }
+            catch
+            {
                 if (File.Exists(zipPath))
                     File.Delete(zipPath);
-                ZipFile.CreateFromDirectory(bundleDir, zipPath, CompressionLevel.Optimal, false);
-                if (dumpOk) return true;
-                errorMessage = $"Harmony dump failed: {dumpErr}";
-                return false;
-            }
-            catch (Exception ex)
-            {
-                errorMessage = ex.Message;
-                return false;
-            }
-            finally
-            {
-                if (!string.IsNullOrEmpty(bundleDir) && Directory.Exists(bundleDir))
-                    try
-                    {
-                        Directory.Delete(bundleDir, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[SelfCheck] Failed to remove temporary bundle directory '{SanitizeForReport(bundleDir)}': {ex.Message}");
-                    }
+                throw;
             }
         }
 

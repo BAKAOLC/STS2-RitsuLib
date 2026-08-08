@@ -38,6 +38,7 @@ using STS2RitsuLib.Platform;
 using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.RunData;
 using STS2RitsuLib.RuntimeInput;
+using STS2RitsuLib.Search;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Godot;
@@ -433,6 +434,9 @@ namespace STS2RitsuLib
                     () => HarmonyPatchAllTypeLoadGuard.Install(message => Logger.Warn(message)));
                 RitsuLibStartupAudit.Measure("harmonyInitSetterCompat", HarmonyInitSetterCompat.Install);
                 RitsuLibStartupAudit.Measure("settingsStore", RitsuLibSettingsStore.Initialize);
+                RitsuLibStartupAudit.Measure("legacyGeneratedDataCleanup",
+                    RitsuLibLegacyGeneratedDataCleanup.RunOnce);
+                RitsuLibStartupAudit.Measure("searchExpansion", RitsuSearchService.Initialize);
                 RitsuLibStartupAudit.Measure("debugLogViewer",
                     () => RitsuDebugLogPipeline.Initialize(RitsuLibSettingsStore.GetDebugLogViewerOptions()));
                 RitsuLibStartupAudit.Measure("modSettingsBootstrap", RitsuLibModSettingsBootstrap.Initialize);

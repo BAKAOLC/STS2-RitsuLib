@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using STS2RitsuLib.Diagnostics.DebugTools;
+using STS2RitsuLib.Ui.Overlay;
 
 namespace STS2RitsuLib.Settings
 {
@@ -11,17 +12,21 @@ namespace STS2RitsuLib.Settings
             if (creature.IsPlayer || creature.Monster == null || !creature.CombatId.HasValue)
                 return;
 
-            AddSectionTitle(root, L("ritsulib.debugTools.creaturePresets.title", "Creature presets"));
-            AddHint(root, L(
+            var content = CreateAdjustmentContent();
+            root.AddChild(AdjustmentSection(
+                L("ritsulib.debugTools.creaturePresets.title", "Creature presets"),
+                content,
+                RitsuDebugToolsGlyph.Creatures));
+            AddHint(content, L(
                 "ritsulib.debugTools.creaturePresets.description",
                 "Save this enemy's health, block, and Powers. Apply a preset to an enemy or add its saved monster to combat."));
 
             var newName = TextField(
-                root,
+                content,
                 L("ritsulib.debugTools.creaturePresets.name", "New preset name"),
                 CreateCreaturePresetName(creature),
                 L("ritsulib.debugTools.creaturePresets.nameHint", "Enter a preset name"));
-            root.AddChild(ActionButton(
+            content.AddChild(ActionButton(
                 L("ritsulib.debugTools.creaturePresets.saveNew", "Save current as new"),
                 ModSettingsButtonTone.Accent,
                 () => SaveNewCreaturePreset(creature, newName.Text)));
@@ -29,7 +34,7 @@ namespace STS2RitsuLib.Settings
             var presets = RitsuDebugCreaturePresetStore.GetSnapshot();
             if (presets.Count == 0)
             {
-                AddHint(root, L("ritsulib.debugTools.creaturePresets.empty", "No saved creature presets."));
+                AddHint(content, L("ritsulib.debugTools.creaturePresets.empty", "No saved creature presets."));
                 return;
             }
 
@@ -38,7 +43,7 @@ namespace STS2RitsuLib.Settings
                            presets[0];
             _selectedCreaturePresetId = selected.Id;
             var summary = CreatePowerListHint(CreaturePresetSummary(selected));
-            root.AddChild(DropdownField(
+            content.AddChild(DropdownField(
                 L("ritsulib.debugTools.creaturePresets.saved", "Saved preset"),
                 [.. presets.Select(static preset => (preset.Id, preset.Name))],
                 selected.Id,
@@ -48,7 +53,7 @@ namespace STS2RitsuLib.Settings
                     selected = presets.First(preset => preset.Id == value);
                     summary.Text = CreaturePresetSummary(selected);
                 }));
-            root.AddChild(summary);
+            content.AddChild(summary);
 
             var primaryActions = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             primaryActions.AddThemeConstantOverride("separation", 8);
@@ -60,7 +65,7 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.creaturePresets.add", "Add saved monster"),
                 ModSettingsButtonTone.Normal,
                 () => SubmitCreaturePresetMonster(selected)));
-            root.AddChild(primaryActions);
+            content.AddChild(primaryActions);
 
             var managementActions = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             managementActions.AddThemeConstantOverride("separation", 8);
@@ -72,7 +77,7 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.creaturePresets.delete", "Delete preset"),
                 ModSettingsButtonTone.Danger,
                 () => DeleteCreaturePreset(selected)));
-            root.AddChild(managementActions);
+            content.AddChild(managementActions);
         }
 
         private void SaveNewCreaturePreset(Creature creature, string requestedName)

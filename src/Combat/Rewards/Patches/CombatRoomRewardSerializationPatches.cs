@@ -40,8 +40,8 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                     if (!RewardSerializationExt.TryGetExtData(rewards[i], out var ext) || ext == null)
                         continue;
                     // BaseLib owns CardReward sideband serialization when present. RitsuLib still persists
-                    // custom reward payloads because BaseLib does not know about RitsuLib reward ids.
-                    if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
+                    // its own reward payloads because BaseLib does not know their format.
+                    if (baselibRewardPatchLoaded && !ext.HasRitsuLibData)
                         continue;
 
                     var key = RewardSerializationExt.MakeKey(netId, i);
@@ -98,7 +98,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                     if (ext == null)
                         continue;
                     // Match the ToSerializable side: keep custom reward payloads, leave CardReward data to BaseLib.
-                    if (baselibRewardPatchLoaded && !ext.HasCustomRewardData)
+                    if (baselibRewardPatchLoaded && !ext.HasRitsuLibData)
                         continue;
 
                     RewardSerializationExt.SetExtData(rewards[index], ext);
@@ -107,10 +107,10 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
 
             foreach (var (_, rewards) in serializableRoom.ExtraRewards)
             {
-                var removed = rewards.RemoveAll(r => r.RewardType == RewardType.None);
+                var removed = rewards.RemoveAll(r =>
+                    r.RewardType == RewardType.None && !LinkedRewardSetSerialization.HasSerializedData(r));
                 if (removed > 0)
-                    Log.Warn($"[RitsuLib] Stripped {removed} RewardType.None entry(s) from ExtraRewards " +
-                             "(e.g. LinkedRewardSet) — serialization for this type is not supported.");
+                    Log.Warn($"[RitsuLib] Stripped {removed} unsupported RewardType.None entry(s) from ExtraRewards.");
             }
         }
     }

@@ -68,6 +68,12 @@ namespace STS2RitsuLib.CardPiles
             cardPlay.CancelPlayCard();
         }
 
+        internal static void CancelActiveTargeting(NModExtraHand container)
+        {
+            if (ReferenceEquals(_active?.Container, container))
+                CancelActiveTargeting();
+        }
+
         internal static bool TryBegin(NModExtraHand container, NHandCardHolder holder)
         {
             if (_active != null || holder.CardModel is not { } card)

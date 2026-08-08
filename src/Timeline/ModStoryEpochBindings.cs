@@ -45,14 +45,22 @@ namespace STS2RitsuLib.Timeline
 
             if (!typeof(StoryModel).IsAssignableFrom(storyType) ||
                 storyType.IsAbstract ||
-                storyType.IsInterface)
-                throw new ArgumentException($"Type '{storyType.FullName}' must be a concrete StoryModel subtype.",
+                storyType.IsInterface ||
+                storyType.ContainsGenericParameters ||
+                storyType.GetConstructor(Type.EmptyTypes) == null)
+                throw new ArgumentException(
+                    $"Type '{storyType.FullName}' must be a closed concrete StoryModel subtype with a public " +
+                    "parameterless constructor.",
                     nameof(storyType));
 
             if (!typeof(EpochModel).IsAssignableFrom(epochType) ||
                 epochType.IsAbstract ||
-                epochType.IsInterface)
-                throw new ArgumentException($"Type '{epochType.FullName}' must be a concrete EpochModel subtype.",
+                epochType.IsInterface ||
+                epochType.ContainsGenericParameters ||
+                epochType.GetConstructor(Type.EmptyTypes) == null)
+                throw new ArgumentException(
+                    $"Type '{epochType.FullName}' must be a closed concrete EpochModel subtype with a public " +
+                    "parameterless constructor.",
                     nameof(epochType));
 
             lock (Sync)

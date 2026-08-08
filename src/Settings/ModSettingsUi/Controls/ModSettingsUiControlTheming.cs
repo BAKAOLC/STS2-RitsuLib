@@ -13,6 +13,8 @@ namespace STS2RitsuLib.Settings
         private const string AdaptiveButtonTextEnabledMeta = "ritsulib_adaptive_button_text";
         private const string AdaptiveButtonTextMaximumMeta = "ritsulib_adaptive_button_text_maximum";
         private const string AdaptiveButtonTextMinimumMeta = "ritsulib_adaptive_button_text_minimum";
+        private const string DisabledOpacityTokenPath = "semantic.state.disabled.opacity";
+        private const float DisabledOpacityFallback = 0.78f;
 
         internal static void EnableAdaptiveButtonText(Button button, int minimumFontSize, int maximumFontSize)
         {
@@ -64,6 +66,15 @@ namespace STS2RitsuLib.Settings
                 fontSize--;
             if (button.GetThemeFontSize("font_size") != fontSize)
                 button.AddThemeFontSizeOverride("font_size", fontSize);
+        }
+
+        internal static Color ResolveDisabledForeground(Color foreground)
+        {
+            var opacity = RitsuShellTheme.Current.TryGetNumber(DisabledOpacityTokenPath, out var resolved) &&
+                          resolved is > 0.05 and <= 1.0
+                ? (float)resolved
+                : DisabledOpacityFallback;
+            return new(foreground.R, foreground.G, foreground.B, foreground.A * opacity);
         }
 
         /// <summary>
@@ -508,10 +519,13 @@ namespace STS2RitsuLib.Settings
             button.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             button.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
             button.AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            button.AddThemeColorOverride("font_disabled_color",
+                ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelSecondary));
             button.AddThemeStyleboxOverride("normal", CreateSettingsToggleButtonStyle(on, hovered));
             button.AddThemeStyleboxOverride("hover", CreateSettingsToggleButtonStyle(on, true));
             button.AddThemeStyleboxOverride("pressed", CreateSettingsToggleButtonStyle(true, true));
             button.AddThemeStyleboxOverride("focus", CreateSettingsToggleButtonStyle(on, true));
+            button.AddThemeStyleboxOverride("disabled", ModSettingsToggleControl.CreateDisabledStyle());
             RefreshAdaptiveButtonText(button);
         }
 

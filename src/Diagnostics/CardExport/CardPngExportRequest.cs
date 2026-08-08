@@ -83,6 +83,19 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
         /// <summary>
         ///     <para xml:lang="en">
+        ///         Whether output filenames use each card's localized title in the language active when the export
+        ///         starts. Missing or unusable titles fall back to the model ID, and duplicate titles receive a stable
+        ///         disambiguating suffix.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         输出文件名是否使用导出开始时当前语言下的卡牌标题。标题缺失或无法用于文件名时会回退到模型 ID，重复标题会附加稳定的
+        ///         区分后缀。
+        ///     </para>
+        /// </summary>
+        public bool UseLocalizedFileNames { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
         ///         Creates a request with scale <c>1</c>, card-only capture, and upgraded variants enabled.
         ///     </para>
         ///     <para xml:lang="zh-CN">

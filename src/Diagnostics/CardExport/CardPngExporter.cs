@@ -202,13 +202,21 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             var idFilter = string.IsNullOrWhiteSpace(request.IdFilterSubstring)
                 ? null
                 : request.IdFilterSubstring.Trim();
-            var cards = ModelDb.AllCards
+            var candidateCards = ModelDb.AllCards
                 .Where(c => c is not DeprecatedCard)
                 .Where(c => request.IncludeCardsHiddenFromLibrary || c.ShouldShowInCardLibrary)
-                .Where(c => idFilter == null ||
-                            c.Id.Entry.Contains(idFilter, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(c => c.Id.Entry, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+            var cards = candidateCards
+                .Where(c => idFilter == null ||
+                            c.Id.Entry.Contains(idFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var fileStems = BuildSafeFileStemLookup(
+                candidateCards,
+                card => card.Id.Entry,
+                card => card.TitleLocString.Exists() ? card.Title : "",
+                request.UseLocalizedFileNames,
+                "card");
 
             var totalSteps = CountTotalExportSteps(cards, request);
             CardPngExportProgressOverlay? progressUi = null;
@@ -230,7 +238,8 @@ namespace STS2RitsuLib.Diagnostics.CardExport
                     {
                         progressUi.SetProgress(stepIndex, canonical.Id.Entry);
 
-                        var baseName = BuildSafeFileStem(canonical.Id.Entry, "card") + "_base.png";
+                        var fileStem = fileStems[canonical.Id.Entry];
+                        var baseName = fileStem + "_base.png";
                         var basePath = Path.Combine(outDir, baseName);
                         if (await TryCaptureWithRetriesAsync(tree, canonical, basePath, request, scale, log, baseName))
                         {
@@ -254,7 +263,7 @@ namespace STS2RitsuLib.Diagnostics.CardExport
 
                             var upgraded = canonical.ToMutable();
                             upgraded.UpgradeInternal();
-                            var upName = BuildSafeFileStem(canonical.Id.Entry, "card") + "_upgraded.png";
+                            var upName = fileStem + "_upgraded.png";
                             var upPath = Path.Combine(outDir, upName);
                             progressUi.SetProgress(stepIndex, $"{canonical.Id.Entry} (upgraded)");
                             if (await TryCaptureWithRetriesAsync(tree, upgraded, upPath, request, scale, log, upName))
@@ -743,9 +752,54 @@ namespace STS2RitsuLib.Diagnostics.CardExport
             if (string.Equals(sanitized, entry, StringComparison.Ordinal))
                 return sanitized;
 
-            var digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(entry)))[..12]
-                .ToLowerInvariant();
+            var digest = BuildStableDigest(entry);
             return $"{sanitized}-{digest}";
+        }
+
+        internal static IReadOnlyDictionary<string, string> BuildSafeFileStemLookup<T>(
+            IReadOnlyList<T> models,
+            Func<T, string> getEntry,
+            Func<T, string> getLocalizedTitle,
+            bool useLocalizedFileNames,
+            string fallback)
+        {
+            var entries = models
+                .Select(model =>
+                {
+                    var entry = getEntry(model);
+                    var title = entry;
+                    try
+                    {
+                        if (useLocalizedFileNames)
+                            title = getLocalizedTitle(model);
+                    }
+                    catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                    {
+                        title = entry;
+                    }
+
+                    var source = string.IsNullOrWhiteSpace(title) ? entry : title.Trim();
+                    return (Entry: entry, Stem: BuildSafeFileStem(source, fallback));
+                })
+                .ToArray();
+            var duplicateStems = entries
+                .GroupBy(value => value.Stem, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            return entries.ToDictionary(
+                value => value.Entry,
+                value => duplicateStems.Contains(value.Stem)
+                    ? $"{value.Stem}-{BuildStableDigest(value.Entry)}"
+                    : value.Stem,
+                StringComparer.Ordinal);
+        }
+
+        private static string BuildStableDigest(string value)
+        {
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)))[..12]
+                .ToLowerInvariant();
         }
 
         private sealed class BuiltCaptureViewport

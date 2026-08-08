@@ -236,14 +236,15 @@ namespace STS2RitsuLib.Scaffolding.Godot.NodeAttachments
             ArgumentNullException.ThrowIfNull(nodeType);
             ArgumentNullException.ThrowIfNull(factory);
 
-            if (!typeof(Node).IsAssignableFrom(parentType))
+            if (parentType.ContainsGenericParameters || !typeof(Node).IsAssignableFrom(parentType))
                 throw new ArgumentException(
-                    $"Parent type '{parentType.FullName}' must derive from {typeof(Node).FullName}.",
+                    $"Parent type '{parentType.FullName}' must be closed and derive from {typeof(Node).FullName}.",
                     nameof(parentType));
 
-            if (!typeof(Node).IsAssignableFrom(nodeType))
+            if (nodeType.ContainsGenericParameters || !typeof(Node).IsAssignableFrom(nodeType))
                 throw new ArgumentException(
-                    $"Node type '{nodeType.FullName}' must derive from {typeof(Node).FullName}.", nameof(nodeType));
+                    $"Node type '{nodeType.FullName}' must be closed and derive from {typeof(Node).FullName}.",
+                    nameof(nodeType));
 
             var normalizedLocalId = localId.Trim();
             var id = GetQualifiedNodeAttachmentId(_modId, normalizedLocalId);

@@ -3,11 +3,13 @@ using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Ui.Catalog;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -17,7 +19,8 @@ namespace STS2RitsuLib.Settings
         RitsuCatalogItem Item,
         CardModel VisualCard,
         CardModel SourceCard,
-        Func<Control> DetailFactory);
+        Func<Control> DetailFactory,
+        int StateHash = 0);
 
     // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugCardCatalog : Control
@@ -31,7 +34,10 @@ namespace STS2RitsuLib.Settings
         private const float CardHorizontalPadding = 32f;
         private const float CardVerticalPadding = 36f;
         private const float CardSelectionFrameMargin = 10f;
-        private const float DetailDrawerWidth = 400f;
+        private const float DetailDrawerMinimumWidth = 400f;
+        private const float DetailDrawerMaximumWidth = 640f;
+        private const float DetailDrawerPreferredWidthFraction = 0.44f;
+        private const float MinimumVisibleCatalogWidth = 300f;
         private const int OverscanRows = 2;
         internal static readonly Vector2 HolderScale = Vector2.One * 0.7f;
         internal static readonly Vector2 HolderHoverScale = HolderScale * 1.1f;
@@ -49,9 +55,11 @@ namespace STS2RitsuLib.Settings
         private readonly RitsuCatalogFilter[] _filters;
         private readonly Dictionary<NGridCardHolder, string> _holderItemIds = [];
         private readonly List<NGridCardHolder> _holders = [];
+        private readonly Func<RitsuCatalogItem, bool>? _primaryAllMatches;
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
+        private readonly HashSet<string> _primaryOverflowOptionIds;
         private readonly List<PanelContainer> _selectionFrames = [];
         private readonly Dictionary<CardSortField, Button> _sortButtons = [];
         private Control _canvas = null!;
@@ -74,6 +82,8 @@ namespace STS2RitsuLib.Settings
         private int _searchRevision;
         private string? _selectedItemId;
         private Dictionary<string, int> _sourceIndexes;
+        private Control _workspace = null!;
+        private RitsuDebugSearchableChoice? _primaryOverflowPicker;
 
         internal RitsuDebugCardCatalog(
             string searchPlaceholder,
@@ -83,7 +93,10 @@ namespace STS2RitsuLib.Settings
             string? primaryDefaultOptionId = null,
             string? primaryFilterBreakBeforeOptionId = null,
             string? defaultFilterId = null,
-            string? defaultFilterOptionId = null)
+            string? defaultFilterOptionId = null,
+            bool primaryDefaultsToAll = false,
+            Func<RitsuCatalogItem, bool>? primaryAllMatches = null,
+            IReadOnlyCollection<string>? primaryOverflowOptionIds = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
             ValidateEntries(entries);
@@ -94,6 +107,9 @@ namespace STS2RitsuLib.Settings
             _sourceIndexes = _entries.Select((entry, index) => (entry.Item.Id, Index: index))
                 .ToDictionary(static pair => pair.Id, static pair => pair.Index, StringComparer.Ordinal);
             _filters = filters == null ? [] : [.. filters];
+            _primaryOverflowOptionIds = primaryOverflowOptionIds == null
+                ? []
+                : new(primaryOverflowOptionIds, StringComparer.Ordinal);
             foreach (var filter in _filters)
                 _filterSelections.Add(filter.Id, -1);
             if (primaryFilterId != null)
@@ -104,10 +120,15 @@ namespace STS2RitsuLib.Settings
                                         nameof(primaryFilterId));
                 _primaryFilterId = primaryFilter.Id;
                 _primaryFilterBreakBeforeOptionId = primaryFilterBreakBeforeOptionId;
+                _primaryAllMatches = primaryAllMatches;
+                if (_primaryOverflowOptionIds.Any(id => primaryFilter.Options.All(option => option.Id != id)))
+                    throw new ArgumentException(
+                        "Every primary overflow option ID must identify an option in the primary filter.",
+                        nameof(primaryOverflowOptionIds));
                 var defaultIndex = primaryDefaultOptionId == null
                     ? 0
                     : primaryFilter.Options.ToList().FindIndex(option => option.Id == primaryDefaultOptionId);
-                _filterSelections[primaryFilter.Id] = Math.Max(0, defaultIndex);
+                _filterSelections[primaryFilter.Id] = primaryDefaultsToAll ? -1 : Math.Max(0, defaultIndex);
             }
 
             if (defaultFilterId == null != (defaultFilterOptionId == null))
@@ -138,6 +159,8 @@ namespace STS2RitsuLib.Settings
         internal void UpdateEntries(IReadOnlyList<RitsuDebugCardCatalogEntry> entries)
         {
             ValidateEntries(entries);
+            if (EntriesMatch(entries))
+                return;
             var rebuildDetail = false;
             if (_selectedItemId != null)
             {
@@ -155,6 +178,26 @@ namespace STS2RitsuLib.Settings
                 .ToDictionary(static pair => pair.Id, static pair => pair.Index, StringComparer.Ordinal);
             ApplyFilter(rebuildDetail);
             RefreshState();
+        }
+
+        private bool EntriesMatch(IReadOnlyList<RitsuDebugCardCatalogEntry> entries)
+        {
+            if (_entries.Length != entries.Count)
+                return false;
+            for (var index = 0; index < _entries.Length; index++)
+            {
+                var previous = _entries[index];
+                var current = entries[index];
+                if (!string.Equals(previous.Item.Id, current.Item.Id, StringComparison.Ordinal) ||
+                    !ReferenceEquals(previous.SourceCard, current.SourceCard) ||
+                    previous.StateHash != current.StateHash ||
+                    !string.Equals(previous.Item.Title, current.Item.Title, StringComparison.Ordinal) ||
+                    !string.Equals(previous.Item.Subtitle, current.Item.Subtitle, StringComparison.Ordinal) ||
+                    !string.Equals(previous.Item.Badge, current.Item.Badge, StringComparison.Ordinal))
+                    return false;
+            }
+
+            return true;
         }
 
         internal void RefreshState()
@@ -240,15 +283,16 @@ namespace STS2RitsuLib.Settings
 
         private void BuildUi()
         {
-            var workspace = new Control
+            _workspace = new()
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
                 ClipContents = true,
             };
-            AddChild(workspace);
-            workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            AddChild(_workspace);
+            _workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            _workspace.Resized += UpdateDetailDrawerWidth;
 
             var catalogPanel = new PanelContainer
             {
@@ -256,7 +300,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsVertical = SizeFlags.ExpandFill,
             };
             catalogPanel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListShellStyle());
-            workspace.AddChild(catalogPanel);
+            _workspace.AddChild(catalogPanel);
             catalogPanel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 
             var catalog = new VBoxContainer
@@ -294,6 +338,7 @@ namespace STS2RitsuLib.Settings
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             summary.AddChild(label);
             _resultCount = new() { HorizontalAlignment = HorizontalAlignment.Right };
+            _resultCount.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _resultCount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             summary.AddChild(_resultCount);
             catalog.AddChild(summary);
@@ -326,6 +371,7 @@ namespace STS2RitsuLib.Settings
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
+            _emptyLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _emptyLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             catalogPanel.AddChild(_emptyLabel);
             _emptyLabel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -345,7 +391,7 @@ namespace STS2RitsuLib.Settings
             };
             _detailBackdrop.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             _detailBackdrop.GuiInput += OnDetailBackdropInput;
-            workspace.AddChild(_detailBackdrop);
+            _workspace.AddChild(_detailBackdrop);
             _detailSlideHost = new()
             {
                 Visible = false,
@@ -356,11 +402,11 @@ namespace STS2RitsuLib.Settings
             _detailSlideHost.AnchorRight = 1f;
             _detailSlideHost.AnchorTop = 0f;
             _detailSlideHost.AnchorBottom = 1f;
-            _detailSlideHost.OffsetLeft = -DetailDrawerWidth;
+            _detailSlideHost.OffsetLeft = -DetailDrawerMinimumWidth;
             _detailSlideHost.OffsetRight = 0f;
             _detailSlideHost.OffsetTop = 0f;
             _detailSlideHost.OffsetBottom = 0f;
-            workspace.AddChild(_detailSlideHost);
+            _workspace.AddChild(_detailSlideHost);
             detailPanel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             _detailSlideHost.AddChild(detailPanel);
 
@@ -387,14 +433,17 @@ namespace STS2RitsuLib.Settings
             _detailTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             _detailTitle.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
             detailHeader.AddChild(_detailTitle);
-            detailHeader.AddChild(new ModSettingsTextButton(
-                "×",
-                ModSettingsButtonTone.Normal,
-                () => CloseDetailDrawer(Sts2InputCompat.IsUsingDirectionalNavigation))
-            {
-                TooltipText = ModSettingsLocalization.Get("ritsulib.catalog.closeDetails", "Close details"),
-                CustomMinimumSize = new(42f, 38f),
-            });
+            var closeTooltip = ModSettingsLocalization.Get("ritsulib.catalog.closeDetails", "Close details");
+            var closeButton = new RitsuDebugToolsIconButton(42f, 38f);
+            closeButton.Configure(
+                RitsuDebugToolsIcons.Get(
+                    RitsuDebugToolsGlyph.Close,
+                    18,
+                    RitsuShellTheme.Current.Text.LabelPrimary),
+                closeTooltip,
+                ModSettingsButtonTone.Normal);
+            closeButton.Pressed += () => CloseDetailDrawer(Sts2InputCompat.IsUsingDirectionalNavigation);
+            detailHeader.AddChild(closeButton);
             detailColumn.AddChild(detailHeader);
 
             var detailScroll = new ScrollContainer
@@ -420,6 +469,7 @@ namespace STS2RitsuLib.Settings
             detailScroll.GetVScrollBar().VisibilityChanged += () =>
                 SyncScrollGutter(detailScroll, _detailScrollFrame);
             Callable.From(() => SyncScrollGutter(detailScroll, _detailScrollFrame)).CallDeferred();
+            Callable.From(UpdateDetailDrawerWidth).CallDeferred();
             SetProcessUnhandledInput(true);
         }
 
@@ -430,6 +480,7 @@ namespace STS2RitsuLib.Settings
                 Text = ModSettingsLocalization.Get("ritsulib.debugTools.sort", "Sort"),
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             tools.AddChild(label);
 
@@ -534,13 +585,16 @@ namespace STS2RitsuLib.Settings
             if (_primaryFilterId == null)
                 return;
             var filter = _filters.Single(candidate => candidate.Id == _primaryFilterId);
-            var row = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            row.AddThemeConstantOverride("separation", 4);
+            var row = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            row.AddThemeConstantOverride("h_separation", 4);
+            row.AddThemeConstantOverride("v_separation", 6);
             catalog.AddChild(row);
             AddOptionButton(-1, filter.AllLabel);
             for (var index = 0; index < filter.Options.Count; index++)
             {
                 var option = filter.Options[index];
+                if (_primaryOverflowOptionIds.Contains(option.Id))
+                    continue;
                 if (option.Id == _primaryFilterBreakBeforeOptionId)
                 {
                     var separator = new VSeparator { CustomMinimumSize = new(12f, 0f) };
@@ -550,7 +604,32 @@ namespace STS2RitsuLib.Settings
                 AddOptionButton(index, option.Label);
             }
 
-            row.AddChild(new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill });
+            var overflowOptions = filter.Options
+                .Where(option => _primaryOverflowOptionIds.Contains(option.Id))
+                .Select(option => new RitsuDebugSearchableChoiceOption(option.Id, option.Label))
+                .ToArray();
+            if (overflowOptions.Length > 0)
+            {
+                _primaryOverflowPicker = new(
+                    ModSettingsLocalization.Get("ritsulib.debugTools.filter.customPiles", "Custom piles"),
+                    ModSettingsLocalization.Get("ritsulib.debugTools.search.customPiles", "Search custom piles"),
+                    ModSettingsLocalization.Get("ritsulib.debugTools.empty.customPiles", "No matching custom piles"),
+                    overflowOptions);
+                _primaryOverflowPicker.CustomMinimumSize = new(260f, 0f);
+                _primaryOverflowPicker.SelectionChanged += selectedId =>
+                {
+                    if (selectedId == null)
+                        return;
+                    var optionIndex = filter.Options.ToList().FindIndex(option => option.Id == selectedId);
+                    if (optionIndex < 0)
+                        return;
+                    _filterSelections[filter.Id] = optionIndex;
+                    RefreshPrimaryFilterButtons();
+                    ApplyFilter();
+                };
+                row.AddChild(_primaryOverflowPicker);
+            }
+
             return;
 
             void AddOptionButton(int optionIndex, string label)
@@ -584,6 +663,16 @@ namespace STS2RitsuLib.Settings
                 ModSettingsUiControlTheming.ApplySettingsToggleButtonStyle(button, index == selected, false);
                 ModSettingsUiControlTheming.RefreshAdaptiveButtonText(button);
             }
+
+            var selectedOptionId = selected >= 0 && selected < _filters
+                .Single(filter => filter.Id == _primaryFilterId)
+                .Options.Count
+                ? _filters.Single(filter => filter.Id == _primaryFilterId).Options[selected].Id
+                : null;
+            _primaryOverflowPicker?.SetSelectedId(
+                selectedOptionId != null && _primaryOverflowOptionIds.Contains(selectedOptionId)
+                    ? selectedOptionId
+                    : null);
         }
 
         private async void ScheduleSearch()
@@ -624,9 +713,9 @@ namespace STS2RitsuLib.Settings
                     CardSortField.Type => left.VisualCard.Type.CompareTo(right.VisualCard.Type),
                     CardSortField.Rarity => GetRarityOrder(left.VisualCard.Rarity)
                         .CompareTo(GetRarityOrder(right.VisualCard.Rarity)),
-                    CardSortField.Cost => (left.VisualCard.EnergyCost?.Canonical ?? 0)
-                        .CompareTo(right.VisualCard.EnergyCost?.Canonical ?? 0),
-                    CardSortField.Alphabet => StringComparer.CurrentCultureIgnoreCase.Compare(
+                    CardSortField.Cost => GetCostOrder(left.VisualCard)
+                        .CompareTo(GetCostOrder(right.VisualCard)),
+                    CardSortField.Alphabet => LocManager.Instance.StringComparer.Compare(
                         left.Item.Title, right.Item.Title),
                     _ => 0,
                 };
@@ -652,13 +741,29 @@ namespace STS2RitsuLib.Settings
             };
         }
 
+        private static int GetCostOrder(CardModel card)
+        {
+            if (card.EnergyCost.CostsX)
+                return int.MaxValue - 2;
+            if (card.EnergyCost.Canonical >= 0)
+                return card.EnergyCost.Canonical;
+            if (card.CanonicalStarCost >= 0)
+                return int.MaxValue - 3;
+            return int.MaxValue - 1;
+        }
+
         private bool MatchesFilters(RitsuCatalogItem item)
         {
             foreach (var filter in _filters)
             {
                 var index = _filterSelections.GetValueOrDefault(filter.Id, -1);
-                if (index >= 0 && (index >= filter.Options.Count || !filter.Options[index].Matches(item)))
-                    return false;
+                switch (index)
+                {
+                    case < 0 when filter.Id == _primaryFilterId &&
+                                  _primaryAllMatches != null && !_primaryAllMatches(item):
+                    case >= 0 when index >= filter.Options.Count || !filter.Options[index].Matches(item):
+                        return false;
+                }
             }
 
             return true;
@@ -834,6 +939,7 @@ namespace STS2RitsuLib.Settings
                         "Details are unavailable for this item."),
                     AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 };
+                label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
                 label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
                 _detailHost.AddChild(label);
             }
@@ -869,21 +975,22 @@ namespace STS2RitsuLib.Settings
         {
             _detailTween?.Kill();
             _detailTween = null;
+            var width = ResolveDetailDrawerWidth();
             if (show)
             {
                 _detailBackdrop.Show();
                 if (_detailSlideHost.Visible)
                 {
-                    SetDetailDrawerOffsets(-DetailDrawerWidth, 0f);
+                    SetDetailDrawerOffsets(-width, 0f);
                     return;
                 }
 
-                SetDetailDrawerOffsets(0f, DetailDrawerWidth);
+                SetDetailDrawerOffsets(0f, width);
                 _detailSlideHost.Show();
                 _detailTween = _detailSlideHost.CreateTween();
                 _detailTween.SetTrans(Tween.TransitionType.Cubic);
                 _detailTween.SetEase(Tween.EaseType.Out);
-                _detailTween.TweenProperty(_detailSlideHost, "offset_left", -DetailDrawerWidth, 0.22f);
+                _detailTween.TweenProperty(_detailSlideHost, "offset_left", -width, 0.22f);
                 _detailTween.Parallel().TweenProperty(_detailSlideHost, "offset_right", 0f, 0.22f);
                 _detailTween.TweenCallback(Callable.From(() => _detailTween = null));
                 return;
@@ -895,16 +1002,40 @@ namespace STS2RitsuLib.Settings
             _detailTween.SetTrans(Tween.TransitionType.Cubic);
             _detailTween.SetEase(Tween.EaseType.In);
             _detailTween.TweenProperty(_detailSlideHost, "offset_left", 0f, 0.16f);
-            _detailTween.Parallel().TweenProperty(_detailSlideHost, "offset_right", DetailDrawerWidth, 0.16f);
+            _detailTween.Parallel().TweenProperty(_detailSlideHost, "offset_right", width, 0.16f);
             _detailTween.TweenCallback(Callable.From(() =>
             {
                 _detailTween = null;
                 if (!IsInstanceValid(_detailSlideHost))
                     return;
                 _detailSlideHost.Hide();
-                SetDetailDrawerOffsets(-DetailDrawerWidth, 0f);
+                SetDetailDrawerOffsets(-width, 0f);
                 _detailBackdrop.Hide();
             }));
+        }
+
+        private void UpdateDetailDrawerWidth()
+        {
+            if (!IsInstanceValid(_detailSlideHost))
+                return;
+            _detailTween?.Kill();
+            _detailTween = null;
+            var width = ResolveDetailDrawerWidth();
+            SetDetailDrawerOffsets(_detailSlideHost.Visible ? -width : 0f, _detailSlideHost.Visible ? 0f : width);
+        }
+
+        private float ResolveDetailDrawerWidth()
+        {
+            var availableWidth = _workspace.Size.X;
+            if (availableWidth <= 0f || !float.IsFinite(availableWidth))
+                return DetailDrawerMinimumWidth;
+
+            var minimum = MathF.Min(DetailDrawerMinimumWidth, availableWidth);
+            var maximum = MathF.Min(DetailDrawerMaximumWidth, availableWidth);
+            if (availableWidth >= DetailDrawerMinimumWidth + MinimumVisibleCatalogWidth)
+                maximum = MathF.Min(maximum, availableWidth - MinimumVisibleCatalogWidth);
+            maximum = MathF.Max(minimum, maximum);
+            return Math.Clamp(availableWidth * DetailDrawerPreferredWidthFraction, minimum, maximum);
         }
 
         private void SetDetailDrawerOffsets(float left, float right)

@@ -21,7 +21,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarPeerFeatures.BrotliPayloadCompression |
             RitsuLibSidecarPeerFeatures.ModelRightClickV2 |
             RitsuLibSidecarPeerFeatures.DeveloperActionsV1 |
-            RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1;
+            RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1 |
+            RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1;
 
         private const int HelloMaxPacketAttempts = 6;
 

@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Globalization;
+using System.Text;
 using Godot;
 using Godot.Collections;
 using MegaCrit.Sts2.addons.mega_text;
@@ -13,6 +15,18 @@ using Array = System.Array;
 
 namespace STS2RitsuLib.Settings
 {
+    internal static class ModSettingsLocalizedFormatting
+    {
+        private static readonly ConcurrentDictionary<string, CompositeFormat> Cache =
+            new(StringComparer.Ordinal);
+
+        internal static string Format(string format, object? argument)
+        {
+            var compositeFormat = Cache.GetOrAdd(format, static value => CompositeFormat.Parse(value));
+            return string.Format(CultureInfo.CurrentCulture, compositeFormat, argument);
+        }
+    }
+
     internal interface IModSettingsTransientPopupOwner
     {
         void ForceCloseTransientUi();
@@ -72,6 +86,8 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_disabled_color",
+                ModSettingsUiControlTheming.ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelSecondary));
             ModSettingsUiControlTheming.EnableAdaptiveButtonText(
                 this,
                 11,
@@ -217,7 +233,7 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        private static StyleBoxFlat CreateDisabledStyle()
+        internal static StyleBoxFlat CreateDisabledStyle()
         {
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.borderWidthDisabled", 2);
             var cornerRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii("components.toggle.layout.cornerRadius",
@@ -2217,7 +2233,7 @@ namespace STS2RitsuLib.Settings
                 : label + ModSettingsLocalization.Get("choice.dropdown.chevronGap", "  ") +
                   ModSettingsLocalization.Get("choice.dropdown.chevron", "\u25be");
             _faceButton.TooltipText = $"{ModSettingsLocalization.Get("choice.dropdown.title", "Choose a value")}\n" +
-                                      string.Format(
+                                      ModSettingsLocalizedFormatting.Format(
                                           ModSettingsLocalization.Get("choice.dropdown.tooltip",
                                               "Opens a list to choose a value. Current: {0}"),
                                           label);
@@ -3713,6 +3729,11 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1001:Types that own disposable fields should be disposable",
+            Justification =
+                "Godot nodes are owned and released by the scene tree rather than this shared coordinator.")]
         private sealed class SharedActionsDropdown
         {
             private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
@@ -4425,6 +4446,8 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_disabled_color",
+                ModSettingsUiControlTheming.ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelSecondary));
             AddThemeStyleboxOverride("normal", CreateStyle(false));
             AddThemeStyleboxOverride("hover", CreateStyle(true));
             AddThemeStyleboxOverride("pressed", CreateStyle(true));
@@ -4639,7 +4662,7 @@ namespace STS2RitsuLib.Settings
 
         private static string FormatDragIndexLabel(int zeroBasedRowIndex)
         {
-            return (zeroBasedRowIndex + 1).ToString();
+            return (zeroBasedRowIndex + 1).ToString(CultureInfo.CurrentCulture);
         }
 
         public override void _EnterTree()
@@ -5004,7 +5027,7 @@ namespace STS2RitsuLib.Settings
         private void UpdateListHeaderChrome(List<TItem> items)
         {
             if (_countLabel != null)
-                _countLabel.Text = string.Format(
+                _countLabel.Text = ModSettingsLocalizedFormatting.Format(
                     ModSettingsLocalization.Get("list.count", "{0} items"),
                     items.Count);
 
@@ -6650,6 +6673,8 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Color.White);
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Color.White);
+            AddThemeColorOverride("font_disabled_color",
+                ModSettingsUiControlTheming.ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelSecondary));
 
             AddThemeStyleboxOverride("normal", CreateStyle(false, false, _kind, _indentLevel));
             AddThemeStyleboxOverride("hover", CreateStyle(false, true, _kind, _indentLevel));
@@ -6929,11 +6954,12 @@ namespace STS2RitsuLib.Settings
             ClipText = true;
             AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Button);
-            AddThemeColorOverride("font_color", ResolveToneForeground(tone));
+            AddThemeColorOverride("font_color", ResolveToneTextForeground(tone));
             AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
-            AddThemeColorOverride("font_disabled_color", RitsuShellTheme.Current.Text.LabelSecondary);
+            AddThemeColorOverride("font_disabled_color",
+                ModSettingsUiControlTheming.ResolveDisabledForeground(ResolveToneTextForeground(tone)));
             ModSettingsUiControlTheming.EnableAdaptiveButtonText(
                 this,
                 11,
@@ -7007,6 +7033,11 @@ namespace STS2RitsuLib.Settings
                 ModSettingsButtonTone.Danger => RitsuShellTheme.Current.Component.TextButton.Danger.Fg,
                 _ => RitsuShellTheme.Current.Component.TextButton.Neutral.Fg,
             };
+        }
+
+        private static Color ResolveToneTextForeground(ModSettingsButtonTone tone)
+        {
+            return ResolveToneForeground(tone).Lerp(RitsuShellTheme.Current.Text.LabelPrimary, 0.5f);
         }
 
         private static StyleBoxFlat CreateStyle(bool selected, bool hovered, ModSettingsButtonTone tone)

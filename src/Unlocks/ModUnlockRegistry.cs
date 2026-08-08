@@ -200,7 +200,7 @@ namespace STS2RitsuLib.Unlocks
 
         private void RequireEpochCore(Type modelType, string epochId, bool overwrite)
         {
-            ArgumentNullException.ThrowIfNull(modelType);
+            EnsureModelType(modelType, typeof(AbstractModel), nameof(modelType));
             ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
             EnsureMutable($"register unlock requirement for '{modelType.Name}'");
 
@@ -245,7 +245,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterRunAs(Type characterType, Type epochType)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
@@ -280,7 +280,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterWinAs(Type characterType, Type epochType)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunRule(
                 PostRunEpochUnlockRule.Create(
@@ -318,7 +318,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterAscensionWin(Type characterType, Type epochType, int ascensionLevel)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             ArgumentOutOfRangeException.ThrowIfNegative(ascensionLevel);
             RegisterPostRunRule(
@@ -400,7 +400,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterEliteVictories(Type characterType, Type epochType, int requiredEliteWins = 15)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             RegisterEliteEpochRule(
                 EliteEpochUnlockRule.Create(
@@ -456,7 +456,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterBossVictories(Type characterType, Type epochType, int requiredBossWins = 15)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             RegisterBossEpochRule(
                 CountedEpochUnlockRule.Create(
@@ -510,7 +510,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockEpochAfterAscensionOneWin(Type characterType, Type epochType)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             RegisterAscensionOneEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
@@ -559,7 +559,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void RevealAscensionAfterEpoch(Type characterType, Type epochType)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             RegisterAscensionRevealEpoch(ModelDb.GetId(characterType), ModTimelineRegistry.GetEpochId(epochType));
         }
@@ -611,7 +611,7 @@ namespace STS2RitsuLib.Unlocks
         /// </summary>
         public void UnlockCharacterAfterRunAs(Type characterType, Type epochType)
         {
-            ArgumentNullException.ThrowIfNull(characterType);
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
             ArgumentNullException.ThrowIfNull(epochType);
             RegisterPostRunCharacterUnlockEpoch(ModelDb.GetId(characterType),
                 ModTimelineRegistry.GetEpochId(epochType));
@@ -890,6 +890,17 @@ namespace STS2RitsuLib.Unlocks
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(epochId);
             ArgumentException.ThrowIfNullOrWhiteSpace(description);
+        }
+
+        private static void EnsureModelType(Type type, Type expectedBaseType, string paramName)
+        {
+            ArgumentNullException.ThrowIfNull(type, paramName);
+            ArgumentNullException.ThrowIfNull(expectedBaseType);
+
+            if (type.IsInterface || type.ContainsGenericParameters || !expectedBaseType.IsAssignableFrom(type))
+                throw new ArgumentException(
+                    $"Type '{type.FullName}' must be a closed subtype of '{expectedBaseType.FullName}'.",
+                    paramName);
         }
     }
 

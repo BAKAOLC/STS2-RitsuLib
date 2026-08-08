@@ -258,6 +258,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             $"{Const.ModId}:relics",
             $"{Const.ModId}:potions",
             $"{Const.ModId}:powers",
+            $"{Const.ModId}:secondary-resources",
             $"{Const.ModId}:players",
             $"{Const.ModId}:creatures",
             $"{Const.ModId}:monsters",

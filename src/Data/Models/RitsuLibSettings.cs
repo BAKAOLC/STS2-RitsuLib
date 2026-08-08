@@ -19,6 +19,10 @@ namespace STS2RitsuLib.Data.Models
         internal const string DefaultSettingsOpenHotkey = "Ctrl+Shift+F9";
         internal const string DefaultDebugToolsOpenHotkey = "Ctrl+Shift+F10";
         internal const string DefaultCreaturePickerHotkey = "Ctrl+Shift+F11";
+        internal const string DefaultModSourceHoverTipsPlacement = "top";
+        internal const string DefaultModSourceHoverTipsColor = "#EE82EE";
+        internal const string DefaultModSourceHoverTipsFormat = "{source}";
+        internal const int MaxModSourceHoverTipsFormatLength = 256;
 
         /// <summary>
         ///     <para xml:lang="en">Gets or sets the persisted schema version used by the migration pipeline.</para>
@@ -266,6 +270,54 @@ namespace STS2RitsuLib.Data.Models
         public string ModSourceHoverTipsDisplayStyle { get; set; } = "name_and_id";
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets where a folded content-source line appears relative to the hover-tip body. Valid values
+        ///         are <c>top</c> and <c>bottom</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置折叠到悬停提示正文中的内容来源行相对于正文的位置。有效值为 <c>top</c> 和
+        ///         <c>bottom</c>；其他值在使用时回退为 <c>top</c>。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_placement")]
+        public string ModSourceHoverTipsPlacement { get; set; } = DefaultModSourceHoverTipsPlacement;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets the HTML color used for content-source text. Invalid values fall back to the default
+        ///         purple.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置内容来源文字使用的 HTML 颜色；无效值会回退为默认紫色。</para>
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_color")]
+        public string ModSourceHoverTipsColor { get; set; } = DefaultModSourceHoverTipsColor;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether a blank line separates folded content-source text from the hover-tip body.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置折叠的内容来源文字与悬停提示正文之间是否添加一个空行。</para>
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_separate_from_body")]
+        public bool ModSourceHoverTipsSeparateFromBody { get; set; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets the single-line content-source format. The placeholders <c>{source}</c>, <c>{name}</c>,
+        ///         and <c>{id}</c> insert the selected display style, display name, and mod ID respectively. Line breaks
+        ///         are converted to spaces, values are limited to 256 characters, and empty values fall back to
+        ///         <c>{source}</c>.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置单行内容来源格式。占位符 <c>{source}</c>、<c>{name}</c> 和 <c>{id}</c>
+        ///         分别插入所选显示样式、显示名称和模组 ID。换行符会转换为空格，长度限制为 256 个字符，
+        ///         空值会回退为 <c>{source}</c>。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("mod_source_hover_tips_format")]
+        public string ModSourceHoverTipsFormat { get; set; } = DefaultModSourceHoverTipsFormat;
+
+        /// <summary>
         ///     <para xml:lang="en">Gets or sets whether base-game content also shows source hover tips.</para>
         ///     <para xml:lang="zh-CN">获取或设置原版内容是否也显示来源悬停提示。</para>
         /// </summary>
@@ -402,6 +454,15 @@ namespace STS2RitsuLib.Data.Models
 
         /// <summary>
         ///     <para xml:lang="en">
+        ///         Gets or sets whether card export filenames use localized titles instead of model IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置卡牌导出文件名是否使用本地化标题而非模型 ID。</para>
+        /// </summary>
+        [JsonPropertyName("card_png_export_use_localized_file_names")]
+        public bool CardPngExportUseLocalizedFileNames { get; set; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
         ///         Gets or sets whether card exports include an approximate hover-tip-style column on the right.
         ///     </para>
         ///     <para xml:lang="zh-CN">获取或设置卡牌导出是否包含位于右侧的近似悬停提示样式栏。</para>
@@ -452,6 +513,15 @@ namespace STS2RitsuLib.Data.Models
         public string RelicDetailPngExportOutputPath { get; set; } = "";
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether relic export filenames use localized titles instead of model IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置遗物导出文件名是否使用本地化标题而非模型 ID。</para>
+        /// </summary>
+        [JsonPropertyName("relic_detail_png_export_use_localized_file_names")]
+        public bool RelicDetailPngExportUseLocalizedFileNames { get; set; }
+
+        /// <summary>
         ///     <para xml:lang="en">Gets or sets the render scale for relic-detail exports.</para>
         ///     <para xml:lang="zh-CN">获取或设置遗物详情导出的渲染缩放比例。</para>
         /// </summary>
@@ -478,6 +548,15 @@ namespace STS2RitsuLib.Data.Models
         /// </summary>
         [JsonPropertyName("potion_detail_png_export_output_path")]
         public string PotionDetailPngExportOutputPath { get; set; } = "";
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets whether potion export filenames use localized titles instead of model IDs.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取或设置药水导出文件名是否使用本地化标题而非模型 ID。</para>
+        /// </summary>
+        [JsonPropertyName("potion_detail_png_export_use_localized_file_names")]
+        public bool PotionDetailPngExportUseLocalizedFileNames { get; set; }
 
         /// <summary>
         ///     <para xml:lang="en">Gets or sets the render scale for potion-detail exports.</para>

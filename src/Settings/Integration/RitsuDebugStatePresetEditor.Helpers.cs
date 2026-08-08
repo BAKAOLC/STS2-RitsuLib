@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Models;
 using STS2RitsuLib.Ui.Shell;
@@ -307,6 +308,17 @@ namespace STS2RitsuLib.Settings
 
         private static string PileLabel(PileType pileType)
         {
+            if (ModCardPileRegistry.TryGetByPileType(pileType, out var definition))
+                try
+                {
+                    var title = definition.Title.GetFormattedText().Trim();
+                    return string.IsNullOrWhiteSpace(title) ? definition.Id : title;
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    return definition.Id;
+                }
+
             return L($"ritsulib.debugTools.enum.PileType.{pileType}", pileType.ToString());
         }
 
@@ -331,6 +343,14 @@ namespace STS2RitsuLib.Settings
                     preset.Powers.Items.Count));
             if (preset.Player != null)
                 parts.Add(L("ritsulib.debugTools.statePresets.summaryPlayer", "player values"));
+            if (preset.SecondaryResources is { Count: > 0 } resources)
+                parts.Add(string.Format(
+                    L("ritsulib.debugTools.statePresets.summarySecondaryResources", "{0} secondary resources"),
+                    resources.Count));
+            if (preset.CapabilityTargets is { Count: > 0 } capabilityTargets)
+                parts.Add(string.Format(
+                    L("ritsulib.debugTools.statePresets.summaryCapabilities", "{0} capability targets"),
+                    capabilityTargets.Count));
             return parts.Count == 0 ? "—" : string.Join(" · ", parts);
         }
 

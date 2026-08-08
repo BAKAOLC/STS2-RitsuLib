@@ -33,11 +33,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Returns whether <paramref name="partial" /> matches the option title or the linked relic's ID or
-        ///         title.
+        ///         Returns whether <paramref name="partial" /> matches the option title, the linked relic's ID or
+        ///         title, or an enabled search expansion of either title.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         返回 <paramref name="partial" /> 是否匹配选项标题或关联遗物的 ID、标题。
+        ///         返回 <paramref name="partial" /> 是否匹配选项标题、关联遗物的 ID 或标题，或两个标题的已启用搜索扩展。
         ///     </para>
         /// </summary>
         public static bool MatchesLocalizedTitle(string ancientEntryId, string choiceToken, string partial)
@@ -52,8 +52,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
             var trimmed = partial.Trim();
 
             var title = option.Title.GetFormattedText()?.Trim();
-            if (!string.IsNullOrWhiteSpace(title) &&
-                title.Contains(trimmed, StringComparison.OrdinalIgnoreCase))
+            if (DevConsoleAutocompleteMatchExtensions.MatchesLocalizedText(title, trimmed))
                 return true;
 
             if (option.Relic == null)
@@ -64,8 +63,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 return true;
 
             var relicTitle = relic.Title.GetFormattedText()?.Trim();
-            return !string.IsNullOrWhiteSpace(relicTitle) &&
-                   relicTitle.Contains(trimmed, StringComparison.OrdinalIgnoreCase);
+            return DevConsoleAutocompleteMatchExtensions.MatchesLocalizedText(relicTitle, trimmed);
         }
 
         private static EventOption? TryFindOption(string ancientEntryId, string choiceToken)

@@ -402,8 +402,11 @@ namespace STS2RitsuLib.Settings
                 CreateStringFieldCommitHandler(context, entry),
                 entry.ValueValidationVisual,
                 entry.ValueValidationCommit);
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
-                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
+            RegisterRefreshWhenAlive(context, control, () =>
+            {
+                if (control.Editor?.HasFocus() != true)
+                    control.SetValue(entry.Binding.Read());
+            }, ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,
@@ -425,8 +428,11 @@ namespace STS2RitsuLib.Settings
                 placeholder,
                 entry.MaxLength,
                 CreateStringFieldCommitHandler(context, entry));
-            RegisterRefreshWhenAlive(context, control, () => control.SetValue(entry.Binding.Read()),
-                ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
+            RegisterRefreshWhenAlive(context, control, () =>
+            {
+                if (control.Editor?.HasFocus() != true)
+                    control.SetValue(entry.Binding.Read());
+            }, ModSettingsUiRefreshSpec.ForBinding(entry.Binding));
 
             return CreateSettingLine(
                 context,

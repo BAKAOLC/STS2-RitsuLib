@@ -281,9 +281,14 @@ namespace STS2RitsuLib.Relics
 
         private static void EnsureModelType(Type modelType, Type requiredBase, string paramName)
         {
-            ArgumentNullException.ThrowIfNull(modelType);
-            if (!requiredBase.IsAssignableFrom(modelType))
-                throw new ArgumentException($"{modelType.Name} must derive from {requiredBase.Name}.", paramName);
+            ArgumentNullException.ThrowIfNull(modelType, paramName);
+            ArgumentNullException.ThrowIfNull(requiredBase);
+
+            if (modelType.IsAbstract || modelType.IsInterface || modelType.ContainsGenericParameters ||
+                !requiredBase.IsAssignableFrom(modelType))
+                throw new ArgumentException(
+                    $"Type '{modelType.FullName}' must be a closed concrete subtype of '{requiredBase.FullName}'.",
+                    paramName);
         }
 
         private sealed record OrobasUpgradeMapping(

@@ -167,8 +167,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             RitsuDebugCardActions.RegisterBuiltInActions();
             RitsuDebugPlayerActions.RegisterBuiltInActions();
             RitsuDebugInventoryActions.RegisterBuiltInActions();
+            RitsuDebugOrbActions.RegisterBuiltInActions();
             RitsuDebugCombatActions.RegisterBuiltInActions();
             RitsuDebugRunActions.RegisterBuiltInActions();
+            RitsuDebugSecondaryResourceActions.RegisterBuiltInActions();
+            RitsuDebugCapabilityActions.RegisterBuiltInActions();
             RitsuDebugStatePresetActions.RegisterBuiltInActions();
             lock (Gate)
             {
@@ -199,7 +202,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string actionId,
             Func<RitsuDebugActionContext, TPayload, RitsuDebugActionCheck> validate,
             Func<RitsuDebugActionContext, TPayload, Task<string>> execute,
-            RitsuLibSidecarPeerFeatures requiredPeerFeatures = RitsuLibSidecarPeerFeatures.DeveloperActionsV1)
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures = RitsuLibSidecarPeerFeatures.DeveloperActionsV1,
+            Func<TPayload, RitsuLibSidecarPeerFeatures>? payloadPeerFeatures = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(actionId);
             ArgumentNullException.ThrowIfNull(validate);
@@ -223,7 +227,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     actionId,
                     validate,
                     execute,
-                    requiredPeerFeatures | RitsuLibSidecarPeerFeatures.DeveloperActionsV1);
+                    requiredPeerFeatures | RitsuLibSidecarPeerFeatures.DeveloperActionsV1,
+                    payloadPeerFeatures);
             }
         }
 
@@ -271,7 +276,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 { Type: NetGameType.Singleplayer } => RequestManagedAction(runManager, envelope),
                 NetHostGameService host => !CanHostSynchronize(
                     host,
-                    prepared.Registration.RequiredPeerFeatures,
+                    prepared.RequiredPeerFeatures,
                     out var hostError)
                     ? RitsuDebugActionSubmission.Reject(hostError)
                     : RequestManagedAction(runManager, envelope),
@@ -280,7 +285,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     client,
                     requester,
                     envelope,
-                    prepared.Registration.RequiredPeerFeatures),
+                    prepared.RequiredPeerFeatures),
                 _ => RitsuDebugActionSubmission.Reject(
                     "protocol.unsupportedGameMode",
                     "Developer tools cannot change state in the current game mode."),
@@ -387,7 +392,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "The host does not allow other players to request state changes.");
             else if (!TryValidateEnvelope(action, out var prepared, out var validationError))
                 decision = RitsuDebugActionSubmission.Reject(validationError);
-            else if (!CanHostSynchronize(host, prepared.Registration.RequiredPeerFeatures,
+            else if (!CanHostSynchronize(host, prepared.RequiredPeerFeatures,
                          out var capabilityError))
                 decision = RitsuDebugActionSubmission.Reject(capabilityError);
             else
@@ -618,7 +623,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return false;
             }
 
-            prepared = new(registration, actionContext);
+            prepared = new(
+                registration,
+                actionContext,
+                registration.GetRequiredPeerFeatures(envelope.PayloadJson));
             feedback = default;
             return true;
         }
@@ -714,7 +722,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private readonly record struct PreparedAction(
             RegistrationBase Registration,
-            RitsuDebugActionContext Context);
+            RitsuDebugActionContext Context,
+            RitsuLibSidecarPeerFeatures RequiredPeerFeatures);
 
         private readonly record struct PendingClientRequest(
             string ActionId,
@@ -737,6 +746,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 RitsuDebugActionContext context,
                 string payloadJson);
 
+            internal abstract RitsuLibSidecarPeerFeatures GetRequiredPeerFeatures(string payloadJson);
+
             internal abstract Task<string> Execute(
                 RitsuDebugActionContext context,
                 string payloadJson);
@@ -746,7 +757,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string actionId,
             Func<RitsuDebugActionContext, TPayload, RitsuDebugActionCheck> validate,
             Func<RitsuDebugActionContext, TPayload, Task<string>> execute,
-            RitsuLibSidecarPeerFeatures requiredPeerFeatures)
+            RitsuLibSidecarPeerFeatures requiredPeerFeatures,
+            Func<TPayload, RitsuLibSidecarPeerFeatures>? payloadPeerFeatures)
             : RegistrationBase(actionId, typeof(TPayload), requiredPeerFeatures)
         {
             internal override RitsuDebugActionCheck Validate(
@@ -757,6 +769,15 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return RitsuDebugActionCheck.Fail(error);
 
                 return validate(context, payload);
+            }
+
+            internal override RitsuLibSidecarPeerFeatures GetRequiredPeerFeatures(string payloadJson)
+            {
+                if (payloadPeerFeatures == null ||
+                    !TryDeserializePayload(payloadJson, out var payload, out _))
+                    return RequiredPeerFeatures;
+
+                return RequiredPeerFeatures | payloadPeerFeatures(payload);
             }
 
             internal override Task<string> Execute(

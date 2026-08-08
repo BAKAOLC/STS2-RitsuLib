@@ -38,10 +38,11 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
         /// <summary>
         ///     <para xml:lang="en">
         ///         Returns whether <paramref name="partial" /> occurs in the localized title of
-        ///         <paramref name="token" />, ignoring case.
+        ///         <paramref name="token" /> or one of its enabled search expansions, ignoring case.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         返回 <paramref name="token" /> 的本地化标题是否包含 <paramref name="partial" />，忽略大小写。
+        ///         返回 <paramref name="token" /> 的本地化标题或已启用搜索扩展是否包含
+        ///         <paramref name="partial" />，忽略大小写。
         ///     </para>
         /// </summary>
         public static bool MatchesLocalizedTitle(string token, string partial)
@@ -50,8 +51,7 @@ namespace STS2RitsuLib.Diagnostics.DevConsole
                 return true;
 
             var title = GetTitlesSnapshot().GetValueOrDefault(token.Trim());
-            return !string.IsNullOrWhiteSpace(title) &&
-                   title.Contains(partial.Trim(), StringComparison.OrdinalIgnoreCase);
+            return DevConsoleAutocompleteMatchExtensions.MatchesLocalizedText(title, partial);
         }
 
         /// <summary>

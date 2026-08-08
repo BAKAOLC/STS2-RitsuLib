@@ -77,5 +77,8 @@ namespace STS2RitsuLib.Networking.Sidecar
     {
         internal const RitsuLibSidecarPeerFeatures MonsterIntentActionsV1 =
             (RitsuLibSidecarPeerFeatures)(1u << 5);
+
+        internal const RitsuLibSidecarPeerFeatures ExtendedDeveloperStateActionsV1 =
+            (RitsuLibSidecarPeerFeatures)(1u << 6);
     }
 }

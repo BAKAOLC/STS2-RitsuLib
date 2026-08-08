@@ -143,8 +143,8 @@ The old companion analyzer
 (`STS2.ModAnalyzers.RitsuLib`) is archived and no longer maintained.
 
 For RitsuLib-style mods, the recommended optional analyzer is
-[STS2RitsuLibModAnalyzers](https://github.com/alkaid616/STS2RitsuLibModAnalyzers)
-(`Nothing.STS2RitsuLib.ModAnalyzers`). It provides Roslyn diagnostics for RitsuLib localization and resource paths, and
+[STS2RitsuLibModAnalyzers](https://github.com/Miooowo/STS2-RitsuLibModAnalyzers)
+(`Miooowo.STS2RitsuLib.ModAnalyzers`). It provides Roslyn diagnostics for RitsuLib localization and resource paths, and
 its package can automatically pass common project files to the analyzer through `buildTransitive`.
 
 This analyzer is provided, maintained, and supported by a third party. RitsuLib does not guarantee that it fully matches

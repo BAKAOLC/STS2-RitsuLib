@@ -41,6 +41,13 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
         {
             RewardSerializationExt.TryGetExtData(save, out var ext);
 
+            if (LinkedRewardSetSerialization.TryCreate(save, player, out var linkedRewardSet) &&
+                linkedRewardSet != null)
+            {
+                __result = linkedRewardSet;
+                return false;
+            }
+
             if (ModRewardRegistry.TryCreate(save.RewardType, save, player, ext?.CustomRewardJson, out var customReward)
                 && customReward != null)
             {

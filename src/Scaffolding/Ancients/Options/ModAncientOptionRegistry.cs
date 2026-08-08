@@ -47,9 +47,11 @@ namespace STS2RitsuLib.Scaffolding.Ancients.Options
                     "Cannot register ancient option rules after content registration has been frozen. " +
                     "Register from your mod initializer before ModelDb initializes.");
 
-            if (ancientType.IsAbstract || !typeof(AncientEventModel).IsAssignableFrom(ancientType))
+            if (ancientType.IsAbstract || ancientType.IsInterface || ancientType.ContainsGenericParameters ||
+                !typeof(AncientEventModel).IsAssignableFrom(ancientType))
                 throw new ArgumentException(
-                    $"Type '{ancientType.FullName}' must be a concrete subtype of {typeof(AncientEventModel).FullName}.",
+                    $"Type '{ancientType.FullName}' must be a closed concrete subtype of " +
+                    $"{typeof(AncientEventModel).FullName}.",
                     nameof(ancientType));
 
             var registered = new RegisteredRule(

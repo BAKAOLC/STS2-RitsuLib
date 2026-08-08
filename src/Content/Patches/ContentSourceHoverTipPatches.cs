@@ -40,7 +40,17 @@ namespace STS2RitsuLib.Content.Patches
 
         internal static void Append(ContentSourceHoverTipFactory.ContentSourceInfo source, ref HoverTip tip)
         {
-            tip.Description = $"[purple]{source.FormatForBbCode()}[/purple]\n{tip.Description}";
+            var sourceLine = source.FormatLineForBbCode();
+            if (string.IsNullOrEmpty(tip.Description))
+            {
+                tip.Description = sourceLine;
+                return;
+            }
+
+            var separator = RitsuLibSettingsStore.ShouldSeparateModSourceHoverTipsFromBody() ? "\n\n" : "\n";
+            tip.Description = RitsuLibSettingsStore.GetModSourceHoverTipsPlacement() == ContentSourcePlacement.Bottom
+                ? $"{tip.Description}{separator}{sourceLine}"
+                : $"{sourceLine}{separator}{tip.Description}";
         }
 
         internal static void Append(AbstractModel model, ref IEnumerable<IHoverTip> result)
@@ -55,7 +65,9 @@ namespace STS2RitsuLib.Content.Patches
                 return;
             }
 
-            result = [tip, .. tips];
+            result = RitsuLibSettingsStore.GetModSourceHoverTipsPlacement() == ContentSourcePlacement.Bottom
+                ? [.. tips, tip]
+                : [tip, .. tips];
         }
 
         internal static void AppendToFirstHoverTip(AbstractModel model, ref IEnumerable<IHoverTip> result)
@@ -75,12 +87,15 @@ namespace STS2RitsuLib.Content.Patches
                 return;
             }
 
-            result = [CreateSourceTip(source), .. tips];
+            var sourceTip = CreateSourceTip(source);
+            result = RitsuLibSettingsStore.GetModSourceHoverTipsPlacement() == ContentSourcePlacement.Bottom
+                ? [.. tips, sourceTip]
+                : [sourceTip, .. tips];
         }
 
         private static HoverTip CreateSourceTip(ContentSourceHoverTipFactory.ContentSourceInfo source)
         {
-            return new(ContentSourceHoverTipFactory.GetTitle(), source.FormatForBbCode())
+            return new(ContentSourceHoverTipFactory.GetTitle(), source.FormatLineForBbCode())
             {
                 Id = "ritsulib:content_source:" + source.Id,
             };
@@ -153,7 +168,7 @@ namespace STS2RitsuLib.Content.Patches
             if (!IsNodeUsable(tipSet._textHoverTipContainer))
                 return;
 
-            AddHoverTipControl(tipSet, new(ContentSourceHoverTipFactory.GetTitle(), source.FormatForBbCode())
+            AddHoverTipControl(tipSet, new(ContentSourceHoverTipFactory.GetTitle(), source.FormatLineForBbCode())
             {
                 Id = "ritsulib:event_content_source:" + source.Id,
             });
@@ -368,6 +383,8 @@ namespace STS2RitsuLib.Content.Patches
         private readonly record struct EventSourceSettings(
             bool Enabled,
             ContentSourceDisplayStyle DisplayStyle,
+            string Color,
+            string Format,
             bool IncludeVanilla,
             bool EventsEnabled)
         {
@@ -376,6 +393,8 @@ namespace STS2RitsuLib.Content.Patches
                 return new(
                     RitsuLibSettingsStore.IsModSourceHoverTipsEnabled(),
                     RitsuLibSettingsStore.GetModSourceHoverTipsDisplayStyle(),
+                    RitsuLibSettingsStore.GetModSourceHoverTipsColor(),
+                    RitsuLibSettingsStore.GetModSourceHoverTipsFormat(),
                     RitsuLibSettingsStore.ShouldIncludeVanillaModSourceHoverTips(),
                     RitsuLibSettingsStore.ShouldShowEventModSourceHoverTips());
             }

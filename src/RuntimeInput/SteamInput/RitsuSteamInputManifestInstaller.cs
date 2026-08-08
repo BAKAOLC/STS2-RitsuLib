@@ -1,7 +1,6 @@
 using System.Text;
-using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
-using Environment = System.Environment;
+using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.RuntimeInput
 {
@@ -251,13 +250,7 @@ namespace STS2RitsuLib.RuntimeInput
 
         private static string ResolveGeneratedManifestPath()
         {
-            var userDataDir = OS.GetUserDataDir();
-            if (string.IsNullOrWhiteSpace(userDataDir))
-                userDataDir = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "SlayTheSpire2");
-
-            return Path.Combine(userDataDir, "mods", "RitsuLib", "steam_input", GeneratedManifestFileName);
+            return Path.Combine(RitsuLibDataPaths.EnsureTemporaryDirectory(), GeneratedManifestFileName);
         }
 
         private static bool TryFindNamedBlock(string text, string name, int start, int end, out VdfBlock block)

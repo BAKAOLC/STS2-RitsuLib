@@ -9,15 +9,15 @@ namespace STS2RitsuLib.Settings
 {
     internal sealed partial class RitsuDebugStatePresetEditor
     {
-        private static readonly PileType[] EditablePiles =
-            [PileType.Deck, PileType.Hand, PileType.Draw, PileType.Discard, PileType.Exhaust];
-
         private void BuildCardsPage()
         {
+            var editablePiles = RitsuDebugCardActions.GetMutablePileTypes();
+            if (!editablePiles.Contains(_selectedPile))
+                _selectedPile = PileType.Deck;
             var pileTabs = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             pileTabs.AddThemeConstantOverride("h_separation", 6);
             pileTabs.AddThemeConstantOverride("v_separation", 6);
-            foreach (var pileType in EditablePiles)
+            foreach (var pileType in editablePiles)
             {
                 var capturedPile = pileType;
                 var count = FindPile(pileType)?.Cards.Sum(static card => card.Count) ?? 0;
@@ -54,7 +54,7 @@ namespace STS2RitsuLib.Settings
                     {
                         _draft!.CardPiles.Add(new()
                         {
-                            Pile = _selectedPile.ToString(),
+                            Pile = RitsuDebugCardActions.GetPileToken(_selectedPile),
                             ApplyMode = RitsuDebugStatePresetApplyMode.Add,
                         });
                         MarkDirty(true);
@@ -84,7 +84,7 @@ namespace STS2RitsuLib.Settings
             header.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.fillPage", "Fill page"),
                 ModSettingsButtonTone.Normal,
-                () => CaptureScopes(ScopeForPile(_selectedPile)),
+                () => CapturePile(_selectedPile),
                 86f));
             _contentBody.AddChild(header);
             if (pile.Cards.Count == 0)
@@ -145,13 +145,7 @@ namespace STS2RitsuLib.Settings
                 id => ModelDb.AllRelics.FirstOrDefault(model => model.Id.ToString() == id),
                 static model => model.Icon,
                 relics.ApplyMode,
-                id => ShowRemoveItemDrawer(
-                    ModelLabel(id),
-                    () =>
-                    {
-                        relics.ModelIds.Remove(id);
-                        MarkDirty(true);
-                    }));
+                id => ShowRelicEditor(relics, id));
         }
 
         private void BuildPotionsPage()
@@ -527,20 +521,8 @@ namespace STS2RitsuLib.Settings
         private RitsuDebugStatePresetCardPile? FindPile(PileType pileType)
         {
             return _draft!.CardPiles.FirstOrDefault(candidate =>
-                candidate.Pile.Equals(pileType.ToString(), StringComparison.OrdinalIgnoreCase));
-        }
-
-        private static RitsuDebugStatePresetCaptureScope ScopeForPile(PileType pileType)
-        {
-            return pileType switch
-            {
-                PileType.Deck => RitsuDebugStatePresetCaptureScope.Deck,
-                PileType.Hand => RitsuDebugStatePresetCaptureScope.Hand,
-                PileType.Draw => RitsuDebugStatePresetCaptureScope.Draw,
-                PileType.Discard => RitsuDebugStatePresetCaptureScope.Discard,
-                PileType.Exhaust => RitsuDebugStatePresetCaptureScope.Exhaust,
-                _ => RitsuDebugStatePresetCaptureScope.None,
-            };
+                RitsuDebugCardActions.TryParseMutablePileType(candidate.Pile, out var candidatePileType) &&
+                candidatePileType == pileType);
         }
 
         private static void AssignMissingPotionSlots(RitsuDebugStatePresetPotions potions)

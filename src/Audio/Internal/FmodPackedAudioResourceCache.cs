@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Godot;
+using STS2RitsuLib.Utils.Persistence;
 using FileAccess = Godot.FileAccess;
 using GArray = Godot.Collections.Array;
 
@@ -8,7 +9,6 @@ namespace STS2RitsuLib.Audio.Internal
 {
     internal static class FmodPackedAudioResourceCache
     {
-        private const string CacheRoot = "user://ritsulib/fmod-cache/audio";
         private const uint OggCrcPolynomial = 0x04c11db7;
         private static readonly Lock Gate = new();
         private static readonly uint[] OggCrcTable = BuildOggCrcTable();
@@ -145,9 +145,9 @@ namespace STS2RitsuLib.Audio.Internal
                 return false;
 
             var digest = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
-            var cacheDir = ProjectSettings.GlobalizePath(CacheRoot);
+            var cacheDir = RitsuLibDataPaths.EnsureSharedCacheDirectory();
             var fileName =
-                $"{SanitizeFileName(Path.GetFileNameWithoutExtension(resourcePath))}-{digest[..16]}{extension}";
+                $"fmod-audio-{SanitizeFileName(Path.GetFileNameWithoutExtension(resourcePath))}-{digest[..16]}{extension}";
             var path = Path.Combine(cacheDir, fileName);
             string? temporaryPath = null;
 
