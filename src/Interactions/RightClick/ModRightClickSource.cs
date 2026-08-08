@@ -1,4 +1,5 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
+using STS2RitsuLib.CardPiles;
 
 namespace STS2RitsuLib.Interactions.RightClick
 {
@@ -21,8 +22,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         HandCard = 1,
 
         /// <summary>
-        ///     <para xml:lang="en">A card holder in a combat pile screen.</para>
-        ///     <para xml:lang="zh-CN">战斗牌堆界面中的卡牌容器。</para>
+        ///     <para xml:lang="en">A card holder representing a card in a combat pile.</para>
+        ///     <para xml:lang="zh-CN">表示战斗牌堆内卡牌的卡牌容器。</para>
         /// </summary>
         CombatPileCard = 2,
 
@@ -55,7 +56,8 @@ namespace STS2RitsuLib.Interactions.RightClick
     {
         public static bool IsSupported(PileType pileType)
         {
-            return pileType is PileType.Draw or PileType.Discard or PileType.Exhaust;
+            return pileType is PileType.Draw or PileType.Discard or PileType.Exhaust ||
+                   ModCardPileRegistry.IsModPileType(pileType);
         }
     }
 }

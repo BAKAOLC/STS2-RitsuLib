@@ -1,6 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.ControllerInput;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
@@ -11,8 +12,8 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Interactions.RightClick.Patches
 {
     /// <summary>
-    ///     <para xml:lang="en">Connects right-click dispatch to card holders in the local player's hand.</para>
-    ///     <para xml:lang="zh-CN">将右键分发接入本地玩家手牌中的卡牌容器。</para>
+    ///     <para xml:lang="en">Connects right-click dispatch to hand-style card holders.</para>
+    ///     <para xml:lang="zh-CN">将右键分发接入手牌样式的卡牌容器。</para>
     /// </summary>
     internal sealed class ModRightClickCardHolderPatch : IPatchMethod
     {
@@ -20,7 +21,7 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
 
         public static string PatchId => "ritsulib_right_click_card_holder";
         public static bool IsCritical => false;
-        public static string Description => "Connect RitsuLib model right-click dispatch to hand cards";
+        public static string Description => "Connect RitsuLib model right-click dispatch to hand-style cards";
 
         public static ModPatchTarget[] GetTargets()
         {
@@ -29,13 +30,32 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
 
         public static void Postfix(NHandCardHolder holder)
         {
-            holder.Connect(Control.SignalName.GuiInput,
-                Callable.From<InputEvent>(inputEvent => OnHolderGuiInput(holder, inputEvent)));
-            holder.Hitbox.Connect(Control.SignalName.GuiInput,
-                Callable.From<InputEvent>(inputEvent => OnHitboxGuiInput(holder, inputEvent)));
+            Connect(holder, ModRightClickSource.HandCard, null);
         }
 
-        private static void OnHolderGuiInput(NCardHolder holder, InputEvent inputEvent)
+        internal static void ConnectModPileHolder(NCardHolder holder, PileType pileType)
+        {
+            Connect(holder, ModRightClickSource.CombatPileCard, pileType);
+        }
+
+        private static void Connect(
+            NCardHolder holder,
+            ModRightClickSource source,
+            PileType? expectedCardPile)
+        {
+            holder.Connect(Control.SignalName.GuiInput,
+                Callable.From<InputEvent>(inputEvent =>
+                    OnHolderGuiInput(holder, inputEvent, source, expectedCardPile)));
+            holder.Hitbox.Connect(Control.SignalName.GuiInput,
+                Callable.From<InputEvent>(inputEvent =>
+                    OnHitboxGuiInput(holder, inputEvent, source, expectedCardPile)));
+        }
+
+        private static void OnHolderGuiInput(
+            NCardHolder holder,
+            InputEvent inputEvent,
+            ModRightClickSource source,
+            PileType? expectedCardPile)
         {
             var triggeredByController =
                 inputEvent is InputEventAction { Action: var action } actionEvent &&
@@ -45,17 +65,21 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
                 holder.HasFocus();
 
             if (triggeredByController)
-                TryHandle(holder, new(true, null, ModRightClickSource.HandCard));
+                TryHandle(holder, new(true, null, source, expectedCardPile));
         }
 
-        private static void OnHitboxGuiInput(NCardHolder holder, InputEvent inputEvent)
+        private static void OnHitboxGuiInput(
+            NCardHolder holder,
+            InputEvent inputEvent,
+            ModRightClickSource source,
+            PileType? expectedCardPile)
         {
             var triggeredByMouse =
                 inputEvent is InputEventMouseButton { ButtonIndex: MouseButton.Right } rightClick &&
                 rightClick.IsPressed();
 
             if (triggeredByMouse)
-                TryHandle(holder, new(false, null, ModRightClickSource.HandCard));
+                TryHandle(holder, new(false, null, source, expectedCardPile));
         }
 
         private static void TryHandle(NCardHolder holder, ModRightClickTrigger trigger)
