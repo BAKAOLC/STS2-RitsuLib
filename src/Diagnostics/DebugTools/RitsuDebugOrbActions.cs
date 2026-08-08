@@ -241,10 +241,16 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             var queue = context.Target.PlayerCombatState!.OrbQueue;
             var difference = payload.Capacity - queue.Capacity;
-            if (difference > 0)
-                await OrbCmd.AddSlots(context.Target, difference);
-            else if (difference < 0)
-                OrbCmd.RemoveSlots(context.Target, -difference);
+            switch (difference)
+            {
+                case > 0:
+                    await OrbCmd.AddSlots(context.Target, difference);
+                    break;
+                case < 0:
+                    OrbCmd.RemoveSlots(context.Target, -difference);
+                    break;
+            }
+
             return $"Set orb slots to {payload.Capacity}.";
         }
 

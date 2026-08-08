@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Globalization;
+using System.Text;
 using Godot;
 using Godot.Collections;
 using MegaCrit.Sts2.addons.mega_text;
@@ -13,6 +15,18 @@ using Array = System.Array;
 
 namespace STS2RitsuLib.Settings
 {
+    internal static class ModSettingsLocalizedFormatting
+    {
+        private static readonly ConcurrentDictionary<string, CompositeFormat> Cache =
+            new(StringComparer.Ordinal);
+
+        internal static string Format(string format, object? argument)
+        {
+            var compositeFormat = Cache.GetOrAdd(format, static value => CompositeFormat.Parse(value));
+            return string.Format(CultureInfo.CurrentCulture, compositeFormat, argument);
+        }
+    }
+
     internal interface IModSettingsTransientPopupOwner
     {
         void ForceCloseTransientUi();
@@ -2219,7 +2233,7 @@ namespace STS2RitsuLib.Settings
                 : label + ModSettingsLocalization.Get("choice.dropdown.chevronGap", "  ") +
                   ModSettingsLocalization.Get("choice.dropdown.chevron", "\u25be");
             _faceButton.TooltipText = $"{ModSettingsLocalization.Get("choice.dropdown.title", "Choose a value")}\n" +
-                                      string.Format(
+                                      ModSettingsLocalizedFormatting.Format(
                                           ModSettingsLocalization.Get("choice.dropdown.tooltip",
                                               "Opens a list to choose a value. Current: {0}"),
                                           label);
@@ -3715,6 +3729,11 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1001:Types that own disposable fields should be disposable",
+            Justification =
+                "Godot nodes are owned and released by the scene tree rather than this shared coordinator.")]
         private sealed class SharedActionsDropdown
         {
             private readonly System.Collections.Generic.Dictionary<int, ModSettingsMiniButton> _rowButtonCache = [];
@@ -4643,7 +4662,7 @@ namespace STS2RitsuLib.Settings
 
         private static string FormatDragIndexLabel(int zeroBasedRowIndex)
         {
-            return (zeroBasedRowIndex + 1).ToString();
+            return (zeroBasedRowIndex + 1).ToString(CultureInfo.CurrentCulture);
         }
 
         public override void _EnterTree()
@@ -5008,7 +5027,7 @@ namespace STS2RitsuLib.Settings
         private void UpdateListHeaderChrome(List<TItem> items)
         {
             if (_countLabel != null)
-                _countLabel.Text = string.Format(
+                _countLabel.Text = ModSettingsLocalizedFormatting.Format(
                     ModSettingsLocalization.Get("list.count", "{0} items"),
                     items.Count);
 

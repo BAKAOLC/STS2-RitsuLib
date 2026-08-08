@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text;
+﻿using System.Text;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Diagnostics.DebugTools;
@@ -109,7 +108,7 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshCapabilityEditor(CapabilityEditorBinding binding)
         {
-            if (!GodotObject.IsInstanceValid(binding.Content))
+            if (!IsInstanceValid(binding.Content))
                 return;
             var stateHash = GetCapabilityStateHash(binding.Model);
             if (binding.StateHash == stateHash)
@@ -376,7 +375,7 @@ namespace STS2RitsuLib.Settings
                 var node = state.SaveState();
                 if (node == null)
                     return null;
-                var json = node.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+                var json = node.ToJsonString(new() { WriteIndented = false });
                 if (json.Length > MaximumCapabilityStatePreviewLength)
                     json = $"{json[..MaximumCapabilityStatePreviewLength]}…";
                 return string.Format(

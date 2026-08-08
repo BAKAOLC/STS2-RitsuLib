@@ -85,15 +85,15 @@ namespace STS2RitsuLib.Settings
             list.AddThemeConstantOverride("separation", 5);
             frame.AddChild(list);
 
-            foreach (var option in options)
+            foreach (var (id, label, _) in options)
             {
-                var capturedId = option.Id;
-                var button = ModSettingsUiControlTheming.CreateCompactSettingsToggleButton(option.Label, false);
+                var capturedId = id;
+                var button = ModSettingsUiControlTheming.CreateCompactSettingsToggleButton(label, false);
                 button.CustomMinimumSize = new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
                 button.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-                button.TooltipText = $"{option.Label}\n{option.Id}";
+                button.TooltipText = $"{label}\n{id}";
                 button.Pressed += () => Select(capturedId);
-                _optionButtons.Add(option.Id, button);
+                _optionButtons.Add(id, button);
                 list.AddChild(button);
             }
 

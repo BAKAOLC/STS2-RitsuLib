@@ -110,8 +110,10 @@ namespace STS2RitsuLib.Ui.Catalog
             ArgumentNullException.ThrowIfNull(icon);
             ArgumentException.ThrowIfNullOrWhiteSpace(tooltip);
             ArgumentNullException.ThrowIfNull(action);
+#pragma warning disable CA1513
             if (!GodotObject.IsInstanceValid(icon))
                 throw new ObjectDisposedException(nameof(icon));
+#pragma warning restore CA1513
             if (tooltip.Length > RitsuCatalogItem.MaximumTextLength)
                 throw new ArgumentException("The action tooltip is too long.", nameof(tooltip));
             if (!Enum.IsDefined(tone))
@@ -370,7 +372,7 @@ namespace STS2RitsuLib.Ui.Catalog
             if (prepared == null)
             {
                 var created = new RitsuSearchPreparedText(
-                    string.Join('\n', [Title, Subtitle ?? string.Empty, SearchText ?? string.Empty, Id]));
+                    string.Join('\n', Title, Subtitle ?? string.Empty, SearchText ?? string.Empty, Id));
                 prepared = Interlocked.CompareExchange(ref _preparedSearchText, created, null) ?? created;
             }
 

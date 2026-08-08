@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Headers;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using Godot;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Ui.Toast;
@@ -305,8 +304,7 @@ namespace STS2RitsuLib.Search.Pinyin
                     cancellationToken)
                 .ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            if (response.Content.Headers.ContentLength is { } contentLength &&
-                contentLength is <= 0 or > MaximumDownloadBytes)
+            if (response.Content.Headers.ContentLength is <= 0 or > MaximumDownloadBytes)
                 throw new InvalidDataException("The Unicode source download has an invalid content length.");
 
             await using var input = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
@@ -363,7 +361,7 @@ namespace STS2RitsuLib.Search.Pinyin
         private static HttpClient CreateClient()
         {
             var client = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
-            client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("STS2-RitsuLib", Const.Version));
+            client.DefaultRequestHeaders.UserAgent.Add(new("STS2-RitsuLib", Const.Version));
             return client;
         }
 
@@ -446,16 +444,18 @@ namespace STS2RitsuLib.Search.Pinyin
 
             var now = System.Environment.TickCount64;
             var nextCheck = Volatile.Read(ref _nextCachePresenceCheck);
-            if (!force && now < nextCheck)
-                return;
-            if (!force &&
-                Interlocked.CompareExchange(
-                    ref _nextCachePresenceCheck,
-                    now + CachePresenceCheckIntervalMilliseconds,
-                    nextCheck) != nextCheck)
-                return;
-            if (force)
-                Volatile.Write(ref _nextCachePresenceCheck, now + CachePresenceCheckIntervalMilliseconds);
+            switch (force)
+            {
+                case false when now < nextCheck ||
+                                Interlocked.CompareExchange(
+                                    ref _nextCachePresenceCheck,
+                                    now + CachePresenceCheckIntervalMilliseconds,
+                                    nextCheck) != nextCheck:
+                    return;
+                case true:
+                    Volatile.Write(ref _nextCachePresenceCheck, now + CachePresenceCheckIntervalMilliseconds);
+                    break;
+            }
 
             if (File.Exists(GetCachePath(CompiledFileName)) ||
                 !ReferenceEquals(Interlocked.CompareExchange(ref _data, null, data), data))
@@ -532,11 +532,12 @@ namespace STS2RitsuLib.Search.Pinyin
 
         private static string FormatBytes(long bytes)
         {
-            if (bytes < 1024)
-                return $"{bytes} B";
-            if (bytes < 1024 * 1024)
-                return $"{bytes / 1024d:F1} KiB";
-            return $"{bytes / (1024d * 1024d):F1} MiB";
+            return bytes switch
+            {
+                < 1024 => $"{bytes} B",
+                < 1024 * 1024 => $"{bytes / 1024d:F1} KiB",
+                _ => $"{bytes / (1024d * 1024d):F1} MiB",
+            };
         }
 
         private static void PostToMainLoop(Action action)

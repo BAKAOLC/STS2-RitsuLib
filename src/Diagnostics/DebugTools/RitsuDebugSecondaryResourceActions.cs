@@ -65,7 +65,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return payload.Operation switch
             {
                 RitsuDebugSecondaryResourceOperation.Gain or RitsuDebugSecondaryResourceOperation.Lose
-                    when payload.Value is < 1 => RitsuDebugActionCheck.Fail(
+                    when payload.Value < 1 => RitsuDebugActionCheck.Fail(
                         "secondaryResource.positiveAmountRequired",
                         "The amount must be a positive integer."),
                 RitsuDebugSecondaryResourceOperation.Set

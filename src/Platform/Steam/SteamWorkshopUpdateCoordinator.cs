@@ -135,25 +135,23 @@ namespace STS2RitsuLib.Platform.Steam
                             $"Triggered={result.TriggeredCount}, AlreadyQueued={result.AlreadyQueuedCount}, " +
                             $"Failed={result.FailedCount}, Error={result.ErrorMessage ?? "<none>"}.");
                         LogCheckSummary(source, result);
-                        if (source == CheckSource.Manual &&
-                            result is { Available: true, NeedsUpdateCount: 0 } &&
-                            TakeFinishedAutoDownloadNotification() is { } completedAutoUpdate)
+                        switch (source)
                         {
-                            RitsuLibFramework.Logger.Info(
-                                "[SteamWorkshopUpdate] Manual check found no missing downloads, but automatic Workshop updates completed during this session; reporting that a restart is required.");
-                            CompleteOrShowResult(
-                                completedAutoUpdate.Result,
-                                source,
-                                deferToastToMainMenu,
-                                progressToast,
-                                true);
-                            return;
-                        }
-
-                        if (source == CheckSource.Auto && result.MonitorItems is { Count: > 0 })
-                        {
-                            StartAutoDownloadNotification(result, deferToastToMainMenu);
-                            return;
+                            case CheckSource.Manual
+                                when result is { Available: true, NeedsUpdateCount: 0 } &&
+                                     TakeFinishedAutoDownloadNotification() is { } completedAutoUpdate:
+                                RitsuLibFramework.Logger.Info(
+                                    "[SteamWorkshopUpdate] Manual check found no missing downloads, but automatic Workshop updates completed during this session; reporting that a restart is required.");
+                                CompleteOrShowResult(
+                                    completedAutoUpdate.Result,
+                                    source,
+                                    deferToastToMainMenu,
+                                    progressToast,
+                                    true);
+                                return;
+                            case CheckSource.Auto when result.MonitorItems is { Count: > 0 }:
+                                StartAutoDownloadNotification(result, deferToastToMainMenu);
+                                return;
                         }
 
                         var downloadFinished = await MonitorTriggeredDownloadsAsync(

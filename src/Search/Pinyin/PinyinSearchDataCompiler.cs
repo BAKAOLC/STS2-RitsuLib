@@ -133,7 +133,7 @@ namespace STS2RitsuLib.Search.Pinyin
 
             internal void Add(string value, bool preferred)
             {
-                if (value.Length == 0 || value.Length > 24)
+                if (value.Length is 0 or > 24)
                     return;
                 if (preferred && _primary == null)
                     _primary = value;

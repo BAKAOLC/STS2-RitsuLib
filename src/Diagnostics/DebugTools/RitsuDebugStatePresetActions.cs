@@ -518,20 +518,16 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     !IsStableCapabilityTargetKind(target.Target.Kind) ||
                     !RitsuDebugCapabilityActions.IsValidTargetReference(target.Target) ||
                     !uniqueTargets.Add(target.Target) ||
-                    target.Capabilities?.Capabilities == null ||
-                    target.Capabilities.Capabilities.Count >
-                    RitsuDebugCapabilityActions.MaximumCapabilitiesPerModel)
+                    target.Capabilities?.Capabilities is not { } capabilities ||
+                    capabilities.Count > RitsuDebugCapabilityActions.MaximumCapabilitiesPerModel ||
+                    capabilities.Any(static capability =>
+                        capability == null ||
+                        string.IsNullOrWhiteSpace(capability.Id) ||
+                        capability.Id.Length > 128 ||
+                        capability.Schema < 1))
                     return RitsuDebugActionCheck.Fail(
                         "statePreset.capabilityInvalid",
                         "A saved model-capability target or entry is invalid.");
-                foreach (var capability in target.Capabilities.Capabilities)
-                    if (capability == null ||
-                        string.IsNullOrWhiteSpace(capability.Id) ||
-                        capability.Id.Length > 128 ||
-                        capability.Schema < 1)
-                        return RitsuDebugActionCheck.Fail(
-                            "statePreset.capabilityInvalid",
-                            "A saved model-capability target or entry is invalid.");
             }
 
             return RitsuDebugActionCheck.Ok;

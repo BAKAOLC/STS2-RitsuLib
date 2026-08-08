@@ -1243,7 +1243,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     out var card,
                     out var feedback))
                 return RitsuDebugActionCheck.Fail(feedback);
-            return payload.Levels is >= 0 && payload.Levels <= card.MaxUpgradeLevel
+            return payload.Levels >= 0 && payload.Levels <= card.MaxUpgradeLevel
                 ? RitsuDebugActionCheck.Ok
                 : RitsuDebugActionCheck.Fail(
                     "card.upgradeLevelRange",

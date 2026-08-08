@@ -14,9 +14,9 @@ namespace STS2RitsuLib.CardPiles
     /// </summary>
     public sealed record ModCardPileExtraHandSpec
     {
-        private Vector2 _disabledOffset = new(0f, 100f);
-        private Color _disabledModulate = new(0.5f, 0.5f, 0.5f);
-        private double _disabledTransitionDuration = 0.2;
+        private readonly Vector2 _disabledOffset = new(0f, 100f);
+        private readonly Color _disabledModulate = new(0.5f, 0.5f, 0.5f);
+        private readonly double _disabledTransitionDuration = 0.2;
 
         /// <summary>
         ///     <para xml:lang="en">

@@ -797,7 +797,9 @@ namespace STS2RitsuLib.Settings
                         creature is { IsPlayer: true, IsDead: false },
                     PowerApplyScope.AllEnemies => static creature =>
                         creature is { IsPlayer: false, IsDead: false },
-                    _ => throw new ArgumentOutOfRangeException(),
+                    PowerApplyScope.Selected => throw new InvalidOperationException(
+                        "The selected-creature scope must be handled before building a creature predicate."),
+                    _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, null),
                 };
                 uint[] combatIds =
                 [
@@ -1418,14 +1420,22 @@ namespace STS2RitsuLib.Settings
                 PlayerContentDestination.Orbs => "orbs",
                 _ => throw new ArgumentOutOfRangeException(nameof(destination)),
             };
-            if (destination == PlayerContentDestination.Relics)
-                _relicCatalogMode = RelicCatalogMode.Owned;
-            else if (destination == PlayerContentDestination.Potions)
-                _potionCatalogMode = PotionCatalogMode.Owned;
-            else if (destination == PlayerContentDestination.Powers)
-                _powerCatalogMode = PowerCatalogMode.Current;
-            else if (destination == PlayerContentDestination.Orbs)
-                _orbCatalogMode = OrbCatalogMode.Current;
+            switch (destination)
+            {
+                case PlayerContentDestination.Relics:
+                    _relicCatalogMode = RelicCatalogMode.Owned;
+                    break;
+                case PlayerContentDestination.Potions:
+                    _potionCatalogMode = PotionCatalogMode.Owned;
+                    break;
+                case PlayerContentDestination.Powers:
+                    _powerCatalogMode = PowerCatalogMode.Current;
+                    break;
+                case PlayerContentDestination.Orbs:
+                    _orbCatalogMode = OrbCatalogMode.Current;
+                    break;
+            }
+
             UpdateTargetDropdown(GetPlayers(), true);
             _contextualPageSelection = true;
             try

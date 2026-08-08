@@ -757,11 +757,13 @@ namespace STS2RitsuLib.Settings
             foreach (var filter in _filters)
             {
                 var index = _filterSelections.GetValueOrDefault(filter.Id, -1);
-                if (index < 0 && filter.Id == _primaryFilterId &&
-                    _primaryAllMatches != null && !_primaryAllMatches(item))
-                    return false;
-                if (index >= 0 && (index >= filter.Options.Count || !filter.Options[index].Matches(item)))
-                    return false;
+                switch (index)
+                {
+                    case < 0 when filter.Id == _primaryFilterId &&
+                                  _primaryAllMatches != null && !_primaryAllMatches(item):
+                    case >= 0 when index >= filter.Options.Count || !filter.Options[index].Matches(item):
+                        return false;
+                }
             }
 
             return true;

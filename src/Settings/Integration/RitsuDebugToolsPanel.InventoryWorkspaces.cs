@@ -320,6 +320,15 @@ namespace STS2RitsuLib.Settings
             currentView.AddChild(currentToolbar);
             currentView.AddChild(currentBrowser);
 
+            root.AddChild(libraryBrowser);
+            root.RegisterRefresh(RefreshCurrentPowers);
+
+            if (CurrentCreatures().Length == 0)
+                _powerCatalogMode = PowerCatalogMode.Library;
+            RefreshCurrentPowers();
+            SetMode(_powerCatalogMode);
+            return root;
+
             void OnClearPressed()
             {
                 var creature = SelectedCreature();
@@ -340,15 +349,6 @@ namespace STS2RitsuLib.Settings
                 clearArmed = false;
                 SubmitCreatureOperation(combatId, RitsuDebugCreatureOperation.ClearPowers, 0);
             }
-
-            root.AddChild(libraryBrowser);
-            root.RegisterRefresh(RefreshCurrentPowers);
-
-            if (CurrentCreatures().Length == 0)
-                _powerCatalogMode = PowerCatalogMode.Library;
-            RefreshCurrentPowers();
-            SetMode(_powerCatalogMode);
-            return root;
 
             void SetMode(PowerCatalogMode mode)
             {
@@ -702,7 +702,7 @@ namespace STS2RitsuLib.Settings
             var replacement = orb.Id.ToString();
             editorContent.AddChild(DropdownField(
                 L("ritsulib.debugTools.field.orbType", "Orb type"),
-                models.Select(model => (model.Id.ToString(), SafeTitle(model))).ToArray(),
+                [.. models.Select(model => (model.Id.ToString(), SafeTitle(model)))],
                 replacement,
                 value => replacement = value));
             editorContent.AddChild(ActionButton(

@@ -32,7 +32,7 @@ namespace STS2RitsuLib.Utils.Persistence
         internal static string TemporaryDirectory { get; } =
             Path.Combine(SharedCacheRootPath, SessionDirectoryName);
 
-        internal static string SharedCacheDirectory => SharedCacheRootPath;
+        internal static readonly string SharedCacheDirectory = SharedCacheRootPath;
 
         internal static string EnsureSharedCacheDirectory()
         {

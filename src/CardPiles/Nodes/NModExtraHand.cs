@@ -42,7 +42,6 @@ namespace STS2RitsuLib.CardPiles.Nodes
         };
 
         private readonly Dictionary<CardModel, NHandCardHolder> _holders = [];
-        private bool _cardPlayEnabled;
         private Tween? _disabledTween;
         private NHandCardHolder? _focusedHolder;
         private bool _invalidBuiltInLayoutWarningLogged;
@@ -82,7 +81,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///         当前容器，不会在战斗创建新容器后保留；定义未允许出牌时，运行时可用性不能授予出牌能力。
         ///     </para>
         /// </remarks>
-        public bool CardPlayEnabled => _cardPlayEnabled;
+        public bool CardPlayEnabled { get; private set; }
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -97,7 +96,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var hand = new NModExtraHand
             {
                 Definition = definition,
-                _cardPlayEnabled = definition.ExtraHand.AllowCardPlay,
+                CardPlayEnabled = definition.ExtraHand.AllowCardPlay,
                 Name = $"ModExtraHand_{definition.Id}",
                 MouseFilter = MouseFilterEnum.Pass,
                 CustomMinimumSize = DefaultChromeSize,
@@ -164,10 +163,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (enabled && !Definition.ExtraHand.AllowCardPlay)
                 throw new InvalidOperationException(
                     $"Extra hand '{Definition.Id}' does not allow manual card play.");
-            if (_cardPlayEnabled == enabled)
+            if (CardPlayEnabled == enabled)
                 return;
 
-            _cardPlayEnabled = enabled;
+            CardPlayEnabled = enabled;
             if (!enabled)
                 ModExtraHandPlayCoordinator.CancelActiveTargeting(this);
             RefreshCardPlayAvailability();
@@ -453,7 +452,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             return !ModExtraHandPlayCoordinator.IsPlaying;
         }
 
-        private bool IsCardPlayAvailable => _cardPlayEnabled
+        private bool IsCardPlayAvailable => CardPlayEnabled
                                             && _vanillaHand?.CurrentMode is null or NPlayerHand.Mode.Play;
 
         private void AttachVanillaHand(NPlayerHand? hand)

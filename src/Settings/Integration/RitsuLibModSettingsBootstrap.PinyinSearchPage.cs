@@ -263,11 +263,12 @@ namespace STS2RitsuLib.Settings
 
         private static string FormatBytes(long bytes)
         {
-            if (bytes < 1024)
-                return $"{bytes} B";
-            if (bytes < 1024 * 1024)
-                return $"{bytes / 1024d:F1} KiB";
-            return $"{bytes / (1024d * 1024d):F1} MiB";
+            return bytes switch
+            {
+                < 1024 => $"{bytes} B",
+                < 1024 * 1024 => $"{bytes / 1024d:F1} KiB",
+                _ => $"{bytes / (1024d * 1024d):F1} MiB",
+            };
         }
     }
 }

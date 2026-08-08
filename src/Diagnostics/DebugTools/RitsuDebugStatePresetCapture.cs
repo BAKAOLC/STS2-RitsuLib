@@ -462,13 +462,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             var values = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var (key, dynamicVar) in dynamicVars)
             {
-                if (!RitsuDebugModelValueOverrides.IsEditable(dynamicVar))
-                {
-                    skipped++;
-                    continue;
-                }
-
-                if (values.Count >= RitsuDebugModelValueOverrides.MaximumDynamicVariableCount)
+                if (!RitsuDebugModelValueOverrides.IsEditable(dynamicVar) ||
+                    values.Count >= RitsuDebugModelValueOverrides.MaximumDynamicVariableCount)
                 {
                     skipped++;
                     continue;

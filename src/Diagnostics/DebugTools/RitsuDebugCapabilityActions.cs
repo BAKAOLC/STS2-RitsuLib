@@ -57,10 +57,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 ValidateModify,
                 ExecuteModifyAsync,
                 RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1,
-                static payload => payload.Target.Kind == RitsuDebugCapabilityTargetKind.Card &&
-                                  payload.Target.Pile != null &&
-                                  RitsuDebugCardActions.TryParseMutablePileType(payload.Target.Pile,
-                                      out var pileType) &&
+                static payload => payload.Target is
+                                      { Kind: RitsuDebugCapabilityTargetKind.Card, Pile: { } pile } &&
+                                  RitsuDebugCardActions.TryParseMutablePileType(pile, out var pileType) &&
                                   ModCardPileRegistry.IsModPileType(pileType)
                     ? RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1
                     : RitsuLibSidecarPeerFeatures.None);
@@ -234,29 +233,59 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             return reference.Kind switch
             {
                 RitsuDebugCapabilityTargetKind.Character =>
-                    reference.Index == -1 && reference.Pile == null && !reference.CreatureCombatId.HasValue &&
-                    reference.ContainerModelId == null,
+                    reference is
+                    {
+                        Index: -1,
+                        Pile: null,
+                        CreatureCombatId: null,
+                        ContainerModelId: null,
+                    },
                 RitsuDebugCapabilityTargetKind.Card =>
-                    reference.Index >= 0 && reference.Pile != null &&
-                    RitsuDebugCardActions.TryParseMutablePileType(reference.Pile, out _) &&
-                    !reference.CreatureCombatId.HasValue && reference.ContainerModelId == null,
+                    reference is
+                    {
+                        Index: >= 0,
+                        Pile: { } pile,
+                        CreatureCombatId: null,
+                        ContainerModelId: null,
+                    } &&
+                    RitsuDebugCardActions.TryParseMutablePileType(pile, out _),
                 RitsuDebugCapabilityTargetKind.Relic or
                     RitsuDebugCapabilityTargetKind.Potion or
                     RitsuDebugCapabilityTargetKind.Orb =>
-                    reference.Index >= 0 && reference.Pile == null && !reference.CreatureCombatId.HasValue &&
-                    reference.ContainerModelId == null,
+                    reference is
+                    {
+                        Index: >= 0,
+                        Pile: null,
+                        CreatureCombatId: null,
+                        ContainerModelId: null,
+                    },
                 RitsuDebugCapabilityTargetKind.Power =>
-                    reference.Index >= 0 && reference.Pile == null && reference.CreatureCombatId.HasValue &&
-                    reference.ContainerModelId == null,
+                    reference is
+                    {
+                        Index: >= 0,
+                        Pile: null,
+                        CreatureCombatId: not null,
+                        ContainerModelId: null,
+                    },
                 RitsuDebugCapabilityTargetKind.Enchantment or RitsuDebugCapabilityTargetKind.Affliction =>
-                    reference.Index >= 0 && reference.Pile != null &&
-                    RitsuDebugCardActions.TryParseMutablePileType(reference.Pile, out _) &&
-                    !reference.CreatureCombatId.HasValue &&
-                    !string.IsNullOrWhiteSpace(reference.ContainerModelId) &&
-                    reference.ContainerModelId.Length <= 128,
+                    reference is
+                    {
+                        Index: >= 0,
+                        Pile: { } pile,
+                        CreatureCombatId: null,
+                        ContainerModelId: { } containerModelId,
+                    } &&
+                    RitsuDebugCardActions.TryParseMutablePileType(pile, out _) &&
+                    !string.IsNullOrWhiteSpace(containerModelId) &&
+                    containerModelId.Length <= 128,
                 RitsuDebugCapabilityTargetKind.Monster =>
-                    reference.Index == -1 && reference.Pile == null && reference.CreatureCombatId.HasValue &&
-                    reference.ContainerModelId == null,
+                    reference is
+                    {
+                        Index: -1,
+                        Pile: null,
+                        CreatureCombatId: not null,
+                        ContainerModelId: null,
+                    },
                 _ => false,
             };
         }
@@ -550,8 +579,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return false;
             }
 
-            var card = (CardModel)cardModel;
-            var attachment = enchantment ? (AbstractModel?)card.Enchantment : card.Affliction;
+            if (cardModel is not CardModel card)
+                throw new InvalidOperationException("A resolved card target did not contain a card model.");
+
+            AbstractModel? attachment = enchantment ? card.Enchantment : card.Affliction;
             if (attachment == null || !MatchesModelId(attachment, reference.ModelId))
             {
                 model = null!;

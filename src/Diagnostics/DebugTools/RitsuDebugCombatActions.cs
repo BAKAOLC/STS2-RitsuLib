@@ -805,8 +805,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             {
                 case RitsuDebugCreatureOperation.Kill:
                     await CreatureCmd.Kill(creature, true);
-                    if (creature.IsPet &&
-                        creature.CombatState is { } petCombatState &&
+                    if (creature is { IsPet: true, CombatState: { } petCombatState } &&
                         petCombatState.ContainsCreature(creature))
                     {
                         CombatManager.Instance.RemoveCreature(creature);
