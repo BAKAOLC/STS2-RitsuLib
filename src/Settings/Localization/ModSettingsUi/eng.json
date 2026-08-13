@@ -1574,5 +1574,7 @@
   "search.placeholder": "Search mods, pages, sections, and settings",
   "search.hint": "Double-tap Shift to open · ↑/↓ to select · Enter to navigate · Esc to close",
   "search.start": "Type a setting name or description to find its destination.",
-  "search.empty": "No matching settings found."
+  "search.empty": "No matching settings found.",
+  "search.searching": "Searching… {0}/{1}",
+  "search.more": "Showing the first {0} matches. More are available."
 }

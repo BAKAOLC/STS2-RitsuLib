@@ -73,12 +73,17 @@ namespace STS2RitsuLib.Search.Pinyin
             {
                 var next = new List<Variant>(Math.Min(MaximumVariantsPerRun, variants.Count * readings.Length));
                 foreach (var prefix in variants)
-                foreach (var reading in readings)
                 {
-                    var value = new Variant(prefix.Full + reading, prefix.Initials + reading[0]);
-                    if (!next.Contains(value))
-                        next.Add(value);
-                    if (next.Count == MaximumVariantsPerRun)
+                    foreach (var reading in readings)
+                    {
+                        var value = new Variant(prefix.Full + reading, prefix.Initials + reading[0]);
+                        if (!next.Contains(value))
+                            next.Add(value);
+                        if (next.Count >= MaximumVariantsPerRun)
+                            break;
+                    }
+
+                    if (next.Count >= MaximumVariantsPerRun)
                         break;
                 }
 
