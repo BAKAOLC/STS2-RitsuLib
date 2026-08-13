@@ -125,6 +125,60 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Reduces the current amount to the current hook-adjusted maximum when it exceeds that maximum.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">当前数量超过经钩子修正后的最大值时，将其降低到该最大值。</para>
+        /// </summary>
+        /// <param name="player">
+        ///     <para xml:lang="en">The player who owns the resource.</para>
+        ///     <para xml:lang="zh-CN">拥有该资源的玩家。</para>
+        /// </param>
+        /// <param name="resourceId">
+        ///     <para xml:lang="en">The full registered resource ID.</para>
+        ///     <para xml:lang="zh-CN">已注册资源的完整 ID。</para>
+        /// </param>
+        /// <param name="source">
+        ///     <para xml:lang="en">The optional model responsible for the maximum change.</para>
+        ///     <para xml:lang="zh-CN">引起最大值变化的可选模型。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">
+        ///         The resulting amount, or zero when the resource is unknown or the player is not in combat.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">操作后的数量；资源未知或玩家不在战斗中时为零。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="player" /> is <see langword="null" />.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="player" /> 为 <see langword="null" />。</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en"><paramref name="resourceId" /> is empty or whitespace.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="resourceId" /> 为空或仅包含空白字符。</para>
+        /// </exception>
+        public static async Task<int> ClampToMax(
+            Player player,
+            string resourceId,
+            AbstractModel? source = null)
+        {
+            if (!TryResolve(player, resourceId, out var combatState, out var definition))
+                return 0;
+
+            var current = Get(player, definition.Id);
+            if (GetMax(player, definition.Id) is not { } maxAmount ||
+                current <= maxAmount)
+                return current;
+
+            return await SetCore(
+                combatState,
+                player,
+                definition,
+                maxAmount,
+                SecondaryResourceChangeReason.ClampToMax,
+                source);
+        }
+
+        /// <summary>
         ///     <para xml:lang="en">Pays a positive amount after applying spend checks.</para>
         ///     <para xml:lang="zh-CN">通过支付检查后支付一个正数数量。</para>
         /// </summary>

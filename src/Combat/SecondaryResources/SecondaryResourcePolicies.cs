@@ -302,5 +302,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         ///     <para xml:lang="zh-CN">表示由回合开始策略造成的变化。</para>
         /// </summary>
         TurnStart = 6,
+
+        /// <summary>
+        ///     <para xml:lang="en">Indicates an explicit clamp to the current maximum.</para>
+        ///     <para xml:lang="zh-CN">表示显式限制到当前最大数量。</para>
+        /// </summary>
+        ClampToMax = 7,
     }
 }
