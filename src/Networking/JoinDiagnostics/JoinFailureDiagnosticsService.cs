@@ -78,7 +78,10 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         {
             var local = JoinDiagnosticsPayloadCodec.CreateLocalSnapshot();
             var host = initialMessage.HasValue
-                ? JoinDiagnosticsPayloadCodec.CreateHostSnapshot(initialMessage.Value, hostPayload)
+                ? JoinDiagnosticsPayloadCodec.CreateHostSnapshot(
+                    initialMessage.Value,
+                    hostPayload,
+                    CreateHostVersionSnapshot(info))
                 : null;
             var issues = new List<JoinFailureIssue>();
             var reason = info.GetReason();
@@ -136,6 +139,22 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 local,
                 LocalizeReason(reason),
                 info.GetErrorString().Trim());
+        }
+
+        private static JoinHostVersionSnapshot? CreateHostVersionSnapshot(NetErrorInfo info)
+        {
+#if STS2_AT_LEAST_0_111_0
+            if (info.ConnectionExtraInfo?.remoteInfo is not { } remote)
+                return null;
+
+            return new(
+                remote.version,
+                remote.idDatabaseHash,
+                remote.gameplayAffectingMods,
+                remote.otherMods);
+#else
+            return null;
+#endif
         }
 
         private static void AddModelDbHashModeIssue(
