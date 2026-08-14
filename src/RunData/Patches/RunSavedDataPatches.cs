@@ -9,7 +9,9 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Daily;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
+#if STS2_AT_LEAST_0_110_0 && !STS2_AT_LEAST_0_111_0
 using MegaCrit.Sts2.Core.Multiplayer;
+#endif
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
@@ -790,7 +792,10 @@ namespace STS2RitsuLib.RunData.Patches
         {
             return
             [
-#if STS2_AT_LEAST_0_110_0
+#if STS2_AT_LEAST_0_111_0
+                new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
+                    [typeof(SerializableUnlockState), typeof(int), typeof(bool), typeof(ulong)]),
+#elif STS2_AT_LEAST_0_110_0
                 new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
                     [typeof(SerializableUnlockState), typeof(int), typeof(PeerVersionInfo), typeof(ulong)]),
 #else

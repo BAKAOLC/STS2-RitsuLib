@@ -63,7 +63,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             ArgumentNullException.ThrowIfNull(definition);
 
             var oldAmount = Get(definition.Id);
-            var newAmount = Clamp(definition, amount);
+            var newAmount = Clamp(player, definition, amount);
             if (oldAmount == newAmount)
             {
                 _amounts.TryAdd(definition.Id, newAmount);
@@ -81,6 +81,20 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(resourceId);
             return _amounts.Remove(resourceId.Trim());
+        }
+
+        private static int Clamp(
+            Player player,
+            SecondaryResourceDefinition definition,
+            int amount)
+        {
+            var hardClamped = Clamp(definition, amount);
+            if (!definition.ClampToMaxAmount)
+                return hardClamped;
+
+            return SecondaryResourceStateStore.GetMaxAmount(player, definition.Id) is { } maxAmount
+                ? Math.Min(hardClamped, maxAmount)
+                : hardClamped;
         }
 
         private static int Clamp(SecondaryResourceDefinition definition, int amount)

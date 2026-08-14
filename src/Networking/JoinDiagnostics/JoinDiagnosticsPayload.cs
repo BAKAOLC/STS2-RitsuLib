@@ -57,6 +57,12 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         string? ModelDbHashModeDetail,
         bool? SavedPropertyNetIdUsesDeterministicSort);
 
+    internal sealed record JoinHostVersionSnapshot(
+        string GameVersion,
+        uint ModelDbHash,
+        IReadOnlyList<string>? GameplayMods,
+        IReadOnlyList<string>? OtherMods);
+
     internal static class JoinDiagnosticsPayloadCodec
     {
         private const string ExtensionId = "ritsulib.joinDiagnostics";
@@ -96,17 +102,17 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         {
             try
             {
-                var cacheStatus = ModelIdSerializationCacheDynamicContentPatch.GetDeterministicCacheStatus();
+                var local = CreateLocalSnapshot();
                 var payload = new JoinDiagnosticsPayloadV5(
-                    GetGameVersion(message),
-                    GetModelDbHash(message),
+                    local.GameVersion,
+                    local.ModelDbHash,
                     message.gameMode.ToString(),
                     message.sessionState.ToString(),
-                    CreateLocalModEntries(),
-                    ContentModInventoryPayloadCodec.Compact(CreateLocalContentModEntries()),
-                    cacheStatus.IsActive,
-                    cacheStatus.Detail,
-                    SavedPropertiesTypeCacheInjectionPatch.UsesDeterministicNetIdTable);
+                    local.GameplayMods,
+                    ContentModInventoryPayloadCodec.Compact(local.ContentMods),
+                    local.ModelDbHashUsesDeterministicCache,
+                    local.ModelDbHashModeDetail,
+                    local.SavedPropertyNetIdUsesDeterministicSort);
                 return EncodeCompressed(payload);
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
@@ -213,17 +219,19 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         public static JoinPeerSnapshot CreateHostSnapshot(
             InitialGameInfoMessage message,
-            JoinDiagnosticsPayload? payload)
+            JoinDiagnosticsPayload? payload,
+            JoinHostVersionSnapshot? versionInfo)
         {
-            var contentMods = CreateHostContentModEntries(message, payload, out var hasProcessedContentMods);
+            var contentMods =
+                CreateHostContentModEntries(message, payload, versionInfo, out var hasProcessedContentMods);
             return new(
-                GetGameVersion(message),
-                GetModelDbHash(message),
+                payload?.GameVersion ?? versionInfo?.GameVersion ?? GetGameVersion(message),
+                payload?.ModelDbHash ?? versionInfo?.ModelDbHash ?? GetModelDbHash(message),
                 message.gameMode.ToString(),
                 message.sessionState.ToString(),
                 payload?.GameplayMods.Count > 0
                     ? payload.GameplayMods
-                    : CreateFallbackModEntries(GetFallbackGameplayModKeys(message)),
+                    : CreateFallbackModEntries(GetFallbackGameplayModKeys(message, versionInfo)),
                 contentMods,
                 hasProcessedContentMods,
                 payload?.ModelDbHashUsesDeterministicCache ?? false,
@@ -265,35 +273,50 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
         private static IReadOnlyList<ContentModInventoryEntry> CreateHostContentModEntries(
             InitialGameInfoMessage message,
             JoinDiagnosticsPayload? payload,
+            JoinHostVersionSnapshot? versionInfo,
             out bool hasProcessedContentMods)
         {
             hasProcessedContentMods = ContentModInventoryPayloadCodec.TryDecode(payload?.ContentMods, out var entries);
             return hasProcessedContentMods
                 ? entries
-                : CreateFallbackContentModEntries(GetFallbackContentModKeys(message));
+                : CreateFallbackContentModEntries(GetFallbackContentModKeys(message, versionInfo));
         }
 
-        private static IReadOnlyList<string>? GetFallbackGameplayModKeys(InitialGameInfoMessage message)
+        private static IReadOnlyList<string>? GetFallbackGameplayModKeys(
+            InitialGameInfoMessage message,
+            JoinHostVersionSnapshot? versionInfo)
         {
+#if STS2_AT_LEAST_0_111_0
+            return versionInfo?.GameplayMods;
+#else
 #if STS2_AT_LEAST_0_107_1
             return GetGameplayAffectingMods(message);
 #else
             return message.mods;
 #endif
+#endif
         }
 
-        private static IReadOnlyList<string>? GetFallbackContentModKeys(InitialGameInfoMessage message)
+        private static IReadOnlyList<string>? GetFallbackContentModKeys(
+            InitialGameInfoMessage message,
+            JoinHostVersionSnapshot? versionInfo)
         {
+#if STS2_AT_LEAST_0_111_0
+            return MergeModKeys(versionInfo?.GameplayMods, versionInfo?.OtherMods);
+#else
 #if STS2_AT_LEAST_0_107_1
             return MergeModKeys(GetGameplayAffectingMods(message), GetOtherMods(message));
 #else
             return message.mods;
 #endif
+#endif
         }
 
         private static string GetGameVersion(InitialGameInfoMessage message)
         {
-#if STS2_AT_LEAST_0_110_0
+#if STS2_AT_LEAST_0_111_0
+            return "UNKNOWN";
+#elif STS2_AT_LEAST_0_110_0
             return message.versionInfo.version;
 #else
             return message.version;
@@ -302,7 +325,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static uint GetModelDbHash(InitialGameInfoMessage message)
         {
-#if STS2_AT_LEAST_0_110_0
+#if STS2_AT_LEAST_0_111_0
+            return 0;
+#elif STS2_AT_LEAST_0_110_0
             return message.versionInfo.idDatabaseHash;
 #else
             return message.idDatabaseHash;
@@ -311,7 +336,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static IReadOnlyList<string>? GetGameplayAffectingMods(InitialGameInfoMessage message)
         {
-#if STS2_AT_LEAST_0_110_0
+#if STS2_AT_LEAST_0_111_0
+            return null;
+#elif STS2_AT_LEAST_0_110_0
             return message.versionInfo.gameplayAffectingMods;
 #else
             return message.gameplayAffectingMods;
@@ -320,7 +347,9 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static IReadOnlyList<string>? GetOtherMods(InitialGameInfoMessage message)
         {
-#if STS2_AT_LEAST_0_110_0
+#if STS2_AT_LEAST_0_111_0
+            return null;
+#elif STS2_AT_LEAST_0_110_0
             return message.versionInfo.otherMods;
 #else
             return message.otherMods;

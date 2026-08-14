@@ -37,8 +37,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         ///     <para xml:lang="zh-CN">请求的来源界面。</para>
         /// </param>
         /// <param name="expectedCardPile">
-        ///     <para xml:lang="en">The card pile captured from a combat-pile screen request.</para>
-        ///     <para xml:lang="zh-CN">从战斗牌堆界面请求中记录的牌堆。</para>
+        ///     <para xml:lang="en">The card pile captured from a combat-pile card request.</para>
+        ///     <para xml:lang="zh-CN">从战斗牌堆卡牌请求中记录的牌堆。</para>
         /// </param>
         public ModRightClickTrigger(
             bool isController,
@@ -58,8 +58,8 @@ namespace STS2RitsuLib.Interactions.RightClick
         public ModRightClickSource Source { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the card pile captured from a combat-pile screen request.</para>
-        ///     <para xml:lang="zh-CN">获取从战斗牌堆界面请求中记录的牌堆。</para>
+        ///     <para xml:lang="en">Gets the card pile captured from a combat-pile card request.</para>
+        ///     <para xml:lang="zh-CN">获取从战斗牌堆卡牌请求中记录的牌堆。</para>
         /// </summary>
         public PileType? ExpectedCardPile { get; init; }
     }

@@ -13,6 +13,7 @@ namespace STS2RitsuLib.Settings
         private const ulong QuickSearchDoubleShiftIntervalMsec = 420;
         private const int QuickSearchResultLimit = 40;
         private readonly List<ModSettingsSidebarButton> _quickSearchResultButtons = [];
+        private CancellationTokenSource? _quickSearchCancellation;
         private ModSettingsMiniButton? _quickSearchButton;
         private LineEdit? _quickSearchEdit;
         private IReadOnlyList<ModSettingsSearchResult> _quickSearchIndex = [];
@@ -118,6 +119,7 @@ namespace STS2RitsuLib.Settings
         {
             _quickSearchLastShiftTapMsec = 0;
             _quickSearchRefreshEpoch++;
+            CancelQuickSearch();
             if (!_quickSearchOpen)
                 return;
 
@@ -279,13 +281,8 @@ namespace STS2RitsuLib.Settings
             if (_quickSearchResultsHost == null || _quickSearchEdit == null)
                 return;
 
-            foreach (var child in _quickSearchResultsHost.GetChildren())
-            {
-                _quickSearchResultsHost.RemoveChild(child);
-                child.QueueFree();
-            }
-
-            _quickSearchResultButtons.Clear();
+            CancelQuickSearch();
+            ClearQuickSearchResults();
             var query = _quickSearchEdit.Text.Trim();
             if (query.Length == 0)
             {
@@ -296,14 +293,43 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            _quickSearchResults = ModSettingsSearchIndex.Search(
-                _quickSearchIndex,
-                query,
-                QuickSearchResultLimit);
+            var epoch = _quickSearchRefreshEpoch;
+            _quickSearchCancellation = new();
+            AddQuickSearchStatus(FormatQuickSearchProgress(0, _quickSearchIndex.Count));
+            ObserveBackgroundUiTask(
+                RefreshQuickSearchResultsAsync(query, epoch, _quickSearchCancellation.Token),
+                $"quick_search:{query}");
+        }
+
+        private async Task RefreshQuickSearchResultsAsync(
+            string query,
+            int epoch,
+            CancellationToken cancellationToken)
+        {
+            await foreach (var batch in ModSettingsSearchIndex.SearchStreamAsync(
+                               _quickSearchIndex,
+                               query,
+                               QuickSearchResultLimit,
+                               cancellationToken))
+            {
+                if (!_quickSearchOpen || epoch != _quickSearchRefreshEpoch || cancellationToken.IsCancellationRequested)
+                    break;
+                RenderQuickSearchBatch(batch);
+            }
+        }
+
+        private void RenderQuickSearchBatch(ModSettingsSearchBatch batch)
+        {
+            if (_quickSearchResultsHost == null)
+                return;
+            ClearQuickSearchResults();
+            _quickSearchResults = batch.Results;
             if (_quickSearchResults.Count == 0)
             {
                 _quickSearchSelectedIndex = -1;
-                AddQuickSearchStatus(ModSettingsLocalization.Get("search.empty", "No matching settings found."));
+                AddQuickSearchStatus(batch.IsComplete
+                    ? ModSettingsLocalization.Get("search.empty", "No matching settings found.")
+                    : FormatQuickSearchProgress(batch.ProcessedCount, batch.TotalCount));
                 return;
             }
 
@@ -325,6 +351,40 @@ namespace STS2RitsuLib.Settings
             }
 
             SetQuickSearchSelection(0, false);
+            if (!batch.IsComplete)
+                AddQuickSearchStatus(FormatQuickSearchProgress(batch.ProcessedCount, batch.TotalCount));
+            else if (batch.HasMore)
+                AddQuickSearchStatus(string.Format(
+                    ModSettingsLocalization.Get("search.more", "Showing the first {0} matches. More are available."),
+                    QuickSearchResultLimit));
+        }
+
+        private void ClearQuickSearchResults()
+        {
+            if (_quickSearchResultsHost == null)
+                return;
+            foreach (var child in _quickSearchResultsHost.GetChildren())
+            {
+                _quickSearchResultsHost.RemoveChild(child);
+                child.QueueFree();
+            }
+
+            _quickSearchResultButtons.Clear();
+        }
+
+        private void CancelQuickSearch()
+        {
+            _quickSearchCancellation?.Cancel();
+            _quickSearchCancellation?.Dispose();
+            _quickSearchCancellation = null;
+        }
+
+        private static string FormatQuickSearchProgress(int processedCount, int totalCount)
+        {
+            return string.Format(
+                ModSettingsLocalization.Get("search.searching", "Searching… {0}/{1}"),
+                processedCount,
+                totalCount);
         }
 
         private void AddQuickSearchStatus(string text)

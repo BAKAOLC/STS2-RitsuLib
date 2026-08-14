@@ -1574,5 +1574,7 @@
   "search.placeholder": "搜索模组、页面、分组和设置",
   "search.hint": "双击 Shift 唤起 · ↑/↓ 选择 · Enter 跳转 · Esc 关闭",
   "search.start": "输入设置名称或说明以查找目标位置。",
-  "search.empty": "没有找到匹配的设置。"
+  "search.empty": "没有找到匹配的设置。",
+  "search.searching": "正在搜索……{0}/{1}",
+  "search.more": "正在显示前 {0} 个匹配项，另有更多结果。"
 }

@@ -149,7 +149,7 @@ namespace STS2RitsuLib.Networking.StateDivergence
             return new(
                 L("section.commonIncompatibleMods.title", "Common incompatible mods"),
                 L("section.commonIncompatibleMods.warning",
-                    "Detected mods are known to potentially cause state divergence or other unexpected behavior. If you encounter a problem, try disabling these mods and check whether it can still be reproduced."),
+                    "Detected mods are known to potentially cause state divergence or other unexpected behavior. If you encounter a problem, try disabling these mods and check whether it can still be reproduced. Mods included in this list are shown only as common potential sources of incompatibility; their presence does not mean they caused the current divergence. Please test before reporting the issue."),
                 false,
                 [
                     new(

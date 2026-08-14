@@ -14,6 +14,13 @@ namespace STS2RitsuLib.Settings
         internal RitsuSearchPreparedText PreparedSearchText { get; } = new(SearchText);
     }
 
+    internal sealed record ModSettingsSearchBatch(
+        IReadOnlyList<ModSettingsSearchResult> Results,
+        int ProcessedCount,
+        int TotalCount,
+        bool IsComplete,
+        bool HasMore);
+
     internal static class ModSettingsSearchIndex
     {
         internal static IReadOnlyList<ModSettingsSearchResult> BuildVisible()
@@ -128,6 +135,62 @@ namespace STS2RitsuLib.Settings
             ];
         }
 
+        internal static async Task<ModSettingsSearchBatch> SearchAsync(
+            IReadOnlyList<ModSettingsSearchResult> index,
+            string query,
+            int limit,
+            CancellationToken cancellationToken = default)
+        {
+            ModSettingsSearchBatch? completed = null;
+            await foreach (var batch in SearchStreamAsync(index, query, limit, cancellationToken)
+                               .ConfigureAwait(false))
+                completed = batch;
+            return completed ?? new([], 0, index.Count, true, false);
+        }
+
+        internal static async IAsyncEnumerable<ModSettingsSearchBatch> SearchStreamAsync(
+            IReadOnlyList<ModSettingsSearchResult> index,
+            string query,
+            int limit,
+            [System.Runtime.CompilerServices.EnumeratorCancellation]
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(index);
+            ArgumentNullException.ThrowIfNull(query);
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
+
+            var terms = query.Split((char[]?)null,
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (terms.Length == 0)
+            {
+                yield return new([], 0, index.Count, true, false);
+                yield break;
+            }
+
+            const int resultsPerBatch = 12;
+            var matches = new List<(ModSettingsSearchResult Result, int Score)>();
+            for (var indexPosition = 0; indexPosition < index.Count; indexPosition++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var result = index[indexPosition];
+                var score = await ScoreAsync(result, terms, cancellationToken).ConfigureAwait(false);
+                if (score >= 0)
+                    matches.Add((result, score));
+
+                var processedCount = indexPosition + 1;
+                if (matches.Count > limit)
+                {
+                    yield return CreateBatch(matches, limit, processedCount, index.Count, true, true);
+                    yield break;
+                }
+
+                if (processedCount % resultsPerBatch == 0)
+                    yield return CreateBatch(matches, limit, processedCount, index.Count, false, false);
+            }
+
+            yield return CreateBatch(matches, limit, index.Count, index.Count, true, false);
+        }
+
         private static ModSettingsSearchResult CreateResult(
             string title,
             string path,
@@ -192,6 +255,81 @@ namespace STS2RitsuLib.Settings
             }
 
             return score;
+        }
+
+        private static async ValueTask<int> ScoreAsync(
+            ModSettingsSearchResult result,
+            IReadOnlyList<string> terms,
+            CancellationToken cancellationToken)
+        {
+            var score = 0;
+            foreach (var term in terms)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var titleIndex = result.Title.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+                if (titleIndex >= 0)
+                {
+                    score += titleIndex == 0 ? 0 : 12 + titleIndex;
+                    continue;
+                }
+
+                var pathIndex = result.Path.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+                if (pathIndex >= 0)
+                {
+                    score += 40 + pathIndex;
+                    continue;
+                }
+
+                var searchIndex = result.SearchText.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+                if (searchIndex >= 0)
+                {
+                    score += 80 + searchIndex;
+                    continue;
+                }
+
+                var expandedTitleScore = await result.PreparedTitle.ScoreExpansionAsync(term, cancellationToken)
+                    .ConfigureAwait(false);
+                if (expandedTitleScore >= 0)
+                {
+                    score += 100 + expandedTitleScore;
+                    continue;
+                }
+
+                var expandedPathScore = await result.PreparedPath.ScoreExpansionAsync(term, cancellationToken)
+                    .ConfigureAwait(false);
+                if (expandedPathScore >= 0)
+                {
+                    score += 140 + expandedPathScore;
+                    continue;
+                }
+
+                var expandedSearchScore = await result.PreparedSearchText.ScoreExpansionAsync(term, cancellationToken)
+                    .ConfigureAwait(false);
+                if (expandedSearchScore < 0)
+                    return -1;
+                score += 180 + expandedSearchScore;
+            }
+
+            return score;
+        }
+
+        private static ModSettingsSearchBatch CreateBatch(
+            IReadOnlyList<(ModSettingsSearchResult Result, int Score)> matches,
+            int limit,
+            int processedCount,
+            int totalCount,
+            bool isComplete,
+            bool hasMore)
+        {
+            IReadOnlyList<ModSettingsSearchResult> results =
+            [
+                .. matches
+                    .OrderBy(static match => match.Score)
+                    .ThenBy(static match => match.Result.Order)
+                    .Take(limit)
+                    .Select(static match => match.Result),
+            ];
+            return new(results, processedCount, totalCount, isComplete, hasMore);
         }
 
         private static IReadOnlyList<string> ResolvePageTitles(

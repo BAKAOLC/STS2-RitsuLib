@@ -7,6 +7,7 @@
       <SourcePath ParameterType="System.String" Required="true" />
       <DestinationPath ParameterType="System.String" Required="true" />
       <DisplayName ParameterType="System.String" Required="true" />
+      <Version ParameterType="System.String" Required="true" />
       <MinGameVersion ParameterType="System.String" Required="false" />
     </ParameterGroup>
     <Task>
@@ -44,6 +45,7 @@
             }
 
             root["name"] = DisplayName;
+            root["version"] = Version;
             if (!string.IsNullOrWhiteSpace(MinGameVersion))
             {
                 root["min_game_version"] = MinGameVersion;
@@ -86,6 +88,7 @@
         SourcePath="$(RitsuLibManifestSource)"
         DestinationPath="$(RitsuLibManifestGenerated)"
         DisplayName="$(RitsuLibModDisplayName)"
+        Version="$(Version)"
         MinGameVersion="$(RitsuLibManifestMinGameVersion)" />
   </Target>
 </Project>

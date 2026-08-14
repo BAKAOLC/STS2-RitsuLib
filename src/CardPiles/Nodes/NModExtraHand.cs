@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Runs;
+using STS2RitsuLib.Interactions.RightClick.Patches;
 using STS2RitsuLib.Patching;
 
 namespace STS2RitsuLib.CardPiles.Nodes
@@ -394,6 +395,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var holder = NHandCardHolder.Create(ncard, hand);
             _holders[card] = holder;
             _cardLayer.AddChild(holder);
+            ModRightClickCardHolderPatch.ConnectModPileHolder(holder, Definition.PileType);
             holder.SetIndexLabel(0);
             ApplyCardPlayAvailability(holder);
             holder.Connect(NCardHolder.SignalName.Pressed,

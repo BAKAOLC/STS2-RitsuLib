@@ -46,6 +46,9 @@ export default defineValaxyConfig<PressTheme.Config>({
   },
 
   themeConfig: {
+    editLink: {
+      pattern: 'https://github.com/BAKAOLC/STS2-RitsuLib/edit/main/docs/pages/:path',
+    },
     nav: [
       {
         text: 'nav.home',

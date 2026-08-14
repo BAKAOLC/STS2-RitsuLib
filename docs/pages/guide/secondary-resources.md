@@ -20,12 +20,18 @@ var charge = resources.Register("charge", new SecondaryResourceDefinition(
     turnStartPolicy: SecondaryResourceTurnStartPolicy.ResetToMax,
     persistencePolicy: SecondaryResourcePersistencePolicy.Combat,
     smallIconPath: "res://MyMod/assets/ui/charge_small.png",
-    largeIconPath: "res://MyMod/assets/ui/charge_large.png"));
+    largeIconPath: "res://MyMod/assets/ui/charge_large.png")
+{
+    ClampToMaxAmount = true,
+});
 ```
 
 The registry expands the mod-local ID into a stable full resource ID. Use the returned `charge.Id` whenever another API needs that full ID. Registering the same ID again returns the definition registered first.
 
 `baseMaxAmount` is optional. Leave it `null` for resources without a max concept.
+
+Set `ClampToMaxAmount` when every amount write must respect the current hook-adjusted maximum. This option requires
+`baseMaxAmount`; the default amount must not exceed the unmodified maximum.
 
 By default, each resource uses the following localization layout:
 
@@ -52,12 +58,18 @@ var charge = resources.Register("charge", new SecondaryResourceDefinition(
     turnStartPolicy: SecondaryResourceTurnStartPolicy.ResetToMax,
     persistencePolicy: SecondaryResourcePersistencePolicy.Combat,
     smallIconPath: "res://MyMod/assets/ui/charge_small.png",
-    largeIconPath: "res://MyMod/assets/ui/charge_large.png"));
+    largeIconPath: "res://MyMod/assets/ui/charge_large.png")
+{
+    ClampToMaxAmount = true,
+});
 ```
 
 注册表会把模组内 ID 扩展成稳定的完整资源 ID。其他 API 需要完整 ID 时，使用返回定义中的 `charge.Id`。重复注册同一 ID 时会返回最先注册的定义。
 
 `baseMaxAmount` 是可选的。没有上限概念的资源保持 `null` 即可。
+
+需要让每次数量写入都遵守当前经钩子修正后的最大值时，设置 `ClampToMaxAmount`。该选项要求设置
+`baseMaxAmount`，且默认数量不得超过未经修正的最大值。
 
 默认情况下，每种资源使用以下本地化约定：
 
@@ -82,10 +94,16 @@ var max = SecondaryResourceCmd.GetMax(player, charge.Id);
 await SecondaryResourceCmd.Gain(player, charge.Id, 1, source: card);
 await SecondaryResourceCmd.Lose(player, charge.Id, 1, source: relic);
 await SecondaryResourceCmd.Set(player, charge.Id, 2, source: power);
+await SecondaryResourceCmd.ClampToMax(player, charge.Id, source: relic);
 
 var spent = await SecondaryResourceCmd.Spend(player, charge.Id, 2, card, source: card);
 await SecondaryResourceCmd.Reset(player, charge.Id, toMax: true);
 ```
+
+When an effect changes state used by `ModifyMaxSecondaryResource`, call `ClampToMax` immediately afterward if the new
+maximum may be lower. Maximum calculation is side-effect-free, so RitsuLib cannot otherwise observe when arbitrary
+modifier dependencies change. With `ClampToMaxAmount` enabled, later gains, sets, resets, and persistence restores are
+also clamped at the shared state-write boundary.
 
 Built-in turn-start behavior is selected with `SecondaryResourceTurnStartPolicy`:
 
@@ -119,10 +137,15 @@ var max = SecondaryResourceCmd.GetMax(player, charge.Id);
 await SecondaryResourceCmd.Gain(player, charge.Id, 1, source: card);
 await SecondaryResourceCmd.Lose(player, charge.Id, 1, source: relic);
 await SecondaryResourceCmd.Set(player, charge.Id, 2, source: power);
+await SecondaryResourceCmd.ClampToMax(player, charge.Id, source: relic);
 
 var spent = await SecondaryResourceCmd.Spend(player, charge.Id, 2, card, source: card);
 await SecondaryResourceCmd.Reset(player, charge.Id, toMax: true);
 ```
+
+某个效果改变了 `ModifyMaxSecondaryResource` 所依赖的状态、且新最大值可能降低时，应紧接着调用
+`ClampToMax`。最大值计算本身不产生副作用，因此 RitsuLib 无法通过其他方式获知任意修正依赖何时发生变化。
+启用 `ClampToMaxAmount` 后，后续增加、设置、重置以及持久化恢复也会在统一的状态写入边界受到限制。
 
 内置的回合开始行为由 `SecondaryResourceTurnStartPolicy` 控制：
 

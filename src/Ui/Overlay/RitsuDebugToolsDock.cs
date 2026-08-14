@@ -12,6 +12,8 @@ namespace STS2RitsuLib.Ui.Overlay
     {
         private const float RailLeft = 24f;
         private const float RailWidth = 64f;
+        private const float RailRevealTriggerWidth = 20f;
+        private const float RailKeepOpenPadding = 16f;
         private const float PanelRightMargin = 24f;
         private const float PanelMaximumViewportFraction = 0.9f;
         private const double CollapseGraceMilliseconds = 320d;
@@ -548,7 +550,10 @@ namespace STS2RitsuLib.Ui.Overlay
             var railRect = _rail.GetGlobalRect();
             var overRail = _railShown && railRect.Grow(8f).HasPoint(mouse);
             var overPeek = _peekTab.Visible && _peekTab.GetGlobalRect().Grow(4f).HasPoint(mouse);
-            var inSideZone = mouse.X <= RailLeft + RailWidth + 16f &&
+            var sideZoneWidth = _railShown
+                ? RailLeft + RailWidth + RailKeepOpenPadding
+                : RailRevealTriggerWidth;
+            var inSideZone = mouse.X <= sideZoneWidth &&
                              mouse.Y >= railRect.Position.Y - 20f && mouse.Y <= railRect.End.Y + 20f;
             if (overRail || overPeek || inSideZone)
             {

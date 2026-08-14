@@ -92,6 +92,24 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public int HardMaxAmount { get; init; }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets whether amount writes are clamped to the current hook-adjusted maximum.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取写入数量时是否限制到当前经钩子修正后的最大值。</para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         This option requires <see cref="BaseMaxAmount" />. When a maximum modifier's dependencies change,
+        ///         call <see cref="SecondaryResourceCmd.ClampToMax" /> to reduce an already stored amount immediately.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         此选项要求设置 <see cref="BaseMaxAmount" />。最大值修正所依赖的状态发生变化时，应调用
+        ///         <see cref="SecondaryResourceCmd.ClampToMax" />，立即收缩已经存储的数量。
+        ///     </para>
+        /// </remarks>
+        public bool ClampToMaxAmount { get; init; }
+
+        /// <summary>
         ///     <para xml:lang="en">Gets the built-in turn-start behavior.</para>
         ///     <para xml:lang="zh-CN">获取内置的回合开始行为。</para>
         /// </summary>
@@ -216,6 +234,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (BaseMaxAmount is < 0)
                 throw new InvalidOperationException(
                     $"Secondary resource '{id}' cannot have a negative base max amount.");
+
+            if (!ClampToMaxAmount)
+                return;
+
+            if (BaseMaxAmount is not { } baseMaxAmount)
+                throw new InvalidOperationException(
+                    $"Secondary resource '{id}' cannot clamp to a maximum without BaseMaxAmount.");
+
+            if (Math.Clamp(DefaultAmount, MinAmount, HardMaxAmount) >
+                Math.Clamp(baseMaxAmount, MinAmount, HardMaxAmount))
+                throw new InvalidOperationException(
+                    $"Secondary resource '{id}' cannot have a default amount above its base maximum when clamping.");
         }
     }
 }
