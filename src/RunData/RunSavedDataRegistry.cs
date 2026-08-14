@@ -82,10 +82,10 @@ namespace STS2RitsuLib.RunData
             return runState == null ? null : Export(runState);
         }
 
-        public static string InjectIntoJson(string json, SerializableRun save)
+        public static byte[] InjectIntoUtf8Json(byte[] json, SerializableRun save)
         {
             return RunSavedDataRuntime.TryGetDocument(save, out var document)
-                ? RunSavedDataDocument.InjectIntoJson(json, document)
+                ? RunSavedDataDocument.InjectIntoUtf8Json(json, document)
                 : json;
         }
 

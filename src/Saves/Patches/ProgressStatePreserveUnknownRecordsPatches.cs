@@ -72,7 +72,8 @@ namespace STS2RitsuLib.Saves.Patches
         public static void Postfix(ProgressState __instance, SerializableProgress __result)
         {
             PreservedProgressRecords.MergeInto(__instance, __result);
-            if (!RawProgressCommitBridge.IsPreparingCommitProjection)
+            if (!RawProgressCommitBridge.IsPreparingCommitProjection &&
+                !RawProgressCommitBridge.IsSavingOrdinaryProgress)
                 ProgressMirrorStore.SaveMirror(__result);
         }
     }

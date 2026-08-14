@@ -30,14 +30,19 @@ namespace STS2RitsuLib.Saves.RawProgress
         internal static bool TryAttach(ProgressState progress, string rawJson, string knownJson)
         {
             ArgumentNullException.ThrowIfNull(progress);
+            States.Remove(progress);
+
+            if (string.Equals(rawJson, knownJson, StringComparison.Ordinal))
+                return true;
 
             try
             {
                 var state = PreservationState.Create(rawJson, knownJson);
+                if (!state.HasUnknownProperties())
+                    return true;
                 if (!state.CanReconstructRawDocument())
                     return false;
 
-                States.Remove(progress);
                 States.Add(progress, state);
                 return true;
             }
@@ -326,6 +331,14 @@ namespace STS2RitsuLib.Saves.RawProgress
                     var reconstructed = _knownBaseline.DeepClone();
                     MergeUnknown(_rawDocument, _knownBaseline, reconstructed);
                     return AreUnknownPropertiesPreserved(_rawDocument, _knownBaseline, reconstructed);
+                }
+            }
+
+            internal bool HasUnknownProperties()
+            {
+                lock (_syncRoot)
+                {
+                    return ContainsUnknownProperties(_rawDocument, _knownBaseline);
                 }
             }
 
