@@ -51,7 +51,7 @@ namespace STS2RitsuLib.Saves
             }
         }
 
-        internal static void SaveMirror(SerializableProgress save)
+        internal static void SaveMirror(SerializableProgress save, string? serializedJson = null)
         {
             if (_isSavingMirror || string.IsNullOrWhiteSpace(save.UniqueId))
                 return;
@@ -59,7 +59,7 @@ namespace STS2RitsuLib.Saves
             try
             {
                 _isSavingMirror = true;
-                var json = JsonSerializationUtility.ToJson(save);
+                var json = serializedJson ?? JsonSerializationUtility.ToJson(save);
                 var result = FileOperations.WriteText(GetMirrorPath(), json, LogContext);
                 if (!result.Success)
                     RitsuLibFramework.Logger.Warn(

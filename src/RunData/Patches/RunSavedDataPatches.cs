@@ -105,12 +105,11 @@ namespace STS2RitsuLib.RunData.Patches
 
             try
             {
-                var json = Encoding.UTF8.GetString(bytes);
-                var injectedJson = RunSavedDataRegistry.InjectIntoJson(json, save);
-                if (ReferenceEquals(injectedJson, json))
+                var result = RunSavedDataRegistry.InjectIntoUtf8Json(bytes, save);
+                if (ReferenceEquals(result, bytes))
                     return false;
 
-                injectedBytes = Encoding.UTF8.GetBytes(injectedJson);
+                injectedBytes = result;
                 return true;
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))

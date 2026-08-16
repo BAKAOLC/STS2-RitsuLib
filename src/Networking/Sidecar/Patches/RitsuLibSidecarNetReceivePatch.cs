@@ -43,6 +43,7 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
         {
             var isHostIngest = __instance is NetHostGameService;
             RitsuLibSidecarNativeTrailerEvidence.ObserveInbound(senderId, packetBytes);
+            RitsuLibSidecarConnectionExchange.TrySendClientHelloIfReachable(__instance);
             return !RitsuLibSidecarReceivePipeline.ShouldSuppressVanillaDeserialize(
                 __instance,
                 senderId,

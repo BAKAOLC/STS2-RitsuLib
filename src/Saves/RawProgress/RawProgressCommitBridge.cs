@@ -43,6 +43,7 @@ namespace STS2RitsuLib.Saves.RawProgress
         };
 
         [field: ThreadStatic] internal static bool IsPreparingCommitProjection { get; private set; }
+        [field: ThreadStatic] internal static bool IsSavingOrdinaryProgress { get; private set; }
 
         private readonly RawProgressBridgeFeature _features;
 
@@ -168,9 +169,21 @@ namespace STS2RitsuLib.Saves.RawProgress
                 try
                 {
                     var progress = manager.Progress;
-                    var serializable = progress.ToSerializable();
+                    SerializableProgress serializable;
+                    var wasSavingOrdinaryProgress = IsSavingOrdinaryProgress;
+                    try
+                    {
+                        IsSavingOrdinaryProgress = true;
+                        serializable = progress.ToSerializable();
+                    }
+                    finally
+                    {
+                        IsSavingOrdinaryProgress = wasSavingOrdinaryProgress;
+                    }
+
                     serializable.SchemaVersion = GetSupportedSchema(manager);
                     var knownJson = JsonSerializationUtility.ToJson(serializable);
+                    ProgressMirrorStore.SaveMirror(serializable, knownJson);
                     var content = RawProgressJsonPreservation.PreserveAndAdvance(progress, knownJson);
                     SaveStore(manager).WriteFile(
                         ProgressSaveManager.GetProgressPathForProfile(ProfileIdProvider(manager).CurrentProfileId),

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace STS2RitsuLib.RunData
@@ -121,24 +122,117 @@ namespace STS2RitsuLib.RunData
                 yield return (modId, key, entry);
         }
 
-        public static string InjectIntoJson(string json, RunSavedDataDocument? document)
+        public static byte[] InjectIntoUtf8Json(byte[] json, RunSavedDataDocument? document)
         {
             if (document == null || document.IsEmpty)
                 return json;
 
             try
             {
-                if (JsonNode.Parse(json) is not JsonObject root)
+                if (!TryLocateRootProperty(
+                        json,
+                        out var insertionPoint,
+                        out var hasRootProperties,
+                        out var existingValueStart,
+                        out var existingValueEnd))
                     return json;
 
-                root[RootPropertyName] = document.ToRootObject()[RootPropertyName]!.DeepClone();
-                return root.ToJsonString(new() { WriteIndented = true });
+                var value = document.ToRootObject()[RootPropertyName]!;
+                var valueBytes = JsonSerializer.SerializeToUtf8Bytes(value);
+                if (existingValueStart >= 0)
+                    return ReplaceRange(json, existingValueStart, existingValueEnd, valueBytes);
+
+                return InsertRootProperty(json, insertionPoint, hasRootProperties, valueBytes);
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn($"[RunSavedData] Failed to inject run extension data: {ex.Message}");
                 return json;
             }
+        }
+
+        private static bool TryLocateRootProperty(
+            ReadOnlySpan<byte> json,
+            out int insertionPoint,
+            out bool hasRootProperties,
+            out int existingValueStart,
+            out int existingValueEnd)
+        {
+            insertionPoint = -1;
+            hasRootProperties = false;
+            existingValueStart = -1;
+            existingValueEnd = -1;
+
+            var reader = new Utf8JsonReader(json);
+            if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject)
+                return false;
+
+            while (reader.Read())
+            {
+                switch (reader.TokenType)
+                {
+                    case JsonTokenType.PropertyName when reader.CurrentDepth == 1:
+                        hasRootProperties = true;
+                        if (!reader.ValueTextEquals(RootPropertyName))
+                            continue;
+
+                        if (!reader.Read())
+                            return false;
+
+                        existingValueStart = checked((int)reader.TokenStartIndex);
+                        reader.Skip();
+                        existingValueEnd = checked((int)reader.BytesConsumed);
+                        continue;
+
+                    case JsonTokenType.EndObject when reader.CurrentDepth == 0:
+                        insertionPoint = checked((int)reader.TokenStartIndex);
+                        break;
+                }
+            }
+
+            if (insertionPoint < 0)
+                return false;
+
+            while (insertionPoint > 0 && IsJsonWhitespace(json[insertionPoint - 1]))
+                insertionPoint--;
+            return true;
+        }
+
+        private static byte[] InsertRootProperty(
+            byte[] json,
+            int insertionPoint,
+            bool hasRootProperties,
+            byte[] valueBytes)
+        {
+            var propertyPrefix = "\"_ritsulib\":"u8;
+            var separatorLength = hasRootProperties ? 1 : 0;
+            var result = GC.AllocateUninitializedArray<byte>(
+                checked(json.Length + separatorLength + propertyPrefix.Length + valueBytes.Length));
+            var offset = insertionPoint;
+
+            json.AsSpan(0, insertionPoint).CopyTo(result);
+            if (hasRootProperties)
+                result[offset++] = (byte)',';
+            propertyPrefix.CopyTo(result.AsSpan(offset));
+            offset += propertyPrefix.Length;
+            valueBytes.CopyTo(result.AsSpan(offset));
+            offset += valueBytes.Length;
+            json.AsSpan(insertionPoint).CopyTo(result.AsSpan(offset));
+            return result;
+        }
+
+        private static byte[] ReplaceRange(byte[] json, int start, int end, byte[] replacement)
+        {
+            var result = GC.AllocateUninitializedArray<byte>(checked(json.Length - (end - start) + replacement.Length));
+            json.AsSpan(0, start).CopyTo(result);
+            replacement.CopyTo(result.AsSpan(start));
+            json.AsSpan(end).CopyTo(result.AsSpan(start + replacement.Length));
+            return result;
+        }
+
+        private static bool IsJsonWhitespace(byte value)
+        {
+            return value is (byte)' ' or (byte)'\t' or (byte)'\r' or (byte)'\n';
         }
     }
 }

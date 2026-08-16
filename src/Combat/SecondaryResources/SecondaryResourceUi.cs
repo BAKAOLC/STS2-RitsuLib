@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -318,6 +319,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             where TParent : Node
             where TNode : Node
         {
+            SecondaryResourceCombatUiStateTracker.Ensure(parent);
             CombatHiders.GetOrCreate(parent).Add(() => HideNode(node));
             CombatUpdaters.GetOrCreate(parent).Add(player =>
             {
@@ -641,6 +643,42 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                    playerState.GetNodeOrNull<HBoxContainer>("TopInfoContainer") is { } topInfoContainer
                 ? topInfoContainer
                 : parent;
+        }
+    }
+
+    internal partial class SecondaryResourceCombatUiStateTracker : Node
+    {
+        private const string NodeName = "RitsuLibSecondaryResourceCombatUiStateTracker";
+        private Node _parent = null!;
+
+        public static void Ensure(Node parent)
+        {
+            if (parent.GetNodeOrNull<SecondaryResourceCombatUiStateTracker>(NodeName) != null)
+                return;
+
+            parent.AddChild(new SecondaryResourceCombatUiStateTracker
+            {
+                Name = NodeName,
+                _parent = parent,
+            });
+        }
+
+        public override void _EnterTree()
+        {
+            base._EnterTree();
+            CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
+        }
+
+        public override void _ExitTree()
+        {
+            base._ExitTree();
+            CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
+        }
+
+        private void OnCombatStateChanged(CombatState state)
+        {
+            if (IsInstanceValid(_parent))
+                SecondaryResourceUiRuntime.UpdateCombatUi(_parent, LocalContext.GetMe(state));
         }
     }
 
