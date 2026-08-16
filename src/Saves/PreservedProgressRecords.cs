@@ -96,7 +96,12 @@ namespace STS2RitsuLib.Saves
             if (ValidationErrorsField?.GetValue(ctx) is not List<ValidationError> errors)
                 return 0;
 
-            var removed = errors.RemoveAll(IsExpectedPreservedWarning);
+            var preservedIdentifiers = GetPreservedIdentifierStrings();
+            var preservedAchievements = _unlockedAchievements
+                .Select(static item => item.Achievement)
+                .ToHashSet(StringComparer.Ordinal);
+            var removed = errors.RemoveAll(error =>
+                IsExpectedPreservedWarning(error, preservedIdentifiers, preservedAchievements));
             if (removed > 0)
                 RitsuLibFramework.Logger.Info(
                     $"[Saves] Suppressed {removed} expected progress validation warning(s) for unavailable preserved records");
@@ -210,18 +215,26 @@ namespace STS2RitsuLib.Saves
         private void CaptureDiscoveredSet<TModel>(List<ModelId> source, List<ModelId> target)
             where TModel : AbstractModel
         {
-            foreach (var id in source.Where(id => IsUnknownModel<TModel>(id) && !target.Contains(id)))
-                target.Add(id);
+            var existing = target.ToHashSet();
+            target.AddRange(source.Where(IsUnknownModel<TModel>).Where(existing.Add));
         }
 
         private void CaptureEpochs(List<SerializableEpoch> source)
         {
-            foreach (var epoch in source.Where(epoch => !string.IsNullOrWhiteSpace(epoch.Id) &&
-                                                        !EpochModel.IsValid(epoch.Id) &&
-                                                        Enum.IsDefined(epoch.State) &&
-                                                        epoch.State >= EpochState.NotObtained).Where(epoch =>
-                         _epochs.All(e => e.Id != epoch.Id)))
+            var existing = _epochs
+                .Select(static epoch => epoch.Id)
+                .ToHashSet(StringComparer.Ordinal);
+            foreach (var epoch in source)
+            {
+                if (string.IsNullOrWhiteSpace(epoch.Id) ||
+                    EpochModel.IsValid(epoch.Id) ||
+                    !Enum.IsDefined(epoch.State) ||
+                    epoch.State < EpochState.NotObtained ||
+                    !existing.Add(epoch.Id))
+                    continue;
+
                 _epochs.Add(Clone(epoch));
+            }
         }
 
         private void CaptureAchievements(List<SerializableUnlockedAchievement>? source)
@@ -229,11 +242,18 @@ namespace STS2RitsuLib.Saves
             if (source == null)
                 return;
 
-            foreach (var achievement in source.Where(achievement =>
-                         !string.IsNullOrWhiteSpace(achievement.Achievement) &&
-                         !KnownAchievementNames.Contains(achievement.Achievement)).Where(achievement =>
-                         _unlockedAchievements.All(a => a.Achievement != achievement.Achievement)))
+            var existing = _unlockedAchievements
+                .Select(static achievement => achievement.Achievement)
+                .ToHashSet(StringComparer.Ordinal);
+            foreach (var achievement in source)
+            {
+                if (string.IsNullOrWhiteSpace(achievement.Achievement) ||
+                    KnownAchievementNames.Contains(achievement.Achievement) ||
+                    !existing.Add(achievement.Achievement))
+                    continue;
+
                 _unlockedAchievements.Add(Clone(achievement));
+            }
         }
 
         private void MergeInto(SerializableProgress save)
@@ -321,22 +341,39 @@ namespace STS2RitsuLib.Saves
             return count > 0 ? $"{label}={count}" : "";
         }
 
-        private bool IsExpectedPreservedWarning(ValidationError error)
+        private static bool IsExpectedPreservedWarning(
+            ValidationError error,
+            HashSet<string> preservedIdentifiers,
+            HashSet<string> preservedAchievements)
         {
             if (error.IsFatal || !error.Message.StartsWith("Unknown ", StringComparison.Ordinal))
                 return false;
 
-            var modelIds = GetPreservedModelIdStrings();
-            if (modelIds.Any(id => error.Message.Contains(id, StringComparison.Ordinal))) return true;
+            const string achievementPrefix = "Unknown achievement \"";
+            if (error.Message.StartsWith(achievementPrefix, StringComparison.Ordinal))
+            {
+                var achievementEnd = error.Message.LastIndexOf("\" at index ", StringComparison.Ordinal);
+                return achievementEnd > achievementPrefix.Length &&
+                       preservedAchievements.Contains(error.Message[achievementPrefix.Length..achievementEnd]);
+            }
 
-            if (_epochs.Select(static epoch => epoch.Id)
-                .Any(epochId => error.Message.Contains(epochId, StringComparison.Ordinal))) return true;
+            var identifierStart = error.Message.IndexOf(": ", StringComparison.Ordinal);
+            if (identifierStart < 0)
+                return false;
 
-            return _unlockedAchievements.Select(static item => item.Achievement).Any(achievement =>
-                error.Message.Contains('"' + achievement + '"', StringComparison.Ordinal));
+            identifierStart += 2;
+            var identifierEnd = error.Message.Length;
+            const string removingSuffix = ", removing";
+            const string resettingSuffix = ", resetting to none";
+            if (error.Message.EndsWith(removingSuffix, StringComparison.Ordinal))
+                identifierEnd -= removingSuffix.Length;
+            else if (error.Message.EndsWith(resettingSuffix, StringComparison.Ordinal))
+                identifierEnd -= resettingSuffix.Length;
+
+            return preservedIdentifiers.Contains(error.Message[identifierStart..identifierEnd]);
         }
 
-        private HashSet<string> GetPreservedModelIdStrings()
+        private HashSet<string> GetPreservedIdentifierStrings()
         {
             var ids = new HashSet<string>(StringComparer.Ordinal);
             AddIds(ids, _characterStats.Select(static stats => stats.Id));
@@ -355,6 +392,8 @@ namespace STS2RitsuLib.Saves
             AddIds(ids, _discoveredPotions);
             AddIds(ids, _discoveredEvents);
             AddIds(ids, _discoveredActs);
+            foreach (var epoch in _epochs)
+                ids.Add(epoch.Id);
 
             if (_pendingCharacterUnlock is { } pendingCharacterUnlock &&
                 pendingCharacterUnlock != ModelId.none)
@@ -386,8 +425,9 @@ namespace STS2RitsuLib.Saves
 
         private static void AppendMissingIds(List<ModelId> target, IEnumerable<ModelId> source)
         {
+            var existing = target.ToHashSet();
             foreach (var id in source)
-                if (!target.Contains(id))
+                if (existing.Add(id))
                     target.Add(id);
         }
 
