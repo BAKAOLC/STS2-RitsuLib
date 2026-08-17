@@ -103,5 +103,43 @@ namespace STS2RitsuLib.Networking.Sidecar
         public const ulong DiagnosticRelayDumpFanout = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
                                                        RitsuLibSidecarControlOpcodeLayout
                                                            .DiagnosticRelayDumpFanoutOffset;
+
+        /// <summary>
+        ///     <para xml:lang="en">Carries a peer's complete routed-endpoint capability catalog to the host.</para>
+        ///     <para xml:lang="zh-CN">向主机承载对等方完整的路由端点能力目录。</para>
+        /// </summary>
+        public const ulong EndpointCatalog = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
+                                             RitsuLibSidecarControlOpcodeLayout.EndpointCatalogOffset;
+
+        /// <summary>
+        ///     <para xml:lang="en">Carries the host-authoritative routed-endpoint snapshot to one client.</para>
+        ///     <para xml:lang="zh-CN">向一个客户端承载由主机确定的路由端点快照。</para>
+        /// </summary>
+        public const ulong EndpointRouteSnapshot = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
+                                                   RitsuLibSidecarControlOpcodeLayout.EndpointRouteSnapshotOffset;
+
+        /// <summary>
+        ///     <para xml:lang="en">Acknowledges an atomically applied routed-endpoint snapshot.</para>
+        ///     <para xml:lang="zh-CN">确认已原子应用一份路由端点快照。</para>
+        /// </summary>
+        public const ulong EndpointRouteSnapshotAck = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
+                                                      RitsuLibSidecarControlOpcodeLayout
+                                                          .EndpointRouteSnapshotAckOffset;
+
+        /// <summary>
+        ///     <para xml:lang="en">Carries client endpoint data to the host for validation and optional relay.</para>
+        ///     <para xml:lang="zh-CN">将客户端端点数据送往主机，以便验证并按需中继。</para>
+        /// </summary>
+        public const ulong EndpointIngress = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
+                                             RitsuLibSidecarControlOpcodeLayout.EndpointIngressOffset;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Carries host-originated or host-relayed endpoint data with a host-assigned canonical sender identity.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">承载主机发起或主机中继的端点数据，并包含由主机确定的规范发送方身份。</para>
+        /// </summary>
+        public const ulong EndpointDelivery = RitsuLibSidecarControlOpcodeLayout.ControlRangeStart +
+                                              RitsuLibSidecarControlOpcodeLayout.EndpointDeliveryOffset;
     }
 }

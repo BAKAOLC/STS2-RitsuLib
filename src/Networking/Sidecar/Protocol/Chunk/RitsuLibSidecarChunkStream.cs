@@ -12,6 +12,16 @@ namespace STS2RitsuLib.Networking.Sidecar
     /// </summary>
     /// <remarks>
     ///     <para xml:lang="en">
+    ///         This compatibility API is obsolete. New file, image, and large-snapshot transfers must use
+    ///         <see cref="RitsuLibSidecarEndpoints.RegisterBulk" />, which adds negotiation, bounded streaming,
+    ///         backpressure, cancellation, end-to-end integrity, and lifecycle handling.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         此兼容接口已过时。新的文件、图片和大型快照传输必须使用
+    ///         <see cref="RitsuLibSidecarEndpoints.RegisterBulk" />；新接口提供协商、有界流式处理、背压、取消、
+    ///         端到端完整性校验和生命周期处理。
+    ///     </para>
+    ///     <para xml:lang="en">
     ///         Frames are fully constructed and registered for retransmission before the first transport attempt. If the
     ///         first attempt fails, its outbound state is removed. A later failed attempt stops the remaining sends while
     ///         retaining the state for frames that may already have reached the peer.
@@ -21,6 +31,8 @@ namespace STS2RitsuLib.Networking.Sidecar
     ///         会停止发送剩余帧，但保留已可能到达对等方的帧的重传状态。
     ///     </para>
     /// </remarks>
+    [Obsolete(
+        "Use RitsuLibSidecarEndpoints.RegisterBulk for bounded streaming transfers. This compatibility API will be removed after the migration window.")]
     public static class RitsuLibSidecarChunkStream
     {
         private static long _streamIdMonotonic;

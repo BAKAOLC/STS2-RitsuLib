@@ -52,6 +52,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     RitsuLibSidecarSessionManager.EnsureProvidersBootstrapped();
                     RitsuLibSidecarBuiltInHandlers.Register();
                     RitsuLibSidecarSyncMessages.RegisterBuiltInHandler();
+                    RitsuLibSidecarEndpointProtocol.EnsureRegistered();
                     ModRightClickRegistry.RegisterBuiltInSyncDescriptors();
                     RitsuDebugActionProtocol.EnsureHandlersRegistered();
                     RitsuLibSidecarNetworkingLifecycle.EnsureHooksInstalled();

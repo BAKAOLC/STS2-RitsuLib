@@ -484,7 +484,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (!Registrations.TryGetValue(packet.DescriptorOpcode, out var registration))
                     return false;
 
-                shouldRelay = registration.ShouldBroadcast;
+                shouldRelay = packet.Route == RitsuLibSidecarSyncMessageRoute.ClientToHostAndBroadcast &&
+                              registration.ShouldBroadcast;
                 scope = registration.BroadcastScope;
                 failurePolicy = registration.FailurePolicy;
                 return true;
@@ -596,16 +597,28 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return;
             }
 
+            if (context.IsHostIngest)
+                packet = packet with { OriginalSenderNetId = context.SenderNetId };
+
             if (RitsuLibSidecarSync.TryDeferForLocation(packet.LocationTargeted, packet.Location, context))
                 return;
 
             if (context.IsHostIngest &&
+                packet.Route == RitsuLibSidecarSyncMessageRoute.ClientToHostAndBroadcast &&
                 registration.ShouldBroadcast &&
                 RunManager.Instance?.NetService is NetHostGameService host)
+            {
+                var relayPayload = RitsuLibSidecarSync.WriteMessagePacket(
+                    packet.DescriptorOpcode,
+                    context.SenderNetId,
+                    RitsuLibSidecarSyncMessageRoute.Direct,
+                    packet.LocationTargeted,
+                    packet.Location,
+                    packet.Payload);
                 if (!RitsuLibSidecarSync.TryBroadcastToPeers(
                         host,
                         RitsuLibSidecarSync.MessageOpcode,
-                        context.Envelope.Payload.Span,
+                        relayPayload,
                         context.SenderNetId,
                         registration.BroadcastScope,
                         context.TransferMode,
@@ -616,6 +629,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                         $"[SidecarSync] Required relay failed for sync message {registration.ModuleId}/{registration.MessageKey}; local handler suppressed.");
                     return;
                 }
+            }
 
             registration.Dispatch(packet, context);
         }

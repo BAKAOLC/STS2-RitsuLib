@@ -34,6 +34,18 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     <para xml:lang="en">
+        ///         The recommended ENet channel for reliable bulk Sidecar streams. Backends without independent channels
+        ///         may map it to their reliable transport while retaining RitsuLib's bulk scheduling limits.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         可靠 Sidecar 批量流使用的推荐 ENet 通道。不支持独立通道的后端可以映射到其可靠传输，同时保留
+        ///         RitsuLib 的批量调度限制。
+        ///     </para>
+        /// </summary>
+        public const int RecommendedBulkChannel = 50;
+
+        /// <summary>
+        ///     <para xml:lang="en">
         ///         The wire-format version written by the current library.
         ///     </para>
         ///     <para xml:lang="zh-CN">

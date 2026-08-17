@@ -104,6 +104,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarConnectionExchange.TickHandshakeNegotiation();
             RitsuLibSidecarSessionManager.RefreshAllReachabilityFromProviders();
             RitsuLibSidecarConnectionExchange.TrySendClientHelloIfReachable(net);
+            RitsuLibSidecarEndpointRegistry.TickBulkTransfers();
+            RitsuLibSidecarOutboundScheduler.Tick(net);
         }
 
         private static void OnRunEnded()

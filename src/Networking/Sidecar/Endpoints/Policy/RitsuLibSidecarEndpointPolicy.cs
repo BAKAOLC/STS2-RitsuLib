@@ -1,0 +1,69 @@
+﻿namespace STS2RitsuLib.Networking.Sidecar
+{
+    internal static class RitsuLibSidecarEndpointPolicy
+    {
+        internal const int MaxIdentifierUtf8Bytes = 128;
+        internal const int MaxLocalEndpoints = 64;
+        internal const int MaxLegacyTypedMigrationEndpoints = 32;
+        internal const int MaxCatalogEndpointsPerPeer = 64;
+        internal const int MaxHostRoutes = 256;
+        internal const int MaxRouteParticipants = 16;
+        internal const int MaxCatalogPayloadBytes = 32 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int MaxRouteSnapshotPayloadBytes = 256 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int DefaultControlPayloadBytes = 16 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int MaxControlPayloadBytes = 64 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int DefaultRealtimePayloadBytes = 1024;
+        internal const int MaxRealtimePayloadBytes = 1024;
+        internal const int DefaultBulkPayloadBytes = 16 * RitsuLibSidecarBinaryLayout.KiB + 24;
+        internal const int MaxBulkPayloadBytes = 48 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int DefaultControlPacketsPerSecond = 64;
+        internal const int DefaultRealtimePacketsPerSecond = 100;
+        internal const int DefaultBulkPacketsPerSecond = 128;
+        internal const int MaxConfiguredPacketsPerSecond = 1000;
+        internal const int DefaultControlBytesPerSecond = 256 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int DefaultRealtimeBytesPerSecond = 128 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int DefaultBulkBytesPerSecond = 2 * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int CatalogUpdatesPerSecond = 4;
+        internal const int CatalogBytesPerSecond = 128 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int MaxConfiguredBytesPerSecond = 16 * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int MaxDispatchQueueMessages = 512;
+        internal const int MaxDispatchQueueBytes = 2 * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int MaxOutboundQueuedMessagesGlobal = 4096;
+        internal const int MaxOutboundQueuedMessagesPerPeer = 1024;
+        internal const int MaxOutboundQueuedBytesGlobal = 8 * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int MaxOutboundQueuedBytesPerPeer = 2 * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int MaxOutboundPacketsPerTick = 256;
+        internal const int MaxOutboundBytesPerTick = RitsuLibSidecarBinaryLayout.MiB;
+        internal const int MaxBulkQueuedMessagesGlobal = 512;
+        internal const int MaxBulkQueuedMessagesPerPeer = 128;
+        internal const int MaxBulkQueuedBytesGlobal = 4 * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int MaxBulkQueuedBytesPerPeer = RitsuLibSidecarBinaryLayout.MiB;
+        internal const long DefaultBulkStreamBytes = 64L * RitsuLibSidecarBinaryLayout.MiB;
+        internal const long MaxBulkStreamBytes = 1024L * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int DefaultBulkChunkBytes = 16 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int MinBulkChunkBytes = RitsuLibSidecarBinaryLayout.KiB;
+        internal const int MaxBulkChunkBytes = 32 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int DefaultBulkWindowBytes = 256 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int MinBulkWindowBytes = 16 * RitsuLibSidecarBinaryLayout.KiB;
+        internal const int MaxBulkWindowBytes = 2 * RitsuLibSidecarBinaryLayout.MiB;
+        internal const int DefaultBulkConcurrentInboundStreams = 2;
+        internal const int DefaultBulkConcurrentOutboundStreams = 2;
+        internal const int MaxBulkConcurrentStreamsPerEndpoint = 8;
+        internal const int MaxBulkConcurrentInboundStreamsGlobal = 32;
+        internal const int MaxBulkConcurrentOutboundStreamsGlobal = 32;
+        internal const int DefaultBulkRetryCount = 5;
+        internal const int MaxBulkRetryCount = 12;
+        internal const int MaxBulkNameUtf8Bytes = 255;
+        internal const int MaxBulkContentTypeUtf8Bytes = 127;
+        internal static readonly TimeSpan DefaultRealtimeLifetime = TimeSpan.FromMilliseconds(250);
+        internal static readonly TimeSpan MinimumRealtimeLifetime = TimeSpan.FromMilliseconds(20);
+        internal static readonly TimeSpan MaximumRealtimeLifetime = TimeSpan.FromSeconds(2);
+        internal static readonly TimeSpan DefaultBulkAcknowledgementTimeout = TimeSpan.FromSeconds(2);
+        internal static readonly TimeSpan MinimumBulkAcknowledgementTimeout = TimeSpan.FromMilliseconds(250);
+        internal static readonly TimeSpan MaximumBulkAcknowledgementTimeout = TimeSpan.FromSeconds(15);
+        internal static readonly TimeSpan DefaultBulkIdleTimeout = TimeSpan.FromSeconds(30);
+        internal static readonly TimeSpan MinimumBulkIdleTimeout = TimeSpan.FromSeconds(5);
+        internal static readonly TimeSpan MaximumBulkIdleTimeout = TimeSpan.FromMinutes(5);
+        internal static readonly TimeSpan BulkCompletedTransferRetention = TimeSpan.FromMinutes(2);
+    }
+}
