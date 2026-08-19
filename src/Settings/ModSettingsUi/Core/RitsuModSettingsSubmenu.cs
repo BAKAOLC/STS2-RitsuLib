@@ -4169,14 +4169,16 @@ namespace STS2RitsuLib.Settings
                 if (string.IsNullOrWhiteSpace(path))
                     return null;
 
-                if (ModImageTextureCache.TryGetValue(path, out var cached))
+                if (ModImageTextureCache.TryGetValue(path, out var cached) && IsTextureUsable(cached))
                     return cached;
+
+                ModImageTextureCache.Remove(path);
 
                 Texture2D? texture = null;
                 try
                 {
                     if (ResourceLoader.Exists(path))
-                        texture = PreloadManager.Cache.GetAsset<Texture2D>(path);
+                        texture = ResourceLoader.Load<Texture2D>(path, null, ResourceLoader.CacheMode.Ignore);
                 }
                 catch (Exception ex)
                 {
@@ -4186,6 +4188,21 @@ namespace STS2RitsuLib.Settings
 
                 ModImageTextureCache[path] = texture;
                 return texture;
+            }
+
+            private static bool IsTextureUsable(Texture2D? texture)
+            {
+                if (texture == null)
+                    return false;
+
+                try
+                {
+                    return GodotObject.IsInstanceValid(texture);
+                }
+                catch (ObjectDisposedException)
+                {
+                    return false;
+                }
             }
 
             private static StyleBoxFlat CreateModImageFrameStyle()
@@ -4414,11 +4431,8 @@ namespace STS2RitsuLib.Settings
                 {
                     DrawStyleBox(CreateModImageFrameStyle(), rect);
                     var inner = rect.Grow(-4f);
-                    if (_texture != null)
-                    {
-                        DrawTextureRect(_texture, FitTextureRect(_texture, inner), false);
+                    if (TryDrawTexture(_texture, inner))
                         return;
-                    }
 
                     var text = ResolvePlaceholderInitial(info.Name, info.ModId);
                     var font = RitsuShellTheme.Current.Font.BodyBold;
@@ -4430,6 +4444,22 @@ namespace STS2RitsuLib.Settings
                         font.GetAscent(fontSize));
                     DrawString(font, pos, text, HorizontalAlignment.Left, inner.Size.X, fontSize,
                         RitsuShellTheme.Current.Text.HoverHighlight);
+                }
+
+                private bool TryDrawTexture(Texture2D? texture, Rect2 bounds)
+                {
+                    if (texture == null || !IsTextureUsable(texture))
+                        return false;
+
+                    try
+                    {
+                        DrawTextureRect(texture, FitTextureRect(texture, bounds), false);
+                        return true;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        return false;
+                    }
                 }
 
                 private static Rect2 FitTextureRect(Texture2D texture, Rect2 bounds)
