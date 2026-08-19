@@ -14,6 +14,8 @@ namespace STS2RitsuLib.Telemetry
             Timeout = TimeSpan.FromSeconds(60),
         };
 
+        private readonly Uri _batchEndpoint;
+
         /// <summary>
         ///     <para xml:lang="en">Creates a PostHog adapter for a fixed host and project API key.</para>
         ///     <para xml:lang="zh-CN">使用固定主机地址和项目 API 密钥创建 PostHog 适配器。</para>
@@ -24,6 +26,7 @@ namespace STS2RitsuLib.Telemetry
             Host = new(host.TrimEnd('/'), UriKind.Absolute);
             if (Host.Scheme is not ("http" or "https"))
                 throw new ArgumentException("The PostHog host must use HTTP or HTTPS.", nameof(host));
+            _batchEndpoint = new(Host, "/batch/");
 
             ArgumentException.ThrowIfNullOrWhiteSpace(projectApiKey);
             ProjectApiKey = projectApiKey;
@@ -49,7 +52,7 @@ namespace STS2RitsuLib.Telemetry
         public string AdapterId => "posthog";
 
         /// <inheritdoc />
-        public string EndpointDescription => $"{Host}/batch";
+        public string EndpointDescription => _batchEndpoint.ToString();
 
         /// <inheritdoc />
         public async ValueTask<TelemetrySendResult> SendAsync(
@@ -74,7 +77,7 @@ namespace STS2RitsuLib.Telemetry
             try
             {
                 using var response = await Client.PostAsync(
-                    new Uri(Host, "/batch/"),
+                    _batchEndpoint,
                     new StringContent(body, Encoding.UTF8, "application/json"),
                     cancellationToken);
 

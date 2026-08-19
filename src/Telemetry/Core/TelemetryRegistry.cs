@@ -278,7 +278,7 @@ namespace STS2RitsuLib.Telemetry
                             .Select(subscription => subscription.Trim())
                             .Distinct(StringComparer.OrdinalIgnoreCase),
                     ],
-                    RunHistoryCaptureFilter = request.RunHistoryCaptureFilter,
+                    CaptureFilter = request.CaptureFilter,
                 });
             }
 

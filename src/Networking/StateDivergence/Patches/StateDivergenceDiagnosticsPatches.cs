@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Telemetry.Diagnostics;
 
 namespace STS2RitsuLib.Networking.StateDivergence.Patches
 {
@@ -123,6 +124,10 @@ namespace STS2RitsuLib.Networking.StateDivergence.Patches
                     BundleError = bundleError,
                 };
                 StateDivergenceDiagnosticsReports.Store(report, logReport, bundlePath, bundleError);
+                StateDivergenceTelemetryCollector.CaptureForAuthorizedApplicants(
+                    logReport,
+                    bundlePath,
+                    "LogStateDivergence");
             }
             catch (Exception ex)
             {
