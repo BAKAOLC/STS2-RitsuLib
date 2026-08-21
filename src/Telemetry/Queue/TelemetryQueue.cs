@@ -7,6 +7,7 @@ namespace STS2RitsuLib.Telemetry
         private const int MaxEventsPerApplicant = 2000;
         private const int MaxEventsPerFlush = 1000;
         private static readonly Lock Sync = new();
+
         private static readonly Dictionary<string, TaskCompletionSource> ActiveFlushes =
             new(StringComparer.OrdinalIgnoreCase);
 

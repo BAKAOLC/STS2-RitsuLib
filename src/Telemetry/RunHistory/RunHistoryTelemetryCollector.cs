@@ -271,6 +271,5 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                     TelemetryQueue.FlushApplicantAsync(applicantId),
                     "flush_applicant_after_run_history");
         }
-
     }
 }

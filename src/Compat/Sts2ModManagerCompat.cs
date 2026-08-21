@@ -305,7 +305,7 @@ namespace STS2RitsuLib.Compat
             ArgumentNullException.ThrowIfNull(mod);
             try
             {
-                if (ReadWorkshopItemId(mod) is { } workshopItemId && workshopItemId > 0)
+                if (ReadWorkshopItemId(mod) is > 0 and var workshopItemId)
                     return workshopItemId;
 
                 if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromPath(ReadPath(mod), out var pathItemId) &&

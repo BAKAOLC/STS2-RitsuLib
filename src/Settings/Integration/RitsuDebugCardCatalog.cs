@@ -12,6 +12,7 @@ using STS2RitsuLib.Ui.Catalog;
 using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
@@ -680,7 +681,8 @@ namespace STS2RitsuLib.Settings
             if (!IsInsideTree())
                 return;
             var revision = ++_searchRevision;
-            await ToSignal(GetTree().CreateTimer(SearchDelaySeconds), SceneTreeTimer.SignalName.Timeout);
+            await ToSignal(GetTree().CreateTimer(SearchDelaySeconds), SceneTreeTimer.SignalName.Timeout)
+                .AsRitsuAwaitable();
             if (IsInsideTree() && revision == _searchRevision)
                 ApplyFilter();
         }
