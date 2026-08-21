@@ -84,8 +84,8 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
                         !TelemetryConsentStore.IsRequestGranted(applicant, request))
                         continue;
 
-                    new TelemetryClient(applicant.ApplicantId).CaptureException(exception, properties);
-                    capturedApplicants.Add(applicant.ApplicantId);
+                    if (new TelemetryClient(applicant.ApplicantId).TryCaptureException(exception, properties))
+                        capturedApplicants.Add(applicant.ApplicantId);
                 }
 
                 RitsuLibFramework.Logger.Debug(

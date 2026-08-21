@@ -123,6 +123,12 @@ namespace STS2RitsuLib.Networking.StateDivergence
 
         internal static byte[] BuildSanitizedSubmissionBundle(string sourcePath)
         {
+            lock (BundleWriteLock)
+                return BuildSanitizedSubmissionBundleCore(sourcePath);
+        }
+
+        private static byte[] BuildSanitizedSubmissionBundleCore(string sourcePath)
+        {
             using var sourceArchive = ZipFile.OpenRead(sourcePath);
             ValidateBundleEntries(sourceArchive, null);
 

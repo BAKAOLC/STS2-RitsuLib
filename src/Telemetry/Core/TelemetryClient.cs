@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using STS2RitsuLib.Telemetry.Diagnostics;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Telemetry
 {
@@ -34,17 +35,16 @@ namespace STS2RitsuLib.Telemetry
             Exception exception,
             IReadOnlyDictionary<string, object?>? properties = null)
         {
-            ArgumentNullException.ThrowIfNull(exception);
-
-            var payload = DiagnosticsTelemetryCollector.BuildExceptionPayload(exception);
-            CapturePayload("exception", "diagnostics", payload, properties);
+            TryCaptureException(exception, properties);
         }
 
         internal bool TryCapturePayload(
             string eventName,
             string requestId,
             JsonNode payload,
-            IReadOnlyDictionary<string, object?>? properties = null)
+            IReadOnlyDictionary<string, object?>? properties = null,
+            TelemetryCaptureContext? captureContext = null,
+            bool filterAlreadyApplied = false)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
             ArgumentException.ThrowIfNullOrWhiteSpace(requestId);
@@ -63,6 +63,15 @@ namespace STS2RitsuLib.Telemetry
                     $"[Telemetry] Dropped event '{eventName}' for applicant '{ApplicantId}': request '{requestId}' is not authorized.");
                 return false;
             }
+
+            captureContext ??= new(
+                eventName,
+                requestId,
+                request.Category,
+                ResolveCaptureSource(properties));
+            if (!filterAlreadyApplied &&
+                !TelemetryCaptureFilter.ShouldCapture(request, captureContext.Value, applicant.ApplicantId))
+                return false;
 
             try
             {
@@ -84,6 +93,112 @@ namespace STS2RitsuLib.Telemetry
                     $"[Telemetry] Capture failed for event '{eventName}' and applicant '{ApplicantId}': {ex.Message}");
                 return false;
             }
+        }
+
+        internal async Task<bool> TryCapturePayloadAsync(
+            string eventName,
+            string requestId,
+            JsonNode payload,
+            IReadOnlyDictionary<string, object?>? properties = null,
+            TelemetryCaptureContext? captureContext = null,
+            bool filterAlreadyApplied = false,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(requestId);
+            ArgumentNullException.ThrowIfNull(payload);
+
+            if (!TryResolveRequest(requestId, out var applicant, out var request))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Dropped event '{eventName}' for applicant '{ApplicantId}': request '{requestId}' is not registered.");
+                return false;
+            }
+
+            if (!TelemetryConsentStore.IsRequestGranted(applicant, request))
+            {
+                RitsuLibFramework.Logger.Debug(
+                    $"[Telemetry] Dropped event '{eventName}' for applicant '{ApplicantId}': request '{requestId}' is not authorized.");
+                return false;
+            }
+
+            captureContext ??= new(
+                eventName,
+                requestId,
+                request.Category,
+                ResolveCaptureSource(properties));
+            if (!filterAlreadyApplied &&
+                !TelemetryCaptureFilter.ShouldCapture(request, captureContext.Value, applicant.ApplicantId))
+                return false;
+
+            try
+            {
+                TelemetryEnvelope? envelope = null;
+                await RitsuMainThread.InvokeAsync(
+                        () => envelope = TelemetryEnvelopeFactory.Create(
+                            applicant,
+                            request,
+                            eventName,
+                            payload,
+                            properties),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                await TelemetryQueue.EnqueueAsync(envelope!, cancellationToken).ConfigureAwait(false);
+                await TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId, cancellationToken)
+                    .ConfigureAwait(false);
+                return true;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[Telemetry] Async capture failed for event '{eventName}' and applicant '{ApplicantId}': {ex.Message}");
+                return false;
+            }
+        }
+
+        internal bool TryCaptureException(
+            Exception exception,
+            IReadOnlyDictionary<string, object?>? properties = null)
+        {
+            ArgumentNullException.ThrowIfNull(exception);
+
+            const string eventName = "exception";
+            const string requestId = "diagnostics";
+            if (!TryResolveRequest(requestId, out var applicant, out var request) ||
+                !TelemetryConsentStore.IsRequestGranted(applicant, request))
+                return false;
+
+            var context = new TelemetryCaptureContext(
+                eventName,
+                requestId,
+                request.Category,
+                ResolveCaptureSource(properties),
+                exception);
+            if (!TelemetryCaptureFilter.ShouldCapture(request, context, applicant.ApplicantId))
+                return false;
+
+            var payload = DiagnosticsTelemetryCollector.BuildExceptionPayload(exception);
+            return TryCapturePayload(
+                eventName,
+                requestId,
+                payload,
+                properties,
+                context,
+                true);
+        }
+
+        private static string ResolveCaptureSource(IReadOnlyDictionary<string, object?>? properties)
+        {
+            return properties != null &&
+                   properties.TryGetValue("capture_source", out var value) &&
+                   value is string source &&
+                   !string.IsNullOrWhiteSpace(source)
+                ? source
+                : "applicant";
         }
 
         private bool TryResolveRequest(

@@ -430,6 +430,14 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (!shouldRelay)
                 return false;
 
+            var canonicalPayload = WriteMessagePacket(
+                packet.DescriptorOpcode,
+                context.SenderNetId,
+                RitsuLibSidecarSyncMessageRoute.Direct,
+                packet.LocationTargeted,
+                packet.Location,
+                packet.Payload);
+
             if (failurePolicy == RitsuLibSidecarSyncFailurePolicy.Required &&
                 !RitsuLibSidecarSyncMessages.CanSendToAllTargetPeers(host, context.SenderNetId, scope))
             {
@@ -442,7 +450,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (!TryBroadcastToPeers(
                     host,
                     MessageOpcode,
-                    context.Payload.Span,
+                    canonicalPayload,
                     context.SenderNetId,
                     scope,
                     context.TransferMode,
@@ -456,19 +464,12 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return suppressAfterRequiredFailure;
             }
 
-            var localPayload = WriteMessagePacket(
-                packet.DescriptorOpcode,
-                packet.OriginalSenderNetId,
-                RitsuLibSidecarSyncMessageRoute.Direct,
-                packet.LocationTargeted,
-                packet.Location,
-                packet.Payload);
             var localEnvelope = new RitsuLibSidecarEnvelope.ParsedEnvelope(
                 context.Envelope.WireFormatVersion,
                 context.Envelope.Flags,
                 context.Envelope.Opcode,
                 context.Envelope.HeaderExtension,
-                localPayload);
+                canonicalPayload);
             localOnlyContext = new(
                 context.SenderNetId,
                 context.TransferMode,

@@ -14,7 +14,8 @@ namespace STS2RitsuLib.Telemetry.RunHistory
         {
             var mods = new JsonArray();
             foreach (var mod in Sts2ModManagerCompat.BuildModInventoryEntries())
-                mods.Add(new JsonObject
+            {
+                var entry = new JsonObject
                 {
                     ["id"] = mod.Id,
                     ["name"] = mod.Name,
@@ -26,7 +27,11 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                     ["assembly_version"] = mod.AssemblyVersion,
                     ["error_count"] = mod.Errors.Count,
                     ["errors"] = BuildModErrors(mod.Errors),
-                });
+                };
+                if (mod.WorkshopItemId.HasValue)
+                    entry["workshop_id"] = mod.WorkshopItemId.Value;
+                mods.Add(entry);
+            }
 
             return mods;
         }
@@ -183,6 +188,26 @@ namespace STS2RitsuLib.Telemetry.RunHistory
 
         internal static void CaptureEndedRun(RunEndedEvent evt)
         {
+            var context = new TelemetryCaptureContext(
+                "run_history.completed",
+                "run_history",
+                TelemetryDataCategory.RunHistory,
+                "run_ended",
+                evt);
+            var applicantIds = new List<string>();
+            foreach (var applicant in TelemetryRegistry.GetApplicants())
+            {
+                if (!TelemetryRegistry.TryGetRequest(applicant, "run_history", out var request) ||
+                    !TelemetryConsentStore.IsRequestGranted(applicant, request) ||
+                    !TelemetryCaptureFilter.ShouldCapture(request, context, applicant.ApplicantId))
+                    continue;
+
+                applicantIds.Add(applicant.ApplicantId);
+            }
+
+            if (applicantIds.Count == 0)
+                return;
+
             JsonNode? runHistory;
             try
             {
@@ -204,6 +229,7 @@ namespace STS2RitsuLib.Telemetry.RunHistory
 
             var properties = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
             {
+                ["capture_source"] = "run_ended",
                 ["is_victory"] = evt.IsVictory,
                 ["is_abandoned"] = evt.IsAbandoned,
                 ["occurred_at_utc"] = evt.OccurredAtUtc.ToString("O"),
@@ -219,19 +245,23 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                     .Select(player => player.CharacterId?.ToString() ?? "<unknown>")
                     .ToArray(),
             };
+            var payload = new JsonObject
+            {
+                ["run_history"] = runHistory,
+            };
 
             var capturedApplicants = new List<string>();
-            foreach (var applicant in TelemetryRegistry.GetApplicants())
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var applicantId in applicantIds)
             {
-                if (!TelemetryRegistry.TryGetRequest(applicant, "run_history", out var request) ||
-                    !TelemetryConsentStore.IsRequestGranted(applicant, request))
-                    continue;
-
-                if (!ShouldCaptureForRequest(request, evt, applicant.ApplicantId))
-                    continue;
-
-                CaptureVanillaRunHistory(applicant.ApplicantId, runHistory, null, properties);
-                capturedApplicants.Add(applicant.ApplicantId);
+                if (new TelemetryClient(applicantId).TryCapturePayload(
+                        "run_history.completed",
+                        "run_history",
+                        payload,
+                        properties,
+                        context,
+                        true))
+                    capturedApplicants.Add(applicantId);
             }
 
             RitsuLibFramework.Logger.Info(
@@ -242,24 +272,5 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                     "flush_applicant_after_run_history");
         }
 
-        private static bool ShouldCaptureForRequest(
-            TelemetryRequest request,
-            RunEndedEvent evt,
-            string applicantId)
-        {
-            if (request.RunHistoryCaptureFilter == null)
-                return true;
-
-            try
-            {
-                return request.RunHistoryCaptureFilter(evt);
-            }
-            catch (Exception ex)
-            {
-                RitsuLibFramework.Logger.Warn(
-                    $"[Telemetry] Run-history capture filter failed for applicant '{applicantId}': {ex.Message}");
-                return false;
-            }
-        }
     }
 }

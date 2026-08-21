@@ -597,7 +597,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 ? T("value.noVersion", "No version")
                 : mod.Version;
             var id = string.IsNullOrWhiteSpace(mod.Id) ? mod.Key : mod.Id;
-            return "#" + (mod.Index + 1) + "  " + id + "  version=" + version;
+            var workshop = mod.WorkshopItemId.HasValue ? "  workshop=" + mod.WorkshopItemId.Value : "";
+            return "#" + (mod.Index + 1) + "  " + id + "  version=" + version + workshop;
         }
 
         private static string FormatContentModLabel(ContentModInventoryEntry mod)
@@ -615,7 +616,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 ? T("value.noVersion", "No version")
                 : mod.Version;
             var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : "  source=" + mod.Source;
-            return "#" + (mod.Index + 1) + "  " + mod.Id + "  version=" + version + source;
+            var workshop = mod.WorkshopItemId.HasValue ? "  workshop=" + mod.WorkshopItemId.Value : "";
+            return "#" + (mod.Index + 1) + "  " + mod.Id + "  version=" + version + source + workshop;
         }
 
         private static IReadOnlyDictionary<string, ContentModInventoryEntry> BuildContentModIdentityMap(

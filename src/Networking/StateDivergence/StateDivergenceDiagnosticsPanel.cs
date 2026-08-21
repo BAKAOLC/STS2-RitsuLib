@@ -884,8 +884,9 @@ namespace STS2RitsuLib.Networking.StateDivergence
                 ? T("value.dependency", "dependency")
                 : T("value.content", "content");
             var enabled = mod.IsEnabled ? T("value.enabled", "enabled") : T("value.disabled", "disabled");
+            var workshop = mod.WorkshopItemId.HasValue ? " workshop=" + mod.WorkshopItemId.Value : "";
             return
-                $"#{mod.Index + 1:00} [{role}, {enabled}] {name} version={version} source={mod.Source}";
+                $"#{mod.Index + 1:00} [{role}, {enabled}] {name} version={version} source={mod.Source}{workshop}";
         }
 
         private static string FormatLoadedModInventoryLine(ContentModInventoryEntry mod)

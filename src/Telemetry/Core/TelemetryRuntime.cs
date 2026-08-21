@@ -109,14 +109,14 @@ namespace STS2RitsuLib.Telemetry
                 applicant,
                 "basic_usage",
                 "session_start",
-                snapshot.BuildSessionStartPayload(),
-                snapshot.BuildSessionStartProperties());
+                snapshot.BuildSessionStartPayload,
+                snapshot.BuildSessionStartProperties);
             TryReplayStartupEvent(
                 applicant,
                 "mod_inventory",
                 "mod_inventory",
-                snapshot.BuildModInventoryPayload(),
-                snapshot.BuildModInventoryProperties());
+                snapshot.BuildModInventoryPayload,
+                snapshot.BuildModInventoryProperties);
         }
 
         /// <summary>
@@ -175,13 +175,21 @@ namespace STS2RitsuLib.Telemetry
             TelemetryApplicant applicant,
             string requestId,
             string eventName,
-            JsonNode payload,
-            IReadOnlyDictionary<string, object?>? properties)
+            Func<JsonNode> buildPayload,
+            Func<IReadOnlyDictionary<string, object?>?> buildProperties)
         {
             if (!TelemetryRegistry.TryGetRequest(applicant, requestId, out var request))
                 return;
 
             if (!TelemetryConsentStore.IsRequestGranted(applicant, request))
+                return;
+
+            var context = new TelemetryCaptureContext(
+                eventName,
+                requestId,
+                request.Category,
+                "startup_snapshot");
+            if (!TelemetryCaptureFilter.ShouldCapture(request, context, applicant.ApplicantId))
                 return;
 
             var deliveryKey = BuildStartupDeliveryKey(applicant.ApplicantId, requestId, eventName);
@@ -194,7 +202,13 @@ namespace STS2RitsuLib.Telemetry
             RitsuLibFramework.Logger.Debug(
                 $"[Telemetry] Replaying startup event '{eventName}' to applicant '{applicant.ApplicantId}'.");
             var client = new TelemetryClient(applicant.ApplicantId);
-            if (client.TryCapturePayload(eventName, requestId, payload, properties))
+            if (client.TryCapturePayload(
+                    eventName,
+                    requestId,
+                    buildPayload(),
+                    buildProperties(),
+                    context,
+                    true))
                 return;
 
             lock (Sync)
@@ -249,6 +263,7 @@ namespace STS2RitsuLib.Telemetry
             {
                 return new(StringComparer.OrdinalIgnoreCase)
                 {
+                    ["capture_source"] = "startup_snapshot",
                     ["startup_snapshot_at_utc"] = CapturedAtUtc.ToString("O"),
                     ["registered_mod_count"] = CountMods(),
                     ["loaded_mod_count"] = CountMods("Loaded"),
@@ -287,6 +302,7 @@ namespace STS2RitsuLib.Telemetry
             {
                 return new(StringComparer.OrdinalIgnoreCase)
                 {
+                    ["capture_source"] = "startup_snapshot",
                     ["startup_snapshot_at_utc"] = CapturedAtUtc.ToString("O"),
                     ["registered_mod_count"] = CountMods(),
                     ["loaded_mod_count"] = CountMods("Loaded"),

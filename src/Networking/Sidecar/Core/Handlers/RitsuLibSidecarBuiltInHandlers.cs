@@ -5,15 +5,6 @@ namespace STS2RitsuLib.Networking.Sidecar
 {
     internal static class RitsuLibSidecarBuiltInHandlers
     {
-        private const RitsuLibSidecarPeerFeatures SupportedFeatures =
-            RitsuLibSidecarPeerFeatures.ChunkedStreams |
-            RitsuLibSidecarPeerFeatures.ManagedNetActions |
-            RitsuLibSidecarPeerFeatures.BrotliPayloadCompression |
-            RitsuLibSidecarPeerFeatures.ModelRightClickV2 |
-            RitsuLibSidecarPeerFeatures.DeveloperActionsV1 |
-            RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1 |
-            RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1;
-
         private static readonly RitsuLibSidecarChunkReassembly Chunks = new();
 
         internal static void Register()
@@ -145,7 +136,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 buf.AsSpan(),
                 selected,
                 ok,
-                SupportedFeatures);
+                RitsuLibSidecarSupportedFeatures.All);
             var rm = RunManager.Instance;
             if (ctx.IsHostIngest)
                 RitsuLibSidecarHighLevelSend.TrySendAsHostToPeer(
@@ -162,7 +153,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                     RitsuLibSidecarDeliverySemantics.StableSync);
 
             RitsuLibFramework.Logger.Debug(
-                $"[Sidecar] Handshake ack sent target={ctx.SenderNetId}, opcode={RitsuLibSidecarControlOpcodes.HandshakeAck}, payloadLen={buf.Length}, selectedWire={selected}, ok={ok}, senderFeatures={SupportedFeatures}");
+                $"[Sidecar] Handshake ack sent target={ctx.SenderNetId}, opcode={RitsuLibSidecarControlOpcodes.HandshakeAck}, payloadLen={buf.Length}, selectedWire={selected}, ok={ok}, senderFeatures={RitsuLibSidecarSupportedFeatures.All}");
         }
 
         private static void OnHandshakeAck(RitsuLibSidecarDispatchContext ctx)

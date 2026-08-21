@@ -7,7 +7,8 @@ namespace STS2RitsuLib.Telemetry
         private const int MaxEventsPerApplicant = 2000;
         private const int MaxEventsPerFlush = 1000;
         private static readonly Lock Sync = new();
-        private static readonly HashSet<string> FlushingApplicants = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, TaskCompletionSource> ActiveFlushes =
+            new(StringComparer.OrdinalIgnoreCase);
 
         internal static void Enqueue(TelemetryEnvelope envelope)
         {
@@ -37,33 +38,55 @@ namespace STS2RitsuLib.Telemetry
             }
         }
 
+        internal static Task EnqueueAsync(
+            TelemetryEnvelope envelope,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(envelope);
+            return Task.Run(() => Enqueue(envelope), cancellationToken);
+        }
+
         public static async Task FlushApplicantAsync(string applicantId, CancellationToken cancellationToken = default)
         {
             TelemetryApplicant applicant;
-
-            lock (Sync)
+            TaskCompletionSource ownedFlush;
+            while (true)
             {
-                if (!TelemetryRegistry.TryGetApplicant(applicantId, out applicant))
+                Task activeFlush;
+                lock (Sync)
                 {
-                    RitsuLibFramework.Logger.Warn($"[Telemetry] Flush skipped: unknown applicant '{applicantId}'.");
-                    return;
+                    if (!TelemetryRegistry.TryGetApplicant(applicantId, out applicant))
+                    {
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Telemetry] Flush skipped: unknown applicant '{applicantId}'.");
+                        return;
+                    }
+
+                    if (ActiveFlushes.TryGetValue(applicantId, out var active))
+                    {
+                        activeFlush = active.Task;
+                    }
+                    else
+                    {
+                        ownedFlush = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                        ActiveFlushes.Add(applicantId, ownedFlush);
+                        break;
+                    }
                 }
 
-                if (!FlushingApplicants.Add(applicantId))
-                {
-                    RitsuLibFramework.Logger.Debug(
-                        $"[Telemetry] Flush skipped for '{applicantId}': another send is already in progress.");
-                    return;
-                }
+                RitsuLibFramework.Logger.Debug(
+                    $"[Telemetry] Waiting for the active flush for '{applicantId}'.");
+                await activeFlush.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
 
             try
             {
                 while (true)
                 {
-                    var batch = await RitsuMainThread.InvokeAsync(
-                        () => PrepareBatch(applicantId, applicant),
-                        cancellationToken);
+                    var batch = await Task.Run(
+                            () => PrepareBatch(applicantId, applicant),
+                            cancellationToken)
+                        .ConfigureAwait(false);
                     if (batch.Length == 0)
                         return;
 
@@ -73,7 +96,8 @@ namespace STS2RitsuLib.Telemetry
                     TelemetrySendResult result;
                     try
                     {
-                        result = await applicant.Adapter.SendAsync(applicant, batch, cancellationToken);
+                        result = await applicant.Adapter.SendAsync(applicant, batch, cancellationToken)
+                            .ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                     {
@@ -84,9 +108,10 @@ namespace STS2RitsuLib.Telemetry
                         result = TelemetrySendResult.Fail(ex.Message);
                     }
 
-                    var shouldContinue = await RitsuMainThread.InvokeAsync(
-                        () => CommitBatchResult(applicantId, batch, result),
-                        CancellationToken.None);
+                    var shouldContinue = await Task.Run(
+                            () => CommitBatchResult(applicantId, batch, result),
+                            CancellationToken.None)
+                        .ConfigureAwait(false);
                     if (!shouldContinue)
                         return;
                 }
@@ -97,16 +122,21 @@ namespace STS2RitsuLib.Telemetry
             }
             catch (Exception ex)
             {
-                await RitsuMainThread.InvokeAsync(
-                    () => RecordFlushFailure(applicantId, ex),
-                    CancellationToken.None);
+                await Task.Run(
+                        () => RecordFlushFailure(applicantId, ex),
+                        CancellationToken.None)
+                    .ConfigureAwait(false);
             }
             finally
             {
                 lock (Sync)
                 {
-                    FlushingApplicants.Remove(applicantId);
+                    if (ActiveFlushes.TryGetValue(applicantId, out var active) &&
+                        ReferenceEquals(active, ownedFlush))
+                        ActiveFlushes.Remove(applicantId);
                 }
+
+                ownedFlush.TrySetResult();
             }
         }
 

@@ -181,7 +181,7 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static MethodInfo? ResolveCardPileCmdAddMethod()
         {
-#if STS2_AT_LEAST_0_110_0
+#if STS2_AT_LEAST_0_109_0
             return AccessTools.Method(typeof(CardPileCmd), nameof(CardPileCmd.Add),
             [
                 typeof(IEnumerable<CardModel>), typeof(CardPile), typeof(CardPilePosition),

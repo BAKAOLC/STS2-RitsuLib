@@ -12,5 +12,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         public const ulong ChunkStreamReassemblyDoneOffset = 4;
         public const ulong DiagnosticRelayDumpRequestOffset = 5;
         public const ulong DiagnosticRelayDumpFanoutOffset = 6;
+        public const ulong EndpointCatalogOffset = 7;
+        public const ulong EndpointRouteSnapshotOffset = 8;
+        public const ulong EndpointRouteSnapshotAckOffset = 9;
+        public const ulong EndpointIngressOffset = 10;
+        public const ulong EndpointDeliveryOffset = 11;
     }
 }

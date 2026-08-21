@@ -305,6 +305,9 @@ components:
           type: string
         source:
           type: string
+        workshop_id:
+          type: integer
+          minimum: 1
         affects_gameplay:
           type: boolean
         assembly:

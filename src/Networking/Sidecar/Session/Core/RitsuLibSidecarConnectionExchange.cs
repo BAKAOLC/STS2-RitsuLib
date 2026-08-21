@@ -15,15 +15,6 @@ namespace STS2RitsuLib.Networking.Sidecar
     /// </summary>
     public static class RitsuLibSidecarConnectionExchange
     {
-        private const RitsuLibSidecarPeerFeatures SupportedFeatures =
-            RitsuLibSidecarPeerFeatures.ChunkedStreams |
-            RitsuLibSidecarPeerFeatures.ManagedNetActions |
-            RitsuLibSidecarPeerFeatures.BrotliPayloadCompression |
-            RitsuLibSidecarPeerFeatures.ModelRightClickV2 |
-            RitsuLibSidecarPeerFeatures.DeveloperActionsV1 |
-            RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1 |
-            RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1;
-
         private const int HelloMaxPacketAttempts = 6;
 
         private const int HelloAckTimeoutMilliseconds = 12000;
@@ -286,7 +277,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 buf.AsSpan(),
                 RitsuLibSidecarWire.CurrentWireFormatVersion,
                 RitsuLibSidecarWire.SupportedWireFormatVersionMax,
-                SupportedFeatures);
+                RitsuLibSidecarSupportedFeatures.All);
 
             var sent = netService switch
             {

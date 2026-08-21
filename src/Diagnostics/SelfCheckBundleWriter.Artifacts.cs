@@ -258,7 +258,7 @@ namespace STS2RitsuLib.Diagnostics
             var target = GetBundlePath(bundleDir, "diagnostics/mod_inventory.tsv");
             var sb = new StringBuilder();
             sb.AppendLine(
-                "scope\tid\tname\tversion\tstate\tsource\taffectsGameplay\tassemblyName\tassemblyVersion\terrorCount\terrors");
+                "scope\tid\tname\tversion\tstate\tsource\tworkshopId\taffectsGameplay\tassemblyName\tassemblyVersion\terrorCount\terrors");
 
             foreach (var mod in Sts2ModManagerCompat.BuildLoadedModInventoryEntries()
                          .OrderBy(x => x.Id, StringComparer.OrdinalIgnoreCase))
@@ -495,6 +495,7 @@ namespace STS2RitsuLib.Diagnostics
                 EscapeTsv(mod.Version),
                 EscapeTsv(mod.State),
                 EscapeTsv(mod.Source),
+                EscapeTsv(mod.WorkshopItemId?.ToString()),
                 EscapeTsv(mod.AffectsGameplay.ToString()),
                 EscapeTsv(mod.AssemblyName),
                 EscapeTsv(mod.AssemblyVersion),
