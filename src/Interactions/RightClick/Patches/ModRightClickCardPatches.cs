@@ -127,6 +127,7 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
             if (!IsPileScreenGrid(__instance))
                 return true;
 
+            var viewport = __instance.GetViewport();
             var hand = NPlayerHand.Instance;
             if (hand == null || hand.InCardPlay || NTargetManager.Instance.IsInSelection)
                 return true;
@@ -148,10 +149,11 @@ namespace STS2RitsuLib.Interactions.RightClick.Patches
                 null,
                 ModRightClickSource.CombatPileCard,
                 expectedPile);
-            if (!ModRightClickRegistry.TryDispatch(new(player, card, trigger)))
+            if (!ModRightClickInputConsumer.TryDispatchAndConsumeInput(
+                    () => ModRightClickRegistry.TryDispatch(new(player, card, trigger)),
+                    viewport.SetInputAsHandled))
                 return true;
 
-            holder.GetViewport().SetInputAsHandled();
             return false;
         }
 
