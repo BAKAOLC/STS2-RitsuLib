@@ -117,7 +117,8 @@ namespace STS2RitsuLib.Diagnostics
                 else
                 {
                     foreach (var mod in loadedMods)
-                        text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)})");
+                        text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)})" +
+                                        FormatWorkshopItemId(mod));
 
                     var commonIncompatibleMods = registeredMods
                         .Where(static mod => mod.IsCommonIncompatibleMod)
@@ -127,7 +128,8 @@ namespace STS2RitsuLib.Diagnostics
                         text.AppendLine("Common Incompatible Mods:");
                         foreach (var mod in commonIncompatibleMods)
                             text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)}) " +
-                                            $"state={mod.State} source={mod.Source}");
+                                            $"state={mod.State} source={mod.Source}" +
+                                            FormatWorkshopItemId(mod));
                     }
                 }
 
@@ -162,6 +164,11 @@ namespace STS2RitsuLib.Diagnostics
         private static string FormatVersion(Sts2ModInventoryEntry mod)
         {
             return string.IsNullOrWhiteSpace(mod.Version) ? "unknown version" : mod.Version.Trim();
+        }
+
+        private static string FormatWorkshopItemId(Sts2ModInventoryEntry mod)
+        {
+            return mod.WorkshopItemId.HasValue ? $" workshopId={mod.WorkshopItemId.Value}" : "";
         }
     }
 }

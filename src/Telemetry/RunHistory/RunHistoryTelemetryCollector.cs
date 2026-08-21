@@ -14,7 +14,8 @@ namespace STS2RitsuLib.Telemetry.RunHistory
         {
             var mods = new JsonArray();
             foreach (var mod in Sts2ModManagerCompat.BuildModInventoryEntries())
-                mods.Add(new JsonObject
+            {
+                var entry = new JsonObject
                 {
                     ["id"] = mod.Id,
                     ["name"] = mod.Name,
@@ -26,7 +27,11 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                     ["assembly_version"] = mod.AssemblyVersion,
                     ["error_count"] = mod.Errors.Count,
                     ["errors"] = BuildModErrors(mod.Errors),
-                });
+                };
+                if (mod.WorkshopItemId.HasValue)
+                    entry["workshop_id"] = mod.WorkshopItemId.Value;
+                mods.Add(entry);
+            }
 
             return mods;
         }

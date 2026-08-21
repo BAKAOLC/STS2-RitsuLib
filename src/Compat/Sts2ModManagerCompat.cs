@@ -29,6 +29,7 @@ namespace STS2RitsuLib.Compat
         private static readonly Func<Mod, IReadOnlyList<LocString>> ReadErrors = CreateModErrorsAccessor();
         private static readonly Func<Mod, string> ReadSource = CreateModSourceAccessor();
         private static readonly Func<Mod, string?> ReadPath = CreateModPathAccessor();
+        private static readonly Func<Mod, ulong?> ReadWorkshopItemId = CreateModWorkshopItemIdAccessor();
         private static readonly Func<Mod, int, string> ReadLoadState = CreateLoadStateAccessor();
 
         private static readonly Func<ModManifest, string?> ReadManifestId =
@@ -304,11 +305,16 @@ namespace STS2RitsuLib.Compat
             ArgumentNullException.ThrowIfNull(mod);
             try
             {
-                if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromPath(ReadPath(mod), out var pathItemId))
+                if (ReadWorkshopItemId(mod) is { } workshopItemId && workshopItemId > 0)
+                    return workshopItemId;
+
+                if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromPath(ReadPath(mod), out var pathItemId) &&
+                    pathItemId > 0)
                     return pathItemId;
 
                 foreach (var assembly in ReadAssemblies(mod))
-                    if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromAssembly(assembly, out var assemblyItemId))
+                    if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromAssembly(assembly, out var assemblyItemId) &&
+                        assemblyItemId > 0)
                         return assemblyItemId;
             }
             catch (Exception ex)
@@ -378,7 +384,8 @@ namespace STS2RitsuLib.Compat
                     assemblyName?.Name,
                     assemblyName?.Version?.ToString(),
                     errors,
-                    CommonIncompatibleModRegistry.IsMatch(assemblies));
+                    CommonIncompatibleModRegistry.IsMatch(assemblies),
+                    TryGetWorkshopItemId(mod));
             }
             catch (Exception ex)
             {
@@ -639,6 +646,12 @@ namespace STS2RitsuLib.Compat
             return mod => getter?.Invoke(mod) as string;
         }
 
+        private static Func<Mod, ulong?> CreateModWorkshopItemIdAccessor()
+        {
+            var getter = CreateUntypedMemberGetter(typeof(Mod), "workshopId");
+            return mod => getter?.Invoke(mod) as ulong?;
+        }
+
         private static Func<Mod, int, string> CreateLoadStateAccessor()
         {
             if (typeof(Mod).GetField("state", InstanceMemberFlags) != null)
@@ -754,7 +767,8 @@ namespace STS2RitsuLib.Compat
         string? AssemblyName,
         string? AssemblyVersion,
         IReadOnlyList<LocString> Errors,
-        bool IsCommonIncompatibleMod);
+        bool IsCommonIncompatibleMod,
+        ulong? WorkshopItemId);
 
     internal sealed record Sts2LoadedModAssemblyEntry(
         string Id,

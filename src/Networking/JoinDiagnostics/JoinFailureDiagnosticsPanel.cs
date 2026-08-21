@@ -1212,7 +1212,8 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
 
         private static string FormatModLine(JoinDiagnosticsModEntry mod)
         {
-            return FormatModName(mod) + " version=" + FormatVersion(mod.Version);
+            var workshop = mod.WorkshopItemId.HasValue ? " workshop=" + mod.WorkshopItemId.Value : "";
+            return FormatModName(mod) + " version=" + FormatVersion(mod.Version) + workshop;
         }
 
         private static string FormatModName(JoinDiagnosticsModEntry mod)
@@ -1228,21 +1229,24 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 ? mod.Id
                 : mod.Name + " (" + mod.Id + ")";
             var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : " source=" + mod.Source;
-            return $"#{mod.Index + 1:00} {name} version={FormatVersion(mod.Version)}{source}";
+            var workshop = mod.WorkshopItemId.HasValue ? " workshop=" + mod.WorkshopItemId.Value : "";
+            return $"#{mod.Index + 1:00} {name} version={FormatVersion(mod.Version)}{source}{workshop}";
         }
 
         private static string FormatContentModInventoryLine(ContentModInventoryEntry mod)
         {
             var role = mod.IsDependency ? " dep" : "";
             var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : " source=" + mod.Source;
+            var workshop = mod.WorkshopItemId.HasValue ? " workshop=" + mod.WorkshopItemId.Value : "";
             return
-                $"#{mod.Index + 1:00}{role} {FormatContentModName(mod)} version={FormatVersion(mod.Version)}{source}";
+                $"#{mod.Index + 1:00}{role} {FormatContentModName(mod)} version={FormatVersion(mod.Version)}{source}{workshop}";
         }
 
         private static string FormatContentModLine(ContentModInventoryEntry mod)
         {
             var source = string.IsNullOrWhiteSpace(mod.Source) ? "" : " source=" + mod.Source;
-            return FormatContentModName(mod) + " version=" + FormatVersion(mod.Version) + source;
+            var workshop = mod.WorkshopItemId.HasValue ? " workshop=" + mod.WorkshopItemId.Value : "";
+            return FormatContentModName(mod) + " version=" + FormatVersion(mod.Version) + source + workshop;
         }
 
         private static string FormatContentModName(ContentModInventoryEntry mod)
