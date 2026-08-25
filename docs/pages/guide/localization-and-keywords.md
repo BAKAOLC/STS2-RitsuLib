@@ -501,6 +501,9 @@ var title = new LocString(tableId, "settings.enabled");
 Pass a custom stem to `RegisterI18NLocTableBridge(...)` and `GetI18NLocTableId(...)` when you need multiple virtual
 tables.
 
+The bridge does not insert entries into the game's localization-table collection. RitsuLib refreshes its own table
+snapshot when `I18N.Changed` fires and unregisters it automatically when the `I18N` instance is disposed.
+
 :::
 
 ## I18N{lang="zh-CN"}
@@ -540,5 +543,8 @@ var title = new LocString(tableId, "settings.enabled");
 ```
 
 需要多个虚拟表时，在 `RegisterI18NLocTableBridge(...)` 和 `GetI18NLocTableId(...)` 里传入自定义 stem。
+
+桥接不会向游戏的本地化表集合插入条目。`I18N.Changed` 触发时，RitsuLib 会刷新自身持有的表快照；`I18N`
+实例释放时，该虚拟表会自动注销。
 
 :::

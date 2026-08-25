@@ -17,8 +17,10 @@ namespace STS2RitsuLib.Localization
     /// </summary>
     public static class I18NLocTableBridge
     {
-        private static readonly ConcurrentDictionary<string, I18NLocTable> LocTables =
+        private static readonly ConcurrentDictionary<string, I18NLocTableRegistration> LocTables =
             new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly Lock RegistrationLock = new();
 
         /// <summary>
         ///     <para xml:lang="en">Builds a virtual localization-table ID in the standard <c>MODID_I18N_STEM</c> form.</para>
@@ -46,6 +48,20 @@ namespace STS2RitsuLib.Localization
         ///         <see langword="false" /> 时为 <see langword="false" />。
         ///     </para>
         /// </returns>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         The bridge owns a localization snapshot outside the game's table collection. It refreshes that
+        ///         snapshot after <see cref="I18N.Changed" /> and unregisters it when <paramref name="i18N" /> is disposed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         桥接在游戏表集合之外持有本地化快照；<see cref="I18N.Changed" /> 触发后会刷新快照，且
+        ///         <paramref name="i18N" /> 释放时会自动注销。
+        ///     </para>
+        /// </remarks>
+        /// <exception cref="ObjectDisposedException">
+        ///     <para xml:lang="en"><paramref name="i18N" /> has already been disposed.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="i18N" /> 已被释放。</para>
+        /// </exception>
         public static bool TryRegister(string modId, I18N i18N, string stem = "DEFAULT", bool replaceExisting = false)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -53,13 +69,25 @@ namespace STS2RitsuLib.Localization
             ArgumentNullException.ThrowIfNull(i18N);
 
             var tableId = GetTableId(modId, stem);
+            I18NLocTableRegistration? previous;
+            I18NLocTableRegistration registration;
 
-            var locTable = new I18NLocTable(tableId, i18N);
-            if (!replaceExisting)
-                return LocTables.TryAdd(tableId, locTable);
+            lock (RegistrationLock)
+            {
+                if (LocTables.TryGetValue(tableId, out previous) && !replaceExisting)
+                    return false;
 
-            LocTables[tableId] = locTable;
-            return true;
+                registration = new(tableId, i18N);
+                LocTables[tableId] = registration;
+            }
+
+            previous?.Dispose();
+
+            if (!i18N.IsDisposed)
+                return true;
+
+            RemoveIfCurrent(tableId, registration);
+            throw new ObjectDisposedException(nameof(i18N));
         }
 
         /// <summary>
@@ -76,32 +104,44 @@ namespace STS2RitsuLib.Localization
             ArgumentException.ThrowIfNullOrWhiteSpace(stem);
 
             var tableId = GetTableId(modId, stem);
-            return LocTables.TryRemove(tableId, out _);
-        }
+            I18NLocTableRegistration? registration;
 
-        internal static bool TryGet(string tableId, out I18N i18N)
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(tableId);
-            if (LocTables.TryGetValue(tableId, out var locTable))
+            lock (RegistrationLock)
             {
-                i18N = locTable.I18N;
-                return true;
+                if (!LocTables.TryRemove(tableId, out registration))
+                    return false;
             }
 
-            i18N = null!;
-            return false;
+            registration.Dispose();
+            return true;
         }
 
         internal static bool TryGetLocTable(string tableId, out LocTable locTable)
         {
-            if (!LocTables.TryGetValue(tableId, out var i18NLocTable))
+            lock (RegistrationLock)
             {
-                locTable = null!;
-                return false;
+                if (!LocTables.TryGetValue(tableId, out var registration))
+                {
+                    locTable = null!;
+                    return false;
+                }
+
+                locTable = registration.CurrentTable;
+                return true;
+            }
+        }
+
+        internal static void RemoveIfCurrent(string tableId, I18NLocTableRegistration registration)
+        {
+            I18NLocTableRegistration? removed = null;
+
+            lock (RegistrationLock)
+            {
+                if (LocTables.TryGetValue(tableId, out var current) && ReferenceEquals(current, registration))
+                    LocTables.TryRemove(tableId, out removed);
             }
 
-            locTable = i18NLocTable;
-            return true;
+            removed?.Dispose();
         }
     }
 }
