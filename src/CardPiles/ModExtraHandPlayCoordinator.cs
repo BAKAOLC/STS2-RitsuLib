@@ -20,11 +20,13 @@ namespace STS2RitsuLib.CardPiles
     /// </summary>
     /// <remarks>
     ///     <para xml:lang="en">
-    ///         A card is temporarily moved to the player's hand while targeting is active. Canceling targeting
-    ///         or the queued action restores the card to its original pile and position.
+    ///         The card remains in its extra-hand pile while targeting and queued. The vanilla manual-play checks
+    ///         treat that pile as hand-compatible only inside the patched play path. Canceling targeting or the
+    ///         queued action returns the same card node to the extra hand without changing model ownership.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         目标选择期间会将卡牌暂时移入玩家手牌。取消目标选择或已排队动作时，会将卡牌恢复到原牌堆及原位置。
+    ///         目标选择及排队期间，卡牌会保留在额外手牌堆中。仅在修补后的出牌路径内，原版手动出牌检查会将该牌堆
+    ///         视为与手牌兼容。取消目标选择或已排队动作时，同一个卡牌节点会退回额外手牌，且不改变模型归属。
     ///     </para>
     /// </remarks>
     internal static class ModExtraHandPlayCoordinator
@@ -82,20 +84,16 @@ namespace STS2RitsuLib.CardPiles
                 return false;
 
             var hand = NPlayerHand.Instance;
-            var handPile = PileType.Hand.GetPile(card.Owner);
-            if (hand == null || handPile == null)
+            if (hand == null)
                 return false;
 
-            var origin = new PlayOrigin(container, holder, card, sourcePile, handPile,
-                Array.IndexOf([.. sourcePile.Cards], card));
+            var origin = new PlayOrigin(container, holder, card, sourcePile);
             try
             {
-                sourcePile.RemoveInternal(card, true);
-                handPile.AddInternal(card, silent: true);
                 PendingOrigins[card] = origin;
+                origin.SourceCardRemoved = removed => OnSourceCardRemoved(origin, removed);
+                sourcePile.CardRemoved += origin.SourceCardRemoved;
                 _active = origin;
-                origin.HandCardRemoved = removed => OnHandCardRemoved(origin, removed);
-                handPile.CardRemoved += origin.HandCardRemoved;
 
                 holder.Reparent(hand.CardHolderContainer);
                 StartVanillaCardPlayWithExtraHandShortcut(hand, holder);
@@ -128,7 +126,7 @@ namespace STS2RitsuLib.CardPiles
 
                 try
                 {
-                    RollBackTargeting(origin, true);
+                    RollBackTargeting(origin);
                 }
                 catch (Exception rollbackException)
                 {
@@ -177,9 +175,35 @@ namespace STS2RitsuLib.CardPiles
                         continue;
                 }
 
-                RestoreToSourcePile(origin);
                 ClearOrigin(origin);
             }
+        }
+
+        internal static PileType GetVanillaManualPlayPileType(CardPile pile)
+        {
+            var pileType = pile.Type;
+            return ModCardPileRegistry.TryGetByPileType(pileType, out var definition)
+                   && definition is
+                   {
+                       Style: ModCardPileUiStyle.ExtraHand,
+                       ExtraHand.AllowCardPlay: true,
+                   }
+                   && PendingOrigins.Values.Any(origin => ReferenceEquals(origin.SourcePile, pile))
+                ? PileType.Hand
+                : pileType;
+        }
+
+        internal static NHandCardHolder ReturnCancelledQueuedCard(
+            NPlayerHand hand,
+            NCard cardNode,
+            int index)
+        {
+            var card = cardNode.Model;
+            if (card == null || !PendingOrigins.TryGetValue(card, out var origin))
+                return hand.Add(cardNode, index);
+
+            ClearOrigin(origin);
+            return origin.Container.RestoreCancelledQueuedCard(card, cardNode);
         }
 
         internal static void RestoreCancelledAction(PlayCardAction action)
@@ -188,19 +212,13 @@ namespace STS2RitsuLib.CardPiles
             if (card == null || !PendingOrigins.TryGetValue(card, out var origin))
                 return;
 
-            NCard? cardNode = null;
             var hand = NPlayerHand.Instance;
-            var holder = hand?.GetCardHolder(card);
-            if (holder != null)
-            {
-                cardNode = holder.CardNode;
-                hand!.RemoveCardHolder(holder);
-            }
-
-            RestoreToSourcePile(origin);
+            if (hand?.GetCardHolder(card) is not NHandCardHolder holder)
+                return;
 
             ClearOrigin(origin);
-            origin.Container.RestoreCancelledQueuedCard(card, cardNode);
+            origin.Container.RestoreCancelledPlay(card, holder);
+            hand.ForceRefreshCardIndices();
         }
 
         private static void OnTargetingFinished(PlayOrigin origin, bool success)
@@ -250,38 +268,23 @@ namespace STS2RitsuLib.CardPiles
             }
         }
 
-        private static void RollBackTargeting(PlayOrigin origin, bool restoreInterruptedTransfer = false)
+        private static void RollBackTargeting(PlayOrigin origin)
         {
             if (origin.Closed)
                 return;
             if (ReferenceEquals(_active, origin))
                 _active = null;
-            RestoreToSourcePile(origin, restoreInterruptedTransfer);
 
             ClearOrigin(origin);
             origin.Container.RestoreCancelledPlay(origin.Card, origin.Holder);
             NPlayerHand.Instance?.ForceRefreshCardIndices();
         }
 
-        private static void OnHandCardRemoved(PlayOrigin origin, CardModel removed)
+        private static void OnSourceCardRemoved(PlayOrigin origin, CardModel removed)
         {
             if (!ReferenceEquals(origin.Card, removed))
                 return;
             ClearOrigin(origin);
-        }
-
-        private static void RestoreToSourcePile(PlayOrigin origin, bool restoreInterruptedTransfer = false)
-        {
-            if (origin.HandPile.Cards.Contains(origin.Card))
-                origin.HandPile.RemoveInternal(origin.Card, true);
-            else if (!restoreInterruptedTransfer)
-                return;
-
-            if (origin.SourcePile.Cards.Contains(origin.Card))
-                return;
-
-            var index = Math.Clamp(origin.SourceIndex, 0, origin.SourcePile.Cards.Count);
-            origin.SourcePile.AddInternal(origin.Card, index, true);
         }
 
         private static void ClearOrigin(PlayOrigin origin)
@@ -292,27 +295,23 @@ namespace STS2RitsuLib.CardPiles
                 return;
             origin.Closed = true;
             PendingOrigins.Remove(origin.Card);
-            if (origin.HandCardRemoved != null)
-                origin.HandPile.CardRemoved -= origin.HandCardRemoved;
-            origin.HandCardRemoved = null;
+            if (origin.SourceCardRemoved != null)
+                origin.SourcePile.CardRemoved -= origin.SourceCardRemoved;
+            origin.SourceCardRemoved = null;
         }
 
         private sealed class PlayOrigin(
             NModExtraHand container,
             NHandCardHolder holder,
             CardModel card,
-            CardPile sourcePile,
-            CardPile handPile,
-            int sourceIndex)
+            CardPile sourcePile)
         {
             public NModExtraHand Container { get; } = container;
             public NHandCardHolder Holder { get; } = holder;
             public CardModel Card { get; } = card;
             public CardPile SourcePile { get; } = sourcePile;
-            public CardPile HandPile { get; } = handPile;
-            public int SourceIndex { get; } = sourceIndex;
             public NCardPlay? CardPlay { get; set; }
-            public Action<CardModel>? HandCardRemoved { get; set; }
+            public Action<CardModel>? SourceCardRemoved { get; set; }
             public bool Closed { get; set; }
         }
     }
