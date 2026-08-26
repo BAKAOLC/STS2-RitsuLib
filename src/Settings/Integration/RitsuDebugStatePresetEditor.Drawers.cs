@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Search;
+using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
@@ -16,7 +17,7 @@ namespace STS2RitsuLib.Settings
             ShowModelPicker(
                 L("ritsulib.debugTools.statePresets.addCard", "Add card"),
                 ModelDb.AllCards,
-                static _ => null,
+                static card => card.Portrait,
                 card =>
                 {
                     if (pile.Cards.Sum(static saved => saved.Count) >=
@@ -30,9 +31,11 @@ namespace STS2RitsuLib.Settings
                     }
 
                     pile.Cards.Add(new() { CardId = card.Id.ToString() });
-                    MarkDirty();
+                    MarkDirty(true);
                     return true;
-                });
+                },
+                subtitle: card =>
+                    $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · {card.Id}");
         }
 
         private void ShowRelicPicker(RitsuDebugStatePresetInventory relics)
@@ -115,7 +118,8 @@ namespace STS2RitsuLib.Settings
             IEnumerable<TModel> source,
             Func<TModel, Texture2D?> icon,
             Func<TModel, bool> selected,
-            Func<TModel, bool>? available = null)
+            Func<TModel, bool>? available = null,
+            Func<TModel, string>? subtitle = null)
             where TModel : AbstractModel
         {
             _drawerTitle.Text = title;
@@ -172,7 +176,7 @@ namespace STS2RitsuLib.Settings
                     var captured = model;
                     flow.AddChild(CreateCollectionTile(
                         SafeTitle(captured),
-                        captured.Id.ToString(),
+                        subtitle?.Invoke(captured) ?? captured.Id.ToString(),
                         SafeTexture(() => icon(captured)),
                         () =>
                         {
@@ -188,7 +192,7 @@ namespace STS2RitsuLib.Settings
             }
         }
 
-        private void ShowCardEditor(RitsuDebugStatePresetCardPile pile, int index)
+        private void ShowCardEditor(RitsuDebugStatePresetCardPile pile, int index, bool animate = true)
         {
             if (index < 0 || index >= pile.Cards.Count)
                 return;
@@ -198,12 +202,16 @@ namespace STS2RitsuLib.Settings
 
             var actions = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             actions.AddThemeConstantOverride("separation", 6);
-            var up = CompactButton("↑", ModSettingsButtonTone.Normal, () => MoveCard(-1), 38f);
-            up.Disabled = index == 0;
-            actions.AddChild(up);
-            var down = CompactButton("↓", ModSettingsButtonTone.Normal, () => MoveCard(1), 38f);
-            down.Disabled = index == pile.Cards.Count - 1;
-            actions.AddChild(down);
+            actions.AddChild(OrderButton(
+                RitsuDebugToolsGlyph.ChevronUp,
+                L("ritsulib.debugTools.action.moveEarlier", "Move earlier"),
+                () => MoveCard(-1),
+                index == 0));
+            actions.AddChild(OrderButton(
+                RitsuDebugToolsGlyph.ChevronDown,
+                L("ritsulib.debugTools.action.moveLater", "Move later"),
+                () => MoveCard(1),
+                index == pile.Cards.Count - 1));
             actions.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.duplicateCard", "Duplicate"),
                 ModSettingsButtonTone.Normal,
@@ -386,7 +394,8 @@ namespace STS2RitsuLib.Settings
             }
 
             _cardGrid?.SetSelectedIndex(index);
-            OpenDrawer();
+            if (animate)
+                OpenDrawer();
             return;
 
             void CardChanged()
@@ -398,11 +407,28 @@ namespace STS2RitsuLib.Settings
             void MoveCard(int offset)
             {
                 var destination = index + offset;
-                if (destination < 0 || destination >= pile.Cards.Count)
+                if (!MovePresetCard(pile, index, destination))
                     return;
-                (pile.Cards[index], pile.Cards[destination]) = (pile.Cards[destination], pile.Cards[index]);
-                MarkDirty();
-                CloseDrawer();
+                ShowCardEditor(pile, destination, false);
+            }
+
+            static RitsuDebugToolsIconButton OrderButton(
+                RitsuDebugToolsGlyph glyph,
+                string tooltip,
+                Action action,
+                bool disabled)
+            {
+                var button = new RitsuDebugToolsIconButton(38f, 38f);
+                button.Configure(
+                    RitsuDebugToolsIcons.Get(
+                        glyph,
+                        18,
+                        RitsuShellTheme.Current.Text.LabelPrimary),
+                    tooltip,
+                    ModSettingsButtonTone.Normal);
+                button.Disabled = disabled;
+                button.Pressed += action;
+                return button;
             }
         }
 

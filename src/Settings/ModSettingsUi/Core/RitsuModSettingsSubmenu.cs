@@ -4197,7 +4197,7 @@ namespace STS2RitsuLib.Settings
 
                 try
                 {
-                    return GodotObject.IsInstanceValid(texture);
+                    return IsInstanceValid(texture);
                 }
                 catch (ObjectDisposedException)
                 {

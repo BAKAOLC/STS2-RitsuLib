@@ -24,10 +24,12 @@ namespace STS2RitsuLib.Utils
         private readonly string[] _resourceFolders;
         private IReadOnlyList<string>? _availableLanguagesCache;
         private bool _disposed;
-        private string? _loadedLanguage;
-        private HashSet<string> _localKeys = new(StringComparer.OrdinalIgnoreCase);
+        private LoadedTranslations _loaded = LoadedTranslations.Empty;
         private bool _subscribed;
-        private Dictionary<string, string> _translations = new(StringComparer.OrdinalIgnoreCase);
+
+        internal bool IsDisposed => Volatile.Read(ref _disposed);
+
+        internal event Action<I18N>? Disposed;
 
         /// <summary>
         ///     <para xml:lang="en">Creates an instance, optionally wiring locale change subscription when sources are configured.</para>
@@ -87,9 +89,10 @@ namespace STS2RitsuLib.Utils
             if (_disposed) return;
             _disposed = true;
 
+            Disposed?.Invoke(this);
             TryUnsubscribe();
-            _translations.Clear();
-            _localKeys.Clear();
+            Volatile.Write(ref _loaded, LoadedTranslations.Empty);
+            Disposed = null;
             Changed = null;
             RitsuLibFramework.Logger.Info($"[{_instanceName}] Instance disposed and resources released");
             GC.SuppressFinalize(this);
@@ -109,8 +112,8 @@ namespace STS2RitsuLib.Utils
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            EnsureLoaded();
-            return _translations.ToArray().AsEnumerable().GetEnumerator();
+            var loaded = GetLoadedTranslations();
+            return loaded.Translations.ToArray().AsEnumerable().GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -120,10 +123,12 @@ namespace STS2RitsuLib.Utils
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Raised by <see cref="ForceReload" />, including reloads initiated by a subscribed locale-change
-        ///         notification.
+        ///         Raised after translations are reloaded, including explicit <see cref="ForceReload" /> calls,
+        ///         subscribed locale-change notifications, and lazily detected locale changes.
         ///     </para>
-        ///     <para xml:lang="zh-CN">由 <see cref="ForceReload" /> 触发，包括已订阅语言变化通知所发起的重新加载。</para>
+        ///     <para xml:lang="zh-CN">
+        ///         翻译重新加载后触发，包括显式调用 <see cref="ForceReload" />、已订阅的语言变化通知，以及延迟检测到的语言变化。
+        ///     </para>
         /// </summary>
         public event Action? Changed;
 
@@ -134,8 +139,7 @@ namespace STS2RitsuLib.Utils
         public string Get(string key, string fallback)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            EnsureLoaded();
-            return _translations.GetValueOrDefault(key) ?? fallback;
+            return GetLoadedTranslations().Translations.GetValueOrDefault(key) ?? fallback;
         }
 
         /// <summary>
@@ -145,8 +149,7 @@ namespace STS2RitsuLib.Utils
         public bool TryGet(string key, out string value)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            EnsureLoaded();
-            return _translations.TryGetValue(key, out value!);
+            return GetLoadedTranslations().Translations.TryGetValue(key, out value!);
         }
 
         /// <summary>
@@ -156,8 +159,7 @@ namespace STS2RitsuLib.Utils
         public bool ContainsKey(string key)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            EnsureLoaded();
-            return _translations.ContainsKey(key);
+            return GetLoadedTranslations().Translations.ContainsKey(key);
         }
 
         /// <summary>
@@ -170,8 +172,7 @@ namespace STS2RitsuLib.Utils
         public bool ContainsLocalKey(string key)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            EnsureLoaded();
-            return _localKeys.Contains(key);
+            return GetLoadedTranslations().LocalKeys.Contains(key);
         }
 
         /// <summary>
@@ -181,8 +182,7 @@ namespace STS2RitsuLib.Utils
         public IReadOnlyDictionary<string, string> Snapshot()
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            EnsureLoaded();
-            return new ReadOnlyDictionary<string, string>(_translations);
+            return new ReadOnlyDictionary<string, string>(GetLoadedTranslations().Translations);
         }
 
         /// <summary>
@@ -203,9 +203,9 @@ namespace STS2RitsuLib.Utils
         public IEnumerable<string> EnumerateKeys(string? prefix = null, bool orderByKey = true)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            EnsureLoaded();
+            var loaded = GetLoadedTranslations();
 
-            IEnumerable<string> keys = _translations.Keys;
+            IEnumerable<string> keys = loaded.Translations.Keys;
             if (!string.IsNullOrWhiteSpace(prefix))
                 keys = keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
@@ -265,15 +265,34 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public void ForceReload()
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
             var language = ResolveLanguage();
             var loaded = LoadTranslations(language);
-            _translations = loaded.Translations;
-            _localKeys = loaded.LocalKeys;
-            _loadedLanguage = language;
+            Volatile.Write(ref _loaded, loaded);
             _availableLanguagesCache = null;
             RitsuLibFramework.Logger.Debug(
-                $"[{_instanceName}] Successfully reloaded translations for language '{language}' ({_translations.Count} entries)");
+                $"[{_instanceName}] Successfully reloaded translations for language '{language}' ({loaded.Translations.Count} entries)");
             BroadcastChange();
+        }
+
+        internal (Dictionary<string, string> Local, Dictionary<string, string> Fallback) CaptureLocTableData()
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var loaded = GetLoadedTranslations();
+            var local = new Dictionary<string, string>(loaded.LocalKeys.Count, StringComparer.OrdinalIgnoreCase);
+            var fallback = new Dictionary<string, string>(
+                loaded.Translations.Count - loaded.LocalKeys.Count,
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (key, value) in loaded.Translations)
+            {
+                if (loaded.LocalKeys.Contains(key))
+                    local.Add(key, value);
+                else
+                    fallback.Add(key, value);
+            }
+
+            return (local, fallback);
         }
 
         private void Initialize()
@@ -342,8 +361,13 @@ namespace STS2RitsuLib.Utils
             var language = ResolveLanguage();
             RitsuLibFramework.Logger.Info(
                 $"[{_instanceName}] Locale change detected, switching to language: {language}");
-            _loadedLanguage = null;
             ForceReload();
+        }
+
+        private LoadedTranslations GetLoadedTranslations()
+        {
+            EnsureLoaded();
+            return Volatile.Read(ref _loaded);
         }
 
         private void EnsureLoaded()
@@ -351,14 +375,14 @@ namespace STS2RitsuLib.Utils
             if (!_subscribed) TrySubscribe();
 
             var language = ResolveLanguage();
-            if (string.Equals(_loadedLanguage, language, StringComparison.OrdinalIgnoreCase)) return;
+            var current = Volatile.Read(ref _loaded);
+            if (string.Equals(current.Language, language, StringComparison.OrdinalIgnoreCase)) return;
 
             var loaded = LoadTranslations(language);
-            _translations = loaded.Translations;
-            _localKeys = loaded.LocalKeys;
-            _loadedLanguage = language;
+            Volatile.Write(ref _loaded, loaded);
             RitsuLibFramework.Logger.Debug(
-                $"[{_instanceName}] Successfully loaded translations for language '{_loadedLanguage}' ({_translations.Count} entries)");
+                $"[{_instanceName}] Successfully loaded translations for language '{language}' ({loaded.Translations.Count} entries)");
+            BroadcastChange();
         }
 
         private LoadedTranslations LoadTranslations(string language)
@@ -423,7 +447,7 @@ namespace STS2RitsuLib.Utils
                     $"fallbackEntries={merged.Count - localKeys.Count}, sources={sourceCount} " +
                     $"(local={primarySourceCount}, fallback={fallbackSourceCount})");
 
-            return new(merged, localKeys);
+            return new(language, merged, localKeys);
 
             void CountSource(bool isPrimary)
             {
@@ -671,9 +695,16 @@ namespace STS2RitsuLib.Utils
             };
         }
 
-        private readonly record struct LoadedTranslations(
+        private sealed record LoadedTranslations(
+            string? Language,
             Dictionary<string, string> Translations,
-            HashSet<string> LocalKeys);
+            HashSet<string> LocalKeys)
+        {
+            internal static LoadedTranslations Empty { get; } = new(
+                null,
+                new(StringComparer.OrdinalIgnoreCase),
+                new(StringComparer.OrdinalIgnoreCase));
+        }
 
         private readonly record struct LanguageLoadStep(string Language, bool IsPrimary);
     }

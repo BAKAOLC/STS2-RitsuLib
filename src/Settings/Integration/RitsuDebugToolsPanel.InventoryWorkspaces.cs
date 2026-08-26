@@ -262,9 +262,15 @@ namespace STS2RitsuLib.Settings
         {
             var powersByItemId = new Dictionary<string, (uint CombatId, int Index, PowerModel Power)>(
                 StringComparer.Ordinal);
+            PowerModel[] availablePowers = [.. ModelDb.AllPowers];
             var currentBrowser = Browser(
                 L("ritsulib.debugTools.search.currentPowers", "Search current Powers"),
                 item => CreateLivePowerDetail(item.Id, powersByItemId),
+                [
+                    CreateContentSourceFilter(
+                        availablePowers,
+                        item => powersByItemId.TryGetValue(item.Id, out var entry) ? entry.Power : null),
+                ],
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 260f,
                 gridTileHeight: 132f,
@@ -437,6 +443,11 @@ namespace STS2RitsuLib.Settings
             var currentBrowser = Browser(
                 L("ritsulib.debugTools.search.currentOrbs", "Search current orbs"),
                 item => CreateLiveOrbSlotDetail(item.Id, orbsByItemId, emptySlotsByItemId, models),
+                [
+                    CreateContentSourceFilter(
+                        models,
+                        item => orbsByItemId.TryGetValue(item.Id, out var entry) ? entry.Orb : null),
+                ],
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 260f,
                 gridTileHeight: 132f,

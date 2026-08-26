@@ -10,6 +10,17 @@ namespace STS2RitsuLib.Models.Capabilities
         private static bool _propertyNameRegistered;
         private static bool _registrationFinalized;
 
+        internal static bool IsPropertyNameRegistered
+        {
+            get
+            {
+                lock (SyncRoot)
+                {
+                    return _propertyNameRegistered;
+                }
+            }
+        }
+
         public static void EnsureInitialized()
         {
             lock (SyncRoot)

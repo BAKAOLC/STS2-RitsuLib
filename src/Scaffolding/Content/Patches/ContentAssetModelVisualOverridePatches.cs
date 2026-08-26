@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
@@ -510,10 +511,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static void Postfix(NCard __instance)
         {
             var model = __instance.Model;
-            if (model == null || !TryResolveVisualStyle(model, out var style))
+            if (model == null)
                 return;
 
-            ApplyVisualStyle(__instance, model, style == CardVisualStyle.Ancient);
+            if (TryResolveVisualStyle(model, out var style))
+            {
+                ApplyVisualStyle(__instance, model, style == CardVisualStyle.Ancient);
+                return;
+            }
+
+            if (model.Rarity == CardRarity.Ancient)
+                SetTexture(__instance, "%AncientBanner", ResolveAncientBannerTexture(model));
         }
 
         internal static bool UsesAncientVisualStyle(CardModel model)
@@ -842,6 +850,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     internal class CardNodeMaterialPatch : IPatchMethod
     {
+        private static readonly ConditionalWeakTable<NCard, CardNodeOverrideState> OverrideStates = new();
+
         public static string PatchId => "content_asset_override_card_node_material";
 
         public static string Description =>
@@ -857,8 +867,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         public static void Postfix(NCard __instance)
         {
             var model = __instance.Model;
-            if (model == null || __instance.Visibility != ModelVisibility.Visible)
+            if (model == null)
                 return;
+
+            var state = OverrideStates.GetValue(__instance, static _ => new());
+            var allowOverrides = __instance.Visibility == ModelVisibility.Visible;
 
             ApplyTexture(
                 __instance,
@@ -866,7 +879,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 "%AncientBorder",
                 static o => o.CustomAncientBorderPath,
                 nameof(IModCardAssetOverrides.CustomAncientBorderPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderTexture,
+                state.AncientBorderTexture,
+                allowOverrides);
 
             ApplyTexture(
                 __instance,
@@ -874,7 +889,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 "%AncientBanner",
                 static o => o.CustomAncientBannerPath,
                 nameof(IModCardAssetOverrides.CustomAncientBannerPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerTexture,
+                state.AncientBannerTexture,
+                allowOverrides);
 
             ApplyTexture(
                 __instance,
@@ -882,7 +899,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 "%TitleBanner",
                 static o => o.CustomBannerTexturePath,
                 nameof(IModCardAssetOverrides.CustomBannerTexturePath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardBannerTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardBannerTexture,
+                state.BannerTexture,
+                allowOverrides);
 
             ApplyMaterial<IModCardPortraitBorderMaterialOverride>(
                 __instance,
@@ -892,7 +911,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModCardPortraitBorderMaterialOverride.CustomPortraitBorderMaterial),
                 static o => o.CustomPortraitBorderMaterialPath,
                 nameof(IModCardAssetOverrides.CustomPortraitBorderMaterialPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderMaterial);
+                ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderMaterial,
+                state.PortraitBorderMaterial,
+                allowOverrides);
 
             ApplyMaterial<IModCardEnergyIconMaterialOverride>(
                 __instance,
@@ -902,7 +923,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModCardEnergyIconMaterialOverride.CustomEnergyIconMaterial),
                 static o => o.CustomEnergyIconMaterialPath,
                 nameof(IModCardAssetOverrides.CustomEnergyIconMaterialPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconMaterial);
+                ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconMaterial,
+                state.EnergyIconMaterial,
+                allowOverrides);
 
             ApplyMaterial<IModCardAncientBorderMaterialOverride>(
                 __instance,
@@ -912,7 +935,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModCardAncientBorderMaterialOverride.CustomAncientBorderMaterial),
                 static o => o.CustomAncientBorderMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientBorderMaterialPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderMaterial);
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderMaterial,
+                state.AncientBorderMaterial,
+                allowOverrides);
 
             ApplyMaterial<IModCardAncientTextBgMaterialOverride>(
                 __instance,
@@ -922,7 +947,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModCardAncientTextBgMaterialOverride.CustomAncientTextBgMaterial),
                 static o => o.CustomAncientTextBgMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientTextBgMaterialPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgMaterial);
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgMaterial,
+                state.AncientTextBgMaterial,
+                allowOverrides);
 
             ApplyMaterial<IModCardAncientBannerMaterialOverride>(
                 __instance,
@@ -932,7 +959,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 nameof(IModCardAncientBannerMaterialOverride.CustomAncientBannerMaterial),
                 static o => o.CustomAncientBannerMaterialPath,
                 nameof(IModCardAssetOverrides.CustomAncientBannerMaterialPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerMaterial);
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerMaterial,
+                state.AncientBannerMaterial,
+                allowOverrides);
         }
 
         private static void ApplyTexture(
@@ -941,16 +970,18 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             NodePath nodePath,
             Func<IModCardAssetOverrides, string?> pathSelector,
             string memberName,
-            TryCharacterOwnedTextureOverride tryCharacterOwned)
+            TryCharacterOwnedTextureOverride tryCharacterOwned,
+            ResourceOverrideState<Texture2D> state,
+            bool allowOverride)
         {
-            if (!TryGetTexture(model, pathSelector, memberName, tryCharacterOwned, out var texture))
-                return;
-
             var node = card.GetNodeOrNull<TextureRect>(nodePath);
             if (node == null)
                 return;
 
-            node.Texture = texture;
+            if (allowOverride && TryGetTexture(model, pathSelector, memberName, tryCharacterOwned, out var texture))
+                state.Apply(node.Texture, texture, value => node.Texture = value);
+            else
+                state.Restore(node.Texture, value => node.Texture = value);
         }
 
         private static void ApplyMaterial<TDirectOverride>(
@@ -961,10 +992,17 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             string directMemberName,
             Func<IModCardAssetOverrides, string?> pathSelector,
             string memberName,
-            TryCharacterOwnedMaterialOverride tryCharacterOwned)
+            TryCharacterOwnedMaterialOverride tryCharacterOwned,
+            ResourceOverrideState<Material> state,
+            bool allowOverride)
             where TDirectOverride : class
         {
-            if (!TryGetMaterial(
+            var node = card.GetNodeOrNull<CanvasItem>(nodePath);
+            if (node == null)
+                return;
+
+            if (allowOverride &&
+                TryGetMaterial(
                     model,
                     directSelector,
                     directMemberName,
@@ -972,13 +1010,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     memberName,
                     tryCharacterOwned,
                     out var material))
-                return;
-
-            var node = card.GetNodeOrNull<CanvasItem>(nodePath);
-            if (node == null)
-                return;
-
-            node.Material = material;
+                state.Apply(node.Material, material, value => node.Material = value);
+            else
+                state.Restore(node.Material, value => node.Material = value);
         }
 
         private static bool TryGetMaterial<TDirectOverride>(
@@ -1030,6 +1064,60 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private delegate bool TryCharacterOwnedMaterialOverride(CardModel model, ref Material material);
 
         private delegate bool TryCharacterOwnedTextureOverride(CardModel model, ref Texture2D texture);
+
+        private sealed class CardNodeOverrideState
+        {
+            public ResourceOverrideState<Texture2D> AncientBorderTexture { get; } = new();
+
+            public ResourceOverrideState<Texture2D> AncientBannerTexture { get; } = new();
+
+            public ResourceOverrideState<Texture2D> BannerTexture { get; } = new();
+
+            public ResourceOverrideState<Material> PortraitBorderMaterial { get; } = new();
+
+            public ResourceOverrideState<Material> EnergyIconMaterial { get; } = new();
+
+            public ResourceOverrideState<Material> AncientBorderMaterial { get; } = new();
+
+            public ResourceOverrideState<Material> AncientTextBgMaterial { get; } = new();
+
+            public ResourceOverrideState<Material> AncientBannerMaterial { get; } = new();
+        }
+
+        private sealed class ResourceOverrideState<T> where T : Resource
+        {
+            private T? _baseValue;
+            private T? _overrideValue;
+            private bool _hasOverride;
+
+            public void Apply(T? currentValue, T overrideValue, Action<T?> setter)
+            {
+                if (!_hasOverride || !IsSameResource(currentValue, _overrideValue))
+                    _baseValue = currentValue;
+
+                setter(overrideValue);
+                _overrideValue = overrideValue;
+                _hasOverride = true;
+            }
+
+            public void Restore(T? currentValue, Action<T?> setter)
+            {
+                if (!_hasOverride)
+                    return;
+
+                if (IsSameResource(currentValue, _overrideValue))
+                    setter(_baseValue);
+
+                _baseValue = null;
+                _overrideValue = null;
+                _hasOverride = false;
+            }
+
+            private static bool IsSameResource(T? left, T? right)
+            {
+                return left == null ? right == null : right != null && left.GetInstanceId() == right.GetInstanceId();
+            }
+        }
     }
 
     /// <summary>

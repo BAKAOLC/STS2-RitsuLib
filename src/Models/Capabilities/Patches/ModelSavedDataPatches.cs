@@ -11,6 +11,28 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
     /// </summary>
     internal static class ModelSavedDataPatches
     {
+        private static void RemoveSavedData(SavedProperties properties)
+        {
+            RemoveByName(ref properties.ints);
+            RemoveByName(ref properties.bools);
+            RemoveByName(ref properties.strings);
+            RemoveByName(ref properties.intArrays);
+            RemoveByName(ref properties.modelIds);
+            RemoveByName(ref properties.cards);
+            RemoveByName(ref properties.cardArrays);
+            return;
+
+            static void RemoveByName<T>(ref List<SavedProperties.SavedProperty<T>>? values)
+            {
+                if (values == null)
+                    return;
+
+                values.RemoveAll(static value => value.name == ModelSavedDataRuntime.SavedPropertiesName);
+                if (values.Count == 0)
+                    values = null;
+            }
+        }
+
         /// <summary>
         ///     <para xml:lang="en">
         ///         Exports registered model-saved data after base-game model properties are serialized.
@@ -84,6 +106,12 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             {
                 if (model is not AbstractModel abstractModel)
                     return;
+
+                if (!ModelSavedDataRegistry.IsPropertyNameRegistered)
+                {
+                    RemoveSavedData(__instance);
+                    return;
+                }
 
                 SavedAttachedStateRegistry.TryGetFromProperties<string>(
                     __instance,

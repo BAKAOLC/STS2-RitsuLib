@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Networking.Sidecar;
 using STS2RitsuLib.Scaffolding.Content;
@@ -32,6 +33,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal const string CreateCardActionId = "cards.create";
         internal const string CopyCardActionId = "cards.copy";
         internal const string MoveCardActionId = "cards.move";
+        internal const string ReorderCardActionId = "cards.reorder";
         internal const string SetReplayCountActionId = "cards.set-replay";
         internal const string RemoveCardActionId = "cards.remove";
         internal const string EditCardActionId = "cards.edit";
@@ -75,6 +77,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 payloadPeerFeatures: static payload =>
                     FeaturesForPileToken(payload.Location.Pile) |
                     FeaturesForPileToken(payload.DestinationPile));
+            RitsuDebugActionProtocol.Register<ReorderCardPayload>(
+                ReorderCardActionId,
+                ValidateReorderCard,
+                ExecuteReorderCardAsync,
+                RitsuLibSidecarInternalPeerFeatures.CardPileReorderActionsV1,
+                static payload => FeaturesForPileToken(payload.Location.Pile));
             RitsuDebugActionProtocol.Register<SetReplayCountPayload>(
                 SetReplayCountActionId,
                 ValidateSetReplayCount,
@@ -164,6 +172,25 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 new MoveCardPayload(
                     CreateCardLocationPayload(target, pileType, cardIndex, expectedCardId, combatCardId),
                     GetPileToken(destinationPile)));
+            return RitsuDebugActionProtocol.Submit(requester, envelope);
+        }
+
+        internal static RitsuDebugActionSubmission SubmitReorderCard(
+            Player requester,
+            Player target,
+            PileType pileType,
+            int cardIndex,
+            string expectedCardId,
+            int destinationIndex,
+            uint? combatCardId = null)
+        {
+            var envelope = RitsuDebugActionProtocol.CreateEnvelope(
+                ReorderCardActionId,
+                requester,
+                target,
+                new ReorderCardPayload(
+                    CreateCardLocationPayload(target, pileType, cardIndex, expectedCardId, combatCardId),
+                    destinationIndex));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -931,6 +958,87 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                   $"{destinationPile} could not accept another card.";
         }
 
+        private static RitsuDebugActionCheck ValidateReorderCard(
+            RitsuDebugActionContext context,
+            ReorderCardPayload payload)
+        {
+            if (!TryGetLocatedCard(
+                    context.Target,
+                    payload.Location,
+                    out var pileType,
+                    out var card,
+                    out var feedback))
+                return RitsuDebugActionCheck.Fail(feedback);
+            var pile = GetPile(context.Target, pileType);
+            if (pile == null)
+                return RitsuDebugActionCheck.Fail(
+                    "card.pileUnavailable",
+                    "Pile '{0}' is unavailable for the selected player.",
+                    pileType);
+            var currentIndex = FindCardIndex(pile, card);
+            if (currentIndex != payload.Location.CardIndex)
+                return RitsuDebugActionCheck.Fail(
+                    "card.selectedMoved",
+                    "The selected card moved or is no longer available.");
+            if (payload.DestinationIndex < 0 || payload.DestinationIndex >= pile.Cards.Count)
+                return RitsuDebugActionCheck.Fail(
+                    "card.reorderIndexRange",
+                    "The destination position must be between 1 and {0}.",
+                    pile.Cards.Count);
+            return payload.DestinationIndex == currentIndex
+                ? RitsuDebugActionCheck.Fail(
+                    "card.alreadyAtPosition",
+                    "The card is already at the selected position.")
+                : RitsuDebugActionCheck.Ok;
+        }
+
+        private static Task<string> ExecuteReorderCardAsync(
+            RitsuDebugActionContext context,
+            ReorderCardPayload payload)
+        {
+            _ = TryGetLocatedCard(context.Target, payload.Location, out var pileType, out var card, out _);
+            var pile = GetPile(context.Target, pileType)!;
+            var currentIndex = FindCardIndex(pile, card);
+            pile.RemoveInternal(card, true);
+            pile.AddInternal(card, payload.DestinationIndex, true);
+            pile.InvokeContentsChanged();
+            RefreshHandOrder(pile, card);
+            return Task.FromResult(
+                $"Moved {card.Id} in {pileType} from position {currentIndex + 1} " +
+                $"to {payload.DestinationIndex + 1}.");
+        }
+
+        private static int FindCardIndex(CardPile pile, CardModel card)
+        {
+            for (var index = 0; index < pile.Cards.Count; index++)
+                if (ReferenceEquals(pile.Cards[index], card))
+                    return index;
+            return -1;
+        }
+
+        private static void RefreshHandOrder(CardPile pile, CardModel card)
+        {
+            if (pile.Type != PileType.Hand || NPlayerHand.Instance is not { } hand)
+                return;
+            var holder = hand.GetCardHolder(card);
+            var container = hand.CardHolderContainer;
+            if (holder?.GetParent() == container)
+            {
+                var holderIndex = 0;
+                foreach (var pileCard in pile.Cards)
+                {
+                    if (ReferenceEquals(pileCard, card))
+                        break;
+                    if (hand.GetCardHolder(pileCard)?.GetParent() == container)
+                        holderIndex++;
+                }
+
+                container.MoveChild(holder, Math.Clamp(holderIndex, 0, container.GetChildCount() - 1));
+            }
+
+            hand.ForceRefreshCardIndices();
+        }
+
         private static RitsuDebugActionCheck ValidateSetReplayCount(
             RitsuDebugActionContext context,
             SetReplayCountPayload payload)
@@ -1495,6 +1603,10 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal readonly record struct MoveCardPayload(
             CardLocationPayload Location,
             string DestinationPile);
+
+        internal readonly record struct ReorderCardPayload(
+            CardLocationPayload Location,
+            int DestinationIndex);
 
         internal readonly record struct SetReplayCountPayload(
             CardLocationPayload Location,

@@ -270,10 +270,16 @@ namespace STS2RitsuLib.CardPiles.Nodes
             ArrangeCards();
         }
 
-        internal void RestoreCancelledQueuedCard(CardModel card, NCard? cardNode)
+        internal NHandCardHolder RestoreCancelledQueuedCard(CardModel card, NCard? cardNode)
         {
+            var globalPosition = cardNode?.GlobalPosition;
             AddVisualFor(card, cardNode, false);
+            var holder = GetHolder(card)
+                         ?? throw new InvalidOperationException("The canceled extra-hand card could not be restored.");
+            if (globalPosition != null)
+                holder.GlobalPosition = globalPosition.Value;
             ArrangeCards();
+            return holder;
         }
 
         internal void NotifyCardArrived(CardModel card)

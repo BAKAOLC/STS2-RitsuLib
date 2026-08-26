@@ -12,6 +12,7 @@ using STS2RitsuLib.Ui.Catalog;
 using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
@@ -20,7 +21,9 @@ namespace STS2RitsuLib.Settings
         CardModel VisualCard,
         CardModel SourceCard,
         Func<Control> DetailFactory,
-        int StateHash = 0);
+        int StateHash = 0,
+        string? ReorderGroup = null,
+        int ReorderIndex = -1);
 
     // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugCardCatalog : Control
@@ -34,9 +37,9 @@ namespace STS2RitsuLib.Settings
         private const float CardHorizontalPadding = 32f;
         private const float CardVerticalPadding = 36f;
         private const float CardSelectionFrameMargin = 10f;
-        private const float DetailDrawerMinimumWidth = 400f;
-        private const float DetailDrawerMaximumWidth = 640f;
-        private const float DetailDrawerPreferredWidthFraction = 0.44f;
+        private const float DetailDrawerMinimumWidth = 460f;
+        private const float DetailDrawerMaximumWidth = 760f;
+        private const float DetailDrawerPreferredWidthFraction = 0.52f;
         private const float MinimumVisibleCatalogWidth = 300f;
         private const int OverscanRows = 2;
         internal static readonly Vector2 HolderScale = Vector2.One * 0.7f;
@@ -60,6 +63,9 @@ namespace STS2RitsuLib.Settings
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
         private readonly HashSet<string> _primaryOverflowOptionIds;
+        private readonly bool _preserveSourceOrder;
+        private readonly Action<RitsuDebugCardCatalogEntry, int>? _reorderRequested;
+        private readonly string? _reorderHint;
         private readonly List<PanelContainer> _selectionFrames = [];
         private readonly Dictionary<CardSortField, Button> _sortButtons = [];
         private Control _canvas = null!;
@@ -76,6 +82,7 @@ namespace STS2RitsuLib.Settings
         private bool _gridRefreshQueued;
         private Dictionary<string, RitsuDebugCardCatalogEntry> _itemsById;
         private Label _resultCount = null!;
+        private Label? _reorderHintLabel;
         private ScrollContainer _scroll = null!;
         private MarginContainer _scrollFrame = null!;
         private LineEdit _search = null!;
@@ -84,6 +91,7 @@ namespace STS2RitsuLib.Settings
         private Dictionary<string, int> _sourceIndexes;
         private Control _workspace = null!;
         private RitsuDebugSearchableChoice? _primaryOverflowPicker;
+        private CardReorderController? _reorderController;
 
         internal RitsuDebugCardCatalog(
             string searchPlaceholder,
@@ -96,12 +104,22 @@ namespace STS2RitsuLib.Settings
             string? defaultFilterOptionId = null,
             bool primaryDefaultsToAll = false,
             Func<RitsuCatalogItem, bool>? primaryAllMatches = null,
-            IReadOnlyCollection<string>? primaryOverflowOptionIds = null)
+            IReadOnlyCollection<string>? primaryOverflowOptionIds = null,
+            bool preserveSourceOrder = false,
+            Action<RitsuDebugCardCatalogEntry, int>? reorderRequested = null,
+            string? reorderHint = null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
             ValidateEntries(entries);
 
             SearchPlaceholder = searchPlaceholder;
+            _preserveSourceOrder = preserveSourceOrder;
+            _reorderRequested = reorderRequested;
+            _reorderHint = reorderHint;
+            if (reorderRequested != null && !preserveSourceOrder)
+                throw new ArgumentException(
+                    "Reorderable card catalogs must preserve their source order.",
+                    nameof(preserveSourceOrder));
             _entries = [.. entries];
             _itemsById = _entries.ToDictionary(static entry => entry.Item.Id, StringComparer.Ordinal);
             _sourceIndexes = _entries.Select((entry, index) => (entry.Item.Id, Index: index))
@@ -151,6 +169,11 @@ namespace STS2RitsuLib.Settings
 
         private string SearchPlaceholder { get; }
 
+        private bool CanReorderCurrentView =>
+            _reorderRequested != null &&
+            _primaryFilterId != null &&
+            _filterSelections.GetValueOrDefault(_primaryFilterId, -1) >= 0;
+
         internal static bool IsCatalogHolder(NCardHolder holder)
         {
             return holder is NGridCardHolder && holder.HasMeta(HolderMetaKey);
@@ -161,11 +184,21 @@ namespace STS2RitsuLib.Settings
             ValidateEntries(entries);
             if (EntriesMatch(entries))
                 return;
+            _reorderController?.Cancel();
             var rebuildDetail = false;
             if (_selectedItemId != null)
             {
                 var previous = _itemsById.GetValueOrDefault(_selectedItemId);
                 var current = entries.FirstOrDefault(entry => entry.Item.Id == _selectedItemId);
+                var currentBySource = previous == null
+                    ? null
+                    : entries.FirstOrDefault(entry => ReferenceEquals(entry.SourceCard, previous.SourceCard));
+                if (currentBySource != null)
+                {
+                    _selectedItemId = currentBySource.Item.Id;
+                    current = currentBySource;
+                }
+
                 rebuildDetail = previous == null ||
                                 current == null ||
                                 !ReferenceEquals(previous.SourceCard, current.SourceCard) ||
@@ -316,7 +349,8 @@ namespace STS2RitsuLib.Settings
             var tools = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             tools.AddThemeConstantOverride("separation", 10);
             catalog.AddChild(tools);
-            AddSortControls(tools);
+            if (!_preserveSourceOrder)
+                AddSortControls(tools);
 
             _search = ModSettingsUiControlTheming.CreateStyledLineEdit(string.Empty, SearchPlaceholder);
             _search.ClearButtonEnabled = true;
@@ -342,6 +376,20 @@ namespace STS2RitsuLib.Settings
             _resultCount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             summary.AddChild(_resultCount);
             catalog.AddChild(summary);
+            if (!string.IsNullOrWhiteSpace(_reorderHint))
+            {
+                _reorderHintLabel = new()
+                {
+                    Text = _reorderHint,
+                    AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                    Visible = CanReorderCurrentView,
+                };
+                _reorderHintLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                _reorderHintLabel.AddThemeFontSizeOverride("font_size",
+                    RitsuShellTheme.Current.Metric.FontSize.HintSmall);
+                _reorderHintLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.Hint);
+                catalog.AddChild(_reorderHintLabel);
+            }
 
             _scroll = new()
             {
@@ -470,6 +518,8 @@ namespace STS2RitsuLib.Settings
                 SyncScrollGutter(detailScroll, _detailScrollFrame);
             Callable.From(() => SyncScrollGutter(detailScroll, _detailScrollFrame)).CallDeferred();
             Callable.From(UpdateDetailDrawerWidth).CallDeferred();
+            if (_reorderRequested != null)
+                _reorderController = CardReorderController.Attach(_workspace, this);
             SetProcessUnhandledInput(true);
         }
 
@@ -680,7 +730,8 @@ namespace STS2RitsuLib.Settings
             if (!IsInsideTree())
                 return;
             var revision = ++_searchRevision;
-            await ToSignal(GetTree().CreateTimer(SearchDelaySeconds), SceneTreeTimer.SignalName.Timeout);
+            await ToSignal(GetTree().CreateTimer(SearchDelaySeconds), SceneTreeTimer.SignalName.Timeout)
+                .AsRitsuAwaitable();
             if (IsInsideTree() && revision == _searchRevision)
                 ApplyFilter();
         }
@@ -706,6 +757,8 @@ namespace STS2RitsuLib.Settings
 
         private int CompareEntries(RitsuDebugCardCatalogEntry left, RitsuDebugCardCatalogEntry right)
         {
+            if (_preserveSourceOrder)
+                return _sourceIndexes[left.Item.Id].CompareTo(_sourceIndexes[right.Item.Id]);
             foreach (var (field, ascending) in SortPriority)
             {
                 var comparison = field switch
@@ -786,6 +839,10 @@ namespace STS2RitsuLib.Settings
             if (!IsInstanceValid(_scroll) || !IsInstanceValid(_canvas))
                 return;
 
+            if (_reorderHintLabel != null && IsInstanceValid(_reorderHintLabel))
+                _reorderHintLabel.Visible = CanReorderCurrentView;
+            if (!CanReorderCurrentView && _reorderController?.IsDragging == true)
+                _reorderController.Cancel();
             SyncScrollGutter(_scroll, _scrollFrame);
             var gutter = _scroll.GetVScrollBar().Visible
                 ? ModSettingsUiControlTheming.ResolveSettingsScrollContentRightGutter(_scroll)
@@ -833,16 +890,23 @@ namespace STS2RitsuLib.Settings
                     _holderItemIds[holder] = entry.Item.Id;
                 }
 
-                var row = itemIndex / _gridColumns;
-                var column = itemIndex % _gridColumns;
+                var visualIndex = _reorderController?.GetPreviewIndex(itemIndex) ?? itemIndex;
+                var row = visualIndex / _gridColumns;
+                var column = visualIndex % _gridColumns;
                 holder.Position = new(
                     originX + column * (CardWidth + CardHorizontalGap) + CardWidth * 0.5f,
                     CardVerticalPadding + row * rowHeight + CardHeight * 0.5f);
                 var selected = entry.Item.Id == _selectedItemId;
-                holder.Modulate = selected
-                    ? Colors.White
-                    : new(0.9f, 0.9f, 0.93f);
-                selectionFrame.Visible = selected;
+                var dragging = _reorderController?.IsDraggingItem(entry.Item.Id) == true;
+                holder.MouseDefaultCursorShape = CanReorderCurrentView
+                    ? CursorShape.Drag
+                    : CursorShape.Arrow;
+                holder.Modulate = dragging
+                    ? new(1f, 1f, 0.95f, 0.22f)
+                    : selected
+                        ? Colors.White
+                        : new(0.9f, 0.9f, 0.93f);
+                selectionFrame.Visible = selected && !dragging;
                 holder.Show();
             }
         }
@@ -885,8 +949,33 @@ namespace STS2RitsuLib.Settings
             }
         }
 
+        private bool CanReorderItems(string sourceItemId, string targetItemId)
+        {
+            if (!CanReorderCurrentView ||
+                sourceItemId == targetItemId ||
+                !_itemsById.TryGetValue(sourceItemId, out var source) ||
+                !_itemsById.TryGetValue(targetItemId, out var target))
+                return false;
+            return source.ReorderIndex >= 0 &&
+                   target.ReorderIndex >= 0 &&
+                   !string.IsNullOrWhiteSpace(source.ReorderGroup) &&
+                   string.Equals(source.ReorderGroup, target.ReorderGroup, StringComparison.Ordinal);
+        }
+
+        private void ReorderItemToTarget(string sourceItemId, string targetItemId)
+        {
+            if (!CanReorderItems(sourceItemId, targetItemId))
+                return;
+            var source = _itemsById[sourceItemId];
+            var target = _itemsById[targetItemId];
+            _reorderRequested?.Invoke(source, target.ReorderIndex);
+        }
+
         private void OnHolderPressed(NCardHolder holder)
         {
+            if (_reorderController?.ShouldSuppressClick() == true ||
+                _reorderController?.IsDragging == true)
+                return;
             if (holder is not NGridCardHolder gridHolder ||
                 !_holderItemIds.TryGetValue(gridHolder, out var itemId) ||
                 !_itemsById.ContainsKey(itemId))
@@ -1069,6 +1158,317 @@ namespace STS2RitsuLib.Settings
                 return;
             frame.AddThemeConstantOverride("margin_right", gutter);
             frame.QueueSort();
+        }
+
+        private sealed class CardReorderController
+        {
+            private const float DragStartThreshold = 4f;
+            private readonly List<(int FilteredIndex, string ItemId, Vector2 Center)> _dropSlots = [];
+            private readonly Control _host;
+            private readonly RitsuDebugCardCatalog _owner;
+            private string? _dropTargetItemId;
+            private Control? _ghost;
+            private Vector2 _ghostOffset;
+            private NGridCardHolder? _pendingHolder;
+            private Vector2? _pendingGlobalPosition;
+            private int _previewDestinationIndex = -1;
+            private string? _sourceItemId;
+            private int _sourceFilteredIndex = -1;
+            private bool _suppressNextClick;
+            private bool _wasMousePressed;
+
+            private CardReorderController(Control host, RitsuDebugCardCatalog owner)
+            {
+                _host = host;
+                _owner = owner;
+            }
+
+            internal bool IsDragging { get; private set; }
+
+            internal static CardReorderController Attach(Control root, RitsuDebugCardCatalog owner)
+            {
+                var host = new Control
+                {
+                    Name = "PileCardReorderDragHost",
+                    MouseFilter = MouseFilterEnum.Ignore,
+                    ZIndex = 80,
+                };
+                host.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+                root.AddChild(host);
+                root.MoveChild(host, root.GetChildCount() - 1);
+                var controller = new CardReorderController(host, owner);
+                var timer = new Godot.Timer
+                {
+                    Name = "PileCardReorderDragPoll",
+                    WaitTime = 0.016d,
+                    Autostart = true,
+                    ProcessMode = ProcessModeEnum.Always,
+                };
+                timer.Timeout += controller.Poll;
+                root.AddChild(timer);
+                return controller;
+            }
+
+            internal void Cancel()
+            {
+                FinishVisuals();
+                _pendingHolder = null;
+                _pendingGlobalPosition = null;
+            }
+
+            internal int GetPreviewIndex(int itemIndex)
+            {
+                if (!IsDragging ||
+                    _sourceFilteredIndex < 0 ||
+                    _previewDestinationIndex < 0 ||
+                    itemIndex == _sourceFilteredIndex)
+                    return itemIndex == _sourceFilteredIndex && IsDragging
+                        ? _previewDestinationIndex
+                        : itemIndex;
+                if (_sourceFilteredIndex < _previewDestinationIndex &&
+                    itemIndex > _sourceFilteredIndex &&
+                    itemIndex <= _previewDestinationIndex)
+                    return itemIndex - 1;
+                if (_previewDestinationIndex < _sourceFilteredIndex &&
+                    itemIndex >= _previewDestinationIndex &&
+                    itemIndex < _sourceFilteredIndex)
+                    return itemIndex + 1;
+                return itemIndex;
+            }
+
+            internal bool IsDraggingItem(string itemId)
+            {
+                return IsDragging && string.Equals(_sourceItemId, itemId, StringComparison.Ordinal);
+            }
+
+            internal bool ShouldSuppressClick()
+            {
+                if (!_suppressNextClick)
+                    return false;
+                _suppressNextClick = false;
+                return true;
+            }
+
+            private Vector2 MouseCanvas => _owner._canvas.GetGlobalMousePosition();
+
+            private void Poll()
+            {
+                if (!IsInstanceValid(_owner) || !IsInstanceValid(_host))
+                    return;
+                var mousePressed = Input.IsMouseButtonPressed(MouseButton.Left);
+                if (!_owner.CanReorderCurrentView)
+                {
+                    if (IsDragging)
+                        Cancel();
+                    _pendingHolder = null;
+                    _pendingGlobalPosition = null;
+                    _wasMousePressed = mousePressed;
+                    return;
+                }
+
+                var mouse = MouseCanvas;
+                if (IsDragging)
+                {
+                    UpdateGhostPosition(mouse);
+                    UpdateTarget(mouse);
+                    if (!mousePressed)
+                        CompleteDrop();
+                    _wasMousePressed = mousePressed;
+                    return;
+                }
+
+                if (mousePressed)
+                {
+                    if (!_wasMousePressed)
+                    {
+                        _pendingHolder = FindHolderAt(mouse);
+                        _pendingGlobalPosition = _pendingHolder == null ? null : mouse;
+                    }
+
+                    if (_pendingHolder != null &&
+                        _pendingGlobalPosition is { } start &&
+                        start.DistanceTo(mouse) >= DragStartThreshold)
+                        TryBeginDrag(_pendingHolder, mouse);
+                }
+                else if (_wasMousePressed)
+                {
+                    _pendingHolder = null;
+                    _pendingGlobalPosition = null;
+                }
+
+                _wasMousePressed = mousePressed;
+            }
+
+            private void TryBeginDrag(NGridCardHolder holder, Vector2 globalMouse)
+            {
+                if (IsDragging ||
+                    !_owner.CanReorderCurrentView ||
+                    !_owner._holderItemIds.TryGetValue(holder, out var itemId) ||
+                    !_owner._itemsById.TryGetValue(itemId, out var entry) ||
+                    entry.ReorderIndex < 0 ||
+                    string.IsNullOrWhiteSpace(entry.ReorderGroup))
+                    return;
+                var sourceIndex = Array.FindIndex(
+                    _owner._filtered,
+                    candidate => string.Equals(candidate.Item.Id, itemId, StringComparison.Ordinal));
+                CaptureDropSlots();
+                if (sourceIndex < 0 ||
+                    _dropSlots.Count < 2 ||
+                    CreateCardGhost(holder, globalMouse) is not { } ghost)
+                {
+                    _dropSlots.Clear();
+                    return;
+                }
+
+                _ghost = ghost;
+                _sourceItemId = itemId;
+                _sourceFilteredIndex = sourceIndex;
+                _previewDestinationIndex = sourceIndex;
+                _dropTargetItemId = null;
+                IsDragging = true;
+                _suppressNextClick = true;
+                _pendingHolder = null;
+                _pendingGlobalPosition = null;
+                _owner.QueueGridRefresh();
+            }
+
+            private Control? CreateCardGhost(NGridCardHolder holder, Vector2 globalMouse)
+            {
+                if (holder.CardNode is not Control source || source.Duplicate(14) is not Control duplicate)
+                    return null;
+                duplicate.Name = "PileCardReorderGhost";
+                duplicate.ZIndex = 90;
+                IgnoreMouseRecursively(duplicate);
+                _host.AddChild(duplicate);
+                duplicate.Scale = holder.Scale * source.Scale;
+                duplicate.Rotation = holder.Rotation + source.Rotation;
+                duplicate.Position = _host.GetGlobalTransformWithCanvas().AffineInverse() *
+                                     source.GetGlobalTransformWithCanvas().Origin;
+                var localMouse = _host.GetGlobalTransformWithCanvas().AffineInverse() * globalMouse;
+                _ghostOffset = duplicate.Position - localMouse;
+                return duplicate;
+            }
+
+            private static void IgnoreMouseRecursively(Node node)
+            {
+                if (node is Control control)
+                    control.MouseFilter = MouseFilterEnum.Ignore;
+                foreach (var child in node.GetChildren())
+                    IgnoreMouseRecursively(child);
+            }
+
+            private void UpdateGhostPosition(Vector2 globalMouse)
+            {
+                if (_ghost == null || !IsInstanceValid(_ghost))
+                    return;
+                var localMouse = _host.GetGlobalTransformWithCanvas().AffineInverse() * globalMouse;
+                _ghost.Position = localMouse + _ghostOffset;
+            }
+
+            private void UpdateTarget(Vector2 globalMouse)
+            {
+                if (_sourceItemId == null || _dropSlots.Count == 0)
+                {
+                    ResetTarget();
+                    return;
+                }
+
+                var target = _dropSlots.MinBy(slot => (globalMouse - slot.Center).LengthSquared());
+                if (string.Equals(target.ItemId, _sourceItemId, StringComparison.Ordinal) ||
+                    !_owner.CanReorderItems(_sourceItemId, target.ItemId))
+                {
+                    ResetTarget();
+                    return;
+                }
+
+                if (_previewDestinationIndex == target.FilteredIndex &&
+                    string.Equals(_dropTargetItemId, target.ItemId, StringComparison.Ordinal))
+                    return;
+                _previewDestinationIndex = target.FilteredIndex;
+                _dropTargetItemId = target.ItemId;
+                _owner.QueueGridRefresh();
+            }
+
+            private void ResetTarget()
+            {
+                if (_previewDestinationIndex == _sourceFilteredIndex && _dropTargetItemId == null)
+                    return;
+                _previewDestinationIndex = _sourceFilteredIndex;
+                _dropTargetItemId = null;
+                _owner.QueueGridRefresh();
+            }
+
+            private void CaptureDropSlots()
+            {
+                _dropSlots.Clear();
+                foreach (var holder in _owner._holders)
+                {
+                    if (!holder.Visible ||
+                        !IsInstanceValid(holder) ||
+                        !_owner._holderItemIds.TryGetValue(holder, out var itemId))
+                        continue;
+                    var filteredIndex = Array.FindIndex(
+                        _owner._filtered,
+                        entry => string.Equals(entry.Item.Id, itemId, StringComparison.Ordinal));
+                    if (filteredIndex < 0)
+                        continue;
+                    _dropSlots.Add((
+                        filteredIndex,
+                        itemId,
+                        holder.GetGlobalTransformWithCanvas().Origin));
+                }
+            }
+
+            private NGridCardHolder? FindHolderAt(Vector2 globalMouse)
+            {
+                var half = HolderVisualBounds.Size * HolderScale * 0.5f;
+                NGridCardHolder? fallback = null;
+                var fallbackDistanceSquared = float.MaxValue;
+                foreach (var holder in _owner._holders)
+                {
+                    if (!holder.Visible || !IsInstanceValid(holder))
+                        continue;
+                    if (holder.CardNode is Control cardNode &&
+                        cardNode.GetGlobalRect() is { Size: { X: > 1f, Y: > 1f } } cardRect &&
+                        cardRect.HasPoint(globalMouse))
+                        return holder;
+
+                    var center = holder.GetGlobalTransformWithCanvas().Origin;
+                    var distanceSquared = (globalMouse - center).LengthSquared();
+                    if (distanceSquared >= fallbackDistanceSquared)
+                        continue;
+                    fallbackDistanceSquared = distanceSquared;
+                    fallback = holder;
+                }
+
+                return fallback != null && fallbackDistanceSquared <= half.LengthSquared()
+                    ? fallback
+                    : null;
+            }
+
+            private void CompleteDrop()
+            {
+                var sourceItemId = _sourceItemId;
+                var targetItemId = _dropTargetItemId;
+                FinishVisuals();
+                if (sourceItemId != null && targetItemId != null)
+                    _owner.ReorderItemToTarget(sourceItemId, targetItemId);
+            }
+
+            private void FinishVisuals()
+            {
+                if (_ghost != null && IsInstanceValid(_ghost))
+                    _ghost.QueueFreeSafely();
+                _ghost = null;
+                IsDragging = false;
+                _sourceItemId = null;
+                _sourceFilteredIndex = -1;
+                _previewDestinationIndex = -1;
+                _dropTargetItemId = null;
+                _dropSlots.Clear();
+                if (IsInstanceValid(_owner))
+                    _owner.QueueGridRefresh();
+            }
         }
 
         private enum CardSortField

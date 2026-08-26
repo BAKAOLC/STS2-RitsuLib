@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Combat;
@@ -34,6 +35,8 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class RitsuDebugToolsPanel
     {
+        private readonly ConditionalWeakTable<CardModel, Dictionary<string, bool>> _pileCardSectionExpansion = new();
+
         private Control CreateCardDetail(CardModel card)
         {
             var root = DetailShell(
@@ -310,9 +313,46 @@ namespace STS2RitsuLib.Settings
                 L("ritsulib.debugTools.field.replay", "Replay count"),
                 replay,
                 replayButton));
-            root.AddChild(AdjustmentSection(
+            root.AddChild(PileCardAdjustmentSection(
+                entry.Card,
+                "state",
                 L("ritsulib.debugTools.action.cardState", "Card state"),
                 stateSettings));
+
+            var pileCardCount = RitsuDebugCardActions.GetExistingPile(entry.Card.Owner, entry.PileType)?.Cards.Count ??
+                                0;
+            if (pileCardCount > 1)
+            {
+                var orderActions = new HBoxContainer
+                {
+                    SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
+                };
+                orderActions.AddThemeConstantOverride("separation", 8);
+                orderActions.AddChild(CardOrderButton(
+                    entry,
+                    RitsuDebugToolsGlyph.ChevronUp,
+                    L("ritsulib.debugTools.action.moveEarlier", "Move earlier"),
+                    entry.Index - 1,
+                    entry.Index == 0));
+                orderActions.AddChild(CardOrderButton(
+                    entry,
+                    RitsuDebugToolsGlyph.ChevronDown,
+                    L("ritsulib.debugTools.action.moveLater", "Move later"),
+                    entry.Index + 1,
+                    entry.Index == pileCardCount - 1));
+                var orderSettings = CreateAdjustmentContent();
+                orderSettings.AddChild(Field(
+                    string.Format(
+                        L("ritsulib.debugTools.field.pilePosition", "Position {0} of {1}"),
+                        entry.Index + 1,
+                        pileCardCount),
+                    orderActions));
+                root.AddChild(PileCardAdjustmentSection(
+                    entry.Card,
+                    "order",
+                    L("ritsulib.debugTools.action.pileOrder", "Pile order"),
+                    orderSettings));
+            }
 
             var placementSettings = CreateAdjustmentContent();
             var hasActiveCombat = HasActiveCombatState(entry.Card.Owner);
@@ -385,7 +425,9 @@ namespace STS2RitsuLib.Settings
             moveButtonHolder[0] = moveButton;
             placementActions.AddChild(moveButton);
             placementSettings.AddChild(placementActions);
-            root.AddChild(AdjustmentSection(
+            root.AddChild(PileCardAdjustmentSection(
+                entry.Card,
+                "placement",
                 L("ritsulib.debugTools.action.cardPlacement", "Copies and pile placement"),
                 placementSettings,
                 RitsuDebugToolsGlyph.Cards));
@@ -414,7 +456,9 @@ namespace STS2RitsuLib.Settings
             }
 
             if (propertySettings.GetChildCount() > 0)
-                root.AddChild(AdjustmentSection(
+                root.AddChild(PileCardAdjustmentSection(
+                    entry.Card,
+                    "properties",
                     L("ritsulib.debugTools.action.cardProperties", "Card properties"),
                     propertySettings));
 
@@ -428,7 +472,9 @@ namespace STS2RitsuLib.Settings
                     localKeywords.Contains(CardKeyword.Ethereal)),
                 CardFlagField(root, entry, RitsuDebugCardEditField.Unplayable,
                     localKeywords.Contains(CardKeyword.Unplayable))));
-            root.AddChild(AdjustmentSection(
+            root.AddChild(PileCardAdjustmentSection(
+                entry.Card,
+                "flags",
                 L("ritsulib.debugTools.action.cardFlags", "Card flags"),
                 flagSettings));
 
@@ -500,7 +546,9 @@ namespace STS2RitsuLib.Settings
                     L("ritsulib.debugTools.noEnchantments", "No enchantments are available."));
             }
 
-            root.AddChild(AdjustmentSection(
+            root.AddChild(PileCardAdjustmentSection(
+                entry.Card,
+                "enchantment",
                 L("ritsulib.debugTools.field.enchantment", "Enchantment"),
                 enchantmentSettings));
 
@@ -530,6 +578,54 @@ namespace STS2RitsuLib.Settings
                         entry.CombatCardId));
                 }));
             return root;
+        }
+
+        private Button CardOrderButton(
+            PileCardEntry entry,
+            RitsuDebugToolsGlyph glyph,
+            string tooltip,
+            int destinationIndex,
+            bool disabled)
+        {
+            var button = new RitsuDebugToolsIconButton(42f, 36f);
+            button.Configure(
+                RitsuDebugToolsIcons.Get(
+                    glyph,
+                    18,
+                    RitsuShellTheme.Current.Text.LabelPrimary),
+                tooltip,
+                ModSettingsButtonTone.Normal);
+            button.Disabled = disabled;
+            button.Pressed += () =>
+            {
+                if (!TryGetActionContext(out var requester, out var target))
+                    return;
+                RunAction(() => RitsuDebugCardActions.SubmitReorderCard(
+                    requester,
+                    target,
+                    entry.PileType,
+                    entry.Index,
+                    entry.Card.Id.ToString(),
+                    destinationIndex,
+                    entry.CombatCardId));
+            };
+            return button;
+        }
+
+        private Control PileCardAdjustmentSection(
+            CardModel card,
+            string sectionId,
+            string title,
+            Control content,
+            RitsuDebugToolsGlyph glyph = RitsuDebugToolsGlyph.Sliders)
+        {
+            var expansion = _pileCardSectionExpansion.GetOrCreateValue(card);
+            return AdjustmentSection(
+                title,
+                content,
+                glyph,
+                expansion.GetValueOrDefault(sectionId),
+                expanded => expansion[sectionId] = expanded);
         }
 
         private void AddCardValueEditor(
@@ -1888,22 +1984,26 @@ namespace STS2RitsuLib.Settings
         private static Control AdjustmentSection(
             string title,
             Control content,
-            RitsuDebugToolsGlyph glyph = RitsuDebugToolsGlyph.Sliders)
+            RitsuDebugToolsGlyph glyph = RitsuDebugToolsGlyph.Sliders,
+            bool initiallyExpanded = false,
+            Action<bool>? expansionChanged = null)
         {
             var root = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             root.AddThemeConstantOverride("separation", 6);
             var panel = CreateAdjustmentPanel(content);
-            panel.Visible = false;
+            panel.Visible = initiallyExpanded;
 
             var toggle = IconTextButton(
                 glyph,
                 title,
                 ModSettingsButtonTone.Normal,
                 static () => { });
+            toggle.SetSelected(initiallyExpanded);
             toggle.Pressed += () =>
             {
                 panel.Visible = !panel.Visible;
                 toggle.SetSelected(panel.Visible);
+                expansionChanged?.Invoke(panel.Visible);
             };
             toggle.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             toggle.CustomMinimumSize = new(0f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
@@ -2012,7 +2112,7 @@ namespace STS2RitsuLib.Settings
             var labelNode = new Label
             {
                 Text = label,
-                CustomMinimumSize = new(92f, 0f),
+                CustomMinimumSize = new(148f, 0f),
                 VerticalAlignment = VerticalAlignment.Center,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };

@@ -322,6 +322,12 @@ namespace STS2RitsuLib.Settings
             return L($"ritsulib.debugTools.enum.PileType.{pileType}", pileType.ToString());
         }
 
+        private static string EnumLabel<TValue>(TValue value)
+            where TValue : struct, Enum
+        {
+            return L($"ritsulib.debugTools.enum.{typeof(TValue).Name}.{value}", value.ToString());
+        }
+
         private static string PresetSummary(RitsuDebugStatePreset preset)
         {
             var parts = new List<string>();

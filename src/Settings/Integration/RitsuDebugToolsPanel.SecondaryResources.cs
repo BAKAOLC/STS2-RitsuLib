@@ -1,6 +1,7 @@
 ﻿using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using STS2RitsuLib.Combat.SecondaryResources;
+using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Catalog;
 using STS2RitsuLib.Ui.Overlay;
@@ -24,11 +25,20 @@ namespace STS2RitsuLib.Settings
                     "No mods have registered secondary resources."));
 
             var byId = definitions.ToDictionary(static definition => definition.Id, StringComparer.Ordinal);
+            var sourceByItemId = definitions.ToDictionary(
+                static definition => definition.Id,
+                static definition => new ContentSourceDescriptor(definition.ModId, definition.ModId),
+                StringComparer.Ordinal);
             var browser = Browser(
                 L(
                     "ritsulib.debugTools.search.secondaryResources",
                     "Search secondary resources by name, owner, or ID"),
                 item => CreateSecondaryResourceDetail(byId[item.Id]),
+                [
+                    CreateContentSourceFilter(
+                        sourceByItemId.Values,
+                        item => sourceByItemId.TryGetValue(item.Id, out var source) ? source : null),
+                ],
                 presentation: RitsuCatalogPresentation.List,
                 detailWidth: 520f);
             browser.SetItems(CreateSecondaryResourceItems(target, definitions));

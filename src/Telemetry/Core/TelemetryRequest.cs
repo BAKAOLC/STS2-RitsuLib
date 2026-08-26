@@ -9,6 +9,7 @@ namespace STS2RitsuLib.Telemetry
     public sealed class TelemetryRequest
     {
         private readonly Func<TelemetryCaptureContext, bool>? _captureFilter;
+
         // ReSharper disable once FieldCanBeMadeReadOnly.Local
         private Func<RunEndedEvent, bool>? _runHistoryCaptureFilter;
 

@@ -305,7 +305,7 @@ namespace STS2RitsuLib.Compat
             ArgumentNullException.ThrowIfNull(mod);
             try
             {
-                if (ReadWorkshopItemId(mod) is { } workshopItemId && workshopItemId > 0)
+                if (ReadWorkshopItemId(mod) is > 0 and var workshopItemId)
                     return workshopItemId;
 
                 if (SteamWorkshopInstallSource.TryGetWorkshopItemIdFromPath(ReadPath(mod), out var pathItemId) &&
@@ -369,8 +369,7 @@ namespace STS2RitsuLib.Compat
             try
             {
                 var manifest = ReadManifest(mod);
-                var assemblies = ReadAssemblies(mod);
-                var assembly = assemblies.FirstOrDefault();
+                var assembly = ReadAssembly(mod);
                 var assemblyName = ResolveAssemblyName(assembly);
                 var errors = ReadErrors(mod);
                 var fallbackName = assemblyName?.Name ?? "<unknown>";
@@ -384,7 +383,6 @@ namespace STS2RitsuLib.Compat
                     assemblyName?.Name,
                     assemblyName?.Version?.ToString(),
                     errors,
-                    CommonIncompatibleModRegistry.IsMatch(assemblies),
                     TryGetWorkshopItemId(mod));
             }
             catch (Exception ex)
@@ -767,7 +765,6 @@ namespace STS2RitsuLib.Compat
         string? AssemblyName,
         string? AssemblyVersion,
         IReadOnlyList<LocString> Errors,
-        bool IsCommonIncompatibleMod,
         ulong? WorkshopItemId);
 
     internal sealed record Sts2LoadedModAssemblyEntry(

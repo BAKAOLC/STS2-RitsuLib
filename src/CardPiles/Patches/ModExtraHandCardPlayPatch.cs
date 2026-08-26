@@ -1,7 +1,13 @@
+using System.Reflection;
+using HarmonyLib;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.CardPiles.Patches
 {
@@ -31,24 +37,74 @@ namespace STS2RitsuLib.CardPiles.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Restores a queued extra-hand card to its source pile when the vanilla action is canceled.
+    ///         Routes playable extra-hand cards through the vanilla manual-play queue without moving them into the
+    ///         backend hand, and returns the same card node to its extra hand when a queued action is canceled.
     ///     </para>
-    ///     <para xml:lang="zh-CN">原版动作取消时，将已排队的额外手牌卡牌恢复到来源牌堆。</para>
+    ///     <para xml:lang="zh-CN">
+    ///         使可打出的额外手牌无需移入后端手牌即可使用原版手动出牌队列，并在已排队动作取消时将同一卡牌节点退回额外手牌。
+    ///     </para>
     /// </summary>
     internal sealed class ModExtraHandCardPlayCancelPatch : IPatchMethod
     {
         public static string PatchId => "ritsulib_extra_hand_card_play_cancel";
-        public static string Description => "Restore canceled queued extra-hand cards to their source pile";
+
+        public static string Description =>
+            "Play extra-hand cards directly from their source pile and return canceled card nodes";
+
         public static bool IsCritical => false;
 
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(PlayCardAction), "CancelAction", Type.EmptyTypes)];
+            return
+            [
+                PatchTarget.AsyncMethod<PlayCardAction>("ExecuteAction"),
+                new(typeof(NCardPlayQueue), nameof(NCardPlayQueue.OnLocalCardPlayed),
+                    [typeof(PlayCardAction), typeof(NCardHolder), typeof(CardModel)]),
+                new(typeof(NCardPlayQueue), "RemoveCardFromQueueForCancellation",
+                    [typeof(int), typeof(bool)]),
+                new(typeof(PlayCardAction), "CancelAction", Type.EmptyTypes),
+            ];
         }
 
-        public static void Postfix(PlayCardAction __instance)
+        public static IEnumerable<CodeInstruction> Transpiler(
+            IEnumerable<CodeInstruction> instructions,
+            MethodBase __originalMethod)
         {
-            ModExtraHandPlayCoordinator.RestoreCancelledAction(__instance);
+            if (__originalMethod.DeclaringType == typeof(PlayCardAction))
+                return instructions;
+
+            const string pileOperation = "[ExtraHand] direct manual-play pile routing";
+            var pileTypeGetter = HarmonyIl.RequireMethod(
+                AccessTools.PropertyGetter(typeof(CardPile), nameof(CardPile.Type)), pileOperation);
+            var compatiblePileTypeGetter = HarmonyIl.RequireMethod(
+                AccessTools.Method(typeof(ModExtraHandPlayCoordinator),
+                    nameof(ModExtraHandPlayCoordinator.GetVanillaManualPlayPileType)), pileOperation);
+            var rewriter = HarmonyIlRewriter.From(instructions);
+            var pileReport = rewriter.RedirectCalls(
+                pileOperation,
+                called => called == pileTypeGetter ? compatiblePileTypeGetter : null,
+                code => code.Any(HarmonyIl.IsCall(compatiblePileTypeGetter)));
+            if (__originalMethod.Name != "RemoveCardFromQueueForCancellation")
+                return rewriter.InstructionsChecked([pileReport]);
+
+            const string returnOperation = "[ExtraHand] route canceled queued card to its source extra hand";
+            var vanillaHandAdd = HarmonyIl.RequireMethod(
+                AccessTools.Method(typeof(NPlayerHand), nameof(NPlayerHand.Add), [typeof(NCard), typeof(int)]),
+                returnOperation);
+            var returnCancelledCard = HarmonyIl.RequireMethod(
+                AccessTools.Method(typeof(ModExtraHandPlayCoordinator),
+                    nameof(ModExtraHandPlayCoordinator.ReturnCancelledQueuedCard)), returnOperation);
+            var returnReport = rewriter.RedirectCalls(
+                returnOperation,
+                called => called == vanillaHandAdd ? returnCancelledCard : null,
+                code => code.Any(HarmonyIl.IsCall(returnCancelledCard)));
+            return rewriter.InstructionsChecked([pileReport, returnReport]);
+        }
+
+        public static void Postfix(object __instance)
+        {
+            if (__instance is PlayCardAction action)
+                ModExtraHandPlayCoordinator.RestoreCancelledAction(action);
         }
     }
 }

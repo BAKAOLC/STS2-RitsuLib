@@ -21,6 +21,8 @@ namespace STS2RitsuLib.Settings
 {
     internal sealed partial class RitsuDebugToolsPanel
     {
+        private readonly Dictionary<string, CardModel> _pileCardsByItemId = new(StringComparer.Ordinal);
+
         private Control CreateCardCatalog()
         {
             var cards = ModelDb.AllCards.OrderBy(SafeTitle, StringComparer.CurrentCultureIgnoreCase).ToArray();
@@ -139,15 +141,43 @@ namespace STS2RitsuLib.Settings
             var customPileOptionIds = ModCardPileRegistry.GetDefinitionsSnapshot()
                 .Select(static definition => RitsuDebugCardActions.GetPileToken(definition.PileType))
                 .ToHashSet(StringComparer.Ordinal);
+            var catalogEntries = CreatePileCardCatalogEntries(entries);
+            CardModel[] availableCards = [.. ModelDb.AllCards];
             return new RitsuDebugCardCatalog(
                 L("ritsulib.debugTools.search.pileCards", "Search the target player's cards"),
-                CreatePileCardCatalogEntries(entries),
-                [filter],
+                catalogEntries,
+                [
+                    filter,
+                    CreateContentSourceFilter(
+                        availableCards,
+                        item => _pileCardsByItemId.GetValueOrDefault(item.Id)),
+                ],
                 primaryFilterId: filter.Id,
                 primaryFilterBreakBeforeOptionId: RitsuDebugCardActions.GetPileToken(PileType.Deck),
                 primaryDefaultsToAll: true,
                 primaryAllMatches: IsDefaultPileCardEntry,
-                primaryOverflowOptionIds: customPileOptionIds);
+                primaryOverflowOptionIds: customPileOptionIds,
+                preserveSourceOrder: true,
+                reorderRequested: ReorderPileCard,
+                reorderHint: L(
+                    "ritsulib.debugTools.dragPileCardHint",
+                    "Drag cards within the same pile to reorder them."));
+        }
+
+        private void ReorderPileCard(RitsuDebugCardCatalogEntry entry, int destinationIndex)
+        {
+            if (entry.ReorderGroup == null ||
+                !RitsuDebugCardActions.TryParseMutablePileType(entry.ReorderGroup, out var pileType) ||
+                !TryGetActionContext(out var requester, out var target))
+                return;
+            RunAction(() => RitsuDebugCardActions.SubmitReorderCard(
+                requester,
+                target,
+                pileType,
+                entry.ReorderIndex,
+                entry.SourceCard.Id.ToString(),
+                destinationIndex,
+                RitsuDebugCardActions.GetCombatCardId(entry.SourceCard)));
         }
 
         private Control CreateRelicCatalog()
@@ -251,6 +281,7 @@ namespace STS2RitsuLib.Settings
                 .Where(IsVisibleCombatant)
                 .OrderBy(static creature => creature.CombatId)
                 .ToArray() ?? [];
+            AbstractModel[] sourceModels = [.. ModelDb.AllCharacters, .. ModelDb.Monsters];
             var filter = new RitsuCatalogFilter(
                 "combatantType",
                 L("ritsulib.debugTools.filter.combatantType", "Type"),
@@ -274,7 +305,12 @@ namespace STS2RitsuLib.Settings
                         : EmptyBrowser(L("ritsulib.debugTools.targetChanged",
                             "The selected target is no longer available."));
                 },
-                [filter],
+                [
+                    filter,
+                    CreateContentSourceFilter(
+                        sourceModels,
+                        ResolveCurrentModel),
+                ],
                 RitsuCatalogPresentation.Grid,
                 220f,
                 detailWidth: 640f);
@@ -295,6 +331,15 @@ namespace STS2RitsuLib.Settings
                        ulong.TryParse(item.Id.AsSpan("player:".Length), out var netId)
                     ? GetPlayers().FirstOrDefault(player => player.NetId == netId)
                     : null;
+            }
+
+            static AbstractModel? ResolveCurrentModel(RitsuCatalogItem item)
+            {
+                if (ResolveCurrentPlayer(item) is { } player)
+                    return player.Character;
+                if (ResolveCurrentCreature(item) is not { } creature)
+                    return null;
+                return ModelDb.Monsters.FirstOrDefault(model => model.Id == creature.ModelId);
             }
         }
 
@@ -323,20 +368,28 @@ namespace STS2RitsuLib.Settings
         private RitsuDebugCardCatalogEntry[] CreatePileCardCatalogEntries(
             IEnumerable<PileCardEntry> entries)
         {
-            return
+            RitsuDebugCardCatalogEntry[] result =
             [
                 .. entries.Select(entry => new RitsuDebugCardCatalogEntry(
                     new(
                         entry.StableId,
                         SafeTitle(entry.Card),
-                        $"{PileLabel(entry.PileType)} #{entry.Index + 1} · {entry.Card.Id}",
-                        $"{RitsuDebugCardActions.GetPileToken(entry.PileType)} {entry.Card.Type} {entry.Card.Rarity}",
+                        $"{PileLabel(entry.PileType)} #{entry.Index + 1} · " +
+                        $"{ContentSourceDisplayLabel(ContentSourceResolver.Resolve(entry.Card))} · {entry.Card.Id}",
+                        $"{RitsuDebugCardActions.GetPileToken(entry.PileType)} {entry.Card.Type} " +
+                        $"{entry.Card.Rarity} {ContentSourceSearchText(entry.Card)}",
                         badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null),
                     CreateCardPreviewModel(entry.Card),
                     entry.Card,
                     () => CreatePileCardDetail(entry),
-                    GetCardStateHash(entry.Card))),
+                    GetCardStateHash(entry.Card),
+                    RitsuDebugCardActions.GetPileToken(entry.PileType),
+                    entry.Index)),
             ];
+            _pileCardsByItemId.Clear();
+            foreach (var entry in result)
+                _pileCardsByItemId[entry.Item.Id] = entry.SourceCard;
+            return result;
         }
 
         private static int GetPileCardSnapshotHash(IReadOnlyList<PileCardEntry> entries)
@@ -466,6 +519,7 @@ namespace STS2RitsuLib.Settings
                         acts,
                         static act => act.AllEncounters.Select(encounter => encounter.Id.ToString())),
                     CreateEncounterTierFilter(tierItemIds),
+                    CreateContentSourceFilter(models, byId),
                 ],
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 240f,
@@ -483,7 +537,7 @@ namespace STS2RitsuLib.Settings
                         model.Id.ToString(),
                         SafeTitle(model),
                         summary,
-                        $"{model.Id.Category} {string.Join(' ', monsterNames)}",
+                        $"{model.Id.Category} {string.Join(' ', monsterNames)} {ContentSourceSearchText(model)}",
                         tooltip: BuildCatalogTooltip(
                             SafeTitle(model),
                             model.Id.ToString(),
@@ -517,6 +571,7 @@ namespace STS2RitsuLib.Settings
                         acts,
                         static act => act.AllMonsters.Select(monster => monster.Id.ToString())),
                     CreateEncounterTierFilter(tierItemIds),
+                    CreateContentSourceFilter(models, byId),
                 ],
                 presentation: RitsuCatalogPresentation.Grid,
                 gridTileMinimumWidth: 220f,
@@ -526,8 +581,8 @@ namespace STS2RitsuLib.Settings
                 .. models.Select(model => new RitsuCatalogItem(
                     model.Id.ToString(),
                     SafeTitle(model),
-                    MonsterVitals(model),
-                    model.Id.Category,
+                    $"{MonsterVitals(model)} · {ContentSourceDisplayLabel(ContentSourceResolver.Resolve(model))}",
+                    $"{model.Id.Category} {ContentSourceSearchText(model)}",
                     tooltip: BuildCatalogTooltip(
                         SafeTitle(model),
                         model.Id.ToString(),
@@ -668,6 +723,7 @@ namespace STS2RitsuLib.Settings
                             .Select(model => model.Id.ToString())
                             .Concat(act.AllAncients.Select(model => model.Id.ToString()))),
                     kindFilter,
+                    CreateContentSourceFilter(models, byId),
                 ],
                 RitsuCatalogPresentation.Grid,
                 180f,
@@ -751,11 +807,26 @@ namespace STS2RitsuLib.Settings
             IReadOnlyDictionary<string, TModel> modelsById)
             where TModel : AbstractModel
         {
-            var sourceByItemId = models.ToDictionary(
-                static model => model.Id.ToString(),
-                static model => ContentSourceResolver.Resolve(model),
-                StringComparer.Ordinal);
-            var sources = sourceByItemId.Values
+            return CreateContentSourceFilter(
+                models,
+                item => modelsById.GetValueOrDefault(item.Id));
+        }
+
+        private static RitsuCatalogFilter CreateContentSourceFilter<TModel>(
+            IReadOnlyCollection<TModel> models,
+            Func<RitsuCatalogItem, TModel?> modelResolver)
+            where TModel : AbstractModel
+        {
+            return CreateContentSourceFilter(
+                models.Select(ContentSourceResolver.Resolve),
+                item => modelResolver(item) is { } model ? ContentSourceResolver.Resolve(model) : null);
+        }
+
+        private static RitsuCatalogFilter CreateContentSourceFilter(
+            IEnumerable<ContentSourceDescriptor> availableSources,
+            Func<RitsuCatalogItem, ContentSourceDescriptor?> sourceResolver)
+        {
+            var sources = availableSources
                 .DistinctBy(static source => source.ModId, StringComparer.OrdinalIgnoreCase)
                 .OrderBy(static source => string.Equals(source.ModId, "Vanilla", StringComparison.OrdinalIgnoreCase)
                     ? 0
@@ -770,9 +841,8 @@ namespace STS2RitsuLib.Settings
                     .. sources.Select(source => new RitsuCatalogFilterOption(
                         source.ModId,
                         ContentSourceDisplayLabel(source),
-                        item => modelsById.TryGetValue(item.Id, out var model) &&
-                                string.Equals(ContentSourceResolver.Resolve(model).ModId, source.ModId,
-                                    StringComparison.OrdinalIgnoreCase))),
+                        item => sourceResolver(item) is { } itemSource &&
+                                string.Equals(itemSource.ModId, source.ModId, StringComparison.OrdinalIgnoreCase))),
                 ]);
         }
 
@@ -966,11 +1036,12 @@ namespace STS2RitsuLib.Settings
 
         private static CardModel CreateCardPreviewModel(CardModel card)
         {
-            if (card is not MadScience { TinkerTimeType: CardType.None })
-                return card;
-            var clone = (MadScience)card.MutableClone();
-            clone.TinkerTimeType = CardType.Attack;
-            return clone;
+            var preview = card.IsMutable
+                ? (CardModel)card.ClonePreservingMutability()
+                : card.ToMutable();
+            if (preview is MadScience { TinkerTimeType: CardType.None } madScience)
+                madScience.TinkerTimeType = CardType.Attack;
+            return preview;
         }
 
         private static string CardCost(CardModel card)

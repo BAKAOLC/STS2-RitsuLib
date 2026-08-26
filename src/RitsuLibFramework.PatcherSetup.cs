@@ -205,10 +205,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<NCustomRunLoadScreenBeginRunMissingCharacterPatch>();
             patcher.RegisterPatch<RitsuLibModelDbInitPostfixPatch>();
             patcher.RegisterPatch<LocManagerGetTableI18NBridgePatch>();
-            patcher.RegisterPatch<LocTableHasEntryI18NBridgePatch>();
-            patcher.RegisterPatch<LocTableIsLocalKeyI18NBridgePatch>();
-            patcher.RegisterPatch<LocTableGetRawTextI18NBridgePatch>();
-            patcher.RegisterPatch<LocTableGetLocStringI18NBridgePatch>();
+            patcher.RegisterPatch<LocStringGetRawTextI18NBridgePatch>();
+            patcher.RegisterPatch<LocStringStaticExistsI18NBridgePatch>();
+            patcher.RegisterPatch<LocStringExistsI18NBridgePatch>();
+            patcher.RegisterPatch<LocStringGetRandomWithPrefixI18NBridgePatch>();
             patcher.RegisterPatch<LocTableGetLocStringCompatibilityPatch>();
             patcher.RegisterPatch<LocTableGetRawTextCompatibilityPatch>();
             patcher.RegisterPatch<LocManagerLoadLocFormattersPostfixPatch>();

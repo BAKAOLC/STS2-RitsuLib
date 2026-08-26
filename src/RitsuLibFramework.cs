@@ -1862,6 +1862,19 @@ namespace STS2RitsuLib
         ///         <c>LocString</c> 管线可以从中解析原始模板。
         ///     </para>
         /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         The virtual table stays outside the game's table collection. Its snapshot is refreshed when
+        ///         <paramref name="i18N" /> changes and is unregistered automatically when that instance is disposed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         虚拟表不会加入游戏的表集合；<paramref name="i18N" /> 变化时会刷新其快照，并在该实例释放时自动注销。
+        ///     </para>
+        /// </remarks>
+        /// <exception cref="ObjectDisposedException">
+        ///     <para xml:lang="en"><paramref name="i18N" /> has already been disposed.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="i18N" /> 已被释放。</para>
+        /// </exception>
         public static bool RegisterI18NLocTableBridge(string modId, I18N i18N, string stem = "DEFAULT",
             bool replaceExisting = false)
         {

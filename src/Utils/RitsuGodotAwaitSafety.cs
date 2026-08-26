@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Utils
 
         private static async Task AwaitProcessFrameSignalAsync(SceneTree tree)
         {
-            await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+            await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame).AsRitsuAwaitable();
         }
 
         internal static async Task AwaitProcessFramesAsync(SceneTree? tree, int count,
@@ -49,6 +49,19 @@ namespace STS2RitsuLib.Utils
         {
             if (owner != null && !GodotObject.IsInstanceValid(owner))
                 throw new OperationCanceledException("Godot owner was deleted while awaiting a callback.", ct);
+        }
+
+        internal static RitsuGodotSignalAwaitable AsRitsuAwaitable(this SignalAwaiter signalAwaiter)
+        {
+            return new(signalAwaiter);
+        }
+
+        internal readonly struct RitsuGodotSignalAwaitable(SignalAwaiter signalAwaiter)
+        {
+            internal SignalAwaiter GetAwaiter()
+            {
+                return signalAwaiter;
+            }
         }
     }
 }

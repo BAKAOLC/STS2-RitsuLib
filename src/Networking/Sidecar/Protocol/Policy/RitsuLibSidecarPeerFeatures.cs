@@ -91,6 +91,9 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         internal const RitsuLibSidecarPeerFeatures ExtendedDeveloperStateActionsV1 =
             (RitsuLibSidecarPeerFeatures)(1u << 6);
+
+        internal const RitsuLibSidecarPeerFeatures CardPileReorderActionsV1 =
+            (RitsuLibSidecarPeerFeatures)(1u << 7);
     }
 
     internal static class RitsuLibSidecarSupportedFeatures
@@ -102,6 +105,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             RitsuLibSidecarPeerFeatures.ModelRightClickV2 |
             RitsuLibSidecarPeerFeatures.DeveloperActionsV1 |
             RitsuLibSidecarInternalPeerFeatures.MonsterIntentActionsV1 |
-            RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1;
+            RitsuLibSidecarInternalPeerFeatures.ExtendedDeveloperStateActionsV1 |
+            RitsuLibSidecarInternalPeerFeatures.CardPileReorderActionsV1;
     }
 }
