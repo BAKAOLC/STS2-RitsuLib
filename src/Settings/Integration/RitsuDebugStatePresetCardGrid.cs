@@ -17,14 +17,22 @@ namespace STS2RitsuLib.Settings
         private const int ContentEdgePadding = 18;
         private readonly HFlowContainer _flow;
         private readonly MarginContainer _frame;
+        private readonly Action<int, int> _moved;
+        private readonly PresetCardReorderController _reorderController;
         private readonly Action<int> _selected;
         private IReadOnlyList<RitsuDebugStatePresetCard> _cards = [];
         private int _selectedIndex = -1;
 
-        internal RitsuDebugStatePresetCardGrid(Action<int> selected)
+        internal RitsuDebugStatePresetCardGrid(
+            Control dragLayer,
+            Action<int> selected,
+            Action<int, int> moved)
         {
+            ArgumentNullException.ThrowIfNull(dragLayer);
             ArgumentNullException.ThrowIfNull(selected);
+            ArgumentNullException.ThrowIfNull(moved);
             _selected = selected;
+            _moved = moved;
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             SizeFlagsVertical = SizeFlags.ExpandFill;
             HorizontalScrollMode = ScrollMode.Disabled;
@@ -49,6 +57,7 @@ namespace STS2RitsuLib.Settings
             _flow.AddThemeConstantOverride("h_separation", 14);
             _flow.AddThemeConstantOverride("v_separation", 18);
             _frame.AddChild(_flow);
+            _reorderController = PresetCardReorderController.Attach(dragLayer, this);
             GetVScrollBar().VisibilityChanged += SyncScrollGutter;
             SyncScrollGutter();
         }
@@ -56,6 +65,7 @@ namespace STS2RitsuLib.Settings
         internal void SetCards(IReadOnlyList<RitsuDebugStatePresetCard> cards, int selectedIndex)
         {
             ArgumentNullException.ThrowIfNull(cards);
+            _reorderController.Cancel();
             _cards = cards;
             _selectedIndex = selectedIndex;
             Rebuild();
@@ -69,6 +79,12 @@ namespace STS2RitsuLib.Settings
             _selectedIndex = selectedIndex;
             ApplyTileSelection(previous);
             ApplyTileSelection(selectedIndex);
+        }
+
+        public override void _ExitTree()
+        {
+            _reorderController.Cancel();
+            base._ExitTree();
         }
 
         internal void RefreshCard(int index)
@@ -101,6 +117,7 @@ namespace STS2RitsuLib.Settings
             {
                 CustomMinimumSize = new(TileWidth, TileHeight),
                 MouseFilter = MouseFilterEnum.Stop,
+                MouseDefaultCursorShape = CursorShape.Drag,
                 TooltipText = BuildTooltip(saved),
             };
             tile.AddThemeStyleboxOverride(
@@ -131,7 +148,12 @@ namespace STS2RitsuLib.Settings
             var visualCenter = RitsuDebugCardCatalog.HolderVisualBounds.GetCenter() * holder.Scale;
             holder.Position = new Vector2(TileWidth * 0.5f, TileHeight * 0.5f) - visualCenter;
             holder.MouseFilter = MouseFilterEnum.Pass;
-            holder.Pressed += _ => _selected(index);
+            holder.Pressed += _ =>
+            {
+                if (_reorderController.ShouldSuppressClick() || _reorderController.IsDragging)
+                    return;
+                _selected(index);
+            };
             canvas.AddChild(holder);
             card.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
 
@@ -190,7 +212,12 @@ namespace STS2RitsuLib.Settings
 
         private static string BuildTooltip(RitsuDebugStatePresetCard card)
         {
-            var lines = new List<string> { card.CardId, $"×{card.Count}" };
+            var lines = new List<string>
+            {
+                card.CardId,
+                $"×{card.Count}",
+                L("ritsulib.debugTools.statePresets.dragCardHint", "Drag cards to reorder."),
+            };
             if (card.UpgradeLevels > 0)
                 lines.Add($"+{card.UpgradeLevels}");
             if (card.BaseCost.HasValue)
@@ -220,6 +247,243 @@ namespace STS2RitsuLib.Settings
                 return;
             _frame.AddThemeConstantOverride("margin_right", gutter);
             _frame.QueueSort();
+        }
+
+        private sealed class PresetCardReorderController
+        {
+            private const float DragStartThreshold = 4f;
+            private readonly Control _dragLayer;
+            private readonly List<Vector2> _dropSlotCenters = [];
+            private readonly RitsuDebugStatePresetCardGrid _owner;
+            private Control? _ghost;
+            private Vector2 _ghostOffset;
+            private int _originalIndex = -1;
+            private Control? _pendingTile;
+            private Vector2? _pendingGlobalPosition;
+            private Control? _sourceTile;
+            private bool _suppressNextClick;
+            private bool _wasMousePressed;
+
+            private PresetCardReorderController(
+                Control dragLayer,
+                RitsuDebugStatePresetCardGrid owner)
+            {
+                _dragLayer = dragLayer;
+                _owner = owner;
+            }
+
+            internal bool IsDragging { get; private set; }
+
+            internal static PresetCardReorderController Attach(
+                Control dragLayer,
+                RitsuDebugStatePresetCardGrid owner)
+            {
+                var controller = new PresetCardReorderController(dragLayer, owner);
+                var timer = new Godot.Timer
+                {
+                    Name = "PresetCardReorderDragPoll",
+                    WaitTime = 0.016d,
+                    Autostart = true,
+                    ProcessMode = ProcessModeEnum.Always,
+                };
+                timer.Timeout += controller.Poll;
+                owner.AddChild(timer);
+                return controller;
+            }
+
+            internal void Cancel()
+            {
+                FinishVisuals();
+                _pendingTile = null;
+                _pendingGlobalPosition = null;
+            }
+
+            internal bool ShouldSuppressClick()
+            {
+                if (!_suppressNextClick)
+                    return false;
+                _suppressNextClick = false;
+                return true;
+            }
+
+            private Vector2 MouseCanvas => _owner._flow.GetGlobalMousePosition();
+
+            private void Poll()
+            {
+                if (!IsInstanceValid(_owner) ||
+                    !IsInstanceValid(_dragLayer) ||
+                    !_owner.IsVisibleInTree())
+                    return;
+                var mousePressed = Input.IsMouseButtonPressed(MouseButton.Left);
+                var mouse = MouseCanvas;
+                if (IsDragging)
+                {
+                    UpdateGhostPosition(mouse);
+                    UpdateTarget(mouse);
+                    if (!mousePressed)
+                        CompleteDrop();
+                    _wasMousePressed = mousePressed;
+                    return;
+                }
+
+                if (mousePressed)
+                {
+                    if (!_wasMousePressed)
+                    {
+                        _pendingTile = FindTileAt(mouse);
+                        _pendingGlobalPosition = _pendingTile == null ? null : mouse;
+                    }
+
+                    if (_pendingTile != null &&
+                        _pendingGlobalPosition is { } start &&
+                        start.DistanceTo(mouse) >= DragStartThreshold)
+                        TryBeginDrag(_pendingTile, mouse);
+                }
+                else if (_wasMousePressed)
+                {
+                    _pendingTile = null;
+                    _pendingGlobalPosition = null;
+                }
+
+                _wasMousePressed = mousePressed;
+            }
+
+            private void TryBeginDrag(Control tile, Vector2 globalMouse)
+            {
+                if (IsDragging)
+                    return;
+                CaptureDropSlots();
+                if (_dropSlotCenters.Count < 2 ||
+                    FindCardHolder(tile) is not { } holder ||
+                    CreateCardGhost(holder, globalMouse) is not { } ghost)
+                {
+                    _dropSlotCenters.Clear();
+                    return;
+                }
+
+                _ghost = ghost;
+                _sourceTile = tile;
+                _originalIndex = tile.GetIndex();
+                IsDragging = true;
+                _suppressNextClick = true;
+                _pendingTile = null;
+                _pendingGlobalPosition = null;
+                tile.Modulate = new(1f, 1f, 0.95f, 0.22f);
+            }
+
+            private Control? CreateCardGhost(NGridCardHolder holder, Vector2 globalMouse)
+            {
+                if (holder.CardNode is not Control source || source.Duplicate(14) is not Control duplicate)
+                    return null;
+                duplicate.Name = "PresetCardReorderGhost";
+                duplicate.ZIndex = 90;
+                IgnoreMouseRecursively(duplicate);
+                _dragLayer.AddChild(duplicate);
+                duplicate.Scale = holder.Scale * source.Scale;
+                duplicate.Rotation = holder.Rotation + source.Rotation;
+                duplicate.Position = _dragLayer.GetGlobalTransformWithCanvas().AffineInverse() *
+                                     source.GetGlobalTransformWithCanvas().Origin;
+                var localMouse = _dragLayer.GetGlobalTransformWithCanvas().AffineInverse() * globalMouse;
+                _ghostOffset = duplicate.Position - localMouse;
+                return duplicate;
+            }
+
+            private static void IgnoreMouseRecursively(Node node)
+            {
+                if (node is Control control)
+                    control.MouseFilter = MouseFilterEnum.Ignore;
+                foreach (var child in node.GetChildren())
+                    IgnoreMouseRecursively(child);
+            }
+
+            private void UpdateGhostPosition(Vector2 globalMouse)
+            {
+                if (_ghost == null || !IsInstanceValid(_ghost))
+                    return;
+                var localMouse = _dragLayer.GetGlobalTransformWithCanvas().AffineInverse() * globalMouse;
+                _ghost.Position = localMouse + _ghostOffset;
+            }
+
+            private void UpdateTarget(Vector2 globalMouse)
+            {
+                if (_sourceTile == null ||
+                    !IsInstanceValid(_sourceTile) ||
+                    _dropSlotCenters.Count == 0)
+                    return;
+
+                var destinationIndex = 0;
+                var targetDistanceSquared = float.MaxValue;
+                for (var index = 0; index < _dropSlotCenters.Count; index++)
+                {
+                    var distanceSquared = (globalMouse - _dropSlotCenters[index]).LengthSquared();
+                    if (distanceSquared >= targetDistanceSquared)
+                        continue;
+                    targetDistanceSquared = distanceSquared;
+                    destinationIndex = index;
+                }
+
+                var sourceIndex = _sourceTile.GetIndex();
+                if (destinationIndex == sourceIndex)
+                    return;
+                _owner._flow.MoveChild(_sourceTile, destinationIndex);
+                _owner._flow.QueueSort();
+            }
+
+            private void CaptureDropSlots()
+            {
+                _dropSlotCenters.Clear();
+                foreach (var child in _owner._flow.GetChildren())
+                {
+                    if (child is Control { Visible: true } tile)
+                        _dropSlotCenters.Add(tile.GetGlobalRect().GetCenter());
+                }
+            }
+
+            private Control? FindTileAt(Vector2 globalMouse)
+            {
+                Control? fallback = null;
+                var fallbackDistanceSquared = float.MaxValue;
+                foreach (var child in _owner._flow.GetChildren())
+                {
+                    if (child is not Control { Visible: true } tile)
+                        continue;
+                    var rect = tile.GetGlobalRect();
+                    if (rect.HasPoint(globalMouse))
+                        return tile;
+                    var distanceSquared = (globalMouse - rect.GetCenter()).LengthSquared();
+                    if (distanceSquared >= fallbackDistanceSquared)
+                        continue;
+                    fallbackDistanceSquared = distanceSquared;
+                    fallback = tile;
+                }
+
+                var maximumDistance = new Vector2(TileWidth, TileHeight).LengthSquared() * 0.35f;
+                return fallbackDistanceSquared <= maximumDistance ? fallback : null;
+            }
+
+            private void CompleteDrop()
+            {
+                var destinationIndex = _sourceTile is { } source && IsInstanceValid(source)
+                    ? source.GetIndex()
+                    : _originalIndex;
+                var originalIndex = _originalIndex;
+                FinishVisuals();
+                if (originalIndex >= 0 && destinationIndex >= 0 && originalIndex != destinationIndex)
+                    _owner._moved(originalIndex, destinationIndex);
+            }
+
+            private void FinishVisuals()
+            {
+                if (_sourceTile != null && IsInstanceValid(_sourceTile))
+                    _sourceTile.Modulate = Colors.White;
+                if (_ghost != null && IsInstanceValid(_ghost))
+                    _ghost.QueueFreeSafely();
+                _ghost = null;
+                _sourceTile = null;
+                _originalIndex = -1;
+                _dropSlotCenters.Clear();
+                IsDragging = false;
+            }
         }
     }
 }

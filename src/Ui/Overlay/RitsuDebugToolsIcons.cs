@@ -32,6 +32,8 @@ namespace STS2RitsuLib.Ui.Overlay
         Heart,
         ChevronLeft,
         ChevronRight,
+        ChevronUp,
+        ChevronDown,
     }
 
     internal static class RitsuDebugToolsIcons
@@ -112,6 +114,8 @@ namespace STS2RitsuLib.Ui.Overlay
                     "<path d='M12 20S4 15.2 4 9.2C4 6.4 5.9 4.5 8.4 4.5c1.6 0 2.9.8 3.6 2 0.7-1.2 2-2 3.6-2C18.1 4.5 20 6.4 20 9.2c0 6-8 10.8-8 10.8z'/>",
                 RitsuDebugToolsGlyph.ChevronLeft => "<path d='M15 5l-7 7 7 7'/>",
                 RitsuDebugToolsGlyph.ChevronRight => "<path d='M9 5l7 7-7 7'/>",
+                RitsuDebugToolsGlyph.ChevronUp => "<path d='M5 15l7-7 7 7'/>",
+                RitsuDebugToolsGlyph.ChevronDown => "<path d='M5 9l7 7 7-7'/>",
                 _ =>
                     "<path d='M9 3h4v4h4v4h4v4h-4v4h-4v-4H9v4H5v-4H3v-4h2V7h4z'/>",
             };

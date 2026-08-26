@@ -156,7 +156,28 @@ namespace STS2RitsuLib.Settings
                 primaryFilterBreakBeforeOptionId: RitsuDebugCardActions.GetPileToken(PileType.Deck),
                 primaryDefaultsToAll: true,
                 primaryAllMatches: IsDefaultPileCardEntry,
-                primaryOverflowOptionIds: customPileOptionIds);
+                primaryOverflowOptionIds: customPileOptionIds,
+                preserveSourceOrder: true,
+                reorderRequested: ReorderPileCard,
+                reorderHint: L(
+                    "ritsulib.debugTools.dragPileCardHint",
+                    "Drag cards within the same pile to reorder them."));
+        }
+
+        private void ReorderPileCard(RitsuDebugCardCatalogEntry entry, int destinationIndex)
+        {
+            if (entry.ReorderGroup == null ||
+                !RitsuDebugCardActions.TryParseMutablePileType(entry.ReorderGroup, out var pileType) ||
+                !TryGetActionContext(out var requester, out var target))
+                return;
+            RunAction(() => RitsuDebugCardActions.SubmitReorderCard(
+                requester,
+                target,
+                pileType,
+                entry.ReorderIndex,
+                entry.SourceCard.Id.ToString(),
+                destinationIndex,
+                RitsuDebugCardActions.GetCombatCardId(entry.SourceCard)));
         }
 
         private Control CreateRelicCatalog()
@@ -361,7 +382,9 @@ namespace STS2RitsuLib.Settings
                     CreateCardPreviewModel(entry.Card),
                     entry.Card,
                     () => CreatePileCardDetail(entry),
-                    GetCardStateHash(entry.Card))),
+                    GetCardStateHash(entry.Card),
+                    RitsuDebugCardActions.GetPileToken(entry.PileType),
+                    entry.Index)),
             ];
             _pileCardsByItemId.Clear();
             foreach (var entry in result)
@@ -1013,11 +1036,12 @@ namespace STS2RitsuLib.Settings
 
         private static CardModel CreateCardPreviewModel(CardModel card)
         {
-            if (card is not MadScience { TinkerTimeType: CardType.None })
-                return card;
-            var clone = (MadScience)card.MutableClone();
-            clone.TinkerTimeType = CardType.Attack;
-            return clone;
+            var preview = card.IsMutable
+                ? (CardModel)card.ClonePreservingMutability()
+                : card.ToMutable();
+            if (preview is MadScience { TinkerTimeType: CardType.None } madScience)
+                madScience.TinkerTimeType = CardType.Attack;
+            return preview;
         }
 
         private static string CardCost(CardModel card)

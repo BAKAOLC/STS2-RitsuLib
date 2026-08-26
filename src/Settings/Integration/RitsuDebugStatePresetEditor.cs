@@ -12,8 +12,8 @@ namespace STS2RitsuLib.Settings
     // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuDebugStatePresetEditor : HBoxContainer
     {
-        private const float PresetListWidth = 220f;
-        private const float DetailDrawerWidth = 440f;
+        private const float PresetListWidth = 240f;
+        private const float DetailDrawerWidth = 580f;
         private readonly Func<RitsuDebugStatePreset, bool> _apply;
         private readonly Func<Player?> _getTarget;
         private readonly Dictionary<string, string> _modelTitles = new(StringComparer.Ordinal);
@@ -22,6 +22,7 @@ namespace STS2RitsuLib.Settings
         private VBoxContainer _contentBody = null!;
         private bool _dirty;
         private RitsuDebugStatePreset? _draft;
+        private Control _dragLayer = null!;
         private VBoxContainer _drawerBody = null!;
         private Control _drawerLayer = null!;
         private PanelContainer _drawerPanel = null!;
@@ -49,7 +50,7 @@ namespace STS2RitsuLib.Settings
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
             SizeFlagsVertical = SizeFlags.ExpandFill;
-            CustomMinimumSize = new(0f, 500f);
+            CustomMinimumSize = new(0f, 540f);
             AddThemeConstantOverride("separation", 10);
             CacheModelTitles(ModelDb.AllCards);
             CacheModelTitles(ModelDb.AllRelics);
@@ -160,6 +161,14 @@ namespace STS2RitsuLib.Settings
             };
             _drawerBody.AddThemeConstantOverride("separation", 10);
             scroll.AddChild(_drawerBody);
+
+            _dragLayer = new()
+            {
+                MouseFilter = MouseFilterEnum.Ignore,
+                ZIndex = 80,
+            };
+            _dragLayer.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            host.AddChild(_dragLayer);
         }
 
         private void SelectInitialPreset()
@@ -296,15 +305,16 @@ namespace STS2RitsuLib.Settings
 
         private void BuildTopToolbar()
         {
-            var toolbar = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            toolbar.AddThemeConstantOverride("separation", 6);
+            var toolbar = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            toolbar.AddThemeConstantOverride("h_separation", 6);
+            toolbar.AddThemeConstantOverride("v_separation", 6);
             var name = new LineEdit
             {
                 Text = _draft!.Name,
                 PlaceholderText = L("ritsulib.debugTools.statePresets.name", "Preset name"),
                 MaxLength = RitsuDebugStatePresetStore.MaximumNameLength,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                CustomMinimumSize = new(220f, 34f),
+                CustomMinimumSize = new(240f, 34f),
             };
             ModSettingsUiControlTheming.ApplyEntryLineEditValueFieldTheme(
                 name,

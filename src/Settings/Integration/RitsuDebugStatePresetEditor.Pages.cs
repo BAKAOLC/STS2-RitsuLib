@@ -96,9 +96,34 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            _cardGrid = new(index => ShowCardEditor(pile, index));
+            _contentBody.AddChild(Hint(L(
+                "ritsulib.debugTools.statePresets.dragCardHint",
+                "Drag cards to reorder.")));
+            _cardGrid = new(
+                _dragLayer,
+                index => ShowCardEditor(pile, index),
+                (sourceIndex, destinationIndex) => MovePresetCard(pile, sourceIndex, destinationIndex));
             _cardGrid.SetCards(pile.Cards, -1);
             _contentBody.AddChild(_cardGrid);
+        }
+
+        private bool MovePresetCard(
+            RitsuDebugStatePresetCardPile pile,
+            int sourceIndex,
+            int destinationIndex)
+        {
+            if (sourceIndex < 0 ||
+                sourceIndex >= pile.Cards.Count ||
+                destinationIndex < 0 ||
+                destinationIndex >= pile.Cards.Count ||
+                sourceIndex == destinationIndex)
+                return false;
+            var card = pile.Cards[sourceIndex];
+            pile.Cards.RemoveAt(sourceIndex);
+            pile.Cards.Insert(destinationIndex, card);
+            MarkDirty();
+            _cardGrid?.SetCards(pile.Cards, destinationIndex);
+            return true;
         }
 
         private void BuildRelicsPage()
@@ -460,7 +485,7 @@ namespace STS2RitsuLib.Settings
         {
             var button = new ModSettingsMiniButton(string.Empty, selected)
             {
-                CustomMinimumSize = new(210f, 66f),
+                CustomMinimumSize = new(248f, 76f),
                 TooltipText = $"{title}\n{subtitle}",
             };
             button.Pressed += () => ApplySelectionStyle(button, true);
@@ -476,7 +501,7 @@ namespace STS2RitsuLib.Settings
                     Texture = icon,
                     ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                     StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                    CustomMinimumSize = new(44f, 44f),
+                    CustomMinimumSize = new(52f, 52f),
                     MouseFilter = MouseFilterEnum.Ignore,
                 });
             var labels = new VBoxContainer
