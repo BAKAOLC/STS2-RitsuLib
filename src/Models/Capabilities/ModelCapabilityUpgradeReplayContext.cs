@@ -64,7 +64,7 @@ namespace STS2RitsuLib.Models.Capabilities
             DeferredImports.Remove(card);
             try
             {
-                ModelCapabilities.ImportImmediate(card, deferredImport.Document);
+                ModelCapabilities.Get(card).LoadAfterCardUpgradeReplay(deferredImport.Document);
             }
             catch (Exception ex)
             {

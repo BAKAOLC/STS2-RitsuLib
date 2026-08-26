@@ -709,6 +709,19 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal void Load(ModelCapabilitySaveDocument? document)
         {
+            LoadDocument(document, CreateDefaultCapabilityLoadState());
+        }
+
+        internal void LoadAfterCardUpgradeReplay(ModelCapabilitySaveDocument? document)
+        {
+            if (document == null)
+                return;
+
+            LoadDocument(document, CreateCurrentCapabilityLoadState());
+        }
+
+        private void LoadDocument(ModelCapabilitySaveDocument? document, CapabilityLoadState loadState)
+        {
             foreach (var capability in _capabilities)
                 capability.Detach(true);
 
@@ -718,17 +731,16 @@ namespace STS2RitsuLib.Models.Capabilities
             _unknownEntries.Clear();
             IsDirty = false;
 
-            var defaultCapabilities = CreateDefaultCapabilities();
             if (document == null)
             {
-                AddMissingDefaultCapabilities(defaultCapabilities);
+                AddMissingCapabilities(loadState);
                 return;
             }
 
-            Load(document, defaultCapabilities);
+            LoadDocumentEntries(document, loadState);
         }
 
-        private void Load(ModelCapabilitySaveDocument document, DefaultCapabilityLoadState defaultItems)
+        private void LoadDocumentEntries(ModelCapabilitySaveDocument document, CapabilityLoadState loadState)
         {
             foreach (var entry in document.Capabilities)
             {
@@ -738,11 +750,11 @@ namespace STS2RitsuLib.Models.Capabilities
                     continue;
                 }
 
-                if (defaultItems.TryTake(entry.Id, out var defaultCapability))
+                if (loadState.TryTake(entry.Id, out var loadItem))
                 {
-                    LoadCapabilityState(defaultCapability, entry);
-                    AddDefaultCapability(defaultCapability);
-                    NotifyCapabilityLoadedFromSave(defaultCapability);
+                    LoadCapabilityState(loadItem.Capability, entry);
+                    AddLoadedCapability(loadItem);
+                    NotifyCapabilityLoadedFromSave(loadItem.Capability);
                     continue;
                 }
 
@@ -759,7 +771,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 NotifyCapabilityLoadedFromSave(capability);
             }
 
-            AddMissingDefaultCapabilities(defaultItems);
+            AddMissingCapabilities(loadState);
         }
 
         internal ModelCapabilitySaveDocument? Save()
@@ -819,27 +831,38 @@ namespace STS2RitsuLib.Models.Capabilities
                 target.MarkDirty();
         }
 
-        private DefaultCapabilityLoadState CreateDefaultCapabilities()
+        private CapabilityLoadState CreateDefaultCapabilityLoadState()
         {
-            var state = new DefaultCapabilityLoadState();
+            var state = new CapabilityLoadState();
             foreach (var capability in ModelCapabilityDefaults.Create(Owner))
-                state.Add(capability);
+                state.Add(capability, true);
 
             return state;
         }
 
-        private void AddDefaultCapability(IModelCapability capability)
+        private CapabilityLoadState CreateCurrentCapabilityLoadState()
         {
-            _capabilities.Add(capability);
-            InvalidateAttachedSnapshot();
-            _defaultCapabilities.Add(capability);
-            capability.Attach(Owner, true);
+            var state = new CapabilityLoadState();
+            foreach (var capability in _capabilities)
+                state.Add(capability, _defaultCapabilities.Contains(capability));
+
+            return state;
         }
 
-        private void AddMissingDefaultCapabilities(DefaultCapabilityLoadState defaultItems)
+        private void AddLoadedCapability(CapabilityLoadItem item)
         {
-            foreach (var capability in defaultItems.TakeRemaining())
-                AddDefaultCapability(capability);
+            _capabilities.Add(item.Capability);
+            InvalidateAttachedSnapshot();
+            if (item.IsDefault)
+                _defaultCapabilities.Add(item.Capability);
+
+            item.Capability.Attach(Owner, true);
+        }
+
+        private void AddMissingCapabilities(CapabilityLoadState loadState)
+        {
+            foreach (var item in loadState.TakeRemaining())
+                AddLoadedCapability(item);
         }
 
         private static void LoadCapabilityState(IModelCapability capability, ModelCapabilitySaveEntry entry)
@@ -951,39 +974,42 @@ namespace STS2RitsuLib.Models.Capabilities
                 $"Capability '{capability.CapabilityId}' is already attached to model '{capability.Owner.Id}'.");
         }
 
-        private sealed class DefaultCapabilityLoadState
-        {
-            private readonly Dictionary<string, Queue<IModelCapability>> _queues = new(StringComparer.Ordinal);
-            private readonly List<IModelCapability> _remaining = [];
+        private readonly record struct CapabilityLoadItem(IModelCapability Capability, bool IsDefault);
 
-            public void Add(IModelCapability capability)
+        private sealed class CapabilityLoadState
+        {
+            private readonly Dictionary<string, Queue<CapabilityLoadItem>> _queues = new(StringComparer.Ordinal);
+            private readonly List<CapabilityLoadItem> _remaining = [];
+
+            public void Add(IModelCapability capability, bool isDefault)
             {
-                _remaining.Add(capability);
+                var item = new CapabilityLoadItem(capability, isDefault);
+                _remaining.Add(item);
                 if (!_queues.TryGetValue(capability.CapabilityId, out var queue))
                 {
                     queue = new();
                     _queues[capability.CapabilityId] = queue;
                 }
 
-                queue.Enqueue(capability);
+                queue.Enqueue(item);
             }
 
-            public bool TryTake(string capabilityId, out IModelCapability capability)
+            public bool TryTake(string capabilityId, out CapabilityLoadItem item)
             {
-                capability = null!;
+                item = default;
                 if (!_queues.TryGetValue(capabilityId, out var queue) || queue.Count == 0)
                     return false;
 
-                capability = queue.Dequeue();
-                var taken = capability;
-                var index = _remaining.FindIndex(candidate => ReferenceEquals(candidate, taken));
+                item = queue.Dequeue();
+                var capability = item.Capability;
+                var index = _remaining.FindIndex(candidate => ReferenceEquals(candidate.Capability, capability));
                 if (index >= 0)
                     _remaining.RemoveAt(index);
 
                 return true;
             }
 
-            public IReadOnlyList<IModelCapability> TakeRemaining()
+            public IReadOnlyList<CapabilityLoadItem> TakeRemaining()
             {
                 var remaining = _remaining.ToArray();
                 _remaining.Clear();
