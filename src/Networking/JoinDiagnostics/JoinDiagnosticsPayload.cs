@@ -405,8 +405,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                         null,
                         true,
                         true,
-                        ContentModLoadOrderInventory.IsDependencyLibraryId(id),
-                        false);
+                        ContentModLoadOrderInventory.IsDependencyLibraryId(id));
                 }),
             ];
         }
