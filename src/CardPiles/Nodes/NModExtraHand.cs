@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -10,7 +11,6 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Interactions.RightClick.Patches;
-using STS2RitsuLib.Patching;
 
 namespace STS2RitsuLib.CardPiles.Nodes
 {
@@ -29,10 +29,6 @@ namespace STS2RitsuLib.CardPiles.Nodes
         internal const float DefaultChromeHeight = 280f;
         internal static readonly Vector2 DefaultChromeSize = new(DefaultChromeWidth, DefaultChromeHeight);
         private static readonly ModCardPileExtraHandSpec DefaultLayout = new();
-
-        private static readonly Action<NHandCardHolder, NCard> SetHolderCard =
-            PrivateAccess.DeclaredMethodDelegate<NHandCardHolder, Action<NHandCardHolder, NCard>>(
-                "SetCard", typeof(NCard));
 
         private readonly HashSet<CardModel> _arrivingCards = [];
 
@@ -289,26 +285,66 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 Definition.ExtraHand.OnCardArrived?.Invoke(BuildContext(card, holder));
         }
 
-        internal bool TryBeginHandEntryAnimation(NCard sourceCard)
+        internal bool RepresentsPile(CardPile pile)
+        {
+            return ReferenceEquals(_pile, pile);
+        }
+
+        internal NHandCardHolder? AddFromVanillaHandFlow(NCard cardNode, int index)
         {
             if (!Definition.CardShouldBeVisible
-                || sourceCard.Model is not { } card
-                || card.Pile?.Type != Definition.PileType
-                || GetHolder(card) is not { } holder)
-                return false;
+                || cardNode.Model is not { } card
+                || !ReferenceEquals(card.Pile, _pile))
+                return null;
 
-            var sourcePosition = sourceCard.GlobalPosition;
-            if (holder.CardNode == null)
-                SetHolderCard(holder, sourceCard);
-            else if (!ReferenceEquals(holder.CardNode, sourceCard)) sourceCard.QueueFree();
+            if (GetHolder(card) is { } existingHolder)
+                return ReferenceEquals(existingHolder.CardNode, cardNode)
+                    ? existingHolder
+                    : throw new InvalidOperationException("The extra hand already contains another node for the card.");
 
-            holder.GlobalPosition = sourcePosition;
-            holder.SetAngleInstantly(0f);
-            holder.SetScaleInstantly(Vector2.One);
-            if (holder.CardNode != null)
-                holder.CardNode.Position = Vector2.Zero;
+            var globalPosition = cardNode.GlobalPosition;
+            AddVisualFor(card, cardNode, true);
+            var holder = GetHolder(card)
+                         ?? throw new InvalidOperationException(
+                             "The extra hand could not create a holder for the card.");
+            if (index >= 0)
+                _cardLayer.MoveChildSafely(holder, Math.Min(index, _cardLayer.GetChildCount() - 1));
+            holder.GlobalPosition = globalPosition;
             _arrivingCards.Add(card);
             ArrangeCards();
+            return holder;
+        }
+
+        internal bool MoveCardNodeToNewPileBeforeTween(NCard cardNode, PileType newPileType)
+        {
+            if (cardNode.Model is not { } card
+                || GetHolder(card) is not { } holder
+                || !ReferenceEquals(holder.CardNode, cardNode))
+                return false;
+
+            var combatUi = NCombatRoom.Instance?.Ui;
+            if (combatUi == null)
+                return false;
+
+            var globalPosition = cardNode.GlobalPosition;
+            if (combatUi.PlayQueue.IsAncestorOf(cardNode))
+                combatUi.PlayQueue.RemoveCardFromQueueForExecution(card);
+
+            RemoveHolderForPileMove(card, holder);
+            if (newPileType == PileType.Play)
+            {
+                combatUi.PlayContainer.AddChildSafely(cardNode);
+                if (NCombatUi.IsDebugHidingPlayContainer)
+                    cardNode.Visible = false;
+            }
+            else
+            {
+                combatUi.AddChildSafely(cardNode);
+            }
+
+            cardNode.GlobalPosition = globalPosition;
+            cardNode.PlayPileTween?.Kill();
+            cardNode.PlayPileTween = null;
             return true;
         }
 
@@ -322,8 +358,6 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_pile == null)
                 return;
 
-            _pile.CardAdded += OnCardAdded;
-            _pile.CardRemoved += OnCardRemoved;
             foreach (var card in _pile.Cards)
                 AddVisualFor(card, null, true);
             ArrangeCards();
@@ -331,12 +365,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void DetachPile()
         {
-            if (_pile != null)
-            {
-                _pile.CardAdded -= OnCardAdded;
-                _pile.CardRemoved -= OnCardRemoved;
-                _pile = null;
-            }
+            _pile = null;
 
             foreach (var holder in _holders.Values.Where(IsInstanceValid))
                 holder.QueueFree();
@@ -345,26 +374,19 @@ namespace STS2RitsuLib.CardPiles.Nodes
             _focusedHolder = null;
         }
 
-        private void OnCardAdded(CardModel card)
-        {
-            AddVisualFor(card, null, true);
-            ArrangeCards();
-        }
-
-        private void OnCardRemoved(CardModel card)
+        private void RemoveHolderForPileMove(CardModel card, NHandCardHolder holder)
         {
             _arrivingCards.Remove(card);
-            if (!_holders.Remove(card, out var holder))
-                return;
-
+            _holders.Remove(card);
             if (ReferenceEquals(_focusedHolder, holder))
             {
                 _focusedHolder = null;
                 RunManager.Instance.HoveredModelTracker.OnLocalCardUnhovered();
             }
 
-            if (IsInstanceValid(holder))
-                holder.QueueFree();
+            holder.GetParent()?.RemoveChildSafely(holder);
+            holder.Clear();
+            holder.QueueFreeSafely();
             ArrangeCards();
         }
 
@@ -400,7 +422,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
             var holder = NHandCardHolder.Create(ncard, hand);
             _holders[card] = holder;
-            _cardLayer.AddChild(holder);
+            _cardLayer.AddChildSafely(holder);
             ModRightClickCardHolderPatch.ConnectModPileHolder(holder, Definition.PileType);
             holder.SetIndexLabel(0);
             ApplyCardPlayAvailability(holder);
