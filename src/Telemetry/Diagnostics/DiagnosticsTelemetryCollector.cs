@@ -1,9 +1,8 @@
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 
 namespace STS2RitsuLib.Telemetry.Diagnostics
 {
-    internal static partial class DiagnosticsTelemetryCollector
+    internal static class DiagnosticsTelemetryCollector
     {
         private const int MaxRecentFingerprints = 128;
         private static readonly Lock Sync = new();
@@ -25,8 +24,8 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
             var node = new JsonObject
             {
                 ["type"] = exception.GetType().FullName ?? exception.GetType().Name,
-                ["message"] = SanitizeDiagnosticText(exception.Message),
-                ["stack_trace"] = SanitizeDiagnosticText(exception.StackTrace),
+                ["message"] = exception.Message,
+                ["stack_trace"] = exception.StackTrace,
             };
 
             if (exception.InnerException != null)
@@ -138,12 +137,12 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
 
         private static bool TryMarkRecent(Exception exception, string source)
         {
-            var stackHead = SanitizeDiagnosticText(exception.StackTrace)?.Split('\n').FirstOrDefault()?.Trim() ?? "";
+            var stackHead = exception.StackTrace?.Split('\n').FirstOrDefault()?.Trim() ?? "";
             var fingerprint = string.Join(
                 "\n",
                 source,
                 exception.GetType().FullName ?? exception.GetType().Name,
-                SanitizeDiagnosticText(exception.Message),
+                exception.Message,
                 stackHead);
 
             lock (Sync)
@@ -157,25 +156,5 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
                 return true;
             }
         }
-
-        private static string? SanitizeDiagnosticText(string? text)
-        {
-            if (string.IsNullOrEmpty(text))
-                return text;
-
-            var sanitized = WindowsStackPathRegex().Replace(text, " in <local-path>:line $1");
-            sanitized = UnixStackPathRegex().Replace(sanitized, " in <local-path>:line $1");
-            sanitized = WindowsPathRegex().Replace(sanitized, "<local-path>");
-            return sanitized;
-        }
-
-        [GeneratedRegex(@"\s+in\s+[A-Za-z]:[^\r\n]*:line\s+(\d+)", RegexOptions.CultureInvariant)]
-        private static partial Regex WindowsStackPathRegex();
-
-        [GeneratedRegex(@"\s+in\s+/[^\r\n]*:line\s+(\d+)", RegexOptions.CultureInvariant)]
-        private static partial Regex UnixStackPathRegex();
-
-        [GeneratedRegex(@"[A-Za-z]:[\\/][^\r\n\t""']+", RegexOptions.CultureInvariant)]
-        private static partial Regex WindowsPathRegex();
     }
 }
