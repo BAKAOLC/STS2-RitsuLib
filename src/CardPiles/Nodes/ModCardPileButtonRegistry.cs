@@ -1,3 +1,6 @@
+using MegaCrit.Sts2.Core.Entities.Cards;
+using MegaCrit.Sts2.Core.Nodes.Cards;
+
 namespace STS2RitsuLib.CardPiles.Nodes
 {
     /// <summary>
@@ -67,6 +70,29 @@ namespace STS2RitsuLib.CardPiles.Nodes
             {
                 return ExtraHands.GetValueOrDefault(definition.Id);
             }
+        }
+
+        internal static NModExtraHand? TryGetExtraHand(CardPile pile)
+        {
+            if (!ModCardPileRegistry.TryGetByPileType(pile.Type, out var definition))
+                return null;
+
+            var hand = TryGetExtraHand(definition);
+            return hand?.RepresentsPile(pile) == true ? hand : null;
+        }
+
+        internal static NModExtraHand? TryGetExtraHandContaining(NCard cardNode)
+        {
+            if (cardNode.Model is not { } card)
+                return null;
+
+            NModExtraHand[] hands;
+            lock (SyncRoot)
+            {
+                hands = [.. ExtraHands.Values];
+            }
+
+            return hands.FirstOrDefault(hand => ReferenceEquals(hand.GetCard(card), cardNode));
         }
     }
 }

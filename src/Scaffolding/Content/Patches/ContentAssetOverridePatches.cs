@@ -2004,6 +2004,15 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 (suppressAncientBackgroundScene ? null : eventOverrides.CustomBackgroundScenePath,
                     nameof(IModEventAssetOverrides.CustomBackgroundScenePath)),
                 (eventOverrides.CustomVfxScenePath, nameof(IModEventAssetOverrides.CustomVfxScenePath)));
+            if (__instance.LayoutType == EventLayoutType.Default
+                && !string.IsNullOrWhiteSpace(eventOverrides.CustomInitialPortraitPath)
+                && merged.Contains(eventOverrides.CustomInitialPortraitPath, StringComparer.Ordinal))
+            {
+                var entry = __instance.Id.Entry.ToLowerInvariant();
+                var vanillaPortrait = ImageHelper.GetImagePath($"events/{entry}.png");
+                paths = RemovePath(paths, vanillaPortrait);
+            }
+
             if (externalMerged.Length > 0)
                 merged = [.. merged.Concat(externalMerged).Distinct()];
 
