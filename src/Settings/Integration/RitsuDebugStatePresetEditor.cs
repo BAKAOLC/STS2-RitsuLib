@@ -26,6 +26,7 @@ namespace STS2RitsuLib.Settings
         private VBoxContainer _drawerBody = null!;
         private Control _drawerLayer = null!;
         private PanelContainer _drawerPanel = null!;
+        private VBoxContainer _drawerPinnedBody = null!;
         private Label _drawerTitle = null!;
         private Tween? _drawerTween;
         private VBoxContainer _mainBody = null!;
@@ -152,6 +153,13 @@ namespace STS2RitsuLib.Settings
                 () => CloseDrawer(),
                 70f));
             drawerFrame.AddChild(drawerHeader);
+            _drawerPinnedBody = new()
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            };
+            _drawerPinnedBody.AddThemeConstantOverride("separation", 8);
+            drawerFrame.AddChild(_drawerPinnedBody);
             var scroll = CreateScroll();
             drawerFrame.AddChild(scroll);
             _drawerBody = new()
@@ -247,7 +255,12 @@ namespace STS2RitsuLib.Settings
             foreach (var preset in presets)
             {
                 var selected = _draft != null && preset.Id.Equals(_draft.Id, StringComparison.OrdinalIgnoreCase);
-                var button = new ModSettingsMiniButton(preset.Name, () => RequestSelectPreset(preset))
+                var unsaved = selected && _dirty;
+                var button = new ModSettingsMiniButton(
+                    unsaved
+                        ? $"{preset.Name} · {L("ritsulib.debugTools.statePresets.unsaved", "Unsaved")}"
+                        : preset.Name,
+                    () => RequestSelectPreset(preset))
                 {
                     Alignment = HorizontalAlignment.Left,
                     CustomMinimumSize = new(0f, 36f),
@@ -255,6 +268,7 @@ namespace STS2RitsuLib.Settings
                     TooltipText = $"{preset.Name}\n{PresetSummary(preset)}",
                 };
                 ApplySelectionStyle(button, selected);
+                ApplyUnsavedStyle(button, unsaved);
                 _presetList.AddChild(button);
             }
 
@@ -270,6 +284,7 @@ namespace STS2RitsuLib.Settings
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             ApplySelectionStyle(draft, true);
+            ApplyUnsavedStyle(draft, true);
             _presetList.AddChild(draft);
         }
 
@@ -323,7 +338,7 @@ namespace STS2RitsuLib.Settings
             name.TextChanged += value =>
             {
                 _draft.Name = value;
-                _dirty = true;
+                MarkDirty();
             };
             toolbar.AddChild(name);
             toolbar.AddChild(CompactButton(
@@ -508,6 +523,7 @@ namespace STS2RitsuLib.Settings
         private void MarkDirty(bool rebuild = false)
         {
             _dirty = true;
+            RebuildPresetList();
             if (rebuild)
                 RebuildMain();
         }
@@ -516,6 +532,17 @@ namespace STS2RitsuLib.Settings
         {
             _draft!.ApplyInternalValues = true;
             MarkDirty(rebuild);
+        }
+
+        private static void ApplyUnsavedStyle(Button button, bool unsaved)
+        {
+            if (!unsaved)
+                return;
+            var color = RitsuShellTheme.Current.Component.TextButton.Accent.Fg;
+            button.AddThemeColorOverride("font_color", color);
+            button.AddThemeColorOverride("font_hover_color", color);
+            button.AddThemeColorOverride("font_pressed_color", color);
+            button.AddThemeColorOverride("font_focus_color", color);
         }
 
         private enum PresetPage

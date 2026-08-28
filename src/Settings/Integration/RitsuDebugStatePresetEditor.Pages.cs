@@ -20,7 +20,10 @@ namespace STS2RitsuLib.Settings
             foreach (var pileType in editablePiles)
             {
                 var capturedPile = pileType;
-                var count = FindPile(pileType)?.Cards.Sum(static card => card.Count) ?? 0;
+                var configuredPile = FindPile(pileType);
+                var count = configuredPile == null
+                    ? "–"
+                    : configuredPile.Cards.Sum(static card => card.Count).ToString();
                 var text = $"{PileLabel(pileType)} · {count}";
                 var button = new ModSettingsMiniButton(text, () =>
                 {
