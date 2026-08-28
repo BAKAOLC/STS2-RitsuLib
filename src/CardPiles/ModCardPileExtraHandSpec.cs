@@ -17,6 +17,7 @@ namespace STS2RitsuLib.CardPiles
         private readonly Vector2 _disabledOffset = new(0f, 100f);
         private readonly Color _disabledModulate = new(0.5f, 0.5f, 0.5f);
         private readonly double _disabledTransitionDuration = 0.2;
+        private readonly ModExtraHandBehavior _behaviors;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -76,19 +77,56 @@ namespace STS2RitsuLib.CardPiles
         /// <summary>
         ///     <para xml:lang="en">
         ///         Gets whether this pile has manual-card-play capability through the base-game targeting, action
-        ///         queue, resource payment, card hooks, and destination-pile flow. This value also initializes
+        ///         queue, hand-consistent evaluation and resource payment, card hooks, and destination-pile flow.
+        ///         Hand identity during cost display, play validation, and payment is an invariant of this capability,
+        ///         not a separately selectable behavior. Play-enabled cards automatically participate in core
+        ///         empty-hand and playable-card queries, and are always represented by card nodes. This value also initializes
         ///         <see cref="NModExtraHand.CardPlayEnabled" /> for each new container. The default is
         ///         <see langword="true" />. Runtime availability can temporarily disable and restore granted
         ///         capability, but cannot enable a definition that disallows card play.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取此牌堆是否具备通过游戏原有目标选择、行动队列、资源支付、卡牌钩子与目标牌堆流程手动
-        ///         出牌的能力。该值也会初始化每个新容器的 <see cref="NModExtraHand.CardPlayEnabled" />。默认值为
+        ///         获取此牌堆是否具备通过游戏原有目标选择、行动队列、与手牌一致的求值及资源支付、卡牌钩子
+        ///         与目标牌堆流程手动出牌的能力。费用显示、出牌验证及支付期间的手牌身份是此能力必须保证的
+        ///         不变量，而不是可单独选择的行为。允许打出的卡牌会自动参与核心空手及可打出卡牌查询，并始终
+        ///         由卡牌节点表示。该值也会初始化每个新容器的
+        ///         <see cref="NModExtraHand.CardPlayEnabled" />。默认值为
         ///         <see langword="true" />。运行时可用性可以临时禁用并恢复已授予的能力，但不能启用定义中未
         ///         允许出牌的牌堆。
         ///     </para>
         /// </summary>
         public bool AllowCardPlay { get; init; } = true;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the optional base-game hand semantics applied to cards in this pile. The default does not
+        ///         add semantics beyond those required by <see cref="AllowCardPlay" />. Presentation,
+        ///         multiplayer synchronization, vanilla action execution, and card-node animation remain mandatory
+        ///         invariants rather than optional behaviors. Extra-hand cards never count toward the base-game
+        ///         maximum hand size or reduce its draw capacity.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取应用于此牌堆卡牌的可选游戏原有手牌语义。默认不添加
+        ///         <see cref="AllowCardPlay" /> 所要求语义之外的行为。表现、多人同步、原版行动执行及卡牌节点
+        ///         动画属于必须保证的不变量，而不是可选行为。额外手牌卡牌不会计入游戏原有最大手牌数量，也不会
+        ///         减少其抽牌容量。
+        ///     </para>
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">The assigned value contains an undefined behavior flag.</para>
+        ///     <para xml:lang="zh-CN">所赋值包含未定义的行为标志。</para>
+        /// </exception>
+        public ModExtraHandBehavior Behaviors
+        {
+            get => _behaviors;
+            init
+            {
+                if ((value & ~ModExtraHandBehavior.FullHand) != 0)
+                    throw new ArgumentOutOfRangeException(nameof(Behaviors), value,
+                        "The extra-hand behavior value contains an undefined flag.");
+                _behaviors = value;
+            }
+        }
 
         /// <summary>
         ///     <para xml:lang="en">

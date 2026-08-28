@@ -53,6 +53,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterOwnedCardPileAttribute(string localPileStem) : AutoRegistrationAttribute
     {
+        private ModExtraHandBehavior _extraHandBehaviors;
+
         /// <summary>
         ///     <para xml:lang="en">Local pile stem within the owning mod's namespace.</para>
         ///     <para xml:lang="zh-CN">归属模组命名空间内的本地牌堆名称。</para>
@@ -172,10 +174,12 @@ namespace STS2RitsuLib.Interop.AutoRegistration
         ///     <para xml:lang="en">
         ///         Only meaningful for <see cref="ModCardPileUiStyle.ExtraHand" />: when
         ///         <see langword="true" />, cards in the pile are rendered as <c>NCard</c> nodes inside its container.
+        ///         <see cref="ExtraHandAllowCardPlay" /> forces this behavior for a play-enabled extra hand.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         仅对 <see cref="ModCardPileUiStyle.ExtraHand" /> 有意义：为 <see langword="true" /> 时，
-        ///         牌堆中的卡牌会在容器内渲染为 <c>NCard</c> 节点。
+        ///         牌堆中的卡牌会在容器内渲染为 <c>NCard</c> 节点。对于允许打出的额外手牌，
+        ///         <see cref="ExtraHandAllowCardPlay" /> 会强制启用此行为。
         ///     </para>
         /// </summary>
         public bool CardShouldBeVisible { get; set; }
@@ -217,16 +221,48 @@ namespace STS2RitsuLib.Interop.AutoRegistration
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Whether the extra-hand pile has manual-card-play capability through the vanilla pipeline. This
-        ///         also determines each new container's initial runtime availability. Defaults to
+        ///         Whether the extra-hand pile has manual-card-play capability through the vanilla pipeline,
+        ///         including hand-consistent cost display, validation, and payment. Play-enabled cards automatically
+        ///         participate in core empty-hand and playable-card queries and are represented by card nodes.
+        ///         This also determines each new
+        ///         container's initial runtime availability. Defaults to
         ///         <see langword="true" />.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         额外手牌牌堆是否具备通过原版流程手动出牌的能力；该值也决定每个新容器的运行时可用性
-        ///         初始值。默认为 <see langword="true" />。
+        ///         额外手牌牌堆是否具备通过原版流程手动出牌的能力，包括与手牌一致的费用显示、验证及支付；
+        ///         允许打出的卡牌会自动参与核心空手及可打出卡牌查询，并由卡牌节点表示。该值也决定每个新
+        ///         容器的运行时可用性初始值。默认为 <see langword="true" />。
         ///     </para>
         /// </summary>
         public bool ExtraHandAllowCardPlay { get; set; } = true;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Optional base-game hand semantics applied to cards in an extra-hand pile. The default does not
+        ///         add semantics beyond those required by <see cref="ExtraHandAllowCardPlay" />. Extra-hand cards
+        ///         never count toward the base-game maximum hand size or reduce its draw capacity.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         应用于额外手牌牌堆卡牌的可选游戏原有手牌语义。默认不添加
+        ///         <see cref="ExtraHandAllowCardPlay" /> 所要求语义之外的行为。额外手牌卡牌不会计入游戏原有
+        ///         最大手牌数量，也不会减少其抽牌容量。
+        ///     </para>
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">The assigned value contains an undefined behavior flag.</para>
+        ///     <para xml:lang="zh-CN">所赋值包含未定义的行为标志。</para>
+        /// </exception>
+        public ModExtraHandBehavior ExtraHandBehaviors
+        {
+            get => _extraHandBehaviors;
+            set
+            {
+                if ((value & ~ModExtraHandBehavior.FullHand) != 0)
+                    throw new ArgumentOutOfRangeException(nameof(ExtraHandBehaviors), value,
+                        "The extra-hand behavior value contains an undefined flag.");
+                _extraHandBehaviors = value;
+            }
+        }
 
         /// <summary>
         ///     <para xml:lang="en">

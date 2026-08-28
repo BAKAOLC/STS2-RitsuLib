@@ -72,6 +72,14 @@ namespace STS2RitsuLib.CardPiles.Nodes
             }
         }
 
+        internal static NModExtraHand[] GetExtraHands()
+        {
+            lock (SyncRoot)
+            {
+                return [.. ExtraHands.Values];
+            }
+        }
+
         internal static NModExtraHand? TryGetExtraHand(CardPile pile)
         {
             if (!ModCardPileRegistry.TryGetByPileType(pile.Type, out var definition))

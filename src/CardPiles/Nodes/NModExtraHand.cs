@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Interactions.RightClick.Patches;
+using STS2RitsuLib.Patching;
 
 namespace STS2RitsuLib.CardPiles.Nodes
 {
@@ -29,6 +30,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
         internal const float DefaultChromeHeight = 280f;
         internal static readonly Vector2 DefaultChromeSize = new(DefaultChromeWidth, DefaultChromeHeight);
         private static readonly ModCardPileExtraHandSpec DefaultLayout = new();
+
+        private static readonly Action<NEndTurnButton> RefreshEndTurnPlayableState =
+            PrivateAccess.DeclaredMethodDelegate<NEndTurnButton, Action<NEndTurnButton>>("StartOrStopPulseVfx");
 
         private readonly HashSet<CardModel> _arrivingCards = [];
 
@@ -168,6 +172,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 ModExtraHandPlayCoordinator.CancelActiveTargeting(this);
             RefreshCardPlayAvailability();
             UpdateDisabledPresentation();
+            if (NCombatRoom.Instance?.Ui?.EndTurnButton is { } endTurnButton && IsInstanceValid(endTurnButton))
+                RefreshEndTurnPlayableState(endTurnButton);
         }
 
         /// <summary>
@@ -283,6 +289,16 @@ namespace STS2RitsuLib.CardPiles.Nodes
             var holder = GetHolder(card);
             if (holder != null)
                 Definition.ExtraHand.OnCardArrived?.Invoke(BuildContext(card, holder));
+        }
+
+        internal void FlashPlayableHolders()
+        {
+            if (!IsCardPlayAvailable)
+                return;
+
+            foreach (var holder in _holders.Values.Where(IsInstanceValid))
+                if (holder.CardNode?.Model is { } card && card.CanPlay())
+                    holder.Flash();
         }
 
         internal bool RepresentsPile(CardPile pile)
