@@ -92,6 +92,12 @@ namespace STS2RitsuLib.Settings
             base._ExitTree();
         }
 
+        public override void _Ready()
+        {
+            base._Ready();
+            RefreshCardVisuals();
+        }
+
         internal void RefreshCard(int index)
         {
             if (index < 0 || index >= _cards.Count || index >= _flow.GetChildCount())
@@ -102,6 +108,7 @@ namespace STS2RitsuLib.Settings
             ReleaseTile(current);
             _flow.AddChild(replacement);
             _flow.MoveChild(replacement, index);
+            RefreshTile(replacement);
         }
 
         private void Rebuild()
@@ -109,7 +116,11 @@ namespace STS2RitsuLib.Settings
             ReleaseCards();
 
             for (var index = 0; index < _cards.Count; index++)
-                _flow.AddChild(CreateTile(_cards[index], index));
+            {
+                var tile = CreateTile(_cards[index], index);
+                _flow.AddChild(tile);
+                RefreshTile(tile);
+            }
         }
 
         private void ReleaseCards()
@@ -181,6 +192,19 @@ namespace STS2RitsuLib.Settings
             count.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             canvas.AddChild(count);
             return tile;
+        }
+
+        private void RefreshCardVisuals()
+        {
+            foreach (var child in _flow.GetChildren())
+                RefreshTile((Control)child);
+        }
+
+        private static void RefreshTile(Control tile)
+        {
+            if (FindCardHolder(tile)?.CardNode is not { } card || !card.IsNodeReady())
+                return;
+            card.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
         }
 
         private void ApplyTileSelection(int index)
