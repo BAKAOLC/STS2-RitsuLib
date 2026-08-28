@@ -17,6 +17,7 @@ namespace STS2RitsuLib.Settings
         private const int ContentEdgePadding = 18;
         private readonly HFlowContainer _flow;
         private readonly MarginContainer _frame;
+        private readonly Func<bool> _isReorderAllowed;
         private readonly Action<int, int> _moved;
         private readonly PresetCardReorderController _reorderController;
         private readonly Action<int> _selected;
@@ -25,12 +26,15 @@ namespace STS2RitsuLib.Settings
 
         internal RitsuDebugStatePresetCardGrid(
             Control dragLayer,
+            Func<bool> isReorderAllowed,
             Action<int> selected,
             Action<int, int> moved)
         {
             ArgumentNullException.ThrowIfNull(dragLayer);
+            ArgumentNullException.ThrowIfNull(isReorderAllowed);
             ArgumentNullException.ThrowIfNull(selected);
             ArgumentNullException.ThrowIfNull(moved);
+            _isReorderAllowed = isReorderAllowed;
             _selected = selected;
             _moved = moved;
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
@@ -84,6 +88,7 @@ namespace STS2RitsuLib.Settings
         public override void _ExitTree()
         {
             _reorderController.Cancel();
+            ReleaseCards();
             base._ExitTree();
         }
 
@@ -101,14 +106,19 @@ namespace STS2RitsuLib.Settings
 
         private void Rebuild()
         {
+            ReleaseCards();
+
+            for (var index = 0; index < _cards.Count; index++)
+                _flow.AddChild(CreateTile(_cards[index], index));
+        }
+
+        private void ReleaseCards()
+        {
             foreach (var child in _flow.GetChildren())
             {
                 _flow.RemoveChild(child);
                 ReleaseTile((Control)child);
             }
-
-            for (var index = 0; index < _cards.Count; index++)
-                _flow.AddChild(CreateTile(_cards[index], index));
         }
 
         private Control CreateTile(RitsuDebugStatePresetCard saved, int index)
@@ -139,7 +149,7 @@ namespace STS2RitsuLib.Settings
             var holder = NGridCardHolder.Create(card);
             if (holder == null)
             {
-                card.QueueFree();
+                card.QueueFreeSafely();
                 return tile;
             }
 
@@ -190,7 +200,6 @@ namespace STS2RitsuLib.Settings
             if (holder != null && IsInstanceValid(holder))
             {
                 holder.RemoveMeta(RitsuDebugCardCatalog.HolderMetaKey);
-                holder.GetParent()?.RemoveChildSafely(holder);
                 holder.QueueFreeSafely();
             }
 
@@ -310,11 +319,18 @@ namespace STS2RitsuLib.Settings
 
             private void Poll()
             {
-                if (!IsInstanceValid(_owner) ||
-                    !IsInstanceValid(_dragLayer) ||
-                    !_owner.IsVisibleInTree())
+                if (!IsInstanceValid(_owner) || !IsInstanceValid(_dragLayer))
                     return;
                 var mousePressed = Input.IsMouseButtonPressed(MouseButton.Left);
+                if (!_owner.IsVisibleInTree() || !_owner._isReorderAllowed())
+                {
+                    Cancel();
+                    _pendingTile = null;
+                    _pendingGlobalPosition = null;
+                    _wasMousePressed = mousePressed;
+                    return;
+                }
+
                 var mouse = MouseCanvas;
                 if (IsDragging)
                 {

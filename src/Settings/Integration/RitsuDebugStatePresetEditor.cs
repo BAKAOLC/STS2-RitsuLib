@@ -512,6 +512,12 @@ namespace STS2RitsuLib.Settings
                 RebuildMain();
         }
 
+        private void MarkInternalValuesDirty(bool rebuild = false)
+        {
+            _draft!.ApplyInternalValues = true;
+            MarkDirty(rebuild);
+        }
+
         private enum PresetPage
         {
             Cards,

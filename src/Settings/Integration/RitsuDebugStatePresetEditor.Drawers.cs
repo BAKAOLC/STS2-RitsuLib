@@ -269,7 +269,7 @@ namespace STS2RitsuLib.Settings
                 value =>
                 {
                     card.UpgradeLevels = value;
-                    CardChanged();
+                    InternalCardChanged();
                 }));
             _drawerBody.AddChild(OptionalIntegerField(
                 L("ritsulib.debugTools.field.baseCost", "Base cost"),
@@ -279,7 +279,7 @@ namespace STS2RitsuLib.Settings
                 value =>
                 {
                     card.BaseCost = value;
-                    CardChanged();
+                    InternalCardChanged();
                 }));
             _drawerBody.AddChild(OptionalIntegerField(
                 L("ritsulib.debugTools.field.replayCount", "Replay count"),
@@ -289,7 +289,7 @@ namespace STS2RitsuLib.Settings
                 value =>
                 {
                     card.ReplayCount = value;
-                    CardChanged();
+                    InternalCardChanged();
                 }));
 
             _drawerBody.AddChild(SectionTitle(L("ritsulib.debugTools.action.cardFlags", "Card flags")));
@@ -299,7 +299,7 @@ namespace STS2RitsuLib.Settings
                 value =>
                 {
                     card.Exhaust = value;
-                    CardChanged();
+                    InternalCardChanged();
                 }));
             _drawerBody.AddChild(NullableBoolField(
                 L("ritsulib.debugTools.field.ethereal", "Ethereal"),
@@ -307,7 +307,7 @@ namespace STS2RitsuLib.Settings
                 value =>
                 {
                     card.Ethereal = value;
-                    CardChanged();
+                    InternalCardChanged();
                 }));
             _drawerBody.AddChild(NullableBoolField(
                 L("ritsulib.debugTools.field.unplayable", "Unplayable"),
@@ -315,7 +315,7 @@ namespace STS2RitsuLib.Settings
                 value =>
                 {
                     card.Unplayable = value;
-                    CardChanged();
+                    InternalCardChanged();
                 }));
 
             if (canonical != null)
@@ -352,7 +352,7 @@ namespace STS2RitsuLib.Settings
                                         card.DynamicVars = null;
                                 }
 
-                                CardChanged();
+                                InternalCardChanged();
                             }));
                     }
                 }
@@ -378,7 +378,7 @@ namespace STS2RitsuLib.Settings
                 {
                     card.EnchantmentId = id;
                     card.EnchantmentAmount = id == null ? null : card.EnchantmentAmount ?? 1;
-                    CardChanged();
+                    InternalCardChanged();
                 };
                 picker.AddExpandedControl(OptionalIntegerField(
                     L("ritsulib.debugTools.field.enchantmentAmount", "Enchantment amount"),
@@ -388,7 +388,7 @@ namespace STS2RitsuLib.Settings
                     value =>
                     {
                         card.EnchantmentAmount = card.EnchantmentId == null ? null : value ?? 1;
-                        CardChanged();
+                        InternalCardChanged();
                     }));
                 _drawerBody.AddChild(picker);
             }
@@ -401,6 +401,12 @@ namespace STS2RitsuLib.Settings
             void CardChanged()
             {
                 MarkDirty();
+                _cardGrid?.RefreshCard(index);
+            }
+
+            void InternalCardChanged()
+            {
+                MarkInternalValuesDirty();
                 _cardGrid?.RefreshCard(index);
             }
 
@@ -457,7 +463,11 @@ namespace STS2RitsuLib.Settings
                 AddInternalValueEditors(
                     canonical.DynamicVars,
                     () => potion.DynamicVars,
-                    values => potion.DynamicVars = values);
+                    values =>
+                    {
+                        potion.DynamicVars = values;
+                        MarkInternalValuesDirty();
+                    });
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.remove", "Remove"),
                 ModSettingsButtonTone.Danger,
@@ -485,7 +495,7 @@ namespace STS2RitsuLib.Settings
                 value =>
                 {
                     power.Amount = value;
-                    MarkDirty();
+                    MarkInternalValuesDirty();
                 }));
             var canonical = ModelDb.AllPowers.FirstOrDefault(model =>
                 model.Id.ToString().Equals(power.PowerId, StringComparison.Ordinal));
@@ -493,7 +503,11 @@ namespace STS2RitsuLib.Settings
                 AddInternalValueEditors(
                     canonical.DynamicVars,
                     () => power.DynamicVars,
-                    values => power.DynamicVars = values);
+                    values =>
+                    {
+                        power.DynamicVars = values;
+                        MarkInternalValuesDirty();
+                    });
             _drawerBody.AddChild(CompactButton(
                 L("ritsulib.debugTools.statePresets.remove", "Remove"),
                 ModSettingsButtonTone.Danger,
@@ -551,7 +565,7 @@ namespace STS2RitsuLib.Settings
             {
                 relics.InternalValues ??= new(StringComparer.Ordinal);
                 relics.InternalValues[relicId] = state;
-                MarkDirty();
+                MarkInternalValuesDirty();
             }
         }
 
@@ -594,7 +608,6 @@ namespace STS2RitsuLib.Settings
                         }
 
                         setValues(values);
-                        MarkDirty();
                     }));
             }
         }

@@ -101,6 +101,7 @@ namespace STS2RitsuLib.Settings
                 "Drag cards to reorder.")));
             _cardGrid = new(
                 _dragLayer,
+                () => !_drawerLayer.Visible,
                 index => ShowCardEditor(pile, index),
                 (sourceIndex, destinationIndex) => MovePresetCard(pile, sourceIndex, destinationIndex));
             _cardGrid.SetCards(pile.Cards, -1);
