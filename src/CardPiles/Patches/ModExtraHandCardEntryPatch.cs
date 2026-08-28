@@ -154,7 +154,9 @@ namespace STS2RitsuLib.CardPiles.Patches
                 HarmonyIlPattern.Sequence(HarmonyIl.IsCall(pileTypeGetter)),
                 [HarmonyIl.Call(visualPileTypeGetter)],
                 code => code.Any(HarmonyIl.IsCall(visualPileTypeGetter)));
-            return rewriter.InstructionsChecked(report);
+            report.RequireSucceeded();
+            report.RequireExactly(1);
+            return rewriter.InstructionsChecked(operation);
         }
     }
 #endif
