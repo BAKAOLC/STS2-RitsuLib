@@ -89,10 +89,12 @@ namespace STS2RitsuLib.CardPiles
         /// <summary>
         ///     <para xml:lang="en">
         ///         Gets whether cards in an <see cref="ModCardPileUiStyle.ExtraHand" /> pile are represented by
-        ///         card nodes.
+        ///         card nodes. <see cref="ModCardPileExtraHandSpec.AllowCardPlay" /> forces this behavior for a
+        ///         play-enabled extra hand.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         获取 <see cref="ModCardPileUiStyle.ExtraHand" /> 牌堆中的卡牌是否显示为卡牌节点。
+        ///         对允许打出的额外手牌，<see cref="ModCardPileExtraHandSpec.AllowCardPlay" /> 会强制启用此行为。
         ///     </para>
         /// </summary>
         public bool CardShouldBeVisible { get; init; }

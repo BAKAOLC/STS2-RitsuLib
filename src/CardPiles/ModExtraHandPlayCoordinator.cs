@@ -188,9 +188,14 @@ namespace STS2RitsuLib.CardPiles
                        Style: ModCardPileUiStyle.ExtraHand,
                        ExtraHand.AllowCardPlay: true,
                    }
-                   && PendingOrigins.Values.Any(origin => ReferenceEquals(origin.SourcePile, pile))
                 ? PileType.Hand
                 : pileType;
+        }
+
+        internal static async Task<(int, int)> SpendResourcesWithHandSemantics(CardModel card)
+        {
+            using var scope = ModExtraHandSemanticContext.EnterPlayEvaluation(card);
+            return await card.SpendResources();
         }
 
         internal static NHandCardHolder ReturnCancelledQueuedCard(

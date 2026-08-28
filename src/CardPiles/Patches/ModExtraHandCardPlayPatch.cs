@@ -84,6 +84,21 @@ namespace STS2RitsuLib.CardPiles.Patches
                 pileOperation,
                 called => called == pileTypeGetter ? compatiblePileTypeGetter : null,
                 code => code.Any(HarmonyIl.IsCall(compatiblePileTypeGetter)));
+            if (__originalMethod.DeclaringType?.DeclaringType == typeof(PlayCardAction))
+            {
+                const string resourceOperation = "[ExtraHand] evaluate resource payment with hand semantics";
+                var spendResources = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(CardModel), nameof(CardModel.SpendResources)), resourceOperation);
+                var spendResourcesWithHandSemantics = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(ModExtraHandPlayCoordinator),
+                        nameof(ModExtraHandPlayCoordinator.SpendResourcesWithHandSemantics)), resourceOperation);
+                var resourceReport = rewriter.RedirectCalls(
+                    resourceOperation,
+                    called => called == spendResources ? spendResourcesWithHandSemantics : null,
+                    code => code.Any(HarmonyIl.IsCall(spendResourcesWithHandSemantics)));
+                return rewriter.InstructionsChecked([pileReport, resourceReport]);
+            }
+
             if (__originalMethod.Name != "RemoveCardFromQueueForCancellation")
                 return rewriter.InstructionsChecked([pileReport]);
 

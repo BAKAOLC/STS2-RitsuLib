@@ -1360,6 +1360,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
                     HoverScale = Vector2.One * attr.ExtraHandHoverScale,
                     ShowPlayableGlow = attr.ExtraHandShowPlayableGlow,
                     AllowCardPlay = attr.ExtraHandAllowCardPlay,
+                    Behaviors = attr.ExtraHandBehaviors,
                 },
                 OnOpen = ResolveCardPileOpenHandler(declaringType),
                 HoverTipScreenOffset = new(attr.HoverTipOffsetX, attr.HoverTipOffsetY),

@@ -40,16 +40,16 @@ namespace STS2RitsuLib.Patching.Models
         /// </summary>
         /// <remarks>
         ///     <para xml:lang="en">
-        ///         When <see cref="GetTargets" /> contains multiple entries with the same
-        ///         <see cref="ModPatchTarget.TargetType" /> and <see cref="ModPatchTarget.MethodName" />, such as
-        ///         several <c>.ctor</c> overloads, the generated <see cref="ModPatchInfo.Id" /> values receive
-        ///         <c>__1</c>, <c>__2</c>, and subsequent suffixes in declaration order. This prevents
+        ///         When <see cref="GetTargets" /> would generate the same base ID for multiple entries, such as
+        ///         several <c>.ctor</c> overloads or compiler-generated types that share a simple name, the generated
+        ///         <see cref="ModPatchInfo.Id" /> values receive <c>__1</c>, <c>__2</c>, and subsequent suffixes in
+        ///         declaration order. This prevents
         ///         <see cref="Patching.Core.ModPatcher.RegisterPatch(ModPatchInfo)" /> from treating them as duplicates.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         当 <see cref="GetTargets" /> 包含多个 <see cref="ModPatchTarget.TargetType" /> 和
-        ///         <see cref="ModPatchTarget.MethodName" /> 均相同的条目时（例如多个 <c>.ctor</c> 重载），
-        ///         生成的 <see cref="ModPatchInfo.Id" /> 会按声明顺序追加 <c>__1</c>、<c>__2</c> 等后缀，
+        ///         当 <see cref="GetTargets" /> 中多个条目会生成相同基础 ID 时（例如多个 <c>.ctor</c> 重载，
+        ///         或简单名称相同的编译器生成类型），生成的 <see cref="ModPatchInfo.Id" /> 会按声明顺序追加
+        ///         <c>__1</c>、<c>__2</c> 等后缀，
         ///         以免 <see cref="Patching.Core.ModPatcher.RegisterPatch(ModPatchInfo)" /> 将它们视为重复项。
         ///     </para>
         /// </remarks>
@@ -69,15 +69,14 @@ namespace STS2RitsuLib.Patching.Models
                 else
                 {
                     var baseId = $"{TPatch.PatchId}_{target.TargetType.Name}_{target.MethodName}";
-                    var sameDeclaringAndName = targets.Count(t =>
-                        t.TargetType == target.TargetType && t.MethodName == target.MethodName);
+                    var sameBaseId = targets.Count(candidate =>
+                        $"{TPatch.PatchId}_{candidate.TargetType.Name}_{candidate.MethodName}" == baseId);
 
-                    if (sameDeclaringAndName > 1)
+                    if (sameBaseId > 1)
                     {
                         var ordinal = 0;
                         for (var j = 0; j <= i; j++)
-                            if (targets[j].TargetType == target.TargetType &&
-                                targets[j].MethodName == target.MethodName)
+                            if ($"{TPatch.PatchId}_{targets[j].TargetType.Name}_{targets[j].MethodName}" == baseId)
                                 ordinal++;
 
                         id = $"{baseId}__{ordinal}";

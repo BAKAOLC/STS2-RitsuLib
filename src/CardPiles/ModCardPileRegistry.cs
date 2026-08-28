@@ -452,7 +452,12 @@ namespace STS2RitsuLib.CardPiles
                 spec.Anchor,
                 spec.IconPath,
                 spec.Hotkeys,
-                spec.CardShouldBeVisible,
+                spec.CardShouldBeVisible
+                || spec is
+                {
+                    Style: ModCardPileUiStyle.ExtraHand,
+                    ExtraHand.AllowCardPlay: true,
+                },
                 spec.OnOpen,
                 spec.HoverTipScreenOffset,
                 spec.HoverTipPlacement,

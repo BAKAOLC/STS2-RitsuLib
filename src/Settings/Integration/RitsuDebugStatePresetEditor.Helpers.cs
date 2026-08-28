@@ -163,9 +163,10 @@ namespace STS2RitsuLib.Settings
             int? value,
             int minimum,
             int maximum,
-            Action<int?> changed)
+            Action<int?> changed,
+            int? defaultValue = null)
         {
-            var committed = value ?? minimum;
+            var committed = value ?? defaultValue ?? minimum;
             var row = new HBoxContainer
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
