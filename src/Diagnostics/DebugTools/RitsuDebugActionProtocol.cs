@@ -121,6 +121,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         private const string ManagedActionKey = "developer-action-v1";
         private const string RequestMessageKey = "developer-action-request-v1";
         private const string DecisionMessageKey = "developer-action-decision-v1";
+        private static readonly TimeSpan PendingLocalActionTimeout = TimeSpan.FromSeconds(30);
 
         private static readonly Lock Gate = new();
 
@@ -129,6 +130,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private static readonly Dictionary<string, PendingClientRequest> PendingClientRequests =
             new(StringComparer.Ordinal);
+
+        private static readonly Dictionary<ulong, DateTimeOffset> PendingLocalActions = [];
 
         private static readonly Dictionary<HostClientRequestKey, DateTimeOffset> RecentHostClientRequests = [];
 
@@ -271,25 +274,41 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "protocol.startRun",
                     "Start a run before changing its state.");
 
-            return netService switch
+            if (!TryReserveLocalAction(requester.NetId, out var pendingError))
+                return RitsuDebugActionSubmission.Reject(pendingError);
+
+            RitsuDebugActionSubmission submission;
+            try
             {
-                { Type: NetGameType.Singleplayer } => RequestManagedAction(runManager, envelope),
-                NetHostGameService host => !CanHostSynchronize(
-                    host,
-                    prepared.RequiredPeerFeatures,
-                    out var hostError)
-                    ? RitsuDebugActionSubmission.Reject(hostError)
-                    : RequestManagedAction(runManager, envelope),
-                NetClientGameService client => SubmitClientRequest(
-                    runManager,
-                    client,
-                    requester,
-                    envelope,
-                    prepared.RequiredPeerFeatures),
-                _ => RitsuDebugActionSubmission.Reject(
-                    "protocol.unsupportedGameMode",
-                    "Developer tools cannot change state in the current game mode."),
-            };
+                submission = netService switch
+                {
+                    { Type: NetGameType.Singleplayer } => RequestManagedAction(runManager, envelope),
+                    NetHostGameService host => !CanHostSynchronize(
+                        host,
+                        prepared.RequiredPeerFeatures,
+                        out var hostError)
+                        ? RitsuDebugActionSubmission.Reject(hostError)
+                        : RequestManagedAction(runManager, envelope),
+                    NetClientGameService client => SubmitClientRequest(
+                        runManager,
+                        client,
+                        requester,
+                        envelope,
+                        prepared.RequiredPeerFeatures),
+                    _ => RitsuDebugActionSubmission.Reject(
+                        "protocol.unsupportedGameMode",
+                        "Developer tools cannot change state in the current game mode."),
+                };
+            }
+            catch
+            {
+                ReleaseLocalAction(requester.NetId);
+                throw;
+            }
+
+            if (!submission.Accepted)
+                ReleaseLocalAction(requester.NetId);
+            return submission;
         }
 
         internal static bool CanHostSynchronize(
@@ -442,6 +461,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 return;
             }
 
+            ReleaseLocalAction(client.NetId);
             var feedback = context.Message.Feedback;
             RitsuLibFramework.Logger.Warn(
                 $"[DebugTools] Host rejected client request '{actionId}': {feedback.GetEnglishText()}");
@@ -517,6 +537,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             bool success,
             RitsuDebugActionFeedback feedback)
         {
+            if (RunManager.Instance?.NetService?.NetId == envelope.RequestedByNetId)
+                ReleaseLocalAction(envelope.RequestedByNetId);
+
             if (!success && RunManager.Instance?.NetService?.NetId == envelope.RequestedByNetId)
                 RitsuToastService.ShowError(
                     feedback.GetLocalizedText(),
@@ -669,6 +692,40 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                          .Select(static pair => pair.Key)
                          .ToArray())
                 PendingClientRequests.Remove(requestId);
+        }
+
+        private static bool TryReserveLocalAction(
+            ulong requesterNetId,
+            out RitsuDebugActionFeedback feedback)
+        {
+            var cutoff = DateTimeOffset.UtcNow - PendingLocalActionTimeout;
+            lock (Gate)
+            {
+                foreach (var requesterId in PendingLocalActions
+                             .Where(pair => pair.Value < cutoff)
+                             .Select(static pair => pair.Key)
+                             .ToArray())
+                    PendingLocalActions.Remove(requesterId);
+
+                if (!PendingLocalActions.TryAdd(requesterNetId, DateTimeOffset.UtcNow))
+                {
+                    feedback = RitsuDebugActionFeedback.Create(
+                        "protocol.actionPending",
+                        "Another developer-tool change is still in progress. Wait for it to finish.");
+                    return false;
+                }
+            }
+
+            feedback = default;
+            return true;
+        }
+
+        private static void ReleaseLocalAction(ulong requesterNetId)
+        {
+            lock (Gate)
+            {
+                PendingLocalActions.Remove(requesterNetId);
+            }
         }
 
         private static bool TryReserveHostClientRequest(
