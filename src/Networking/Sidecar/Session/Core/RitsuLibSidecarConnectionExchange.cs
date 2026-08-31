@@ -146,15 +146,18 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Attempts a client handshake using the network service from <see cref="RunManager.Instance" />.
+        ///         Attempts a client handshake using the active observed Sidecar service, falling back to the service from
+        ///         <see cref="RunManager.Instance" /> when no service has been observed yet.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         使用 <see cref="RunManager.Instance" /> 中的网络服务尝试客户端握手。
+        ///         使用当前观察到的 Sidecar 服务尝试客户端握手；尚未观察到服务时，回退使用
+        ///         <see cref="RunManager.Instance" /> 中的服务。
         ///     </para>
         /// </summary>
         public static void TrySendLocalClientHello()
         {
-            TrySendClientHelloIfReachable(RunManager.Instance?.NetService);
+            TrySendClientHelloIfReachable(
+                RitsuLibSidecarSessionManager.CurrentNetService ?? RunManager.Instance?.NetService);
         }
 
         /// <summary>
