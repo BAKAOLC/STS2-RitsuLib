@@ -48,6 +48,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             ];
         }
 
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             const string operation = "[ExtraHand] route visible extra-hand entries through the vanilla hand branch";
@@ -140,6 +141,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             ];
         }
 
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             const string operation = "[ExtraHand] prepare extra-hand destinations as vanilla hand visuals";
