@@ -150,7 +150,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                     if (texture is null)
                         continue;
 
-                    image.Texture = texture;
+                    SetFilterIconTexture(image, texture);
                 }
                 catch (Exception ex)
                 {
@@ -232,8 +232,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ShaderMaterial? referenceMat,
             Texture2D? fallbackIcon)
         {
-            const float imagePos = (DefaultFilterSize - DefaultImageSize) / 2f;
-
             var filter = new NCardPoolFilter
             {
                 Name = $"MOD_FILTER_{character.Id.Entry}",
@@ -242,23 +240,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 FocusMode = Control.FocusModeEnum.All,
             };
 
-            var mat = (ShaderMaterial?)referenceMat?.Duplicate();
-
-            var image = new TextureRect
-            {
-                Name = "Image",
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                Size = new(DefaultImageSize, DefaultImageSize),
-                Position = new(imagePos, imagePos),
-                Scale = new(0.9f, 0.9f),
-                PivotOffset = Vector2.One * (DefaultImageSize / 2f),
-                Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1),
-                Texture = ResolveFilterIconTexture(character, iconTexturePath, fallbackIcon),
-            };
-
-            filter.AddChild(image);
-            image.Owner = filter;
+            AddFilterImage(
+                filter,
+                referenceMat,
+                ResolveFilterIconTexture(character, iconTexturePath, fallbackIcon));
 
             var reticlePath = SceneHelper.GetScenePath("ui/selection_reticle");
             var reticle = PreloadManager.Cache.GetScene(reticlePath).Instantiate<NSelectionReticle>();
@@ -289,8 +274,6 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             ShaderMaterial? referenceMat,
             Texture2D? fallbackIcon)
         {
-            const float imagePos = (DefaultFilterSize - DefaultImageSize) / 2f;
-
             var filter = new NCardPoolFilter
             {
                 Name = $"MOD_FILTER_SHARED_{registration.StableId}",
@@ -299,23 +282,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 FocusMode = Control.FocusModeEnum.All,
             };
 
-            var mat = (ShaderMaterial?)referenceMat?.Duplicate();
-
-            var image = new TextureRect
-            {
-                Name = "Image",
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-                Size = new(DefaultImageSize, DefaultImageSize),
-                Position = new(imagePos, imagePos),
-                Scale = new(0.9f, 0.9f),
-                PivotOffset = Vector2.One * (DefaultImageSize / 2f),
-                Material = mat ?? MaterialUtils.CreateHsvShaderMaterial(1, 1, 1),
-                Texture = ResolveSharedPoolFilterIcon(registration, fallbackIcon),
-            };
-
-            filter.AddChild(image);
-            image.Owner = filter;
+            AddFilterImage(filter, referenceMat, ResolveSharedPoolFilterIcon(registration, fallbackIcon));
 
             var reticlePath = SceneHelper.GetScenePath("ui/selection_reticle");
             var reticle = PreloadManager.Cache.GetScene(reticlePath).Instantiate<NSelectionReticle>();
@@ -328,6 +295,63 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
                 filter.Loc = new("card_library", id);
 
             return filter;
+        }
+
+        private static void AddFilterImage(
+            NCardPoolFilter filter,
+            ShaderMaterial? referenceMat,
+            Texture2D? texture)
+        {
+            const float imagePosition = (DefaultFilterSize - DefaultImageSize) / 2f;
+            var imageSize = Vector2.One * DefaultImageSize;
+            var image = new TextureRect
+            {
+                Name = "Image",
+                CustomMinimumSize = imageSize,
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                Size = imageSize,
+                Position = Vector2.One * imagePosition,
+                Scale = new(0.9f, 0.9f),
+                PivotOffset = imageSize / 2f,
+                Material = (ShaderMaterial?)referenceMat?.Duplicate() ??
+                           MaterialUtils.CreateHsvShaderMaterial(1, 1, 1),
+                Texture = texture,
+            };
+
+            filter.AddChild(image);
+            image.Owner = filter;
+
+            var shadow = new TextureRect
+            {
+                Name = "Shadow",
+                SelfModulate = new(0f, 0f, 0f, 64f / 255f),
+                ShowBehindParent = true,
+                AnchorRight = 1f,
+                AnchorBottom = 1f,
+                OffsetLeft = 4f,
+                OffsetTop = 3f,
+                OffsetRight = 4f,
+                OffsetBottom = 3f,
+                GrowHorizontal = Control.GrowDirection.Both,
+                GrowVertical = Control.GrowDirection.Both,
+                PivotOffset = imageSize / 2f,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                Texture = texture,
+            };
+
+            image.AddChild(shadow);
+            shadow.Owner = filter;
+        }
+
+        private static void SetFilterIconTexture(TextureRect image, Texture2D texture)
+        {
+            image.Texture = texture;
+            if (image.GetNodeOrNull<TextureRect>("Shadow") is { } shadow)
+                shadow.Texture = texture;
         }
 
         private static void ApplyFinalFilterLayout(Node filterParent)
