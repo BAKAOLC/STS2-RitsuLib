@@ -2979,6 +2979,11 @@ namespace STS2RitsuLib.Settings
             captureButton.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             captureButton.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
             captureButton.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            captureButton.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            captureButton.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            captureButton.AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            captureButton.AddThemeColorOverride("font_disabled_color",
+                ModSettingsUiControlTheming.ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelSecondary));
             ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(captureButton);
             row.AddChild(captureButton);
             _captureButton = captureButton;

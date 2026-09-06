@@ -601,7 +601,7 @@
   "ritsulib.section.runtimeHotkeys.description": "Lists active runtime hotkey registrations grouped by category.",
   "ritsulib.runtimeHotkeys.empty": "No runtime hotkeys are currently registered.",
   "ritsulib.runtimeHotkeys.summary": "{0} runtime hotkeys are currently registered.",
-  "ritsulib.runtimeHotkeys.groups.description": "Each entry shows the current binding, display name, optional description, and registration id.",
+  "ritsulib.runtimeHotkeys.groups.description": "View shortcuts by category. Change bindings in each mod's settings.",
   "ritsulib.runtimeHotkeys.groupSummary": "{0} hotkeys in this category.",
   "ritsulib.runtimeHotkeys.bindingLine": "Binding: {0} ({1})",
   "ritsulib.section.runtimeHotkeys.empty.title": "No registered hotkeys",
