@@ -1,0 +1,142 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "themeFormatVersion": 1,
+  "themeVersion": 10,
+  "id": "sakura",
+  "displayName": "Sakura (Square)",
+  "inherits": "default",
+  "core": {
+    "color": {
+      "scheme": {
+        "canvas": {
+          "$value": "#251B25",
+          "$type": "color"
+        },
+        "sidebar": {
+          "$value": "#1D141D",
+          "$type": "color"
+        },
+        "inset": {
+          "$value": "#170F17",
+          "$type": "color"
+        },
+        "panel": {
+          "$value": "#332632",
+          "$type": "color"
+        },
+        "raised": {
+          "$value": "#423140",
+          "$type": "color"
+        },
+        "hover": {
+          "$value": "#543E50",
+          "$type": "color"
+        },
+        "overlay": {
+          "$value": "#3D2C3B",
+          "$type": "color"
+        },
+        "selected": {
+          "$value": "#533345",
+          "$type": "color"
+        },
+        "selectedHover": {
+          "$value": "#674157",
+          "$type": "color"
+        },
+        "pressed": {
+          "$value": "#784D65",
+          "$type": "color"
+        },
+        "primary": {
+          "$value": "#FCF0F6",
+          "$type": "color"
+        },
+        "body": {
+          "$value": "#EEDCE6",
+          "$type": "color"
+        },
+        "secondary": {
+          "$value": "#D6BACB",
+          "$type": "color"
+        },
+        "muted": {
+          "$value": "#BB9EB0",
+          "$type": "color"
+        },
+        "focus": {
+          "$value": "#FFE0EF",
+          "$type": "color"
+        },
+        "accent": {
+          "$value": "#F0ADC9",
+          "$type": "color"
+        },
+        "accentHover": {
+          "$value": "#FFCEE1",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#785A70",
+          "$type": "color"
+        },
+        "divider": {
+          "$value": "#503C4B",
+          "$type": "color"
+        },
+        "disabled": {
+          "$value": "#2C202B",
+          "$type": "color"
+        },
+        "disabledBorder": {
+          "$value": "#564052",
+          "$type": "color"
+        },
+        "track": {
+          "$value": "#77586C",
+          "$type": "color"
+        },
+        "thumb": {
+          "$value": "#9A627F",
+          "$type": "color"
+        },
+        "thumbHover": {
+          "$value": "#AF7492",
+          "$type": "color"
+        },
+        "thumbPressed": {
+          "$value": "#C388A5",
+          "$type": "color"
+        },
+        "successBg": {
+          "$value": "#214D3B",
+          "$type": "color"
+        },
+        "success": {
+          "$value": "#91DFB0",
+          "$type": "color"
+        },
+        "danger": {
+          "$value": "#F0A29F",
+          "$type": "color"
+        },
+        "dangerBg": {
+          "$value": "#45272C",
+          "$type": "color"
+        },
+        "dangerHover": {
+          "$value": "#5C3339",
+          "$type": "color"
+        },
+        "info": {
+          "$value": "#8AC8F2",
+          "$type": "color"
+        },
+        "warning": {
+          "$value": "#EBC674",
+          "$type": "color"
+        }
+      }
+    }
+  }
+}

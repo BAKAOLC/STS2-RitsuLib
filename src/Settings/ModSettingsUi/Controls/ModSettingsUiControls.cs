@@ -1366,9 +1366,9 @@ namespace STS2RitsuLib.Settings
             face.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             face.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
             face.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
-            face.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Color.White);
-            face.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Color.White);
-            face.AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Color.White);
+            face.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            face.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            face.AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(face);
             ModSettingsUiControlTheming.EnableAdaptiveButtonText(
                 face,
@@ -2087,13 +2087,12 @@ namespace STS2RitsuLib.Settings
                 ApplyDropdownVirtualRowPresentation(row, optIndex, usableW);
                 var yTop = RowTopOffset(optIndex, _dropdownRowStride);
                 row.Position = new(0f, yTop);
-                row.TooltipText = string.Empty;
+                row.TooltipText = _optionsWithValues[optIndex].Label;
 
                 if (optIndex == _selectedIndex)
                 {
-                    row.TooltipText = $"{row.Text}\n" +
-                                      ModSettingsLocalization.Get("choice.dropdown.currentRow",
-                                          "This option is the active setting (shown on the closed control).");
+                    row.TooltipText += "\n" +
+                                       ModSettingsLocalization.Get("choice.dropdown.currentRow", "Currently selected.");
                     row.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.DropdownRow);
                     row.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
                     row.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
@@ -4446,6 +4445,7 @@ namespace STS2RitsuLib.Settings
             AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_disabled_color",
                 ModSettingsUiControlTheming.ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelSecondary));
             AddThemeStyleboxOverride("normal", CreateStyle(false));
@@ -6671,8 +6671,8 @@ namespace STS2RitsuLib.Settings
                 ? RitsuShellTheme.Current.Text.SidebarSection
                 : RitsuShellTheme.Current.Text.LabelPrimary);
             AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
-            AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Color.White);
-            AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Color.White);
+            AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
             AddThemeColorOverride("font_disabled_color",
                 ModSettingsUiControlTheming.ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelSecondary));
 
@@ -7091,7 +7091,9 @@ namespace STS2RitsuLib.Settings
                     : RitsuShellTheme.Current.Component.TextButton.Neutral.Bg,
             };
 
-            var shadowSize = hovered ? 7 : 2;
+            var shadowSize = RitsuShellThemeLayoutResolver.ResolveInt(
+                hovered ? "components.textButton.layout.shadowSizeHover" : "components.textButton.layout.shadowSize",
+                hovered ? 7 : 2);
             var shadowColor = hovered
                 ? new(borderColor.R, borderColor.G, borderColor.B, 0.42f)
                 : RitsuShellTheme.Current.Color.Shadow.Ambient;

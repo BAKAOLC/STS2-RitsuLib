@@ -1,0 +1,444 @@
+{
+  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "themeFormatVersion": 1,
+  "themeVersion": 10,
+  "id": "warm-rounded",
+  "displayName": "Warm (Rounded)",
+  "inherits": "default",
+  "semantic": {
+    "metrics": {
+      "radius": {
+        "default": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "validation": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "overlay": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "fontSize": {
+      "settingLineTitle": {
+        "$value": 21,
+        "$type": "dimension"
+      }
+    }
+  },
+  "components": {
+    "chromeMenu": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "pageToolbarTray": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listShell": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listItem": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "sidebarCard": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "surface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "entryField": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "colorSwatch": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "insetSurface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "framedSurface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listEditor": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "pill": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "toggle": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "slider": {
+      "layout": {
+        "grabber": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "dropdown": {
+      "layout": {
+        "currentRow": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "actionsRow": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "stepper": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "dragHandle": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "collapsible": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "textButton": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "stringValidation": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "choiceCenter": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "toast": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "width": {
+          "$value": 420,
+          "$type": "dimension"
+        },
+        "minHeight": {
+          "$value": 72,
+          "$type": "dimension"
+        },
+        "rowSpacing": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "imageSize": {
+          "$value": 56,
+          "$type": "dimension"
+        },
+        "screenMargin": {
+          "$value": 16,
+          "$type": "dimension"
+        }
+      },
+      "animation": {
+        "enterDuration": {
+          "$value": 0.22,
+          "$type": "dimension"
+        },
+        "moveDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "exitDuration": {
+          "$value": 0.18,
+          "$type": "dimension"
+        },
+        "enterSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "exitSlideDistance": {
+          "$value": 80,
+          "$type": "dimension"
+        },
+        "enterScale": {
+          "$value": 0.92,
+          "$type": "dimension"
+        }
+      }
+    },
+    "scrollbar": {
+      "layout": {
+        "track": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "grabber": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "sidebar": {
+      "layout": {
+        "width": {
+          "$value": 292,
+          "$type": "dimension"
+        },
+        "button": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "disabled": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "tooltip": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    }
+  },
+  "core": {
+    "color": {
+      "scheme": {
+        "canvas": {
+          "$value": "#211A15",
+          "$type": "color"
+        },
+        "sidebar": {
+          "$value": "#191410",
+          "$type": "color"
+        },
+        "inset": {
+          "$value": "#15100D",
+          "$type": "color"
+        },
+        "panel": {
+          "$value": "#2C231C",
+          "$type": "color"
+        },
+        "raised": {
+          "$value": "#382D24",
+          "$type": "color"
+        },
+        "hover": {
+          "$value": "#493A2E",
+          "$type": "color"
+        },
+        "overlay": {
+          "$value": "#342920",
+          "$type": "color"
+        },
+        "selected": {
+          "$value": "#493321",
+          "$type": "color"
+        },
+        "selectedHover": {
+          "$value": "#5B4028",
+          "$type": "color"
+        },
+        "pressed": {
+          "$value": "#694A2F",
+          "$type": "color"
+        },
+        "primary": {
+          "$value": "#FBF3E8",
+          "$type": "color"
+        },
+        "body": {
+          "$value": "#EADCCD",
+          "$type": "color"
+        },
+        "secondary": {
+          "$value": "#CEBBA6",
+          "$type": "color"
+        },
+        "muted": {
+          "$value": "#B6A18B",
+          "$type": "color"
+        },
+        "focus": {
+          "$value": "#FFE8C7",
+          "$type": "color"
+        },
+        "accent": {
+          "$value": "#EABB7E",
+          "$type": "color"
+        },
+        "accentHover": {
+          "$value": "#F5D4A3",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#6C5745",
+          "$type": "color"
+        },
+        "divider": {
+          "$value": "#4C3D31",
+          "$type": "color"
+        },
+        "disabled": {
+          "$value": "#272019",
+          "$type": "color"
+        },
+        "disabledBorder": {
+          "$value": "#514234",
+          "$type": "color"
+        },
+        "track": {
+          "$value": "#715B44",
+          "$type": "color"
+        },
+        "thumb": {
+          "$value": "#896442",
+          "$type": "color"
+        },
+        "thumbHover": {
+          "$value": "#9F764D",
+          "$type": "color"
+        },
+        "thumbPressed": {
+          "$value": "#B7895B",
+          "$type": "color"
+        },
+        "successBg": {
+          "$value": "#214D3B",
+          "$type": "color"
+        },
+        "success": {
+          "$value": "#91DFB0",
+          "$type": "color"
+        },
+        "danger": {
+          "$value": "#F0A29F",
+          "$type": "color"
+        },
+        "dangerBg": {
+          "$value": "#45272C",
+          "$type": "color"
+        },
+        "dangerHover": {
+          "$value": "#5C3339",
+          "$type": "color"
+        },
+        "info": {
+          "$value": "#8AC8F2",
+          "$type": "color"
+        },
+        "warning": {
+          "$value": "#EBC674",
+          "$type": "color"
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Settings
 {
@@ -62,6 +63,12 @@ namespace STS2RitsuLib.Settings
                     if (!GodotObject.IsInstanceValid(line))
                         continue;
 
+                    if (!ReferenceEquals(line.ThemeSnapshot, RitsuShellTheme.Current))
+                    {
+                        line.QueueFree();
+                        continue;
+                    }
+
                     valid.Add(line);
                 }
 
@@ -112,6 +119,8 @@ namespace STS2RitsuLib.Settings
             }
 
             internal ModSettingsReusableEntryKind Kind { get; }
+
+            internal RitsuShellTheme ThemeSnapshot { get; } = RitsuShellTheme.Current;
 
             internal ulong LastUsedMsec { get; set; }
         }
