@@ -21,6 +21,8 @@ namespace STS2RitsuLib.Settings
         private readonly ulong _targetPlayerNetId;
         private bool _refreshQueued;
         private bool _targetAvailable;
+        private bool _statusIsFailure;
+        private readonly List<Action> _refreshButtonThemes = [];
 
         internal RitsuDebugMonsterIntentWindow(uint combatId, ulong requesterNetId, ulong targetPlayerNetId)
         {
@@ -93,6 +95,7 @@ namespace STS2RitsuLib.Settings
             RitsuDebugActionProtocol.ActionExecuted += OnActionExecuted;
             CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
             CombatManager.Instance.CombatEnded += OnCombatEnded;
+            RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
             RefreshTarget();
         }
 
@@ -101,6 +104,7 @@ namespace STS2RitsuLib.Settings
             RitsuDebugActionProtocol.ActionExecuted -= OnActionExecuted;
             CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
             CombatManager.Instance.CombatEnded -= OnCombatEnded;
+            RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
             _graph.ContentMinimumSizeChanged -= OnGraphContentMinimumSizeChanged;
             base._ExitTree();
         }
@@ -110,6 +114,25 @@ namespace STS2RitsuLib.Settings
             _scroll.CustomMinimumSize = new(
                 Math.Min(size.X, 720f),
                 Math.Min(size.Y, 440f));
+        }
+
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this) || !IsInsideTree())
+                    return;
+                _identity.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+                _identity.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Grip);
+                _identity.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+                _status.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                _status.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Grip);
+                SetStatus(_status.Text, _statusIsFailure);
+                ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_scroll);
+                foreach (var refresh in _refreshButtonThemes)
+                    refresh();
+                _graph.QueueRedraw();
+            }).CallDeferred();
         }
 
         private void Submit(Func<Player, Player, RitsuDebugActionSubmission> action)
@@ -213,6 +236,7 @@ namespace STS2RitsuLib.Settings
 
         private void SetStatus(string message, bool failure)
         {
+            _statusIsFailure = failure;
             _status.Text = message;
             _status.Visible = !string.IsNullOrWhiteSpace(message);
             _status.AddThemeColorOverride("font_color", failure
@@ -225,7 +249,7 @@ namespace STS2RitsuLib.Settings
             return ModSettingsLocalization.Get(key, fallback);
         }
 
-        private static ModSettingsTextButton CreateCompactActionButton(
+        private ModSettingsTextButton CreateCompactActionButton(
             string text,
             ModSettingsButtonTone tone,
             Action action,
@@ -236,6 +260,12 @@ namespace STS2RitsuLib.Settings
                 CustomMinimumSize = new(width, 28f),
             };
             button.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HintSmall);
+            _refreshButtonThemes.Add(() =>
+            {
+                button.Configure(text, tone, action);
+                button.CustomMinimumSize = new(width, 28f);
+                button.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HintSmall);
+            });
             return button;
         }
     }

@@ -27,6 +27,7 @@ namespace STS2RitsuLib.Ui.Overlay
         private Label _pageTitle = null!;
         private Button _peekTab = null!;
         private PanelContainer _rail = null!;
+        private ScrollContainer _railScroll = null!;
         private VBoxContainer _railButtons = null!;
         private bool _railShown;
         private StyleBoxFlat _railStyle = null!;
@@ -35,6 +36,8 @@ namespace STS2RitsuLib.Ui.Overlay
         private IDisposable? _tooltipTimingScope;
         private Control _workspaceContent = null!;
         private Control _workspaceMover = null!;
+        private Panel _workspaceSurface = null!;
+        private HSeparator _workspaceSeparator = null!;
         private bool _workspaceResizeAnimating;
         private double _workspaceResizeElapsed;
         private float _workspaceResizeFrom;
@@ -286,6 +289,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
             };
             ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(scroll);
+            _railScroll = scroll;
             margin.AddChild(scroll);
 
             var scrollFrame = new MarginContainer
@@ -342,6 +346,7 @@ namespace STS2RitsuLib.Ui.Overlay
             {
                 MouseFilter = MouseFilterEnum.Stop,
             };
+            _workspaceSurface = workspaceSurface;
             workspaceSurface.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             var workspaceStyle = RitsuShellPanelStyles.CreateFramedSurface(
                 RitsuShellTheme.Current.Surface.Content,
@@ -398,6 +403,7 @@ namespace STS2RitsuLib.Ui.Overlay
             column.AddChild(header);
 
             var separator = new HSeparator();
+            _workspaceSeparator = separator;
             column.AddChild(separator);
             Panel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             Panel.SizeFlagsVertical = SizeFlags.ExpandFill;
@@ -433,8 +439,30 @@ namespace STS2RitsuLib.Ui.Overlay
         {
             Callable.From(() =>
             {
-                if (IsInstanceValid(this) && IsInsideTree())
-                    ApplyPeekTabTheme();
+                if (!IsInstanceValid(this) || !IsInsideTree())
+                    return;
+                ApplyPeekTabTheme();
+                _railStyle = RitsuShellPanelStyles.CreateFramedSurface(
+                    RitsuShellTheme.Current.Surface.Sidebar,
+                    RitsuShellTheme.Current.Metric.Radius.Default);
+                _rail.AddThemeStyleboxOverride("panel", _railStyle);
+                SetRailJoined(Expanded);
+                ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_railScroll);
+                var workspaceStyle = RitsuShellPanelStyles.CreateFramedSurface(
+                    RitsuShellTheme.Current.Surface.Content,
+                    RitsuShellTheme.Current.Metric.Radius.Default);
+                workspaceStyle.CornerRadiusTopLeft = 0;
+                workspaceStyle.CornerRadiusBottomLeft = 0;
+                workspaceStyle.BorderWidthLeft = 0;
+                _workspaceSurface.AddThemeStyleboxOverride("panel", workspaceStyle);
+                _pageTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+                _pageTitle.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
+                _workspaceSeparator.AddThemeStyleboxOverride("separator", new StyleBoxLine
+                {
+                    Color = RitsuShellTheme.Current.Color.Divider,
+                    Thickness = 1,
+                });
+                RefreshPageButtonStyles();
             }).CallDeferred();
         }
 

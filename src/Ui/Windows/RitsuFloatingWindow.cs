@@ -34,6 +34,7 @@ namespace STS2RitsuLib.Ui.Windows
         private Vector2 _dragOffset;
         private bool _dragging;
         private HBoxContainer? _header;
+        private Label? _title;
         private bool _interactionLocked;
         private bool _layoutInitialized;
         private ResizeEdge _resizeEdge;
@@ -286,6 +287,7 @@ namespace STS2RitsuLib.Ui.Windows
                 BuildLayout();
             Size = ClampSize(firstReady ? Options.InitialSize : Size);
             GetViewport().SizeChanged += OnViewportSizeChanged;
+            RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
             SetProcessInput(true);
             Callable.From(() => InitializeGeometry(firstReady)).CallDeferred();
         }
@@ -293,6 +295,7 @@ namespace STS2RitsuLib.Ui.Windows
         /// <inheritdoc />
         public override void _ExitTree()
         {
+            RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
             var viewport = GetViewport();
             if (viewport != null)
                 viewport.SizeChanged -= OnViewportSizeChanged;
@@ -362,6 +365,7 @@ namespace STS2RitsuLib.Ui.Windows
                 : RitsuShellTheme.Current.Metric.FontSize.OverlayTitle);
             title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
             titleMargin.AddChild(title);
+            _title = title;
 
             if (Options.Closable)
             {
@@ -396,6 +400,29 @@ namespace STS2RitsuLib.Ui.Windows
             AddChild(_resizeLayer);
             AddResizeHandles();
             RefreshInteractionState();
+        }
+
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this) || !IsInsideTree() || _title == null || _header == null)
+                    return;
+                AddThemeStyleboxOverride("panel", RitsuShellPanelStyles.CreateFramedSurface(
+                    RitsuShellTheme.Current.Surface.Content, RitsuShellTheme.Current.Metric.Radius.Default));
+                _title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+                _title.AddThemeFontSizeOverride("font_size", Options.CompactChrome
+                    ? RitsuShellTheme.Current.Metric.FontSize.HintSmall
+                    : RitsuShellTheme.Current.Metric.FontSize.OverlayTitle);
+                _title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
+                foreach (var close in _header.GetChildren().OfType<ModSettingsTextButton>())
+                {
+                    close.Configure("×", ModSettingsButtonTone.Normal, Close);
+                    close.CustomMinimumSize = Options.CompactChrome ? new(34f, 30f) : new(44f, 40f);
+                    if (Options.CompactChrome)
+                        close.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.HintSmall);
+                }
+            }).CallDeferred();
         }
 
         private void AddResizeHandles()

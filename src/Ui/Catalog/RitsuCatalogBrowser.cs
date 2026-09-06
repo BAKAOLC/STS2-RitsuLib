@@ -137,6 +137,7 @@ namespace STS2RitsuLib.Ui.Catalog
             _options.Validate();
             BuildUi();
             ApplyFilter();
+            RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
         }
 
         /// <inheritdoc />
@@ -155,12 +156,46 @@ namespace STS2RitsuLib.Ui.Catalog
         /// <inheritdoc />
         public override void _ExitTree()
         {
+            RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
             _searchCancellation?.Cancel();
             _searchCancellation?.Dispose();
             _searchCancellation = null;
             _detailTween?.Kill();
             _detailTween = null;
             base._ExitTree();
+        }
+
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this) || !IsInsideTree() || _workspace == null)
+                    return;
+                var query = _search?.Text ?? string.Empty;
+                var scroll = _scroll?.ScrollVertical ?? 0;
+                var previousSearchMenu = _searchMenu;
+                _searchRevision++;
+                _searchCancellation?.Cancel();
+                _detailTween?.Kill();
+                _detailTween = null;
+                RemoveChild(_workspace);
+                _workspace.QueueFree();
+                _rowPool.Clear();
+                _tilePool.Clear();
+                _detailContent = null;
+                _uiBuilt = false;
+                BuildUi();
+                if (previousSearchMenu != null)
+                    _searchMenu?.RestoreSearchState(previousSearchMenu);
+                else if (_search != null)
+                    _search.Text = query;
+                ApplyFilter(false);
+                Callable.From(() =>
+                {
+                    if (IsInsideTree() && _scroll != null)
+                        _scroll.ScrollVertical = scroll;
+                }).CallDeferred();
+            }).CallDeferred();
         }
 
         /// <summary>
@@ -568,11 +603,12 @@ namespace STS2RitsuLib.Ui.Catalog
             {
                 var options = new List<(int Value, string Label)> { (-1, $"{filter.Label}: {filter.AllLabel}") };
                 options.AddRange(filter.Options.Select((option, index) => (index, $"{filter.Label}: {option.Label}")));
-                var dropdown = new ModSettingsDropdownChoiceControl<int>(options, -1, selected =>
-                {
-                    _filterSelections[filter.Id] = selected;
-                    ApplyFilter();
-                })
+                var dropdown = new ModSettingsDropdownChoiceControl<int>(options, _filterSelections[filter.Id],
+                    selected =>
+                    {
+                        _filterSelections[filter.Id] = selected;
+                        ApplyFilter();
+                    })
                 {
                     CustomMinimumSize = new(190f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
                 };

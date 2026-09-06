@@ -282,10 +282,12 @@ namespace STS2RitsuLib.Settings
             MouseFilter = MouseFilterEnum.Pass;
             BuildUi();
             ApplyFilter();
+            RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
         }
 
         public override void _ExitTree()
         {
+            RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
             _searchCancellation?.Cancel();
             _searchCancellation?.Dispose();
             _searchCancellation = null;
@@ -311,6 +313,39 @@ namespace STS2RitsuLib.Settings
             _selectionFrames.Clear();
             _holderItemIds.Clear();
             base._ExitTree();
+        }
+
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this) || !IsInsideTree())
+                    return;
+                var scroll = _scroll.ScrollVertical;
+                var previousSearchMenu = _searchMenu;
+                _searchRevision++;
+                _searchCancellation?.Cancel();
+                _reorderController?.Cancel();
+                _detailTween?.Kill();
+                _detailTween = null;
+                RemoveChild(_workspace);
+                _workspace.QueueFree();
+                _holders.Clear();
+                _selectionFrames.Clear();
+                _holderItemIds.Clear();
+                _primaryFilterButtons.Clear();
+                _sortButtons.Clear();
+                _primaryOverflowPicker = null;
+                BuildUi();
+                if (previousSearchMenu != null)
+                    _searchMenu?.RestoreSearchState(previousSearchMenu);
+                ApplyFilter();
+                Callable.From(() =>
+                {
+                    if (IsInsideTree())
+                        _scroll.ScrollVertical = scroll;
+                }).CallDeferred();
+            }).CallDeferred();
         }
 
         public override void _UnhandledInput(InputEvent @event)

@@ -161,6 +161,16 @@ namespace STS2RitsuLib.Settings
 
         internal bool IsAdvanced => _preferences.AdvancedMode;
 
+        internal void RestoreSearchState(RitsuCatalogSearchMenu previous)
+        {
+            _normalQuery = previous.IsAdvanced ? previous._normalQuery : previous._input?.Text ?? string.Empty;
+            _advancedQuery = previous.IsAdvanced ? previous._input?.Text ?? string.Empty : previous._advancedQuery;
+            _defaults.Clear();
+            foreach (var (id, value) in previous._defaults)
+                _defaults.Add(id, value);
+            UpdateSearchMode();
+        }
+
         internal void BindSearch(LineEdit input, Control sidebarHost)
         {
             _input = input;

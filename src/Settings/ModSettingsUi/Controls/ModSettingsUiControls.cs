@@ -1369,7 +1369,10 @@ namespace STS2RitsuLib.Settings
             face.AddThemeColorOverride("font_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
             face.AddThemeColorOverride("font_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
             face.AddThemeColorOverride("font_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            face.AddThemeColorOverride("font_disabled_color",
+                ModSettingsUiControlTheming.ResolveDisabledForeground(RitsuShellTheme.Current.Text.LabelPrimary));
             ModSettingsUiControlTheming.ApplyUniformSurfaceButtonStates(face);
+            face.AddThemeStyleboxOverride("disabled", ModSettingsUiFactory.CreateSurfaceStyle());
             ModSettingsUiControlTheming.EnableAdaptiveButtonText(
                 face,
                 11,

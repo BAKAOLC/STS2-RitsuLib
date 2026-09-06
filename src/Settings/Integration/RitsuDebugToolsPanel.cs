@@ -54,6 +54,8 @@ namespace STS2RitsuLib.Settings
         private uint? _selectedCreatureCombatId;
         private string? _selectedCreaturePresetId;
         private bool _stateRefreshScheduled;
+        private PanelContainer? _header;
+        private bool _statusIsError;
         private Label? _status;
         private ModSettingsDropdownChoiceControl<ulong>? _targetDropdown;
         private Label? _targetLabel;
@@ -82,6 +84,7 @@ namespace STS2RitsuLib.Settings
         {
             RitsuDebugActionProtocol.ActionExecuted += OnDebugActionExecuted;
             RitsuDebugToolsPageRegistry.Changed += OnPageRegistryChanged;
+            RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
             _modelRegistryInitializedSubscription =
                 RitsuLibFramework.SubscribeLifecycle<ModelRegistryInitializedEvent>(_ => ScheduleRefresh());
             CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
@@ -112,6 +115,7 @@ namespace STS2RitsuLib.Settings
             FinishCreaturePicking(false);
             RitsuDebugActionProtocol.ActionExecuted -= OnDebugActionExecuted;
             RitsuDebugToolsPageRegistry.Changed -= OnPageRegistryChanged;
+            RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
             _modelRegistryInitializedSubscription?.Dispose();
             _modelRegistryInitializedSubscription = null;
             CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
@@ -171,6 +175,7 @@ namespace STS2RitsuLib.Settings
         private void BuildHeader()
         {
             var panel = new PanelContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            _header = panel;
             panel.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreatePageToolbarTrayStyle());
             AddChild(panel);
             var toolbar = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
@@ -188,7 +193,7 @@ namespace STS2RitsuLib.Settings
             toolbar.AddChild(_targetLabel);
 
             var players = GetPlayers();
-            if (players.Length > 0)
+            if (players.Length > 0 && players.All(player => player.NetId != _targetPlayerNetId))
             {
                 var localNetId = RunManager.Instance?.NetService?.NetId;
                 _targetPlayerNetId = localNetId.HasValue &&
@@ -266,6 +271,31 @@ namespace STS2RitsuLib.Settings
                 CustomMinimumSize = new(0f, 460f),
             };
             AddChild(_browserHost);
+        }
+
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this) || !IsInsideTree())
+                    return;
+                if (_header != null)
+                {
+                    RemoveChild(_header);
+                    _header.QueueFree();
+                }
+
+                BuildHeader();
+                MoveChild(_header!, 0);
+                if (_status != null)
+                {
+                    _status.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+                    _status.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
+                    SetStatus(_status.Text, _statusIsError);
+                }
+
+                RefreshPages();
+            }).CallDeferred();
         }
 
         internal IReadOnlyList<RitsuDebugToolsPageView> GetPages()
@@ -612,6 +642,7 @@ namespace STS2RitsuLib.Settings
 
         private void SetStatus(string text, bool error)
         {
+            _statusIsError = error;
             if (_status == null)
                 return;
             _status.Text = text;
