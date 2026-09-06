@@ -63,6 +63,8 @@ namespace STS2RitsuLib.Ui.Catalog
         private MarginContainer? _scrollFrame;
         private LineEdit? _search;
         private int _searchRevision;
+        private CancellationTokenSource? _searchCancellation;
+        private RitsuCatalogSearchMenu? _searchMenu;
         private string? _selectedItemId;
         private bool _uiBuilt;
         private Control? _workspace;
@@ -153,6 +155,9 @@ namespace STS2RitsuLib.Ui.Catalog
         /// <inheritdoc />
         public override void _ExitTree()
         {
+            _searchCancellation?.Cancel();
+            _searchCancellation?.Dispose();
+            _searchCancellation = null;
             _detailTween?.Kill();
             _detailTween = null;
             base._ExitTree();
@@ -199,6 +204,10 @@ namespace STS2RitsuLib.Ui.Catalog
                 throw new ArgumentException("Catalog items cannot contain null.", nameof(items));
             if (items.Select(static item => item.Id).Distinct(StringComparer.Ordinal).Count() != items.Count)
                 throw new ArgumentException("Catalog item IDs must be unique.", nameof(items));
+
+            if (!rebuildDetail && items.Count == _items.Length &&
+                !items.Where((item, index) => !CanReuseItem(_items[index], item)).Any())
+                return;
 
             _items = [.. items];
             Items = Array.AsReadOnly(_items);
@@ -273,6 +282,17 @@ namespace STS2RitsuLib.Ui.Catalog
                 ApplyFilter();
         }
 
+        private static bool CanReuseItem(RitsuCatalogItem previous, RitsuCatalogItem current)
+        {
+            return previous.SearchDocument != null &&
+                   ReferenceEquals(previous.SearchDocument, current.SearchDocument) &&
+                   previous.QuickAction == null && current.QuickAction == null &&
+                   previous.Id == current.Id && previous.Title == current.Title &&
+                   previous.Subtitle == current.Subtitle && previous.SearchText == current.SearchText &&
+                   previous.Badge == current.Badge && previous.Tooltip == current.Tooltip &&
+                   previous.AccentColor == current.AccentColor && previous.Icon == current.Icon;
+        }
+
         private void SetFiltersCore(IReadOnlyList<RitsuCatalogFilter> filters)
         {
             ArgumentNullException.ThrowIfNull(filters);
@@ -342,11 +362,32 @@ namespace STS2RitsuLib.Ui.Catalog
                 _options.SearchPlaceholder,
                 0f);
             _search.ClearButtonEnabled = true;
-            _search.MaxLength = MaximumSearchTextLength;
+            _search.MaxLength = _options.SearchPreferenceId == null
+                ? MaximumSearchTextLength
+                : RitsuCatalogQuery.MaximumLength;
             _search.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            _search.TextChanged += _ => ScheduleSearch();
-            catalog.AddChild(_search);
-            AddFilterControls(catalog);
+            _search.TextChanged += _ =>
+            {
+                _searchCancellation?.Cancel();
+                ScheduleSearch();
+            };
+            var tools = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            tools.AddThemeConstantOverride("separation", 10);
+            catalog.AddChild(tools);
+            tools.AddChild(_search);
+            if (_options.SearchPreferenceId is { } preferenceId)
+            {
+                _searchMenu = new(preferenceId, _filters, _filterSelections, () => ApplyFilter(), query =>
+                {
+                    _search.Text = query;
+                    ApplyFilter();
+                });
+                _searchMenu.SetAvailableFields(_items);
+                tools.AddChild(_searchMenu);
+                _searchMenu.BindSearch(_search, _workspace);
+            }
+            else
+                AddFilterControls(catalog);
 
             var summary = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             var summaryTitle = new Label
@@ -551,19 +592,50 @@ namespace STS2RitsuLib.Ui.Catalog
             ApplyFilter();
         }
 
-        private void ApplyFilter(bool rebuildDetail = true)
+        private async void ApplyFilter(bool rebuildDetail = true)
         {
             var terms = (_search?.Text ?? string.Empty).Split(
                 (char[]?)null,
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            _filteredItems = [.. _items.Where(item => item.Matches(terms) && MatchesFilters(item))];
+            // ReSharper disable once MethodHasAsyncOverload
+            _searchCancellation?.Cancel();
+            _searchCancellation?.Dispose();
+            var cancellation = new CancellationTokenSource();
+            _searchCancellation = cancellation;
+            try
+            {
+                if (_searchMenu != null)
+                {
+                    _searchMenu.SetAvailableFields(_items);
+                    if (_resultCount != null)
+                        _resultCount.Text =
+                            ModSettingsLocalization.Get("ritsulib.catalog.search.searching", "Searching…");
+                    var filtered = await _searchMenu.FilterAsync(_items, static item => item, MatchesFilters,
+                        _search?.Text ?? string.Empty, cancellation.Token);
+                    if (cancellation.IsCancellationRequested || !IsInsideTree())
+                        return;
+                    _filteredItems = filtered;
+                }
+                else
+                    _filteredItems = [.. _items.Where(item => MatchesFilters(item) && item.Matches(terms))];
+            }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested || !IsInsideTree())
+            {
+                return;
+            }
+
             _hasVisibleQuickActions = _filteredItems.Any(static item => item.QuickAction != null);
             if (_resultCount != null)
                 _resultCount.Text = _filteredItems.Length == _items.Length
                     ? _items.Length.ToString()
                     : $"{_filteredItems.Length} / {_items.Length}";
             if (_emptyLabel != null)
+            {
                 _emptyLabel.Visible = _filteredItems.Length == 0;
+                _emptyLabel.Text = _searchMenu?.QueryError ?? _options.EmptyText;
+                _emptyLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+            }
+
             UpdateCanvasMinimumSize();
 
             if (_selectedItemId != null && _filteredItems.All(item => item.Id != _selectedItemId))

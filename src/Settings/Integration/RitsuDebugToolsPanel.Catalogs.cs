@@ -55,7 +55,7 @@ namespace STS2RitsuLib.Settings
                             $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · " +
                             $"{ContentSourceDisplayLabel(ContentSourceResolver.Resolve(card))} · {card.Id}",
                             $"{card.Type} {card.Rarity} {ContentSourceSearchText(card)}",
-                            badge: CardCost(card)),
+                            badge: CardCost(card)) { SearchDocument = CreateSearchDocument(card) },
                         CreateCardPreviewModel(card),
                         card,
                         () => CreateCardDetail(card))),
@@ -372,13 +372,14 @@ namespace STS2RitsuLib.Settings
             [
                 .. entries.Select(entry => new RitsuDebugCardCatalogEntry(
                     new(
-                        entry.StableId,
-                        SafeTitle(entry.Card),
-                        $"{PileLabel(entry.PileType)} #{entry.Index + 1} · " +
-                        $"{ContentSourceDisplayLabel(ContentSourceResolver.Resolve(entry.Card))} · {entry.Card.Id}",
-                        $"{RitsuDebugCardActions.GetPileToken(entry.PileType)} {entry.Card.Type} " +
-                        $"{entry.Card.Rarity} {ContentSourceSearchText(entry.Card)}",
-                        badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null),
+                            entry.StableId,
+                            SafeTitle(entry.Card),
+                            $"{PileLabel(entry.PileType)} #{entry.Index + 1} · " +
+                            $"{ContentSourceDisplayLabel(ContentSourceResolver.Resolve(entry.Card))} · {entry.Card.Id}",
+                            $"{RitsuDebugCardActions.GetPileToken(entry.PileType)} {entry.Card.Type} " +
+                            $"{entry.Card.Rarity} {ContentSourceSearchText(entry.Card)}",
+                            badge: entry.Card.CurrentUpgradeLevel > 0 ? $"+{entry.Card.CurrentUpgradeLevel}" : null)
+                        { SearchDocument = CreateSearchDocument(entry.Card) },
                     CreateCardPreviewModel(entry.Card),
                     entry.Card,
                     () => CreatePileCardDetail(entry),
@@ -749,11 +750,14 @@ namespace STS2RitsuLib.Settings
             RitsuCatalogDetailPresentation detailPresentation = RitsuCatalogDetailPresentation.Drawer,
             float catalogWidth = 260f,
             float detailWidth = 360f,
-            float rowHeight = 52f)
+            float rowHeight = 52f,
+            [System.Runtime.CompilerServices.CallerMemberName]
+            string preferenceId = "")
         {
             return new(new()
             {
                 SearchPlaceholder = searchPlaceholder,
+                SearchPreferenceId = preferenceId,
                 EmptyText = L("ritsulib.debugTools.noMatches", "No matching items"),
                 DetailPlaceholderText = L("ritsulib.debugTools.selectItem", "Select an item to view actions"),
                 DetailUnavailableText = L("ritsulib.debugTools.detailsUnavailable",
@@ -784,7 +788,7 @@ namespace STS2RitsuLib.Settings
                 $"{model.Id.Category} {source.ModId} {source.DisplayName}",
                 badge: category,
                 iconFactory: iconFactory,
-                accentColor: accentColor);
+                accentColor: accentColor) { SearchDocument = CreateSearchDocument(model) };
         }
 
         private static Color PowerTypeAccent(PowerType type)

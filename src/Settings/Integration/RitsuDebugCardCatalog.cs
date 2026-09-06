@@ -62,6 +62,7 @@ namespace STS2RitsuLib.Settings
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
+        private Control? _primaryFiltersRow;
         private readonly HashSet<string> _primaryOverflowOptionIds;
         private readonly bool _preserveSourceOrder;
         private readonly Action<RitsuDebugCardCatalogEntry, int>? _reorderRequested;
@@ -87,6 +88,9 @@ namespace STS2RitsuLib.Settings
         private MarginContainer _scrollFrame = null!;
         private LineEdit _search = null!;
         private int _searchRevision;
+        private readonly string _searchPreferenceId;
+        private CancellationTokenSource? _searchCancellation;
+        private RitsuCatalogSearchMenu? _searchMenu;
         private string? _selectedItemId;
         private Dictionary<string, int> _sourceIndexes;
         private Control _workspace = null!;
@@ -107,12 +111,15 @@ namespace STS2RitsuLib.Settings
             IReadOnlyCollection<string>? primaryOverflowOptionIds = null,
             bool preserveSourceOrder = false,
             Action<RitsuDebugCardCatalogEntry, int>? reorderRequested = null,
-            string? reorderHint = null)
+            string? reorderHint = null,
+            [System.Runtime.CompilerServices.CallerMemberName]
+            string preferenceId = "")
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
             ValidateEntries(entries);
 
             SearchPlaceholder = searchPlaceholder;
+            _searchPreferenceId = preferenceId;
             _preserveSourceOrder = preserveSourceOrder;
             _reorderRequested = reorderRequested;
             _reorderHint = reorderHint;
@@ -279,6 +286,9 @@ namespace STS2RitsuLib.Settings
 
         public override void _ExitTree()
         {
+            _searchCancellation?.Cancel();
+            _searchCancellation?.Dispose();
+            _searchCancellation = null;
             _detailTween?.Kill();
             _detailTween = null;
             for (var index = 0; index < _holders.Count; index++)
@@ -344,34 +354,55 @@ namespace STS2RitsuLib.Settings
             catalog.AddThemeConstantOverride("separation", 7);
             catalogPanel.AddChild(catalog);
 
-            AddPrimaryFilterControls(catalog);
+            _searchMenu = new(_searchPreferenceId, _filters, _filterSelections, () =>
+            {
+                RefreshPrimaryFilterButtons();
+                ApplyFilter();
+            }, query =>
+            {
+                _search.Text = query;
+                ApplyFilter();
+            }, _primaryFilterId);
+            _searchMenu.SetAvailableFields(_entries.Select(static entry => entry.Item));
 
             var tools = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             tools.AddThemeConstantOverride("separation", 10);
             catalog.AddChild(tools);
-            if (!_preserveSourceOrder)
-                AddSortControls(tools);
 
             _search = ModSettingsUiControlTheming.CreateStyledLineEdit(string.Empty, SearchPlaceholder);
             _search.ClearButtonEnabled = true;
-            _search.MaxLength = RitsuCatalogBrowser.MaximumSearchTextLength;
+            _search.MaxLength = RitsuCatalogQuery.MaximumLength;
             _search.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            _search.TextChanged += _ => ScheduleSearch();
-            tools.AddChild(_search);
-            AddFilterControls(catalog);
+            _search.TextChanged += _ =>
+            {
+                _searchCancellation?.Cancel();
+                ScheduleSearch();
+            };
+            tools.AddChild(_searchMenu);
+            _searchMenu.BindSearch(_search, _workspace);
+            AddPrimaryFilterControls(catalog);
 
             var summary = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            summary.AddThemeConstantOverride("separation", 6);
+            if (!_preserveSourceOrder)
+                AddSortControls(summary);
             var label = new Label
             {
-                Text = SearchPlaceholder,
+                Text = _preserveSourceOrder ? SearchPlaceholder : string.Empty,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                VerticalAlignment = VerticalAlignment.Center,
                 ClipText = true,
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             };
             label.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
             summary.AddChild(label);
-            _resultCount = new() { HorizontalAlignment = HorizontalAlignment.Right };
+            _resultCount = new()
+            {
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+                CustomMinimumSize = new(100f, 0f),
+            };
             _resultCount.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
             _resultCount.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             summary.AddChild(_resultCount);
@@ -534,6 +565,7 @@ namespace STS2RitsuLib.Settings
             label.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             tools.AddChild(label);
 
+            var buttonWidth = 104f;
             foreach (var (field, text) in new[]
                      {
                          (CardSortField.Type,
@@ -547,12 +579,19 @@ namespace STS2RitsuLib.Settings
                      })
             {
                 var button = ModSettingsUiControlTheming.CreateCompactSettingsToggleButton(text, false);
-                button.CustomMinimumSize = new(72f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
+                var font = button.GetThemeFont("font");
+                var fontSize = button.GetThemeFontSize("font_size");
+                var textWidth = Mathf.Max(font.GetStringSize($"{text} ▲", fontSize: fontSize).X,
+                    font.GetStringSize($"{text} ▼", fontSize: fontSize).X);
+                buttonWidth = Mathf.Max(buttonWidth,
+                    Mathf.Ceil(textWidth + button.GetThemeStylebox("normal").GetMinimumSize().X + 2f));
                 button.Pressed += () => PromoteSort(field);
                 _sortButtons.Add(field, button);
                 tools.AddChild(button);
             }
 
+            foreach (var button in _sortButtons.Values)
+                button.CustomMinimumSize = new(buttonWidth, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight);
             RefreshSortButtons();
         }
 
@@ -599,43 +638,13 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        private void AddFilterControls(VBoxContainer catalog)
-        {
-            if (_filters.All(filter => filter.Id == _primaryFilterId))
-                return;
-
-            var row = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-            row.AddThemeConstantOverride("h_separation", 8);
-            row.AddThemeConstantOverride("v_separation", 6);
-            catalog.AddChild(row);
-            foreach (var filter in _filters)
-            {
-                if (filter.Id == _primaryFilterId)
-                    continue;
-                var options = new List<(int Value, string Label)> { (-1, $"{filter.Label}: {filter.AllLabel}") };
-                options.AddRange(filter.Options.Select((option, index) =>
-                    (index, $"{filter.Label}: {option.Label}")));
-                var dropdown = new ModSettingsDropdownChoiceControl<int>(
-                    options,
-                    _filterSelections[filter.Id],
-                    selected =>
-                    {
-                        _filterSelections[filter.Id] = selected;
-                        ApplyFilter();
-                    })
-                {
-                    CustomMinimumSize = new(190f, RitsuShellTheme.Current.Metric.Entry.ValueMinHeight),
-                };
-                row.AddChild(dropdown);
-            }
-        }
-
         private void AddPrimaryFilterControls(VBoxContainer catalog)
         {
             if (_primaryFilterId == null)
                 return;
             var filter = _filters.Single(candidate => candidate.Id == _primaryFilterId);
             var row = new HFlowContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+            _primaryFiltersRow = row;
             row.AddThemeConstantOverride("h_separation", 4);
             row.AddThemeConstantOverride("v_separation", 6);
             catalog.AddChild(row);
@@ -675,6 +684,7 @@ namespace STS2RitsuLib.Settings
                         return;
                     _filterSelections[filter.Id] = optionIndex;
                     RefreshPrimaryFilterButtons();
+                    _searchMenu?.RememberFilters();
                     ApplyFilter();
                 };
                 row.AddChild(_primaryOverflowPicker);
@@ -695,6 +705,7 @@ namespace STS2RitsuLib.Settings
                         ? -1
                         : optionIndex;
                     RefreshPrimaryFilterButtons();
+                    _searchMenu?.RememberFilters();
                     ApplyFilter();
                 };
                 _primaryFilterButtons.Add(optionIndex, button);
@@ -736,16 +747,40 @@ namespace STS2RitsuLib.Settings
                 ApplyFilter();
         }
 
-        private void ApplyFilter(bool rebuildDetail = true)
+        private async void ApplyFilter(bool rebuildDetail = true)
         {
-            var terms = _search.Text.Split((char[]?)null,
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            _filtered = [.. _entries.Where(entry => entry.Item.Matches(terms) && MatchesFilters(entry.Item))];
+            if (_searchMenu == null || !IsInsideTree())
+                return;
+            if (_primaryFiltersRow != null)
+                _primaryFiltersRow.Visible = !_searchMenu.IsAdvanced;
+            // ReSharper disable once MethodHasAsyncOverload
+            _searchCancellation?.Cancel();
+            _searchCancellation?.Dispose();
+            var cancellation = new CancellationTokenSource();
+            _searchCancellation = cancellation;
+            _searchMenu.SetAvailableFields(_entries.Select(static entry => entry.Item));
+            try
+            {
+                _resultCount.Text = ModSettingsLocalization.Get("ritsulib.catalog.search.searching", "Searching…");
+                var filtered = await _searchMenu.FilterAsync(_entries, static entry => entry.Item, MatchesFilters,
+                    _search.Text, cancellation.Token);
+                if (cancellation.IsCancellationRequested || !IsInsideTree())
+                    return;
+                _filtered = filtered;
+            }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested || !IsInsideTree())
+            {
+                return;
+            }
+
             Array.Sort(_filtered, CompareEntries);
             _resultCount.Text = _filtered.Length == _entries.Length
                 ? _entries.Length.ToString()
                 : $"{_filtered.Length} / {_entries.Length}";
             _emptyLabel.Visible = _filtered.Length == 0;
+            _emptyLabel.Text = _searchMenu.QueryError ??
+                               ModSettingsLocalization.Get("ritsulib.debugTools.noMatches", "No matching items");
+            _emptyLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
 
             if (_selectedItemId != null && _filtered.All(entry => entry.Item.Id != _selectedItemId))
                 _selectedItemId = null;

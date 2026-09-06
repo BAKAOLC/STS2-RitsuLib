@@ -89,22 +89,15 @@
             }
         }
 
-        internal static IReadOnlyList<RitsuSearchExpansion> Expand(string text, string languageCode)
+        internal static IReadOnlyList<RitsuSearchExpansion> Expand(string text, string languageCode,
+            RitsuSearchOptions? options = null)
         {
+            options ??= RitsuSearchOptions.Default;
             ProviderEntry[] providers;
             lock (SyncRoot)
             {
                 providers = [.. Providers.Values];
             }
-
-            providers =
-            [
-                .. providers.Where(entry =>
-                    RitsuSearchSettingsStore.IsProviderEnabled(entry.Id, entry.EnabledByDefault)),
-            ];
-
-            if (providers.Length == 0)
-                return [];
 
             var context = new RitsuSearchExpansionContext(languageCode);
             var expansions = new List<RitsuSearchExpansion>();
@@ -112,6 +105,18 @@
             var totalCharacters = 0;
             foreach (var entry in providers)
             {
+                if (entry.Provider is Pinyin.PinyinSearchExpansionProvider)
+                    continue;
+                var isPinyin = string.Equals(entry.Id, Pinyin.PinyinSearchExpansionProvider.ProviderId,
+                    StringComparison.OrdinalIgnoreCase);
+                var enabled = options.ProviderOverrides.TryGetValue(entry.Id, out var requested)
+                    ? requested
+                    : (isPinyin || options.UseOtherProviders) &&
+                      RitsuSearchSettingsStore.IsProviderEnabled(entry.Id, entry.EnabledByDefault);
+                var full = isPinyin ? options.Pinyin ?? enabled : enabled;
+                var initials = isPinyin ? options.PinyinInitials ?? enabled : enabled;
+                if (!full && !initials)
+                    continue;
                 IReadOnlyList<RitsuSearchExpansion>? supplied;
                 try
                 {
@@ -138,6 +143,7 @@
                         totalCharacters >= MaximumTotalExpansionCharacters)
                         break;
                     if (expansion == null ||
+                        !(expansion.Kind == RitsuSearchExpansionKind.Initialism ? initials : full) ||
                         string.Equals(expansion.Text, text, StringComparison.OrdinalIgnoreCase) ||
                         !seen.Add(expansion.Text))
                         continue;
@@ -151,6 +157,24 @@
             }
 
             return expansions;
+        }
+
+        internal static int ScorePinyin(string text, string term, RitsuSearchOptions options,
+            CancellationToken cancellationToken)
+        {
+            ProviderEntry? entry;
+            lock (SyncRoot)
+            {
+                if (!Providers.TryGetValue(Pinyin.PinyinSearchExpansionProvider.ProviderId, out entry) ||
+                    entry.Provider is not Pinyin.PinyinSearchExpansionProvider)
+                    return -1;
+            }
+
+            var enabled = options.ProviderOverrides.TryGetValue(entry.Id, out var requested)
+                ? requested
+                : RitsuSearchSettingsStore.IsProviderEnabled(entry.Id, entry.EnabledByDefault);
+            return Pinyin.PinyinSearchMatcher.Score(text, term, options.Pinyin ?? enabled,
+                options.PinyinInitials ?? enabled, cancellationToken);
         }
 
         internal static IReadOnlyList<ProviderSnapshot> GetProviderSnapshots()

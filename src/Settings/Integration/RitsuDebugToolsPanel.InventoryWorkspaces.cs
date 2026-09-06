@@ -116,7 +116,7 @@ namespace STS2RitsuLib.Settings
                             SafeTitle(relic),
                             relic.Id.ToString(),
                             ContentSourceDisplayLabel(source)),
-                        quickAction: quickAction);
+                        quickAction: quickAction) { SearchDocument = CreateSearchDocument(relic) };
                 }).ToArray();
                 ownedBrowser.UpdateItems(ownedItems);
 
@@ -240,7 +240,7 @@ namespace STS2RitsuLib.Settings
                             SafeTitle(potion),
                             potion.Id.ToString(),
                             ContentSourceDisplayLabel(source)),
-                        quickAction: quickAction);
+                        quickAction: quickAction) { SearchDocument = CreateSearchDocument(potion) };
                 }).ToArray();
                 ownedBrowser.UpdateItems(ownedItems);
 
@@ -404,7 +404,7 @@ namespace STS2RitsuLib.Settings
                                 power.Id.ToString(),
                                 SafeDescription(() => power.Description.GetFormattedText())),
                             quickAction: quickAction,
-                            accentColor: PowerTypeAccent(power.Type));
+                            accentColor: PowerTypeAccent(power.Type)) { SearchDocument = CreateSearchDocument(power) };
                     }).ToArray();
                 currentBrowser.UpdateItems(items);
 
@@ -591,7 +591,7 @@ namespace STS2RitsuLib.Settings
                             orb.Id.ToString(),
                             SafeDescription(() => orb.Description.GetFormattedText())),
                         quickAction: quickAction,
-                        accentColor: orb.DarkenedColor));
+                        accentColor: orb.DarkenedColor) { SearchDocument = CreateSearchDocument(orb) });
                 }
 
                 for (var index = orbs.Length; index < queue.Capacity; index++)
@@ -798,7 +798,7 @@ namespace STS2RitsuLib.Settings
                 iconFactory: () => relic.Icon,
                 badge: ownedCount > 0
                     ? string.Format(L("ritsulib.debugTools.relics.ownedBadge", "Owned ×{0}"), ownedCount)
-                    : EnumLabel(relic.Rarity));
+                    : EnumLabel(relic.Rarity)) { SearchDocument = CreateSearchDocument(relic) };
         }
 
         private RitsuCatalogItem CreatePotionLibraryItem(PotionModel potion, int ownedCount)
@@ -812,7 +812,7 @@ namespace STS2RitsuLib.Settings
                 iconFactory: () => potion.Image,
                 badge: ownedCount > 0
                     ? string.Format(L("ritsulib.debugTools.potions.ownedBadge", "Owned ×{0}"), ownedCount)
-                    : EnumLabel(potion.Rarity));
+                    : EnumLabel(potion.Rarity)) { SearchDocument = CreateSearchDocument(potion) };
         }
 
         private Control CreateOwnedRelicDetail(RelicModel relic, int relicIndex)
