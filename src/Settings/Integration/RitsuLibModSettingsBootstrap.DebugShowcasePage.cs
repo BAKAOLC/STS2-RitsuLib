@@ -70,11 +70,11 @@ namespace STS2RitsuLib.Settings
                                 ui.PreviewMode))
                         .AddSubpage(
                             "showcase_spine_preview",
-                            T("ritsulib.runtimeReflection.spine.page.title", "Spine preview (sample)"),
+                            T("ritsulib.runtimeReflection.spine.page.title", "Character animation preview (sample)"),
                             "runtime-reflection-spine-example",
                             T("button.open", "Open"),
                             T("ritsulib.runtimeReflection.spine.page.description",
-                                "Try bindings and a simple spine preview.")))
+                                "Try bindings and preview character Spine animations, frame sequences, and static cues.")))
                     .AddSection("inputs", section => section
                         .WithTitle(T("ritsulib.showcase.inputs.title", "Inputs"))
                         .WithDescription(T("ritsulib.showcase.inputs.description",
