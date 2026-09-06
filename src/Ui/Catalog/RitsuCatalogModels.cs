@@ -158,6 +158,15 @@ namespace STS2RitsuLib.Ui.Catalog
     public sealed class RitsuCatalogItem
     {
         private RitsuSearchPreparedText? _preparedSearchText;
+        private RitsuCatalogSearchDocument? _defaultSearchDocument;
+
+        internal RitsuCatalogSearchDocument? SearchDocument { get; init; }
+
+        internal bool Matches(string[] terms, RitsuCatalogSearchFields fields, RitsuSearchOptions options)
+        {
+            var document = SearchDocument ?? (_defaultSearchDocument ??= new());
+            return document.Matches(this, terms, fields, options);
+        }
 
         /// <summary>
         ///     <para xml:lang="en">The maximum supported length of an item ID.</para>
@@ -580,6 +589,8 @@ namespace STS2RitsuLib.Ui.Catalog
         ///     <para xml:lang="zh-CN">获取或初始化搜索框占位文本。</para>
         /// </summary>
         public string SearchPlaceholder { get; init; } = "Search";
+
+        internal string? SearchPreferenceId { get; init; }
 
         /// <summary>
         ///     <para xml:lang="en">Gets or initializes the text displayed when no item matches.</para>

@@ -192,14 +192,14 @@
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Identifies one observed version of the active progress destination.</para>
-    ///     <para xml:lang="zh-CN">标识活动进度目标的一次已观测版本。</para>
+    ///     <para xml:lang="en">Identifies one observed version of a progress destination.</para>
+    ///     <para xml:lang="zh-CN">标识一个进度目标的一次已观测版本。</para>
     /// </summary>
     public sealed record ProgressGeneration
     {
         /// <summary>
-        ///     <para xml:lang="en">Gets the active profile ID.</para>
-        ///     <para xml:lang="zh-CN">获取活动档案 ID。</para>
+        ///     <para xml:lang="en">Gets the observed profile ID.</para>
+        ///     <para xml:lang="zh-CN">获取观测到的档案 ID。</para>
         /// </summary>
         public required int ProfileId { get; init; }
 
@@ -276,8 +276,8 @@
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Contains the active raw progress document and the generation captured with it.</para>
-    ///     <para xml:lang="zh-CN">包含活动原始进度文档及与其同时捕获的代次。</para>
+    ///     <para xml:lang="en">Contains a raw progress document and the generation captured with it.</para>
+    ///     <para xml:lang="zh-CN">包含一个原始进度文档及与其同时捕获的代次。</para>
     /// </summary>
     public sealed record RawProgressSnapshot
     {
@@ -301,8 +301,8 @@
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Reports the outcome of capturing the active progress document.</para>
-    ///     <para xml:lang="zh-CN">报告捕获活动进度文档的结果。</para>
+    ///     <para xml:lang="en">Reports the outcome of capturing a progress document.</para>
+    ///     <para xml:lang="zh-CN">报告捕获进度文档的结果。</para>
     /// </summary>
     public enum RawProgressReadOutcome
     {
@@ -313,26 +313,26 @@
         Succeeded,
 
         /// <summary>
-        ///     <para xml:lang="en">The game has not initialized an active profile.</para>
-        ///     <para xml:lang="zh-CN">游戏尚未初始化活动档案。</para>
+        ///     <para xml:lang="en">The game has not initialized the save runtime or an active profile.</para>
+        ///     <para xml:lang="zh-CN">游戏尚未初始化存档运行时或活动档案。</para>
         /// </summary>
         ActiveProfileUnavailable,
 
         /// <summary>
-        ///     <para xml:lang="en">The active local progress file does not exist or could not be read.</para>
-        ///     <para xml:lang="zh-CN">活动本地进度文件不存在或无法读取。</para>
+        ///     <para xml:lang="en">The selected local progress file does not exist or could not be read.</para>
+        ///     <para xml:lang="zh-CN">所选本地进度文件不存在或无法读取。</para>
         /// </summary>
         LocalReadUnavailable,
 
         /// <summary>
-        ///     <para xml:lang="en">The active document is malformed, oversized, or lacks a stable identity.</para>
-        ///     <para xml:lang="zh-CN">活动文档格式错误、尺寸过大或缺少稳定身份。</para>
+        ///     <para xml:lang="en">The selected document is malformed, oversized, or lacks a stable identity.</para>
+        ///     <para xml:lang="zh-CN">所选文档格式错误、尺寸过大或缺少稳定身份。</para>
         /// </summary>
         ValidationFailed,
 
         /// <summary>
-        ///     <para xml:lang="en">The active document uses a schema this provider build does not accept.</para>
-        ///     <para xml:lang="zh-CN">活动文档使用了此提供方构建不接受的 schema。</para>
+        ///     <para xml:lang="en">The selected document uses a schema this provider build does not accept.</para>
+        ///     <para xml:lang="zh-CN">所选文档使用了此提供方构建不接受的 schema。</para>
         /// </summary>
         SchemaUnsupported,
 
@@ -363,8 +363,11 @@
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Requests one conditional replacement of the active raw progress document.</para>
-    ///     <para xml:lang="zh-CN">请求对活动原始进度文档执行一次条件替换。</para>
+    ///     <para xml:lang="en">
+    ///         Requests one conditional raw progress replacement. The active bridge binds it to the active document; the
+    ///         targeted bridge binds it to an explicit destination.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">请求一次条件原始进度替换。活动桥接器将其绑定到活动文档，目标化桥接器则将其绑定到显式目标。</para>
     /// </summary>
     public sealed record RawProgressCommitRequest
     {
@@ -397,10 +400,10 @@
         ///     <para xml:lang="en">
         ///         Gets the caller-generated transaction ID used for duplicate suppression and recovery. It must be unique
         ///         within <see cref="OwnerId" />. Reuse the same owner and transaction only to replay the identical proposed
-        ///         payload; reusing it with different content is rejected.
+        ///         request; reusing it with any different request content is rejected.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取调用方生成的事务 ID，用于抑制重复提交和恢复。该值在 <see cref="OwnerId" /> 内必须唯一；仅可使用相同所有者与事务重试完全相同的拟提交内容，若内容不同则会被拒绝。
+        ///         获取调用方生成的事务 ID，用于抑制重复提交和恢复。该值在 <see cref="OwnerId" /> 内必须唯一；仅可使用相同所有者与事务重试完全相同的请求，任何请求内容不同都会被拒绝。
         ///     </para>
         /// </summary>
         public required Guid TransactionId { get; init; }
@@ -474,8 +477,11 @@
     public enum RawProgressCommitOutcome
     {
         /// <summary>
-        ///     <para xml:lang="en">Local, cloud when present, live memory, and preservation evidence all agree.</para>
-        ///     <para xml:lang="zh-CN">本地、存在时的云端、内存状态和保留机制证据全部一致。</para>
+        ///     <para xml:lang="en">
+        ///         Local and cloud evidence agree. An active destination was synchronized with live memory and preservation;
+        ///         an inactive destination left that state isolated.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">本地与云端证据一致；活动目标已同步内存状态与保留机制，非活动目标则保持该状态隔离。</para>
         /// </summary>
         CommittedVerified,
 
@@ -571,6 +577,37 @@
     }
 
     /// <summary>
+    ///     <para xml:lang="en">Reports how a commit interacted with the active in-memory progress state.</para>
+    ///     <para xml:lang="zh-CN">报告提交与活动内存进度状态的交互方式。</para>
+    /// </summary>
+    public enum RawProgressLiveStateDisposition
+    {
+        /// <summary>
+        ///     <para xml:lang="en">No live-state operation was required or reached.</para>
+        ///     <para xml:lang="zh-CN">无需执行或尚未执行内存状态操作。</para>
+        /// </summary>
+        NotObserved,
+
+        /// <summary>
+        ///     <para xml:lang="en">The active destination was synchronized and its known projection was verified.</para>
+        ///     <para xml:lang="zh-CN">活动目标已同步，且其已知投影已验证。</para>
+        /// </summary>
+        Synchronized,
+
+        /// <summary>
+        ///     <para xml:lang="en">The destination was inactive, so the active progress state was deliberately left unchanged.</para>
+        ///     <para xml:lang="zh-CN">目标处于非活动状态，因此活动进度状态被有意保持不变。</para>
+        /// </summary>
+        Isolated,
+
+        /// <summary>
+        ///     <para xml:lang="en">Synchronization of an active destination was attempted but could not be verified.</para>
+        ///     <para xml:lang="zh-CN">已尝试同步活动目标，但无法验证结果。</para>
+        /// </summary>
+        Unverified,
+    }
+
+    /// <summary>
     ///     <para xml:lang="en">Contains verification and recovery evidence for a commit attempt.</para>
     ///     <para xml:lang="zh-CN">包含一次提交尝试的验证与恢复证据。</para>
     /// </summary>
@@ -617,6 +654,12 @@
         ///     <para xml:lang="zh-CN">获取安装保留机制时对应的原始哈希。</para>
         /// </summary>
         public string? PreservedRawSha256 { get; init; }
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets how the commit handled the active in-memory progress state.</para>
+        ///     <para xml:lang="zh-CN">获取提交处理活动内存进度状态的方式。</para>
+        /// </summary>
+        public RawProgressLiveStateDisposition LiveStateDisposition { get; init; }
 
         /// <summary>
         ///     <para xml:lang="en">Gets whether any destination may have changed during the attempt.</para>
@@ -927,10 +970,10 @@
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Provides fail-closed capture, conditional commit, and bounded recovery operations for the active progress
-    ///         document.
+    ///         Provides fail-closed capture and conditional commit for the active progress document, plus bounded recovery
+    ///         operations for the destination recorded by each journal.
     ///     </para>
-    ///     <para xml:lang="zh-CN">为活动进度文档提供保守失败的捕获、条件提交与有界恢复操作。</para>
+    ///     <para xml:lang="zh-CN">为活动进度文档提供保守失败的捕获与条件提交，并为每份日志所记录的目标提供有界恢复操作。</para>
     /// </summary>
     public interface IRawProgressCommitBridge
     {
@@ -970,12 +1013,13 @@
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Restores a journal's validated original document only when the active profile and freshly captured
-        ///         destination generation still match. The same local, cloud, live-state, and preservation verification used
-        ///         by a normal raw commit applies. The journal is removed only after a fully verified restoration.
+        ///         Restores a journal's validated original document only when the journal destination and freshly captured
+        ///         destination generation still match. Active destinations use live-state and preservation verification;
+        ///         inactive destinations preserve active-state isolation. The journal is removed only after a fully verified
+        ///         restoration.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         仅当活动档案与新近捕获的目标代次仍然匹配时，恢复日志中已验证的原始文档。恢复会执行与普通原始提交相同的本地、云端、内存状态和保留机制验证，且仅在恢复得到完整验证后删除日志。
+        ///         仅当日志目标与新近捕获的目标代次仍然匹配时，恢复日志中已验证的原始文档。活动目标会执行内存状态与保留机制验证，非活动目标则保持活动状态隔离；且仅在恢复得到完整验证后删除日志。
         ///     </para>
         /// </summary>
         /// <param name="request">
@@ -1006,11 +1050,11 @@
         /// <summary>
         ///     <para xml:lang="en">
         ///         Explicitly accepts the current destination and removes a matching retained journal without changing
-        ///         progress data. The owner, opaque token, active profile, and freshly captured destination generation must
-        ///         still match inside the exclusive window. No journal is removed on a mismatch.
+        ///         progress data. The owner, opaque token, journal destination, and freshly captured destination generation
+        ///         must still match inside the exclusive window. No journal is removed on a mismatch.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         显式接受当前目标，并在不改变进度数据的情况下移除匹配的保留日志。所有者、不透明 token、活动档案及新近捕获的目标代次必须在独占窗口内仍然匹配；任何不匹配都不会移除日志。
+        ///         显式接受当前目标，并在不改变进度数据的情况下移除匹配的保留日志。所有者、不透明 token、日志目标及新近捕获的目标代次必须在独占窗口内仍然匹配；任何不匹配都不会移除日志。
         ///     </para>
         /// </summary>
         /// <param name="request">
@@ -1114,5 +1158,11 @@
         ///     <para xml:lang="zh-CN">获取共享的提供方实例。</para>
         /// </summary>
         public static IRawProgressCommitBridge Instance => RawProgressCommitBridge.Instance;
+
+        /// <summary>
+        ///     <para xml:lang="en">Gets the shared provider instance with explicitly targeted operations.</para>
+        ///     <para xml:lang="zh-CN">获取支持显式目标化操作的共享提供方实例。</para>
+        /// </summary>
+        public static ITargetedRawProgressCommitBridge TargetedInstance => RawProgressCommitBridge.Instance;
     }
 }

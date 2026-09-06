@@ -3278,6 +3278,19 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyStaticTexts()
         {
+            if (_sidebarHeaderTitleLabel != null && IsInstanceValid(_sidebarHeaderTitleLabel))
+            {
+                _sidebarHeaderTitleLabel.Text = ModSettingsLocalization.Get("sidebar.title", "Mods");
+                _sidebarHeaderTitleLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+            }
+
+            if (_sidebarHeaderSubtitleLabel != null && IsInstanceValid(_sidebarHeaderSubtitleLabel))
+            {
+                _sidebarHeaderSubtitleLabel.Text =
+                    ModSettingsLocalization.Get("sidebar.subtitle", "Browse mods, pages, and sections.");
+                _sidebarHeaderSubtitleLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            }
+
             ApplyBirthdayLabelText();
             ApplyQuickSearchButtonPresentation();
         }
@@ -3344,10 +3357,11 @@ namespace STS2RitsuLib.Settings
             FlushDirtyBindings();
             ResetQuickSearchOverlay();
             ModSettingsRegistry.InvalidateOrderingCache();
-            _sidebarStructureDirty = true;
-            _contentStructureDirty = true;
-            _selectionDirty = true;
-            CallDeferredIfAlive(() => EnsureUiUpToDate(true, true));
+            CallDeferredIfAlive(() =>
+            {
+                ResetUiPresentationCaches();
+                EnsureUiUpToDate(true, true);
+            });
         }
 
         private void OnShellThemeChanged()
@@ -3355,7 +3369,7 @@ namespace STS2RitsuLib.Settings
             ResetQuickSearchOverlay();
             CallDeferredIfAlive(() =>
             {
-                ResetUiCachesForShellThemeChange();
+                ResetUiPresentationCaches();
                 ApplyShellThemeToExistingChrome();
                 EnsureUiUpToDate(true, true);
             });
@@ -3460,7 +3474,7 @@ namespace STS2RitsuLib.Settings
             _sidebarScrollFrame.QueueSort();
         }
 
-        private void ResetUiCachesForShellThemeChange()
+        private void ResetUiPresentationCaches()
         {
             _sidebarStructureDirty = true;
             _contentStructureDirty = true;

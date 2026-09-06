@@ -16,9 +16,10 @@ using STS2RitsuLib.Utils.Persistence;
 
 namespace STS2RitsuLib.Saves.RawProgress
 {
-    internal sealed class RawProgressCommitBridge : IRawProgressCommitBridge
+    internal sealed class RawProgressCommitBridge : ITargetedRawProgressCommitBridge
     {
         internal const int ProtocolVersion = 1;
+        internal const int TargetedProtocolVersion = 1;
         internal const long MaxDocumentUtf8Bytes = 16 * 1024 * 1024;
         internal const int MaxRecoveryOwnerIdUtf8Bytes = 256;
         private const int MaxRetainedRecoveryJournals = 8;
@@ -33,6 +34,10 @@ namespace STS2RitsuLib.Saves.RawProgress
         private static readonly UTF8Encoding StrictUtf8 = new(false, true);
         private static readonly Dictionary<RecoveryTransactionKey, CompletedTransaction> CompletedTransactions = [];
         private static readonly Queue<RecoveryTransactionKey> CompletedTransactionOrder = [];
+
+        private static readonly IReadOnlySet<RawProgressEnvironment> SupportedEnvironments =
+            new[] { RawProgressEnvironment.Vanilla, RawProgressEnvironment.Modded }.ToFrozenSet();
+
         private static int _observedRuntimeSchema;
 
         private static readonly JsonSerializerOptions JournalJsonOptions = new()
@@ -96,6 +101,30 @@ namespace STS2RitsuLib.Saves.RawProgress
             };
         }
 
+        public TargetedRawProgressBridgeDescriptor DescribeTargeted()
+        {
+            var descriptor = Describe();
+            return new()
+            {
+                ProviderId = descriptor.ProviderId,
+                ProviderVersion = descriptor.ProviderVersion,
+                ProtocolVersion = TargetedProtocolVersion,
+                BaseProtocolVersion = descriptor.ProtocolVersion,
+                SupportedSchemas = descriptor.SupportedSchemas,
+                SupportedEnvironments = SupportedEnvironments,
+                Features = TargetedRawProgressBridgeFeature.ExplicitDestinationCapture |
+                           TargetedRawProgressBridgeFeature.InactiveDestinationCommit |
+                           TargetedRawProgressBridgeFeature.SourceAndDestinationGenerationCheck |
+                           TargetedRawProgressBridgeFeature.ActiveProgressStateIsolation |
+                           TargetedRawProgressBridgeFeature.TargetedRecoveryJournalManagement |
+                           TargetedRawProgressBridgeFeature.StablePublicContract,
+                BaseFeatures = descriptor.Features,
+                MaxDocumentUtf8Bytes = descriptor.MaxDocumentUtf8Bytes,
+                MaxRetainedRecoveryJournals = descriptor.MaxRetainedRecoveryJournals,
+                MaxRecoveryOwnerIdUtf8Bytes = descriptor.MaxRecoveryOwnerIdUtf8Bytes,
+            };
+        }
+
         public ValueTask<RawProgressReadResult> CaptureAsync(CancellationToken cancellationToken = default)
         {
             return new(RitsuMainThread.InvokeAsync(() =>
@@ -109,6 +138,25 @@ namespace STS2RitsuLib.Saves.RawProgress
             }, cancellationToken));
         }
 
+        public ValueTask<RawProgressReadResult> CaptureAsync(
+            RawProgressDestination destination,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(destination);
+            if (!IsValidDestination(destination))
+                throw new ArgumentOutOfRangeException(nameof(destination));
+
+            return new(RitsuMainThread.InvokeAsync(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                lock (SaveWindow)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return CaptureCore(destination).Result;
+                }
+            }, cancellationToken));
+        }
+
         public ValueTask<RawProgressCommitResult> CommitAsync(
             RawProgressCommitRequest request,
             CancellationToken cancellationToken = default)
@@ -117,6 +165,17 @@ namespace STS2RitsuLib.Saves.RawProgress
 
             return new(RitsuMainThread.InvokeAsync(
                 () => CommitOnMainThread(request, cancellationToken),
+                cancellationToken));
+        }
+
+        public ValueTask<TargetedRawProgressCommitResult> CommitAsync(
+            TargetedRawProgressCommitRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(request);
+
+            return new(RitsuMainThread.InvokeAsync(
+                () => CommitTargetedOnMainThread(request, cancellationToken),
                 cancellationToken));
         }
 
@@ -278,47 +337,143 @@ namespace STS2RitsuLib.Saves.RawProgress
             if (cancellationToken.IsCancellationRequested)
                 return CreateResult(RawProgressCommitOutcome.CancelledBeforeCommit);
 
+            var requestFingerprint = ComputeRequestFingerprint("active", request);
+
             lock (SaveWindow)
             {
-                if (TryGetCompletedTransaction(request, out var completed))
+                if (TryGetCompletedTransaction(request, requestFingerprint, out var completed, out _))
                     return completed;
                 if (cancellationToken.IsCancellationRequested)
-                    return Remember(request, CreateResult(RawProgressCommitOutcome.CancelledBeforeCommit));
+                    return Remember(request, requestFingerprint,
+                        CreateResult(RawProgressCommitOutcome.CancelledBeforeCommit));
 
                 var current = CaptureCore();
                 if (current.Result.Outcome != RawProgressReadOutcome.Succeeded || current.Result.Snapshot == null)
-                    return Remember(request, MapCaptureFailure(current.Result.Outcome));
+                    return Remember(request, requestFingerprint, MapCaptureFailure(current.Result.Outcome));
 
                 var snapshot = current.Result.Snapshot;
                 if (snapshot.Generation.ProfileId != request.ExpectedGeneration.ProfileId ||
                     snapshot.Generation.IsModded != request.ExpectedGeneration.IsModded)
-                    return Remember(request, CreateResult(RawProgressCommitOutcome.ActiveProfileChanged));
+                    return Remember(request, requestFingerprint,
+                        CreateResult(RawProgressCommitOutcome.ActiveProfileChanged));
                 if (!GenerationMatches(snapshot.Generation, request.ExpectedGeneration))
-                    return Remember(request, CreateResult(RawProgressCommitOutcome.GenerationConflict));
+                    return Remember(request, requestFingerprint,
+                        CreateResult(RawProgressCommitOutcome.GenerationConflict));
                 if (!string.Equals(proposed.ProgressUniqueId, snapshot.Generation.ProgressUniqueId,
                         StringComparison.Ordinal))
-                    return Remember(request, CreateResult(RawProgressCommitOutcome.ValidationFailed));
+                    return Remember(request, requestFingerprint,
+                        CreateResult(RawProgressCommitOutcome.ValidationFailed));
 
                 var journal = RecoveryJournal.Create(request, snapshot.RawJson);
                 if (!journal.TryPrepare())
-                    return Remember(request, CreateResult(
+                    return Remember(request, requestFingerprint, CreateResult(
                         RawProgressCommitOutcome.RecoveryRequired,
                         recoveryJournalRetained: journal.Exists));
                 if (cancellationToken.IsCancellationRequested)
                 {
                     var removed = journal.TryDelete();
-                    return Remember(request, CreateResult(
+                    return Remember(request, requestFingerprint, CreateResult(
                         RawProgressCommitOutcome.CancelledBeforeCommit,
                         verifiedBackupAvailable: !removed,
                         recoveryJournalRetained: !removed));
                 }
 
-                return Remember(request, CommitPrepared(
+                return Remember(request, requestFingerprint, CommitPrepared(
                     request.ProposedRawJson,
                     request.ProposedSha256,
                     proposed,
                     current,
                     journal));
+            }
+        }
+
+        private static TargetedRawProgressCommitResult CommitTargetedOnMainThread(
+            TargetedRawProgressCommitRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (request.ProtocolVersion != TargetedProtocolVersion || !TryGetSupportedSchema(out var supportedSchema))
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.ProviderIncompatible);
+            if (request.DestinationCommit is not { } commitRequest)
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.ValidationFailed);
+            if (commitRequest.ProtocolVersion != ProtocolVersion)
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.ProviderIncompatible);
+            if (commitRequest.SchemaVersion != supportedSchema)
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.SchemaUnsupported);
+            if (!IsValidDestination(request.Source) ||
+                !IsValidDestination(request.Destination) ||
+                !IsValidGeneration(request.ExpectedSourceGeneration) ||
+                !GenerationTargetsDestination(request.ExpectedSourceGeneration, request.Source) ||
+                !GenerationTargetsDestination(commitRequest.ExpectedGeneration, request.Destination))
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.ValidationFailed);
+            if (cancellationToken.IsCancellationRequested)
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.CancelledBeforeCommit);
+            if (!TryValidateProposedDocument(commitRequest, out var proposed))
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.ValidationFailed);
+            if (cancellationToken.IsCancellationRequested)
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.CancelledBeforeCommit);
+
+            var requestFingerprint = ComputeRequestFingerprint("targeted", request);
+            lock (SaveWindow)
+            {
+                if (TryGetCompletedTransaction(commitRequest, requestFingerprint, out var completed,
+                        out var requestMatched))
+                    return requestMatched
+                        ? CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.Passed, commitResult: completed)
+                        : CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.ValidationFailed);
+                if (cancellationToken.IsCancellationRequested)
+                    return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.CancelledBeforeCommit);
+
+                var source = CaptureCore(request.Source);
+                if (source.Result.Outcome != RawProgressReadOutcome.Succeeded || source.Result.Snapshot == null)
+                    return CreateTargetedResult(
+                        TargetedRawProgressCommitGuardOutcome.SourceUnavailable,
+                        source.Result.Outcome);
+                if (!GenerationMatches(source.Result.Snapshot.Generation, request.ExpectedSourceGeneration))
+                    return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.SourceGenerationConflict);
+
+                var destination = CaptureCore(request.Destination);
+                if (destination.Result.Outcome != RawProgressReadOutcome.Succeeded ||
+                    destination.Result.Snapshot == null)
+                    return CreateTargetedResult(
+                        TargetedRawProgressCommitGuardOutcome.DestinationUnavailable,
+                        destination.Result.Outcome);
+                if (!GenerationMatches(destination.Result.Snapshot.Generation, commitRequest.ExpectedGeneration))
+                    return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.DestinationGenerationConflict);
+                if (!string.Equals(proposed.ProgressUniqueId,
+                        destination.Result.Snapshot.Generation.ProgressUniqueId,
+                        StringComparison.Ordinal))
+                    return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.ValidationFailed);
+                if (cancellationToken.IsCancellationRequested)
+                    return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.CancelledBeforeCommit);
+
+                var journal = RecoveryJournal.Create(commitRequest, destination.Result.Snapshot.RawJson);
+                RawProgressCommitResult commitResult;
+                if (!journal.TryPrepare())
+                {
+                    commitResult = CreateResult(
+                        RawProgressCommitOutcome.RecoveryRequired,
+                        recoveryJournalRetained: journal.Exists);
+                }
+                else if (cancellationToken.IsCancellationRequested)
+                {
+                    var removed = journal.TryDelete();
+                    commitResult = CreateResult(
+                        RawProgressCommitOutcome.CancelledBeforeCommit,
+                        verifiedBackupAvailable: !removed,
+                        recoveryJournalRetained: !removed);
+                }
+                else
+                {
+                    commitResult = CommitPrepared(
+                        commitRequest.ProposedRawJson,
+                        commitRequest.ProposedSha256,
+                        proposed,
+                        destination,
+                        journal);
+                }
+
+                commitResult = Remember(commitRequest, requestFingerprint, commitResult);
+                return CreateTargetedResult(TargetedRawProgressCommitGuardOutcome.Passed, commitResult: commitResult);
             }
         }
 
@@ -367,7 +522,13 @@ namespace STS2RitsuLib.Saves.RawProgress
                         verifiedBackupAvailable: true,
                         recoveryJournalRetained: journal.Exists);
 
-                var current = CaptureCore();
+                var current = CaptureCore(new()
+                {
+                    ProfileId = data.ProfileId,
+                    Environment = data.IsModded
+                        ? RawProgressEnvironment.Modded
+                        : RawProgressEnvironment.Vanilla,
+                });
                 if (current.Result.Outcome != RawProgressReadOutcome.Succeeded || current.Result.Snapshot == null)
                     return CreateResult(
                         MapCaptureFailure(current.Result.Outcome).Outcome,
@@ -456,7 +617,13 @@ namespace STS2RitsuLib.Saves.RawProgress
                         RawProgressRecoveryDiscardOutcome.ActiveProfileChanged,
                         journal.Exists);
 
-                var current = CaptureCore();
+                var current = CaptureCore(new()
+                {
+                    ProfileId = data.ProfileId,
+                    Environment = data.IsModded
+                        ? RawProgressEnvironment.Modded
+                        : RawProgressEnvironment.Vanilla,
+                });
                 if (current.Result.Outcome != RawProgressReadOutcome.Succeeded || current.Result.Snapshot == null)
                     return CreateDiscardResult(
                         current.Result.Outcome == RawProgressReadOutcome.ActiveProfileUnavailable
@@ -558,31 +725,43 @@ namespace STS2RitsuLib.Saves.RawProgress
 
             string? liveProjectionHash = null;
             var continuationInstalled = false;
-            try
+            var liveStateDisposition = current.IsActive
+                ? RawProgressLiveStateDisposition.Unverified
+                : RawProgressLiveStateDisposition.Isolated;
+            if (current.IsActive)
             {
-                saveManager.Progress = proposed.Progress;
-                continuationInstalled = RawProgressJsonPreservation.TryAttach(
-                    proposed.Progress,
-                    proposedRawJson,
-                    proposed.KnownProjectionJson);
+                try
+                {
+                    saveManager.Progress = proposed.Progress;
+                    continuationInstalled = RawProgressJsonPreservation.TryAttach(
+                        proposed.Progress,
+                        proposedRawJson,
+                        proposed.KnownProjectionJson);
 
-                var liveSerializable = saveManager.Progress.ToSerializable();
-                liveSerializable.SchemaVersion = current.Result.Snapshot!.SchemaVersion;
-                liveProjectionHash = ComputeSha256(JsonSerializationUtility.ToJson(liveSerializable));
-            }
-            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
-            {
-                RitsuLibFramework.Logger.ErrorNoTrace(
-                    $"[RawProgress] Failed to synchronize the live progress projection: {ex.Message}");
+                    var liveSerializable = saveManager.Progress.ToSerializable();
+                    liveSerializable.SchemaVersion = current.Result.Snapshot!.SchemaVersion;
+                    liveProjectionHash = ComputeSha256(JsonSerializationUtility.ToJson(liveSerializable));
+                    if (HashEquals(liveProjectionHash, proposed.KnownProjectionSha256))
+                        liveStateDisposition = RawProgressLiveStateDisposition.Synchronized;
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[RawProgress] Failed to synchronize the live progress projection: {ex.Message}");
+                }
             }
 
             var outcome = (
-                    LiveProjectionMatches: HashEquals(liveProjectionHash, proposed.KnownProjectionSha256),
+                    LiveStateDisposition: liveStateDisposition,
                     ContinuationInstalled: continuationInstalled,
                     CloudStatus: cloudStatus) switch
                 {
-                    { LiveProjectionMatches: false } => RawProgressCommitOutcome.LiveProgressStateUnverified,
-                    { ContinuationInstalled: false } => RawProgressCommitOutcome.UnknownJsonContinuationUnverified,
+                    { LiveStateDisposition: RawProgressLiveStateDisposition.Unverified } =>
+                        RawProgressCommitOutcome.LiveProgressStateUnverified,
+                    {
+                        LiveStateDisposition: RawProgressLiveStateDisposition.Synchronized,
+                        ContinuationInstalled: false,
+                    } => RawProgressCommitOutcome.UnknownJsonContinuationUnverified,
                     { CloudStatus: CloudReadBackStatus.Unavailable or CloudReadBackStatus.FailureObserved } =>
                         RawProgressCommitOutcome.CloudReadBackUnverifiedLocalPreserved,
                     { CloudStatus: CloudReadBackStatus.Mismatch } =>
@@ -609,6 +788,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                 liveProjectionHash,
                 continuationInstalled,
                 continuationInstalled ? proposedSha256 : null,
+                liveStateDisposition,
                 destinationMayHaveChanged,
                 gameBackupVerified || journal.Exists,
                 journal.Exists);
@@ -617,12 +797,18 @@ namespace STS2RitsuLib.Saves.RawProgress
         private static CapturedProgress CaptureCore()
         {
             SaveManager saveManager;
-            int profileId;
+            RawProgressDestination destination;
             int supportedSchema;
             try
             {
                 saveManager = SaveManager.Instance;
-                profileId = saveManager.CurrentProfileId;
+                destination = new()
+                {
+                    ProfileId = saveManager.CurrentProfileId,
+                    Environment = UserDataPathProvider.IsRunningModded
+                        ? RawProgressEnvironment.Modded
+                        : RawProgressEnvironment.Vanilla,
+                };
                 supportedSchema = GetSupportedSchema(saveManager);
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
@@ -631,10 +817,33 @@ namespace STS2RitsuLib.Saves.RawProgress
                 return new(new() { Outcome = RawProgressReadOutcome.ActiveProfileUnavailable });
             }
 
+            return CaptureCore(saveManager, destination, supportedSchema);
+        }
+
+        private static CapturedProgress CaptureCore(RawProgressDestination destination)
+        {
+            try
+            {
+                var saveManager = SaveManager.Instance;
+                var supportedSchema = GetSupportedSchema(saveManager);
+                return CaptureCore(saveManager, destination, supportedSchema);
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Debug($"[RawProgress] Save runtime is unavailable: {ex.Message}");
+                return new(new() { Outcome = RawProgressReadOutcome.ActiveProfileUnavailable });
+            }
+        }
+
+        private static CapturedProgress CaptureCore(
+            SaveManager saveManager,
+            RawProgressDestination destination,
+            int supportedSchema)
+        {
             var saveStore = SaveStore(saveManager);
             var localStore = GetLocalStore(saveStore);
-            var isModded = UserDataPathProvider.IsRunningModded;
-            var path = GetProgressPath(profileId, isModded);
+            var isModded = destination.Environment == RawProgressEnvironment.Modded;
+            var path = GetProgressPath(destination.ProfileId, isModded);
             string? rawJson;
             long localModified;
             int localStoredLength;
@@ -651,7 +860,7 @@ namespace STS2RitsuLib.Saves.RawProgress
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
-                RitsuLibFramework.Logger.Warn($"[RawProgress] Failed to read active local progress: {ex.Message}");
+                RitsuLibFramework.Logger.Warn($"[RawProgress] Failed to read selected local progress: {ex.Message}");
                 return new(new() { Outcome = RawProgressReadOutcome.LocalReadUnavailable });
             }
 
@@ -697,7 +906,7 @@ namespace STS2RitsuLib.Saves.RawProgress
 
                 var generation = new ProgressGeneration
                 {
-                    ProfileId = profileId,
+                    ProfileId = destination.ProfileId,
                     IsModded = isModded,
                     ProgressUniqueId = uniqueId,
                     LocalSha256 = localHash,
@@ -720,7 +929,9 @@ namespace STS2RitsuLib.Saves.RawProgress
                     new() { Outcome = RawProgressReadOutcome.Succeeded, Snapshot = snapshot },
                     saveManager,
                     saveStore,
-                    path);
+                    path,
+                    destination.ProfileId == saveManager.CurrentProfileId &&
+                    isModded == UserDataPathProvider.IsRunningModded);
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
@@ -736,13 +947,10 @@ namespace STS2RitsuLib.Saves.RawProgress
             proposed = null!;
             if (!IsValidOwnerId(request.OwnerId) ||
                 request.TransactionId == Guid.Empty ||
-                request.ExpectedGeneration == null ||
+                !IsValidGeneration(request.ExpectedGeneration) ||
                 request.ProposedRawJson == null ||
                 request.ProposedSha256 == null ||
-                request.ExpectedGeneration.ProfileId is < 1 or > 3 ||
-                string.IsNullOrWhiteSpace(request.ExpectedGeneration.ProgressUniqueId) ||
                 !IsSha256(request.ProposedSha256) ||
-                !IsSha256(request.ExpectedGeneration.LocalSha256) ||
                 request.ProposedRawJson.Length > MaxDocumentUtf8Bytes ||
                 !TryGetUtf8Bytes(request.ProposedRawJson, out var proposedBytes) ||
                 proposedBytes.LongLength == 0 ||
@@ -953,6 +1161,7 @@ namespace STS2RitsuLib.Saves.RawProgress
             string? liveKnownProjectionSha256 = null,
             bool unknownJsonContinuationInstalled = false,
             string? preservedRawSha256 = null,
+            RawProgressLiveStateDisposition liveStateDisposition = RawProgressLiveStateDisposition.NotObserved,
             bool destinationMayHaveChanged = false,
             bool verifiedBackupAvailable = false,
             bool recoveryJournalRetained = false)
@@ -966,9 +1175,23 @@ namespace STS2RitsuLib.Saves.RawProgress
                 LiveKnownProjectionSha256 = liveKnownProjectionSha256,
                 UnknownJsonContinuationInstalled = unknownJsonContinuationInstalled,
                 PreservedRawSha256 = preservedRawSha256,
+                LiveStateDisposition = liveStateDisposition,
                 DestinationMayHaveChanged = destinationMayHaveChanged,
                 VerifiedBackupAvailable = verifiedBackupAvailable,
                 RecoveryJournalRetained = recoveryJournalRetained,
+            };
+        }
+
+        private static TargetedRawProgressCommitResult CreateTargetedResult(
+            TargetedRawProgressCommitGuardOutcome guardOutcome,
+            RawProgressReadOutcome? readFailure = null,
+            RawProgressCommitResult? commitResult = null)
+        {
+            return new()
+            {
+                GuardOutcome = guardOutcome,
+                ReadFailure = readFailure,
+                CommitResult = commitResult,
             };
         }
 
@@ -985,16 +1208,20 @@ namespace STS2RitsuLib.Saves.RawProgress
 
         private static bool TryGetCompletedTransaction(
             RawProgressCommitRequest request,
-            out RawProgressCommitResult result)
+            string requestFingerprint,
+            out RawProgressCommitResult result,
+            out bool requestMatched)
         {
             var key = new RecoveryTransactionKey(request.OwnerId, request.TransactionId);
             if (!CompletedTransactions.TryGetValue(key, out var completed))
             {
                 result = null!;
+                requestMatched = false;
                 return false;
             }
 
-            result = HashEquals(completed.ProposedSha256, request.ProposedSha256)
+            requestMatched = HashEquals(completed.RequestFingerprint, requestFingerprint);
+            result = requestMatched
                 ? completed.Result
                 : CreateResult(RawProgressCommitOutcome.ValidationFailed);
             return true;
@@ -1002,12 +1229,13 @@ namespace STS2RitsuLib.Saves.RawProgress
 
         private static RawProgressCommitResult Remember(
             RawProgressCommitRequest request,
+            string requestFingerprint,
             RawProgressCommitResult result)
         {
             var key = new RecoveryTransactionKey(request.OwnerId, request.TransactionId);
             if (!CompletedTransactions.ContainsKey(key))
             {
-                CompletedTransactions.Add(key, new(request.ProposedSha256, result));
+                CompletedTransactions.Add(key, new(requestFingerprint, result));
                 CompletedTransactionOrder.Enqueue(key);
                 while (CompletedTransactionOrder.Count > 256)
                     CompletedTransactions.Remove(CompletedTransactionOrder.Dequeue());
@@ -1060,8 +1288,56 @@ namespace STS2RitsuLib.Saves.RawProgress
 #if STS2_AT_LEAST_0_110_0
             return ProgressSaveManager.GetProgressPathForProfile(profileId, isModded);
 #else
-            return ProgressSaveManager.GetProgressPathForProfile(profileId);
+            return Path.Combine(
+                isModded ? "modded" : string.Empty,
+                $"profile{profileId}",
+                UserDataPathProvider.SavesDir,
+                "progress.save");
 #endif
+        }
+
+        private static bool IsValidDestination(RawProgressDestination? destination)
+        {
+            return destination is
+            {
+                ProfileId: >= 1 and <= 3,
+                Environment: RawProgressEnvironment.Vanilla or RawProgressEnvironment.Modded,
+            };
+        }
+
+        private static bool GenerationTargetsDestination(
+            ProgressGeneration? generation,
+            RawProgressDestination destination)
+        {
+            return generation != null &&
+                   generation.ProfileId == destination.ProfileId &&
+                   generation.IsModded == (destination.Environment == RawProgressEnvironment.Modded);
+        }
+
+        private static bool IsValidGeneration(ProgressGeneration? generation)
+        {
+            if (generation is not
+                {
+                    ProfileId: >= 1 and <= 3,
+                    LocalLength: > 0 and <= MaxDocumentUtf8Bytes,
+                    LocalLastModifiedUtcTicks: >= 0,
+                } ||
+                string.IsNullOrWhiteSpace(generation.ProgressUniqueId) ||
+                generation.ProgressUniqueId.Length > 256 ||
+                !IsSha256(generation.LocalSha256) ||
+                generation is { CloudSyncEnabled: true, CloudAvailable: false } ||
+                generation is { CloudPersisted: true, CloudAvailable: false })
+                return false;
+
+            if (!generation.CloudPersisted)
+                return generation.CloudSha256 == null &&
+                       generation.CloudLength == null &&
+                       generation.CloudLastModifiedUtcTicks == null;
+
+            return generation.CloudSha256 != null &&
+                   IsSha256(generation.CloudSha256) &&
+                   generation.CloudLength is > 0 and <= MaxDocumentUtf8Bytes &&
+                   generation.CloudLastModifiedUtcTicks is >= 0;
         }
 
         private static bool TryGetUtf8Bytes(string value, out byte[] bytes)
@@ -1093,13 +1369,12 @@ namespace STS2RitsuLib.Saves.RawProgress
                    request.TransactionId != Guid.Empty &&
                    request.RecoveryToken != null &&
                    IsSha256(request.RecoveryToken) &&
-                   request.ExpectedGeneration is
-                   {
-                       ProfileId: >= 1 and <= 3,
-                   } expected &&
-                   !string.IsNullOrWhiteSpace(expected.ProgressUniqueId) &&
-                   expected.ProgressUniqueId.Length <= 256 &&
-                   IsSha256(expected.LocalSha256);
+                   IsValidGeneration(request.ExpectedGeneration);
+        }
+
+        private static string ComputeRequestFingerprint<TRequest>(string scope, TRequest request)
+        {
+            return ComputeSha256(scope + "\n" + JsonSerializer.Serialize(request));
         }
 
         private static string ComputeSha256(string value)
@@ -1166,7 +1441,8 @@ namespace STS2RitsuLib.Saves.RawProgress
             RawProgressReadResult Result,
             SaveManager? SaveManager = null,
             ISaveStore? Store = null,
-            string? Path = null);
+            string? Path = null,
+            bool IsActive = false);
 
         private sealed record ValidatedDocument(
             string ProgressUniqueId,
@@ -1174,7 +1450,7 @@ namespace STS2RitsuLib.Saves.RawProgress
             string KnownProjectionJson,
             string KnownProjectionSha256);
 
-        private sealed record CompletedTransaction(string ProposedSha256, RawProgressCommitResult Result);
+        private sealed record CompletedTransaction(string RequestFingerprint, RawProgressCommitResult Result);
 
         private readonly record struct RecoveryTransactionKey(string OwnerId, Guid TransactionId);
 

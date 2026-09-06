@@ -547,6 +547,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardPortraitAvailabilityPatch>();
             patcher.RegisterPatch<CardBetaPortraitAvailabilityPatch>();
             patcher.RegisterPatch<CardTextureOverridePatch>();
+            patcher.RegisterPatch<HoverTipCardVisualContextPatch>();
             patcher.RegisterPatch<CardPortraitBorderTexturePatch>();
             patcher.RegisterPatch<CardEnergyIconTexturePatch>();
 #if STS2_AT_LEAST_0_105_0

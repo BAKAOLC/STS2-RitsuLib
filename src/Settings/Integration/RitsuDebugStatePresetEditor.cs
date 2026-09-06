@@ -61,6 +61,31 @@ namespace STS2RitsuLib.Settings
             BuildPresetRail();
             BuildWorkspace();
             SelectInitialPreset();
+            RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
+        }
+
+        public override void _ExitTree()
+        {
+            RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
+            _drawerTween?.Kill();
+            _drawerTween = null;
+            base._ExitTree();
+        }
+
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this) || !IsInsideTree())
+                    return;
+                _drawerTween?.Kill();
+                _drawerTween = null;
+                _cardGrid = null;
+                ClearChildren(this);
+                BuildPresetRail();
+                BuildWorkspace();
+                RebuildAll();
+            }).CallDeferred();
         }
 
         private void BuildPresetRail()

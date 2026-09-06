@@ -473,6 +473,11 @@ namespace STS2RitsuLib.Settings
             if (!IsInstanceValid(_quickSearchButton))
                 return;
             _quickSearchButton.Text = string.Empty;
+            _quickSearchButton.AddThemeStyleboxOverride("normal", ModSettingsMiniButton.CreateStyle(false));
+            _quickSearchButton.AddThemeStyleboxOverride("hover", ModSettingsMiniButton.CreateStyle(true));
+            _quickSearchButton.AddThemeStyleboxOverride("pressed", ModSettingsMiniButton.CreatePressedStyle());
+            _quickSearchButton.AddThemeStyleboxOverride("focus", ModSettingsMiniButton.CreateFocusStyle());
+            _quickSearchButton.AddThemeStyleboxOverride("disabled", ModSettingsMiniButton.CreateStyle(false, true));
             _quickSearchButton.Icon = RitsuDebugToolsIcons.Get(
                 RitsuDebugToolsGlyph.Search,
                 18,

@@ -137,23 +137,22 @@ namespace STS2RitsuLib.Networking.Sidecar
                 selected,
                 ok,
                 RitsuLibSidecarSupportedFeatures.All);
-            var rm = RunManager.Instance;
-            if (ctx.IsHostIngest)
-                RitsuLibSidecarHighLevelSend.TrySendAsHostToPeer(
-                    rm,
+            var netService = RitsuLibSidecarSessionManager.CurrentNetService ?? RunManager.Instance?.NetService;
+            var sent = ctx.IsHostIngest
+                ? RitsuLibSidecarHighLevelSend.TrySendAsHostToPeer(
+                    netService,
                     ctx.SenderNetId,
                     RitsuLibSidecarControlOpcodes.HandshakeAck,
                     buf,
-                    RitsuLibSidecarDeliverySemantics.StableSync);
-            else
-                RitsuLibSidecarHighLevelSend.TrySendAsClient(
-                    rm,
+                    RitsuLibSidecarDeliverySemantics.StableSync)
+                : RitsuLibSidecarHighLevelSend.TrySendAsClient(
+                    netService,
                     RitsuLibSidecarControlOpcodes.HandshakeAck,
                     buf,
                     RitsuLibSidecarDeliverySemantics.StableSync);
 
             RitsuLibFramework.Logger.Debug(
-                $"[Sidecar] Handshake ack sent target={ctx.SenderNetId}, opcode={RitsuLibSidecarControlOpcodes.HandshakeAck}, payloadLen={buf.Length}, selectedWire={selected}, ok={ok}, senderFeatures={RitsuLibSidecarSupportedFeatures.All}");
+                $"[Sidecar] Handshake ack send completed target={ctx.SenderNetId}, opcode={RitsuLibSidecarControlOpcodes.HandshakeAck}, payloadLen={buf.Length}, selectedWire={selected}, ok={ok}, senderFeatures={RitsuLibSidecarSupportedFeatures.All}, sent={sent}");
         }
 
         private static void OnHandshakeAck(RitsuLibSidecarDispatchContext ctx)

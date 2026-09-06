@@ -1,4 +1,5 @@
 using Godot;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace STS2RitsuLib.Networking.Sidecar
@@ -95,17 +96,26 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private static void OnSceneProcessFrame()
         {
-            var rm = RunManager.Instance;
-            var net = rm?.NetService;
-            if (net == null)
+            var net = RitsuLibSidecarSessionManager.CurrentNetService;
+            if (net == null || net.Type == NetGameType.Singleplayer)
+            {
+                net = RunManager.Instance?.NetService;
+                if (net == null || net.Type == NetGameType.Singleplayer)
+                    return;
+                RitsuLibSidecarSessionManager.ObserveNetService(net);
+            }
+
+            if (!net.IsConnected)
+                return;
+            var epoch = RitsuLibSidecarSessionManager.Epoch;
+            if (!RitsuLibSidecarSessionManager.IsCurrentSession(net, epoch))
                 return;
 
-            RitsuLibSidecarSessionManager.ObserveNetService(net);
             RitsuLibSidecarConnectionExchange.TickHandshakeNegotiation();
             RitsuLibSidecarSessionManager.RefreshAllReachabilityFromProviders();
             RitsuLibSidecarConnectionExchange.TrySendClientHelloIfReachable(net);
             RitsuLibSidecarEndpointRegistry.TickBulkTransfers();
-            RitsuLibSidecarOutboundScheduler.Tick(net);
+            RitsuLibSidecarOutboundScheduler.Tick(net, epoch);
         }
 
         private static void OnRunEnded()

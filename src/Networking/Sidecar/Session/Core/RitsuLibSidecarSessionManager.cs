@@ -52,6 +52,14 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
+        internal static bool IsCurrentSession(INetGameService netService, long epoch)
+        {
+            lock (Gate)
+            {
+                return ReferenceEquals(_currentNetService, netService) && _epoch == epoch;
+            }
+        }
+
         /// <summary>
         ///     <para xml:lang="en">Raised after a non-singleplayer service has become the active session service.</para>
         ///     <para xml:lang="zh-CN">在非单人游戏服务成为活动会话服务后引发。</para>

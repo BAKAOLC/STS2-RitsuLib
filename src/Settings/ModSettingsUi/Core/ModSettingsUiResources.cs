@@ -14,16 +14,32 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     public static class ModSettingsUiResources
     {
+        private static readonly Lazy<Theme> SettingsLineThemeCache = new(CreateSettingsLineTheme);
+
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets the native line theme used by standard settings rows.
+        ///         Gets a shared copy of the native line theme without text shadows or outlines, for readable
+        ///         settings rows on both light and dark surfaces. Callers must not modify this shared resource.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取标准设置行使用的原版行主题。
+        ///         获取移除文字阴影和描边的原版行主题共享副本，确保设置行在浅色与深色背景上均清晰可读。
+        ///         调用方不得修改此共享资源。
         ///     </para>
         /// </summary>
-        public static Theme SettingsLineTheme =>
-            PreloadManager.Cache.GetAsset<Theme>("res://themes/settings_screen_line_header.tres");
+        public static Theme SettingsLineTheme => SettingsLineThemeCache.Value;
+
+        private static Theme CreateSettingsLineTheme()
+        {
+            var nativeTheme = PreloadManager.Cache.GetAsset<Theme>("res://themes/settings_screen_line_header.tres");
+            var theme = (Theme)nativeTheme.Duplicate();
+            theme.SetColor("font_shadow_color", "RichTextLabel", Colors.Transparent);
+            theme.SetColor("font_outline_color", "RichTextLabel", Colors.Transparent);
+            theme.SetConstant("shadow_offset_x", "RichTextLabel", 0);
+            theme.SetConstant("shadow_offset_y", "RichTextLabel", 0);
+            theme.SetConstant("shadow_outline_size", "RichTextLabel", 0);
+            theme.SetConstant("outline_size", "RichTextLabel", 0);
+            return theme;
+        }
 
         /// <summary>
         ///     <para xml:lang="en">

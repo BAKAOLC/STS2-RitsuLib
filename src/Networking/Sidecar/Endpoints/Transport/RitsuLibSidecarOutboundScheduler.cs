@@ -96,7 +96,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             }
         }
 
-        internal static void Tick(INetGameService? netService)
+        internal static void Tick(INetGameService? netService, long sessionEpoch)
         {
             if (netService == null || netService.Type == NetGameType.Singleplayer)
             {
@@ -104,7 +104,9 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return;
             }
 
-            var epoch = RitsuLibSidecarSessionManager.Epoch;
+            if (!RitsuLibSidecarSessionManager.IsCurrentSession(netService, sessionEpoch))
+                return;
+
             var packetsRemaining = RitsuLibSidecarEndpointPolicy.MaxOutboundPacketsPerTick;
             var bytesRemaining = RitsuLibSidecarEndpointPolicy.MaxOutboundBytesPerTick;
             while (packetsRemaining > 0 && bytesRemaining > 0)
@@ -112,7 +114,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 OutboundFrame? next;
                 lock (Gate)
                 {
-                    next = TryDequeueNext(epoch, Environment.TickCount64, bytesRemaining);
+                    next = TryDequeueNext(sessionEpoch, Environment.TickCount64, bytesRemaining);
                 }
 
                 if (next is not { } frame)
@@ -123,6 +125,10 @@ namespace STS2RitsuLib.Networking.Sidecar
                 if (frame.Owner is { IsDisposed: true })
                 {
                     Interlocked.Increment(ref _disposedFrames);
+                }
+                else if (!RitsuLibSidecarSessionManager.IsCurrentSession(netService, sessionEpoch))
+                {
+                    Interlocked.Increment(ref _staleSessionFrames);
                 }
                 else if (!RitsuLibSidecarEndpointTransport.TrySend(
                              netService,

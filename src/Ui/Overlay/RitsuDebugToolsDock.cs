@@ -27,6 +27,7 @@ namespace STS2RitsuLib.Ui.Overlay
         private Label _pageTitle = null!;
         private Button _peekTab = null!;
         private PanelContainer _rail = null!;
+        private ScrollContainer _railScroll = null!;
         private VBoxContainer _railButtons = null!;
         private bool _railShown;
         private StyleBoxFlat _railStyle = null!;
@@ -35,6 +36,8 @@ namespace STS2RitsuLib.Ui.Overlay
         private IDisposable? _tooltipTimingScope;
         private Control _workspaceContent = null!;
         private Control _workspaceMover = null!;
+        private Panel _workspaceSurface = null!;
+        private HSeparator _workspaceSeparator = null!;
         private bool _workspaceResizeAnimating;
         private double _workspaceResizeElapsed;
         private float _workspaceResizeFrom;
@@ -71,6 +74,7 @@ namespace STS2RitsuLib.Ui.Overlay
             BuildLayout();
             GetViewport().SizeChanged += OnViewportSizeChanged;
             RitsuDebugToolsInterfaceStateStore.StateRestored += OnInterfaceStateRestored;
+            RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
             SetProcess(false);
             SetProcessUnhandledInput(false);
             SyncAvailability();
@@ -104,6 +108,7 @@ namespace STS2RitsuLib.Ui.Overlay
             Panel.CreaturePickingStarted -= OnCreaturePickingStarted;
             Panel.CreaturePickingFinished -= OnCreaturePickingFinished;
             RitsuDebugToolsInterfaceStateStore.StateRestored -= OnInterfaceStateRestored;
+            RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
             _railTween?.Kill();
             _railTween = null;
             ReleaseQuickTooltipTiming();
@@ -284,6 +289,7 @@ namespace STS2RitsuLib.Ui.Overlay
                 VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
             };
             ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(scroll);
+            _railScroll = scroll;
             margin.AddChild(scroll);
 
             var scrollFrame = new MarginContainer
@@ -340,6 +346,7 @@ namespace STS2RitsuLib.Ui.Overlay
             {
                 MouseFilter = MouseFilterEnum.Stop,
             };
+            _workspaceSurface = workspaceSurface;
             workspaceSurface.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
             var workspaceStyle = RitsuShellPanelStyles.CreateFramedSurface(
                 RitsuShellTheme.Current.Surface.Content,
@@ -396,6 +403,7 @@ namespace STS2RitsuLib.Ui.Overlay
             column.AddChild(header);
 
             var separator = new HSeparator();
+            _workspaceSeparator = separator;
             column.AddChild(separator);
             Panel.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             Panel.SizeFlagsVertical = SizeFlags.ExpandFill;
@@ -407,23 +415,79 @@ namespace STS2RitsuLib.Ui.Overlay
             _peekTab = CreateIconButton(
                 RitsuDebugToolsIcons.Get(
                     RitsuDebugToolsGlyph.ChevronRight,
-                    13,
-                    RitsuShellTheme.Current.Text.LabelPrimary),
+                    16,
+                    Colors.White),
                 ModSettingsLocalization.Get("ritsulib.debugTools.expand", "Show developer tools"),
                 () => Expand());
             _peekTab.Name = "DebugToolsPeekTab";
             _peekTab.FocusMode = FocusModeEnum.None;
-            _peekTab.CustomMinimumSize = new(15f, 50f);
+            _peekTab.CustomMinimumSize = new(22f, 50f);
             _peekTab.AnchorLeft = 0f;
             _peekTab.AnchorRight = 0f;
             _peekTab.AnchorTop = 0.5f;
             _peekTab.AnchorBottom = 0.5f;
             _peekTab.OffsetLeft = 0f;
-            _peekTab.OffsetRight = 15f;
+            _peekTab.OffsetRight = 22f;
             _peekTab.OffsetTop = -25f;
             _peekTab.OffsetBottom = 25f;
             _peekTab.MouseEntered += () => SlideRail(true);
+            ApplyPeekTabTheme();
             AddChild(_peekTab);
+        }
+
+        private void OnShellThemeChanged()
+        {
+            Callable.From(() =>
+            {
+                if (!IsInstanceValid(this) || !IsInsideTree())
+                    return;
+                ApplyPeekTabTheme();
+                _railStyle = RitsuShellPanelStyles.CreateFramedSurface(
+                    RitsuShellTheme.Current.Surface.Sidebar,
+                    RitsuShellTheme.Current.Metric.Radius.Default);
+                _rail.AddThemeStyleboxOverride("panel", _railStyle);
+                SetRailJoined(Expanded);
+                ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_railScroll);
+                var workspaceStyle = RitsuShellPanelStyles.CreateFramedSurface(
+                    RitsuShellTheme.Current.Surface.Content,
+                    RitsuShellTheme.Current.Metric.Radius.Default);
+                workspaceStyle.CornerRadiusTopLeft = 0;
+                workspaceStyle.CornerRadiusBottomLeft = 0;
+                workspaceStyle.BorderWidthLeft = 0;
+                _workspaceSurface.AddThemeStyleboxOverride("panel", workspaceStyle);
+                _pageTitle.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+                _pageTitle.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
+                _workspaceSeparator.AddThemeStyleboxOverride("separator", new StyleBoxLine
+                {
+                    Color = RitsuShellTheme.Current.Color.Divider,
+                    Thickness = 1,
+                });
+                RefreshPageButtonStyles();
+            }).CallDeferred();
+        }
+
+        private void ApplyPeekTabTheme()
+        {
+            _peekTab.AddThemeColorOverride("icon_normal_color", RitsuShellTheme.Current.Text.LabelPrimary);
+            _peekTab.AddThemeColorOverride("icon_hover_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            _peekTab.AddThemeColorOverride("icon_pressed_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            _peekTab.AddThemeColorOverride("icon_focus_color", RitsuShellTheme.Current.Text.HoverHighlight);
+            _peekTab.AddThemeStyleboxOverride("normal", CreatePeekTabStyle(false));
+            _peekTab.AddThemeStyleboxOverride("hover", CreatePeekTabStyle(true));
+            _peekTab.AddThemeStyleboxOverride("pressed", CreatePeekTabStyle(true));
+            _peekTab.AddThemeStyleboxOverride("focus", CreatePeekTabStyle(true));
+        }
+
+        private static StyleBoxFlat CreatePeekTabStyle(bool hovered)
+        {
+            var style = (StyleBoxFlat)ModSettingsMiniButton.CreateStyle(hovered).Duplicate();
+            style.ContentMarginLeft = 3;
+            style.ContentMarginRight = 3;
+            style.ContentMarginTop = 0;
+            style.ContentMarginBottom = 0;
+            style.CornerRadiusTopLeft = 0;
+            style.CornerRadiusBottomLeft = 0;
+            return style;
         }
 
         private void RebuildPageButtons(IReadOnlyList<RitsuDebugToolsPageView> pages)

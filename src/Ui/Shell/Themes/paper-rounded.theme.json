@@ -1,0 +1,254 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "themeFormatVersion": 1,
+  "themeVersion": 10,
+  "id": "paper-rounded",
+  "displayName": "Paper (Rounded)",
+  "inherits": "paper",
+  "semantic": {
+    "metrics": {
+      "radius": {
+        "default": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "validation": {
+          "$value": 10,
+          "$type": "dimension"
+        },
+        "overlay": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    }
+  },
+  "components": {
+    "sidebarCard": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "chromeMenu": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "pageToolbarTray": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listShell": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listItem": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "listEditor": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "pill": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "toggle": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "slider": {
+      "layout": {
+        "grabber": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "dropdown": {
+      "layout": {
+        "currentRow": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "actionsRow": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "stepper": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "dragHandle": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "collapsible": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "textButton": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "stringValidation": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "tooltip": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "toast": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "choiceCenter": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "sidebar": {
+      "layout": {
+        "button": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "disabled": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "scrollbar": {
+      "layout": {
+        "track": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        },
+        "grabber": {
+          "cornerRadius": {
+            "$value": 10,
+            "$type": "dimension"
+          }
+        }
+      }
+    },
+    "surface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "entryField": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "colorSwatch": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "insetSurface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    },
+    "framedSurface": {
+      "layout": {
+        "cornerRadius": {
+          "$value": 10,
+          "$type": "dimension"
+        }
+      }
+    }
+  }
+}

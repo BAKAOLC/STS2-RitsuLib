@@ -1,0 +1,142 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
+  "themeFormatVersion": 1,
+  "themeVersion": 10,
+  "id": "ocean",
+  "displayName": "Ocean (Square)",
+  "inherits": "default",
+  "core": {
+    "color": {
+      "scheme": {
+        "canvas": {
+          "$value": "#101F28",
+          "$type": "color"
+        },
+        "sidebar": {
+          "$value": "#0B171F",
+          "$type": "color"
+        },
+        "inset": {
+          "$value": "#08141C",
+          "$type": "color"
+        },
+        "panel": {
+          "$value": "#172C36",
+          "$type": "color"
+        },
+        "raised": {
+          "$value": "#203A46",
+          "$type": "color"
+        },
+        "hover": {
+          "$value": "#2A4B58",
+          "$type": "color"
+        },
+        "overlay": {
+          "$value": "#1D3440",
+          "$type": "color"
+        },
+        "selected": {
+          "$value": "#16434E",
+          "$type": "color"
+        },
+        "selectedHover": {
+          "$value": "#1E5662",
+          "$type": "color"
+        },
+        "pressed": {
+          "$value": "#276575",
+          "$type": "color"
+        },
+        "primary": {
+          "$value": "#EAF7F8",
+          "$type": "color"
+        },
+        "body": {
+          "$value": "#D3E8EB",
+          "$type": "color"
+        },
+        "secondary": {
+          "$value": "#AECBD1",
+          "$type": "color"
+        },
+        "muted": {
+          "$value": "#94B4BD",
+          "$type": "color"
+        },
+        "focus": {
+          "$value": "#CCFFFF",
+          "$type": "color"
+        },
+        "accent": {
+          "$value": "#70D8DF",
+          "$type": "color"
+        },
+        "accentHover": {
+          "$value": "#A5F0EF",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#436B79",
+          "$type": "color"
+        },
+        "divider": {
+          "$value": "#2B4855",
+          "$type": "color"
+        },
+        "disabled": {
+          "$value": "#152A33",
+          "$type": "color"
+        },
+        "disabledBorder": {
+          "$value": "#365460",
+          "$type": "color"
+        },
+        "track": {
+          "$value": "#3D6270",
+          "$type": "color"
+        },
+        "thumb": {
+          "$value": "#307F8D",
+          "$type": "color"
+        },
+        "thumbHover": {
+          "$value": "#3D96A3",
+          "$type": "color"
+        },
+        "thumbPressed": {
+          "$value": "#50ADBA",
+          "$type": "color"
+        },
+        "successBg": {
+          "$value": "#214D3B",
+          "$type": "color"
+        },
+        "success": {
+          "$value": "#91DFB0",
+          "$type": "color"
+        },
+        "danger": {
+          "$value": "#F0A29F",
+          "$type": "color"
+        },
+        "dangerBg": {
+          "$value": "#45272C",
+          "$type": "color"
+        },
+        "dangerHover": {
+          "$value": "#5C3339",
+          "$type": "color"
+        },
+        "info": {
+          "$value": "#8AC8F2",
+          "$type": "color"
+        },
+        "warning": {
+          "$value": "#EBC674",
+          "$type": "color"
+        }
+      }
+    }
+  }
+}

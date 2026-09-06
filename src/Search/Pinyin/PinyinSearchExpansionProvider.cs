@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Search.Pinyin
                 return [];
 
             var expansions = new List<RitsuSearchExpansion>();
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var seen = new HashSet<(string Text, RitsuSearchExpansionKind Kind)>();
             var run = new List<string[]>();
             var combinedRuns = new List<string[]>();
             var runCount = 0;
@@ -64,7 +64,7 @@ namespace STS2RitsuLib.Search.Pinyin
         private static void FlushRun(
             List<string[]> run,
             ICollection<RitsuSearchExpansion> expansions,
-            ISet<string> seen)
+            ISet<(string Text, RitsuSearchExpansionKind Kind)> seen)
         {
             if (run.Count == 0)
                 return;
@@ -118,9 +118,9 @@ namespace STS2RitsuLib.Search.Pinyin
             string value,
             RitsuSearchExpansionKind kind,
             ICollection<RitsuSearchExpansion> expansions,
-            ISet<string> seen)
+            ISet<(string Text, RitsuSearchExpansionKind Kind)> seen)
         {
-            if (value.Length == 0 || value.Length > RitsuSearchExpansion.MaximumTextLength || !seen.Add(value))
+            if (value.Length == 0 || value.Length > RitsuSearchExpansion.MaximumTextLength || !seen.Add((value, kind)))
                 return;
             expansions.Add(new(value, kind));
         }

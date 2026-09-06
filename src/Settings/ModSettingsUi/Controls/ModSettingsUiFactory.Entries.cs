@@ -675,10 +675,10 @@ namespace STS2RitsuLib.Settings
             summaryMargins = new(
                 RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.left",
                     summaryMargins.Left),
-                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.top", 6),
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.top", 3),
                 RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.right",
                     summaryMargins.Right),
-                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.bottom", 6));
+                RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.margin.bottom", 3));
             line.AddThemeConstantOverride("margin_left", summaryMargins.Left);
             line.AddThemeConstantOverride("margin_right", summaryMargins.Right);
             line.AddThemeConstantOverride("margin_top", summaryMargins.Top);
@@ -727,7 +727,7 @@ namespace STS2RitsuLib.Settings
             left.AddChild(titleRow);
 
             var title = CreateRefreshableHeaderLabel(context, entry.Label,
-                () => ResolveEntryLabelDisplay(entry.Label), 24, HorizontalAlignment.Left,
+                () => ResolveEntryLabelDisplay(entry.Label), 20, HorizontalAlignment.Left,
                 RitsuShellTheme.Current.Text.RichTitle);
             title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             titleRow.AddChild(title);
@@ -743,12 +743,8 @@ namespace STS2RitsuLib.Settings
             idLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichMuted);
             titleRow.AddChild(idLabel);
             var idLabelSpec = entry.Description?.GetUiRefreshSpec() ?? ModSettingsUiRefreshSpec.StaticDisplay;
-            RegisterRefreshWhenAlive(context, idLabel, () =>
-            {
-                var idText = entry.Description == null ? string.Empty : ModSettingsUiContext.Resolve(entry.Description);
-                idLabel.Text = string.IsNullOrWhiteSpace(idText) ? string.Empty : $"({idText})";
-                idLabel.Visible = !string.IsNullOrWhiteSpace(idText);
-            }, idLabelSpec);
+            RefreshIdLabel();
+            RegisterRefreshWhenAlive(context, idLabel, RefreshIdLabel, idLabelSpec);
 
             left.AddChild(CreateRefreshableDescriptionLabel(context, entry.Body,
                 () => ModSettingsUiContext.Resolve(entry.Body)));
@@ -757,7 +753,7 @@ namespace STS2RitsuLib.Settings
             {
                 CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
                     "components.hotkeySummary.layout.bindingsMinSize",
-                    new(RitsuShellTheme.Current.Metric.Keybinding.BlockWidth, 0f)),
+                    new(240f, 0f)),
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd,
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -766,44 +762,53 @@ namespace STS2RitsuLib.Settings
                 RitsuShellThemeLayoutResolver.ResolveInt("components.hotkeySummary.layout.bindingsSeparation", 6));
             row.AddChild(bindingsColumn);
 
-            RegisterRefreshWhenAlive(context, bindingsColumn, () =>
+            var bindings = entry.Bindings.Count > 0
+                ? entry.Bindings
+                : [ModSettingsText.Literal(ModSettingsLocalization.Get("keybinding.unbound", "Unbound"))];
+            foreach (var binding in bindings)
             {
-                foreach (var child in bindingsColumn.GetChildren())
+                var chip = new PanelContainer
                 {
-                    bindingsColumn.RemoveChild(child);
-                    child.QueueFree();
-                }
-
-                foreach (var binding in entry.Bindings)
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                };
+                chip.AddThemeStyleboxOverride("panel", CreateInsetSurfaceStyle());
+                var chipLabel = new Label
                 {
-                    var chip = new PanelContainer
-                    {
-                        MouseFilter = Control.MouseFilterEnum.Ignore,
-                        SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    };
-                    chip.AddThemeStyleboxOverride("panel", CreateInsetSurfaceStyle());
-                    var chipLabel = new Label
-                    {
-                        Text = ModSettingsUiContext.Resolve(binding),
-                        MouseFilter = Control.MouseFilterEnum.Ignore,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        AutowrapMode = TextServer.AutowrapMode.Off,
-                        ClipText = true,
-                    };
-                    chipLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-                    chipLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
-                    chipLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
-                    chip.AddChild(chipLabel);
-                    bindingsColumn.AddChild(chip);
-                }
-
-                bindingsColumn.UpdateMinimumSize();
-                bindingsColumn.QueueSort();
-                FastVerticalStack.RequestAncestorLayouts(bindingsColumn);
-            }, ModSettingsUiRefreshSpec.AnyBindingDirty);
+                    Text = ResolveBindingText(binding),
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                };
+                chipLabel.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
+                chipLabel.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.ValueLabel);
+                chipLabel.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
+                chip.AddChild(chipLabel);
+                bindingsColumn.AddChild(chip);
+                RegisterRefreshWhenAlive(context, chipLabel, () =>
+                {
+                    chipLabel.Text = ResolveBindingText(binding);
+                    FastVerticalStack.RequestAncestorLayouts(bindingsColumn);
+                }, binding.GetUiRefreshSpec());
+            }
 
             return line;
+
+            void RefreshIdLabel()
+            {
+                var idText = entry.Description == null ? string.Empty : ModSettingsUiContext.Resolve(entry.Description);
+                idLabel.Text = string.IsNullOrWhiteSpace(idText) ? string.Empty : $"({idText})";
+                idLabel.Visible = !string.IsNullOrWhiteSpace(idText);
+            }
+
+            static string ResolveBindingText(ModSettingsText binding)
+            {
+                var text = ModSettingsUiContext.Resolve(binding);
+                return string.IsNullOrWhiteSpace(text)
+                    ? ModSettingsLocalization.Get("keybinding.unbound", "Unbound")
+                    : text;
+            }
         }
 
         internal static Control CreateImageEntry(ModSettingsUiContext context, ImageModSettingsEntryDefinition entry)

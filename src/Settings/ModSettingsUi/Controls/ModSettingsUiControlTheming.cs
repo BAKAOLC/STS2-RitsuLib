@@ -133,6 +133,10 @@ namespace STS2RitsuLib.Settings
             edit.AddThemeFontSizeOverride("font_size", fontSize);
             edit.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichBody);
             var normal = ModSettingsUiFactory.CreateEntryFieldFrameStyle(false);
+            edit.AddThemeColorOverride("font_placeholder_color",
+                RitsuShellTheme.Current.Text.LabelSecondary.Lerp(normal.BgColor, 0.25f));
+            edit.AddThemeColorOverride("caret_color", RitsuShellTheme.Current.Text.RichBody);
+            edit.AddThemeConstantOverride("caret_width", 2);
             var emphasis = ModSettingsUiFactory.CreateEntryFieldFrameStyle(true);
             edit.AddThemeStyleboxOverride("normal", normal);
             edit.AddThemeStyleboxOverride("hover", emphasis);
@@ -162,6 +166,10 @@ namespace STS2RitsuLib.Settings
             edit.AddThemeFontSizeOverride("font_size", fontSize);
             edit.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichBody);
             var normal = ModSettingsUiFactory.CreateEntryFieldFrameStyle(false);
+            edit.AddThemeColorOverride("font_placeholder_color",
+                RitsuShellTheme.Current.Text.LabelSecondary.Lerp(normal.BgColor, 0.25f));
+            edit.AddThemeColorOverride("caret_color", RitsuShellTheme.Current.Text.RichBody);
+            edit.AddThemeConstantOverride("caret_width", 2);
             var emphasis = ModSettingsUiFactory.CreateEntryFieldFrameStyle(true);
             edit.AddThemeStyleboxOverride("normal", normal);
             edit.AddThemeStyleboxOverride("hover", emphasis);

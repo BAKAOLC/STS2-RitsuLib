@@ -922,7 +922,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static IModCharacterAssetOverrides? TryGetOwningCharacterOverrides(CardModel instance)
         {
-            return ResolveOwningCharacterOverrides(instance.IsCanonical ? null : instance.Owner?.Character);
+            return ResolveOwningCharacterOverrides(HoverTipCardVisualContextPatch.ResolveCardCharacter(instance));
         }
 
         private static IModCharacterAssetOverrides? ResolveOwningCharacterOverrides(CharacterModel? owner)

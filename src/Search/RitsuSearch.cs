@@ -27,6 +27,16 @@
         ///     <para xml:lang="en">The substring or alternate representation to find.</para>
         ///     <para xml:lang="zh-CN">要查找的子串或可选表示。</para>
         /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">
+        ///         Immutable matching policy for this operation; null follows user defaults. Explicit choices affect only
+        ///         this operation and never load or download provider data. Prepared text retains this policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前操作的不可变匹配策略；null 遵循用户默认值。显式选项仅影响当前操作，不会加载或下载提供器数据。
+        ///         预处理文本会保留此策略。
+        ///     </para>
+        /// </param>
         /// <returns>
         ///     <para xml:lang="en">
         ///         <see langword="true" /> when a case-insensitive direct or expanded match exists; otherwise,
@@ -41,9 +51,9 @@
         ///     <para xml:lang="en"><paramref name="text" /> or <paramref name="term" /> is null.</para>
         ///     <para xml:lang="zh-CN"><paramref name="text" /> 或 <paramref name="term" /> 为 null。</para>
         /// </exception>
-        public static bool Contains(string text, string term)
+        public static bool Contains(string text, string term, RitsuSearchOptions? options = null)
         {
-            return Prepare(text).Contains(term);
+            return Prepare(text, options).Contains(term);
         }
 
         /// <summary>
@@ -64,6 +74,16 @@
         ///     <para xml:lang="en">The substring or alternate representation to find.</para>
         ///     <para xml:lang="zh-CN">要查找的子串或可选表示。</para>
         /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">
+        ///         Immutable matching policy for this operation; null follows user defaults. Explicit choices affect only
+        ///         this operation and never load or download provider data. Prepared text retains this policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前操作的不可变匹配策略；null 遵循用户默认值。显式选项仅影响当前操作，不会加载或下载提供器数据。
+        ///         预处理文本会保留此策略。
+        ///     </para>
+        /// </param>
         /// <param name="cancellationToken">
         ///     <para xml:lang="en">A token that stops waiting for the result.</para>
         ///     <para xml:lang="zh-CN">用于停止等待结果的取消令牌。</para>
@@ -80,12 +100,12 @@
         ///     <para xml:lang="en"><paramref name="cancellationToken" /> is canceled.</para>
         ///     <para xml:lang="zh-CN"><paramref name="cancellationToken" /> 已取消。</para>
         /// </exception>
-        public static ValueTask<bool> ContainsAsync(
-            string text,
+        public static ValueTask<bool> ContainsAsync(string text,
             string term,
+            RitsuSearchOptions? options = null,
             CancellationToken cancellationToken = default)
         {
-            return Prepare(text).ContainsAsync(term, cancellationToken);
+            return Prepare(text, options).ContainsAsync(term, cancellationToken);
         }
 
         /// <summary>
@@ -120,6 +140,16 @@
         ///     <para xml:lang="en">The positive number of matches required before enumeration may stop.</para>
         ///     <para xml:lang="zh-CN">达到后可以停止枚举的正数匹配项数量。</para>
         /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">
+        ///         Immutable matching policy for this operation; null follows user defaults. Explicit choices affect only
+        ///         this operation and never load or download provider data. Prepared text retains this policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前操作的不可变匹配策略；null 遵循用户默认值。显式选项仅影响当前操作，不会加载或下载提供器数据。
+        ///         预处理文本会保留此策略。
+        ///     </para>
+        /// </param>
         /// <param name="cancellationToken">
         ///     <para xml:lang="en">A token that cancels enumeration and waiting.</para>
         ///     <para xml:lang="zh-CN">用于取消枚举和等待的令牌。</para>
@@ -144,11 +174,11 @@
         ///     <para xml:lang="en"><paramref name="cancellationToken" /> is canceled.</para>
         ///     <para xml:lang="zh-CN"><paramref name="cancellationToken" /> 已取消。</para>
         /// </exception>
-        public static async Task<IReadOnlyList<T>> SearchAsync<T>(
-            IEnumerable<T> source,
+        public static async Task<IReadOnlyList<T>> SearchAsync<T>(IEnumerable<T> source,
             Func<T, string> textSelector,
             string term,
             int maximumResults,
+            RitsuSearchOptions? options = null,
             CancellationToken cancellationToken = default)
         {
             var results = new List<T>();
@@ -157,7 +187,7 @@
                                textSelector,
                                term,
                                maximumResults,
-                               cancellationToken).ConfigureAwait(false))
+                               options, cancellationToken).ConfigureAwait(false))
                 results.Add(result);
             return results.AsReadOnly();
         }
@@ -194,6 +224,16 @@
         ///     <para xml:lang="en">The positive number of matches required before enumeration stops.</para>
         ///     <para xml:lang="zh-CN">达到后停止枚举的正数匹配项数量。</para>
         /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">
+        ///         Immutable matching policy for this operation; null follows user defaults. Explicit choices affect only
+        ///         this operation and never load or download provider data. Prepared text retains this policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前操作的不可变匹配策略；null 遵循用户默认值。显式选项仅影响当前操作，不会加载或下载提供器数据。
+        ///         预处理文本会保留此策略。
+        ///     </para>
+        /// </param>
         /// <param name="cancellationToken">
         ///     <para xml:lang="en">A token that cancels enumeration and waiting.</para>
         ///     <para xml:lang="zh-CN">用于取消枚举和等待的令牌。</para>
@@ -218,11 +258,11 @@
         ///     <para xml:lang="en"><paramref name="cancellationToken" /> is canceled.</para>
         ///     <para xml:lang="zh-CN"><paramref name="cancellationToken" /> 已取消。</para>
         /// </exception>
-        public static async IAsyncEnumerable<T> SearchStreamAsync<T>(
-            IEnumerable<T> source,
+        public static async IAsyncEnumerable<T> SearchStreamAsync<T>(IEnumerable<T> source,
             Func<T, string> textSelector,
             string term,
             int maximumResults,
+            RitsuSearchOptions? options = null,
             [System.Runtime.CompilerServices.EnumeratorCancellation]
             CancellationToken cancellationToken = default)
         {
@@ -241,7 +281,7 @@
                            throw new InvalidOperationException("The search text selector returned null.");
                 if (!preparedTexts.TryGetValue(text, out var preparedText))
                 {
-                    preparedText = Prepare(text);
+                    preparedText = Prepare(text, options);
                     preparedTexts.Add(text, preparedText);
                 }
 
@@ -274,6 +314,16 @@
         ///     </para>
         ///     <para xml:lang="zh-CN">返回对象在不再被引用前会保留的源文本。</para>
         /// </param>
+        /// <param name="options">
+        ///     <para xml:lang="en">
+        ///         Immutable matching policy for this operation; null follows user defaults. Explicit choices affect only
+        ///         this operation and never load or download provider data. Prepared text retains this policy.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         当前操作的不可变匹配策略；null 遵循用户默认值。显式选项仅影响当前操作，不会加载或下载提供器数据。
+        ///         预处理文本会保留此策略。
+        ///     </para>
+        /// </param>
         /// <returns>
         ///     <para xml:lang="en">A reusable search-text object owned by the caller.</para>
         ///     <para xml:lang="zh-CN">由调用方持有的可复用搜索文本对象。</para>
@@ -282,10 +332,10 @@
         ///     <para xml:lang="en"><paramref name="text" /> is null.</para>
         ///     <para xml:lang="zh-CN"><paramref name="text" /> 为 null。</para>
         /// </exception>
-        public static RitsuSearchText Prepare(string text)
+        public static RitsuSearchText Prepare(string text, RitsuSearchOptions? options = null)
         {
             ArgumentNullException.ThrowIfNull(text);
-            return new(text);
+            return new(text, options);
         }
     }
 
@@ -303,10 +353,10 @@
         private readonly RitsuSearchPreparedText _preparedText;
         private readonly string _text;
 
-        internal RitsuSearchText(string text)
+        internal RitsuSearchText(string text, RitsuSearchOptions? options)
         {
             _text = text;
-            _preparedText = new(text);
+            _preparedText = new(text, options);
         }
 
         /// <summary>
