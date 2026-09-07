@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -15,6 +16,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
         private const string BaseLibCustomTargetTypeName = "BaseLib.Patches.Features.CustomTargetType";
 
         private static readonly Lock Gate = new();
+        private static readonly ConditionalWeakTable<Assembly, TypeResolution> TypeCache = new();
 
         private static ITargetPredicateMap? _singleTargeting;
         private static ITargetPredicateMap? _multiTargeting;
@@ -135,13 +137,13 @@ namespace STS2RitsuLib.Combat.CardTargeting
             foreach (var mod in Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly())
             foreach (var assembly in Sts2ModManagerCompat.GetAssemblies(mod))
             {
-                var type = assembly.GetType(BaseLibCustomTargetTypeName, false);
+                var type = ResolveAssemblyType(assembly);
                 if (type != null)
                     return type;
             }
 
             var fallback = AppDomain.CurrentDomain.GetAssemblies()
-                .Select(assembly => assembly.GetType(BaseLibCustomTargetTypeName, false))
+                .Select(assembly => ResolveAssemblyType(assembly))
                 .OfType<Type>()
                 .FirstOrDefault();
             if (fallback != null)
@@ -153,6 +155,19 @@ namespace STS2RitsuLib.Combat.CardTargeting
             RitsuLibFramework.Logger.Info("[CardTargeting] BaseLib custom TargetType type not found.");
             return null;
         }
+
+        private static Type? ResolveAssemblyType(Assembly assembly)
+        {
+            // Cache per static assembly; the outer scan still discovers later assemblies in order.
+            // Dynamic assemblies can create types later, so do not cache their missing results.
+            if (assembly.IsDynamic)
+                return assembly.GetType(BaseLibCustomTargetTypeName, false);
+
+            return TypeCache.GetValue(assembly, static candidate =>
+                new TypeResolution(candidate.GetType(BaseLibCustomTargetTypeName, false))).Type;
+        }
+
+        private sealed record TypeResolution(Type? Type);
 
         private static ITargetPredicateMap? ReadPredicateMap(
             Type type,
