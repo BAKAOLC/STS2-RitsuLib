@@ -84,6 +84,8 @@ Preview the affected pages to check layout and navigation.
 
 ## Pull requests
 
+Prefer `dev` as the PR merge target (base branch), unless maintainers specify another target.
+
 Use [the PR template](.github/PULL_REQUEST_TEMPLATE.md) to explain the problem, the resulting behavior, and validation.
 Include examples or screenshots where they help reviewers. State which game/API versions were tested and be honest
 about checks you haven't finished.
