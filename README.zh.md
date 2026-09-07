@@ -11,8 +11,8 @@
 [Release](https://github.com/BAKAOLC/STS2-RitsuLib/releases) |
 [English README](README.md)
 
-RitsuLib 为 Mod 作者提供一层稳定 API，用来处理内容注册、生命周期、Harmony 补丁、持久化、设置界面、本地化、音频、运行时 UI、诊断和兼容辅助。它不替代游戏原生 API，也不要求放弃
-[BaseLib](https://github.com/Alchyr/BaseLib-StS2)；它更像一套把常见 Mod 编写流程整理好的工程工具层。
+RitsuLib 为 Mod 作者提供一层稳定的 API，用来处理内容注册、生命周期、Harmony 补丁、持久化、设置界面、本地化、音频、运行时 UI、诊断和兼容辅助。它与游戏原生 API、
+[BaseLib](https://github.com/Alchyr/BaseLib-StS2) 等库并存，不替代它们。
 
 ## 覆盖范围
 
@@ -65,7 +65,7 @@ flowchart LR
 }
 ```
 
-如果项目没有使用 Central Package Management，请让包管理器或 IDE 选择当前兼容的包版本，不要从 README 复制固定版本号。
+如果项目没有启用 Central Package Management（中央包管理），让包管理器或 IDE 自己选择当前兼容的包版本，不要从 README 里抄固定的版本号。
 
 ## 包选择
 
@@ -73,7 +73,7 @@ flowchart LR
 | --- | --- | --- |
 | 当前最高支持的游戏 API，通常是游戏 beta 分支 | `STS2.RitsuLib` | GitHub Release 中的 `STS2-RitsuLib` |
 | 稳定分支或旧游戏 API 分支 | `STS2.RitsuLib.Compat.<api-version>` | 匹配的 release 资产或变体包 |
-| 玩家需要一个文件夹支持多个 API 分支 | 你的 Mod 仍只引用一个包 | `STS2-RitsuLib.<version>.variant-pack.zip` |
+| 玩家需要一个文件夹同时兼容多个 API 分支 | 你的 Mod 仍只引用一个包 | `STS2-RitsuLib.<version>.variant-pack.zip` |
 
 变体包会安装一个 `mods/STS2-RitsuLib/` 文件夹。根目录的 `STS2-RitsuLib.dll` 是加载器，真正按 API 区分的构建位于
 `lib/<api-version>/`。这只影响玩家安装运行时 Mod 的方式，不改变你的编译期 NuGet 引用。
@@ -102,7 +102,7 @@ RitsuLibFramework.CreateContentPack("MyMod")
     .Apply();
 ```
 
-建议从[快速入门](https://sts2-ritsulib.ritsukage.com/guide/getting-started)开始，再按正在编写的功能阅读对应专题。
+建议从 [快速入门](https://sts2-ritsulib.ritsukage.com/guide/getting-started) 开始，再按正在编写的功能阅读对应专题。
 
 ## 文档
 
@@ -116,11 +116,9 @@ RitsuLibFramework.CreateContentPack("MyMod")
 | Mod 设置 | https://sts2-ritsulib.ritsukage.com/guide/mod-settings |
 | 诊断与兼容 | https://sts2-ritsulib.ritsukage.com/guide/diagnostics-and-compatibility |
 
-RitsuLib 自带文档偏向简明功能参考。更完整的中文《杀戮尖塔 2》模组制作流程请看：
+RitsuLib 自带文档偏重简明的功能参考。更完整的中文《杀戮尖塔 2》模组制作流程请看：
 
 [SlayTheSpire2 Modding Tutorials](https://glitchedreme.github.io/SlayTheSpire2ModdingTutorials/index.html)
-
-这个教程的原始仓库：[GlitchedReme/SlayTheSpire2ModdingTutorials](https://github.com/GlitchedReme/SlayTheSpire2ModdingTutorials)
 
 ## 相关库
 
@@ -138,15 +136,15 @@ RitsuLib 风格项目的推荐可选分析器是
 （包名：`Miooowo.STS2RitsuLib.ModAnalyzers`）。它提供 RitsuLib 本地化与资源路径相关的 Roslyn 诊断，并且包内
 `buildTransitive` 会自动把常见项目文件传给 analyzer。
 
-该分析器由第三方提供、维护和支持；RitsuLib 不保证它与当前 RitsuLib 能力完全对齐，也不保证所有分析器行为都正确。
+该分析器由第三方提供、维护和支持；RitsuLib 不保证它与当前 RitsuLib 的能力完全对齐，也不保证分析器的所有行为都正确。
 
 ## 参与开发
 
-使用 [local.props.template](local.props.template) 指向《杀戮尖塔 2》安装目录或 API signature 目录。RitsuLib 是 DLL-only Mod（`has_pck: false`），正常验证路径是为声明的兼容目标分别执行 DLL 构建。
+开发环境配置、代码与公共 API 约定、验证要求和 PR 准备流程见 [贡献指南](CONTRIBUTING.zh.md)。
 
 ## 致谢
 
-感谢在开发过程中帮助 RitsuLib 的人们，以及所有使用者。完整名单见 [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md)。
+感谢开发过程中提供过帮助的人们和所有使用者，完整名单见 [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md)。
 
 ## 许可证
 

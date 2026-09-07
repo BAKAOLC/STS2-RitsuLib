@@ -1,9 +1,11 @@
 using System.Text.Json;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Patching.Models;
 
@@ -37,6 +39,8 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             ];
         }
 
+        [HarmonyBefore(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.First)]
         public static bool Prefix(SerializableReward save, Player player, ref Reward __result)
         {
             RewardSerializationExt.TryGetExtData(save, out var ext);
@@ -55,9 +59,6 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 return false;
             }
 
-            if (RewardSerializationExt.IsBaselibRewardPatchLoaded())
-                return true;
-
             if (save.RewardType != RewardType.Card || ext == null)
                 return true;
 
@@ -69,6 +70,21 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             SerializableReward save, RewardExtData ext, Player player)
         {
             var flags = (CardCreationFlags)ext.Flags;
+
+            if (ext.FixedCards != null)
+            {
+                var cards = ext.FixedCards.Select(json =>
+                    JsonSerializer.Deserialize<SerializableCard>(json, JsonSerializationUtility.Options)
+                    ?? throw new JsonException("Fixed card reward contains a null card."));
+                var rerollOptions = ext.RerollOptions != null
+                    ? RestoreRerollOptions(ext.RerollOptions, player)
+                    : new CardCreationOptions([player.Character.CardPool], save.Source, save.RarityOdds)
+                        .WithFlags(flags);
+                return CreateFixedCardReward(cards, save.Source, player, rerollOptions);
+            }
+
+            if (ext.CandidateCardIds != null)
+                return new(CreateCandidateOptions(save, ext.CandidateCardIds, flags, player), save.OptionCount, player);
 
             if (ext is { IsCustomPool: true, CustomCardIds: not null })
             {
@@ -83,6 +99,10 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 if (cards.Count > 0)
                 {
 #if STS2_AT_LEAST_0_108_0
+                    if (cards.Count > save.OptionCount)
+                        return new(CreateCandidateOptions(save, ext.CustomCardIds, flags, player),
+                            save.OptionCount, player);
+
                     var rerollOptions = new CardCreationOptions(
                         [player.Character.CardPool],
                         source,
@@ -94,7 +114,8 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
 #endif
 #if STS2_AT_LEAST_0_108_0
                     if (flags != 0) rerollOptions.WithFlags(flags);
-                    return new(cards, source, player, rerollOptions);
+                    return CreateFixedCardReward(cards.Select(card => new SerializableCard { Id = card.Id }),
+                        source, player, rerollOptions);
 #endif
                 }
 
@@ -102,8 +123,68 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                          "falling back to standard card reward.");
             }
 
+            var pools = ResolveCardPools(save.CardPoolIds, player);
+            var poolOptions = new CardCreationOptions(pools, save.Source, save.RarityOdds);
+            if (flags != 0)
+                poolOptions.WithFlags(flags);
+
+            return new(poolOptions, save.OptionCount, player);
+        }
+
+        private static CardReward CreateFixedCardReward(IEnumerable<SerializableCard> savedCards,
+            CardCreationSource source, Player player, CardCreationOptions rerollOptions)
+        {
+            var cards = savedCards.Select(CardModel.FromSerializable).ToList();
+            foreach (var card in cards)
+                player.RunState.AddCard(card, player);
+            return new(cards, source, player, rerollOptions);
+        }
+
+        private static CardCreationOptions RestoreRerollOptions(CardRewardRerollExtData data, Player player)
+        {
+            var save = new SerializableReward
+            {
+                CardPoolIds = [.. data.CardPoolIds.Select(ModelId.Deserialize)],
+                Source = (CardCreationSource)data.Source,
+                RarityOdds = (CardRarityOddsType)data.RarityOdds,
+            };
+            var flags = (CardCreationFlags)data.Flags;
+            var options = data.CandidateCardIds != null
+                ? CreateCandidateOptions(save, data.CandidateCardIds, flags, player)
+                : new CardCreationOptions(save.CardPoolIds.Count > 0 ? ResolveCardPools(save.CardPoolIds, player) : [],
+                    save.Source, save.RarityOdds).WithFlags(flags);
+#if STS2_AT_LEAST_0_109_0
+            if (data.Rng != null)
+                options.WithRngOverride(new(JsonSerializer.Deserialize<SerializableRng>(data.Rng,
+                                                JsonSerializationUtility.Options) ??
+                                            throw new JsonException("Card reward contains a null reroll RNG.")));
+#else
+            if (data.LegacyRngSeed is { } seed)
+                options.WithRngOverride(new(seed, data.LegacyRngCounter));
+#endif
+            return options;
+        }
+
+        private static CardCreationOptions CreateCandidateOptions(
+            SerializableReward save, List<string> candidateCardIds, CardCreationFlags flags, Player player)
+        {
+            var cards = candidateCardIds.Select(TryResolveCard).OfType<CardModel>().ToList();
+#if !STS2_AT_LEAST_0_108_0
+            if (save.CardPoolIds is not { Count: > 0 })
+                return new CardCreationOptions(cards, save.Source, save.RarityOdds).WithFlags(flags);
+#endif
+            var pools = save.CardPoolIds is { Count: > 0 }
+                ? ResolveCardPools(save.CardPoolIds, player)
+                : [.. cards.Select(card => card.Pool).Distinct()];
+            HashSet<ModelId> candidateIds = [.. cards.Select(card => card.Id)];
+            return new CardCreationOptions(pools, save.Source, save.RarityOdds,
+                card => candidateIds.Contains(card.Id)).WithFlags(flags);
+        }
+
+        private static List<CardPoolModel> ResolveCardPools(IEnumerable<ModelId>? poolIds, Player player)
+        {
             List<CardPoolModel> pools = [];
-            foreach (var poolId in save.CardPoolIds ?? [])
+            foreach (var poolId in poolIds ?? [])
             {
                 CardPoolModel? pool;
                 try
@@ -134,11 +215,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 pools.Add(player.Character.CardPool);
             }
 
-            var poolOptions = new CardCreationOptions(pools, save.Source, save.RarityOdds);
-            if (flags != 0)
-                poolOptions.WithFlags(flags);
-
-            return new(poolOptions, save.OptionCount, player);
+            return pools;
         }
 
         private static CardModel? TryResolveCard(string serializedId)

@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Documentation / 文档
-    url: https://github.com/BAKAOLC/sts-2-opencode
-    about: Project entrypoint (update if you have a dedicated docs site).
+    url: https://sts2-ritsulib.ritsukage.com/
+    about: RitsuLib documentation site / RitsuLib 文档站。
   - name: Discussions / 讨论区
     url: https://github.com/BAKAOLC/sts-2-opencode/discussions
     about: Ask questions or propose ideas.

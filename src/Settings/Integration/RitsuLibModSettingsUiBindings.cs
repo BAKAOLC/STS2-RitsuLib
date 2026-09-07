@@ -74,6 +74,7 @@ namespace STS2RitsuLib.Settings
         public IModSettingsValueBinding<bool> PinyinKeepSourceArchive { get; private init; } = null!;
 
         public IModSettingsValueBinding<bool> MainMenuModSettingsButtonEnabled { get; private init; } = null!;
+        public IModSettingsValueBinding<bool> MainMenuScrollingEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ModelDbDeterministicSortMode { get; private init; } = null!;
         public IModSettingsValueBinding<bool> ToastEnabled { get; private init; } = null!;
         public IModSettingsValueBinding<string> ToastAnchor { get; private init; } = null!;
@@ -509,6 +510,13 @@ namespace STS2RitsuLib.Settings
                         settings => settings.MainMenuModSettingsButtonEnabled,
                         (settings, value) => settings.MainMenuModSettingsButtonEnabled = value),
                     () => defaults.MainMenuModSettingsButtonEnabled),
+                MainMenuScrollingEnabled = ModSettingsBindings.WithDefault(
+                    ModSettingsBindings.Global<RitsuLibSettings, bool>(
+                        Const.ModId,
+                        Const.SettingsKey,
+                        settings => settings.MainMenuScrollingEnabled,
+                        (settings, value) => settings.MainMenuScrollingEnabled = value),
+                    () => defaults.MainMenuScrollingEnabled),
                 ModelDbDeterministicSortMode = ModSettingsBindings.WithDefault(
                     ModSettingsBindings.Global<RitsuLibSettings, string>(
                         Const.ModId,
