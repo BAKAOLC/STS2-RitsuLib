@@ -96,6 +96,14 @@ namespace STS2RitsuLib.Combat.Rewards
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<string>? CandidateCardIds { get; set; }
 
+        [JsonPropertyName("fixed_cards")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? FixedCards { get; set; }
+
+        [JsonPropertyName("reroll_options")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public CardRewardRerollExtData? RerollOptions { get; set; }
+
         [JsonPropertyName("is_custom_pool")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsCustomPool { get; set; }
@@ -115,6 +123,33 @@ namespace STS2RitsuLib.Combat.Rewards
         [JsonPropertyName("linked_reward_set")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public LinkedRewardSetExtData? LinkedRewardSet { get; set; }
+    }
+
+    internal sealed class CardRewardRerollExtData
+    {
+        [JsonPropertyName("card_pool_ids")] public List<string> CardPoolIds { get; set; } = [];
+
+        [JsonPropertyName("candidate_card_ids")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? CandidateCardIds { get; set; }
+
+        [JsonPropertyName("source")] public int Source { get; set; }
+
+        [JsonPropertyName("rarity_odds")] public int RarityOdds { get; set; }
+
+        [JsonPropertyName("flags")] public int Flags { get; set; }
+
+        [JsonPropertyName("rng")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Rng { get; set; }
+
+        [JsonPropertyName("legacy_rng_seed")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public uint? LegacyRngSeed { get; set; }
+
+        [JsonPropertyName("legacy_rng_counter")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int LegacyRngCounter { get; set; }
     }
 
     internal sealed class LinkedRewardSetExtData

@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Patching.Models;
 
@@ -70,6 +71,18 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
         {
             var flags = (CardCreationFlags)ext.Flags;
 
+            if (ext.FixedCards != null)
+            {
+                var cards = ext.FixedCards.Select(json =>
+                    JsonSerializer.Deserialize<SerializableCard>(json, JsonSerializationUtility.Options)
+                    ?? throw new JsonException("Fixed card reward contains a null card."));
+                var rerollOptions = ext.RerollOptions != null
+                    ? RestoreRerollOptions(ext.RerollOptions, player)
+                    : new CardCreationOptions([player.Character.CardPool], save.Source, save.RarityOdds)
+                        .WithFlags(flags);
+                return CreateFixedCardReward(cards, save.Source, player, rerollOptions);
+            }
+
             if (ext.CandidateCardIds != null)
                 return new(CreateCandidateOptions(save, ext.CandidateCardIds, flags, player), save.OptionCount, player);
 
@@ -101,7 +114,8 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
 #endif
 #if STS2_AT_LEAST_0_108_0
                     if (flags != 0) rerollOptions.WithFlags(flags);
-                    return new(cards, source, player, rerollOptions);
+                    return CreateFixedCardReward(cards.Select(card => new SerializableCard { Id = card.Id }),
+                        source, player, rerollOptions);
 #endif
                 }
 
@@ -115,6 +129,40 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 poolOptions.WithFlags(flags);
 
             return new(poolOptions, save.OptionCount, player);
+        }
+
+        private static CardReward CreateFixedCardReward(IEnumerable<SerializableCard> savedCards,
+            CardCreationSource source, Player player, CardCreationOptions rerollOptions)
+        {
+            var cards = savedCards.Select(CardModel.FromSerializable).ToList();
+            foreach (var card in cards)
+                player.RunState.AddCard(card, player);
+            return new(cards, source, player, rerollOptions);
+        }
+
+        private static CardCreationOptions RestoreRerollOptions(CardRewardRerollExtData data, Player player)
+        {
+            var save = new SerializableReward
+            {
+                CardPoolIds = [.. data.CardPoolIds.Select(ModelId.Deserialize)],
+                Source = (CardCreationSource)data.Source,
+                RarityOdds = (CardRarityOddsType)data.RarityOdds,
+            };
+            var flags = (CardCreationFlags)data.Flags;
+            var options = data.CandidateCardIds != null
+                ? CreateCandidateOptions(save, data.CandidateCardIds, flags, player)
+                : new CardCreationOptions(save.CardPoolIds.Count > 0 ? ResolveCardPools(save.CardPoolIds, player) : [],
+                    save.Source, save.RarityOdds).WithFlags(flags);
+#if STS2_AT_LEAST_0_109_0
+            if (data.Rng != null)
+                options.WithRngOverride(new(JsonSerializer.Deserialize<SerializableRng>(data.Rng,
+                                                JsonSerializationUtility.Options) ??
+                                            throw new JsonException("Card reward contains a null reroll RNG.")));
+#else
+            if (data.LegacyRngSeed is { } seed)
+                options.WithRngOverride(new(seed, data.LegacyRngCounter));
+#endif
+            return options;
         }
 
         private static CardCreationOptions CreateCandidateOptions(

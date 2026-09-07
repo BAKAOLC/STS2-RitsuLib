@@ -1,7 +1,9 @@
+using System.Text.Json;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Runs;
 using STS2RitsuLib.Patching.Models;
 
@@ -27,6 +29,13 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             AccessTools.MethodDelegate<Func<CardReward, int>>(
                 AccessTools.DeclaredPropertyGetter(typeof(CardReward), "OptionCount"));
 
+        private static readonly Func<CardReward, CardCreationOptions> GetRerollOptions =
+            AccessTools.MethodDelegate<Func<CardReward, CardCreationOptions>>(
+                AccessTools.DeclaredPropertyGetter(typeof(CardReward), "RerollOptions"));
+
+        private static readonly AccessTools.FieldRef<CardReward, bool> GetCardsWereManuallySet =
+            AccessTools.FieldRefAccess<CardReward, bool>("_cardsWereManuallySet");
+
         public static string PatchId => "card_reward_to_serializable_ext";
 
         public static string Description =>
@@ -47,22 +56,22 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             var hasFlags = options.Flags != 0;
             var hasFilter = options.CardPoolFilter != null;
             var hasNoPools = options.CardPools.Count <= 0;
+            var hasFixedCards = GetCardsWereManuallySet(__instance);
 
-            if (!hasFlags && !hasFilter && !hasNoPools)
+            if (!hasFlags && !hasFilter && !hasNoPools && !hasFixedCards)
                 return true;
 
             var result = new SerializableReward { RewardType = RewardType.Card };
             RewardExtData? ext = null;
 
-#if STS2_AT_LEAST_0_108_0
-            if (hasNoPools)
+            if (hasFixedCards)
             {
-                ext = BuildSpecificCardsExt(options, __instance.Cards);
+                ext = BuildSpecificCardsExt(options, __instance.Cards, GetRerollOptions(__instance));
                 result.Source = options.Source;
                 result.RarityOdds = options.RarityOdds;
             }
-#else
-            if (hasNoPools && options.CustomCardPool != null)
+#if !STS2_AT_LEAST_0_108_0
+            else if (hasNoPools && options.CustomCardPool != null)
             {
                 ext = BuildCustomPoolExt(options);
                 result.Source = options.Source;
@@ -98,19 +107,25 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return false;
         }
 
-#if STS2_AT_LEAST_0_108_0
         private static RewardExtData BuildSpecificCardsExt(
-            CardCreationOptions options, IEnumerable<CardModel> cards)
+            CardCreationOptions options, IEnumerable<CardModel> cards, CardCreationOptions rerollOptions)
         {
+            var cardList = cards.ToList();
             return new()
             {
                 IsCustomPool = true,
-                CustomCardIds = [.. cards.Select(c => c.Id.ToString())],
+                CustomCardIds = [.. cardList.Select(c => c.Id.ToString())],
+                FixedCards =
+                [
+                    .. cardList.Select(c =>
+                        JsonSerializer.Serialize(c.ToSerializable(), JsonSerializationUtility.Options)),
+                ],
+                RerollOptions = BuildRerollOptionsExt(rerollOptions),
                 Source = (int)options.Source,
                 RarityOdds = (int)options.RarityOdds,
             };
         }
-#else
+#if !STS2_AT_LEAST_0_108_0
         private static RewardExtData BuildCustomPoolExt(CardCreationOptions options)
         {
             return new()
@@ -122,6 +137,33 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             };
         }
 #endif
+
+        private static CardRewardRerollExtData BuildRerollOptionsExt(CardCreationOptions options)
+        {
+            var result = new CardRewardRerollExtData
+            {
+                CardPoolIds = [.. options.CardPools.Select(pool => pool.Id.ToString())],
+                Source = (int)options.Source,
+                RarityOdds = (int)options.RarityOdds,
+                Flags = (int)options.Flags,
+#if STS2_AT_LEAST_0_109_0
+                Rng = options.RngOverride == null
+                    ? null
+                    : JsonSerializer.Serialize(options.RngOverride.ToSerializable(), JsonSerializationUtility.Options),
+#else
+                LegacyRngSeed = options.RngOverride?.Seed,
+                LegacyRngCounter = options.RngOverride?.Counter ?? 0,
+#endif
+            };
+#if !STS2_AT_LEAST_0_108_0
+            if (options.CustomCardPool != null)
+                result.CandidateCardIds = [.. options.CustomCardPool.Select(card => card.Id.ToString())];
+            else
+#endif
+            if (options.CardPoolFilter != null)
+                result.CandidateCardIds = BuildFilterSnapshotExt(options).CandidateCardIds;
+            return result;
+        }
 
         private static RewardExtData BuildFilterSnapshotExt(CardCreationOptions options)
         {
