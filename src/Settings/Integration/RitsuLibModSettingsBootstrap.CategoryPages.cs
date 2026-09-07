@@ -29,7 +29,7 @@ namespace STS2RitsuLib.Settings
                     .WithSortOrder(-990)
                     .WithTitle(T("ritsulib.category.core.label", "Core settings"))
                     .WithDescription(T("ritsulib.category.core.description",
-                        "Interface theme and main menu shortcut."))
+                        "Interface theme, main menu shortcut, and menu scrolling."))
                     .AddSection("core", section => ConfigureCoreSettingsSection(section, ui)),
                 "core");
         }
@@ -92,6 +92,12 @@ namespace STS2RitsuLib.Settings
                 ui.MainMenuModSettingsButtonEnabled,
                 T("ritsulib.mainMenuModSettingsButton.enabled.description",
                     "Shows a RitsuLib settings shortcut under the patch notes button on the main menu."));
+            section.AddToggle(
+                "main_menu_scrolling_enabled",
+                T("ritsulib.mainMenuScrolling.enabled.label", "Enable main menu scrolling"),
+                ui.MainMenuScrollingEnabled,
+                T("ritsulib.mainMenuScrolling.enabled.description",
+                    "Keeps long menu lists within the screen and scrolls focused entries into view. Enabled by default. Disable to use the original menu layout and navigation. Restart the game after changing this setting."));
         }
 
 #if !STS2_AT_LEAST_0_108_0

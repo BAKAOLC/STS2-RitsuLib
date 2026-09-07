@@ -46,6 +46,7 @@ using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Settings.Patches;
 using STS2RitsuLib.Timeline.Patches;
 using STS2RitsuLib.TopBar.Patches;
+using STS2RitsuLib.Ui.MainMenu;
 using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.RichTextEffects.Patches;
 using STS2RitsuLib.Ui.Shell.Theme.Patches;
@@ -671,6 +672,12 @@ namespace STS2RitsuLib
 #endif
             patcher.RegisterPatch<SettingsScreenModSettingsButtonPatch>();
             patcher.RegisterPatch<MainMenuModSettingsButtonPatch>();
+            patcher.RegisterPatch<MainMenuScrollCreatePatch>();
+            patcher.RegisterPatch<MainMenuScrollReadyPatch>();
+            patcher.RegisterPatch<MainMenuScrollFocusConnectionsPatch>();
+            patcher.RegisterPatch<MainMenuScrollDefaultFocusPatch>();
+            patcher.RegisterPatch<MainMenuScrollButtonInputPatch>();
+            patcher.RegisterPatch<MainMenuScrollRunInfoPatch>();
             patcher.RegisterPatch<RitsuOverlayActiveScreenPatch>();
             patcher.RegisterPatch<RitsuOverlayHoverTipLayerPatch>();
             patcher.RegisterPatch<RitsuDebugCardHolderSmallScalePatch>();

@@ -475,6 +475,12 @@ namespace STS2RitsuLib.Data
             return GetSettings().MainMenuModSettingsButtonEnabled;
         }
 
+        internal static bool IsMainMenuScrollingEnabled()
+        {
+            Initialize();
+            return GetSettings().MainMenuScrollingEnabled;
+        }
+
         internal static string GetCanvasTextureFilterMode()
         {
             Initialize();

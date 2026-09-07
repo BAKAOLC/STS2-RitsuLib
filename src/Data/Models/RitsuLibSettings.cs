@@ -634,6 +634,18 @@ namespace STS2RitsuLib.Data.Models
 
         /// <summary>
         ///     <para xml:lang="en">
+        ///         Gets or sets whether newly created main menus use bounded scrolling and focus handling.
+        ///         Enabled by default. Restart the game to ensure a changed value takes effect.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置新建主菜单是否使用限定区域的滚动及焦点处理。默认启用；修改后重启游戏可确保生效。
+        ///     </para>
+        /// </summary>
+        [JsonPropertyName("main_menu_scrolling_enabled")]
+        public bool MainMenuScrollingEnabled { get; set; } = true;
+
+        /// <summary>
+        ///     <para xml:lang="en">
         ///         Gets or sets the deterministic final-content cache policy for <c>ModelDb</c>. Valid values are
         ///         <c>off</c>, <c>auto</c>, and <c>force</c>.
         ///     </para>
