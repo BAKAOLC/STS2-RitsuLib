@@ -10,19 +10,23 @@ namespace STS2RitsuLib.Content
     {
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Selects uniformly from the act already occupying the slot and all eligible candidates.
+        ///         Contributes weight 1 for eligible candidates. The act already occupying the slot always has weight 1.
+        ///         Other mods may contribute weighted candidates to the same slot.
         ///     </para>
-        ///     <para xml:lang="zh-CN">在槽位中已有的章节与全部符合条件的候选章节之间进行均匀选择。</para>
+        ///     <para xml:lang="zh-CN">
+        ///         为有效候选贡献权重 1。槽位中已有章节始终具有权重 1。其他模组可向同一槽位贡献加权候选。
+        ///     </para>
         /// </summary>
         Uniform = 0,
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Selects by weight from eligible candidates and the optional baseline. Candidates with
-        ///         non-positive weights are excluded.
+        ///         Selects by weight among eligible candidates and the existing act, whose weight is fixed at 1.
+        ///         Candidates with non-finite or non-positive weights are excluded.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         按权重从符合条件的候选章节与可选基线中选择。权重不大于零的候选章节会被排除。
+        ///         在有效候选与已有章节之间按权重选择，已有章节的权重固定为 1。
+        ///         非有限值或非正权重的候选被排除。
         ///     </para>
         /// </summary>
         Weighted = 1,

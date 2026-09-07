@@ -311,6 +311,72 @@ namespace STS2RitsuLib.Scaffolding.Content
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Queues a forced choice restricted to the supplied weighted act candidates.
+        ///         Equal weights give equal probabilities; no existing act is implicitly added.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         将仅限于指定加权章节候选的强制选择加入队列。
+        ///         相同权重对应相同概率，不会自动添加已有章节。
+        ///     </para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Arguments are validated and the array is copied immediately, so later caller mutations do not affect
+        ///         the queued rule. Apply before content freezes; no ordinary pool declaration is required.
+        ///         Registration occurs when the queued step is applied. Repeated calls create independent rules.
+        ///         Priority, callback timing, process lifetime and selection follow
+        ///         <see cref="ModContentRegistry.RegisterActEnterForcePool" />.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         立即验证参数并复制数组，调用方后续修改不会影响已排队的规则。
+        ///         必须在内容冻结前应用，无须声明普通池。应用队列步骤时才会注册，重复调用会创建独立规则。
+        ///         优先级、回调时机、进程生命周期与抽选规则见
+        ///         <see cref="ModContentRegistry.RegisterActEnterForcePool" />。
+        ///     </para>
+        /// </remarks>
+        /// <returns>
+        ///     <para xml:lang="en">This builder for further content registration.</para>
+        ///     <para xml:lang="zh-CN">当前构建器，用于继续注册内容。</para>
+        /// </returns>
+        /// <param name="slotIndex">
+        ///     <para xml:lang="en">The non-negative, zero-based act slot; 1 is the second act.</para>
+        ///     <para xml:lang="zh-CN">非负、从零开始的章节槽位；1 表示第二幕。</para>
+        /// </param>
+        /// <param name="priority">
+        ///     <para xml:lang="en">The priority compared with all force rules; earlier registration breaks ties.</para>
+        ///     <para xml:lang="zh-CN">与所有强制规则比较的优先级；同优先级时先注册者胜出。</para>
+        /// </param>
+        /// <param name="eligibility">
+        ///     <para xml:lang="en">A non-null, deterministic callback deciding whether the entire set applies at act entry.</para>
+        ///     <para xml:lang="zh-CN">在进入章节时判断整个集合是否适用的非空、确定性回调。</para>
+        /// </param>
+        /// <param name="candidates">
+        ///     <para xml:lang="en">1 to 256 distinct, non-null concrete act types and finite, strictly positive weights.</para>
+        ///     <para xml:lang="zh-CN">1 到 256 个互不重复的非空具体章节类型及有限正权重。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The callback, array, or a candidate type is null.</para>
+        ///     <para xml:lang="zh-CN">回调、数组或某个候选类型为空。</para>
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">The slot is negative or the candidate count is outside [1, 256].</para>
+        ///     <para xml:lang="zh-CN">槽位为负数或候选数量不在 [1, 256] 范围内。</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">A candidate type is invalid or duplicated, or a weight is non-finite or non-positive.</para>
+        ///     <para xml:lang="zh-CN">候选类型无效或重复，或权重不是有限正数。</para>
+        /// </exception>
+        public ModContentPackBuilder ActEnterForcePool(int slotIndex, int priority,
+            Func<ActEnterResolveContext, bool> eligibility, params (Type ActType, double Weight)[] candidates)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(slotIndex);
+            ArgumentNullException.ThrowIfNull(eligibility);
+            var snapshot = ModContentRegistry.PrepareActEnterForceCandidates(candidates);
+            return AddStep(ctx => ctx.Content.RegisterActEnterForcePool(slotIndex, priority, eligibility, snapshot));
+        }
+
+        /// <summary>
         ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterActEnterUniformPool" />.</para>
         ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterActEnterUniformPool" /> 加入队列。</para>
         /// </summary>
@@ -361,12 +427,16 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Queues <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" />.
+        ///         Retained for compatibility. The existing act always has fixed weight 1.
+        ///         Queues legacy argument and lifecycle validation; the callback is never invoked.
+        ///         Remove this call and configure only candidate weights.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         将 <see cref="ModContentRegistry.RegisterActEnterWeightedPoolBaseline" /> 加入队列。
+        ///         为兼容旧调用而保留。已有章节始终具有固定权重 1。
+        ///         将旧式参数与生命周期检查加入队列，不执行权重回调。请移除此调用，仅配置候选权重。
         ///     </para>
         /// </summary>
+        [Obsolete("The existing act has fixed weight 1. Remove this call and configure only candidate weights.")]
         public ModContentPackBuilder ActEnterWeightedPoolBaseline(int slotIndex,
             Func<ActEnterResolveContext, double> weight)
         {
