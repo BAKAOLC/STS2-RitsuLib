@@ -126,9 +126,6 @@ RitsuLib's own docs are concise feature references. For a broader Chinese walkth
 
 [SlayTheSpire2 Modding Tutorials](https://glitchedreme.github.io/SlayTheSpire2ModdingTutorials/index.html)
 
-Original repository for this
-tutorial: [GlitchedReme/SlayTheSpire2ModdingTutorials](https://github.com/GlitchedReme/SlayTheSpire2ModdingTutorials)
-
 ## Related Libraries
 
 For minion, summon, companion-card, or guardian-style mechanics, prefer
@@ -152,9 +149,8 @@ current RitsuLib capabilities or that all analyzer behavior is correct.
 
 ## Contributing
 
-Use [local.props.template](local.props.template) to point the project at a Slay the Spire 2 install or API signature
-folder. RitsuLib is a DLL-only mod (`has_pck: false`), so normal validation is a DLL build for each declared
-compatibility target.
+See the [contribution guide](CONTRIBUTING.md) for development setup, code and public API conventions, validation,
+and pull request preparation.
 
 ## Acknowledgements
 

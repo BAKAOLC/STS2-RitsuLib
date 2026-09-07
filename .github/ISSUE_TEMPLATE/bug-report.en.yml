@@ -69,7 +69,11 @@ body:
     id: logs
     attributes:
       label: Logs / stack trace
-      description: Paste relevant logs. If available, include `%AppData%\SlayTheSpire2\logs\godot.log`.
+      description: |-
+        Paste relevant logs. Runtime logs live at logs/godot.log under the game's user data directory:
+        Windows: %AppData%\SlayTheSpire2\logs\godot.log
+        macOS: ~/Library/Application Support/SlayTheSpire2/logs/godot.log
+        Linux: ~/.local/share/SlayTheSpire2/logs/godot.log
       render: shell
     validations:
       required: false

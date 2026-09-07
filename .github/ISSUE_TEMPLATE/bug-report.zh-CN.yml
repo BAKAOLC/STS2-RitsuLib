@@ -9,7 +9,7 @@ body:
       value: |
         感谢反馈问题。
 
-        请尽量提供日志与最小复现步骤；若与 STS2 API 变更相关，请附带游戏版本/构建号。
+        请尽量提供日志与最小复现步骤；如果与 STS2 API 变更有关，请附上游戏版本/构建号。
   - type: dropdown
     id: area
     attributes:
@@ -52,7 +52,7 @@ body:
     id: repro
     attributes:
       label: 复现步骤
-      description: 以“最小复现”为目标。
+      description: 给出能复现问题的最简步骤。
       placeholder: |
         1. ...
         2. ...
@@ -69,7 +69,11 @@ body:
     id: logs
     attributes:
       label: 日志 / 堆栈
-      description: 粘贴相关日志。若可用，请附 `%AppData%\SlayTheSpire2\logs\godot.log` 片段。
+      description: |-
+        粘贴相关日志。运行时日志位于游戏用户数据目录下的 logs/godot.log：
+        Windows：%AppData%\SlayTheSpire2\logs\godot.log
+        macOS：~/Library/Application Support/SlayTheSpire2/logs/godot.log
+        Linux：~/.local/share/SlayTheSpire2/logs/godot.log
       render: shell
     validations:
       required: false

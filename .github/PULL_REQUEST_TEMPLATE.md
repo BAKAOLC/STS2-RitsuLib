@@ -8,8 +8,8 @@
 - 
 
 ## Test plan / 测试计划
-- [ ] Build passes
-- [ ] Basic runtime smoke test (if applicable)
+- [ ] Build passes / 构建通过
+- [ ] Basic runtime smoke test (if applicable) / 基本运行时冒烟测试（如适用）
 
 ## Notes / 备注
 - 
