@@ -1,6 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using Godot;
-using MegaCrit.Sts2.Core.HoverTips;
+﻿using Godot;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
@@ -15,12 +14,12 @@ using STS2RitsuLib.Patching.Models;
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     /// <summary>
-    ///     <para xml:lang="en">Keeps character artwork context on isolated hover-tip card previews without changing card ownership.</para>
-    ///     <para xml:lang="zh-CN">为独立的悬浮提示卡牌预览保留角色美术上下文，不改变卡牌归属。</para>
+    ///     <para xml:lang="en">Scopes character artwork to card rendering without replacing hover tips or card models.</para>
+    ///     <para xml:lang="zh-CN">将角色美术上下文限定于卡牌绘制，不替换悬浮提示或卡牌模型。</para>
     /// </summary>
     internal sealed class HoverTipCardVisualContextPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<CardModel, CharacterModel> PreviewCharacters = new();
+        [ThreadStatic] private static (CardModel? Card, CharacterModel? Character) _current;
 
         public static string PatchId => "hover_tip_card_visual_context";
         public static string Description => "Preserve character artwork for ownerless hover-tip card previews";
@@ -28,29 +27,56 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(NHoverTipCardContainer), nameof(NHoverTipCardContainer.Add), [typeof(CardHoverTip)])];
+            return
+            [
+                new(typeof(NCard), "Reload"),
+#if STS2_AT_LEAST_0_108_0
+                new(typeof(NCard), "UpdatePortrait"),
+#endif
+                new(typeof(NCard), "ReloadOverlay"),
+            ];
         }
 
-        public static void Prefix(NHoverTipCardContainer __instance, ref CardHoverTip cardTip)
+        [HarmonyPriority(Priority.First)]
+        public static void Prefix(NCard __instance, out (CardModel? Card, CharacterModel? Character)? __state)
         {
-            // Preview cards can be ownerless despite the game's non-nullable Owner annotation.
-            // ReSharper disable once RedundantAlwaysMatchSubpattern
-            if (cardTip.Card is { IsMutable: true, Owner: not null } ||
-                __instance.GetParent() is not NHoverTipSet tipSet ||
-                ResolveSourceCharacter(tipSet._owner) is not { } character)
+            __state = _current;
+            _current = default;
+
+            var card = __instance.Model;
+            if (card is not { IsMutable: true })
                 return;
 
-            var preview = (CardModel)cardTip.Card.MutableClone();
-            PreviewCharacters.Add(preview, character);
-            cardTip = new(preview);
+            if (card.Owner != null)
+                return;
+
+            for (var node = __instance.GetParent(); node != null; node = node.GetParent())
+            {
+                if (node is not NHoverTipSet tipSet)
+                    continue;
+
+                _current = (card, ResolveSourceCharacter(tipSet._owner));
+                return;
+            }
+        }
+
+        [HarmonyPriority(Priority.Last)]
+        public static void Finalizer((CardModel? Card, CharacterModel? Character)? __state)
+        {
+            if (__state is { } previous)
+                _current = previous;
         }
 
         internal static CharacterModel? ResolveCardCharacter(CardModel card)
         {
-            if (card is { IsMutable: true, Owner: { } owner })
+            if (!card.IsMutable)
+                return null;
+
+            var owner = card.Owner;
+            if (owner != null)
                 return owner.Character;
 
-            return PreviewCharacters.TryGetValue(card, out var character) ? character : null;
+            return ReferenceEquals(_current.Card, card) ? _current.Character : null;
         }
 
         private static CharacterModel? ResolveSourceCharacter(Node? source)
@@ -80,13 +106,16 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static CharacterModel? ResolveModelCharacter(AbstractModel? model)
         {
+            if (model is not { IsMutable: true })
+                return null;
+
             return model switch
             {
                 CardModel card => ResolveCardCharacter(card),
-                EventModel { IsMutable: true } eventModel => eventModel.Owner?.Character,
-                RelicModel { IsMutable: true } relic => relic.Owner?.Character,
-                PotionModel { IsMutable: true } potion => potion.Owner?.Character,
-                PowerModel { IsMutable: true } power => power.Owner?.Player?.Character,
+                EventModel eventModel => eventModel.Owner?.Character,
+                RelicModel relic => relic.Owner?.Character,
+                PotionModel potion => potion.Owner?.Character,
+                PowerModel power => power.Owner?.Player?.Character,
                 _ => null,
             };
         }
