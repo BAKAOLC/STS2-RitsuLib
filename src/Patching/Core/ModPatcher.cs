@@ -13,6 +13,14 @@ namespace STS2RitsuLib.Patching.Core
     ///     <para xml:lang="zh-CN">
     ///         持有一个 Harmony 实例，并管理静态和动态补丁的注册、应用与移除。
     ///     </para>
+    ///     <para xml:lang="en">
+    ///         Static patches merge class and method Harmony annotations using Harmony's native rules while keeping
+    ///         their registered targets. Dynamic patches use the supplied HarmonyMethod instances directly.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         静态补丁按 Harmony 原生规则合并类级和方法级标注，并保留注册的目标。
+    ///         动态补丁直接使用传入的 HarmonyMethod 实例。
+    ///     </para>
     /// </summary>
     /// <param name="patcherId">
     ///     <para xml:lang="en">Harmony ID, which must be unique for each logical patcher.</para>
@@ -534,12 +542,13 @@ namespace STS2RitsuLib.Patching.Core
                     );
                 }
 
+                var classAttributes = HarmonyMethodExtensions.GetMergedFromType(modPatchInfo.PatchType);
                 _harmony.Patch(
                     originalMethod,
-                    prefix != null ? new HarmonyMethod(prefix) : null,
-                    postfix != null ? new HarmonyMethod(postfix) : null,
-                    transpiler != null ? new HarmonyMethod(transpiler) : null,
-                    finalizer != null ? new HarmonyMethod(finalizer) : null
+                    CreateHarmonyMethod(prefix, classAttributes),
+                    CreateHarmonyMethod(postfix, classAttributes),
+                    CreateHarmonyMethod(transpiler, classAttributes),
+                    CreateHarmonyMethod(finalizer, classAttributes)
                 );
 
                 _patchedStatus[modPatchInfo.Id] = true;
@@ -670,6 +679,16 @@ namespace STS2RitsuLib.Patching.Core
                 methodName,
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic
             );
+        }
+
+        private static HarmonyMethod? CreateHarmonyMethod(MethodInfo? patchMethod, HarmonyMethod classAttributes)
+        {
+            if (patchMethod == null)
+                return null;
+
+            var harmonyMethod = classAttributes.Merge(new(patchMethod));
+            harmonyMethod.method = patchMethod;
+            return harmonyMethod;
         }
 
         private static IEnumerable<Patch> EnumeratePatches(Patches patchInfo, HarmonyPatchType patchType)
