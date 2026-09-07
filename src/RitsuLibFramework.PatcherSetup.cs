@@ -492,8 +492,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardRewardToSerializablePatch>();
             patcher.RegisterPatch<LinkedRewardSetToSerializablePatch>();
             patcher.RegisterPatch<CombatRoomToSerializableRewardExtPatch>();
-            if (!RitsuLibMobileSteamRuntime.SuppressNativeSteamIntegration)
-                patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
+            patcher.RegisterPatch<CombatRoomFromSerializableRewardExtPatch>();
+            patcher.RegisterPatch<BaseLibCombatRoomRewardRestorePatch>();
             patcher.RegisterPatch<RewardFromSerializableExtPatch>();
             patcher.RegisterPatch<LinkedRewardSetOnSelectPatch>();
             patcher.RegisterPatch<LinkedRewardSetSelectLocalRewardPatch>();

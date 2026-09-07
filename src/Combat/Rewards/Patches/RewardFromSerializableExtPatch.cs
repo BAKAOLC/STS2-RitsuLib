@@ -1,4 +1,5 @@
 using System.Text.Json;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Models;
@@ -37,6 +38,8 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             ];
         }
 
+        [HarmonyBefore(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.First)]
         public static bool Prefix(SerializableReward save, Player player, ref Reward __result)
         {
             RewardSerializationExt.TryGetExtData(save, out var ext);
@@ -55,9 +58,6 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 return false;
             }
 
-            if (RewardSerializationExt.IsBaselibRewardPatchLoaded())
-                return true;
-
             if (save.RewardType != RewardType.Card || ext == null)
                 return true;
 
@@ -69,6 +69,9 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             SerializableReward save, RewardExtData ext, Player player)
         {
             var flags = (CardCreationFlags)ext.Flags;
+
+            if (ext.CandidateCardIds != null)
+                return new(CreateCandidateOptions(save, ext.CandidateCardIds, flags, player), save.OptionCount, player);
 
             if (ext is { IsCustomPool: true, CustomCardIds: not null })
             {
@@ -83,6 +86,10 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 if (cards.Count > 0)
                 {
 #if STS2_AT_LEAST_0_108_0
+                    if (cards.Count > save.OptionCount)
+                        return new(CreateCandidateOptions(save, ext.CustomCardIds, flags, player),
+                            save.OptionCount, player);
+
                     var rerollOptions = new CardCreationOptions(
                         [player.Character.CardPool],
                         source,
@@ -102,8 +109,34 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                          "falling back to standard card reward.");
             }
 
+            var pools = ResolveCardPools(save.CardPoolIds, player);
+            var poolOptions = new CardCreationOptions(pools, save.Source, save.RarityOdds);
+            if (flags != 0)
+                poolOptions.WithFlags(flags);
+
+            return new(poolOptions, save.OptionCount, player);
+        }
+
+        private static CardCreationOptions CreateCandidateOptions(
+            SerializableReward save, List<string> candidateCardIds, CardCreationFlags flags, Player player)
+        {
+            var cards = candidateCardIds.Select(TryResolveCard).OfType<CardModel>().ToList();
+#if !STS2_AT_LEAST_0_108_0
+            if (save.CardPoolIds is not { Count: > 0 })
+                return new CardCreationOptions(cards, save.Source, save.RarityOdds).WithFlags(flags);
+#endif
+            var pools = save.CardPoolIds is { Count: > 0 }
+                ? ResolveCardPools(save.CardPoolIds, player)
+                : [.. cards.Select(card => card.Pool).Distinct()];
+            HashSet<ModelId> candidateIds = [.. cards.Select(card => card.Id)];
+            return new CardCreationOptions(pools, save.Source, save.RarityOdds,
+                card => candidateIds.Contains(card.Id)).WithFlags(flags);
+        }
+
+        private static List<CardPoolModel> ResolveCardPools(IEnumerable<ModelId>? poolIds, Player player)
+        {
             List<CardPoolModel> pools = [];
-            foreach (var poolId in save.CardPoolIds ?? [])
+            foreach (var poolId in poolIds ?? [])
             {
                 CardPoolModel? pool;
                 try
@@ -134,11 +167,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                 pools.Add(player.Character.CardPool);
             }
 
-            var poolOptions = new CardCreationOptions(pools, save.Source, save.RarityOdds);
-            if (flags != 0)
-                poolOptions.WithFlags(flags);
-
-            return new(poolOptions, save.OptionCount, player);
+            return pools;
         }
 
         private static CardModel? TryResolveCard(string serializedId)

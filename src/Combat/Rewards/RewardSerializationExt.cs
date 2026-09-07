@@ -80,18 +80,10 @@ namespace STS2RitsuLib.Combat.Rewards
                 return null;
             }
         }
-
-        internal static bool IsBaselibRewardPatchLoaded()
-        {
-            return Type.GetType(
-                "BaseLib.Patches.Fixes.CardRewardToSerializablePatch, BaseLib") != null;
-        }
     }
 
     internal sealed class RewardExtData
     {
-        internal bool HasRitsuLibData => CustomRewardJson != null || LinkedRewardSet != null;
-
         [JsonPropertyName("flags")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public int Flags { get; set; }
@@ -99,6 +91,10 @@ namespace STS2RitsuLib.Combat.Rewards
         [JsonPropertyName("custom_card_ids")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<string>? CustomCardIds { get; set; }
+
+        [JsonPropertyName("candidate_card_ids")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? CandidateCardIds { get; set; }
 
         [JsonPropertyName("is_custom_pool")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

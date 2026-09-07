@@ -1,3 +1,4 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Rooms;
@@ -30,20 +31,15 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return [new(typeof(CombatRoom), nameof(CombatRoom.ToSerializable), Type.EmptyTypes)];
         }
 
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
         public static void Postfix(ref SerializableRoom __result)
         {
-            var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
-
             foreach (var (netId, rewards) in __result.ExtraRewards)
                 for (var i = 0; i < rewards.Count; i++)
                 {
                     if (!RewardSerializationExt.TryGetExtData(rewards[i], out var ext) || ext == null)
                         continue;
-                    // BaseLib owns CardReward sideband serialization when present. RitsuLib still persists
-                    // its own reward payloads because BaseLib does not know their format.
-                    if (baselibRewardPatchLoaded && !ext.HasRitsuLibData)
-                        continue;
-
                     var key = RewardSerializationExt.MakeKey(netId, i);
                     __result.EncounterState ??= [];
                     __result.EncounterState[key] = RewardSerializationExt.ToJson(ext);
@@ -81,8 +77,6 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
         {
             if (serializableRoom.EncounterState != null)
             {
-                var baselibRewardPatchLoaded = RewardSerializationExt.IsBaselibRewardPatchLoaded();
-
                 foreach (var (key, json) in serializableRoom.EncounterState)
                 {
                     if (!RewardSerializationExt.TryParseKey(key, out var netId, out var index))
@@ -97,10 +91,6 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                     var ext = RewardSerializationExt.FromJson(json);
                     if (ext == null)
                         continue;
-                    // Match the ToSerializable side: keep custom reward payloads, leave CardReward data to BaseLib.
-                    if (baselibRewardPatchLoaded && !ext.HasRitsuLibData)
-                        continue;
-
                     RewardSerializationExt.SetExtData(rewards[index], ext);
                 }
             }

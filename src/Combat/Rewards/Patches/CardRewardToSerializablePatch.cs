@@ -39,12 +39,10 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return [new(typeof(CardReward), nameof(CardReward.ToSerializable), Type.EmptyTypes)];
         }
 
+        [HarmonyBefore(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.First)]
         public static bool Prefix(CardReward __instance, ref SerializableReward __result)
         {
-            // BaseLib has its own CardReward serializer; avoid competing with it.
-            if (RewardSerializationExt.IsBaselibRewardPatchLoaded())
-                return true;
-
             var options = GetOptions(__instance);
             var hasFlags = options.Flags != 0;
             var hasFilter = options.CardPoolFilter != null;
@@ -73,9 +71,10 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
 #endif
             else if (hasFilter && options.CardPools.Count > 0)
             {
-                ext = BuildFilterSnapshotExt(options, __instance);
+                ext = BuildFilterSnapshotExt(options);
                 result.Source = options.Source;
                 result.RarityOdds = options.RarityOdds;
+                result.CardPoolIds = [.. options.CardPools.Select(p => p.Id)];
             }
             else
             {
@@ -117,15 +116,14 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return new()
             {
                 IsCustomPool = true,
-                CustomCardIds = options.CustomCardPool!.Select(c => c.Id.ToString()).ToList(),
+                CandidateCardIds = options.CustomCardPool!.Select(c => c.Id.ToString()).ToList(),
                 Source = (int)options.Source,
                 RarityOdds = (int)options.RarityOdds,
             };
         }
 #endif
 
-        private static RewardExtData BuildFilterSnapshotExt(
-            CardCreationOptions options, CardReward reward)
+        private static RewardExtData BuildFilterSnapshotExt(CardCreationOptions options)
         {
             var allCards = options.CardPools
                 .SelectMany(p => p.AllCards)
@@ -135,7 +133,7 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
             return new()
             {
                 IsCustomPool = true,
-                CustomCardIds = [.. allCards.Select(c => c.Id.ToString())],
+                CandidateCardIds = [.. allCards.Select(c => c.Id.ToString())],
                 Source = (int)options.Source,
                 RarityOdds = (int)options.RarityOdds,
             };
