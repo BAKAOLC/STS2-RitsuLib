@@ -86,7 +86,8 @@ namespace STS2RitsuLib.Ui.MainMenu
             if (!Initialized)
                 return;
             var showReticles = IsActive && IsNavigable(_reticleButton) &&
-                               _reticleButton!.GetParent() == this && IsRowFullyVisible(_reticleButton);
+                               _reticleButton!.GetParent() == this &&
+                               (_reticleButton.HasFocus() || IsRowFullyVisible(_reticleButton));
             if (_reticleLeft != null && _reticleRight != null &&
                 IsInstanceValid(_reticleLeft) && IsInstanceValid(_reticleRight))
             {
@@ -138,6 +139,31 @@ namespace STS2RitsuLib.Ui.MainMenu
         {
             _reticleTween?.Kill();
             _runInfoTween?.Kill();
+        }
+
+        private void ApplyEdgeScale(Control item, float top, float height)
+        {
+            var fadeTop = _visualScroll > 0.5f;
+            var fadeBottom = _visualScroll < ScrollLimit - 0.5f;
+            var amount = 1f;
+            var pivotY = height * 0.5f;
+            if (fadeTop && top < EdgeZone)
+            {
+                amount = Mathf.Min(amount, Mathf.SmoothStep(0f, EdgeZone, top + height * 0.5f));
+                pivotY = height;
+            }
+
+            if (fadeBottom && top + height > Size.Y - EdgeZone)
+            {
+                amount = Mathf.Min(amount, Mathf.SmoothStep(0f, EdgeZone, Size.Y - (top + height * 0.5f)));
+                pivotY = 0f;
+            }
+
+            item.PivotOffset = new(item.Size.X * 0.5f, pivotY);
+            item.Scale = Vector2.One * Mathf.Lerp(EdgeMinScale, 1f, amount);
+            var color = item.Modulate;
+            color.A = Mathf.Lerp(EdgeMinAlpha, 1f, amount);
+            item.Modulate = color;
         }
     }
 }

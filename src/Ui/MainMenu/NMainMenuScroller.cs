@@ -1,5 +1,4 @@
 ﻿using Godot;
-using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using STS2RitsuLib.Data;
 
@@ -10,14 +9,16 @@ namespace STS2RitsuLib.Ui.MainMenu
         private const float EdgePadding = 16f;
         private const float ContentPadding = 6f;
         private const float HorizontalPadding = 96f;
-        private const float ScrollBarScale = 0.5f;
-        private const float ScrollBarInset = 24f;
+        private const float EdgeZone = 56f;
+        private const float EdgeMinScale = 0.72f;
+        private const float EdgeMinAlpha = 0.28f;
+        private const float SceneBoxTop = 69f;
+        private const float SceneBoxHeight = 450f;
         private readonly List<Control> _items = [];
         private readonly List<NMainMenuTextButton> _buttons = [];
         private readonly Dictionary<Control, Vector2> _measurements = [];
         private readonly Dictionary<Control, float> _rowTops = [];
         private NMainMenu _mainMenu = null!;
-        private NScrollbar _scrollBar = null!;
         private Rect2 _designOffsets;
         private Vector2 _designAnchor;
         private float _separation;
@@ -60,8 +61,8 @@ namespace STS2RitsuLib.Ui.MainMenu
                 Name = box.Name,
                 _mainMenu = menu,
                 _designAnchor = new(box.AnchorLeft, box.AnchorTop),
-                _designOffsets = new(box.OffsetLeft, box.OffsetTop,
-                    box.OffsetRight - box.OffsetLeft, box.OffsetBottom - box.OffsetTop),
+                _designOffsets = new(box.OffsetLeft, SceneBoxTop,
+                    box.OffsetRight - box.OffsetLeft, SceneBoxHeight),
                 _separation = box.GetThemeConstant("separation"),
                 Theme = box.Theme,
                 Visible = box.Visible,
@@ -117,14 +118,6 @@ namespace STS2RitsuLib.Ui.MainMenu
         {
             if (Initialized)
                 return;
-            _scrollBar = ResourceLoader.Load<PackedScene>("res://scenes/ui/scrollbar.tscn").Instantiate<NScrollbar>();
-            _scrollBar.Name = "ScrollBar";
-            _scrollBar.FocusMode = FocusModeEnum.None;
-            _scrollBar.MouseFilter = MouseFilterEnum.Stop;
-            _scrollBar.PivotOffset = Vector2.Zero;
-            _scrollBar.Scale = Vector2.One * ScrollBarScale;
-            AddChild(_scrollBar, false, InternalMode.Back);
-            _scrollBar.ValueChanged += OnScrollBarChanged;
             ChildOrderChanged += RequestLayout;
             _mainMenu.Resized += RequestLayout;
             VisibilityChanged += OnVisibilityChanged;
@@ -155,9 +148,11 @@ namespace STS2RitsuLib.Ui.MainMenu
                 UntrackItem(item);
             _items.Clear();
             _buttons.Clear();
+            _visualScrollTween?.Kill();
+            _visualScrollTween = null;
+            _visualScroll = 0f;
+            _heightStepIndex = 0;
             DisposeDecorations();
-            _scrollBar.ValueChanged -= OnScrollBarChanged;
-            _scrollBar.QueueFree();
             Initialized = false;
             _initializeOnEnter = true;
             _layoutDirty = true;
@@ -222,15 +217,10 @@ namespace STS2RitsuLib.Ui.MainMenu
                 Size = new(width, Mathf.Max(1f, bottom - top));
                 _columnCenter = Mathf.Clamp(centerX - left, 0f, width);
                 _scroll = Mathf.Clamp(_scroll, 0f, ScrollLimit);
-                _scrollBar.Position = new(Size.X - ScrollBarInset - 12f, ContentPadding + ScrollBarInset);
-                _scrollBar.Size = new(48f,
-                    Mathf.Max(1f, Size.Y - (ContentPadding + ScrollBarInset) * 2f) / ScrollBarScale);
-                _scrollBar.MaxValue = Mathf.Max(1f, ScrollLimit);
-                _scrollBar.Visible = ScrollLimit > 0f;
-                _scrollBar.SetValueNoSignal(_scroll);
+                SyncHeightSteps(instant: true);
                 PositionItems();
                 RebuildNavigation();
-                if (IsDirectional && GetViewport().GuiGetFocusOwner() is { } focused && _rowTops.ContainsKey(focused))
+                if (FollowsFocus && GetViewport().GuiGetFocusOwner() is { } focused && _rowTops.ContainsKey(focused))
                     EnsureVisible(focused);
                 _layoutDirty = false;
             }
@@ -269,6 +259,7 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private void UntrackItem(Control item)
         {
+            ForgetHeightStep(item);
             if (!IsInstanceValid(item))
                 return;
             item.MinimumSizeChanged -= RequestLayout;
@@ -286,49 +277,67 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private void PositionItems()
         {
-            var start = Mathf.Max(ContentPadding, (Size.Y - _contentHeight) / 2f) - _scroll;
-            foreach (var (item, minimum) in _measurements)
+            var start = (ScrollLimit <= 0.5f
+                ? Mathf.Max(ContentPadding, (Size.Y - _contentHeight) / 2f)
+                : ContentPadding) - _visualScroll;
+            foreach (var item in MeasuredItems())
             {
+                var minimum = _measurements[item];
                 var width = item.SizeFlagsHorizontal.HasFlag(SizeFlags.Expand) ||
                             item.SizeFlagsHorizontal.HasFlag(SizeFlags.Fill)
                     ? Mathf.Max(minimum.X, _designOffsets.Size.X)
                     : minimum.X;
                 item.Size = new(width, minimum.Y);
                 item.Position = new(_columnCenter - width / 2f, start + _rowTops[item]);
+                ApplyEdgeScale(item, start + _rowTops[item], minimum.Y);
             }
 
             UpdateDecorations();
         }
 
-        private void OnScrollBarChanged(double value)
-        {
-            if (IsActive)
-            {
-                CancelPress();
-                SetScroll((float)value);
-            }
-        }
-
         private void SetScroll(float value)
         {
             _scroll = Mathf.Clamp(value, 0f, ScrollLimit);
-            _scrollBar.SetValueNoSignal(_scroll);
+            SyncHeightSteps(instant: false);
             PositionItems();
         }
 
         private void EnsureVisible(Control item)
         {
-            if (!_rowTops.TryGetValue(item, out var top))
+            if (!_measurements.ContainsKey(item))
                 return;
-            var height = _measurements[item].Y;
-            var margin = Mathf.Min(ContentPadding, Mathf.Max(0f, (Size.Y - height) / 2f));
-            var start = Mathf.Max(ContentPadding, (Size.Y - _contentHeight) / 2f);
-            var offset = _scroll;
-            if (start + top - offset < margin)
-                offset = start + top - margin;
-            else if (start + top + height - offset > Size.Y - margin)
-                offset = start + top + height - Size.Y + margin;
-            SetScroll(offset);
+            var ordered = MeasuredItems().ToList();
+            var index = ordered.IndexOf(item);
+            var step = _heightStepIndex;
+            if (index >= 0 && index < _heightStepIndex)
+                step = index;
+            else if (index >= _heightStepIndex)
+            {
+                step = index;
+                for (var candidate = _heightStepIndex; candidate <= index; candidate++)
+                {
+                    var top = ContentPadding;
+                    var fits = false;
+                    for (var i = candidate; i < ordered.Count; i++)
+                    {
+                        var height = _measurements[ordered[i]].Y;
+                        if (i == index)
+                        {
+                            fits = top + height <= Size.Y - ContentPadding + 0.5f;
+                            break;
+                        }
+
+                        top += height + _separation;
+                    }
+
+                    if (!fits)
+                        continue;
+                    step = candidate;
+                    break;
+                }
+            }
+
+            SetScroll(ScrollPixelsForStep(step));
         }
     }
 }
