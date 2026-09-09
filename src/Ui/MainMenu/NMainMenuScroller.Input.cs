@@ -262,7 +262,7 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         public override void _GuiInput(InputEvent inputEvent)
         {
-            if (!IsActive || ScrollLimit <= 0f)
+            if (!IsActive || !ScrollEngaged)
                 return;
             if (inputEvent is InputEventMouseButton
                 {
@@ -310,7 +310,7 @@ namespace STS2RitsuLib.Ui.MainMenu
                 }
                 or InputEventPanGesture)
             {
-                if (!IsActive || ScrollLimit <= 0f)
+                if (!IsActive || !ScrollEngaged)
                     return false;
                 CancelPress();
                 SetScroll(_scroll - ScrollHelper.GetDragForScrollEvent(inputEvent));
@@ -341,7 +341,7 @@ namespace STS2RitsuLib.Ui.MainMenu
             if (valid && isSelect && FollowsFocus)
                 EnsureVisible(button);
             valid &= isMouseClick
-                ? GetGlobalRect().HasPoint(GetGlobalMousePosition()) &&
+                ? (!ScrollEngaged || GetGlobalRect().HasPoint(GetGlobalMousePosition())) &&
                   button.GetGlobalRect().HasPoint(GetGlobalMousePosition())
                 : FollowsFocus && IsNavigable(button) && button.HasFocus() && IsRowFullyVisible(button);
             if (!valid)
@@ -390,30 +390,23 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private bool IsRowFullyVisible(Control control)
         {
-            return control.Position.Y >= 0f && control.Position.Y + control.Size.Y <= Size.Y + 0.5f;
-        }
-
-        private IEnumerable<Control> MeasuredItems()
-        {
-            return _items.Where(_measurements.ContainsKey);
+            return !ScrollEngaged ||
+                   (control.Position.Y >= 0f && control.Position.Y + control.Size.Y <= Size.Y + 0.5f);
         }
 
         private void SyncHeightSteps(bool instant)
         {
             var next = 0;
-            var max = 0;
-            foreach (var item in MeasuredItems())
+            foreach (var item in _measured)
             {
-                var bottom = _rowTops[item] + _measurements[item].Y;
-                if (_scroll + 0.001f >= bottom)
-                    next++;
-                if (ScrollLimit + 0.001f >= bottom)
-                    max++;
-                else
+                if (_scroll + 0.001f < _rowTops[item] + _measurements[item].Y * 0.5f)
                     break;
+                next++;
             }
 
-            var target = next >= max ? ScrollLimit : ScrollPixelsForStep(next);
+            var target = _scroll + 0.001f >= _scrollLimit
+                ? _scrollLimit
+                : Mathf.Min(ScrollPixelsForStep(next), _scrollLimit);
             if (instant)
             {
                 _visualScrollTween?.Kill();
@@ -439,20 +432,10 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private float ScrollPixelsForStep(int step)
         {
-            var ordered = MeasuredItems().ToList();
-            if (step <= 0 || ordered.Count == 0)
+            if (step <= 0 || _measured.Count == 0)
                 return 0f;
-            var last = ordered[Math.Min(step, ordered.Count) - 1];
+            var last = _measured[Math.Min(step, _measured.Count) - 1];
             return _rowTops[last] + _measurements[last].Y;
-        }
-
-        private void ForgetHeightStep(Control item)
-        {
-            item.Scale = Vector2.One;
-            item.PivotOffset = Vector2.Zero;
-            var color = item.Modulate;
-            color.A = 1f;
-            item.Modulate = color;
         }
     }
 }

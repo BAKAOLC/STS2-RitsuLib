@@ -9,20 +9,23 @@ namespace STS2RitsuLib.Ui.MainMenu
         private const float EdgePadding = 16f;
         private const float ContentPadding = 6f;
         private const float HorizontalPadding = 96f;
-        private const float EdgeZone = 56f;
-        private const float EdgeMinScale = 0.72f;
-        private const float EdgeMinAlpha = 0.28f;
+        private const float EdgeZone = 80f;
+        private const float EdgeMinScale = 0.78f;
+        private const float EdgeMinAlpha = 0.4f;
         private const float SceneBoxTop = 69f;
         private const float SceneBoxHeight = 450f;
+        private const float ScrollOverflowTolerance = 40f;
         private readonly List<Control> _items = [];
         private readonly List<NMainMenuTextButton> _buttons = [];
         private readonly Dictionary<Control, Vector2> _measurements = [];
         private readonly Dictionary<Control, float> _rowTops = [];
+        private readonly List<Control> _measured = [];
         private NMainMenu _mainMenu = null!;
         private Rect2 _designOffsets;
         private Vector2 _designAnchor;
         private float _separation;
         private float _scroll;
+        private float _scrollLimit;
         private float _contentHeight;
         private float _columnCenter;
         internal bool Initialized { get; private set; }
@@ -31,7 +34,9 @@ namespace STS2RitsuLib.Ui.MainMenu
         private bool _initializeOnEnter;
 
 
-        private float ScrollLimit => Mathf.Max(0f, _contentHeight + ContentPadding * 2f - Size.Y);
+        private float ScrollLimit => _scrollLimit;
+
+        private bool ScrollEngaged => _scrollLimit > 0f;
 
         internal static NMainMenuScroller? Find(NMainMenu menu)
         {
@@ -148,6 +153,10 @@ namespace STS2RitsuLib.Ui.MainMenu
                 UntrackItem(item);
             _items.Clear();
             _buttons.Clear();
+            _measured.Clear();
+            _measurements.Clear();
+            _rowTops.Clear();
+            _scrollLimit = 0f;
             _visualScrollTween?.Kill();
             _visualScrollTween = null;
             _visualScroll = 0f;
@@ -184,6 +193,7 @@ namespace STS2RitsuLib.Ui.MainMenu
                 SynchronizeItems();
                 _measurements.Clear();
                 _rowTops.Clear();
+                _measured.Clear();
                 _contentHeight = 0f;
                 var columnWidth = _designOffsets.Size.X;
                 foreach (var item in _items.Where(static item => item.Visible))
@@ -199,6 +209,7 @@ namespace STS2RitsuLib.Ui.MainMenu
                         _contentHeight += _separation;
                     _rowTops[item] = _contentHeight;
                     _measurements[item] = minimum;
+                    _measured.Add(item);
                     _contentHeight += minimum.Y;
                     columnWidth = Mathf.Max(columnWidth, minimum.X);
                 }
@@ -215,6 +226,9 @@ namespace STS2RitsuLib.Ui.MainMenu
                     Mathf.Max(EdgePadding, menuSize.X - EdgePadding - width));
                 Position = new(left, top);
                 Size = new(width, Mathf.Max(1f, bottom - top));
+                var overflow = _contentHeight + ContentPadding * 2f - Size.Y;
+                _scrollLimit = overflow > ScrollOverflowTolerance ? overflow : 0f;
+                ClipContents = ScrollEngaged;
                 _columnCenter = Mathf.Clamp(centerX - left, 0f, width);
                 _scroll = Mathf.Clamp(_scroll, 0f, ScrollLimit);
                 SyncHeightSteps(instant: true);
@@ -259,9 +273,9 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private void UntrackItem(Control item)
         {
-            ForgetHeightStep(item);
             if (!IsInstanceValid(item))
                 return;
+            ResetEdgeScale(item);
             item.MinimumSizeChanged -= RequestLayout;
             item.VisibilityChanged -= RequestLayout;
             if (item is not NMainMenuTextButton button)
@@ -277,11 +291,15 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private void PositionItems()
         {
-            var start = (ScrollLimit <= 0.5f
-                ? Mathf.Max(ContentPadding, (Size.Y - _contentHeight) / 2f)
-                : ContentPadding) - _visualScroll;
-            foreach (var item in MeasuredItems())
+            var start = (ScrollEngaged
+                ? ContentPadding
+                : (Size.Y - _contentHeight) / 2f) - _visualScroll;
+            var topWeight = Mathf.SmoothStep(0f, EdgeZone, _visualScroll);
+            var bottomWeight = Mathf.SmoothStep(0f, EdgeZone, _scrollLimit - _visualScroll);
+            foreach (var item in _measured)
             {
+                if (!IsInstanceValid(item))
+                    continue;
                 var minimum = _measurements[item];
                 var width = item.SizeFlagsHorizontal.HasFlag(SizeFlags.Expand) ||
                             item.SizeFlagsHorizontal.HasFlag(SizeFlags.Fill)
@@ -289,7 +307,7 @@ namespace STS2RitsuLib.Ui.MainMenu
                     : minimum.X;
                 item.Size = new(width, minimum.Y);
                 item.Position = new(_columnCenter - width / 2f, start + _rowTops[item]);
-                ApplyEdgeScale(item, start + _rowTops[item], minimum.Y);
+                ApplyEdgeScale(item, start + _rowTops[item], minimum.Y, topWeight, bottomWeight);
             }
 
             UpdateDecorations();
@@ -306,17 +324,17 @@ namespace STS2RitsuLib.Ui.MainMenu
         {
             if (!_measurements.ContainsKey(item))
                 return;
-            var ordered = MeasuredItems().ToList();
+            var ordered = _measured;
             var index = ordered.IndexOf(item);
             var step = _heightStepIndex;
-            if (index >= 0 && index < _heightStepIndex)
-                step = index;
-            else if (index >= _heightStepIndex)
+            if (index >= 0 && index <= _heightStepIndex)
+                step = Math.Max(0, index - 1);
+            else if (index > _heightStepIndex)
             {
                 step = index;
                 for (var candidate = _heightStepIndex; candidate <= index; candidate++)
                 {
-                    var top = ContentPadding;
+                    var top = ContentPadding + (candidate > 0 ? _separation : 0f);
                     var fits = false;
                     for (var i = candidate; i < ordered.Count; i++)
                     {

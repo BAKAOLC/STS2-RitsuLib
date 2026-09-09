@@ -85,9 +85,7 @@ namespace STS2RitsuLib.Ui.MainMenu
         {
             if (!Initialized)
                 return;
-            var showReticles = IsActive && IsNavigable(_reticleButton) &&
-                               _reticleButton!.GetParent() == this &&
-                               (_reticleButton.HasFocus() || IsRowFullyVisible(_reticleButton));
+            var showReticles = IsActive && IsReticleTarget(_reticleButton);
             if (_reticleLeft != null && _reticleRight != null &&
                 IsInstanceValid(_reticleLeft) && IsInstanceValid(_reticleRight))
             {
@@ -116,8 +114,9 @@ namespace STS2RitsuLib.Ui.MainMenu
             var position = _runInfoButton.GlobalPosition + _runInfoOffset + new Vector2(0f, -20f * _runInfoProgress);
             position.X = Mathf.Clamp(position.X, menuRect.Position.X + EdgePadding,
                 Mathf.Max(menuRect.Position.X + EdgePadding, menuRect.End.X - _runInfo.Size.X - EdgePadding));
-            position.Y = Mathf.Clamp(position.Y, GlobalPosition.Y,
-                Mathf.Max(GlobalPosition.Y, menuRect.End.Y - _runInfo.Size.Y - EdgePadding));
+            var topLimit = ScrollEngaged ? GlobalPosition.Y : menuRect.Position.Y + EdgePadding;
+            position.Y = Mathf.Clamp(position.Y, topLimit,
+                Mathf.Max(topLimit, menuRect.End.Y - _runInfo.Size.Y - EdgePadding));
             _runInfo.GlobalPosition = position;
             var infoColor = _runInfo.Modulate;
             infoColor.A = _runInfoProgress;
@@ -141,28 +140,55 @@ namespace STS2RitsuLib.Ui.MainMenu
             _runInfoTween?.Kill();
         }
 
-        private void ApplyEdgeScale(Control item, float top, float height)
+        private bool IsReticleTarget(Control? item)
         {
-            var fadeTop = _visualScroll > 0.5f;
-            var fadeBottom = _visualScroll < ScrollLimit - 0.5f;
-            var amount = 1f;
-            var pivotY = height * 0.5f;
-            if (fadeTop && top < EdgeZone)
+            return item != null && item == _reticleButton && IsNavigable(_reticleButton) &&
+                   _reticleButton.GetParent() == this &&
+                   (_reticleButton.HasFocus() || IsRowFullyVisible(_reticleButton));
+        }
+
+        private void ApplyEdgeScale(Control item, float top, float height, float topWeight, float bottomWeight)
+        {
+            if (IsReticleTarget(item))
             {
-                amount = Mathf.Min(amount, Mathf.SmoothStep(0f, EdgeZone, top + height * 0.5f));
-                pivotY = height;
+                ResetEdgeScale(item);
+                return;
             }
 
-            if (fadeBottom && top + height > Size.Y - EdgeZone)
-            {
-                amount = Mathf.Min(amount, Mathf.SmoothStep(0f, EdgeZone, Size.Y - (top + height * 0.5f)));
-                pivotY = 0f;
-            }
+            var amount = 1f;
+            var pivotY = height * 0.5f;
+            if (topWeight > 0f && top < EdgeZone)
+                BlendEdge(topWeight, top + height * 0.5f, height * 0.5f, height, ref amount, ref pivotY);
+            if (bottomWeight > 0f && top + height > Size.Y - EdgeZone)
+                BlendEdge(bottomWeight, Size.Y - (top + height * 0.5f), pivotY, 0f, ref amount, ref pivotY);
 
             item.PivotOffset = new(item.Size.X * 0.5f, pivotY);
             item.Scale = Vector2.One * Mathf.Lerp(EdgeMinScale, 1f, amount);
             var color = item.Modulate;
             color.A = Mathf.Lerp(EdgeMinAlpha, 1f, amount);
+            item.Modulate = color;
+        }
+
+        private static void BlendEdge(
+            float weight, float distance, float fromPivot, float toPivot, ref float amount, ref float pivotY)
+        {
+            var positional = SmootherStep01(distance / EdgeZone);
+            amount = Mathf.Min(amount, Mathf.Lerp(1f, positional, weight));
+            pivotY = Mathf.Lerp(fromPivot, toPivot, weight * (1f - positional));
+        }
+
+        private static float SmootherStep01(float t)
+        {
+            t = Mathf.Clamp(t, 0f, 1f);
+            return t * t * t * (t * (t * 6f - 15f) + 10f);
+        }
+
+        private void ResetEdgeScale(Control item)
+        {
+            item.Scale = Vector2.One;
+            item.PivotOffset = Vector2.Zero;
+            var color = item.Modulate;
+            color.A = 1f;
             item.Modulate = color;
         }
     }
