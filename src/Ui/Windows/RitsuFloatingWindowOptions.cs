@@ -90,6 +90,7 @@ namespace STS2RitsuLib.Ui.Windows
         public bool ConstrainToViewport { get; init; } = true;
 
         internal bool CompactChrome { get; init; }
+        internal int? TitleFontSize { get; init; }
 
         internal void Validate()
         {

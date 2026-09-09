@@ -10,6 +10,7 @@
         <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Platform\SteamCompatibilityRuntime.cs"/>
         <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)EasterEggs\RitsuLibEasterEggPolicy.cs"/>
         <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Icons\**\*.cs"/>
+        <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Files\**\*.cs"/>
         <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Toast\**\*.cs"/>
         <RitsuLibSettingsSource Include="$(RitsuLibSourceRoot)Settings\Localization\RitsuLibEasterEggLocalization.cs"/>
         <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Utils\MaterialUtils*.cs"/>

@@ -2,6 +2,7 @@
     <PropertyGroup>
         <RitsuLibSharedModule>true</RitsuLibSharedModule>
         <AssemblyName>STS2-RitsuLib.Ui</AssemblyName>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <Import Project="..\..\build\RitsuLib.Module.props"/>
     <Import Project="..\..\build\RitsuLib.Modules.items"/>

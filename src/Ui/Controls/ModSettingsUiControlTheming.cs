@@ -745,6 +745,16 @@ namespace STS2RitsuLib.Settings
                 return;
 
             var vScrollBar = container.GetVScrollBar();
+            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt(scrollBarWidthToken, scrollBarWidthIfMissing);
+            ApplySettingsVerticalScrollBarTheme(vScrollBar, scrollSize);
+
+            var sep = RitsuShellThemeLayoutResolver.ResolveInt(scrollbarVSeparationToken,
+                scrollbarVSeparationIfMissing);
+            container.AddThemeConstantOverride("scrollbar_v_separation", sep);
+        }
+
+        internal static void ApplySettingsVerticalScrollBarTheme(VScrollBar vScrollBar, int? width = null)
+        {
             if (!GodotObject.IsInstanceValid(vScrollBar))
                 return;
 
@@ -756,12 +766,8 @@ namespace STS2RitsuLib.Settings
             vScrollBar.AddThemeStyleboxOverride("grabber_pressed",
                 CreateSettingsScrollGrabberStyle("components.scrollbar.grabberPressed"));
 
-            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt(scrollBarWidthToken, scrollBarWidthIfMissing);
+            var scrollSize = width ?? RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.size", 8);
             vScrollBar.CustomMinimumSize = new(scrollSize, vScrollBar.CustomMinimumSize.Y);
-
-            var sep = RitsuShellThemeLayoutResolver.ResolveInt(scrollbarVSeparationToken,
-                scrollbarVSeparationIfMissing);
-            container.AddThemeConstantOverride("scrollbar_v_separation", sep);
 
             if (!TryResolveThemeConstantInt("components.scrollbar.layout.grabber.minLength", out var minGrabberLen) ||
                 minGrabberLen <= 0) return;
