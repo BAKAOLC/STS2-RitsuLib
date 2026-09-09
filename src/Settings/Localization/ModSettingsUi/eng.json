@@ -213,7 +213,7 @@
   "ritsulib.mainMenuModSettingsButton.enabled.label": "Show main menu settings shortcut",
   "ritsulib.mainMenuModSettingsButton.enabled.description": "Shows a RitsuLib settings shortcut under the patch notes button on the main menu.",
   "ritsulib.mainMenuScrolling.enabled.label": "Enable main menu scrolling",
-  "ritsulib.mainMenuScrolling.enabled.description": "Keeps long menu lists within the screen and scrolls focused entries into view. Enabled by default. Disable to use the original menu layout and navigation. Restart the game after changing this setting.",
+  "ritsulib.mainMenuScrolling.enabled.description": "Keeps long menu lists within the screen. Overflow shrinks and fades edge buttons; mouse wheel and focus still scroll. Enabled by default. Disable to use the original menu layout and navigation. Restart the game after changing this setting.",
   "ritsulib.modSourceHoverTips.enabled.label": "Show content source hover tips",
   "ritsulib.modSourceHoverTips.enabled.description": "Shows which mod provides cards, relics, potions, events, keywords, and other model hover tips.",
   "ritsulib.modSourceHoverTips.displayStyle.label": "Source display style",
