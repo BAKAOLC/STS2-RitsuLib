@@ -31,6 +31,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
         private static DateTimeOffset _lastInternalWarning;
 
         public static string? ViewerUrl => _server?.Url;
+        internal static event Action<RitsuDebugLogRecord>? GodotErrorRecorded;
 
         public static void Initialize(RitsuDebugLogViewerOptions options)
         {
@@ -48,7 +49,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     // The worker must start and observe cancellation inside its own shutdown path.
                     // ReSharper disable once MethodSupportsCancellation
                     _worker = Task.Run(() => WorkerLoopAsync(cts.Token));
-                    ConfigureGodotLogListener(options.MirrorGameLogs);
+                    ConfigureGodotLogListener();
 
                     if (options.Enabled)
                         StartServer(options);
@@ -236,11 +237,11 @@ namespace STS2RitsuLib.Diagnostics.Logging
             if (!string.IsNullOrWhiteSpace(scriptBacktrace))
                 body += $"\n{scriptBacktrace}";
 
-            Emit(new()
+            var record = new RitsuDebugLogRecord
             {
                 Timestamp = DateTimeOffset.UtcNow,
-                SeverityText = "ERROR",
-                SeverityNumber = 17,
+                SeverityText = errorType == (int)Godot.Logger.ErrorType.Warning ? "WARN" : "ERROR",
+                SeverityNumber = errorType == (int)Godot.Logger.ErrorType.Warning ? 13 : 17,
                 Body = body,
                 Source = "Godot",
                 Category = "EngineError",
@@ -257,7 +258,10 @@ namespace STS2RitsuLib.Diagnostics.Logging
                     ["godot.error.rationale"] = rationale,
                     ["godot.error.script_backtrace"] = scriptBacktrace,
                 },
-            });
+            };
+            Emit(record);
+            if (_initialized && errorType != (int)Godot.Logger.ErrorType.Warning)
+                GodotErrorRecorded?.Invoke(record);
         }
 
         private static RitsuDebugLogRecord CreateFromGodotLog(string text, bool error)
@@ -570,17 +574,8 @@ namespace STS2RitsuLib.Diagnostics.Logging
             return cleanupException;
         }
 
-        private static void ConfigureGodotLogListener(bool enabled)
+        private static void ConfigureGodotLogListener()
         {
-            if (!enabled)
-            {
-                var cleanupException = TryDetachGodotLogListener();
-                if (cleanupException != null)
-                    throw new InvalidOperationException("Could not disable Godot log mirroring.", cleanupException);
-
-                return;
-            }
-
             if (_godotLogListener != null)
                 return;
 
@@ -599,6 +594,7 @@ namespace STS2RitsuLib.Diagnostics.Logging
             {
                 OS.RemoveLogger(listener);
                 _godotLogListener = null;
+                listener.Dispose();
                 return null;
             }
             catch (Exception ex)

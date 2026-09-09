@@ -138,7 +138,7 @@
   "ritsulib.telemetry.request.basicUsage.description": "会话启动时间、框架和游戏版本、构建渠道、平台、语言与匿名安装 ID。",
   "ritsulib.telemetry.request.modInventory.description": "已注册模组清单、加载状态、版本和玩法影响标记，用于兼容性分析。",
   "ritsulib.telemetry.request.runHistory.description": "完整的原版历史记录，用于平衡性和兼容性分析。",
-  "ritsulib.telemetry.request.diagnostics.description": "异常报告与框架运行时诊断信息。",
+  "ritsulib.telemetry.request.diagnostics.description": "异常报告、Godot 引擎错误与框架运行时诊断信息。",
   "ritsulib.page.title": "设置",
   "ritsulib.page.description": "前置库设置与设置界面参考项。",
   "ritsulib.section.categories.title": "分类",

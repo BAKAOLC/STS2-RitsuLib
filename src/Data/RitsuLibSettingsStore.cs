@@ -348,7 +348,6 @@ namespace STS2RitsuLib.Data
 
             return new(
                 s.DebugLogViewerEnabled,
-                s.DebugLogViewerMirrorGameLogs,
                 s.DebugLogViewerAutoOpen,
                 s.DebugLogViewerLanAccessEnabled,
                 port,

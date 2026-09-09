@@ -96,11 +96,18 @@ namespace STS2RitsuLib.Data.Models
         public bool DebugLogViewerEnabled { get; set; } = true;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets whether game logger callbacks are mirrored into the viewer's event stream.</para>
-        ///     <para xml:lang="zh-CN">获取或设置是否将游戏日志记录器的回调镜像到查看器的事件流。</para>
+        ///     <para xml:lang="en">
+        ///         Always returns true. Setting a value has no effect; this member is excluded from saved settings.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">始终返回 true；设置值没有效果，此成员不会写入设置文件。</para>
         /// </summary>
-        [JsonPropertyName("debug_log_viewer_mirror_game_logs")]
-        public bool DebugLogViewerMirrorGameLogs { get; set; } = true;
+        [Obsolete("Game logs are always captured; this property has no effect.")]
+        [JsonIgnore]
+        public bool DebugLogViewerMirrorGameLogs
+        {
+            get => true;
+            set => _ = value;
+        }
 
         /// <summary>
         ///     <para xml:lang="en">

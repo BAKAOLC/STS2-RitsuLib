@@ -103,10 +103,24 @@ namespace STS2RitsuLib.Telemetry
         ///     <para xml:lang="en">
         ///         Gets optional source data available before payload generation. Filters must treat it as borrowed,
         ///         read-only data and must not retain it after returning.
+        ///         For <c>godot_engine_error</c> events from <c>godot_logger</c>, this is a
+        ///         <see cref="System.Text.Json.Nodes.JsonObject" /> containing type, message, code, function, file,
+        ///         line, script_backtrace, timestamp_utc and truncated fields. Local absolute paths are redacted;
+        ///         resource and node paths are retained. The script backtrace may be empty. Filters run on the main thread.
+        ///         Type is the integer Godot logger error type. Message, code, function, file and backtrace are limited to
+        ///         4096, 2048, 512, 1024 and 8192 characters respectively. Automatic engine capture is best-effort:
+        ///         repeated errors are suppressed for 30 seconds, with up to 20 distinct errors per minute and 64 pending errors.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         获取负载生成前可用的可选来源数据。筛选器必须将其视为借用的只读数据，且不得在返回后继续
         ///         持有它。
+        ///         来源为 <c>godot_logger</c> 的 <c>godot_engine_error</c> 事件提供
+        ///         <see cref="System.Text.Json.Nodes.JsonObject" />，包含 type、message、code、function、file、line、
+        ///         script_backtrace、timestamp_utc 及 truncated 字段。本机绝对路径会脱敏，资源与节点路径会保留；
+        ///         脚本堆栈可能为空。此类事件的筛选器在主线程运行。
+        ///         type 是 Godot 日志错误类型的整数值。message、code、function、file 和堆栈分别限制为
+        ///         4096、2048、512、1024 和 8192 个字符。引擎错误自动采集不保证完整：相同错误在 30 秒内去重，
+        ///         每分钟最多采集 20 项不同错误，最多保留 64 项待处理错误。
         ///     </para>
         /// </summary>
         public object? SourceData { get; }

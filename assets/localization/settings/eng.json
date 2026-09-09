@@ -138,7 +138,7 @@
   "ritsulib.telemetry.request.basicUsage.description": "Session start time, framework and game versions, build channel, platform, language, and anonymous install ID.",
   "ritsulib.telemetry.request.modInventory.description": "Registered mod inventory, load states, versions, and gameplay flags for compatibility analysis.",
   "ritsulib.telemetry.request.runHistory.description": "Complete vanilla run history for balance and compatibility analysis.",
-  "ritsulib.telemetry.request.diagnostics.description": "Exception reports and framework runtime diagnostics.",
+  "ritsulib.telemetry.request.diagnostics.description": "Exception reports, Godot engine errors and framework runtime diagnostics.",
   "ritsulib.page.title": "Settings",
   "ritsulib.page.description": "Framework settings and settings UI reference entries.",
   "ritsulib.section.categories.title": "Categories",
