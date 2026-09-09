@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Reflection;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Networking.StateDivergence
@@ -8,10 +7,8 @@ namespace STS2RitsuLib.Networking.StateDivergence
     {
         private static readonly AsyncLocal<bool> ForceEnglish = new();
 
-        private static readonly Lazy<I18N> InstanceFactory = new(() => new(
-            "RitsuLib-StateDivergenceDiagnostics",
-            resourceFolders: ["STS2RitsuLib.Settings.Localization.StateDivergence"],
-            resourceAssembly: Assembly.GetExecutingAssembly()));
+        private static readonly Lazy<I18N> InstanceFactory = new(() => I18N.CreateForAssets(
+            "RitsuLib-StateDivergenceDiagnostics", "localization/state-divergence"));
 
         public static string Get(string key, string fallback)
         {

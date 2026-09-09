@@ -2,7 +2,8 @@
     <PropertyGroup>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackRitsuRuntimeModules</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
-    <Target Name="PrepareRitsuLibDeployment" AfterTargets="Build" BeforeTargets="Copy Mod">
+    <Import Project="RitsuLib.Assets.targets"/>
+    <Target Name="PrepareRitsuLibDeployment" AfterTargets="Build" BeforeTargets="Copy Mod" DependsOnTargets="PrepareRitsuLibAssets">
         <PropertyGroup>
             <RitsuLibDeploymentDir>$(RitsuLibArtifactsRoot)runtime/$(Configuration)/$(Sts2ApiCompat)/</RitsuLibDeploymentDir>
         </PropertyGroup>
@@ -23,6 +24,11 @@
         <Error Condition="!Exists('$(RitsuLibViewerDistDir)\index.html')" Text="Missing debug log viewer build output."/>
         <RemoveDir Directories="$(RitsuLibDeploymentDir)"/>
         <MakeDir Directories="$(RitsuLibDeploymentDir)shared;$(RitsuLibDeploymentDir)compat\$(Sts2ApiCompat)"/>
+        <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+            <RitsuLibLooseAsset Include="$(RitsuLibAssetSource)**/*"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(RitsuLibLooseAsset)" DestinationFiles="@(RitsuLibLooseAsset->'$(RitsuLibDeploymentDir)assets/%(RecursiveDir)%(Filename)%(Extension)')" Condition="'$(Configuration)' == 'Debug'"/>
+        <Copy SourceFiles="$(RitsuLibAssetArchive)" DestinationFolder="$(RitsuLibDeploymentDir)" Condition="'$(Configuration)' != 'Debug'"/>
         <Copy SourceFiles="@(RitsuLibLoaderOutput)" DestinationFiles="$(RitsuLibDeploymentDir)STS2-RitsuLib.dll"/>
         <Copy SourceFiles="@(RitsuLibSharedBinary);@(RitsuLibSharedSidecar)" DestinationFolder="$(RitsuLibDeploymentDir)shared"/>
         <Copy SourceFiles="@(RitsuLibVariantBinary);@(RitsuLibVariantSidecar)" DestinationFolder="$(RitsuLibDeploymentDir)compat\$(Sts2ApiCompat)"/>
@@ -43,6 +49,10 @@
     </Target>
     <Target Name="PackRitsuRuntimeModules" DependsOnTargets="PrepareRitsuLibDeployment">
         <ItemGroup>
+            <TfmSpecificPackageFile Include="$(RitsuLibAssetArchive)">
+                <PackagePath>contentFiles/any/any/assets.zip</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
             <TfmSpecificPackageFile Include="$(TargetDir)STS2-RitsuLib.Shared.*;$(TargetDir)STS2-RitsuLib.Ui.*;$(TargetDir)STS2-RitsuLib.Settings.*;$(TargetDir)STS2-RitsuLib.Runtime.*"
                                     Exclude="$(TargetDir)*.deps.json;$(TargetDir)*.runtimeconfig.json">
                 <PackagePath>lib/$(TargetFramework)/</PackagePath>

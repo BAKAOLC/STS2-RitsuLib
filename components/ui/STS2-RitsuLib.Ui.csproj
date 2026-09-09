@@ -10,7 +10,5 @@
         <ProjectReference Include="..\shared\STS2-RitsuLib.Shared.csproj"/>
         <Using Include="STS2RitsuLib.RitsuModuleRuntime" Alias="RitsuLibFramework"/>
         <Using Include="STS2RitsuLib.Shared"/>
-        <EmbeddedResource Include="$(RitsuLibSourceRoot)Ui\Shell\Themes\*.theme.json"
-                          LogicalName="STS2RitsuLib.Ui.Shell.Themes.%(Filename)%(Extension)"/>
     </ItemGroup>
 </Project>

@@ -13,10 +13,5 @@
         <ProjectReference Include="../settings/STS2-RitsuLib.Settings.csproj"/>
         <ProjectReference Include="../analyzers/STS2-RitsuLib-Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"/>
         <PackageReference Include="System.IO.Hashing" Version="9.0.0"/>
-        <EmbeddedResource Include="$(RitsuLibRoot)resources/card_art_placeholder.png" LogicalName="STS2RitsuLib.Assets.card_art_placeholder.png"/>
-        <EmbeddedResource Include="$(RitsuLibRoot)resources/mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
-        <EmbeddedResource Include="$(RitsuLibRoot)resources/mod_image_ex.png" LogicalName="STS2RitsuLib.Assets.mod_image_ex.png"/>
-        <EmbeddedResource Include="$(RitsuLibSourceRoot)Settings/Localization/JoinDiagnostics/*.json" LogicalName="STS2RitsuLib.Settings.Localization.JoinDiagnostics.%(Filename)%(Extension)"/>
-        <EmbeddedResource Include="$(RitsuLibSourceRoot)Settings/Localization/StateDivergence/*.json" LogicalName="STS2RitsuLib.Settings.Localization.StateDivergence.%(Filename)%(Extension)"/>
     </ItemGroup>
 </Project>

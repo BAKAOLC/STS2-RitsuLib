@@ -13,7 +13,7 @@ from release_lib.version_sync import read_csproj_version
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build, package, or bundle RitsuLib without release or Git operations.")
-    parser.add_argument("command", choices=("build", "pack", "bundle"))
+    parser.add_argument("command", choices=("build", "pack", "bundle", "assets"))
     parser.add_argument("--configuration", choices=("Debug", "Release"))
     parser.add_argument("--compat-targets", help="latest, all, or a comma-separated list of declared API versions")
     parser.add_argument("--signature-root", type=Path)
@@ -22,6 +22,12 @@ def main(argv: list[str] | None = None) -> int:
     repo = Path(__file__).resolve().parents[1]
     project = repo / RITSULIB_CSPROJ_NAME
     configuration = args.configuration or ("Debug" if args.command == "build" else "Release")
+    if args.command == "assets":
+        if args.compat_targets or args.signature_root or args.game_dir:
+            parser.error("Resource packaging does not use game compatibility or installation options.")
+        subprocess.run(["dotnet", "msbuild", str(project), "/t:PrepareRitsuLibAssets", f"/p:Configuration={configuration}"], cwd=repo, check=True)
+        print(repo / "artifacts" / "assets" / configuration / "assets.zip")
+        return 0
     declared = get_csproj_property(project, "RitsuLibCompatTargets").split(";")
     latest = get_csproj_property(project, "RitsuLibLatestApiCompat")
     selection = args.compat_targets or ("all" if args.command == "bundle" else "latest")

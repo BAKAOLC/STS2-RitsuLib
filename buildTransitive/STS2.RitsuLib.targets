@@ -19,7 +19,7 @@
         </ItemGroup>
         <Error Condition="!Exists('$(RitsuLibPackageContentRoot)viewer\index.html')" Text="The installed RitsuLib NuGet package is missing the debug log viewer."/>
         <MakeDir Directories="$(RitsuLibDeployDir)"/>
-        <RemoveDir Directories="$(RitsuLibDeployDir)\lib;$(RitsuLibDeployDir)\compat;$(RitsuLibDeployDir)\shared"/>
+        <RemoveDir Directories="$(RitsuLibDeployDir)\lib;$(RitsuLibDeployDir)\compat;$(RitsuLibDeployDir)\shared;$(RitsuLibDeployDir)\assets"/>
         <Delete Files="$(RitsuLibDeployDir)\compat-target.txt;$(RitsuLibDeployDir)\ritsulib-variants.json;$(RitsuLibDeployDir)\STS2-RitsuLib.Loader.pdb"/>
         <Copy SourceFiles="@(RitsuLibPackageSharedFiles)" DestinationFolder="$(RitsuLibDeployDir)\shared"/>
         <Copy SourceFiles="@(RitsuLibPackageVariantFiles)" DestinationFolder="$(RitsuLibDeployDir)\compat\$(RitsuLibPackageCompatTarget)"/>
@@ -27,5 +27,6 @@
         <Copy SourceFiles="@(RitsuLibPackageViewerFiles)" DestinationFiles="@(RitsuLibPackageViewerFiles->'$(RitsuLibDeployDir)\viewer\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true"/>
         <Copy SourceFiles="$(RitsuLibPackageContentRoot)loader\STS2-RitsuLib.dll;$(RitsuLibPackageContentRoot)mod_manifest.json;$(RitsuLibPackageContentRoot)ritsulib-variants.manifest" DestinationFolder="$(RitsuLibDeployDir)"/>
         <Copy SourceFiles="$(RitsuLibPackageContentRoot)RitsuLib.References.props" DestinationFolder="$(RitsuLibDeployDir)"/>
+        <Copy SourceFiles="$(RitsuLibPackageContentRoot)assets.zip" DestinationFolder="$(RitsuLibDeployDir)"/>
     </Target>
 </Project>

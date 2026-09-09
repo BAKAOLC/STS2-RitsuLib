@@ -79,6 +79,32 @@ Single-target outputs survive builds of other targets. Shared modules always use
 installation stores them once. Compile-output DLLs and the installation-root loader have different roles: use NuGet or
 the installation's `RitsuLib.References.props` for consumers, and install the complete runtime directory for players.
 
+Bundled resources live in `assets/images/`, `assets/localization/<category>/`, and `assets/themes/`.
+Debug installations copy this tree to `assets/`; Release installations and NuGet packages contain one `assets.zip`,
+shared by every compatibility target. Resources are read by path when requested. A loose `assets/` directory takes
+precedence over the ZIP as a whole.
+
+The reusable `ResourcePack` API accepts any ZIP path or directory; it does not assume this asset layout.
+ZIPs open on first use and stay open until disposal. Resource bytes are not cached by the pack.
+
+```csharp
+using var pack = ResourcePack.FromZip("/path/to/my-content.zip");
+var imageBytes = pack.ReadAllBytes("portraits/hero.png");
+var text = pack.ReadAllText("credits.txt");
+var paths = pack.EnumerateFiles("portraits", recursive: true);
+using var translations = I18N.FromResourcePack(pack, "languages", instanceName: "MyMod");
+```
+
+Both types are in `STS2RitsuLib.Utils`. Keep the pack alive for its consumers and dispose them before disposing the
+pack. Use `ResourcePack.FromDirectory` for loose files. Recreate a ZIP pack after replacing its archive; reads on a
+single pack are serialized, and missing resources fail when requested.
+
+To rebuild only the resource archive without compiling DLLs, run `uv run python scripts/build_cli.py assets`.
+This defaults to Release and writes `artifacts/assets/Release/assets.zip`; `--configuration Debug` selects the Debug
+output directory. Close the game, copy the archive into the installation, and remove any loose `assets/` directory.
+Start the game again to load the replacement resources. Theme files in the user theme
+directory follow the catalog's existing override and version rules.
+
 ## Code and API design
 
 Follow [.editorconfig](.editorconfig) and the surrounding code. Keep identifiers and implementation comments in

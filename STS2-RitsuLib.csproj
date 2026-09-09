@@ -216,8 +216,8 @@
         <Error Condition="'$(Sts2Dir)' == '' or !Exists('$(Sts2Dir)')" Text="Cannot deploy RitsuLib without an existing game directory."/>
         <Message Text="Copying the complete modular RitsuLib runtime to $(RitsuLibGameModDir)..." Importance="high"/>
         <MakeDir Directories="$(RitsuLibGameModDir)"/>
-        <RemoveDir Directories="$(RitsuLibGameModDir)lib;$(RitsuLibGameModDir)compat;$(RitsuLibGameModDir)shared"/>
-        <Delete Files="$(RitsuLibGameModDir)compat-target.txt;$(RitsuLibGameModDir)ritsulib-variants.json;$(RitsuLibGameModDir)STS2-RitsuLib.Loader.pdb"/>
+        <RemoveDir Directories="$(RitsuLibGameModDir)lib;$(RitsuLibGameModDir)compat;$(RitsuLibGameModDir)shared;$(RitsuLibGameModDir)assets"/>
+        <Delete Files="$(RitsuLibGameModDir)compat-target.txt;$(RitsuLibGameModDir)ritsulib-variants.json;$(RitsuLibGameModDir)STS2-RitsuLib.Loader.pdb;$(RitsuLibGameModDir)assets.zip"/>
         <ItemGroup>
             <RitsuLibDeploymentFiles Include="$(RitsuLibDeploymentDir)**\*"/>
         </ItemGroup>

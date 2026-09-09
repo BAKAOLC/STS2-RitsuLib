@@ -6,6 +6,7 @@
         <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Const.cs;$(RitsuLibSourceRoot)RitsuLibExceptionPolicy.cs;$(RitsuLibSourceRoot)FrameworkLifecycleContracts.cs;$(RitsuLibSourceRoot)GameLifecycleContracts.cs"/>
         <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Data\ModDataStore*.cs"/>
         <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Utils\Json\**\*.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Utils\ResourcePack.cs"/>
         <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Platform\SteamCompatibilityRuntime.cs"/>
         <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)EasterEggs\RitsuLibEasterEggPolicy.cs"/>
         <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Icons\**\*.cs"/>

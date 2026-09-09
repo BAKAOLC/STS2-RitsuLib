@@ -50,6 +50,14 @@ def snapshot_bundle_variant_after_pack(
     if [entry["compatTarget"] for entry in manifest["variants"]] != [compat_target]:
         raise RuntimeError(f"Stale deployment output for {compat_target}: {deployment}")
     shared_dest = bundle_staging_root / "shared"
+    assets_archive = deployment / "assets.zip"
+    asset_name = "assets.zip" if assets_archive.is_file() else "assets"
+    asset_destination = bundle_staging_root / asset_name
+    if not asset_destination.exists():
+        if asset_name == "assets.zip":
+            shutil.copy2(assets_archive, asset_destination)
+        else:
+            shutil.copytree(deployment / "assets", asset_destination)
     shared_dest.mkdir(parents=True, exist_ok=True)
     for source in (deployment / "shared").iterdir():
         destination = shared_dest / source.name

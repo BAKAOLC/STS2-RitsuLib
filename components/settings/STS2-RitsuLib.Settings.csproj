@@ -6,7 +6,6 @@
     <Import Project="../../build/RitsuLib.Module.props"/>
     <Import Project="../../build/RitsuLib.Modules.items"/>
     <ItemGroup>
-        <EmbeddedResource Include="$(RitsuLibSourceRoot)Settings/Localization/EasterEggs/*.json" LogicalName="STS2RitsuLib.Settings.Localization.EasterEggs.%(Filename)%(Extension)"/>
         <Using Include="STS2RitsuLib.Settings.RitsuSettingsRuntime" Alias="Sts2ModManagerCompat"/>
         <Using Include="STS2RitsuLib.Ui.Layout.RitsuVerticalStack" Alias="FastVerticalStack"/>
         <Using Include="STS2RitsuLib.Ui.Layout.RitsuFixedWidthScrollContent" Alias="FixedWidthScrollContent"/>

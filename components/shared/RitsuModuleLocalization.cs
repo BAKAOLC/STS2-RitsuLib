@@ -4,10 +4,8 @@ namespace STS2RitsuLib
 {
     internal static class RitsuModuleLocalization
     {
-        private static readonly Lazy<I18N> Localization = new(() => new(
-            "RitsuLib-ModSettings",
-            resourceFolders: ["STS2RitsuLib.Settings.Localization.ModSettingsUi"],
-            resourceAssembly: typeof(RitsuModuleLocalization).Assembly));
+        private static readonly Lazy<I18N> Localization = new(() => I18N.CreateForAssets(
+            "RitsuLib-ModSettings", "localization/settings"));
 
         internal static I18N Instance => Localization.Value;
 

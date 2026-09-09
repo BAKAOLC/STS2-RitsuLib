@@ -67,6 +67,30 @@ pack 和 bundle 只生成分发产物，不安装。兼容目标始终顺序执�
 编译目录中的兼容入口 DLL 与安装根目录中的 loader 各有用途：子 Mod 使用 NuGet 或安装目录中的
 `RitsuLib.References.props` 引用；玩家安装完整运行时目录。
 
+随附资源位于 `assets/images/`、`assets/localization/<分类>/` 和 `assets/themes/`。
+Debug 安装直接复制为 `assets/` 目录；Release 安装与 NuGet 包使用一份供所有兼容目标共用的 `assets.zip`。
+资源在使用时按路径读取。如果安装目录存在散装 `assets/`，会整体优先使用该目录。
+
+通用 `ResourcePack` API 接受任意 ZIP 路径或目录，不依赖上述资源布局。
+ZIP 首次使用时打开，保持到实例释放；资源包本身不缓存文件内容。
+
+```csharp
+using var pack = ResourcePack.FromZip("/path/to/my-content.zip");
+var imageBytes = pack.ReadAllBytes("portraits/hero.png");
+var text = pack.ReadAllText("credits.txt");
+var paths = pack.EnumerateFiles("portraits", recursive: true);
+using var translations = I18N.FromResourcePack(pack, "languages", instanceName: "MyMod");
+```
+
+两个类型均位于 `STS2RitsuLib.Utils`。资源包应活到使用方释放之后；散装文件使用
+`ResourcePack.FromDirectory`。替换 ZIP 前释放实例，替换后重新创建；同一资源包上的读取串行执行，
+缺失资源在实际请求时正常报错。
+
+仅重新打包资源、不编译 DLL 时，运行 `uv run python scripts/build_cli.py assets`。
+默认生成 `artifacts/assets/Release/assets.zip`，可通过 `--configuration Debug` 选择 Debug 输出目录。
+先关闭游戏，将归档复制到安装目录并移除散装 `assets/` 目录，再启动游戏加载替换后的资源；
+用户主题目录中的文件仍按主题目录现有的覆盖与版本规则处理。
+
 ## 代码与 API 设计
 
 遵守 [.editorconfig](.editorconfig)，与相邻代码保持风格一致。标识符和实现注释用英文；需要翻译的界面文本放到本地化系统里。游戏行为通过 Mod 自己的代码、补丁和资源实现；游戏文件与恢复源码仅作只读参考。

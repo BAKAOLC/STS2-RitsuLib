@@ -82,6 +82,9 @@ Common code, reusable UI, and settings live in `shared/`; the compatibility faca
 `compat/<api-version>/`. A variant pack includes several API versions while storing shared modules once. Install the
 whole folder, including both subdirectories and the module manifest; copying only the root DLL is insufficient.
 
+Images, translations, and bundled themes are distributed in the installation's `assets.zip`, shared across game
+versions. Keep this archive with the runtime. Development Debug builds use a loose `assets/` directory instead.
+
 Your NuGet package reference and existing namespaces remain supported. NuGet supplies all compile-time modules, and the
 compatibility facade forwards existing public types for previously compiled mods. Manual assembly references must
 include the facade, Runtime, Shared, Ui, and Settings DLLs from the same package. Reflection that enumerates a single
