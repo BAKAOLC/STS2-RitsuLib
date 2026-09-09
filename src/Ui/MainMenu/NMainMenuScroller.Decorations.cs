@@ -60,6 +60,7 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private void ShowReticles(NMainMenuTextButton button)
         {
+            var previous = _reticleButton;
             _reticleButton = button;
             _reticleTween?.Kill();
             _reticleProgress = 0f;
@@ -70,6 +71,7 @@ namespace STS2RitsuLib.Ui.MainMenu
                 UpdateDecorations();
             }), 0f, 1f, 0.2).SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
             UpdateDecorations();
+            RefreshEdgeScale(previous, button);
         }
 
         private void HideReticles(NMainMenuTextButton button)
@@ -79,6 +81,7 @@ namespace STS2RitsuLib.Ui.MainMenu
             _reticleTween?.Kill();
             _reticleButton = null;
             UpdateDecorations();
+            RefreshEdgeScale(button);
         }
 
         private void UpdateDecorations()
@@ -126,12 +129,14 @@ namespace STS2RitsuLib.Ui.MainMenu
         private void HideDecorations()
         {
             _reticleTween?.Kill();
+            var previous = _reticleButton;
             _reticleButton = null;
             _runInfoTween?.Kill();
             _runInfoProgress = 0f;
             if (_runInfo != null && IsInstanceValid(_runInfo))
                 RunInfoShown(_runInfo) = false;
             UpdateDecorations();
+            RefreshEdgeScale(previous);
         }
 
         private void DisposeDecorations()
@@ -145,6 +150,29 @@ namespace STS2RitsuLib.Ui.MainMenu
             return item != null && item == _reticleButton && IsNavigable(_reticleButton) &&
                    _reticleButton.GetParent() == this &&
                    (_reticleButton.HasFocus() || IsRowFullyVisible(_reticleButton));
+        }
+
+        private (float topWeight, float bottomWeight, float start) GetEdgeScaleContext()
+        {
+            var start = (ScrollEngaged
+                ? ContentPadding
+                : (Size.Y - _contentHeight) / 2f) - _visualScroll;
+            return (Mathf.SmoothStep(0f, EdgeZone, _visualScroll),
+                Mathf.SmoothStep(0f, EdgeZone, _scrollLimit - _visualScroll),
+                start);
+        }
+
+        private void RefreshEdgeScale(params Control?[] items)
+        {
+            if (!Initialized)
+                return;
+            var (topWeight, bottomWeight, start) = GetEdgeScaleContext();
+            foreach (var item in items)
+            {
+                if (item == null || !IsInstanceValid(item) || !_measurements.TryGetValue(item, out var minimum))
+                    continue;
+                ApplyEdgeScale(item, start + _rowTops[item], minimum.Y, topWeight, bottomWeight);
+            }
         }
 
         private void ApplyEdgeScale(Control item, float top, float height, float topWeight, float bottomWeight)

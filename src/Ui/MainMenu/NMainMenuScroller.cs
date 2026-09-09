@@ -291,11 +291,7 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private void PositionItems()
         {
-            var start = (ScrollEngaged
-                ? ContentPadding
-                : (Size.Y - _contentHeight) / 2f) - _visualScroll;
-            var topWeight = Mathf.SmoothStep(0f, EdgeZone, _visualScroll);
-            var bottomWeight = Mathf.SmoothStep(0f, EdgeZone, _scrollLimit - _visualScroll);
+            var (topWeight, bottomWeight, start) = GetEdgeScaleContext();
             foreach (var item in _measured)
             {
                 if (!IsInstanceValid(item))
