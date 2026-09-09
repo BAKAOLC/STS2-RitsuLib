@@ -29,7 +29,7 @@
 项目会自动定位本地游戏安装。需要手动指定路径时，参照 [local.props.template](local.props.template) 创建 `local.props`：
 
 - `Sts2Dir`：本地测试用的游戏安装目录。
-- `Sts2ApiSignatureRoot`（可选）：版本化 API signature 的根目录。每个 `<root>/<Sts2ApiCompat>/` 目录需包含 `sts2.dll`、`0Harmony.dll` 和 `SmartFormat.dll`；不设置此属性时引用已安装游戏的程序集。
+- `Sts2ApiSignatureRoot`：版本化 API signature 的根目录。所选目标和公共模块基线目标的 `<root>/<api-version>/` 目录均需包含 `sts2.dll`、`0Harmony.dll` 和 `SmartFormat.dll`。可复现的兼容构建应使用此配置；不设置时会引用已安装游戏的程序集，不能据此确认兼容旧版 API。
 
 先关闭游戏，然后在仓库根目录执行：
 
@@ -38,6 +38,34 @@ dotnet build STS2-RitsuLib.sln
 ```
 
 默认构建会生成 manifest 和构建查看器，并把 RitsuLib 安装到 `<Sts2Dir>/mods/STS2-RitsuLib/`。如果那里已装过变体包，会被本地单 API 构建替换。RitsuLib 是 DLL-only Mod，无需导出 PCK。
+
+开发使用 Debug，分发使用 Release。解决方案及所有组件统一这两种配置，旧 Godot 导出配置与项目文件已移除。
+构建设置和输出路径集中定义于 `build/RitsuLib.Build.props`，GodotSharp 与源码生成器由 `Directory.Build.targets` 显式引用。
+
+```powershell
+uv run python scripts/build_cli.py build
+uv run python scripts/build_cli.py build --compat-targets all
+uv run python scripts/build_cli.py pack --compat-targets 0.109.0
+uv run python scripts/build_cli.py bundle
+```
+
+`build` 默认 Debug 和最新目标；`pack` 默认 Release 和最新目标；`bundle` 默认 Release 和全部声明目标。
+均支持 `--configuration`、`--compat-targets`、`--signature-root` 与 `--game-dir`。build 保留最新目标正常复制到游戏的行为；
+pack 和 bundle 只生成分发产物，不安装。兼容目标始终顺序执行。
+
+| 产物 | 位置 |
+| --- | --- |
+| 兼容入口及完整编译依赖 | `artifacts/bin/<配置>/<API>/` |
+| 各组件构建输出 | `artifacts/modules/<配置>/shared/<项目>/` 和 `compat/<API>/` |
+| 中间文件 | `artifacts/obj/<项目>/<配置>/<API>/` |
+| 完整单目标安装目录 | `artifacts/runtime/<配置>/<API>/` |
+| 完整多目标合并目录 | `artifacts/bundle/<配置>/` |
+| NuGet 与符号包 | `artifacts/packages/<配置>/nuget/` |
+| 单目标与 Bundle ZIP | `artifacts/packages/<配置>/github/` |
+
+编译其他目标不会覆盖已有单目标输出。公共模块固定使用基线 API，合并安装目录仅保留一份。
+编译目录中的兼容入口 DLL 与安装根目录中的 loader 各有用途：子 Mod 使用 NuGet 或安装目录中的
+`RitsuLib.References.props` 引用；玩家安装完整运行时目录。
 
 ## 代码与 API 设计
 
@@ -51,7 +79,11 @@ public 和 protected API 是长期的兼容承诺：新增 API 要对应使用�
 
 改过的 C# 文件用仓库配置的 ReSharper 格式化，并把检查报出的问题全部解决。确认构建通过，在游戏里实际验证受影响的行为，并检查日志。修改公共 API 时，还要构建并测试使用方 Mod；Bug 修复应覆盖原始复现步骤和相关的边界情况。
 
-改动涉及游戏 API 兼容性或打包/manifest 生成时，把 [STS2-RitsuLib.csproj](STS2-RitsuLib.csproj) 中 `RitsuLibCompatTargets` 声明的全部目标逐个构建一遍：用 `/p:Sts2ApiCompat=<version>` 选择目标，准备匹配的引用程序集。只有最新 API 目标会安装到游戏目录。
+改动涉及游戏 API 兼容性或打包/manifest 生成时，把 [build/RitsuLib.Compatibility.props](build/RitsuLib.Compatibility.props) 中 `RitsuLibCompatTargets` 声明的全部目标逐个构建一遍：用 `/p:Sts2ApiCompat=<version>` 选择目标，准备匹配的引用程序集。只有最新 API 目标会安装到游戏目录。
+
+模块归属集中定义在 [build/RitsuLib.Modules.items](build/RitsuLib.Modules.items)。Shared 提供稳定契约和基础设施；Ui 依赖 Shared；Settings 依赖 Shared 与 Ui；Runtime 提供版本相关的游戏集成。根项目是自动生成类型转发的兼容入口。Shared、Ui、Settings 与加载器固定针对 `RitsuLibSharedApiCompat` 编译，不随 Runtime 的目标变化。变化的游戏 API 调用应通过内部宿主契约留在 Runtime，通用 UI 不应依赖设置注册体系。
+
+普通构建部署完整的单目标模块目录。产物构建与 CI 打包同一目录结构，仅在公共模块逐字节一致时合并多版本，并验证清单、哈希和 XML 文档。可运行 `uv run python scripts/ci/ci_build.py --signature-root <root>` 在本地验证产物流；该命令不安装到实际游戏目录。
 
 改文档要检查链接、示例，以及中英文是否一致。改文档站时，工具版本以 [docs/package.json](docs/package.json) 和 [文档工作流](.github/workflows/gh-pages.yml) 中的为准，然后在 `docs/` 目录执行：
 

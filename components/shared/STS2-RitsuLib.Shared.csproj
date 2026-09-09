@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="Sts2ApiCompat;Sts2DataDir">
+    <PropertyGroup>
+        <RitsuLibSharedModule>true</RitsuLibSharedModule>
+        <AssemblyName>STS2-RitsuLib.Shared</AssemblyName>
+    </PropertyGroup>
+    <Import Project="..\..\build\RitsuLib.Module.props"/>
+    <Import Project="..\..\build\RitsuLib.Modules.items"/>
+    <ItemGroup>
+        <EmbeddedResource Include="$(RitsuLibSourceRoot)Settings/Localization/ModSettingsUi/*.json" LogicalName="STS2RitsuLib.Settings.Localization.ModSettingsUi.%(Filename)%(Extension)"/>
+        <Compile Include="@(RitsuLibSharedSource)" Link="Shared\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Using Include="STS2RitsuLib.RitsuModuleRuntime" Alias="RitsuLibFramework"/>
+        <Using Include="STS2RitsuLib.Shared"/>
+    </ItemGroup>
+</Project>

@@ -1,4 +1,5 @@
-﻿using STS2RitsuLib.Search;
+﻿using System.Text;
+using STS2RitsuLib.Search;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Ui.Catalog
@@ -62,10 +63,8 @@ namespace STS2RitsuLib.Ui.Catalog
 
 
             foreach (var term in terms)
-            {
                 if (!MatchesTerm(term))
                     return false;
-            }
 
             return true;
 
@@ -141,7 +140,7 @@ namespace STS2RitsuLib.Ui.Catalog
 
         internal static string StripMarkup(string text)
         {
-            var result = new System.Text.StringBuilder(text.Length);
+            var result = new StringBuilder(text.Length);
             for (var index = 0; index < text.Length; index++)
             {
                 if (text[index] == '[')

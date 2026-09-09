@@ -12,22 +12,22 @@ namespace STS2RitsuLib.Ui.MainMenu
         private const float HorizontalPadding = 96f;
         private const float ScrollBarScale = 0.5f;
         private const float ScrollBarInset = 24f;
-        private readonly List<Control> _items = [];
         private readonly List<NMainMenuTextButton> _buttons = [];
+        private readonly List<Control> _items = [];
         private readonly Dictionary<Control, Vector2> _measurements = [];
         private readonly Dictionary<Control, float> _rowTops = [];
-        private NMainMenu _mainMenu = null!;
-        private NScrollbar _scrollBar = null!;
-        private Rect2 _designOffsets;
-        private Vector2 _designAnchor;
-        private float _separation;
-        private float _scroll;
-        private float _contentHeight;
         private float _columnCenter;
-        internal bool Initialized { get; private set; }
-        private bool _layoutDirty = true;
-        private bool _layingOut;
+        private float _contentHeight;
+        private Vector2 _designAnchor;
+        private Rect2 _designOffsets;
         private bool _initializeOnEnter;
+        private bool _layingOut;
+        private bool _layoutDirty = true;
+        private NMainMenu _mainMenu = null!;
+        private float _scroll;
+        private NScrollbar _scrollBar = null!;
+        private float _separation;
+        internal bool Initialized { get; private set; }
 
 
         private float ScrollLimit => Mathf.Max(0f, _contentHeight + ContentPadding * 2f - Size.Y);

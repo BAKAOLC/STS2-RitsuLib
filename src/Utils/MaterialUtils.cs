@@ -128,11 +128,11 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         /// <remarks>
         ///     <para xml:lang="en">
-        ///         Use it as <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" /> on a custom
+        ///         Use it as <c>HealthBarForecastSegment.OverlayMaterial</c> on a custom
         ///         forecast overlay to resemble the vanilla Doom strip; see also <c>CreateVanillaDoomBarGradientTexture</c>.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         可将其用作自定义预测叠加层的 <see cref="Combat.HealthBars.HealthBarForecastSegment.OverlayMaterial" />
+        ///         可将其用作自定义预测叠加层的 <c>HealthBarForecastSegment.OverlayMaterial</c>
         ///         ，以呈现原版灾厄条效果；另见 <c>CreateVanillaDoomBarGradientTexture</c>。
         ///     </para>
         /// </remarks>

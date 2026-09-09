@@ -59,7 +59,6 @@ namespace STS2RitsuLib.Scaffolding.Content
         {
             var logger = RitsuLibFramework.CreateLogger(_context.ModId);
             for (var i = 0; i < _steps.Count; i++)
-            {
                 try
                 {
                     _steps[i]();
@@ -77,7 +76,6 @@ namespace STS2RitsuLib.Scaffolding.Content
                         $"[ContentPack] Failed {description} for mod '{_context.ModId}': " +
                         $"{ex.GetType().Name}: {ex.Message}");
                 }
-            }
         }
 
         /// <summary>

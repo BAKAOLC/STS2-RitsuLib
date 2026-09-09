@@ -515,11 +515,11 @@ namespace STS2RitsuLib.Diagnostics.Logging
             yield return Path.Combine(assemblyDir, "viewer");
 
             var compatDir = new DirectoryInfo(assemblyDir);
-            var libDir = compatDir.Parent;
-            var modRoot = libDir?.Parent;
-            if (libDir != null &&
+            var variantsDir = compatDir.Parent;
+            var modRoot = variantsDir?.Parent;
+            if (variantsDir != null &&
                 modRoot != null &&
-                string.Equals(libDir.Name, "lib", StringComparison.OrdinalIgnoreCase))
+                string.Equals(variantsDir.Name, "compat", StringComparison.OrdinalIgnoreCase))
                 yield return Path.Combine(modRoot.FullName, "viewer");
 
             yield return Path.Combine(AppContext.BaseDirectory, "viewer");

@@ -1,0 +1,21 @@
+﻿<Project>
+    <PropertyGroup>
+        <RitsuLibReferenceRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)'))</RitsuLibReferenceRoot>
+        <RitsuLibReferenceTarget Condition="'$(RitsuLibReferenceTarget)' == '' and Exists('$(RitsuLibReferenceRoot)compat') and $([System.IO.Directory]::GetDirectories('$(RitsuLibReferenceRoot)compat').Length) == 1">$([System.IO.Path]::GetFileName($([System.IO.Directory]::GetDirectories('$(RitsuLibReferenceRoot)compat').GetValue(0))))</RitsuLibReferenceTarget>
+        <RitsuLibReferenceTargetValid>$([System.Text.RegularExpressions.Regex]::IsMatch('$(RitsuLibReferenceTarget)', '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'))</RitsuLibReferenceTargetValid>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(RitsuLibReferenceTargetValid)' == 'True'">
+        <Reference Include="STS2-RitsuLib" HintPath="$(RitsuLibReferenceRoot)compat/$(RitsuLibReferenceTarget)/STS2-RitsuLib.dll" Private="False"/>
+        <Reference Include="STS2-RitsuLib.Runtime" HintPath="$(RitsuLibReferenceRoot)compat/$(RitsuLibReferenceTarget)/STS2-RitsuLib.Runtime.dll" Private="False"/>
+        <Reference Include="STS2-RitsuLib.Shared" HintPath="$(RitsuLibReferenceRoot)shared/STS2-RitsuLib.Shared.dll" Private="False"/>
+        <Reference Include="STS2-RitsuLib.Ui" HintPath="$(RitsuLibReferenceRoot)shared/STS2-RitsuLib.Ui.dll" Private="False"/>
+        <Reference Include="STS2-RitsuLib.Settings" HintPath="$(RitsuLibReferenceRoot)shared/STS2-RitsuLib.Settings.dll" Private="False"/>
+    </ItemGroup>
+    <Target Name="ValidateRitsuLibDirectoryReferences" BeforeTargets="ResolveAssemblyReferences">
+        <Error Condition="'$(RitsuLibReferenceTargetValid)' != 'True'" Text="Set RitsuLibReferenceTarget to a game API version when importing references from a multi-version RitsuLib bundle."/>
+        <ItemGroup>
+            <RitsuLibRequiredReference Include="$(RitsuLibReferenceRoot)compat/$(RitsuLibReferenceTarget)/STS2-RitsuLib.dll;$(RitsuLibReferenceRoot)compat/$(RitsuLibReferenceTarget)/STS2-RitsuLib.Runtime.dll;$(RitsuLibReferenceRoot)shared/STS2-RitsuLib.Shared.dll;$(RitsuLibReferenceRoot)shared/STS2-RitsuLib.Ui.dll;$(RitsuLibReferenceRoot)shared/STS2-RitsuLib.Settings.dll"/>
+        </ItemGroup>
+        <Error Condition="!Exists('%(RitsuLibRequiredReference.Identity)')" Text="Missing RitsuLib reference assembly: %(RitsuLibRequiredReference.Identity). Use a complete runtime installation."/>
+    </Target>
+</Project>

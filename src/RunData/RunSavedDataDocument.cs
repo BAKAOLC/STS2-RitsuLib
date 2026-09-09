@@ -168,7 +168,6 @@ namespace STS2RitsuLib.RunData
                 return false;
 
             while (reader.Read())
-            {
                 switch (reader.TokenType)
                 {
                     case JsonTokenType.PropertyName when reader.CurrentDepth == 1:
@@ -188,7 +187,6 @@ namespace STS2RitsuLib.RunData
                         insertionPoint = checked((int)reader.TokenStartIndex);
                         break;
                 }
-            }
 
             if (insertionPoint < 0)
                 return false;

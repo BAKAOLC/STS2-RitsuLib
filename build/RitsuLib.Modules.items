@@ -1,0 +1,27 @@
+﻿<Project>
+    <PropertyGroup>
+        <RitsuLibSourceRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', 'src'))</RitsuLibSourceRoot>
+    </PropertyGroup>
+    <ItemGroup>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Const.cs;$(RitsuLibSourceRoot)RitsuLibExceptionPolicy.cs;$(RitsuLibSourceRoot)FrameworkLifecycleContracts.cs;$(RitsuLibSourceRoot)GameLifecycleContracts.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Data\ModDataStore*.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Utils\Json\**\*.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Platform\SteamCompatibilityRuntime.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)EasterEggs\RitsuLibEasterEggPolicy.cs"/>
+        <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Icons\**\*.cs"/>
+        <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Toast\**\*.cs"/>
+        <RitsuLibSettingsSource Include="$(RitsuLibSourceRoot)Settings\Localization\RitsuLibEasterEggLocalization.cs"/>
+        <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Utils\MaterialUtils*.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)RuntimeInput\RuntimeHotkeyParser.cs;$(RitsuLibSourceRoot)RuntimeInput\RuntimeHotkeyBinding.cs;$(RitsuLibSourceRoot)Compat\ExternalFrameworkRegistry.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Interop\ReflectionInteropConvention.cs;$(RitsuLibSourceRoot)Interop\ReflectionStaticChannel.cs;$(RitsuLibSourceRoot)Interop\ReflectionStaticChannelBinder.cs;$(RitsuLibSourceRoot)Interop\JsonDomChannelDelegates.cs;$(RitsuLibSourceRoot)Interop\KeyedJsonDomTransport.cs;$(RitsuLibSourceRoot)Interop\KeyedJsonPathRouting.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Search\**\*.cs" Exclude="$(RitsuLibSourceRoot)Search\Integration\**;$(RitsuLibSourceRoot)Search\RitsuSearchService.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Utils\FileOperations.cs;$(RitsuLibSourceRoot)Utils\I18N.cs;$(RitsuLibSourceRoot)Utils\FastMethodInvoker.cs;$(RitsuLibSourceRoot)Utils\RitsuGodotAwaitSafety.cs"/>
+        <RitsuLibSharedSource Include="$(RitsuLibSourceRoot)Utils\Persistence\**\*.cs"
+                             Exclude="$(RitsuLibSourceRoot)Utils\Persistence\Patches\**;$(RitsuLibSourceRoot)Utils\Persistence\Interop\**;$(RitsuLibSourceRoot)Utils\Persistence\ModDataCloudHost.cs;$(RitsuLibSourceRoot)Utils\Persistence\ModDataCloudMirror.cs;$(RitsuLibSourceRoot)Utils\Persistence\RitsuLibLegacyGeneratedDataCleanup.cs"/>
+        <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Shell\**\*.cs"
+                         Exclude="$(RitsuLibSourceRoot)Ui\Shell\Theme\Patches\**"/>
+        <RitsuLibUiSource Include="$(RitsuLibSourceRoot)Ui\Controls\**\*.cs;$(RitsuLibSourceRoot)Ui\Layout\**\*.cs;$(RitsuLibSourceRoot)Ui\Windows\**\*.cs;$(RitsuLibSourceRoot)Ui\RitsuUiLayer.cs"/>
+        <RitsuLibSettingsSource Include="$(RitsuLibSourceRoot)Settings\ModSettings\**\*.cs;$(RitsuLibSourceRoot)Settings\ModSettingsUi\**\*.cs;$(RitsuLibSourceRoot)Settings\Localization\ModSettingsLocalization.cs"
+                                Exclude="$(RitsuLibSourceRoot)Settings\ModSettings\Mirrors\RuntimeReflection\RuntimeReflectionSpinePreviewExample.cs"/>
+    </ItemGroup>
+</Project>

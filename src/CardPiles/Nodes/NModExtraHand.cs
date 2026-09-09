@@ -48,9 +48,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private bool _invalidBuiltInLayoutWarningLogged;
         private bool _invalidLayoutResolverWarningLogged;
         private bool _isDisabled;
-        private bool _turnPresentationDisabled;
         private ModCardPile? _pile;
         private Player? _player;
+        private bool _turnPresentationDisabled;
         private NPlayerHand? _vanillaHand;
         private double _visualRefreshElapsed;
 
@@ -83,6 +83,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     </para>
         /// </remarks>
         public bool CardPlayEnabled { get; private set; }
+
+        private bool IsCardPlayAvailable => CardPlayEnabled
+                                            && _vanillaHand?.CurrentMode is null or NPlayerHand.Mode.Play;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -497,9 +500,6 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return false;
             return !ModExtraHandPlayCoordinator.IsPlaying;
         }
-
-        private bool IsCardPlayAvailable => CardPlayEnabled
-                                            && _vanillaHand?.CurrentMode is null or NPlayerHand.Mode.Play;
 
         private void AttachVanillaHand(NPlayerHand? hand)
         {

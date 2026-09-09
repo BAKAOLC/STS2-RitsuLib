@@ -57,10 +57,10 @@ namespace STS2RitsuLib.Settings
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets the mod ID used to resolve <see cref="RitsuLibFramework.GetDataStore" />.
+        ///         Gets the mod ID used to resolve <c>RitsuLibFramework.GetDataStore(modId)</c>.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取用于解析 <see cref="RitsuLibFramework.GetDataStore" /> 的模组 ID。
+        ///         获取用于解析 <c>RitsuLibFramework.GetDataStore(modId)</c> 的模组 ID。
         ///     </para>
         /// </summary>
         public string ModId { get; } = ModSettingsBindingValidation.RequireNonEmpty(modId, nameof(modId));

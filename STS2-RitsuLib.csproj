@@ -1,18 +1,10 @@
-<Project Sdk="Godot.NET.Sdk/4.5.1">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup Label="Compatibility (STS2 API, signatures, defines)">
-        <RitsuLibCompatTargets>0.111.0;0.110.0;0.109.0;0.107.1</RitsuLibCompatTargets>
-        <RitsuLibLatestApiCompat>0.111.0</RitsuLibLatestApiCompat>
-        <RitsuLibLatestGameVersion>0.111.0</RitsuLibLatestGameVersion>
-        <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
         <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
         <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
     </PropertyGroup>
 
     <Import Project="$(MSBuildProjectDirectory)\build\RitsuLib.CompatDefines.targets"/>
-
-    <PropertyGroup Label="Compatibility build isolation">
-        <IntermediateOutputPath>$(MSBuildProjectDirectory)\.godot\mono\temp\obj\$(Configuration)\$(Sts2ApiCompat)\</IntermediateOutputPath>
-    </PropertyGroup>
 
     <PropertyGroup Label="Mod manifest generation">
         <RitsuLibManifestSource>$(MSBuildProjectDirectory)\mod_manifest.json</RitsuLibManifestSource>
@@ -23,6 +15,16 @@
     </PropertyGroup>
 
     <Import Project="$(MSBuildProjectDirectory)\build\RitsuLib.ModManifest.targets"/>
+    <Import Project="$(MSBuildProjectDirectory)\build\RitsuLib.Modules.items"/>
+
+    <ItemGroup>
+        <Compile Remove="src\**\*.cs"/>
+        <ProjectReference Include="components\shared\STS2-RitsuLib.Shared.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="components\ui\STS2-RitsuLib.Ui.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="components\runtime\STS2-RitsuLib.Runtime.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="components\settings\STS2-RitsuLib.Settings.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="components\loader\STS2-RitsuLib-Loader.csproj" ReferenceOutputAssembly="false" PrivateAssets="all"/>
+    </ItemGroup>
 
     <PropertyGroup Label="Assembly and build">
         <RootNamespace>STS2RitsuLib</RootNamespace>
@@ -31,6 +33,7 @@
         <Nullable>enable</Nullable>
         <EnableDynamicLoading>true</EnableDynamicLoading>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
         <NoWarn>$(NoWarn);CS0436</NoWarn>
         <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == '' and '$(Configuration)' == 'Debug'">local_debug</RitsuLibTelemetryBuildChannel>
         <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == ''">local_release</RitsuLibTelemetryBuildChannel>
@@ -42,10 +45,12 @@
         <RitsuLibCopyToGame Condition="'$(RitsuLibCopyToGame)' == ''">true</RitsuLibCopyToGame>
         <RitsuLibAnalyzerProject>$(MSBuildProjectDirectory)\components\analyzers\STS2-RitsuLib-Analyzers.csproj</RitsuLibAnalyzerProject>
         <RitsuLibAnalyzerTargetFramework>netstandard2.0</RitsuLibAnalyzerTargetFramework>
-        <RitsuLibAnalyzerAssembly>$(MSBuildProjectDirectory)\components\analyzers\bin\$(Configuration)\$(RitsuLibAnalyzerTargetFramework)\STS2-RitsuLib.Analyzers.dll</RitsuLibAnalyzerAssembly>
+        <RitsuLibAnalyzerAssembly>$(RitsuLibArtifactsRoot)tools/$(Configuration)/STS2-RitsuLib-Analyzers/STS2-RitsuLib.Analyzers.dll</RitsuLibAnalyzerAssembly>
     </PropertyGroup>
 
     <PropertyGroup Label="NuGet package">
+        <!-- Loader and hashing are deployment assets, not consumer compile references. Package validation checks their exact locations. -->
+        <NoWarn>$(NoWarn);NU5100</NoWarn>
         <IsPackable>true</IsPackable>
         <Version>0.5.20</Version>
         <Authors>OLC</Authors>
@@ -123,7 +128,6 @@
             <_Parameter2>$(Sts2ApiCompat)</_Parameter2>
         </AssemblyAttribute>
         <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="all"/>
-        <PackageReference Include="System.IO.Hashing" Version="9.0.0"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="components\analyzers\STS2-RitsuLib-Analyzers.csproj"
@@ -140,31 +144,12 @@
         <Reference Include="SmartFormat" HintPath="$(Sts2DataDir)\SmartFormat.dll" Private="False"/>
     </ItemGroup>
     <ItemGroup>
-        <Content Include="$(RitsuLibManifestGenerated)"/>
-    </ItemGroup>
-    <ItemGroup>
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\package.json"/>
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\package-lock.json" Condition="Exists('$(RitsuLibViewerProjectDir)\package-lock.json')"/>
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\index.html"/>
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\vite.config.ts"/>
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\tsconfig.json"/>
         <RitsuLibViewerBuildInputs Include="$(RitsuLibViewerProjectDir)\src\**\*"/>
-    </ItemGroup>
-    <ItemGroup>
-        <EmbeddedResource Include="resources\card_art_placeholder.png"
-                          LogicalName="STS2RitsuLib.Assets.card_art_placeholder.png"/>
-        <EmbeddedResource Include="resources\mod_image.png" LogicalName="STS2RitsuLib.Assets.mod_image.png"/>
-        <EmbeddedResource Include="resources\mod_image_ex.png" LogicalName="STS2RitsuLib.Assets.mod_image_ex.png"/>
-        <EmbeddedResource Include="src\Settings\Localization\EasterEggs\*.json"
-                          LogicalName="STS2RitsuLib.Settings.Localization.EasterEggs.%(Filename)%(Extension)"/>
-        <EmbeddedResource Include="src\Settings\Localization\JoinDiagnostics\*.json"
-                          LogicalName="STS2RitsuLib.Settings.Localization.JoinDiagnostics.%(Filename)%(Extension)"/>
-        <EmbeddedResource Include="src\Settings\Localization\ModSettingsUi\*.json"
-                          LogicalName="STS2RitsuLib.Settings.Localization.ModSettingsUi.%(Filename)%(Extension)"/>
-        <EmbeddedResource Include="src\Settings\Localization\StateDivergence\*.json"
-                          LogicalName="STS2RitsuLib.Settings.Localization.StateDivergence.%(Filename)%(Extension)"/>
-        <EmbeddedResource Include="src\Ui\Shell\Themes\*.theme.json"
-                          LogicalName="STS2RitsuLib.Ui.Shell.Themes.%(Filename)%(Extension)"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
@@ -179,7 +164,7 @@
         <EmbeddedResource Remove="sts-2-source\**"/>
 
         <Compile Remove="build\**\*.cs"/>
-        <!-- Component projects are separate assemblies; keep them out of Godot.Sdk default globs. -->
+        <!-- Component projects are separate assemblies. -->
         <Compile Remove="components\**"/>
         <None Remove="components\**"/>
         <Content Remove="components\**"/>
@@ -223,18 +208,20 @@
             </TfmSpecificPackageFile>
         </ItemGroup>
     </Target>
-    <Target Name="Copy Mod" AfterTargets="Build" Condition="'$(RitsuLibCopyToGame)' == 'true' and '$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
-        <Message Text="Copying mod to Slay the Spire 2 mods folder..." Importance="high"/>
-        <MakeDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
-        <RemoveDir Directories="$(Sts2Dir)\mods\$(MSBuildProjectName)\lib"/>
-        <Delete Files="$(Sts2Dir)\mods\$(MSBuildProjectName)\compat-target.txt;$(Sts2Dir)\mods\$(MSBuildProjectName)\ritsulib-variants.json;$(Sts2Dir)\mods\$(MSBuildProjectName)\ritsulib-variants.manifest;$(Sts2Dir)\mods\$(MSBuildProjectName)\STS2-RitsuLib.Loader.pdb"/>
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(Sts2Dir)\mods\$(MSBuildProjectName)\"/>
-        <Copy SourceFiles="$(RitsuLibManifestGenerated)" DestinationFiles="$(Sts2Dir)\mods\$(MSBuildProjectName)\mod_manifest.json"/>
+    <Import Project="build\RitsuLib.Deployment.targets"/>
+    <Target Name="Copy Mod" AfterTargets="Build" DependsOnTargets="PrepareRitsuLibDeployment" Condition="'$(RitsuLibCopyToGame)' == 'true' and '$(Sts2ApiCompat)' == '$(RitsuLibLatestApiCompat)'">
+        <PropertyGroup>
+            <RitsuLibGameModDir>$(Sts2Dir)\mods\$(MSBuildProjectName)\</RitsuLibGameModDir>
+        </PropertyGroup>
+        <Error Condition="'$(Sts2Dir)' == '' or !Exists('$(Sts2Dir)')" Text="Cannot deploy RitsuLib without an existing game directory."/>
+        <Message Text="Copying the complete modular RitsuLib runtime to $(RitsuLibGameModDir)..." Importance="high"/>
+        <MakeDir Directories="$(RitsuLibGameModDir)"/>
+        <RemoveDir Directories="$(RitsuLibGameModDir)lib;$(RitsuLibGameModDir)compat;$(RitsuLibGameModDir)shared"/>
+        <Delete Files="$(RitsuLibGameModDir)compat-target.txt;$(RitsuLibGameModDir)ritsulib-variants.json;$(RitsuLibGameModDir)STS2-RitsuLib.Loader.pdb"/>
         <ItemGroup>
-            <RitsuDebugViewerOutputFiles Include="$(TargetDir)viewer\**\*" Condition="Exists('$(TargetDir)viewer\index.html')"/>
+            <RitsuLibDeploymentFiles Include="$(RitsuLibDeploymentDir)**\*"/>
         </ItemGroup>
-        <Copy SourceFiles="@(RitsuDebugViewerOutputFiles)"
-              DestinationFiles="@(RitsuDebugViewerOutputFiles->'$(Sts2Dir)\mods\$(MSBuildProjectName)\viewer\%(RecursiveDir)%(Filename)%(Extension)')"
-              SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="@(RitsuLibDeploymentFiles)"
+              DestinationFiles="@(RitsuLibDeploymentFiles->'$(RitsuLibGameModDir)%(RecursiveDir)%(Filename)%(Extension)')"/>
     </Target>
 </Project>

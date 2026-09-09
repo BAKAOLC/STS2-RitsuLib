@@ -5,9 +5,9 @@ namespace STS2RitsuLib.Ui.Catalog
     internal sealed class RitsuCatalogSearchRequest
     {
         private readonly RitsuCatalogQuery? _expression;
-        private readonly string[] _terms;
         private readonly RitsuCatalogSearchFields _fields;
         private readonly RitsuSearchOptions _options;
+        private readonly string[] _terms;
 
         private RitsuCatalogSearchRequest(RitsuCatalogQuery? expression, string[] terms,
             RitsuCatalogSearchFields fields, RitsuSearchOptions options)

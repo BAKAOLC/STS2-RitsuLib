@@ -1,5 +1,3 @@
-using System.Reflection;
-using STS2RitsuLib.Compat;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
@@ -14,12 +12,7 @@ namespace STS2RitsuLib.Settings
     /// </summary>
     internal static class ModSettingsLocalization
     {
-        private static readonly Lazy<I18N> InstanceFactory = new(() => new(
-            "RitsuLib-ModSettings",
-            resourceFolders: ["STS2RitsuLib.Settings.Localization.ModSettingsUi"],
-            resourceAssembly: Assembly.GetExecutingAssembly()));
-
-        public static I18N Instance => InstanceFactory.Value;
+        public static I18N Instance => RitsuModuleLocalization.Instance;
 
         public static string Get(string key, string fallback)
         {

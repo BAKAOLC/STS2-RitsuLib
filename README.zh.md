@@ -75,8 +75,22 @@ flowchart LR
 | 稳定分支或旧游戏 API 分支 | `STS2.RitsuLib.Compat.<api-version>` | 匹配的 release 资产或变体包 |
 | 玩家需要一个文件夹同时兼容多个 API 分支 | 你的 Mod 仍只引用一个包 | `STS2-RitsuLib.<version>.variant-pack.zip` |
 
-变体包会安装一个 `mods/STS2-RitsuLib/` 文件夹。根目录的 `STS2-RitsuLib.dll` 是加载器，真正按 API 区分的构建位于
-`lib/<api-version>/`。这只影响玩家安装运行时 Mod 的方式，不改变你的编译期 NuGet 引用。
+所有运行时包均安装为完整的 `mods/STS2-RitsuLib/` 文件夹。根目录的 `STS2-RitsuLib.dll` 是加载器；公共代码、通用 UI 和设置模块放在 `shared/`，兼容入口与游戏集成放在 `compat/<api-version>/`。变体包包含多个 API 版本，但公共模块只保留一份。安装时必须保留整个目录、两个子目录及模块清单，不能只复制根 DLL。
+
+现有 NuGet 引用和命名空间继续受支持。NuGet 会提供所有编译期模块，兼容入口通过类型转发支持已有 Mod 二进制。手动引用程序集时，需要引用同一包中的兼容入口、Runtime、Shared、Ui 和 Settings DLL。自行枚举单个程序集类型的反射代码需要适应类型分布在多个程序集中的变化。
+
+目录引用可直接导入安装目录中的 `RitsuLib.References.props`，自动添加全部五个程序集引用。单版本安装会自动选择唯一目标；引用 Bundle 时先指定编译目标：
+
+```xml
+<PropertyGroup>
+    <RitsuLibReferenceTarget>0.111.0</RitsuLibReferenceTarget>
+</PropertyGroup>
+<Import Project="path/to/STS2-RitsuLib/RitsuLib.References.props" />
+```
+
+该入口不会把框架复制进子 Mod 目录，运行时仍需单独完整安装。库本身统一使用标准 .NET 的 Debug/Release 配置，显式引用 GodotSharp 和源码生成器，构建不需要 Godot 项目、编辑器或导出流水线。
+
+通用控件、布局容器、界面主题和通知由 UI 模块提供，不依赖 Settings 程序集。新增的通用入口包括 `RitsuControlFactory`、`RitsuVerticalStack` 和 `RitsuFixedWidthScrollContent`；已有 `ModSettings*` 控件名称保留，以维持兼容。
 
 主包 `STS2.RitsuLib` 会跟随本仓库支持的《杀戮尖塔 2》最高 API。由于游戏最高 API 通常在 beta 分支，如果你的 Mod 面向其他公开游戏分支，请使用对应的 compat 包。
 

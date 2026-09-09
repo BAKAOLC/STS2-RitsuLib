@@ -7,6 +7,11 @@ namespace STS2RitsuLib.RuntimeInput
     {
         private const string ActionPrefix = "action:";
 
+        internal static bool TryNormalizeBinding(string? text, out string normalized)
+        {
+            return TryParse(text, out _, out normalized);
+        }
+
         public static bool TryParse(string? text, out RuntimeHotkeyBinding binding, out string normalized)
         {
             binding = default;

@@ -2,19 +2,19 @@
 {
     internal sealed class RitsuLibSidecarEndpointRegistration
     {
-        private readonly Lock _dispatchGate = new();
         private readonly Queue<BackgroundAction> _backgroundActions = [];
+        private readonly Lock _dispatchGate = new();
         private readonly Action<RitsuLibSidecarEndpointMessage>? _handler;
         private readonly RitsuLibSidecarTokenBucket _outboundRateLimit;
+        private int _backgroundDispatchBytes;
+        private bool _backgroundDispatchRunning;
+        private int _disposeStarted;
+        private int _disposed;
+        private int _mainLoopDispatchBytes;
+        private int _mainLoopDispatchMessages;
 
         private Action<RitsuLibSidecarEndpointParticipantsChangedEvent>? _participantsChanged;
         private RitsuLibSidecarEndpointRouteDefinition? _route;
-        private int _backgroundDispatchBytes;
-        private bool _backgroundDispatchRunning;
-        private int _mainLoopDispatchBytes;
-        private int _mainLoopDispatchMessages;
-        private int _disposed;
-        private int _disposeStarted;
         private int _sequence;
 
         internal RitsuLibSidecarEndpointRegistration(

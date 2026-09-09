@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using Godot;
-using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {

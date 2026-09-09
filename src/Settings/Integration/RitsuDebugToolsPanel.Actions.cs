@@ -1186,12 +1186,10 @@ namespace STS2RitsuLib.Settings
                     () => SubmitCreatureOperation(creature, RitsuDebugCreatureOperation.Heal, creature.MaxHp)),
             };
             if (!creature.IsPlayer)
-            {
                 quickActions.Add((
                     OperationLabel(RitsuDebugCreatureOperation.Kill),
                     ModSettingsButtonTone.Danger,
                     () => SubmitCreatureOperation(creature, RitsuDebugCreatureOperation.Kill, 0)));
-            }
 
             quickActionSettings.AddChild(ActionGrid(quickActions));
             AddCreatureOperationEditor(quickActionSettings, creature, RitsuDebugCreatureOperation.Damage, "1", 0,
@@ -2197,24 +2195,6 @@ namespace STS2RitsuLib.Settings
             return grid;
         }
 
-        private enum PlayerContentDestination
-        {
-            Cards,
-            Relics,
-            Potions,
-            Powers,
-            Orbs,
-        }
-
-        private sealed class DynamicVariableEditorState
-        {
-            internal Dictionary<string, LineEdit> Editors { get; } = new(StringComparer.Ordinal);
-
-            internal HashSet<string> Changed { get; } = new(StringComparer.Ordinal);
-
-            internal bool HasEditors => Editors.Count > 0;
-        }
-
         private static void AddSectionTitle(VBoxContainer root, string text)
         {
             var divider = new HSeparator();
@@ -2301,6 +2281,24 @@ namespace STS2RitsuLib.Settings
             where TValue : struct, Enum
         {
             return L($"ritsulib.debugTools.operation.{typeof(TValue).Name}.{value}", value.ToString());
+        }
+
+        private enum PlayerContentDestination
+        {
+            Cards,
+            Relics,
+            Potions,
+            Powers,
+            Orbs,
+        }
+
+        private sealed class DynamicVariableEditorState
+        {
+            internal Dictionary<string, LineEdit> Editors { get; } = new(StringComparer.Ordinal);
+
+            internal HashSet<string> Changed { get; } = new(StringComparer.Ordinal);
+
+            internal bool HasEditors => Editors.Count > 0;
         }
     }
 }

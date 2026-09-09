@@ -34,7 +34,6 @@ namespace STS2RitsuLib.Ui.Windows
         private Vector2 _dragOffset;
         private bool _dragging;
         private HBoxContainer? _header;
-        private Label? _title;
         private bool _interactionLocked;
         private bool _layoutInitialized;
         private ResizeEdge _resizeEdge;
@@ -42,6 +41,7 @@ namespace STS2RitsuLib.Ui.Windows
         private Vector2 _resizeStartMouse;
         private Vector2 _resizeStartPosition;
         private Vector2 _resizeStartSize;
+        private Label? _title;
 
         /// <summary>
         ///     <para xml:lang="en">Creates a window with default fixed-window options.</para>

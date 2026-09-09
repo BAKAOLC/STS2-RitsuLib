@@ -1,6 +1,5 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
-using STS2RitsuLib.Data;
 using STS2RitsuLib.Ui.Shell.Theme;
 
 namespace STS2RitsuLib.Ui.Toast
@@ -23,6 +22,15 @@ namespace STS2RitsuLib.Ui.Toast
         private static bool _initializing;
         private static bool _themeChangedSubscribed;
         private static RitsuToastSettings _settings = RitsuToastSettings.Default;
+        private static Func<RitsuToastSettings>? _settingsProvider;
+
+        internal static void AttachSettingsProvider(Func<RitsuToastSettings> provider)
+        {
+            ArgumentNullException.ThrowIfNull(provider);
+            var existing = Interlocked.CompareExchange(ref _settingsProvider, provider, null);
+            if (existing != null && existing != provider)
+                throw new InvalidOperationException("Toast settings already belong to another runtime provider.");
+        }
 
         internal static void Initialize()
         {
@@ -34,7 +42,7 @@ namespace STS2RitsuLib.Ui.Toast
                 _initializing = true;
                 try
                 {
-                    _settings = RitsuLibSettingsStore.GetToastSettings();
+                    _settings = _settingsProvider?.Invoke() ?? RitsuToastSettings.Default;
                     _lifecycleSubscription ??= RitsuLibFramework.SubscribeLifecycle<GameReadyEvent>(evt =>
                     {
                         lock (SyncRoot)
@@ -72,7 +80,7 @@ namespace STS2RitsuLib.Ui.Toast
 
         internal static void RefreshSettingsFromStore()
         {
-            ApplySettings(RitsuLibSettingsStore.GetToastSettings());
+            ApplySettings(_settingsProvider?.Invoke() ?? RitsuToastSettings.Default);
         }
 
         /// <summary>

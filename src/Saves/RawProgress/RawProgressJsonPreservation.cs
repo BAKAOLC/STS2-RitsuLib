@@ -196,11 +196,9 @@ namespace STS2RitsuLib.Saves.RawProgress
                     return rawObject.Count > 0;
 
                 foreach (var (propertyName, rawValue) in rawObject)
-                {
                     if (!baselineObject.TryGetPropertyValue(propertyName, out var baselineValue) ||
                         ContainsUnknownProperties(rawValue, baselineValue))
                         return true;
-                }
 
                 return false;
             }

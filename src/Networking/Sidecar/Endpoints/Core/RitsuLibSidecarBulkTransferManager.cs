@@ -17,18 +17,12 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private readonly Lock _gate = new();
         private readonly Func<RitsuLibSidecarBulkStreamOffer, RitsuLibSidecarBulkReceiveTarget?> _handler;
-        private readonly Dictionary<InboundKey, long> _recentlyCompleted = [];
         private readonly Dictionary<InboundKey, InboundTransfer> _inbound = [];
         private readonly Dictionary<ulong, OutboundTransfer> _outbound = [];
+        private readonly Dictionary<InboundKey, long> _recentlyCompleted = [];
         private readonly RitsuLibSidecarEndpointRegistration _registration;
 
         private int _disposed;
-
-        internal static long AcknowledgedOutboundBytes => Interlocked.Read(ref _acknowledgedOutboundBytes);
-        internal static long CommittedInboundBytes => Interlocked.Read(ref _committedInboundBytes);
-        internal static long CompletedTransfers => Interlocked.Read(ref _completedTransfers);
-        internal static long NonCompletedTransfers => Interlocked.Read(ref _nonCompletedTransfers);
-        internal static long RetransmittedFrames => Interlocked.Read(ref _retransmittedFrames);
 
         internal RitsuLibSidecarBulkTransferManager(
             RitsuLibSidecarEndpointRegistration registration,
@@ -38,7 +32,20 @@ namespace STS2RitsuLib.Networking.Sidecar
             _handler = handler;
         }
 
+        internal static long AcknowledgedOutboundBytes => Interlocked.Read(ref _acknowledgedOutboundBytes);
+        internal static long CommittedInboundBytes => Interlocked.Read(ref _committedInboundBytes);
+        internal static long CompletedTransfers => Interlocked.Read(ref _completedTransfers);
+        internal static long NonCompletedTransfers => Interlocked.Read(ref _nonCompletedTransfers);
+        internal static long RetransmittedFrames => Interlocked.Read(ref _retransmittedFrames);
+
         private RitsuLibSidecarBulkStreamOptions Options => _registration.BulkOptions!;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                return;
+            AbortAll(RitsuLibSidecarBulkTransferStatus.EndpointDisposed);
+        }
 
         internal Task<RitsuLibSidecarBulkTransferResult> SendAsync(
             RitsuLibSidecarEndpointDestination destination,
@@ -180,13 +187,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (Volatile.Read(ref _disposed) != 0)
                 return;
             AbortAll(RitsuLibSidecarBulkTransferStatus.Disconnected);
-        }
-
-        public void Dispose()
-        {
-            if (Interlocked.Exchange(ref _disposed, 1) != 0)
-                return;
-            AbortAll(RitsuLibSidecarBulkTransferStatus.EndpointDisposed);
         }
 
         private async Task RunOutboundAsync(OutboundTransfer state)
@@ -527,7 +527,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             lock (_gate)
             {
                 if (_disposed != 0)
+                {
                     rejectionStatus = RitsuLibSidecarBulkTransferStatus.EndpointDisposed;
+                }
                 else if (!_inbound.TryGetValue(key, out racedExisting))
                 {
                     if (_inbound.Count >= Options.MaxConcurrentInboundStreams)
@@ -669,8 +671,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                 }
                 else if (frame.Offset != state.EnqueuedOffset ||
                          frame.Payload.Length > state.ChunkBytes ||
-                         frame.Payload.Length != state.ChunkBytes &&
-                         frame.Offset + frame.Payload.Length != state.TotalLength ||
+                         (frame.Payload.Length != state.ChunkBytes &&
+                          frame.Offset + frame.Payload.Length != state.TotalLength) ||
                          frame.Offset + frame.Payload.Length > state.TotalLength ||
                          state.EnqueuedOffset - state.CommittedOffset + frame.Payload.Length > state.WindowBytes ||
                          !state.Writer!.Writer.TryWrite(new(frame.Offset, frame.Payload.ToArray())))
@@ -780,8 +782,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             lock (state.Gate)
             {
                 if (frame.Offset < state.ConfirmedOffset || frame.Offset > state.SentOffset ||
-                    frame.Offset != state.ConfirmedOffset &&
-                    state.Unacknowledged.Values.All(chunk => chunk.EndOffset != frame.Offset))
+                    (frame.Offset != state.ConfirmedOffset &&
+                     state.Unacknowledged.Values.All(chunk => chunk.EndOffset != frame.Offset)))
                 {
                     invalid = true;
                     confirmed = state.ConfirmedOffset;
@@ -849,7 +851,9 @@ namespace STS2RitsuLib.Networking.Sidecar
             lock (state.Gate)
             {
                 if (state.CommittedOffset != state.TotalLength || state.EnqueuedOffset != state.TotalLength)
+                {
                     invalid = true;
+                }
                 else if (state.Terminal == 0)
                 {
                     state.TerminalStatus = RitsuLibSidecarBulkTransferStatus.Completed;
@@ -1048,7 +1052,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             _ = Task.Run(async () =>
             {
                 if (state.WriterTask != null)
-                {
                     try
                     {
                         await state.WriterTask.ConfigureAwait(false);
@@ -1056,10 +1059,8 @@ namespace STS2RitsuLib.Networking.Sidecar
                     catch (OperationCanceledException)
                     {
                     }
-                }
 
                 if (state.Target is { LeaveOpen: false } target)
-                {
                     try
                     {
                         await target.Destination.DisposeAsync().ConfigureAwait(false);
@@ -1069,7 +1070,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                         RitsuLibFramework.Logger.ErrorNoTrace(
                             $"[SidecarBulk] Destination disposal failed for {_registration.Descriptor.OwnerId}/{_registration.Descriptor.Name}: {exception}");
                     }
-                }
 
                 FinishInbound(state, status);
             });
@@ -1107,7 +1107,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             _ = Task.Run(async () =>
             {
                 if (!target.LeaveOpen)
-                {
                     try
                     {
                         await target.Destination.DisposeAsync().ConfigureAwait(false);
@@ -1117,7 +1116,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                         RitsuLibFramework.Logger.ErrorNoTrace(
                             $"[SidecarBulk] Detached destination disposal failed for {_registration.Descriptor.OwnerId}/{_registration.Descriptor.Name}: {exception}");
                     }
-                }
 
                 target.Complete(new(
                     state.Key.TransferId,
@@ -1358,6 +1356,11 @@ namespace STS2RitsuLib.Networking.Sidecar
 
         private sealed class OutboundTransfer
         {
+            internal long ConfirmedOffset;
+            internal long LastActivityTick;
+            internal long SentOffset;
+            internal int Terminal;
+
             internal OutboundTransfer(
                 ulong transferId,
                 ulong peerNetId,
@@ -1406,14 +1409,18 @@ namespace STS2RitsuLib.Networking.Sidecar
             internal RitsuLibSidecarBulkTransferCoordinator.Lease Lease { get; }
             internal int ChunkBytes { get; set; }
             internal int WindowBytes { get; set; }
-            internal long SentOffset;
-            internal long ConfirmedOffset;
-            internal long LastActivityTick;
-            internal int Terminal;
         }
 
         private sealed class InboundTransfer
         {
+            internal int Accepted;
+            internal CancellationTokenRegistration CancellationRegistration;
+            internal long CommittedOffset;
+            internal long EnqueuedOffset;
+            internal long LastActivityTick;
+            internal int Terminal;
+            internal RitsuLibSidecarBulkTransferStatus TerminalStatus;
+
             internal InboundTransfer(
                 InboundKey key,
                 ushort protocolVersion,
@@ -1447,13 +1454,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             internal Channel<InboundChunk>? Writer { get; set; }
             internal Task? WriterTask { get; set; }
             internal byte[]? ExpectedSha256 { get; set; }
-            internal CancellationTokenRegistration CancellationRegistration;
-            internal RitsuLibSidecarBulkTransferStatus TerminalStatus;
-            internal int Accepted;
-            internal long EnqueuedOffset;
-            internal long CommittedOffset;
-            internal long LastActivityTick;
-            internal int Terminal;
         }
     }
 }

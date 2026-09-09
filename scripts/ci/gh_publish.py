@@ -13,8 +13,8 @@ if str(_scripts_dir) not in sys.path:
 from release_lib.artifact_validation import validate_viewer_artifacts
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
-    ARTIFACTS_GITHUB,
-    ARTIFACTS_NUGET,
+    github_artifacts,
+    nuget_artifacts,
     GITHUB_BUNDLE_ZIP_SUFFIX,
     GITHUB_PRERELEASE_TAG_NAME,
     GITHUB_ZIP_FILENAME_SUFFIX,
@@ -161,7 +161,7 @@ def _read_csproj_version(repo_root: Path) -> str:
     return v.strip()
 
 
-def cmd_dev_prerelease(repo_root: Path) -> None:
+def cmd_dev_prerelease(repo_root: Path, configuration: str = "Release") -> None:
     repo = _github_repository()
     tag = GITHUB_PRERELEASE_TAG_NAME
     sha = os.environ.get("GITHUB_SHA", "").strip()
@@ -183,11 +183,11 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
         f"- Commit: [`{sha[:8]}`]({commit_url})\n"
         + (f"- Workflow Run: [#{run_id}]({run_url})\n" if run_url else "")
     )
-    zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
-    bundle_zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_BUNDLE_ZIP_SUFFIX}"))
+    zips = sorted((repo_root / github_artifacts(configuration)).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
+    bundle_zips = sorted((repo_root / github_artifacts(configuration)).glob(f"*{GITHUB_BUNDLE_ZIP_SUFFIX}"))
     if not zips and not bundle_zips:
         print(
-            f"No *{GITHUB_ZIP_FILENAME_SUFFIX} or *{GITHUB_BUNDLE_ZIP_SUFFIX} under {ARTIFACTS_GITHUB}/",
+            f"No *{GITHUB_ZIP_FILENAME_SUFFIX} or *{GITHUB_BUNDLE_ZIP_SUFFIX} under {github_artifacts(configuration)}/",
             file=sys.stderr,
         )
         raise SystemExit(1)
@@ -219,22 +219,22 @@ def cmd_dev_prerelease(repo_root: Path) -> None:
     )
 
 
-def cmd_tag_release(repo_root: Path, tag: str) -> None:
+def cmd_tag_release(repo_root: Path, tag: str, configuration: str = "Release") -> None:
     repo = _github_repository()
     if not tag:
         print("Tag is empty; set GITHUB_REF_NAME or pass --tag.", file=sys.stderr)
         raise SystemExit(1)
-    zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
-    bundle_zips = sorted((repo_root / ARTIFACTS_GITHUB).glob(f"*{GITHUB_BUNDLE_ZIP_SUFFIX}"))
+    zips = sorted((repo_root / github_artifacts(configuration)).glob(f"*{GITHUB_ZIP_FILENAME_SUFFIX}"))
+    bundle_zips = sorted((repo_root / github_artifacts(configuration)).glob(f"*{GITHUB_BUNDLE_ZIP_SUFFIX}"))
     nupkgs = sorted(
         p
-        for p in (repo_root / ARTIFACTS_NUGET).glob("*.nupkg")
+        for p in (repo_root / nuget_artifacts(configuration)).glob("*.nupkg")
         if not p.name.endswith(SNUPKG_SUFFIX)
     )
     assets = [str(p) for p in (*zips, *bundle_zips, *nupkgs)]
     if not assets:
         print(
-            f"No release assets under {ARTIFACTS_GITHUB}/ or {ARTIFACTS_NUGET}/.",
+            f"No release assets under {github_artifacts(configuration)}/ or {nuget_artifacts(configuration)}/.",
             file=sys.stderr,
         )
         raise SystemExit(1)
@@ -283,18 +283,18 @@ def cmd_tag_release(repo_root: Path, tag: str) -> None:
         )
 
 
-def cmd_nuget_push(repo_root: Path) -> None:
+def cmd_nuget_push(repo_root: Path, configuration: str = "Release") -> None:
     key = os.environ.get("NUGET_API_KEY", "").strip()
     if not key:
         print("NUGET_API_KEY not set; skipping NuGet.org push.")
         return
     nupkgs = sorted(
         p
-        for p in (repo_root / ARTIFACTS_NUGET).glob("*.nupkg")
+        for p in (repo_root / nuget_artifacts(configuration)).glob("*.nupkg")
         if not p.name.endswith(SNUPKG_SUFFIX)
     )
     if not nupkgs:
-        print(f"No .nupkg files under {ARTIFACTS_NUGET}/; skipping push.")
+        print(f"No .nupkg files under {nuget_artifacts(configuration)}/; skipping push.")
         return
     validate_viewer_artifacts(packages=nupkgs)
     source = NUGET_ORG_V3_INDEX_URL
@@ -319,6 +319,7 @@ def cmd_nuget_push(repo_root: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="GitHub Releases / NuGet publish helpers for CI.")
     p.add_argument("--repo-root", type=Path, default=Path("."))
+    p.add_argument("--configuration", choices=("Debug", "Release"), default="Release")
     sub = p.add_subparsers(dest="command", required=True)
 
     sub.add_parser(
@@ -333,16 +334,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Release tag (default: GITHUB_REF_NAME from Actions)",
     )
 
-    sub.add_parser("nuget-push", help="Push artifacts/nuget/*.nupkg when NUGET_API_KEY is set.")
+    sub.add_parser("nuget-push", help="Push the selected configuration's NuGet artifacts when NUGET_API_KEY is set.")
 
     args = p.parse_args(argv)
     root = args.repo_root.resolve()
     if args.command == "dev-prerelease":
-        cmd_dev_prerelease(root)
+        cmd_dev_prerelease(root, args.configuration)
     elif args.command == "tag-release":
-        cmd_tag_release(root, args.tag.strip())
+        cmd_tag_release(root, args.tag.strip(), args.configuration)
     elif args.command == "nuget-push":
-        cmd_nuget_push(root)
+        cmd_nuget_push(root, args.configuration)
     return 0
 
 

@@ -3,15 +3,15 @@ using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.StartRunLobbyP
 #else
 using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.LobbyPlayer;
 #endif
+#if STS2_AT_LEAST_0_110_0 && !STS2_AT_LEAST_0_111_0
+using MegaCrit.Sts2.Core.Multiplayer;
+#endif
 using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Daily;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
-#if STS2_AT_LEAST_0_110_0 && !STS2_AT_LEAST_0_111_0
-using MegaCrit.Sts2.Core.Multiplayer;
-#endif
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;

@@ -4,6 +4,10 @@ description: >-
   verification + release_cli --artifacts-only with explicit MSBuild overrides).
 
 inputs:
+  configuration:
+    description: Standard .NET build configuration (Debug or Release).
+    required: false
+    default: "Release"
   signatures-root:
     description: Absolute path for Sts2ApiSignatureRoot (versioned folders with sts2.dll).
     required: true
@@ -12,7 +16,7 @@ inputs:
     required: false
     default: "false"
   upload-artifact:
-    description: Upload artifacts/github and artifacts/nuget as a GitHub Actions artifact.
+    description: Upload the selected configuration's NuGet packages and runtime archives.
     required: false
     default: "true"
   artifact-retention-days:
@@ -30,7 +34,7 @@ runs:
     - uses: actions/cache@v5.0.5
       with:
         path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('STS2-RitsuLib.csproj') }}
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets') }}
 
     - uses: actions/setup-node@v4
       with:
@@ -54,6 +58,7 @@ runs:
         uv run python scripts/ci/ci_build.py
         --repo-root "${{ github.workspace }}"
         --signature-root "${{ inputs.signatures-root }}"
+        --configuration "${{ inputs.configuration }}"
         $extra
 
     - name: Resolve artifact name
@@ -71,7 +76,7 @@ runs:
       with:
         name: ${{ steps.artifact.outputs.name }}
         path: |
-          artifacts/github/**
-          artifacts/nuget/**
+          artifacts/packages/${{ inputs.configuration }}/github/**
+          artifacts/packages/${{ inputs.configuration }}/nuget/**
         if-no-files-found: error
         retention-days: ${{ inputs.artifact-retention-days }}

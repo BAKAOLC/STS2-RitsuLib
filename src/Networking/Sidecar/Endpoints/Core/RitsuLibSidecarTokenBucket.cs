@@ -2,16 +2,16 @@
 {
     internal sealed class RitsuLibSidecarTokenBucket
     {
+        private readonly double _byteCapacity;
+        private readonly double _bytesPerMillisecond;
         private readonly Lock _gate = new();
         private readonly double _packetCapacity;
-        private readonly double _byteCapacity;
         private readonly double _packetsPerMillisecond;
-        private readonly double _bytesPerMillisecond;
         private readonly Func<long> _tickCount64;
-
-        private double _packetTokens;
         private double _byteTokens;
         private long _lastRefillTickCount64;
+
+        private double _packetTokens;
 
         internal RitsuLibSidecarTokenBucket(int packetsPerSecond, int bytesPerSecond)
             : this(packetsPerSecond, bytesPerSecond, static () => Environment.TickCount64)

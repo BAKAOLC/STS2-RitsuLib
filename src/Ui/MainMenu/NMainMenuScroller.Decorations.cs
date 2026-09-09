@@ -16,16 +16,17 @@ namespace STS2RitsuLib.Ui.MainMenu
         private static readonly AccessTools.FieldRef<NContinueRunInfo, bool> RunInfoShown =
             AccessTools.FieldRefAccess<NContinueRunInfo, bool>("_isShown");
 
-        private Control? _reticleLeft;
-        private Control? _reticleRight;
         private NMainMenuTextButton? _reticleButton;
-        private Tween? _reticleTween;
+
+        private Control? _reticleLeft;
         private float _reticleProgress;
+        private Control? _reticleRight;
+        private Tween? _reticleTween;
         private NContinueRunInfo? _runInfo;
         private Control? _runInfoButton;
         private Vector2 _runInfoOffset;
-        private Tween? _runInfoTween;
         private float _runInfoProgress;
+        private Tween? _runInfoTween;
 
         private void InitializeDecorations()
         {

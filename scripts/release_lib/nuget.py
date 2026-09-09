@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import hashlib
 import os
 import shutil
 import subprocess
@@ -13,13 +12,13 @@ from pathlib import Path
 
 from release_lib.artifact_validation import validate_github_zip_viewer, validate_nuget_viewer
 from release_lib.msbuild_eval import get_csproj_property
+from release_lib.runtime_layout import validate_runtime_directory, write_module_manifest
 from release_lib.repo_layout import (
-    ARTIFACTS_GITHUB,
-    ARTIFACTS_NUGET,
+    github_artifacts,
+    nuget_artifacts,
+    runtime_directory,
     COMPAT_TARGET_MARKER_NAME,
     GITHUB_ZIP_FILENAME_SUFFIX,
-    GODOT_MONO_BIN_PREFIX,
-    GODOT_MONO_OBJ_PREFIX,
     MOD_MANIFEST_NAME,
     RITSULIB_CSPROJ_NAME,
     SNUPKG_SUFFIX,
@@ -45,29 +44,31 @@ def snapshot_bundle_variant_after_pack(
     bundle_staging_root: Path,
     latest_compat: str,
 ) -> None:
-    """After dotnet pack for a compat target, copy RitsuLib bin outputs into bundle staging."""
-    bin_dir = ritsulib_root / GODOT_MONO_BIN_PREFIX / configuration
-    lib_dest = bundle_staging_root / "lib" / compat_target
-    lib_dest.mkdir(parents=True, exist_ok=True)
-    for name in (ritsulib_built_dll_name(), ritsulib_built_doc_xml_name(), ritsulib_built_pdb_name()):
-        src = bin_dir / name
-        if src.is_file():
-            shutil.copy2(src, lib_dest / name)
-    (lib_dest / COMPAT_TARGET_MARKER_NAME).write_text(
-        compat_target + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
-
+    """Snapshot the complete deployment; shared binaries must be identical across targets."""
+    deployment = runtime_directory(ritsulib_root, configuration, compat_target)
+    manifest = validate_runtime_directory(deployment)
+    if [entry["compatTarget"] for entry in manifest["variants"]] != [compat_target]:
+        raise RuntimeError(f"Stale deployment output for {compat_target}: {deployment}")
+    shared_dest = bundle_staging_root / "shared"
+    shared_dest.mkdir(parents=True, exist_ok=True)
+    for source in (deployment / "shared").iterdir():
+        destination = shared_dest / source.name
+        if destination.exists() and destination.read_bytes() != source.read_bytes():
+            raise RuntimeError(f"Shared module output varies between compatibility targets: {source.name}")
+        shutil.copy2(source, destination)
+    destination = bundle_staging_root / "compat" / compat_target
+    if destination.exists():
+        shutil.rmtree(destination)
+    shutil.copytree(deployment / "compat" / compat_target, destination)
+    loader = deployment / ritsulib_built_dll_name()
+    loader_dest = bundle_staging_root / loader.name
+    if loader_dest.exists() and loader_dest.read_bytes() != loader.read_bytes():
+        raise RuntimeError("Loader output varies between compatibility targets.")
+    shutil.copy2(loader, loader_dest)
+    shutil.copy2(deployment / "RitsuLib.References.props", bundle_staging_root / "RitsuLib.References.props")
     manifest_dest = bundle_staging_root / MOD_MANIFEST_NAME
     if compat_target == latest_compat or not manifest_dest.is_file():
-        gen = generated_manifest_path(
-            ritsulib_root,
-            configuration=configuration,
-            compat_target=compat_target,
-        )
-        if gen.is_file():
-            shutil.copy2(gen, manifest_dest)
+        shutil.copy2(deployment / MOD_MANIFEST_NAME, manifest_dest)
         copy_viewer_dist_to(bundle_staging_root, ritsulib_root=ritsulib_root)
 
 
@@ -99,52 +100,10 @@ def finalize_bundle_manifest(
 
 
 def write_bundle_variant_manifest(bundle_staging_root: Path) -> None:
-    lib_root = bundle_staging_root / "lib"
-    if not lib_root.is_dir():
-        msg = f"bundle staging missing lib variants under {lib_root}"
-        raise RuntimeError(msg)
-
-    variants: list[dict[str, str]] = []
-    for lib_dir in sorted((p for p in lib_root.iterdir() if p.is_dir()), key=lambda p: _compat_version_key(p.name)):
-        compat_target = lib_dir.name
-        marker = lib_dir / COMPAT_TARGET_MARKER_NAME
-        dll = lib_dir / ritsulib_built_dll_name()
-        if not marker.is_file():
-            msg = f"bundle variant missing {COMPAT_TARGET_MARKER_NAME}: {marker}"
-            raise RuntimeError(msg)
-        if marker.read_text(encoding="utf-8").strip() != compat_target:
-            msg = f"bundle variant marker does not match directory: {marker}"
-            raise RuntimeError(msg)
-        if not dll.is_file():
-            msg = f"bundle variant missing DLL: {dll}"
-            raise RuntimeError(msg)
-        variants.append(
-            {
-                "compatTarget": compat_target,
-                "directory": f"lib/{compat_target}",
-                "assembly": ritsulib_built_dll_name(),
-                "sha256": _sha256_file(dll),
-            }
-        )
-
-    if not variants:
-        msg = f"bundle staging missing lib variants under {lib_root}"
-        raise RuntimeError(msg)
-
-    manifest = {"schema": 1, "variants": variants}
-    (bundle_staging_root / VARIANT_MANIFEST_NAME).write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_module_manifest(bundle_staging_root)
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+
 
 
 def copy_viewer_dist_to(dest_root: Path, *, ritsulib_root: Path) -> None:
@@ -312,8 +271,8 @@ def publish_nugets(
     sts2_dir: Path | None = None,
     bundle_staging_root: Path | None = None,
 ) -> tuple[list[Path], list[Path]]:
-    artifacts_dir = ritsulib_root / ARTIFACTS_NUGET
-    github_dir = ritsulib_root / ARTIFACTS_GITHUB
+    artifacts_dir = ritsulib_root / nuget_artifacts(configuration)
+    github_dir = ritsulib_root / github_artifacts(configuration)
     key = _resolve_api_key(api_key)
     published: list[Path] = []
     zips: list[Path] = []
@@ -382,8 +341,8 @@ def build_artifacts(
     sts2_dir: Path | None = None,
     bundle_staging_root: Path | None = None,
 ) -> tuple[list[Path], list[Path]]:
-    artifacts_dir = ritsulib_root / ARTIFACTS_NUGET
-    github_dir = ritsulib_root / ARTIFACTS_GITHUB
+    artifacts_dir = ritsulib_root / nuget_artifacts(configuration)
+    github_dir = ritsulib_root / github_artifacts(configuration)
     packages: list[Path] = []
     zips: list[Path] = []
     latest_compat: str | None = None
@@ -505,39 +464,16 @@ def create_github_zip(
     output_dir: Path,
 ) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
-    out_bin = ritsulib_root / GODOT_MONO_BIN_PREFIX / configuration
-    dll_path = out_bin / ritsulib_built_dll_name()
-    doc_xml_path = out_bin / ritsulib_built_doc_xml_name()
-    pdb_path = out_bin / ritsulib_built_pdb_name()
-    manifest_generated = generated_manifest_path(
-        ritsulib_root,
-        configuration=configuration,
-        compat_target=compat_target,
-    )
-    manifest_path = manifest_generated if manifest_generated.is_file() else (ritsulib_root / MOD_MANIFEST_NAME)
-    if not dll_path.is_file():
-        msg = f"Could not find built DLL for zip packaging: {dll_path}"
-        raise RuntimeError(msg)
-    if not doc_xml_path.is_file():
-        msg = (
-            f"Could not find C# API documentation XML for zip packaging: {doc_xml_path}. "
-            "Build with GenerateDocumentationFile (see STS2-RitsuLib.csproj)."
-        )
-        raise RuntimeError(msg)
-    if not manifest_path.is_file():
-        msg = f"Could not find mod_manifest.json for zip packaging: {manifest_path}"
-        raise RuntimeError(msg)
-
-    zip_name = f"{package.stem}{GITHUB_ZIP_FILENAME_SUFFIX}"
-    zip_path = output_dir / zip_name
+    deployment = runtime_directory(ritsulib_root, configuration, compat_target)
+    manifest = validate_runtime_directory(deployment)
+    if [entry["compatTarget"] for entry in manifest["variants"]] != [compat_target]:
+        raise RuntimeError(f"Stale deployment output for {compat_target}: {deployment}")
+    zip_path = output_dir / f"{package.stem}{GITHUB_ZIP_FILENAME_SUFFIX}"
     with zipfile.ZipFile(zip_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.write(dll_path, arcname=ritsulib_built_dll_name())
-        zf.write(doc_xml_path, arcname=ritsulib_built_doc_xml_name())
-        if pdb_path.is_file():
-            zf.write(pdb_path, arcname=ritsulib_built_pdb_name())
-        zf.write(manifest_path, arcname="mod_manifest.json")
-        zf.writestr("compat-target.txt", compat_target + "\n")
-        write_viewer_dist_to_zip(zf, ritsulib_root=ritsulib_root)
+        for path in sorted(deployment.rglob("*")):
+            if path.is_file():
+                zf.write(path, arcname=path.relative_to(deployment).as_posix())
+    validate_github_zip_viewer(zip_path)
     return zip_path
 
 
@@ -547,11 +483,7 @@ def generated_manifest_path(
     configuration: str,
     compat_target: str,
 ) -> Path:
-    obj_root = ritsulib_root / GODOT_MONO_OBJ_PREFIX / configuration
-    compat_manifest = obj_root / compat_target / "mod_manifest.generated.json"
-    if compat_manifest.is_file():
-        return compat_manifest
-    return obj_root / "mod_manifest.generated.json"
+    return ritsulib_root / "artifacts" / "obj" / "STS2-RitsuLib" / configuration / compat_target / "mod_manifest.generated.json"
 
 
 def run_push(package: Path, *, source: str, api_key: str) -> None:

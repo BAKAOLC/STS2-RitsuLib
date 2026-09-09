@@ -19,12 +19,13 @@ namespace STS2RitsuLib.Ui.MainMenu
         private static readonly AccessTools.FieldRef<NScrollbar, bool> ScrollBarDragging =
             AccessTools.FieldRefAccess<NScrollbar, bool>("_isDragging");
 
-        private NMainMenuTextButton? _lastFocused;
-        private NMainMenuTextButton? _pressedButton;
-        private int _lastFocusedIndex;
-        private bool _wasActive;
-        private bool _restorePending;
         private NControllerManager? _controllerManager;
+
+        private NMainMenuTextButton? _lastFocused;
+        private int _lastFocusedIndex;
+        private NMainMenuTextButton? _pressedButton;
+        private bool _restorePending;
+        private bool _wasActive;
 
         private static bool IsDirectional => Sts2InputCompat.IsUsingDirectionalNavigation;
 
@@ -185,7 +186,7 @@ namespace STS2RitsuLib.Ui.MainMenu
             _restorePending = false;
             var current = GetViewport().GuiGetFocusOwner();
             if (current != null && (current.GetParent() != this ||
-                                    current is NMainMenuTextButton button && IsNavigable(button)))
+                                    (current is NMainMenuTextButton button && IsNavigable(button))))
             {
                 if (current.GetParent() == this)
                 {

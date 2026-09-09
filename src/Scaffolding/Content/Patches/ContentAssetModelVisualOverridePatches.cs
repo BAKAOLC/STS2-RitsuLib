@@ -1087,8 +1087,8 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private sealed class ResourceOverrideState<T> where T : Resource
         {
             private T? _baseValue;
-            private T? _overrideValue;
             private bool _hasOverride;
+            private T? _overrideValue;
 
             public void Apply(T? currentValue, T overrideValue, Action<T?> setter)
             {

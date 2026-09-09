@@ -20,8 +20,8 @@ namespace STS2RitsuLib.Settings
         private readonly VBoxContainer _body;
         private readonly Label _emptyLabel;
         private readonly Button _header;
-        private readonly Dictionary<string, RitsuDebugSearchableChoiceOption> _options;
         private readonly Dictionary<string, Button> _optionButtons = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, RitsuDebugSearchableChoiceOption> _options;
         private readonly LineEdit _search;
         private readonly string _title;
         private bool _expanded;

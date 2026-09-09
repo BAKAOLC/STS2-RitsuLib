@@ -1,7 +1,7 @@
-﻿using MegaCrit.Sts2.Core.Combat;
+﻿using System.Text.Json.Serialization;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
-using System.Text.Json.Serialization;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Networking.Sidecar;

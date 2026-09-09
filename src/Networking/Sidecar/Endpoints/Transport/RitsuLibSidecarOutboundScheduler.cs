@@ -38,6 +38,13 @@ namespace STS2RitsuLib.Networking.Sidecar
         private static long _staleSessionFrames;
         private static long _transportFailedFrames;
 
+        internal static long DisposedFrames => Interlocked.Read(ref _disposedFrames);
+        internal static long ExpiredFrames => Interlocked.Read(ref _expiredFrames);
+        internal static long QueueRejectedFrames => Interlocked.Read(ref _queueRejectedFrames);
+        internal static long RealtimeEvictedFrames => Interlocked.Read(ref _realtimeEvictedFrames);
+        internal static long StaleSessionFrames => Interlocked.Read(ref _staleSessionFrames);
+        internal static long TransportFailedFrames => Interlocked.Read(ref _transportFailedFrames);
+
         internal static RitsuLibSidecarSendStatus TryEnqueue(
             INetGameService? netService,
             long sessionEpoch,
@@ -123,21 +130,15 @@ namespace STS2RitsuLib.Networking.Sidecar
                 packetsRemaining--;
                 bytesRemaining -= frame.Envelope.Length;
                 if (frame.Owner is { IsDisposed: true })
-                {
                     Interlocked.Increment(ref _disposedFrames);
-                }
                 else if (!RitsuLibSidecarSessionManager.IsCurrentSession(netService, sessionEpoch))
-                {
                     Interlocked.Increment(ref _staleSessionFrames);
-                }
                 else if (!RitsuLibSidecarEndpointTransport.TrySend(
                              netService,
                              frame.PeerNetId,
                              frame.Envelope,
                              frame.DeliveryProfile))
-                {
                     Interlocked.Increment(ref _transportFailedFrames);
-                }
             }
         }
 
@@ -193,13 +194,6 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return (_queuedMessages, _queuedBytes);
             }
         }
-
-        internal static long DisposedFrames => Interlocked.Read(ref _disposedFrames);
-        internal static long ExpiredFrames => Interlocked.Read(ref _expiredFrames);
-        internal static long QueueRejectedFrames => Interlocked.Read(ref _queueRejectedFrames);
-        internal static long RealtimeEvictedFrames => Interlocked.Read(ref _realtimeEvictedFrames);
-        internal static long StaleSessionFrames => Interlocked.Read(ref _staleSessionFrames);
-        internal static long TransportFailedFrames => Interlocked.Read(ref _transportFailedFrames);
 
         internal static void ResetStatistics()
         {
@@ -331,15 +325,15 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return;
             var retained = new Queue<OutboundFrame>(queue.Count);
             while (queue.TryDequeue(out var frame))
-            {
                 if (ReferenceEquals(frame.Owner, registration))
                 {
                     Interlocked.Increment(ref _disposedFrames);
                     RemoveDequeued(peerQueue, frame);
                 }
                 else
+                {
                     retained.Enqueue(frame);
-            }
+                }
 
             while (retained.TryDequeue(out var frame))
                 queue.Enqueue(frame);

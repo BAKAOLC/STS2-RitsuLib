@@ -27,10 +27,6 @@ namespace STS2RitsuLib.Utils
         private LoadedTranslations _loaded = LoadedTranslations.Empty;
         private bool _subscribed;
 
-        internal bool IsDisposed => Volatile.Read(ref _disposed);
-
-        internal event Action<I18N>? Disposed;
-
         /// <summary>
         ///     <para xml:lang="en">Creates an instance, optionally wiring locale change subscription when sources are configured.</para>
         ///     <para xml:lang="zh-CN">创建实例；当配置了翻译来源时，可自动接入语言切换订阅。</para>
@@ -80,6 +76,8 @@ namespace STS2RitsuLib.Utils
                 Initialize();
         }
 
+        internal bool IsDisposed => Volatile.Read(ref _disposed);
+
         /// <summary>
         ///     <para xml:lang="en">Releases subscriptions and clears loaded translations.</para>
         ///     <para xml:lang="zh-CN">释放订阅并清空已经加载的翻译。</para>
@@ -120,6 +118,8 @@ namespace STS2RitsuLib.Utils
         {
             return GetEnumerator();
         }
+
+        internal event Action<I18N>? Disposed;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -285,12 +285,10 @@ namespace STS2RitsuLib.Utils
                 StringComparer.OrdinalIgnoreCase);
 
             foreach (var (key, value) in loaded.Translations)
-            {
                 if (loaded.LocalKeys.Contains(key))
                     local.Add(key, value);
                 else
                     fallback.Add(key, value);
-            }
 
             return (local, fallback);
         }
