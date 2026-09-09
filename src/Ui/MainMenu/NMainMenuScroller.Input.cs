@@ -13,21 +13,35 @@ namespace STS2RitsuLib.Ui.MainMenu
 {
     internal sealed partial class NMainMenuScroller
     {
+        private const float HeightTweenDuration = 0.2f;
+
         private static readonly AccessTools.FieldRef<NClickableControl, bool> Pressed =
             AccessTools.FieldRefAccess<NClickableControl, bool>("_isPressed");
 
-        private static readonly AccessTools.FieldRef<NScrollbar, bool> ScrollBarDragging =
-            AccessTools.FieldRefAccess<NScrollbar, bool>("_isDragging");
+        private static readonly AccessTools.FieldRef<NClickableControl, bool> Hovered =
+            AccessTools.FieldRefAccess<NClickableControl, bool>("_isHovered");
+
+        private static readonly AccessTools.FieldRef<NClickableControl, bool> ControllerFocused =
+            AccessTools.FieldRefAccess<NClickableControl, bool>("_isControllerFocused");
+
+        private static readonly Action<NClickableControl> RefreshClickableFocus =
+            AccessTools.MethodDelegate<Action<NClickableControl>>(
+                AccessTools.DeclaredMethod(typeof(NClickableControl), "RefreshFocus"));
 
         private NControllerManager? _controllerManager;
-
+        private int _heightStepIndex;
+        private bool _keyboardNavigating;
         private NMainMenuTextButton? _lastFocused;
         private int _lastFocusedIndex;
         private NMainMenuTextButton? _pressedButton;
         private bool _restorePending;
+        private float _visualScroll;
+        private Tween? _visualScrollTween;
         private bool _wasActive;
 
         private static bool IsDirectional => Sts2InputCompat.IsUsingDirectionalNavigation;
+
+        private bool FollowsFocus => _keyboardNavigating || IsDirectional;
 
         private bool IsActive => Initialized && IsVisibleInTree() &&
                                  ActiveScreenContext.Instance.IsCurrent(_mainMenu) &&
@@ -67,7 +81,6 @@ namespace STS2RitsuLib.Ui.MainMenu
         private void OnWindowFocusExited()
         {
             CancelPress();
-            ScrollBarDragging(_scrollBar) = false;
         }
 
         internal Control? GetDefaultFocus()
@@ -101,11 +114,13 @@ namespace STS2RitsuLib.Ui.MainMenu
         {
             if (_pressedButton != control)
                 CancelPress();
-            if (!IsActive || !IsDirectional || control.GetParent() != this)
+            if (!IsActive || control.GetParent() != this || control is not NMainMenuTextButton button)
                 return;
             if (_layoutDirty)
                 RefreshLayout();
-            EnsureVisible(control);
+            if (!FollowsFocus)
+                return;
+            AdoptExclusiveFocus(button, mouse: false);
         }
 
         private void OnButtonFocused(NClickableControl control)
@@ -116,9 +131,7 @@ namespace STS2RitsuLib.Ui.MainMenu
             _lastFocusedIndex = Math.Max(0, _buttons.IndexOf(button));
             if (_layoutDirty)
                 RefreshLayout();
-            if (IsDirectional)
-                EnsureVisible(button);
-            ShowReticles(button);
+            AdoptExclusiveFocus(button, mouse: !button.HasFocus());
         }
 
         private void OnButtonUnfocused(NClickableControl control)
@@ -129,10 +142,53 @@ namespace STS2RitsuLib.Ui.MainMenu
             HideReticles(button);
         }
 
+        private void AdoptExclusiveFocus(NMainMenuTextButton button, bool mouse)
+        {
+            if (mouse)
+            {
+                _keyboardNavigating = false;
+                ClearGodotFocus();
+                ShowReticles(button);
+                return;
+            }
+
+            _keyboardNavigating = true;
+            ClearHoverFocus();
+            if (!button.HasFocus())
+                button.GrabFocus();
+            EnsureVisible(button);
+            ShowReticles(button);
+        }
+
+        private void ClearHoverFocus()
+        {
+            foreach (var button in _buttons)
+            {
+                if (!IsInstanceValid(button) || !Hovered(button))
+                    continue;
+                Hovered(button) = false;
+                RefreshClickableFocus(button);
+            }
+        }
+
+        private void ClearGodotFocus()
+        {
+            foreach (var button in _buttons)
+            {
+                if (!IsInstanceValid(button))
+                    continue;
+                if (button.HasFocus())
+                    button.ReleaseFocus();
+                if (!ControllerFocused(button))
+                    continue;
+                ControllerFocused(button) = false;
+                RefreshClickableFocus(button);
+            }
+        }
+
         private void OnScreenChanged()
         {
             CancelPress();
-            ScrollBarDragging(_scrollBar) = false;
             _restorePending = IsDirectional;
             if (!IsActive)
                 HideDecorations();
@@ -148,13 +204,19 @@ namespace STS2RitsuLib.Ui.MainMenu
         {
             CancelPress();
             _restorePending = false;
+            _keyboardNavigating = false;
+            ClearGodotFocus();
+            var pos = GetGlobalMousePosition();
+            if (_buttons.LastOrDefault(button =>
+                    IsNavigable(button) && button.GetGlobalRect().HasPoint(pos)) is { } hovered)
+                ShowReticles(hovered);
         }
 
         private void OnControllerDetected()
         {
             CancelPress();
-            ScrollBarDragging(_scrollBar) = false;
             _restorePending = true;
+            ClearHoverFocus();
             RestoreFocusIfMissing();
         }
 
@@ -170,7 +232,7 @@ namespace STS2RitsuLib.Ui.MainMenu
                 }
             }
             else if (!_wasActive || _restorePending ||
-                     (IsDirectional && GetViewport().GuiGetFocusOwner() == null) ||
+                     (FollowsFocus && GetViewport().GuiGetFocusOwner() == null) ||
                      (_lastFocused != null && !IsNavigable(_lastFocused)))
             {
                 RestoreFocusIfMissing();
@@ -188,27 +250,20 @@ namespace STS2RitsuLib.Ui.MainMenu
             if (current != null && (current.GetParent() != this ||
                                     (current is NMainMenuTextButton button && IsNavigable(button))))
             {
-                if (current.GetParent() == this)
-                {
-                    EnsureVisible(current);
-                    if (current is NMainMenuTextButton focusedButton && _reticleButton != focusedButton)
-                        ShowReticles(focusedButton);
-                }
+                if (current.GetParent() == this && current is NMainMenuTextButton focusedButton)
+                    AdoptExclusiveFocus(focusedButton, mouse: false);
 
                 return;
             }
 
-            if (GetDefaultFocus() is not { } target)
+            if (GetDefaultFocus() is not NMainMenuTextButton target)
                 return;
-            EnsureVisible(target);
-            target.GrabFocus();
-            if (target is NMainMenuTextButton textButton)
-                ShowReticles(textButton);
+            AdoptExclusiveFocus(target, mouse: false);
         }
 
         public override void _GuiInput(InputEvent inputEvent)
         {
-            if (!IsActive || ScrollLimit <= 0f)
+            if (!IsActive || !ScrollEngaged)
                 return;
             if (inputEvent is InputEventMouseButton
                 {
@@ -222,16 +277,56 @@ namespace STS2RitsuLib.Ui.MainMenu
             }
         }
 
+        public override void _UnhandledInput(InputEvent inputEvent)
+        {
+            if (!IsActive ||
+                !inputEvent.IsActionPressed(MegaInput.up) && !inputEvent.IsActionPressed(MegaInput.down))
+                return;
+            if (GetViewport().GuiGetFocusOwner() is { } focused && focused.GetParent() == this)
+                return;
+
+            _keyboardNavigating = true;
+            RebuildNavigation();
+            var navigable = _buttons.Where(IsNavigable).ToList();
+            if (navigable.Count == 0)
+                return;
+            var from = navigable.FirstOrDefault(button => Hovered(button)) ??
+                       (IsNavigable(_lastFocused) ? _lastFocused : null) ??
+                       navigable[0];
+            var index = Math.Max(0, navigable.IndexOf(from));
+            var target = inputEvent.IsActionPressed(MegaInput.down)
+                ? navigable[Math.Min(navigable.Count - 1, index + 1)]
+                : navigable[Math.Max(0, index - 1)];
+            AdoptExclusiveFocus(target, mouse: false);
+            GetViewport().SetInputAsHandled();
+        }
+
         internal bool FilterButtonInput(NMainMenuTextButton button, InputEvent inputEvent)
         {
             if (_layoutDirty)
                 RefreshLayout();
+            if (inputEvent is InputEventMouseButton
+                {
+                    Pressed: true, ButtonIndex: MouseButton.WheelUp or MouseButton.WheelDown,
+                }
+                or InputEventPanGesture)
+            {
+                if (!IsActive || !ScrollEngaged)
+                    return false;
+                CancelPress();
+                SetScroll(_scroll - ScrollHelper.GetDragForScrollEvent(inputEvent));
+                GetViewport().SetInputAsHandled();
+                return false;
+            }
+
             if (inputEvent.IsActionPressed(MegaInput.up) || inputEvent.IsActionPressed(MegaInput.down) ||
                 inputEvent.IsActionPressed(MegaInput.left) || inputEvent.IsActionPressed(MegaInput.right))
             {
                 CancelPress();
                 if (!IsActive)
                     return false;
+                _keyboardNavigating = true;
+                ClearHoverFocus();
                 RebuildNavigation();
                 return true;
             }
@@ -244,12 +339,12 @@ namespace STS2RitsuLib.Ui.MainMenu
 
             var valid = IsActive && !button.IsQueuedForDeletion() && button.IsVisibleInTree() &&
                         button.IsEnabled && button.GetParent() == this;
-            if (valid && isSelect && IsDirectional)
+            if (valid && isSelect && FollowsFocus)
                 EnsureVisible(button);
             valid &= isMouseClick
-                ? GetGlobalRect().HasPoint(GetGlobalMousePosition()) &&
+                ? (!ScrollEngaged || GetGlobalRect().HasPoint(GetGlobalMousePosition())) &&
                   button.GetGlobalRect().HasPoint(GetGlobalMousePosition())
-                : IsDirectional && IsNavigable(button) && button.HasFocus() && IsRowFullyVisible(button);
+                : FollowsFocus && IsNavigable(button) && button.HasFocus() && IsRowFullyVisible(button);
             if (!valid)
             {
                 CancelPress();
@@ -296,7 +391,53 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         private bool IsRowFullyVisible(Control control)
         {
-            return control.Position.Y >= 0f && control.Position.Y + control.Size.Y <= Size.Y + 0.5f;
+            return !ScrollEngaged ||
+                   (control.Position.Y >= 0f && control.Position.Y + control.Size.Y <= Size.Y + 0.5f);
+        }
+
+        private void SyncHeightSteps(bool instant)
+        {
+            var next = 0;
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var item in _measured)
+            {
+                if (_scroll + 0.001f < _rowTops[item] + _measurements[item].Y * 0.5f)
+                    break;
+                next++;
+            }
+
+            var target = _scroll + 0.001f >= ScrollLimit
+                ? ScrollLimit
+                : Mathf.Min(ScrollPixelsForStep(next), ScrollLimit);
+            if (instant)
+            {
+                _visualScrollTween?.Kill();
+                _visualScrollTween = null;
+                _heightStepIndex = next;
+                _visualScroll = target;
+                return;
+            }
+
+            if (Mathf.IsEqualApprox(_visualScroll, target) && next == _heightStepIndex)
+                return;
+            _heightStepIndex = next;
+            _visualScrollTween?.Kill();
+            _visualScrollTween = CreateTween();
+            _visualScrollTween.TweenMethod(Callable.From<float>(value =>
+                {
+                    _visualScroll = value;
+                    PositionItems();
+                }), _visualScroll, target, HeightTweenDuration)
+                .SetEase(Tween.EaseType.Out)
+                .SetTrans(Tween.TransitionType.Cubic);
+        }
+
+        private float ScrollPixelsForStep(int step)
+        {
+            if (step <= 0 || _measured.Count == 0)
+                return 0f;
+            var last = _measured[Math.Min(step, _measured.Count) - 1];
+            return _rowTops[last] + _measurements[last].Y;
         }
     }
 }
