@@ -27,6 +27,8 @@ namespace STS2RitsuLib.CardPiles
     /// </remarks>
     public sealed record ModCardPileDefinition
     {
+        private readonly string[]? _hotkeys;
+
         /// <summary>
         ///     <para xml:lang="en">Initializes a card-pile definition and its optional presentation capabilities.</para>
         ///     <para xml:lang="zh-CN">初始化卡牌牌堆定义及其可选展示能力。</para>
@@ -60,8 +62,8 @@ namespace STS2RitsuLib.CardPiles
         ///     <para xml:lang="zh-CN">牌堆图标的可选 Godot 资源路径。</para>
         /// </param>
         /// <param name="hotkeys">
-        ///     <para xml:lang="en">The optional input-action IDs forwarded to the default pile screen.</para>
-        ///     <para xml:lang="zh-CN">转发给默认牌堆界面的可选输入动作 ID。</para>
+        ///     <para xml:lang="en">Optional input-action IDs copied with the contract of ModCardPileSpec.Hotkeys.</para>
+        ///     <para xml:lang="zh-CN">按 ModCardPileSpec.Hotkeys 的约定复制的可选输入动作 ID。</para>
         /// </param>
         /// <param name="cardShouldBeVisible">
         ///     <para xml:lang="en">
@@ -106,6 +108,10 @@ namespace STS2RitsuLib.CardPiles
         ///     <para xml:lang="en">Optional extra-hand presentation settings.</para>
         ///     <para xml:lang="zh-CN">可选的额外手牌展示设置。</para>
         /// </param>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">A hotkey action ID is blank, has surrounding whitespace, or is duplicated.</para>
+        ///     <para xml:lang="zh-CN">快捷键动作 ID 为空白、含首尾空白或重复。</para>
+        /// </exception>
         public ModCardPileDefinition(
             string modId,
             string id,
@@ -132,7 +138,7 @@ namespace STS2RitsuLib.CardPiles
             Style = style;
             Anchor = anchor;
             IconPath = iconPath;
-            Hotkeys = hotkeys;
+            _hotkeys = CopyHotkeys(hotkeys);
             CardShouldBeVisible = cardShouldBeVisible;
             OnOpen = onOpen;
             View = view;
@@ -224,11 +230,35 @@ namespace STS2RitsuLib.CardPiles
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets the optional input-action IDs forwarded to the default pile screen.
+        ///         Gets a copy of the registered input-action IDs. See ModCardPileSpec.Hotkeys for routing and lifecycle.
         ///     </para>
-        ///     <para xml:lang="zh-CN">获取转发给默认牌堆界面的可选输入动作 ID。</para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取已注册输入动作 ID 的副本。路由及生命周期约定见 ModCardPileSpec.Hotkeys。
+        ///     </para>
         /// </summary>
-        public string[]? Hotkeys { get; }
+        public string[]? Hotkeys => _hotkeys == null ? null : [.. _hotkeys];
+
+        internal static string[]? CopyHotkeys(string[]? hotkeys)
+        {
+            if (hotkeys == null)
+                return null;
+
+            var copy = new string[hotkeys.Length];
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < hotkeys.Length; index++)
+            {
+                var action = hotkeys[index];
+                if (string.IsNullOrWhiteSpace(action) || action != action.Trim())
+                    throw new ArgumentException(
+                        "Input-action IDs must be non-empty and have no surrounding whitespace.",
+                        nameof(hotkeys));
+                if (!seen.Add(action))
+                    throw new ArgumentException($"Duplicate input-action ID '{action}'.", nameof(hotkeys));
+                copy[index] = action;
+            }
+
+            return copy;
+        }
 
         /// <summary>
         ///     <para xml:lang="en">

@@ -161,11 +161,13 @@ namespace STS2RitsuLib.Interop.AutoRegistration
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Optional input action IDs forwarded to <c>NCardPileScreen.ShowScreen</c>. Each array element
-        ///         is one ID.
+        ///         Optional Godot input-action IDs for opening the pile control and closing its default screen.
+        ///         Each element is an action name, not a key chord. Registration copies and validates the array
+        ///         according to <see cref="ModCardPileSpec.Hotkeys" />.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         转发给 <c>NCardPileScreen.ShowScreen</c> 的可选输入操作 ID；每个数组元素表示一个 ID。
+        ///         用于打开牌堆控件及关闭默认界面的可选 Godot 输入动作 ID。每项是动作名，而非组合键。
+        ///         注册时按 <see cref="ModCardPileSpec.Hotkeys" /> 的约定复制并校验数组。
         ///     </para>
         /// </summary>
         public string[]? Hotkeys { get; set; }
