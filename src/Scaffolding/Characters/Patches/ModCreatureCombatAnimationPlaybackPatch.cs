@@ -43,7 +43,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///         最多调用一次工厂。
     ///     </para>
     /// </remarks>
-    [HarmonyBefore(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.First)]
     internal class ModCreatureCombatAnimationPlaybackPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByVisuals = [];

@@ -24,7 +24,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     ///         <see cref="AnimatedSprite2D" /> 动画。
     ///     </para>
     /// </summary>
-    [HarmonyBefore(Const.BaseLibHarmonyId)]
+    [HarmonyPriority(Priority.First)]
     internal class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
     {
         private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByRoot = [];
