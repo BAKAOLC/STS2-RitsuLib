@@ -21,7 +21,11 @@ namespace STS2RitsuLib.Loader
         private static int _initializationState;
         private static readonly Lock VariantAssembliesLock = new();
         private static readonly List<Assembly> VariantAssemblies = [];
+        private static Type[]? _variantModTypes;
         private static readonly MethodInfo? AssociateAssemblyWithModMethod = CreateAssociateAssemblyWithModMethod();
+        private static readonly FieldInfo? ManifestField = typeof(Mod).GetField("manifest");
+        private static readonly FieldInfo? ManifestIdField = typeof(ModManifest).GetField("id");
+        private static readonly FieldInfo? AssembliesField = typeof(Mod).GetField("assemblies");
         private static bool _reflectionBridgePatched;
 
         /// <summary>
@@ -57,8 +61,8 @@ namespace STS2RitsuLib.Loader
                 foreach (var assembly in assemblies.Where(assembly =>
                              assembly.GetName().Name!.StartsWith("STS2-RitsuLib", StringComparison.Ordinal)))
                 {
-                    RegisterVariantAssembly(assembly);
-                    AssociateVariantAssemblyWithGame(assembly);
+                    if (!AssociateVariantAssemblyWithGame(assembly))
+                        RegisterVariantAssembly(assembly);
                 }
 
                 var runtime = assemblies.Single(assembly => assembly.GetName().Name == "STS2-RitsuLib.Runtime");
@@ -87,13 +91,23 @@ namespace STS2RitsuLib.Loader
 
         internal static Type[] GetVariantModTypes()
         {
-            Assembly[] assemblies;
             lock (VariantAssembliesLock)
             {
-                assemblies = [.. VariantAssemblies];
-            }
+                if (_variantModTypes != null)
+                    return _variantModTypes;
+                var types = new List<Type>();
+                var complete = true;
+                foreach (var assembly in VariantAssemblies)
+                {
+                    types.AddRange(GetLoadableTypes(assembly, out var loaded));
+                    complete &= loaded;
+                }
 
-            return [.. assemblies.SelectMany(GetLoadableTypes).Distinct()];
+                var result = types.Distinct().ToArray();
+                if (complete)
+                    _variantModTypes = result;
+                return result;
+            }
         }
 
         private static void RegisterVariantAssembly(Assembly realAsm)
@@ -102,24 +116,22 @@ namespace STS2RitsuLib.Loader
 
             lock (VariantAssembliesLock)
             {
-                if (VariantAssemblies.Any(assembly => string.Equals(
-                        assembly.Location,
-                        realAsm.Location,
-                        StringComparison.OrdinalIgnoreCase)))
+                if (VariantAssemblies.Contains(realAsm))
                     return;
 
                 VariantAssemblies.Add(realAsm);
+                _variantModTypes = null;
             }
         }
 
-        private static void AssociateVariantAssemblyWithGame(Assembly assembly)
+        private static bool AssociateVariantAssemblyWithGame(Assembly assembly)
         {
             if (AssociateAssemblyWithModMethod != null)
                 try
                 {
                     AssociateAssemblyWithModMethod.Invoke(null, [ModId, assembly]);
                     if (IsAssemblyAssociatedWithMod(ModId, assembly))
-                        return;
+                        return true;
 
                     Log.Warn(
                         $"[RitsuLib.Loader] Host AssociateAssemblyWithMod did not record variant assembly {assembly.FullName} for {ModId}; applying initializer fallback.");
@@ -131,10 +143,11 @@ namespace STS2RitsuLib.Loader
                 }
 
             if (TryAssociateAssemblyWithModList(ModId, assembly))
-                return;
+                return true;
 
             Log.Warn(
                 $"[RitsuLib.Loader] Could not associate variant assembly {assembly.FullName} with {ModId}; relying on reflection bridge for type discovery.");
+            return false;
         }
 
         private static bool IsAssemblyAssociatedWithMod(string modId, Assembly assembly)
@@ -180,20 +193,14 @@ namespace STS2RitsuLib.Loader
 
         private static string? ReadManifestId(Mod mod)
         {
-            var manifest = typeof(Mod)
-                .GetField("manifest", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                ?.GetValue(mod);
-            return manifest?.GetType()
-                .GetField("id", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                ?.GetValue(manifest) as string;
+            var manifest = ManifestField?.GetValue(mod);
+            return manifest == null ? null : ManifestIdField?.GetValue(manifest) as string;
         }
 
         private static bool TryGetMutableAssembliesList(Mod mod, out IList assemblies)
         {
             assemblies = null!;
-            var value = typeof(Mod).GetField("assemblies",
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                ?.GetValue(mod);
+            var value = AssembliesField?.GetValue(mod);
             if (value is not IList list)
                 return false;
 
@@ -228,14 +235,17 @@ namespace STS2RitsuLib.Loader
             _reflectionBridgePatched = true;
         }
 
-        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly, out bool complete)
         {
             try
             {
-                return assembly.GetTypes();
+                var types = assembly.GetTypes();
+                complete = true;
+                return types;
             }
             catch (ReflectionTypeLoadException ex)
             {
+                complete = false;
                 var loaderExceptions = ex.LoaderExceptions.OfType<Exception>().ToArray();
                 var details = string.Join(
                     Environment.NewLine,

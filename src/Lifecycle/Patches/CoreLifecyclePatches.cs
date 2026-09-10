@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.CardTags;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Keywords;
@@ -196,12 +197,12 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Clears the base-game mod-type cache at the first initialization point after mods load, before other mods
-    ///         such as BaseLib consume <see cref="ReflectionHelper.ModTypes" />.
+    ///         Checks the base-game mod-type cache after mods load, before other mods such as BaseLib consume
+    ///         <see cref="ReflectionHelper.ModTypes" />. Subsequent checks retain it while static assemblies are unchanged.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         在模组加载后的第一个游戏初始化点清理原版游戏的模组类型缓存，早于 BaseLib 等其他模组使用
-    ///         <see cref="ReflectionHelper.ModTypes" />。
+    ///         在模组加载后、BaseLib 等其他模组使用 <see cref="ReflectionHelper.ModTypes" /> 前检查原版类型缓存。
+    ///         后续检查会在静态程序集未变化时保留缓存。
     ///     </para>
     /// </summary>
     internal sealed class ReflectionHelperModTypeCachePostModLoadPatch : IPatchMethod
@@ -230,18 +231,31 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly FieldInfo? ModTypesField =
             typeof(ReflectionHelper).GetField("_modTypes", BindingFlags.Static | BindingFlags.NonPublic);
 
+        private static readonly Lock Gate = new();
+        private static Assembly[]? _assemblies;
+
         public static void Refresh(string phase, bool warnIfCached = false)
         {
             if (ModTypesField is null)
                 return;
 
-            if (warnIfCached && ModTypesField.GetValue(null) is Type[] cachedTypes)
-                RitsuLibFramework.Logger.Warn(
-                    $"[ModelDb] ReflectionHelper.ModTypes was already cached before {phase} ({cachedTypes.Length} types). " +
-                    "Clearing the cache so post-mod-load scans include all loaded mod types; another mod likely accessed " +
-                    "ReflectionHelper.ModTypes before mod loading completed.");
-
-            ModTypesField.SetValue(null, null);
+            var assemblies = Sts2ModManagerCompat.EnumerateLoadedModsWithAssembly()
+                .SelectMany(Sts2ModManagerCompat.GetAssemblies)
+                .Distinct()
+                .ToArray();
+            lock (Gate)
+            {
+                if (_assemblies != null && _assemblies.AsSpan().SequenceEqual(assemblies) &&
+                    !assemblies.Any(static assembly => assembly.IsDynamic))
+                    return;
+                _assemblies = assemblies;
+                if (ModTypesField.GetValue(null) is not Type[] cachedTypes)
+                    return;
+                if (warnIfCached)
+                    RitsuLibFramework.Logger.Debug(
+                        $"[ModelDb] Refreshing the mod-type snapshot before {phase} ({cachedTypes.Length} cached types).");
+                ModTypesField.SetValue(null, null);
+            }
         }
     }
 
