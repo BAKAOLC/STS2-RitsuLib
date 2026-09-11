@@ -1,6 +1,13 @@
+using Godot;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.CardPiles.Nodes;
 using STS2RitsuLib.Screens;
 
@@ -17,11 +24,11 @@ namespace STS2RitsuLib.CardPiles
     /// <remarks>
     ///     <para xml:lang="en">
     ///         The UI invokes the callback only for a non-empty pile. A callback can call
-    ///         <see cref="ShowDefaultPileScreen" />, open a custom capstone screen with
+    ///         <see cref="ShowDefaultPileScreen()" />, open a custom capstone screen with
     ///         <see cref="OpenCapstoneScreen(ICapstoneScreen)" />, or leave the click unhandled.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         界面仅会为非空牌堆调用回调。回调可以调用 <see cref="ShowDefaultPileScreen" />，通过
+    ///         界面仅会为非空牌堆调用回调。回调可以调用 <see cref="ShowDefaultPileScreen()" />，通过
     ///         <see cref="OpenCapstoneScreen(ICapstoneScreen)" /> 打开自定义顶层界面，也可以不处理此次点击。
     ///     </para>
     /// </remarks>
@@ -79,7 +86,63 @@ namespace STS2RitsuLib.CardPiles
         /// </summary>
         public void ShowDefaultPileScreen()
         {
-            NCardPileScreen.ShowScreen(Pile, Definition.Hotkeys ?? []);
+            ShowDefaultPileScreen(Definition, Pile);
+        }
+
+        internal static void OpenPile(ModCardPileDefinition definition, ModCardPile pile, Player player,
+            NModCardPileButton? button)
+        {
+            var capstone = NCapstoneContainer.Instance;
+            if (capstone?.CurrentCapstoneScreen is NCardPileScreen screen && screen.Pile == pile)
+            {
+                capstone.Close();
+                return;
+            }
+
+            switch (pile.IsEmpty)
+            {
+                case true when CombatManager.Instance.IsInProgress:
+                    capstone?.Close();
+                    var thought = NThoughtBubbleVfx.Create(definition.EmptyPileMessage.GetFormattedText(),
+                        player.Creature, 2.0);
+                    NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(thought);
+                    return;
+                case false when definition.OnOpen is { } onOpen:
+                    onOpen(new(definition, pile, player, button));
+                    return;
+                default:
+                    ShowDefaultPileScreen(definition, pile);
+                    return;
+            }
+        }
+
+        private static void ShowDefaultPileScreen(ModCardPileDefinition definition, ModCardPile pile)
+        {
+            var screen = NCardPileScreen.ShowScreen(pile, []);
+            var actions = definition.Hotkeys ?? [];
+            var manager = NHotkeyManager.Instance;
+            if (manager == null || actions.Length == 0)
+                return;
+
+            foreach (var action in actions)
+                manager.PushHotkeyReleasedBinding(action, Close);
+            screen.TreeExiting += Unregister;
+            return;
+
+            void Close()
+            {
+                if (GodotObject.IsInstanceValid(screen) && screen.IsInsideTree()
+                                                        && ActiveScreenContext.Instance.IsCurrent(screen))
+                    NCapstoneContainer.Instance?.Close();
+            }
+
+            void Unregister()
+            {
+                if (!GodotObject.IsInstanceValid(manager))
+                    return;
+                foreach (var action in actions)
+                    manager.RemoveHotkeyReleasedBinding(action, Close);
+            }
         }
 
         /// <summary>

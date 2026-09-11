@@ -98,7 +98,7 @@ namespace STS2RitsuLib.Telemetry
                         "Registered mod inventory, load states, versions, and gameplay flags for compatibility analysis.")),
                     TelemetryRequest.Diagnostics(T(
                         "ritsulib.telemetry.request.diagnostics.description",
-                        "Exception reports and framework runtime diagnostics.")),
+                        "Exception reports, Godot engine errors and framework runtime diagnostics.")),
                 ],
             });
         }

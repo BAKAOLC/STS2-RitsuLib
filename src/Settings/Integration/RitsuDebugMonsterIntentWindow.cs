@@ -15,14 +15,14 @@ namespace STS2RitsuLib.Settings
         private readonly uint _combatId;
         private readonly RitsuDebugMonsterIntentCanvas _graph;
         private readonly Label _identity;
+        private readonly List<Action> _refreshButtonThemes = [];
         private readonly ulong _requesterNetId;
         private readonly ScrollContainer _scroll;
         private readonly Label _status;
         private readonly ulong _targetPlayerNetId;
         private bool _refreshQueued;
-        private bool _targetAvailable;
         private bool _statusIsFailure;
-        private readonly List<Action> _refreshButtonThemes = [];
+        private bool _targetAvailable;
 
         internal RitsuDebugMonsterIntentWindow(uint combatId, ulong requesterNetId, ulong targetPlayerNetId)
         {

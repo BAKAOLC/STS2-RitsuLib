@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="Sts2ApiCompat;Sts2DataDir">
+    <PropertyGroup>
+        <RitsuLibSharedModule>true</RitsuLibSharedModule>
+        <AssemblyName>STS2-RitsuLib.Settings</AssemblyName>
+    </PropertyGroup>
+    <Import Project="../../build/RitsuLib.Module.props"/>
+    <Import Project="../../build/RitsuLib.Modules.items"/>
+    <ItemGroup>
+        <Using Include="STS2RitsuLib.Settings.RitsuSettingsRuntime" Alias="Sts2ModManagerCompat"/>
+        <Using Include="STS2RitsuLib.Ui.Layout.RitsuVerticalStack" Alias="FastVerticalStack"/>
+        <Using Include="STS2RitsuLib.Ui.Layout.RitsuFixedWidthScrollContent" Alias="FixedWidthScrollContent"/>
+        <Compile Include="@(RitsuLibSettingsSource)" Link="Settings/%(RecursiveDir)%(Filename)%(Extension)"/>
+        <ProjectReference Include="../shared/STS2-RitsuLib.Shared.csproj"/>
+        <ProjectReference Include="../ui/STS2-RitsuLib.Ui.csproj"/>
+        <Using Include="STS2RitsuLib.RitsuModuleRuntime" Alias="RitsuLibFramework"/>
+        <Using Include="STS2RitsuLib.Shared"/>
+    </ItemGroup>
+</Project>

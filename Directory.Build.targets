@@ -1,0 +1,9 @@
+﻿<Project>
+    <ItemGroup Condition="'$(RitsuLibUsesGodot)' == 'true'">
+        <PackageReference Include="GodotSharp" Version="4.5.1"/>
+        <PackageReference Include="Godot.SourceGenerators" Version="4.5.1" PrivateAssets="all"/>
+    </ItemGroup>
+    <Target Name="ValidateRitsuLibBuildConfiguration" BeforeTargets="PrepareForBuild">
+        <Error Condition="'$(Configuration)' != 'Debug' and '$(Configuration)' != 'Release'" Text="RitsuLib supports Debug and Release. Godot export configurations are no longer used."/>
+    </Target>
+</Project>

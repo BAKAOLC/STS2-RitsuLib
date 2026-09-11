@@ -60,17 +60,29 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Coalesces runtime visual refresh requests for supported node types.</para>
-    ///     <para xml:lang="zh-CN">合并针对受支持节点类型的运行时视觉刷新请求。</para>
+    ///     <para xml:lang="en">
+    ///         Accepts refresh requests from any thread and coalesces them for the next main-thread frame.
+    ///         Filtered requests in a category are combined with OR; an unrestricted request overrides those filters.
+    ///         Predicates run on the main thread. Recoverable predicate or node-refresh failures are logged
+    ///         without stopping the remaining refreshes.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         接受任意线程发出的刷新请求，并合并到主线程的下一帧。同一类别的条件按“或”组合，
+    ///         整类刷新优先于这些条件。条件回调在主线程执行；条件或节点刷新中的可恢复异常会记录到日志，
+    ///         不会阻止其余刷新。
+    ///     </para>
     /// </summary>
     public static class RuntimeAssetRefreshCoordinator
     {
         private static readonly Lock SyncRoot = new();
 
-        private static readonly Action<NCard>? ReloadCard =
-            AccessTools.Method(typeof(NCard), "Reload")?.CreateDelegate<Action<NCard>>();
+        private static readonly Action<NCard> ReloadCard =
+            (AccessTools.Method(typeof(NCard), "Reload") ??
+             throw new MissingMethodException(typeof(NCard).FullName, "Reload"))
+            .CreateDelegate<Action<NCard>>();
 
         private static RuntimeAssetRefreshScope _pendingScope;
+        private static RuntimeAssetRefreshScope _unfilteredScope;
         private static bool _flushScheduled;
         private static readonly List<Predicate<CardModel>> PendingCardRules = [];
         private static readonly List<Predicate<RelicModel>> PendingRelicRules = [];
@@ -79,34 +91,56 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         private static readonly List<Predicate<OrbModel>> PendingOrbRules = [];
 
         /// <summary>
-        ///     <para xml:lang="en">Requests a deferred refresh pass for the specified <paramref name="scope" />.</para>
-        ///     <para xml:lang="zh-CN">为指定的 <paramref name="scope" /> 请求一次延迟刷新。</para>
+        ///     <para xml:lang="en">
+        ///         Requests a deferred main-thread refresh for every live, ready node in the specified categories.
+        ///         An unrestricted category takes precedence over filtered requests in the same pending batch.
+        ///         Requests made during a refresh are processed on a later frame.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         请求在主线程延迟刷新指定类别中仍有效且已就绪的所有节点。同一批次中的整类刷新优先于
+        ///         条件刷新；刷新期间发出的请求在后续帧处理。
+        ///     </para>
         /// </summary>
+        /// <param name="scope">
+        ///     <para xml:lang="en">The supported categories to refresh; None is a no-op.</para>
+        ///     <para xml:lang="zh-CN">要刷新的受支持类别；None 不执行操作。</para>
+        /// </param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     <para xml:lang="en">The scope contains unsupported flags.</para>
+        ///     <para xml:lang="zh-CN">刷新范围包含不受支持的标志位。</para>
+        /// </exception>
         public static void Request(RuntimeAssetRefreshScope scope = RuntimeAssetRefreshScope.AllSafe)
         {
+            if ((scope & ~RuntimeAssetRefreshScope.AllSafe) != 0)
+                throw new ArgumentOutOfRangeException(nameof(scope));
             if (scope == RuntimeAssetRefreshScope.None)
                 return;
 
-            bool shouldSchedule;
             lock (SyncRoot)
             {
                 _pendingScope |= scope;
+                _unfilteredScope |= scope;
+                ClearFilteredRules(scope);
                 if (_flushScheduled)
                     return;
                 _flushScheduled = true;
-                shouldSchedule = true;
             }
 
-            if (!shouldSchedule)
-                return;
-
-            Callable.From(FlushPending).CallDeferred();
+            Callable.From(ScheduleNextFrame).CallDeferred();
         }
 
         /// <summary>
         ///     <para xml:lang="en">Requests card-node reloads for cards matched by <paramref name="rule" />.</para>
         ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配卡牌的节点。</para>
         /// </summary>
+        /// <param name="rule">
+        ///     <para xml:lang="en">A main-thread predicate selecting the models whose ready nodes should reload.</para>
+        ///     <para xml:lang="zh-CN">在主线程选择应重新加载其就绪节点的模型的条件回调。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The predicate is null.</para>
+        ///     <para xml:lang="zh-CN">条件回调为 null。</para>
+        /// </exception>
         public static void RequestCardsWhere(Predicate<CardModel> rule)
         {
             ArgumentNullException.ThrowIfNull(rule);
@@ -117,6 +151,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <para xml:lang="en">Requests relic-node reloads for relics matched by <paramref name="rule" />.</para>
         ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配遗物的节点。</para>
         /// </summary>
+        /// <param name="rule">
+        ///     <para xml:lang="en">A main-thread predicate selecting the models whose ready nodes should reload.</para>
+        ///     <para xml:lang="zh-CN">在主线程选择应重新加载其就绪节点的模型的条件回调。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The predicate is null.</para>
+        ///     <para xml:lang="zh-CN">条件回调为 null。</para>
+        /// </exception>
         public static void RequestRelicsWhere(Predicate<RelicModel> rule)
         {
             ArgumentNullException.ThrowIfNull(rule);
@@ -127,6 +169,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <para xml:lang="en">Requests potion-node reloads for potions matched by <paramref name="rule" />.</para>
         ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配药水的节点。</para>
         /// </summary>
+        /// <param name="rule">
+        ///     <para xml:lang="en">A main-thread predicate selecting the models whose ready nodes should reload.</para>
+        ///     <para xml:lang="zh-CN">在主线程选择应重新加载其就绪节点的模型的条件回调。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The predicate is null.</para>
+        ///     <para xml:lang="zh-CN">条件回调为 null。</para>
+        /// </exception>
         public static void RequestPotionsWhere(Predicate<PotionModel> rule)
         {
             ArgumentNullException.ThrowIfNull(rule);
@@ -137,6 +187,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <para xml:lang="en">Requests power-node reloads for powers matched by <paramref name="rule" />.</para>
         ///     <para xml:lang="zh-CN">请求重新加载 <paramref name="rule" /> 所匹配能力的节点。</para>
         /// </summary>
+        /// <param name="rule">
+        ///     <para xml:lang="en">A main-thread predicate selecting the models whose ready nodes should reload.</para>
+        ///     <para xml:lang="zh-CN">在主线程选择应重新加载其就绪节点的模型的条件回调。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The predicate is null.</para>
+        ///     <para xml:lang="zh-CN">条件回调为 null。</para>
+        /// </exception>
         public static void RequestPowersWhere(Predicate<PowerModel> rule)
         {
             ArgumentNullException.ThrowIfNull(rule);
@@ -147,6 +205,14 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <para xml:lang="en">Requests orb-node visual updates for orbs matched by <paramref name="rule" />.</para>
         ///     <para xml:lang="zh-CN">请求更新 <paramref name="rule" /> 所匹配充能球的节点视觉效果。</para>
         /// </summary>
+        /// <param name="rule">
+        ///     <para xml:lang="en">A main-thread predicate selecting the models whose ready nodes should reload.</para>
+        ///     <para xml:lang="zh-CN">在主线程选择应重新加载其就绪节点的模型的条件回调。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The predicate is null.</para>
+        ///     <para xml:lang="zh-CN">条件回调为 null。</para>
+        /// </exception>
         public static void RequestOrbsWhere(Predicate<OrbModel> rule)
         {
             ArgumentNullException.ThrowIfNull(rule);
@@ -166,11 +232,12 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 scope = _pendingScope;
                 _pendingScope = RuntimeAssetRefreshScope.None;
                 _flushScheduled = false;
-                cardRules = [.. PendingCardRules];
-                relicRules = [.. PendingRelicRules];
-                potionRules = [.. PendingPotionRules];
-                powerRules = [.. PendingPowerRules];
-                orbRules = [.. PendingOrbRules];
+                cardRules = (_unfilteredScope & RuntimeAssetRefreshScope.Cards) != 0 ? [] : [.. PendingCardRules];
+                relicRules = (_unfilteredScope & RuntimeAssetRefreshScope.Relics) != 0 ? [] : [.. PendingRelicRules];
+                potionRules = (_unfilteredScope & RuntimeAssetRefreshScope.Potions) != 0 ? [] : [.. PendingPotionRules];
+                powerRules = (_unfilteredScope & RuntimeAssetRefreshScope.Powers) != 0 ? [] : [.. PendingPowerRules];
+                orbRules = (_unfilteredScope & RuntimeAssetRefreshScope.Orbs) != 0 ? [] : [.. PendingOrbRules];
+                _unfilteredScope = RuntimeAssetRefreshScope.None;
                 PendingCardRules.Clear();
                 PendingRelicRules.Clear();
                 PendingPotionRules.Clear();
@@ -188,58 +255,99 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             {
                 if ((scope & RuntimeAssetRefreshScope.Cards) != 0 && node is NCard card)
                 {
-                    if (card.Model != null && ShouldApply(card.Model, cardRules))
-                        ReloadCard?.Invoke(card);
+                    RefreshNode(card, cardRules, static node => node.Model, ReloadCard);
                     continue;
                 }
 
                 if ((scope & RuntimeAssetRefreshScope.Relics) != 0 && node is NRelic relic)
                 {
-                    if (ShouldApply(relic.Model, relicRules))
-                        relic.Model = relic.Model;
+                    RefreshNode(relic, relicRules, static value => value.Model,
+                        static value => value.Model = value.Model);
                     continue;
                 }
 
                 if ((scope & RuntimeAssetRefreshScope.Potions) != 0 && node is NPotion potion)
                 {
-                    if (ShouldApply(potion.Model, potionRules))
-                        potion.Model = potion.Model;
+                    RefreshNode(potion, potionRules, static value => value.Model,
+                        static value => value.Model = value.Model);
                     continue;
                 }
 
                 if ((scope & RuntimeAssetRefreshScope.Powers) != 0 && node is NPower power)
                 {
-                    if (ShouldApply(power.Model, powerRules))
-                        power.Model = power.Model;
+                    RefreshNode(power, powerRules, static value => value.Model,
+                        static value => value.Model = value.Model);
                     continue;
                 }
 
-                // ReSharper disable once InvertIf
                 if ((scope & RuntimeAssetRefreshScope.Orbs) != 0 && node is NOrb orb)
-                    if (ShouldApply(orb.Model, orbRules))
-                        orb.UpdateVisuals(false);
+                    RefreshNode(orb, orbRules, static value => value.Model, static value => value.UpdateVisuals(false));
             }
+        }
+
+        private static void RefreshNode<TNode, TModel>(TNode node, IReadOnlyList<Predicate<TModel>> rules,
+            Func<TNode, TModel?> getModel, Action<TNode> reload) where TNode : Node where TModel : class
+        {
+            if (!CanRefresh(node))
+                return;
+            try
+            {
+                var model = getModel(node);
+                if (ShouldApply(model, rules) && CanRefresh(node) && ReferenceEquals(model, getModel(node)))
+                    reload(node);
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Warn($"[Assets] Refresh failed for '{typeof(TNode).Name}': {ex.Message}");
+            }
+        }
+
+        private static bool CanRefresh(Node node)
+        {
+            return GodotObject.IsInstanceValid(node) && !node.IsQueuedForDeletion() &&
+                   node.IsInsideTree() && node.IsNodeReady();
+        }
+
+        private static void ClearFilteredRules(RuntimeAssetRefreshScope scope)
+        {
+            if ((scope & RuntimeAssetRefreshScope.Cards) != 0)
+                PendingCardRules.Clear();
+            if ((scope & RuntimeAssetRefreshScope.Relics) != 0)
+                PendingRelicRules.Clear();
+            if ((scope & RuntimeAssetRefreshScope.Potions) != 0)
+                PendingPotionRules.Clear();
+            if ((scope & RuntimeAssetRefreshScope.Powers) != 0)
+                PendingPowerRules.Clear();
+            if ((scope & RuntimeAssetRefreshScope.Orbs) != 0)
+                PendingOrbRules.Clear();
         }
 
         private static void EnqueueRule<TModel>(List<Predicate<TModel>> bucket, Predicate<TModel> rule,
             RuntimeAssetRefreshScope scope)
             where TModel : class
         {
-            bool shouldSchedule;
             lock (SyncRoot)
             {
-                bucket.Add(rule);
+                if ((_unfilteredScope & scope) != 0)
+                    return;
+                if (!bucket.Contains(rule))
+                    bucket.Add(rule);
                 _pendingScope |= scope;
                 if (_flushScheduled)
                     return;
                 _flushScheduled = true;
-                shouldSchedule = true;
             }
 
-            if (!shouldSchedule)
-                return;
+            Callable.From(ScheduleNextFrame).CallDeferred();
+        }
 
-            Callable.From(FlushPending).CallDeferred();
+        private static void ScheduleNextFrame()
+        {
+            if (Engine.GetMainLoop() is SceneTree tree)
+                tree.Connect(SceneTree.SignalName.ProcessFrame, Callable.From(FlushPending),
+                    (uint)GodotObject.ConnectFlags.OneShot);
+            else
+                FlushPending();
         }
 
         private static bool ShouldApply<TModel>(TModel? model, IReadOnlyList<Predicate<TModel>> rules)
@@ -255,7 +363,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                     if (rule(model))
                         return true;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
                     RitsuLibFramework.Logger.Warn($"[Assets] Refresh rule failed: {ex.Message}");
                 }
@@ -273,11 +381,11 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 if (!GodotObject.IsInstanceValid(current))
                     continue;
 
-                yield return current;
-
                 for (var i = current.GetChildCount() - 1; i >= 0; i--)
                     if (current.GetChild(i) is { } child)
                         stack.Push(child);
+
+                yield return current;
             }
         }
     }

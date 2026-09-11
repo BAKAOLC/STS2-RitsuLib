@@ -48,9 +48,11 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private bool _invalidBuiltInLayoutWarningLogged;
         private bool _invalidLayoutResolverWarningLogged;
         private bool _isDisabled;
-        private bool _turnPresentationDisabled;
+        private bool _visibilityPredicateFailed;
+        private ModCardPileHotkeys? _hotkeys;
         private ModCardPile? _pile;
         private Player? _player;
+        private bool _turnPresentationDisabled;
         private NPlayerHand? _vanillaHand;
         private double _visualRefreshElapsed;
 
@@ -83,6 +85,10 @@ namespace STS2RitsuLib.CardPiles.Nodes
         ///     </para>
         /// </remarks>
         public bool CardPlayEnabled { get; private set; }
+
+        private bool IsCardPlayAvailable => CardPlayEnabled && IsVisibleInTree()
+                                                            && _vanillaHand?.CurrentMode is null
+                                                                or NPlayerHand.Mode.Play;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -124,6 +130,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             AttachPile(ModCardPileStorage.Resolve(Definition.PileType, player));
             if (player.Creature.CombatState is { } state)
                 UpdateDisabledState(state);
+            RefreshVisibility();
         }
 
         /// <summary>
@@ -215,12 +222,17 @@ namespace STS2RitsuLib.CardPiles.Nodes
             CombatManager.Instance.PlayerUnendedTurn += OnPlayerUnendedTurn;
             CombatManager.Instance.StateTracker.CombatStateChanged += OnCombatStateChanged;
             ModCardPileButtonRegistry.RegisterExtraHand(Definition, this);
+            _hotkeys = new(this, Definition, () => _pile != null && _player != null, OpenPile);
+            VisibilityChanged += OnVisibilityChanged;
         }
 
         /// <inheritdoc />
         public override void _ExitTree()
         {
             base._ExitTree();
+            _hotkeys?.Dispose();
+            _hotkeys = null;
+            VisibilityChanged -= OnVisibilityChanged;
             _disabledTween?.Kill();
             DetachVanillaHand();
             CombatManager.Instance.PlayerActionsDisabledChanged -= OnPlayerActionsDisabledChanged;
@@ -235,6 +247,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
         public override void _Process(double delta)
         {
             base._Process(delta);
+            RefreshVisibility();
+            _hotkeys?.Refresh();
             NotifyArrivedCards();
             _visualRefreshElapsed += delta;
             if (_visualRefreshElapsed < 0.1)
@@ -243,6 +257,48 @@ namespace STS2RitsuLib.CardPiles.Nodes
             _visualRefreshElapsed = 0;
             foreach (var holder in _holders.Values)
                 RefreshHolderVisuals(holder);
+        }
+
+        private void OpenPile()
+        {
+            if (_pile != null && _player != null)
+                ModCardPileOpenContext.OpenPile(Definition, _pile, _player, null);
+        }
+
+        private void RefreshVisibility()
+        {
+            if (Definition.VisibleWhen is not { } predicate)
+                return;
+
+            bool visible;
+            try
+            {
+                visible = predicate(new(Definition, _player, null, _pile));
+                _visibilityPredicateFailed = false;
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                if (!_visibilityPredicateFailed)
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardPile] VisibleWhen predicate for '{Definition.Id}' threw; hiding extra hand: {ex}");
+                _visibilityPredicateFailed = true;
+                visible = false;
+            }
+
+            Visible = visible;
+        }
+
+        private void OnVisibilityChanged()
+        {
+            if (!IsVisibleInTree())
+            {
+                ModExtraHandPlayCoordinator.CancelActiveTargeting(this);
+                if (_focusedHolder != null)
+                    OnHolderUnfocused(_focusedHolder);
+            }
+
+            RefreshCardPlayAvailability();
+            UpdateDisabledPresentation();
         }
 
         internal void ReleaseHolderForQueuedPlay(CardModel card)
@@ -497,9 +553,6 @@ namespace STS2RitsuLib.CardPiles.Nodes
                 return false;
             return !ModExtraHandPlayCoordinator.IsPlaying;
         }
-
-        private bool IsCardPlayAvailable => CardPlayEnabled
-                                            && _vanillaHand?.CurrentMode is null or NPlayerHand.Mode.Play;
 
         private void AttachVanillaHand(NPlayerHand? hand)
         {

@@ -1,0 +1,71 @@
+﻿<Project>
+    <PropertyGroup>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);PackRitsuRuntimeModules</TargetsForTfmSpecificContentInPackage>
+    </PropertyGroup>
+    <Import Project="RitsuLib.Assets.targets"/>
+    <Target Name="PrepareRitsuLibDeployment" AfterTargets="Build" BeforeTargets="Copy Mod" DependsOnTargets="PrepareRitsuLibAssets">
+        <PropertyGroup>
+            <RitsuLibDeploymentDir>$(RitsuLibArtifactsRoot)runtime/$(Configuration)/$(Sts2ApiCompat)/</RitsuLibDeploymentDir>
+        </PropertyGroup>
+        <MSBuild Projects="$(MSBuildProjectDirectory)\components\loader\STS2-RitsuLib-Loader.csproj"
+                 Targets="GetTargetPath" Properties="Configuration=$(Configuration)"
+                 RemoveProperties="Sts2ApiCompat;Sts2DataDir;TargetFramework;RuntimeIdentifier;SelfContained">
+            <Output TaskParameter="TargetOutputs" ItemName="RitsuLibLoaderOutput"/>
+        </MSBuild>
+        <ItemGroup>
+            <RitsuLibSharedBinary Include="$(TargetDir)STS2-RitsuLib.Shared.dll;$(TargetDir)STS2-RitsuLib.Ui.dll;$(TargetDir)STS2-RitsuLib.Settings.dll;$(TargetDir)System.IO.Hashing.dll"/>
+            <RitsuLibVariantBinary Include="$(TargetPath);$(TargetDir)STS2-RitsuLib.Runtime.dll"/>
+            <RitsuLibSharedSidecar Include="$(TargetDir)STS2-RitsuLib.Shared.pdb;$(TargetDir)STS2-RitsuLib.Shared.xml;$(TargetDir)STS2-RitsuLib.Ui.pdb;$(TargetDir)STS2-RitsuLib.Ui.xml;$(TargetDir)STS2-RitsuLib.Settings.pdb;$(TargetDir)STS2-RitsuLib.Settings.xml"/>
+            <RitsuLibVariantSidecar Include="$(TargetDir)STS2-RitsuLib.pdb;$(TargetDir)STS2-RitsuLib.xml;$(TargetDir)STS2-RitsuLib.Runtime.pdb;$(TargetDir)STS2-RitsuLib.Runtime.xml"/>
+            <RitsuLibDeploymentViewer Include="$(RitsuLibViewerDistDir)\**\*"/>
+        </ItemGroup>
+        <Error Condition="!Exists('%(RitsuLibSharedBinary.Identity)')" Text="Missing shared runtime module: %(RitsuLibSharedBinary.Identity)"/>
+        <Error Condition="!Exists('%(RitsuLibVariantBinary.Identity)')" Text="Missing compatibility runtime module: %(RitsuLibVariantBinary.Identity)"/>
+        <Error Condition="!Exists('$(RitsuLibViewerDistDir)\index.html')" Text="Missing debug log viewer build output."/>
+        <RemoveDir Directories="$(RitsuLibDeploymentDir)"/>
+        <MakeDir Directories="$(RitsuLibDeploymentDir)shared;$(RitsuLibDeploymentDir)compat\$(Sts2ApiCompat)"/>
+        <Copy SourceFiles="$(RitsuLibAssetArchive)" DestinationFolder="$(RitsuLibDeploymentDir)"/>
+        <Copy SourceFiles="@(RitsuLibLoaderOutput)" DestinationFiles="$(RitsuLibDeploymentDir)STS2-RitsuLib.dll"/>
+        <Copy SourceFiles="@(RitsuLibSharedBinary);@(RitsuLibSharedSidecar)" DestinationFolder="$(RitsuLibDeploymentDir)shared"/>
+        <Copy SourceFiles="@(RitsuLibVariantBinary);@(RitsuLibVariantSidecar)" DestinationFolder="$(RitsuLibDeploymentDir)compat\$(Sts2ApiCompat)"/>
+        <Copy SourceFiles="$(RitsuLibManifestGenerated)" DestinationFiles="$(RitsuLibDeploymentDir)mod_manifest.json"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)/buildTransitive/RitsuLib.References.props" DestinationFolder="$(RitsuLibDeploymentDir)"/>
+        <Copy SourceFiles="@(RitsuLibDeploymentViewer)" DestinationFiles="@(RitsuLibDeploymentViewer->'$(RitsuLibDeploymentDir)viewer\%(RecursiveDir)%(Filename)%(Extension)')"/>
+        <GetFileHash Files="@(RitsuLibSharedBinary)" Algorithm="SHA256">
+            <Output TaskParameter="Items" ItemName="RitsuLibSharedHashes"/>
+        </GetFileHash>
+        <GetFileHash Files="@(RitsuLibVariantBinary)" Algorithm="SHA256">
+            <Output TaskParameter="Items" ItemName="RitsuLibVariantHashes"/>
+        </GetFileHash>
+        <PropertyGroup>
+            <RitsuLibModuleManifest>{"schema":2,"shared":[@(RitsuLibSharedHashes->'{"assembly":"%(Filename)","sha256":"%(FileHash)"}', ',')],"variants":[{"compatTarget":"$(Sts2ApiCompat)","files":[@(RitsuLibVariantHashes->'{"assembly":"%(Filename)","sha256":"%(FileHash)"}', ',')]}]}</RitsuLibModuleManifest>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(RitsuLibDeploymentDir)ritsulib-variants.manifest" Lines="$(RitsuLibModuleManifest)" Overwrite="true" Encoding="UTF-8"/>
+        <WriteLinesToFile File="$(RitsuLibDeploymentDir)compat\$(Sts2ApiCompat)\compat-target.txt" Lines="$(Sts2ApiCompat)" Overwrite="true" Encoding="UTF-8"/>
+    </Target>
+    <Target Name="PackRitsuRuntimeModules" DependsOnTargets="PrepareRitsuLibDeployment">
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="$(RitsuLibAssetArchive)">
+                <PackagePath>contentFiles/any/any/assets.zip</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
+            <TfmSpecificPackageFile Include="$(TargetDir)STS2-RitsuLib.Shared.*;$(TargetDir)STS2-RitsuLib.Ui.*;$(TargetDir)STS2-RitsuLib.Settings.*;$(TargetDir)STS2-RitsuLib.Runtime.*"
+                                    Exclude="$(TargetDir)*.deps.json;$(TargetDir)*.runtimeconfig.json">
+                <PackagePath>lib/$(TargetFramework)/</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
+            <TfmSpecificPackageFile Include="$(RitsuLibDeploymentDir)STS2-RitsuLib.dll">
+                <PackagePath>contentFiles/any/any/loader/STS2-RitsuLib.dll</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
+            <TfmSpecificPackageFile Include="$(RitsuLibDeploymentDir)shared/System.IO.Hashing.dll">
+                <PackagePath>contentFiles/any/any/shared/System.IO.Hashing.dll</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
+            <TfmSpecificPackageFile Include="$(RitsuLibDeploymentDir)RitsuLib.References.props;$(RitsuLibDeploymentDir)ritsulib-variants.manifest;$(RitsuLibDeploymentDir)compat/$(Sts2ApiCompat)/compat-target.txt">
+                <PackagePath>contentFiles/any/any/</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
+        </ItemGroup>
+    </Target>
+</Project>

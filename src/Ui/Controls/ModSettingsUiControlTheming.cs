@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Controls;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -87,7 +88,7 @@ namespace STS2RitsuLib.Settings
         /// </param>
         public static void ApplyUniformSurfaceButtonStates(BaseButton control)
         {
-            var box = ModSettingsUiFactory.CreateSurfaceStyle();
+            var box = RitsuShellChromeStyles.CreateSurfaceStyle();
             control.AddThemeStyleboxOverride("normal", box);
             control.AddThemeStyleboxOverride("hover", box);
             control.AddThemeStyleboxOverride("pressed", box);
@@ -104,7 +105,7 @@ namespace STS2RitsuLib.Settings
         /// </param>
         public static void ApplyColorPickerSwatchButtonChrome(ColorPickerButton picker)
         {
-            var box = ModSettingsUiFactory.CreateColorPickerSwatchFrameStyle();
+            var box = RitsuShellChromeStyles.CreateColorPickerSwatchFrameStyle();
             picker.AddThemeStyleboxOverride("normal", box);
             picker.AddThemeStyleboxOverride("hover", box);
             picker.AddThemeStyleboxOverride("pressed", box);
@@ -132,12 +133,12 @@ namespace STS2RitsuLib.Settings
             edit.AddThemeFontOverride("font", font);
             edit.AddThemeFontSizeOverride("font_size", fontSize);
             edit.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichBody);
-            var normal = ModSettingsUiFactory.CreateEntryFieldFrameStyle(false);
+            var normal = RitsuShellChromeStyles.CreateEntryFieldFrameStyle(false);
             edit.AddThemeColorOverride("font_placeholder_color",
                 RitsuShellTheme.Current.Text.LabelSecondary.Lerp(normal.BgColor, 0.25f));
             edit.AddThemeColorOverride("caret_color", RitsuShellTheme.Current.Text.RichBody);
             edit.AddThemeConstantOverride("caret_width", 2);
-            var emphasis = ModSettingsUiFactory.CreateEntryFieldFrameStyle(true);
+            var emphasis = RitsuShellChromeStyles.CreateEntryFieldFrameStyle(true);
             edit.AddThemeStyleboxOverride("normal", normal);
             edit.AddThemeStyleboxOverride("hover", emphasis);
             edit.AddThemeStyleboxOverride("focus", emphasis);
@@ -165,12 +166,12 @@ namespace STS2RitsuLib.Settings
             edit.AddThemeFontOverride("font", font);
             edit.AddThemeFontSizeOverride("font_size", fontSize);
             edit.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichBody);
-            var normal = ModSettingsUiFactory.CreateEntryFieldFrameStyle(false);
+            var normal = RitsuShellChromeStyles.CreateEntryFieldFrameStyle(false);
             edit.AddThemeColorOverride("font_placeholder_color",
                 RitsuShellTheme.Current.Text.LabelSecondary.Lerp(normal.BgColor, 0.25f));
             edit.AddThemeColorOverride("caret_color", RitsuShellTheme.Current.Text.RichBody);
             edit.AddThemeConstantOverride("caret_width", 2);
-            var emphasis = ModSettingsUiFactory.CreateEntryFieldFrameStyle(true);
+            var emphasis = RitsuShellChromeStyles.CreateEntryFieldFrameStyle(true);
             edit.AddThemeStyleboxOverride("normal", normal);
             edit.AddThemeStyleboxOverride("hover", emphasis);
             edit.AddThemeStyleboxOverride("focus", emphasis);
@@ -200,7 +201,7 @@ namespace STS2RitsuLib.Settings
                 RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.popup.vSeparation", 12));
             popup.AddThemeConstantOverride("h_separation",
                 RitsuShellThemeLayoutResolver.ResolveInt("components.dropdown.layout.popup.hSeparation", 10));
-            popup.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateListShellStyle());
+            popup.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateListShellStyle());
             popup.AddThemeStyleboxOverride("hover", ModSettingsMiniButton.CreateStyle(true));
         }
 
@@ -391,7 +392,7 @@ namespace STS2RitsuLib.Settings
             };
             wrapper.AddThemeConstantOverride("separation",
                 RitsuShellThemeLayoutResolver.ResolveInt("components.editor.layout.fieldSeparation", 6));
-            wrapper.AddChild(ModSettingsUiFactory.CreateInlineDescription(labelText));
+            wrapper.AddChild(RitsuControlFactory.CreateInlineDescription(labelText));
             wrapper.AddChild(editor);
             return wrapper;
         }
@@ -744,6 +745,16 @@ namespace STS2RitsuLib.Settings
                 return;
 
             var vScrollBar = container.GetVScrollBar();
+            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt(scrollBarWidthToken, scrollBarWidthIfMissing);
+            ApplySettingsVerticalScrollBarTheme(vScrollBar, scrollSize);
+
+            var sep = RitsuShellThemeLayoutResolver.ResolveInt(scrollbarVSeparationToken,
+                scrollbarVSeparationIfMissing);
+            container.AddThemeConstantOverride("scrollbar_v_separation", sep);
+        }
+
+        internal static void ApplySettingsVerticalScrollBarTheme(VScrollBar vScrollBar, int? width = null)
+        {
             if (!GodotObject.IsInstanceValid(vScrollBar))
                 return;
 
@@ -755,12 +766,8 @@ namespace STS2RitsuLib.Settings
             vScrollBar.AddThemeStyleboxOverride("grabber_pressed",
                 CreateSettingsScrollGrabberStyle("components.scrollbar.grabberPressed"));
 
-            var scrollSize = RitsuShellThemeLayoutResolver.ResolveInt(scrollBarWidthToken, scrollBarWidthIfMissing);
+            var scrollSize = width ?? RitsuShellThemeLayoutResolver.ResolveInt("components.scrollbar.layout.size", 8);
             vScrollBar.CustomMinimumSize = new(scrollSize, vScrollBar.CustomMinimumSize.Y);
-
-            var sep = RitsuShellThemeLayoutResolver.ResolveInt(scrollbarVSeparationToken,
-                scrollbarVSeparationIfMissing);
-            container.AddThemeConstantOverride("scrollbar_v_separation", sep);
 
             if (!TryResolveThemeConstantInt("components.scrollbar.layout.grabber.minLength", out var minGrabberLen) ||
                 minGrabberLen <= 0) return;

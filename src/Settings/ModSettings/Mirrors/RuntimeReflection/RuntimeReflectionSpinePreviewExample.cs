@@ -363,7 +363,9 @@ namespace STS2RitsuLib.Settings
                             ShowPreviewFailure();
                     }
                     else
+                    {
                         visuals.SpineAnimation.SetAnimation(state.Animation.Name);
+                    }
 
                     ApplyPreviewTransform();
                 }
@@ -374,17 +376,6 @@ namespace STS2RitsuLib.Settings
                 }
             }
         }
-
-        private sealed class PreviewState
-        {
-            internal NCreatureVisuals? Visuals;
-            internal int BuildVersion;
-            internal PreviewAnimation Animation = new(string.Empty, false);
-            internal ModSettingsDropdownChoiceControl<PreviewAnimation> Picker = null!;
-            internal required CharacterModel Character { get; set; }
-        }
-
-        private sealed record PreviewAnimation(string Name, bool IsCue);
 
         private static List<PreviewAnimation> EnumeratePreviewAnimations(NCreatureVisuals visuals, VisualCueSet? cues)
         {
@@ -579,6 +570,17 @@ namespace STS2RitsuLib.Settings
             store.Save(ManualSnapshotDataKey);
             _manualBindingSavedValue = value;
         }
+
+        private sealed class PreviewState
+        {
+            internal PreviewAnimation Animation = new(string.Empty, false);
+            internal int BuildVersion;
+            internal ModSettingsDropdownChoiceControl<PreviewAnimation> Picker = null!;
+            internal NCreatureVisuals? Visuals;
+            internal required CharacterModel Character { get; set; }
+        }
+
+        private sealed record PreviewAnimation(string Name, bool IsCue);
 
         private sealed class ManualSnapshotBox
         {

@@ -180,7 +180,7 @@ namespace STS2RitsuLib.Utils.Persistence
                 var json = JsonSerializer.Serialize(Data, _jsonOptions);
                 var result = FileOperations.WriteText(path, json, _fileName);
                 if (result.Success)
-                    ModDataCloudMirror.MirrorLocalFileAfterWriteIfEnabled(path);
+                    RitsuLibFramework.MirrorModDataFile(path);
 
                 return result.Success;
             }

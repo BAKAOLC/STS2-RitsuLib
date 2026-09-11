@@ -34,7 +34,6 @@ namespace STS2RitsuLib.Ui.Windows
         private Vector2 _dragOffset;
         private bool _dragging;
         private HBoxContainer? _header;
-        private Label? _title;
         private bool _interactionLocked;
         private bool _layoutInitialized;
         private ResizeEdge _resizeEdge;
@@ -42,6 +41,7 @@ namespace STS2RitsuLib.Ui.Windows
         private Vector2 _resizeStartMouse;
         private Vector2 _resizeStartPosition;
         private Vector2 _resizeStartSize;
+        private Label? _title;
 
         /// <summary>
         ///     <para xml:lang="en">Creates a window with default fixed-window options.</para>
@@ -360,9 +360,9 @@ namespace STS2RitsuLib.Ui.Windows
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             };
             title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-            title.AddThemeFontSizeOverride("font_size", compact
+            title.AddThemeFontSizeOverride("font_size", Options.TitleFontSize ?? (compact
                 ? RitsuShellTheme.Current.Metric.FontSize.HintSmall
-                : RitsuShellTheme.Current.Metric.FontSize.OverlayTitle);
+                : RitsuShellTheme.Current.Metric.FontSize.OverlayTitle));
             title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
             titleMargin.AddChild(title);
             _title = title;
@@ -411,9 +411,9 @@ namespace STS2RitsuLib.Ui.Windows
                 AddThemeStyleboxOverride("panel", RitsuShellPanelStyles.CreateFramedSurface(
                     RitsuShellTheme.Current.Surface.Content, RitsuShellTheme.Current.Metric.Radius.Default));
                 _title.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
-                _title.AddThemeFontSizeOverride("font_size", Options.CompactChrome
+                _title.AddThemeFontSizeOverride("font_size", Options.TitleFontSize ?? (Options.CompactChrome
                     ? RitsuShellTheme.Current.Metric.FontSize.HintSmall
-                    : RitsuShellTheme.Current.Metric.FontSize.OverlayTitle);
+                    : RitsuShellTheme.Current.Metric.FontSize.OverlayTitle));
                 _title.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.RichTitle);
                 foreach (var close in _header.GetChildren().OfType<ModSettingsTextButton>())
                 {

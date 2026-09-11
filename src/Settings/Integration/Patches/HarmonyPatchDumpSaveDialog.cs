@@ -1,4 +1,5 @@
 using Godot;
+using STS2RitsuLib.Ui.Files;
 
 namespace STS2RitsuLib.Settings
 {
@@ -16,25 +17,23 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            var dialog = new FileDialog
+            var current = outputPathBinding.Read();
+            RitsuFileDialog.Show(tree.Root, new()
             {
                 Title = ModSettingsLocalization.Get("ritsulib.harmonyDump.browseTitle", "Save Harmony patch dump"),
-                FileMode = FileDialog.FileModeEnum.SaveFile,
-                Access = FileDialog.AccessEnum.Filesystem,
-                CurrentFile = "ritsulib_harmony_patch_dump.log",
-            };
-            dialog.AddFilter("*.log", "Log");
-            dialog.AddFilter("*.txt", "Text");
-
-            dialog.FileSelected += path =>
+                Mode = FileDialog.FileModeEnum.SaveFile,
+                StateKey = "ritsulib.harmonyDump",
+                InitialDirectory = string.IsNullOrWhiteSpace(current) ? null : Path.GetDirectoryName(current),
+                InitialFile = string.IsNullOrWhiteSpace(current)
+                    ? "ritsulib_harmony_patch_dump.log"
+                    : Path.GetFileName(current),
+                Filters = ["*.log;Log", "*.txt;Text"],
+            }, paths =>
             {
-                outputPathBinding.Write(path);
+                outputPathBinding.Write(paths[0]);
                 outputPathBinding.Save();
                 uiHost.RequestRefresh();
-                dialog.QueueFree();
-            };
-
-            ModSettingsNativeFileDialogChrome.Popup(dialog);
+            });
         }
     }
 }

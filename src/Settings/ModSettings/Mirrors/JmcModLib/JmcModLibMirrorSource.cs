@@ -660,11 +660,11 @@ namespace STS2RitsuLib.Settings
                 AddModifier(parts, modifiers, "Shift");
                 AddModifier(parts, modifiers, "Meta");
                 parts.Add(key.ToString());
-                return RuntimeHotkeyService.NormalizeOrDefault(string.Join('+', parts), key.ToString());
+                return RuntimeHotkeyParser.NormalizeOrDefault(string.Join('+', parts), key.ToString());
             }
 
             if (!string.IsNullOrWhiteSpace(controller))
-                return RuntimeHotkeyService.ActionBinding(controller);
+                return RuntimeHotkeyParser.ActionBinding(controller);
 
             return type == typeof(Key) && value is Key directKey && directKey != Key.None
                 ? directKey.ToString()

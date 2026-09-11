@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>STS2-RitsuLib.Runtime</AssemblyName>
+    </PropertyGroup>
+    <Import Project="../../build/RitsuLib.Module.props"/>
+    <Import Project="../../build/RitsuLib.Modules.items"/>
+    <ItemGroup>
+        <Using Include="STS2RitsuLib.Ui.Layout.RitsuVerticalStack" Alias="FastVerticalStack"/>
+        <Using Include="STS2RitsuLib.Ui.Layout.RitsuFixedWidthScrollContent" Alias="FixedWidthScrollContent"/>
+        <Compile Include="$(RitsuLibSourceRoot)**/*.cs" Exclude="@(RitsuLibSharedSource);@(RitsuLibUiSource);@(RitsuLibSettingsSource)" Link="Runtime/%(RecursiveDir)%(Filename)%(Extension)"/>
+        <ProjectReference Include="../shared/STS2-RitsuLib.Shared.csproj"/>
+        <ProjectReference Include="../ui/STS2-RitsuLib.Ui.csproj"/>
+        <ProjectReference Include="../settings/STS2-RitsuLib.Settings.csproj"/>
+        <ProjectReference Include="../analyzers/STS2-RitsuLib-Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"/>
+        <PackageReference Include="System.IO.Hashing" Version="9.0.0"/>
+    </ItemGroup>
+</Project>

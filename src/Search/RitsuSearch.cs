@@ -1,4 +1,6 @@
-﻿namespace STS2RitsuLib.Search
+﻿using System.Runtime.CompilerServices;
+
+namespace STS2RitsuLib.Search
 {
     /// <summary>
     ///     <para xml:lang="en">
@@ -159,8 +161,14 @@
         ///     <para xml:lang="zh-CN">包含不超过请求数量的匹配源项目的任务。</para>
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        ///     <para xml:lang="en"><paramref name="source" />, <paramref name="textSelector" />, or <paramref name="term" /> is null.</para>
-        ///     <para xml:lang="zh-CN"><paramref name="source" />、<paramref name="textSelector" /> 或 <paramref name="term" /> 为 null。</para>
+        ///     <para xml:lang="en">
+        ///         <paramref name="source" />, <paramref name="textSelector" />, or <paramref name="term" /> is
+        ///         null.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="source" />、<paramref name="textSelector" /> 或 <paramref name="term" /> 为
+        ///         null。
+        ///     </para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         ///     <para xml:lang="en"><paramref name="maximumResults" /> is not positive.</para>
@@ -243,8 +251,14 @@
         ///     <para xml:lang="zh-CN">匹配源项目的异步流。</para>
         /// </returns>
         /// <exception cref="ArgumentNullException">
-        ///     <para xml:lang="en"><paramref name="source" />, <paramref name="textSelector" />, or <paramref name="term" /> is null.</para>
-        ///     <para xml:lang="zh-CN"><paramref name="source" />、<paramref name="textSelector" /> 或 <paramref name="term" /> 为 null。</para>
+        ///     <para xml:lang="en">
+        ///         <paramref name="source" />, <paramref name="textSelector" />, or <paramref name="term" /> is
+        ///         null.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         <paramref name="source" />、<paramref name="textSelector" /> 或 <paramref name="term" /> 为
+        ///         null。
+        ///     </para>
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         ///     <para xml:lang="en"><paramref name="maximumResults" /> is not positive.</para>
@@ -263,8 +277,7 @@
             string term,
             int maximumResults,
             RitsuSearchOptions? options = null,
-            [System.Runtime.CompilerServices.EnumeratorCancellation]
-            CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(source);
             ArgumentNullException.ThrowIfNull(textSelector);

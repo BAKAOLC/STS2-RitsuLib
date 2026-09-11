@@ -71,6 +71,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             var maxWidth = GetMaxFgWidth(healthBar);
             var hpForeground = healthBar._hpForeground;
+            PlaceOvercapSegments(healthBar, state, customSegments, maxWidth, visualDenom);
             var poisonDamage = creature.HasPower<PoisonPower>()
                 ? Math.Max(0, creature.GetPower<PoisonPower>()?.CalculateTotalDamageNextTurn() ?? 0)
                 : 0;
@@ -404,6 +405,59 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             }
         }
 
+        private static void PlaceOvercapSegments(NHealthBar healthBar, HealthBarForecastUiState state,
+            CustomSegment[] segments, float maxWidth, int visualDenom)
+        {
+            var maxHp = Math.Max(0, healthBar._creature.MaxHp);
+            if (maxHp == 0 || maxWidth <= 0f)
+            {
+                HideSegments(state.OvercapSegments);
+                return;
+            }
+
+            var inward = segments
+                .Where(segment => segment.Direction == HealthBarForecastGrowthDirection.InwardFromMaxHp)
+                .OrderBy(segment => segment.LeftExclusiveZGroup)
+                .ThenByDescending(segment => segment.Amount)
+                .ThenBy(segment => segment.Order)
+                .ThenBy(segment => segment.SequenceOrder)
+                .ToArray();
+            var boundary = maxHp;
+            foreach (var segment in inward)
+                boundary = Math.Min(boundary, maxHp - Math.Min(segment.Amount, maxHp));
+
+            var edge = Math.Clamp(healthBar._creature.CurrentHp, 0, maxHp);
+            var index = 0;
+            foreach (var segment in segments
+                         .Where(segment => segment.Direction == HealthBarForecastGrowthDirection.OutwardFromCurrentHp)
+                         .OrderBy(segment => segment.Order)
+                         .ThenBy(segment => segment.SequenceOrder))
+            {
+                if (edge >= boundary)
+                    break;
+                var start = edge;
+                edge = Math.Min(boundary, SaturatingAddNonNegative(edge, segment.Amount));
+                Place(segment, start, edge);
+            }
+
+            foreach (var segment in inward)
+                Place(segment, maxHp - Math.Min(segment.Amount, maxHp), maxHp);
+
+            HideSegments(state.OvercapSegments, index);
+            return;
+
+            void Place(CustomSegment segment, int start, int end)
+            {
+                EnsureSegmentCount(state.OvercapSegments, state.OvercapContainer, index + 1, state.OvercapTemplate);
+                var node = state.OvercapSegments[index++];
+                node.Visible = true;
+                ApplyForecastSegmentAppearance(node, segment.Color, segment.OverlayMaterial,
+                    segment.OverlaySelfModulate);
+                node.OffsetLeft = Math.Max(0f, GetFgWidth(healthBar, start, visualDenom) - node.PatchMarginLeft);
+                node.OffsetRight = GetFgWidth(healthBar, end, visualDenom) - maxWidth;
+            }
+        }
+
         private static CustomSegment[] GetCustomSegments(Creature creature)
         {
             var ritsuSegments = HealthBarForecastRegistry.GetSegments(creature)
@@ -447,6 +501,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             HideBaseLibForecastContainer(mask.GetNodeOrNull<Control>("BaseLibForecastRightContainer"));
             HideBaseLibForecastContainer(mask.GetNodeOrNull<Control>("BaseLibForecastLeftContainer"));
+            HideBaseLibForecastContainer(mask.GetNodeOrNull<Control>("BaseLibForecastOvercapContainer"));
         }
 
         private static void HideBaseLibForecastContainer(Control? container)
@@ -465,6 +520,7 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             HideSegments(state.RightSegments);
             HideSegments(state.LeftSegments);
+            HideSegments(state.OvercapSegments);
             state.OverlapLeftZ.Clear();
             state.LastRender = HealthBarForecastRenderResult.Empty;
         }
@@ -485,20 +541,26 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
 
             var rightContainer = CreateContainer("RitsuForecastRightContainer");
             var leftContainer = CreateContainer("RitsuForecastLeftContainer");
+            var overcapContainer = CreateContainer("RitsuForecastOvercapContainer");
 
             mask.AddChild(rightContainer);
             mask.AddChild(leftContainer);
+            mask.AddChild(overcapContainer);
 
             var rightTemplate = CreateSegmentTemplate(poisonForeground, "RitsuForecastRightTemplate");
             var leftTemplate = CreateSegmentTemplate(doomForeground, "RitsuForecastLeftTemplate");
+            var overcapTemplate = CreateSegmentTemplate(poisonForeground, "RitsuForecastOvercapTemplate");
             rightContainer.AddChild(rightTemplate);
             leftContainer.AddChild(leftTemplate);
+            overcapContainer.AddChild(overcapTemplate);
 
             UiStates[healthBar] = new(
                 rightContainer,
                 leftContainer,
+                overcapContainer,
                 rightTemplate,
                 leftTemplate,
+                overcapTemplate,
                 []);
             return true;
         }
@@ -544,6 +606,10 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
                 MoveChildBefore(mask, state.RightContainer, hpForeground);
 
             MoveChildBefore(mask, state.LeftContainer, doomForeground);
+            var lastBand = new[]
+                    { poisonForeground, hpForeground, doomForeground, state.RightContainer, state.LeftContainer }
+                .MaxBy(control => control.GetIndex())!;
+            MoveChildAfter(mask, state.OvercapContainer, lastBand);
         }
 
         private static void MoveChildAfter(Control parent, Control node, Control anchor)
@@ -742,16 +808,21 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
         private sealed class HealthBarForecastUiState(
             Control rightContainer,
             Control leftContainer,
+            Control overcapContainer,
             NinePatchRect rightTemplate,
             NinePatchRect leftTemplate,
+            NinePatchRect overcapTemplate,
             List<NinePatchRect> rightSegments)
         {
             public Control RightContainer { get; } = rightContainer;
             public Control LeftContainer { get; } = leftContainer;
+            public Control OvercapContainer { get; } = overcapContainer;
             public NinePatchRect RightTemplate { get; } = rightTemplate;
             public NinePatchRect LeftTemplate { get; } = leftTemplate;
+            public NinePatchRect OvercapTemplate { get; } = overcapTemplate;
             public List<NinePatchRect> RightSegments { get; } = rightSegments;
             public List<NinePatchRect> LeftSegments { get; } = [];
+            public List<NinePatchRect> OvercapSegments { get; } = [];
             public List<(CustomSegment seg, int drawIndex)> OverlapLeftZ { get; } = [];
             public HealthBarForecastRenderResult LastRender { get; set; } = HealthBarForecastRenderResult.Empty;
             public float? MiddlegroundTweenTarget { get; set; }
@@ -821,6 +892,36 @@ namespace STS2RitsuLib.Combat.HealthBars.Patches
             {
                 _isRunning = false;
             }
+        }
+    }
+
+    internal sealed class BaseLibForecastRendererOwnershipPatch : IPatchMethod
+    {
+        public static string PatchId => "baselib_forecast_renderer_ownership";
+        public static string Description => "Prevent duplicate BaseLib rendering while RitsuLib imports forecasts";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            var type = Type.GetType("BaseLib.Patches.UI.HealthBarForecastPatch, BaseLib");
+            if (type == null)
+                return [];
+            string[] methods =
+            [
+                "RefreshForegroundPostfix", "RefreshMiddlegroundPostfix", "RefreshTextPostfix",
+                "SetHpBarContainerSizeWithOffsetsImmediatelyPostfix",
+            ];
+            return
+            [
+                .. methods.Where(name => AccessTools.DeclaredMethod(type, name, [typeof(NHealthBar)]) != null)
+                    .Select(name => new ModPatchTarget(type, name, [typeof(NHealthBar)])),
+            ];
+        }
+
+        public static bool Prefix()
+        {
+            BaseLibHealthBarForecastBridge.TryRegisterPrimary();
+            return !BaseLibHealthBarForecastBridge.ShouldSuppressBaseLibRenderer();
         }
     }
 

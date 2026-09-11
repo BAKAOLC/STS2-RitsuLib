@@ -13,10 +13,26 @@ DEV_PACKAGE_VERSION_PREFIX = "9999.0.0-dev"
 
 NUGET_ORG_V3_INDEX_URL = "https://api.nuget.org/v3/index.json"
 
-ARTIFACTS_NUGET = Path("artifacts") / "nuget"
-ARTIFACTS_GITHUB = Path("artifacts") / "github"
+def validate_configuration(configuration: str) -> str:
+    if configuration not in ("Debug", "Release"):
+        raise ValueError("RitsuLib configuration must be Debug or Release.")
+    return configuration
 
-ARTIFACTS_BUNDLE_STAGING = Path("artifacts") / "bundle-staging"
+
+def nuget_artifacts(configuration: str = "Release") -> Path:
+    return Path("artifacts") / "packages" / validate_configuration(configuration) / "nuget"
+
+
+def github_artifacts(configuration: str = "Release") -> Path:
+    return Path("artifacts") / "packages" / validate_configuration(configuration) / "github"
+
+
+def bundle_staging(configuration: str = "Release") -> Path:
+    return Path("artifacts") / "bundle" / validate_configuration(configuration)
+
+
+def runtime_directory(repo: Path, configuration: str, compat_target: str) -> Path:
+    return repo / "artifacts" / "runtime" / validate_configuration(configuration) / compat_target
 
 RITSULIB_LOADER_DIR_REL = Path("components") / "loader"
 RITSULIB_LOADER_CSPROJ_REL = RITSULIB_LOADER_DIR_REL / "STS2-RitsuLib-Loader.csproj"
@@ -41,8 +57,6 @@ GIT_DEFAULT_MAIN_BRANCH = "main"
 
 SIGNATURE_EXPECTED_DLL_NAMES = ("sts2.dll", "0Harmony.dll", "SmartFormat.dll")
 
-GODOT_MONO_BIN_PREFIX = Path(".godot") / "mono" / "temp" / "bin"
-GODOT_MONO_OBJ_PREFIX = Path(".godot") / "mono" / "temp" / "obj"
 
 
 def dev_package_version(*, run_id: str, sha: str) -> str:

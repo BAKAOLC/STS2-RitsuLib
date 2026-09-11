@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" TreatAsLocalProperty="Sts2ApiCompat;Sts2DataDir">
+    <PropertyGroup>
+        <RitsuLibSharedModule>true</RitsuLibSharedModule>
+        <AssemblyName>STS2-RitsuLib.Shared</AssemblyName>
+    </PropertyGroup>
+    <Import Project="..\..\build\RitsuLib.Module.props"/>
+    <Import Project="..\..\build\RitsuLib.Modules.items"/>
+    <ItemGroup>
+        <Compile Include="@(RitsuLibSharedSource)" Link="Shared\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Using Include="STS2RitsuLib.RitsuModuleRuntime" Alias="RitsuLibFramework"/>
+        <Using Include="STS2RitsuLib.Shared"/>
+    </ItemGroup>
+</Project>

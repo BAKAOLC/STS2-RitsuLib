@@ -15,35 +15,35 @@ namespace STS2RitsuLib.Settings
     // ReSharper disable once Godot.MissingParameterlessConstructor
     internal sealed partial class RitsuCatalogSearchMenu : HBoxContainer, IModSettingsTransientPopupOwner
     {
-        private readonly string _catalogId;
-        private readonly RitsuCatalogFilter[] _filters;
-        private readonly Dictionary<string, int> _selections;
-        private readonly Dictionary<string, int> _defaults;
-        private readonly string? _primaryFilterId;
-        private readonly Action _changed;
-        private readonly Action<string> _applyQuery;
-        private readonly VBoxContainer _body;
-        private readonly Control _backdrop;
-        private readonly PanelContainer _panel;
-        private readonly Button _toggle;
-        private readonly Button _modeSwitch;
-        private readonly Label _summary;
-        private readonly HBoxContainer _normalToolbar;
-        private readonly HBoxContainer _advancedToolbar;
         private readonly LineEdit _advancedInput;
+        private readonly HBoxContainer _advancedToolbar;
+        private readonly Action<string> _applyQuery;
+        private readonly Control _backdrop;
+        private readonly VBoxContainer _body;
+        private readonly string _catalogId;
+        private readonly Action _changed;
+        private readonly Dictionary<string, int> _defaults;
         private readonly Button _edit;
+        private readonly RitsuCatalogFilter[] _filters;
+        private readonly Button _modeSwitch;
         private readonly Dictionary<string, ModSettingsDropdownChoiceControl<int>> _normalFilterEditors = [];
+        private readonly HBoxContainer _normalToolbar;
+        private readonly PanelContainer _panel;
+        private readonly string? _primaryFilterId;
         private readonly Button _reset;
-        private Control? _sidebarHost;
-        private LineEdit? _input;
-        private string _normalQuery = string.Empty;
+        private readonly Dictionary<string, int> _selections;
+        private readonly Label _summary;
+        private readonly Button _toggle;
         private string _advancedQuery = string.Empty;
-        private RitsuSearchOptions _searchOptions = RitsuSearchOptions.Default;
-        private RitsuDebugSearchPreferences _preferences = new();
         private RitsuCatalogSearchFields _availableFields = RitsuCatalogSearchFields.All;
-        private bool _expanded;
-        private ulong? _nestedPopupFrame;
         private ulong? _closedFrame;
+        private bool _expanded;
+        private LineEdit? _input;
+        private ulong? _nestedPopupFrame;
+        private string _normalQuery = string.Empty;
+        private RitsuDebugSearchPreferences _preferences = new();
+        private RitsuSearchOptions _searchOptions = RitsuSearchOptions.Default;
+        private Control? _sidebarHost;
 
         internal RitsuCatalogSearchMenu(
             string catalogId,
@@ -161,6 +161,13 @@ namespace STS2RitsuLib.Settings
 
         internal bool IsAdvanced => _preferences.AdvancedMode;
 
+        internal string? QueryError { get; private set; }
+
+        void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
+        {
+            Close();
+        }
+
         internal void RestoreSearchState(RitsuCatalogSearchMenu previous)
         {
             _normalQuery = previous.IsAdvanced ? previous._normalQuery : previous._input?.Text ?? string.Empty;
@@ -238,10 +245,7 @@ namespace STS2RitsuLib.Settings
             _advancedInput.Text = _advancedQuery;
             foreach (var (id, editor) in _normalFilterEditors)
                 editor.SetValue(_selections[id]);
-            if (_input != null)
-            {
-                _input.Text = IsAdvanced ? _advancedQuery : _normalQuery;
-            }
+            if (_input != null) _input.Text = IsAdvanced ? _advancedQuery : _normalQuery;
 
             RefreshSummary();
         }
@@ -308,11 +312,6 @@ namespace STS2RitsuLib.Settings
             if (_expanded && Descendants(_body).OfType<IModSettingsDirectionalInputClaimant>()
                     .Any(static owner => owner.ClaimsDirectionalInput))
                 _nestedPopupFrame = Engine.GetProcessFrames();
-        }
-
-        void IModSettingsTransientPopupOwner.ForceCloseTransientUi()
-        {
-            Close();
         }
 
         private void Open()
@@ -424,8 +423,6 @@ namespace STS2RitsuLib.Settings
             return [.. results];
         }
 
-        internal string? QueryError { get; private set; }
-
         private static string FormatQueryError(string? error, int position)
         {
             var reason = error switch
@@ -454,7 +451,9 @@ namespace STS2RitsuLib.Settings
                 if (!_preferences.Filters.TryGetValue(filter.Id, out var id))
                     continue;
                 if (id == null)
+                {
                     _selections[filter.Id] = -1;
+                }
                 else
                 {
                     var index = filter.Options.ToList().FindIndex(option => option.Id == id);
@@ -523,9 +522,7 @@ namespace STS2RitsuLib.Settings
 
             var providers = RitsuSearchExpansionRegistry.GetProviderSnapshots();
             if (providers.Count > 0)
-            {
                 foreach (var provider in providers)
-                {
                     if (provider.Id.Equals(PinyinSearchExpansionProvider.ProviderId,
                             StringComparison.OrdinalIgnoreCase))
                     {
@@ -550,8 +547,6 @@ namespace STS2RitsuLib.Settings
                         };
                         AddRow(_body, provider.DisplayName, toggle);
                     }
-                }
-            }
 
             RefreshSummary();
         }

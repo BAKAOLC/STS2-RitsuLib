@@ -95,13 +95,13 @@ namespace STS2RitsuLib.Telemetry
             }
         }
 
-        internal async Task<bool> TryCapturePayloadAsync(
-            string eventName,
+        internal async Task<bool> TryCapturePayloadAsync(string eventName,
             string requestId,
             JsonNode payload,
             IReadOnlyDictionary<string, object?>? properties = null,
             TelemetryCaptureContext? captureContext = null,
             bool filterAlreadyApplied = false,
+            bool waitForDelivery = true,
             CancellationToken cancellationToken = default)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
@@ -144,8 +144,11 @@ namespace STS2RitsuLib.Telemetry
                         cancellationToken)
                     .ConfigureAwait(false);
                 await TelemetryQueue.EnqueueAsync(envelope!, cancellationToken).ConfigureAwait(false);
-                await TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId, cancellationToken)
-                    .ConfigureAwait(false);
+                var delivery = TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId, cancellationToken);
+                if (waitForDelivery)
+                    await delivery.ConfigureAwait(false);
+                else
+                    TelemetryTaskRunner.Forget(delivery, "flush_applicant");
                 return true;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

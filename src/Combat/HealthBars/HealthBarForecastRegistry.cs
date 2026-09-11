@@ -21,6 +21,30 @@ namespace STS2RitsuLib.Combat.HealthBars
         ///     <para xml:lang="zh-CN">从空白侧边缘向内延伸，与“灾厄”相同。</para>
         /// </summary>
         FromLeft = 1,
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Extends from current HP into the empty remainder, chaining by order and clipped by
+        ///         InwardFromMaxHp segments. Does not consume HP or affect the lethal label.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从当前生命值向空白区域按顺序衔接延伸，并受 InwardFromMaxHp 片段裁剪；不消耗生命值，也不影响致命标签。
+        ///     </para>
+        /// </summary>
+        OutwardFromCurrentHp = 2,
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Extends inward from maximum HP and overlays existing bands without consuming HP or affecting
+        ///         the lethal label. Segments overlap independently, with larger Z groups above smaller groups;
+        ///         within a group, larger amounts draw first, followed by order and registration order.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从最大生命值向内覆盖现有色带，不消耗生命值，也不影响致命标签。片段独立重叠，较大 Z 组绘制在上方；
+        ///         同组先绘制数值较大的片段，再按排序值与注册顺序绘制。
+        ///     </para>
+        /// </summary>
+        InwardFromMaxHp = 3,
     }
 
     /// <summary>
@@ -105,24 +129,29 @@ namespace STS2RitsuLib.Combat.HealthBars
     /// <param name="LeftOriginLayout">
     ///     <para xml:lang="en">
     ///         The empty-edge layout for <see cref="HealthBarForecastGrowthDirection.FromLeft" /> segments. Ignored
-    ///         for <see cref="HealthBarForecastGrowthDirection.FromRight" />.
+    ///         for all other directions.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         <see cref="HealthBarForecastGrowthDirection.FromLeft" /> 片段使用的空白侧布局。
-    ///         对 <see cref="HealthBarForecastGrowthDirection.FromRight" /> 片段忽略。
+    ///         对其他方向的片段忽略。
     ///     </para>
     /// </param>
     /// <param name="LeftExclusiveZGroup">
     ///     <para xml:lang="en">
-    ///         The exclusive Z group for overlapping empty-edge segments. Larger groups draw above smaller groups.
+    ///         The Z group for overlapping empty-edge and InwardFromMaxHp segments. Larger groups draw above smaller groups.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         空白侧重叠片段使用的互斥 Z 组。数值较大的组绘制在数值较小的组之上。
+    ///         空白侧重叠及 InwardFromMaxHp 片段使用的 Z 组。数值较大的组绘制在数值较小的组之上。
     ///     </para>
     /// </param>
     /// <param name="AffectsHpLabel">
-    ///     <para xml:lang="en">Whether this segment can recolor the HP label when its forecast becomes lethal.</para>
-    ///     <para xml:lang="zh-CN">该片段的预测致命时是否可以改变生命值文本颜色。</para>
+    ///     <para xml:lang="en">
+    ///         Whether this segment can recolor the HP label when its forecast becomes lethal.
+    ///         Ignored for OutwardFromCurrentHp and InwardFromMaxHp.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         该片段的预测致命时是否可以改变生命值文本颜色；对 OutwardFromCurrentHp 和 InwardFromMaxHp 忽略。
+    ///     </para>
     /// </param>
     public readonly record struct HealthBarForecastSegment(
         int Amount,

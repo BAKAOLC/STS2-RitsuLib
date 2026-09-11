@@ -31,6 +31,15 @@
         public bool IsDisposed => _registration.IsDisposed;
 
         /// <summary>
+        ///     <para xml:lang="en">Withdraws this endpoint registration. Repeated calls are safe.</para>
+        ///     <para xml:lang="zh-CN">撤回此端点注册；重复调用是安全的。</para>
+        /// </summary>
+        public void Dispose()
+        {
+            _registration.Dispose();
+        }
+
+        /// <summary>
         ///     <para xml:lang="en">
         ///         Raised after the negotiated protocol version or compatible participant set changes. Handlers follow
         ///         the endpoint's dispatch mode and exceptions are isolated.
@@ -130,15 +139,6 @@
                 RitsuLibSidecarEndpointDestination.Peer,
                 peerNetId,
                 payload);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Withdraws this endpoint registration. Repeated calls are safe.</para>
-        ///     <para xml:lang="zh-CN">撤回此端点注册；重复调用是安全的。</para>
-        /// </summary>
-        public void Dispose()
-        {
-            _registration.Dispose();
         }
     }
 }

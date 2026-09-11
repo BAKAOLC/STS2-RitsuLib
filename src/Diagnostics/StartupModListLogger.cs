@@ -111,15 +111,11 @@ namespace STS2RitsuLib.Diagnostics
                     .AppendLine("Mod List:");
 
                 if (loadedMods.Count == 0)
-                {
                     text.AppendLine("  <none>");
-                }
                 else
-                {
                     foreach (var mod in loadedMods)
                         text.AppendLine($"  * {FormatModName(mod)} ({FormatVersion(mod)})" +
                                         FormatWorkshopItemId(mod));
-                }
 
                 RitsuLibFramework.Logger.Info(text.ToString());
                 lock (SyncRoot)

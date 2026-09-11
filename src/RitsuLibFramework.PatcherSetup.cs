@@ -558,9 +558,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CardFrameMaterialPatch>();
             patcher.RegisterPatch<CardPoolFrameMaterialPatch>();
             patcher.RegisterPatch<CardPoolDeckViewStylePatch>();
-            patcher.RegisterPatch<CardVisualStylePatch>();
-            patcher.RegisterPatch<CardPortraitMaterialPatch>();
-            patcher.RegisterPatch<CardNodeMaterialPatch>();
+            patcher.RegisterPatch<CardVisualRefreshPatch>();
+            patcher.RegisterPatch<CardVisualPoolResetPatch>();
             patcher.RegisterPatch<CardAllPortraitPathsPatch>();
             patcher.RegisterPatch<CardOverlayPathPatch>();
             patcher.RegisterPatch<CardOverlayAvailabilityPatch>();

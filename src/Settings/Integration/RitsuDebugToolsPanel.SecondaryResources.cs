@@ -39,7 +39,6 @@ namespace STS2RitsuLib.Settings
                         sourceByItemId.Values,
                         item => sourceByItemId.TryGetValue(item.Id, out var source) ? source : null),
                 ],
-                presentation: RitsuCatalogPresentation.List,
                 detailWidth: 520f);
             browser.SetItems(CreateSecondaryResourceItems(target, definitions));
             return browser;

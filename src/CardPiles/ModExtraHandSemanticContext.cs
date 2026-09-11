@@ -37,8 +37,8 @@ namespace STS2RitsuLib.CardPiles
 
         private sealed class Scope(State? previous) : IDisposable
         {
-            private State? _previous = previous;
             private bool _disposed;
+            private State? _previous = previous;
 
             public void Dispose()
             {

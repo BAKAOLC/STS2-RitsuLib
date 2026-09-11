@@ -166,9 +166,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 !TryConsumeCatalogRate(context.SenderNetId, context.Payload.Length) ||
                 !RitsuLibSidecarEndpointBinary.TryReadCatalog(context.Payload.Span, out var catalog) ||
                 (catalog.SupportedProfiles & RitsuLibSidecarTransportProfileMask.Control) == 0)
-            {
                 return;
-            }
 
             lock (Gate)
             {
@@ -187,9 +185,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 RitsuLibSidecarSessionManager.CurrentNetService is not NetClientGameService client ||
                 context.SenderNetId != client.HostNetId ||
                 !RitsuLibSidecarEndpointBinary.TryReadRouteSnapshot(context.Payload.Span, out var snapshot))
-            {
                 return;
-            }
 
             Dictionary<RitsuLibSidecarEndpointKey, RitsuLibSidecarEndpointRouteDefinition> acceptedByKey = [];
             Dictionary<uint, RitsuLibSidecarEndpointRouteDefinition> acceptedById = [];
@@ -988,7 +984,10 @@ namespace STS2RitsuLib.Networking.Sidecar
         {
             internal RitsuLibSidecarTransportProfileMask SupportedProfiles => Catalog.SupportedProfiles;
 
-            internal IEnumerable<RitsuLibSidecarEndpointAdvertisement> GetEndpoints() => Catalog.Endpoints;
+            internal IEnumerable<RitsuLibSidecarEndpointAdvertisement> GetEndpoints()
+            {
+                return Catalog.Endpoints;
+            }
         }
 
         private readonly record struct AdvertisedParticipant(

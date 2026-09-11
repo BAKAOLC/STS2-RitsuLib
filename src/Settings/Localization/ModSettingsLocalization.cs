@@ -1,25 +1,18 @@
-using System.Reflection;
-using STS2RitsuLib.Compat;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Provides embedded JSON localization for the mod settings UI and resolves mod and page display names.
+    ///         Provides bundled JSON localization for the mod settings UI and resolves mod and page display names.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         为模组设置界面提供嵌入式 JSON 本地化，并解析模组和页面的显示名称。
+    ///         为模组设置界面提供随附 JSON 本地化，并解析模组和页面的显示名称。
     ///     </para>
     /// </summary>
     internal static class ModSettingsLocalization
     {
-        private static readonly Lazy<I18N> InstanceFactory = new(() => new(
-            "RitsuLib-ModSettings",
-            resourceFolders: ["STS2RitsuLib.Settings.Localization.ModSettingsUi"],
-            resourceAssembly: Assembly.GetExecutingAssembly()));
-
-        public static I18N Instance => InstanceFactory.Value;
+        public static I18N Instance => RitsuModuleLocalization.Instance;
 
         public static string Get(string key, string fallback)
         {

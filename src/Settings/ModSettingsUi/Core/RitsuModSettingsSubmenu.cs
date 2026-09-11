@@ -89,11 +89,11 @@ namespace STS2RitsuLib.Settings
 
         private MegaRichTextLabel? _contentEmptyStateLabel;
         private bool _contentLayoutRefreshQueued;
-        private ModSettingsUiFactory.FastVerticalStack _contentList = null!;
+        private FastVerticalStack _contentList = null!;
 
         private bool _contentOnlyRebuildNeedsContentFocus;
         private Control _contentPanelRoot = null!;
-        private ModSettingsUiFactory.FixedWidthScrollContent _contentScrollContent = null!;
+        private FixedWidthScrollContent _contentScrollContent = null!;
         private bool _contentStructureDirty = true;
         private bool _focusNavigationRefreshScheduled;
         private bool _focusSelectedPageButtonOnNextRefresh;
@@ -583,7 +583,7 @@ namespace STS2RitsuLib.Settings
                 if (control.Visible == visible)
                     continue;
                 control.Visible = visible;
-                ModSettingsUiFactory.FastVerticalStack.RequestAncestorLayouts(control);
+                FastVerticalStack.RequestAncestorLayouts(control);
                 changed = true;
             }
 
@@ -710,9 +710,9 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshPageRegistryForUi()
         {
-            RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
+            Sts2ModManagerCompat.EnsureFrameworkPagesRegistered();
             ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
-            RitsuLibModSettingsBootstrap.RefreshDynamicPages();
+            Sts2ModManagerCompat.RefreshDynamicPages();
         }
 
         private void FlushPendingRefreshActionsImmediate()
@@ -1314,7 +1314,7 @@ namespace STS2RitsuLib.Settings
                 MouseFilter = MouseFilterEnum.Ignore,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
-            headerCard.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
+            headerCard.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateInsetSurfaceStyle());
             _sidebarHeaderCard = headerCard;
             root.AddChild(headerCard);
 
@@ -1452,7 +1452,7 @@ namespace STS2RitsuLib.Settings
             ModSettingsUiControlTheming.ApplySettingsScrollContainerTheme(_scrollContainer);
             root.AddChild(_scrollContainer);
 
-            var scrollContent = new ModSettingsUiFactory.FixedWidthScrollContent
+            var scrollContent = new FixedWidthScrollContent
             {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 MouseFilter = MouseFilterEnum.Ignore,
@@ -1857,7 +1857,7 @@ namespace STS2RitsuLib.Settings
                 return existingCache;
             }
 
-            var root = new ModSettingsUiFactory.FastVerticalStack(8)
+            var root = new FastVerticalStack(8)
             {
                 Name = $"CachedPage_{SanitizePageNodeName(pageKey)}",
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -1865,7 +1865,7 @@ namespace STS2RitsuLib.Settings
                 Visible = false,
             };
 
-            var headerHost = new ModSettingsUiFactory.FastVerticalStack(8)
+            var headerHost = new FastVerticalStack(8)
             {
                 Name = $"PageHeader_{SanitizePageNodeName(pageKey)}",
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -2238,7 +2238,7 @@ namespace STS2RitsuLib.Settings
                             page.Id)));
                 }
 
-                layoutDefer = ModSettingsUiFactory.FastVerticalStack.DeferLayoutRequests();
+                layoutDefer = FastVerticalStack.DeferLayoutRequests();
                 var frameStartedAt = Time.GetTicksMsec();
                 foreach (var item in ModSettingsUiFactory.CreatePageBuildItems(context, page,
                              _reusableEntryNodePool))
@@ -2255,7 +2255,7 @@ namespace STS2RitsuLib.Settings
                     layoutDefer = null;
                     RefreshPageHostLayout(cache);
                     await YieldPageBuildAsync(cache, buildVersion, ct);
-                    layoutDefer = ModSettingsUiFactory.FastVerticalStack.DeferLayoutRequests();
+                    layoutDefer = FastVerticalStack.DeferLayoutRequests();
                     frameStartedAt = Time.GetTicksMsec();
                 }
 
@@ -2412,11 +2412,11 @@ namespace STS2RitsuLib.Settings
 
             cache.HeaderHost.UpdateMinimumSize();
             cache.ContentHost.UpdateMinimumSize();
-            if (cache.HeaderHost is ModSettingsUiFactory.FastVerticalStack headerStack)
+            if (cache.HeaderHost is FastVerticalStack headerStack)
                 headerStack.RequestLayout();
-            if (cache.ContentHost is ModSettingsUiFactory.FastVerticalStack contentStack)
+            if (cache.ContentHost is FastVerticalStack contentStack)
                 contentStack.RequestLayout();
-            if (cache.Root is ModSettingsUiFactory.FastVerticalStack rootStack)
+            if (cache.Root is FastVerticalStack rootStack)
                 rootStack.RequestLayout();
 
             ApplyContentViewportWidth();
@@ -3391,7 +3391,7 @@ namespace STS2RitsuLib.Settings
                         RitsuShellTheme.Current.Metric.Radius.Default));
 
             if (_sidebarHeaderCard != null && IsInstanceValid(_sidebarHeaderCard))
-                _sidebarHeaderCard.AddThemeStyleboxOverride("panel", ModSettingsUiFactory.CreateInsetSurfaceStyle());
+                _sidebarHeaderCard.AddThemeStyleboxOverride("panel", RitsuShellChromeStyles.CreateInsetSurfaceStyle());
 
             if (_sidebarHeaderTitleLabel != null && IsInstanceValid(_sidebarHeaderTitleLabel))
                 _sidebarHeaderTitleLabel.Modulate = RitsuShellTheme.Current.Text.SidebarSection;

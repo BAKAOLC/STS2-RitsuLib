@@ -1,34 +1,32 @@
 <Project>
     <PropertyGroup>
         <RitsuLibAutoCopy Condition="'$(RitsuLibAutoCopy)' == ''">true</RitsuLibAutoCopy>
-        <RitsuLibPackageAssemblyPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.dll</RitsuLibPackageAssemblyPath>
-        <RitsuLibPackagePdbPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.pdb</RitsuLibPackagePdbPath>
-        <RitsuLibPackageXmlPath>$(MSBuildThisFileDirectory)..\lib\net9.0\STS2-RitsuLib.xml</RitsuLibPackageXmlPath>
-        <RitsuLibPackageManifestPath>$(MSBuildThisFileDirectory)..\contentFiles\any\any\mod_manifest.json</RitsuLibPackageManifestPath>
-        <RitsuLibPackageViewerRoot>$(MSBuildThisFileDirectory)..\contentFiles\any\any\viewer</RitsuLibPackageViewerRoot>
-        <RitsuLibDeployDir Condition="'$(RitsuLibDeployDir)' == ''"></RitsuLibDeployDir>
+        <RitsuLibPackageLibraryRoot>$(MSBuildThisFileDirectory)..\lib\net9.0\</RitsuLibPackageLibraryRoot>
+        <RitsuLibPackageContentRoot>$(MSBuildThisFileDirectory)..\contentFiles\any\any\</RitsuLibPackageContentRoot>
     </PropertyGroup>
-
-    <Target
-        Name="CopyRitsuLibPackageModFiles"
-        AfterTargets="Build"
-        Condition="'$(DesignTimeBuild)' != 'true' and '$(RitsuLibAutoCopy)' == 'true' and '$(RitsuLibDeployDir)' != '' and Exists('$(RitsuLibPackageAssemblyPath)') and Exists('$(RitsuLibPackageManifestPath)')">
-        <MakeDir Directories="$(RitsuLibDeployDir)"/>
-        <Copy SourceFiles="$(RitsuLibPackageAssemblyPath)" DestinationFolder="$(RitsuLibDeployDir)"
-              SkipUnchangedFiles="true"/>
-        <Copy SourceFiles="$(RitsuLibPackagePdbPath)" DestinationFolder="$(RitsuLibDeployDir)"
-              SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackagePdbPath)')"/>
-        <Copy SourceFiles="$(RitsuLibPackageXmlPath)" DestinationFolder="$(RitsuLibDeployDir)"
-              SkipUnchangedFiles="true" Condition="Exists('$(RitsuLibPackageXmlPath)')"/>
-        <Copy SourceFiles="$(RitsuLibPackageManifestPath)" DestinationFolder="$(RitsuLibDeployDir)"
-              SkipUnchangedFiles="true"/>
+    <Target Name="CopyRitsuLibPackageModFiles" AfterTargets="Build"
+            Condition="'$(DesignTimeBuild)' != 'true' and '$(RitsuLibAutoCopy)' == 'true' and '$(RitsuLibDeployDir)' != ''">
+        <Error Condition="!Exists('$(RitsuLibPackageContentRoot)ritsulib-variants.manifest')" Text="The installed RitsuLib NuGet package is missing its runtime module manifest."/>
+        <ReadLinesFromFile File="$(RitsuLibPackageContentRoot)compat-target.txt">
+            <Output TaskParameter="Lines" PropertyName="RitsuLibPackageCompatTarget"/>
+        </ReadLinesFromFile>
+        <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(RitsuLibPackageCompatTarget)', '^0\.[0-9]+\.[0-9]+$'))" Text="The installed RitsuLib NuGet package has an invalid compatibility target."/>
         <ItemGroup>
-            <RitsuLibPackageViewerFiles Include="$(RitsuLibPackageViewerRoot)\**\*"
-                                        Condition="Exists('$(RitsuLibPackageViewerRoot)\index.html')"/>
+            <RitsuLibPackageSharedFiles Include="$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Shared.*;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Ui.*;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Settings.*;$(RitsuLibPackageContentRoot)shared\System.IO.Hashing.dll"/>
+            <RitsuLibPackageVariantFiles Include="$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.dll;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.xml;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Runtime.*"/>
+            <RitsuLibPackageVariantFiles Include="$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.pdb" Condition="Exists('$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.pdb')"/>
+            <RitsuLibPackageViewerFiles Include="$(RitsuLibPackageContentRoot)viewer\**\*"/>
         </ItemGroup>
-        <Copy SourceFiles="@(RitsuLibPackageViewerFiles)"
-              DestinationFiles="@(RitsuLibPackageViewerFiles->'$(RitsuLibDeployDir)\viewer\%(RecursiveDir)%(Filename)%(Extension)')"
-              SkipUnchangedFiles="true"
-              Condition="'@(RitsuLibPackageViewerFiles)' != ''"/>
+        <Error Condition="!Exists('$(RitsuLibPackageContentRoot)viewer\index.html')" Text="The installed RitsuLib NuGet package is missing the debug log viewer."/>
+        <MakeDir Directories="$(RitsuLibDeployDir)"/>
+        <RemoveDir Directories="$(RitsuLibDeployDir)\lib;$(RitsuLibDeployDir)\compat;$(RitsuLibDeployDir)\shared;$(RitsuLibDeployDir)\assets"/>
+        <Delete Files="$(RitsuLibDeployDir)\compat-target.txt;$(RitsuLibDeployDir)\ritsulib-variants.json;$(RitsuLibDeployDir)\STS2-RitsuLib.Loader.pdb"/>
+        <Copy SourceFiles="@(RitsuLibPackageSharedFiles)" DestinationFolder="$(RitsuLibDeployDir)\shared"/>
+        <Copy SourceFiles="@(RitsuLibPackageVariantFiles)" DestinationFolder="$(RitsuLibDeployDir)\compat\$(RitsuLibPackageCompatTarget)"/>
+        <Copy SourceFiles="$(RitsuLibPackageContentRoot)compat-target.txt" DestinationFolder="$(RitsuLibDeployDir)\compat\$(RitsuLibPackageCompatTarget)"/>
+        <Copy SourceFiles="@(RitsuLibPackageViewerFiles)" DestinationFiles="@(RitsuLibPackageViewerFiles->'$(RitsuLibDeployDir)\viewer\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="$(RitsuLibPackageContentRoot)loader\STS2-RitsuLib.dll;$(RitsuLibPackageContentRoot)mod_manifest.json;$(RitsuLibPackageContentRoot)ritsulib-variants.manifest" DestinationFolder="$(RitsuLibDeployDir)"/>
+        <Copy SourceFiles="$(RitsuLibPackageContentRoot)RitsuLib.References.props" DestinationFolder="$(RitsuLibDeployDir)"/>
+        <Copy SourceFiles="$(RitsuLibPackageContentRoot)assets.zip" DestinationFolder="$(RitsuLibDeployDir)"/>
     </Target>
 </Project>

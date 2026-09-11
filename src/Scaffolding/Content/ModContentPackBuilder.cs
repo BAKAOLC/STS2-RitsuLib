@@ -1938,7 +1938,6 @@ namespace STS2RitsuLib.Scaffolding.Content
                     var succeeded = 0;
                     var failed = 0;
                     for (var i = 0; i < steps.Length; i++)
-                    {
                         try
                         {
                             steps[i](ctx);
@@ -1953,7 +1952,6 @@ namespace STS2RitsuLib.Scaffolding.Content
                                 $"[ContentPack] Failed {description} for mod '{_modId}': " +
                                 $"{ex.GetType().Name}: {ex.Message}");
                         }
-                    }
 
                     logger.Info(
                         $"[ContentPack] Applied {succeeded} deferred registration step(s); {failed} failed.");

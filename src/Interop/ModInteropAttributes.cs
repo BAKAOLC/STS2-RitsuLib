@@ -106,6 +106,59 @@ namespace STS2RitsuLib.Interop
         Inherited = false)]
     public sealed class InteropTargetAttribute : Attribute
     {
+        private Type[]? _genericTypes;
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets or sets concrete generic arguments for the target method, or for the target type on a
+        ///         wrapper class or property. Use the CLR type name including its arity, such as Namespace.Box`1.
+        ///         Arrays are copied on assignment and access. Null or empty means no specialization; at most 32
+        ///         closed, non-pointer, non-byref, non-byref-like and non-void types are accepted.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取或设置目标方法的具体泛型实参；标注包装类或属性时则用于目标类型。类型名须包含 CLR 元数，
+        ///         例如 Namespace.Box`1。赋值及读取时复制数组；null 或空数组表示不指定泛型实参。最多接受 32 个
+        ///         已封闭、非指针、非引用、非类引用且非 void 的类型。
+        ///     </para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Declare a non-generic wrapper and non-generic stub with concrete parameter and return types for
+        ///         each specialization. Open generic stubs are not patched. Target arity and generic constraints
+        ///         are checked when binding; mismatches are logged and leave that member unpatched.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         每组特化使用独立的非泛型包装类和非泛型存根，参数及返回值采用具体类型；不为开放泛型存根打补丁。
+        ///         绑定时校验目标元数和泛型约束；不匹配会记录日志并保留该成员原实现。
+        ///     </para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">More than 32 arguments are supplied, or an argument is null or unsupported.</para>
+        ///     <para xml:lang="zh-CN">实参超过 32 个，或某项为 null 或不支持的类型。</para>
+        /// </exception>
+        public Type[]? GenericTypes
+        {
+            get => _genericTypes == null ? null : [.. _genericTypes];
+            set
+            {
+                if (value == null)
+                {
+                    _genericTypes = null;
+                    return;
+                }
+
+                if (value.Length > 32)
+                    throw new ArgumentException("At most 32 generic arguments are supported.", nameof(value));
+                var copy = value.ToArray();
+                if (copy.Any(type => type == null || type.ContainsGenericParameters || type.IsPointer ||
+                                     type.IsByRef || type.IsByRefLike || type.IsFunctionPointer ||
+                                     type == typeof(void)))
+                    throw new ArgumentException("Generic arguments must be concrete supported CLR types.",
+                        nameof(value));
+                _genericTypes = copy;
+            }
+        }
+
         /// <summary>
         ///     <para xml:lang="en">Overrides the remote type and, optionally, the member name.</para>
         ///     <para xml:lang="zh-CN">覆盖远端类型，并可选择覆盖成员名。</para>
@@ -166,4 +219,18 @@ namespace STS2RitsuLib.Interop
         /// </summary>
         public string? Name { get; }
     }
+
+    /// <summary>
+    ///     <para xml:lang="en">
+    ///         Excludes a declared member from interop binding. Ignored properties retain both accessors;
+    ///         ignored methods keep their original bodies. Annotating either accessor excludes the entire
+    ///         property. Other members are processed normally.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         将声明的成员排除在互操作绑定之外。被忽略的属性保留两个访问器，方法保留原实现；
+    ///         标注任一访问器会排除整个属性。其他成员照常处理。
+    ///     </para>
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Method, Inherited = false)]
+    public sealed class InteropIgnoreAttribute : Attribute;
 }

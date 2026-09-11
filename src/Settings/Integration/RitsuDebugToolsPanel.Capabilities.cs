@@ -323,7 +323,7 @@ namespace STS2RitsuLib.Settings
                 if (index > 0 &&
                     char.IsUpper(current) &&
                     (!char.IsUpper(name[index - 1]) ||
-                     index + 1 < name.Length && char.IsLower(name[index + 1])))
+                     (index + 1 < name.Length && char.IsLower(name[index + 1]))))
                     display.Append(' ');
                 display.Append(current);
             }

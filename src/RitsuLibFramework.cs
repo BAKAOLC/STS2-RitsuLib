@@ -38,11 +38,11 @@ using STS2RitsuLib.Platform;
 using STS2RitsuLib.Platform.Steam;
 using STS2RitsuLib.RunData;
 using STS2RitsuLib.RuntimeInput;
-using STS2RitsuLib.Search;
 using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Scaffolding.Godot.NodeAttachments;
+using STS2RitsuLib.Search;
 using STS2RitsuLib.Settings;
 using STS2RitsuLib.Telemetry;
 using STS2RitsuLib.Telemetry.Diagnostics;
@@ -87,6 +87,9 @@ namespace STS2RitsuLib
 
         static RitsuLibFramework()
         {
+            RitsuModuleRuntime.Attach(RitsuLibModuleHost.Instance);
+            RitsuSettingsRuntime.Attach(RitsuLibModuleHost.Instance);
+            RitsuToastService.AttachSettingsProvider(RitsuLibSettingsStore.GetToastSettings);
             Logger = CreateLogger(Const.ModId);
         }
 

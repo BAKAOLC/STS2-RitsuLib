@@ -55,20 +55,12 @@ namespace STS2RitsuLib.Search
                         nameof(value));
                 var entries = ImmutableDictionary.CreateBuilder<string, bool>(StringComparer.OrdinalIgnoreCase);
                 foreach (var (id, enabled) in value)
-                {
                     if (!IsValidProviderId(id) || entries.Count >= 128 || !entries.TryAdd(id, enabled))
                         throw new ArgumentException("Provider overrides require unique, valid provider IDs.",
                             nameof(value));
-                }
 
                 _providerOverrides = entries.ToImmutable();
             }
-        }
-
-        internal static bool IsValidProviderId(string? id)
-        {
-            return id is { Length: > 0 and <= 128 } && id.All(static character =>
-                character is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '.' or '-' or '_');
         }
 
         /// <summary>
@@ -101,7 +93,8 @@ namespace STS2RitsuLib.Search
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Gets or initializes pinyin-initial matching; null follows the provider override, or the user's setting when absent.
+        ///         Gets or initializes pinyin-initial matching; null follows the provider override, or the user's setting when
+        ///         absent.
         ///     </para>
         ///     <para xml:lang="zh-CN">获取或初始化拼音首字母匹配；null 遵循提供器覆盖值，未覆盖时使用用户设置。</para>
         /// </summary>
@@ -118,5 +111,11 @@ namespace STS2RitsuLib.Search
         ///     </para>
         /// </summary>
         public bool UseOtherProviders { get; init; } = true;
+
+        internal static bool IsValidProviderId(string? id)
+        {
+            return id is { Length: > 0 and <= 128 } && id.All(static character =>
+                character is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '.' or '-' or '_');
+        }
     }
 }

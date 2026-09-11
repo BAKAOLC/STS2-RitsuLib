@@ -99,11 +99,11 @@ namespace STS2RitsuLib.Ui.Catalog
 
         private sealed class Parser
         {
-            private readonly string _text;
             private readonly RitsuCatalogSearchFields _availableFields;
+            private readonly string _text;
+            private Token _current;
             private int _offset;
             private int _termCount;
-            private Token _current;
 
             internal Parser(string text, RitsuCatalogSearchFields availableFields)
             {

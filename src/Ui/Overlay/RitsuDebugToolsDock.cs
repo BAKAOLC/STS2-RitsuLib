@@ -27,8 +27,8 @@ namespace STS2RitsuLib.Ui.Overlay
         private Label _pageTitle = null!;
         private Button _peekTab = null!;
         private PanelContainer _rail = null!;
-        private ScrollContainer _railScroll = null!;
         private VBoxContainer _railButtons = null!;
+        private ScrollContainer _railScroll = null!;
         private bool _railShown;
         private StyleBoxFlat _railStyle = null!;
         private Tween? _railTween;
@@ -36,11 +36,11 @@ namespace STS2RitsuLib.Ui.Overlay
         private IDisposable? _tooltipTimingScope;
         private Control _workspaceContent = null!;
         private Control _workspaceMover = null!;
-        private Panel _workspaceSurface = null!;
-        private HSeparator _workspaceSeparator = null!;
         private bool _workspaceResizeAnimating;
         private double _workspaceResizeElapsed;
         private float _workspaceResizeFrom;
+        private HSeparator _workspaceSeparator = null!;
+        private Panel _workspaceSurface = null!;
         private Tween? _workspaceTween;
         private float _workspaceWidth;
 

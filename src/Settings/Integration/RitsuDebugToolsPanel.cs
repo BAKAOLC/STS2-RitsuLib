@@ -40,23 +40,23 @@ namespace STS2RitsuLib.Settings
         private readonly Dictionary<Control, GuiInputEventHandler> _creaturePickHandlers = [];
         private readonly HashSet<string> _pageFailures = new(StringComparer.Ordinal);
         private Control? _browserHost;
+        private bool _contextualPageSelection;
         private Button? _creaturePickButton;
         private bool _creaturePicking;
         private RitsuToastHandle? _creaturePickingToast;
         private ModSettingsDropdownChoiceControl<uint>? _creatureTargetDropdown;
-        private bool _contextualPageSelection;
         private Control? _currentBrowser;
+        private PanelContainer? _header;
         private IDisposable? _modelRegistryInitializedSubscription;
+        private RitsuDebugToolsPageView[] _pages = [];
         private double _pileCardPollElapsed;
         private int? _pileCardSnapshotHash;
-        private RitsuDebugToolsPageView[] _pages = [];
         private bool _refreshScheduled;
         private uint? _selectedCreatureCombatId;
         private string? _selectedCreaturePresetId;
         private bool _stateRefreshScheduled;
-        private PanelContainer? _header;
-        private bool _statusIsError;
         private Label? _status;
+        private bool _statusIsError;
         private ModSettingsDropdownChoiceControl<ulong>? _targetDropdown;
         private Label? _targetLabel;
         private ulong[] _targetPlayerIds = [];
@@ -719,7 +719,9 @@ namespace STS2RitsuLib.Settings
                         pileCatalog.UpdateEntries(CreatePileCardCatalogEntries(entries));
                     }
                     else
+                    {
                         RebuildBrowser();
+                    }
 
                     break;
                 case $"{Const.ModId}:creatures":

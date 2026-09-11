@@ -36,6 +36,29 @@ namespace STS2RitsuLib.Telemetry
             }
         }
 
+        internal static string[] GetLoadedDiagnosticsApplicantIds()
+        {
+            if (!Sync.TryEnter())
+                return [];
+            try
+            {
+                // ReSharper disable once InconsistentlySynchronizedField
+                // Sync is held through TryEnter to keep logger callbacks nonblocking.
+                return _document == null
+                    ? []
+                    :
+                    [
+                        .. _document.Applicants.Where(pair => pair.Value.Consent == TelemetryConsentState.Granted &&
+                                                              pair.Value.GrantedRequests.Contains("diagnostics"))
+                            .Select(pair => pair.Key),
+                    ];
+            }
+            finally
+            {
+                Sync.Exit();
+            }
+        }
+
         internal static bool IsSharedContributionGranted(
             string applicantId,
             string contributorModId,

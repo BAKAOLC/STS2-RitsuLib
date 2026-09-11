@@ -77,9 +77,34 @@ package version instead of copying a pinned version from this README.
 | Stable or older game API branch                            | `STS2.RitsuLib.Compat.<api-version>`  | Matching release asset or variant pack     |
 | Player needs one folder for several API branches           | Your mod still references one package | `STS2-RitsuLib.<version>.variant-pack.zip` |
 
-The variant pack installs one `mods/STS2-RitsuLib/` folder. Its root `STS2-RitsuLib.dll` is a loader, while the
-API-specific builds live under `lib/<api-version>/`. This only changes how players install the runtime mod; it does not
-change your compile-time NuGet reference.
+Every runtime package installs one complete `mods/STS2-RitsuLib/` folder. Its root `STS2-RitsuLib.dll` is the loader.
+Common code, reusable UI, and settings live in `shared/`; the compatibility facade and game integration live in
+`compat/<api-version>/`. A variant pack includes several API versions while storing shared modules once. Install the
+whole folder, including both subdirectories and the module manifest; copying only the root DLL is insufficient.
+
+Images, translations, and bundled themes are distributed in the installation's `assets.zip`, shared across game
+versions. Keep this archive with the runtime, including development Debug builds.
+
+Your NuGet package reference and existing namespaces remain supported. NuGet supplies all compile-time modules, and the
+compatibility facade forwards existing public types for previously compiled mods. Manual assembly references must
+include the facade, Runtime, Shared, Ui, and Settings DLLs from the same package. Reflection that enumerates a single
+assembly must account for types now belonging to separate assemblies.
+
+For directory references, import the installation's `RitsuLib.References.props` to add all five assembly references. A
+single-version installation selects its only target automatically. For a bundle, set the compile-time target first:
+
+```xml
+<PropertyGroup>
+    <RitsuLibReferenceTarget>0.111.0</RitsuLibReferenceTarget>
+</PropertyGroup>
+<Import Project="path/to/STS2-RitsuLib/RitsuLib.References.props" />
+```
+
+These references do not copy the framework into your mod directory; install the complete runtime separately.
+
+Reusable controls, layout containers, shell themes, and toasts are provided by the UI module without a Settings assembly
+dependency. New general-purpose entry points include `RitsuControlFactory`, `RitsuVerticalStack`, and
+`RitsuFixedWidthScrollContent`; existing `ModSettings*` control names remain available for compatibility.
 
 The main `STS2.RitsuLib` package follows the highest Slay the Spire 2 API supported by this repository. Because the
 game's highest API is often on a beta branch, use a compat package when your mod is meant for another public game
@@ -149,8 +174,11 @@ current RitsuLib capabilities or that all analyzer behavior is correct.
 
 ## Contributing
 
-See the [contribution guide](CONTRIBUTING.md) for development setup, code and public API conventions, validation,
-and pull request preparation.
+See the [contribution guide](CONTRIBUTING.md) for development setup, code and public API conventions, validation, and
+pull request preparation.
+
+The library uses standard .NET `Debug` and `Release` configurations. GodotSharp and its source generators are explicit
+dependencies; building RitsuLib does not require a Godot project, editor, or export workflow.
 
 ## Acknowledgements
 

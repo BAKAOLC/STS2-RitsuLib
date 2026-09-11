@@ -944,10 +944,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             foreach (var monster in monsters)
             {
                 var slot = GetAvailableEncounterSlot(combatState);
-                if (slot == null)
-                {
-                    addedWithoutSlot = true;
-                }
+                if (slot == null) addedWithoutSlot = true;
 
                 _ = await CreatureCmd.Add(monster, combatState, CombatSide.Enemy, slot);
             }
@@ -1058,18 +1055,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             _ = TryResolvePowerInstance(reference, out _, out var power, out _);
             RitsuDebugModelValueOverrides.Apply(power.DynamicVars, payload.DynamicVars);
             if (payload.Amount is { } amount && amount != power.Amount)
-            {
                 await PowerCmd.ModifyAmount(
                     new BlockingPlayerChoiceContext(),
                     power,
                     amount - power.Amount,
                     null,
                     null);
-            }
             else
-            {
                 power.InvokeExecutionFinished();
-            }
 
             return $"Updated values for {power.Id}.";
         }
