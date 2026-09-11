@@ -4,14 +4,8 @@ namespace STS2RitsuLib
 {
     internal static class RitsuAssetStore
     {
-        private static readonly Lazy<ResourcePack> Resources = new(() =>
-        {
-            var root = RootDirectory;
-            var looseRoot = Path.Combine(root, "assets");
-            return Directory.Exists(looseRoot)
-                ? ResourcePack.FromDirectory(looseRoot)
-                : ResourcePack.FromZip(Path.Combine(root, "assets.zip"));
-        });
+        private static readonly Lazy<ResourcePack> Resources =
+            new(() => ResourcePack.FromZip(Path.Combine(RootDirectory, "assets.zip")));
 
         internal static ResourcePack Pack => Resources.Value;
 

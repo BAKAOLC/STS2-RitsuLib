@@ -83,7 +83,7 @@ Common code, reusable UI, and settings live in `shared/`; the compatibility faca
 whole folder, including both subdirectories and the module manifest; copying only the root DLL is insufficient.
 
 Images, translations, and bundled themes are distributed in the installation's `assets.zip`, shared across game
-versions. Keep this archive with the runtime. Development Debug builds use a loose `assets/` directory instead.
+versions. Keep this archive with the runtime, including development Debug builds.
 
 Your NuGet package reference and existing namespaces remain supported. NuGet supplies all compile-time modules, and the
 compatibility facade forwards existing public types for previously compiled mods. Manual assembly references must

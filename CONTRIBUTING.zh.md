@@ -68,8 +68,7 @@ pack 和 bundle 只生成分发产物，不安装。兼容目标始终顺序执�
 `RitsuLib.References.props` 引用；玩家安装完整运行时目录。
 
 随附资源位于 `assets/images/`、`assets/localization/<分类>/` 和 `assets/themes/`。
-Debug 安装直接复制为 `assets/` 目录；Release 安装与 NuGet 包使用一份供所有兼容目标共用的 `assets.zip`。
-资源在使用时按路径读取。如果安装目录存在散装 `assets/`，会整体优先使用该目录。
+Debug、Release 安装与 NuGet 包统一使用一份供所有兼容目标共用的 `assets.zip`，资源在使用时按路径从归档读取。
 
 通用 `ResourcePack` API 接受任意 ZIP 路径或目录，不依赖上述资源布局。
 ZIP 首次使用时打开，保持到实例释放；资源包本身不缓存文件内容。
@@ -88,7 +87,7 @@ using var translations = I18N.FromResourcePack(pack, "languages", instanceName: 
 
 仅重新打包资源、不编译 DLL 时，运行 `uv run python scripts/build_cli.py assets`。
 默认生成 `artifacts/assets/Release/assets.zip`，可通过 `--configuration Debug` 选择 Debug 输出目录。
-先关闭游戏，将归档复制到安装目录并移除散装 `assets/` 目录，再启动游戏加载替换后的资源；
+先关闭游戏，将归档复制到安装目录，再启动游戏加载替换后的资源；
 用户主题目录中的文件仍按主题目录现有的覆盖与版本规则处理。
 
 ## 代码与 API 设计

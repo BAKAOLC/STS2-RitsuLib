@@ -80,9 +80,8 @@ installation stores them once. Compile-output DLLs and the installation-root loa
 the installation's `RitsuLib.References.props` for consumers, and install the complete runtime directory for players.
 
 Bundled resources live in `assets/images/`, `assets/localization/<category>/`, and `assets/themes/`.
-Debug installations copy this tree to `assets/`; Release installations and NuGet packages contain one `assets.zip`,
-shared by every compatibility target. Resources are read by path when requested. A loose `assets/` directory takes
-precedence over the ZIP as a whole.
+Debug and Release installations and NuGet packages contain one `assets.zip`, shared by every compatibility target.
+Resources are read from this archive by path when requested.
 
 The reusable `ResourcePack` API accepts any ZIP path or directory; it does not assume this asset layout.
 ZIPs open on first use and stay open until disposal. Resource bytes are not cached by the pack.
@@ -101,7 +100,7 @@ single pack are serialized, and missing resources fail when requested.
 
 To rebuild only the resource archive without compiling DLLs, run `uv run python scripts/build_cli.py assets`.
 This defaults to Release and writes `artifacts/assets/Release/assets.zip`; `--configuration Debug` selects the Debug
-output directory. Close the game, copy the archive into the installation, and remove any loose `assets/` directory.
+output directory. Close the game and copy the archive into the installation.
 Start the game again to load the replacement resources. Theme files in the user theme
 directory follow the catalog's existing override and version rules.
 
