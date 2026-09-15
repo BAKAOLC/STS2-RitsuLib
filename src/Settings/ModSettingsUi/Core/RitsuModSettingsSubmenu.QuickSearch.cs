@@ -13,8 +13,8 @@ namespace STS2RitsuLib.Settings
         private const ulong QuickSearchDoubleShiftIntervalMsec = 420;
         private const int QuickSearchResultLimit = 40;
         private readonly List<ModSettingsSidebarButton> _quickSearchResultButtons = [];
-        private CancellationTokenSource? _quickSearchCancellation;
         private ModSettingsMiniButton? _quickSearchButton;
+        private CancellationTokenSource? _quickSearchCancellation;
         private LineEdit? _quickSearchEdit;
         private IReadOnlyList<ModSettingsSearchResult> _quickSearchIndex = [];
         private ulong _quickSearchLastShiftTapMsec;

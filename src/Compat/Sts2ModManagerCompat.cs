@@ -772,13 +772,4 @@ namespace STS2RitsuLib.Compat
         string Name,
         string? Version,
         Assembly Assembly);
-
-    internal sealed record RitsuModPresentationInfo(
-        string Id,
-        string Name,
-        string? Author,
-        string? Version,
-        string? Description,
-        string? ModImagePath,
-        int Rank);
 }

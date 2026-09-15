@@ -4,8 +4,8 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Combat;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using STS2RitsuLib.CardPiles;
 using STS2RitsuLib.Networking.Sidecar;
 using STS2RitsuLib.Scaffolding.Content;
@@ -438,8 +438,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static bool IsRunStatePile(PileType pileType)
         {
             return pileType == PileType.Deck ||
-                   ModCardPileRegistry.TryGetByPileType(pileType, out var definition) &&
-                   definition.Scope == ModCardPileScope.RunPersistent;
+                   (ModCardPileRegistry.TryGetByPileType(pileType, out var definition) &&
+                    definition.Scope == ModCardPileScope.RunPersistent);
         }
 
         internal static CardPile? GetPile(Player player, PileType pileType)

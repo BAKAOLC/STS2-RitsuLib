@@ -62,13 +62,13 @@ namespace STS2RitsuLib.Ui.Catalog
         private ScrollContainer? _scroll;
         private MarginContainer? _scrollFrame;
         private LineEdit? _search;
-        private int _searchRevision;
         private CancellationTokenSource? _searchCancellation;
         private RitsuCatalogSearchMenu? _searchMenu;
+        private int _searchRevision;
         private string? _selectedItemId;
         private bool _uiBuilt;
-        private Control? _workspace;
         private bool _virtualRefreshQueued;
+        private Control? _workspace;
 
         /// <summary>
         ///     <para xml:lang="en">Creates a browser with default presentation options and no filters.</para>
@@ -422,7 +422,9 @@ namespace STS2RitsuLib.Ui.Catalog
                 _searchMenu.BindSearch(_search, _workspace);
             }
             else
+            {
                 AddFilterControls(catalog);
+            }
 
             var summary = new HBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
             var summaryTitle = new Label
@@ -653,7 +655,9 @@ namespace STS2RitsuLib.Ui.Catalog
                     _filteredItems = filtered;
                 }
                 else
+                {
                     _filteredItems = [.. _items.Where(item => MatchesFilters(item) && item.Matches(terms))];
+                }
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested || !IsInsideTree())
             {

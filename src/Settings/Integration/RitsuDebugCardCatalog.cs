@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -13,6 +14,7 @@ using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils;
+using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -58,15 +60,15 @@ namespace STS2RitsuLib.Settings
         private readonly RitsuCatalogFilter[] _filters;
         private readonly Dictionary<NGridCardHolder, string> _holderItemIds = [];
         private readonly List<NGridCardHolder> _holders = [];
+        private readonly bool _preserveSourceOrder;
         private readonly Func<RitsuCatalogItem, bool>? _primaryAllMatches;
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
         private readonly string? _primaryFilterId;
-        private Control? _primaryFiltersRow;
         private readonly HashSet<string> _primaryOverflowOptionIds;
-        private readonly bool _preserveSourceOrder;
-        private readonly Action<RitsuDebugCardCatalogEntry, int>? _reorderRequested;
         private readonly string? _reorderHint;
+        private readonly Action<RitsuDebugCardCatalogEntry, int>? _reorderRequested;
+        private readonly string _searchPreferenceId;
         private readonly List<PanelContainer> _selectionFrames = [];
         private readonly Dictionary<CardSortField, Button> _sortButtons = [];
         private Control _canvas = null!;
@@ -82,20 +84,20 @@ namespace STS2RitsuLib.Settings
         private int _gridColumns = 1;
         private bool _gridRefreshQueued;
         private Dictionary<string, RitsuDebugCardCatalogEntry> _itemsById;
-        private Label _resultCount = null!;
+        private Control? _primaryFiltersRow;
+        private RitsuDebugSearchableChoice? _primaryOverflowPicker;
+        private CardReorderController? _reorderController;
         private Label? _reorderHintLabel;
+        private Label _resultCount = null!;
         private ScrollContainer _scroll = null!;
         private MarginContainer _scrollFrame = null!;
         private LineEdit _search = null!;
-        private int _searchRevision;
-        private readonly string _searchPreferenceId;
         private CancellationTokenSource? _searchCancellation;
         private RitsuCatalogSearchMenu? _searchMenu;
+        private int _searchRevision;
         private string? _selectedItemId;
         private Dictionary<string, int> _sourceIndexes;
         private Control _workspace = null!;
-        private RitsuDebugSearchableChoice? _primaryOverflowPicker;
-        private CardReorderController? _reorderController;
 
         internal RitsuDebugCardCatalog(
             string searchPlaceholder,
@@ -112,8 +114,7 @@ namespace STS2RitsuLib.Settings
             bool preserveSourceOrder = false,
             Action<RitsuDebugCardCatalogEntry, int>? reorderRequested = null,
             string? reorderHint = null,
-            [System.Runtime.CompilerServices.CallerMemberName]
-            string preferenceId = "")
+            [CallerMemberName] string preferenceId = "")
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
             ValidateEntries(entries);
@@ -1239,11 +1240,11 @@ namespace STS2RitsuLib.Settings
             private string? _dropTargetItemId;
             private Control? _ghost;
             private Vector2 _ghostOffset;
-            private NGridCardHolder? _pendingHolder;
             private Vector2? _pendingGlobalPosition;
+            private NGridCardHolder? _pendingHolder;
             private int _previewDestinationIndex = -1;
-            private string? _sourceItemId;
             private int _sourceFilteredIndex = -1;
+            private string? _sourceItemId;
             private bool _suppressNextClick;
             private bool _wasMousePressed;
 
@@ -1254,6 +1255,8 @@ namespace STS2RitsuLib.Settings
             }
 
             internal bool IsDragging { get; private set; }
+
+            private Vector2 MouseCanvas => _owner._canvas.GetGlobalMousePosition();
 
             internal static CardReorderController Attach(Control root, RitsuDebugCardCatalog owner)
             {
@@ -1267,7 +1270,7 @@ namespace STS2RitsuLib.Settings
                 root.AddChild(host);
                 root.MoveChild(host, root.GetChildCount() - 1);
                 var controller = new CardReorderController(host, owner);
-                var timer = new Godot.Timer
+                var timer = new Timer
                 {
                     Name = "PileCardReorderDragPoll",
                     WaitTime = 0.016d,
@@ -1318,8 +1321,6 @@ namespace STS2RitsuLib.Settings
                 _suppressNextClick = false;
                 return true;
             }
-
-            private Vector2 MouseCanvas => _owner._canvas.GetGlobalMousePosition();
 
             private void Poll()
             {

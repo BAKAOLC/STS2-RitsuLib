@@ -97,7 +97,7 @@ namespace STS2RitsuLib.Settings
                 T("ritsulib.mainMenuScrolling.enabled.label", "Enable main menu scrolling"),
                 ui.MainMenuScrollingEnabled,
                 T("ritsulib.mainMenuScrolling.enabled.description",
-                    "Keeps long menu lists within the screen and scrolls focused entries into view. Enabled by default. Disable to use the original menu layout and navigation. Restart the game after changing this setting."));
+                    "Keeps long menu lists within the screen. Overflow shrinks and fades edge buttons; mouse wheel and focus still scroll. Enabled by default. Disable to use the original menu layout and navigation. Restart the game after changing this setting."));
         }
 
 #if !STS2_AT_LEAST_0_108_0

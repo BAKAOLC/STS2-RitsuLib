@@ -4,11 +4,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Loads embedded and on-disk <c>.theme.json</c> documents into a catalog, then resolves inheritance,
+    ///         Loads bundled and on-disk <c>.theme.json</c> documents into a catalog, then resolves inheritance,
     ///         scope overlays, and token references when building a snapshot.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         将内嵌及磁盘上的 <c>.theme.json</c> 文档加载到主题目录，并在构建快照时解析继承关系、
+    ///         将内置及磁盘上的 <c>.theme.json</c> 文档加载到主题目录，并在构建快照时解析继承关系、
     ///         作用域覆盖及令牌引用。
     ///     </para>
     /// </summary>
@@ -53,12 +53,12 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Loads embedded themes and theme files from disk. Missing embedded files are extracted beside
-        ///         user-authored themes, and newer embedded revisions replace older disk copies after a
+        ///         Loads bundled themes and theme files from disk. Missing bundled files are extracted beside
+        ///         user-authored themes, and newer bundled revisions replace older disk copies after a
         ///         best-effort backup.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         加载内嵌主题及磁盘主题文件。缺失的内嵌主题会提取到用户主题所在目录；若内嵌修订较新，
+        ///         加载内置主题及磁盘主题文件。缺失的内置主题会提取到用户主题所在目录；若内置修订较新，
         ///         则会在尽力备份后替换磁盘上的旧副本。
         ///     </para>
         /// </summary>
@@ -70,24 +70,15 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     return;
 
                 var map = new Dictionary<string, RitsuShellThemeDocument>(StringComparer.Ordinal);
-                var asm = typeof(RitsuShellThemeCatalog).Assembly;
                 var extractedPairs = new List<(string Id, byte[] Bytes, int Version)>();
 
-                foreach (var manifestName in asm.GetManifestResourceNames())
+                foreach (var manifestName in RitsuAssetStore.EnumerateFiles("themes", ".theme.json"))
                 {
-                    if (!manifestName.EndsWith(".theme.json", StringComparison.OrdinalIgnoreCase))
-                        continue;
-
                     try
                     {
-                        using var stream = asm.GetManifestResourceStream(manifestName);
-                        if (stream == null)
-                            continue;
-
-                        using var ms = new MemoryStream();
-                        stream.CopyTo(ms);
-                        var bytes = ms.ToArray();
-                        var doc = RitsuShellThemeDocument.Deserialize(new MemoryStream(bytes));
+                        var bytes = RitsuAssetStore.ReadBytes(manifestName);
+                        using var stream = new MemoryStream(bytes, false);
+                        var doc = RitsuShellThemeDocument.Deserialize(stream);
                         if (doc == null || string.IsNullOrWhiteSpace(doc.Id))
                             continue;
 
@@ -98,7 +89,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                     catch (Exception ex)
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[ShellTheme] Could not load embedded theme resource '{manifestName}': {ex}");
+                            $"[ShellTheme] Could not load bundled theme resource '{manifestName}': {ex}");
                     }
                 }
 
@@ -123,7 +114,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                         catch (Exception ex)
                         {
                             RitsuLibFramework.Logger.Warn(
-                                $"[ShellTheme] Could not extract embedded theme '{id}' to '{themesAbs}': {ex}");
+                                $"[ShellTheme] Could not extract bundled theme '{id}' to '{themesAbs}': {ex}");
                         }
 
                     try
@@ -264,10 +255,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Tries to replace one disk theme file with its embedded counterpart.
+        ///         Tries to replace one disk theme file with its bundled counterpart.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         尝试使用对应的内嵌主题替换一个磁盘主题文件。
+        ///         尝试使用对应的内置主题替换一个磁盘主题文件。
         ///     </para>
         /// </summary>
         /// <param name="themeId">
@@ -288,11 +279,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </param>
         /// <returns>
         ///     <para xml:lang="en">
-        ///         <see langword="true" /> if an embedded counterpart exists and is written successfully;
+        ///         <see langword="true" /> if an bundled counterpart exists and is written successfully;
         ///         otherwise, <see langword="false" />.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         若存在内嵌对应项且成功写入，则为 <see langword="true" />；否则为
+        ///         若存在内置对应项且成功写入，则为 <see langword="true" />；否则为
         ///         <see langword="false" />。
         ///     </para>
         /// </returns>
@@ -316,7 +307,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ShellTheme] Could not restore embedded theme '{requestedId}': {ex}");
+                    $"[ShellTheme] Could not restore bundled theme '{requestedId}': {ex}");
                 restoredPath = "";
                 return false;
             }
@@ -324,10 +315,10 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Tries to replace every existing disk theme that has an embedded counterpart.
+        ///         Tries to replace every existing disk theme that has an bundled counterpart.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         尝试替换所有存在内嵌对应项的现有磁盘主题。
+        ///         尝试替换所有存在内置对应项的现有磁盘主题。
         ///     </para>
         /// </summary>
         /// <param name="restoredCount">
@@ -467,20 +458,13 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         private static bool TryLoadEmbeddedThemeBytes(string normalizedThemeId, out byte[] bytes)
         {
             bytes = [];
-            var asm = typeof(RitsuShellThemeCatalog).Assembly;
-            foreach (var manifestName in asm.GetManifestResourceNames())
+            foreach (var manifestName in RitsuAssetStore.EnumerateFiles("themes", ".theme.json"))
             {
-                if (!manifestName.EndsWith(".theme.json", StringComparison.OrdinalIgnoreCase))
-                    continue;
                 try
                 {
-                    using var stream = asm.GetManifestResourceStream(manifestName);
-                    if (stream == null)
-                        continue;
-                    using var ms = new MemoryStream();
-                    stream.CopyTo(ms);
-                    var candidateBytes = ms.ToArray();
-                    var doc = RitsuShellThemeDocument.Deserialize(new MemoryStream(candidateBytes));
+                    var candidateBytes = RitsuAssetStore.ReadBytes(manifestName);
+                    using var stream = new MemoryStream(candidateBytes, false);
+                    var doc = RitsuShellThemeDocument.Deserialize(stream);
                     if (doc == null || string.IsNullOrWhiteSpace(doc.Id))
                         continue;
                     var id = doc.Id.Trim().ToLowerInvariant();
@@ -492,7 +476,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ShellTheme] Could not inspect embedded theme resource '{manifestName}': {ex}");
+                        $"[ShellTheme] Could not inspect bundled theme resource '{manifestName}': {ex}");
                 }
             }
 
@@ -501,28 +485,20 @@ namespace STS2RitsuLib.Ui.Shell.Theme
 
         private static IEnumerable<(string Id, byte[] Bytes)> EnumerateEmbeddedThemeDocuments()
         {
-            var asm = typeof(RitsuShellThemeCatalog).Assembly;
-            foreach (var manifestName in asm.GetManifestResourceNames())
+            foreach (var manifestName in RitsuAssetStore.EnumerateFiles("themes", ".theme.json"))
             {
-                if (!manifestName.EndsWith(".theme.json", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
                 byte[] bytes;
                 RitsuShellThemeDocument? doc;
                 try
                 {
-                    using var stream = asm.GetManifestResourceStream(manifestName);
-                    if (stream == null)
-                        continue;
-                    using var ms = new MemoryStream();
-                    stream.CopyTo(ms);
-                    bytes = ms.ToArray();
-                    doc = RitsuShellThemeDocument.Deserialize(new MemoryStream(bytes));
+                    bytes = RitsuAssetStore.ReadBytes(manifestName);
+                    using var stream = new MemoryStream(bytes, false);
+                    doc = RitsuShellThemeDocument.Deserialize(stream);
                 }
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[ShellTheme] Could not enumerate embedded theme resource '{manifestName}': {ex}");
+                        $"[ShellTheme] Could not enumerate bundled theme resource '{manifestName}': {ex}");
                     continue;
                 }
 
@@ -554,7 +530,7 @@ namespace STS2RitsuLib.Ui.Shell.Theme
             catch (Exception ex)
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[ShellTheme] Could not read disk theme version from '{path}'; the embedded copy will replace it: {ex}");
+                    $"[ShellTheme] Could not read disk theme version from '{path}'; the bundled copy will replace it: {ex}");
                 return true;
             }
         }

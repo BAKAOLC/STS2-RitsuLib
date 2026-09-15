@@ -9,13 +9,13 @@ namespace STS2RitsuLib
 
         internal static readonly RitsuLibEmbeddedPngAsset CardArtPlaceholder = Add(
             "res://STS2-RitsuLib/card_art_placeholder.png",
-            static () => "STS2RitsuLib.Assets.card_art_placeholder.png");
+            static () => "images/card_art_placeholder.png");
 
         internal static readonly RitsuLibEmbeddedPngAsset ModImage = Add(
             "res://STS2-RitsuLib/mod_image.png",
             static () => RitsuLibEasterEggPolicy.IsJuneTwentySeventhInBeijing()
-                ? "STS2RitsuLib.Assets.mod_image_ex.png"
-                : "STS2RitsuLib.Assets.mod_image.png");
+                ? "images/mod_image_ex.png"
+                : "images/mod_image.png");
 
         internal static bool Contains(string resourcePath)
         {

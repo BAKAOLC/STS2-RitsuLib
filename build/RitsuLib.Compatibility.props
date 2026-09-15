@@ -1,0 +1,9 @@
+﻿<Project>
+    <PropertyGroup>
+        <RitsuLibCompatTargets>0.111.0;0.110.0;0.109.0;0.107.1</RitsuLibCompatTargets>
+        <RitsuLibLatestApiCompat>0.111.0</RitsuLibLatestApiCompat>
+        <RitsuLibLatestGameVersion>0.111.0</RitsuLibLatestGameVersion>
+        <RitsuLibSharedApiCompat>0.107.1</RitsuLibSharedApiCompat>
+        <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(RitsuLibLatestApiCompat)</Sts2ApiCompat>
+    </PropertyGroup>
+</Project>

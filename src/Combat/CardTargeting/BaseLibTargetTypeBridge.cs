@@ -143,7 +143,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
             }
 
             var fallback = AppDomain.CurrentDomain.GetAssemblies()
-                .Select(assembly => ResolveAssemblyType(assembly))
+                .Select(ResolveAssemblyType)
                 .OfType<Type>()
                 .FirstOrDefault();
             if (fallback != null)
@@ -164,10 +164,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
                 return assembly.GetType(BaseLibCustomTargetTypeName, false);
 
             return TypeCache.GetValue(assembly, static candidate =>
-                new TypeResolution(candidate.GetType(BaseLibCustomTargetTypeName, false))).Type;
+                new(candidate.GetType(BaseLibCustomTargetTypeName, false))).Type;
         }
-
-        private sealed record TypeResolution(Type? Type);
 
         private static ITargetPredicateMap? ReadPredicateMap(
             Type type,
@@ -185,6 +183,8 @@ namespace STS2RitsuLib.Combat.CardTargeting
                 _ => null,
             };
         }
+
+        private sealed record TypeResolution(Type? Type);
 
         private interface ITargetPredicateMap
         {

@@ -172,7 +172,7 @@
         /// <summary>
         ///     <para xml:lang="en">The endpoint's local outbound rate limit rejected the frame.</para>
         ///     <para xml:lang="zh-CN">端点的本地出站速率限制拒绝了该帧。</para>
-        ///     </summary>
+        /// </summary>
         RateLimited,
 
         /// <summary>

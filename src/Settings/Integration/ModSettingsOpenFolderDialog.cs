@@ -1,14 +1,15 @@
 using Godot;
+using STS2RitsuLib.Ui.Files;
 
 namespace STS2RitsuLib.Settings
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Opens a reusable <see cref="FileDialog" /> in <c>OpenDir</c> mode, then writes and saves the selected
+    ///         Opens a reusable <see cref="RitsuFileDialog" /> in <c>OpenDir</c> mode, then writes and saves the selected
     ///         folder path through a settings binding.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         以 <c>OpenDir</c> 模式打开可复用的 <see cref="FileDialog" />，然后通过设置绑定写入并保存
+    ///         以 <c>OpenDir</c> 模式打开可复用的 <see cref="RitsuFileDialog" />，然后通过设置绑定写入并保存
     ///         所选文件夹路径。
     ///     </para>
     /// </summary>
@@ -29,22 +30,18 @@ namespace STS2RitsuLib.Settings
                 return;
             }
 
-            var dialog = new FileDialog
+            RitsuFileDialog.Show(tree.Root, new()
             {
                 Title = ModSettingsLocalization.Get(titleLocalizationKey, titleFallback),
-                FileMode = FileDialog.FileModeEnum.OpenDir,
-                Access = FileDialog.AccessEnum.Filesystem,
-            };
-
-            dialog.DirSelected += path =>
+                Mode = FileDialog.FileModeEnum.OpenDir,
+                StateKey = titleLocalizationKey,
+                InitialDirectory = outputDirBinding.Read(),
+            }, paths =>
             {
-                outputDirBinding.Write(path);
+                outputDirBinding.Write(paths[0]);
                 outputDirBinding.Save();
                 uiHost.RequestRefresh();
-                dialog.QueueFree();
-            };
-
-            ModSettingsNativeFileDialogChrome.Popup(dialog);
+            });
         }
     }
 }

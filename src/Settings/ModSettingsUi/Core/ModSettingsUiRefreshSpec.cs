@@ -31,11 +31,11 @@ namespace STS2RitsuLib.Settings
         /// <summary>
         ///     <para xml:lang="en">
         ///         Gets other binding instances treated as the same selective-refresh target, such as the inner binding
-        ///         wrapped by <see cref="ModSettingsDebugShowcaseBinding{TValue}" />.
+        ///         wrapped by a settings binding decorator.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         获取在选择性刷新中视为同一目标的其他绑定实例，例如
-        ///         <see cref="ModSettingsDebugShowcaseBinding{TValue}" /> 所包装的内部绑定。
+        ///         设置绑定装饰器所包装的内部绑定。
         ///     </para>
         /// </summary>
         IReadOnlyList<IModSettingsBinding> UiRefreshAlsoTreatAsDirty { get; }

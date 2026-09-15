@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace STS2RitsuLib.Telemetry.Diagnostics
 {
-    internal static class DiagnosticsTelemetryCollector
+    internal static partial class DiagnosticsTelemetryCollector
     {
         private const int MaxRecentFingerprints = 128;
         private static readonly Lock Sync = new();
@@ -112,6 +112,7 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
                 {
                     AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
                     TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+                    InitializeEngineErrors();
                     _globalHandlersInitialized = true;
                 }
                 catch

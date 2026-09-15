@@ -6,7 +6,7 @@ namespace STS2RitsuLib
     {
         internal const string DevPackageVersionPrefix = "9999.0.0-dev.";
 
-        private static readonly Assembly Assembly = typeof(Const).Assembly;
+        private static readonly Assembly Assembly = typeof(RitsuLibBuildInfo).Assembly;
 
         internal static string InformationalVersion { get; } =
             Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ??

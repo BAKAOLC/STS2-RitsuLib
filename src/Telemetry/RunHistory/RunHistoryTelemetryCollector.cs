@@ -253,7 +253,6 @@ namespace STS2RitsuLib.Telemetry.RunHistory
             var capturedApplicants = new List<string>();
             // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
             foreach (var applicantId in applicantIds)
-            {
                 if (new TelemetryClient(applicantId).TryCapturePayload(
                         "run_history.completed",
                         "run_history",
@@ -262,7 +261,6 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                         context,
                         true))
                     capturedApplicants.Add(applicantId);
-            }
 
             RitsuLibFramework.Logger.Info(
                 $"[Telemetry] Captured ended run history for {capturedApplicants.Count} authorized applicant(s); abandoned={evt.IsAbandoned}, victory={evt.IsVictory}.");

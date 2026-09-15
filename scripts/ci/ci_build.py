@@ -29,7 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--repo-root", type=Path, default=Path("."))
     p.add_argument("--signature-root", type=Path, required=True)
-    p.add_argument("--configuration", default="Release")
+    p.add_argument("--configuration", choices=("Debug", "Release"), default="Release")
     p.add_argument("--compat-targets", default="all")
     p.add_argument(
         "--use-dev-version",
@@ -40,6 +40,7 @@ def main(argv: list[str] | None = None) -> int:
     repo = args.repo_root.resolve()
     sig = args.signature_root.resolve()
     verify_signature_tree(repo_root=repo, signature_root=sig)
+    subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "scripts/tests"], cwd=repo, check=True)
     release_cli = repo / "scripts" / "release_cli.py"
     ci_sts2_dir = repo / ".ci-sts2-dir"
     ci_sts2_dir.mkdir(parents=True, exist_ok=True)

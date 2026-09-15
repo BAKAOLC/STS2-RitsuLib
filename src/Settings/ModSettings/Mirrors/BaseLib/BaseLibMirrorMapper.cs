@@ -82,7 +82,7 @@ namespace STS2RitsuLib.Settings
                         ? null
                         : ModSettingsText.Dynamic(() => host.ResolveLabel(section.SectionTitle!)),
                     IsCollapsible: !string.IsNullOrWhiteSpace(sourceSection.SectionTitle),
-                    StartCollapsed: false,
+                    StartCollapsed: sourceSection.StartCollapsed,
                     VisibleWhen: ModSettingsMirrorVisibilityPolicy.BuildSectionVisibility(entries)));
             }
 
@@ -127,7 +127,8 @@ namespace STS2RitsuLib.Settings
                             if (current.Entries.Count > 0)
                                 sections.Add(current);
                             currentSectionName = sectionName;
-                            current = new(ModSettingsMirrorIds.Section(sectionName, sections.Count), sectionName, []);
+                            current = new(ModSettingsMirrorIds.Section(sectionName, sections.Count), sectionName, [],
+                                sectionAttrType.GetProperty("CollapsedByDefault")?.GetValue(sectionAttribute) is true);
                         }
                     }
                 }
@@ -641,6 +642,10 @@ namespace STS2RitsuLib.Settings
             };
         }
 
-        private sealed record PendingSection(string Id, string? SectionTitle, List<MemberInfo> Entries);
+        private sealed record PendingSection(
+            string Id,
+            string? SectionTitle,
+            List<MemberInfo> Entries,
+            bool StartCollapsed = false);
     }
 }

@@ -114,6 +114,12 @@ namespace STS2RitsuLib.Ui.Overlay
 
         internal static bool TryGetActiveScreen(out IScreenContext screen)
         {
+            if (Files.RitsuFileDialog.ActiveDialog is { } dialog)
+            {
+                screen = dialog;
+                return true;
+            }
+
             lock (SyncRoot)
             {
                 if (_host is { } host && GodotObject.IsInstanceValid(host) && host.ActiveScreen is { } activeScreen)
@@ -388,7 +394,7 @@ namespace STS2RitsuLib.Ui.Overlay
 
         public override void _UnhandledInput(InputEvent @event)
         {
-            if (@event.IsEcho() ||
+            if (Files.RitsuFileDialog.ActiveDialog != null || @event.IsEcho() ||
                 !(@event.IsActionPressed(MegaInput.cancel) || @event.IsActionPressed(MegaInput.pauseAndBack)))
                 return;
 

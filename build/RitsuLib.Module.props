@@ -1,0 +1,50 @@
+﻿<Project>
+    <PropertyGroup>
+        <RitsuLibRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</RitsuLibRoot>
+        <TargetFramework>net9.0</TargetFramework>
+        <RootNamespace>STS2RitsuLib</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);CS0436</NoWarn>
+        <IsPackable>false</IsPackable>
+        <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(RitsuLibRoot)STS2-RitsuLib.csproj')), '&lt;Version&gt;([^&lt;]+)&lt;/Version&gt;').Groups[1].Value)</Version>
+        <GodotProjectDir>$(RitsuLibRoot)</GodotProjectDir>
+        <GodotProjectDirBase64>$([MSBuild]::ConvertToBase64('$(GodotProjectDir)'))</GodotProjectDirBase64>
+        <Sts2ApiCompat Condition="'$(RitsuLibSharedModule)' == 'true'">$(RitsuLibSharedApiCompat)</Sts2ApiCompat>
+        <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == '' and '$(Configuration)' == 'Debug'">local_debug</RitsuLibTelemetryBuildChannel>
+        <RitsuLibTelemetryBuildChannel Condition="'$(RitsuLibTelemetryBuildChannel)' == ''">local_release</RitsuLibTelemetryBuildChannel>
+        <RitsuLibTelemetryBuildConfiguration Condition="'$(RitsuLibTelemetryBuildConfiguration)' == ''">$(Configuration)</RitsuLibTelemetryBuildConfiguration>
+        <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2DataDir>
+        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    </PropertyGroup>
+    <Import Project="$(RitsuLibRoot)build\RitsuLib.CompatDefines.targets"/>
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>Sts2ApiCompat</_Parameter1>
+            <_Parameter2>$(Sts2ApiCompat)</_Parameter2>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>RitsuLibTelemetryBuildChannel</_Parameter1>
+            <_Parameter2>$(RitsuLibTelemetryBuildChannel)</_Parameter2>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>RitsuLibTelemetryBuildConfiguration</_Parameter1>
+            <_Parameter2>$(RitsuLibTelemetryBuildConfiguration)</_Parameter2>
+        </AssemblyAttribute>
+        <Reference Include="sts2" HintPath="$(Sts2DataDir)\sts2.dll" Private="False"/>
+        <Reference Include="0Harmony" HintPath="$(Sts2DataDir)\0Harmony.dll" Private="False"/>
+        <Reference Include="SmartFormat" HintPath="$(Sts2DataDir)\SmartFormat.dll" Private="False"/>
+        <PackageReference Include="Krafs.Publicizer" Version="2.3.0" PrivateAssets="all"/>
+        <Publicize Include="sts2" IncludeCompilerGeneratedMembers="false" IncludeVirtualMembers="false"/>
+        <InternalsVisibleTo Include="STS2-RitsuLib"/>
+        <InternalsVisibleTo Include="STS2-RitsuLib.Runtime"/>
+        <InternalsVisibleTo Include="STS2-RitsuLib.Shared"/>
+        <InternalsVisibleTo Include="STS2-RitsuLib.Ui"/>
+        <InternalsVisibleTo Include="STS2-RitsuLib.Settings"/>
+    </ItemGroup>
+    <Target Name="ValidateModuleGameReferences" BeforeTargets="ResolveAssemblyReferences">
+        <Error Condition="!Exists('$(Sts2DataDir)\sts2.dll')" Text="Missing game signatures for $(MSBuildProjectName): $(Sts2DataDir)\sts2.dll"/>
+    </Target>
+</Project>

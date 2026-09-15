@@ -175,8 +175,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (!Enum.IsDefined(destination))
                 throw new ArgumentOutOfRangeException(nameof(destination), destination,
                     "Invalid endpoint destination.");
-            if (destination == RitsuLibSidecarEndpointDestination.Peer && targetNetId == 0 ||
-                destination != RitsuLibSidecarEndpointDestination.Peer && targetNetId != 0)
+            if ((destination == RitsuLibSidecarEndpointDestination.Peer && targetNetId == 0) ||
+                (destination != RitsuLibSidecarEndpointDestination.Peer && targetNetId != 0))
                 throw new ArgumentException("Target peer does not match the endpoint destination.",
                     nameof(targetNetId));
             if (payload.Length > RitsuLibSidecarEndpointPolicy.MaxControlPayloadBytes)
@@ -213,8 +213,8 @@ namespace STS2RitsuLib.Networking.Sidecar
             if (!Enum.IsDefined(destination))
                 return false;
             var targetNetId = BinaryPrimitives.ReadUInt64BigEndian(span.Slice(18, 8));
-            if (destination == RitsuLibSidecarEndpointDestination.Peer && targetNetId == 0 ||
-                destination != RitsuLibSidecarEndpointDestination.Peer && targetNetId != 0)
+            if ((destination == RitsuLibSidecarEndpointDestination.Peer && targetNetId == 0) ||
+                (destination != RitsuLibSidecarEndpointDestination.Peer && targetNetId != 0))
                 return false;
 
             frame = new(
@@ -505,7 +505,7 @@ namespace STS2RitsuLib.Networking.Sidecar
                 return false;
             return value.All(character =>
                 character is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '.' or '_' or '-' ||
-                allowSlash && character == '/');
+                (allowSlash && character == '/'));
         }
     }
 }

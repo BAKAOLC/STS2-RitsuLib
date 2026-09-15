@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Analyzers
         {
             var match = FindTarget(target);
             if (match == TargetMatch.Single
-                || match == TargetMatch.Missing && target.IgnoreIfMissing)
+                || (match == TargetMatch.Missing && target.IgnoreIfMissing))
                 return;
 
             var display = FormatTarget(target);
@@ -168,7 +168,6 @@ namespace STS2RitsuLib.Analyzers
         {
             var selected = new List<IMethodSymbol>();
             for (var current = targetType as INamedTypeSymbol; current != null; current = current.BaseType)
-            {
                 foreach (var method in EnumerateDeclaredMethods(current, methodName))
                 {
                     if (!SymbolEqualityComparer.Default.Equals(current, targetType)
@@ -180,7 +179,6 @@ namespace STS2RitsuLib.Analyzers
                     selected.Add(method);
                     yield return method;
                 }
-            }
         }
 
         private static IEnumerable<IMethodSymbol> EnumerateDeclaredMethods(
@@ -188,7 +186,6 @@ namespace STS2RitsuLib.Analyzers
             string methodName)
         {
             foreach (var member in type.GetMembers())
-            {
                 switch (member)
                 {
                     case IMethodSymbol method when method.MetadataName == methodName:
@@ -209,7 +206,6 @@ namespace STS2RitsuLib.Analyzers
                             yield return eventSymbol.RemoveMethod;
                         break;
                 }
-            }
         }
 
         private static bool HasSameRuntimeSignature(IMethodSymbol left, IMethodSymbol right)
@@ -240,11 +236,9 @@ namespace STS2RitsuLib.Analyzers
                 return false;
 
             for (var i = 0; i < method.Parameters.Length; i++)
-            {
                 if (method.Parameters[i].RefKind != RefKind.None
                     || !SymbolEqualityComparer.Default.Equals(method.Parameters[i].Type, parameterTypes.Value[i]))
                     return false;
-            }
 
             return true;
         }

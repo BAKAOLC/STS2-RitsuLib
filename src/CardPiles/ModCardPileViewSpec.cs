@@ -9,6 +9,9 @@ namespace STS2RitsuLib.CardPiles
     /// </summary>
     public sealed record ModCardPileViewSpec
     {
+        private readonly IReadOnlyList<ModCardPileSortOption>? _sortOptions;
+        private readonly IReadOnlyList<SortingOrders>? _defaultSorting;
+
         private static readonly ModCardPileSortOption[] DefaultSortOptions =
         [
             ModCardPileSortOption.Obtained,
@@ -65,7 +68,15 @@ namespace STS2RitsuLib.CardPiles
         ///         字母顺序排序。
         ///     </para>
         /// </summary>
-        public IReadOnlyList<ModCardPileSortOption>? SortOptions { get; init; }
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">An option is undefined or duplicated. Assigned lists are copied.</para>
+        ///     <para xml:lang="zh-CN">选项未定义或重复。赋值的列表会被复制。</para>
+        /// </exception>
+        public IReadOnlyList<ModCardPileSortOption>? SortOptions
+        {
+            get => _sortOptions;
+            init => _sortOptions = CopyOptions(value, nameof(SortOptions));
+        }
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -76,7 +87,15 @@ namespace STS2RitsuLib.CardPiles
         ///         获取初始排序优先级。<see langword="null" /> 或空列表会使用牌堆正序。
         ///     </para>
         /// </summary>
-        public IReadOnlyList<SortingOrders>? DefaultSorting { get; init; }
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">An order is undefined or duplicated. Assigned lists are copied.</para>
+        ///     <para xml:lang="zh-CN">排序方式未定义或重复。赋值的列表会被复制。</para>
+        /// </exception>
+        public IReadOnlyList<SortingOrders>? DefaultSorting
+        {
+            get => _defaultSorting;
+            init => _defaultSorting = CopyOptions(value, nameof(DefaultSorting));
+        }
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -177,6 +196,22 @@ namespace STS2RitsuLib.CardPiles
         internal List<SortingOrders> CreateDefaultSorting()
         {
             return DefaultSorting is { Count: > 0 } ? [.. DefaultSorting] : [SortingOrders.Ascending];
+        }
+
+        private static IReadOnlyList<T>? CopyOptions<T>(IReadOnlyList<T>? values, string parameterName)
+            where T : struct, Enum
+        {
+            if (values == null)
+                return null;
+
+            var copy = values.ToArray();
+            var seen = new HashSet<T>();
+            foreach (var value in copy)
+                if (!Enum.IsDefined(value) || !seen.Add(value))
+                    throw new ArgumentException("Options must be defined enum values without duplicates.",
+                        parameterName);
+
+            return Array.AsReadOnly(copy);
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using Godot;
+using Environment = System.Environment;
+using FileAccess = System.IO.FileAccess;
 
 namespace STS2RitsuLib.Utils.Persistence
 {
@@ -9,9 +11,11 @@ namespace STS2RitsuLib.Utils.Persistence
         private static readonly string SharedCacheRootPath = ResolveSharedCacheRootPath();
 
         private static readonly string SessionDirectoryName =
-            $"session-{System.Environment.ProcessId}-{Guid.NewGuid():N}";
+            $"session-{Environment.ProcessId}-{Guid.NewGuid():N}";
 
         private static bool _staleSessionsCleaned;
+
+        internal static readonly string SharedCacheDirectory = SharedCacheRootPath;
 
         static RitsuLibDataPaths()
         {
@@ -31,8 +35,6 @@ namespace STS2RitsuLib.Utils.Persistence
 
         internal static string TemporaryDirectory { get; } =
             Path.Combine(SharedCacheRootPath, SessionDirectoryName);
-
-        internal static readonly string SharedCacheDirectory = SharedCacheRootPath;
 
         internal static string EnsureSharedCacheDirectory()
         {
@@ -70,7 +72,7 @@ namespace STS2RitsuLib.Utils.Persistence
                 cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
-                    return new(path, FileMode.OpenOrCreate, System.IO.FileAccess.ReadWrite, FileShare.None, 1,
+                    return new(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1,
                         FileOptions.Asynchronous);
                 }
                 catch (IOException)

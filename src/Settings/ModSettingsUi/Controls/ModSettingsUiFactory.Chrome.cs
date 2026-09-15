@@ -1,5 +1,6 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
+using STS2RitsuLib.Ui.Controls;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -55,7 +56,8 @@ namespace STS2RitsuLib.Settings
             string? prefix = null,
             int indentLevel = 0)
         {
-            return new(text, onPressed, kind, prefix, indentLevel);
+            return RitsuControlFactory.CreateSidebarButton(text, onPressed, kind, prefix,
+                indentLevel);
         }
 
         /// <summary>
@@ -68,14 +70,7 @@ namespace STS2RitsuLib.Settings
         /// </returns>
         public static ColorRect CreateDivider()
         {
-            return new()
-            {
-                CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                    "components.divider.layout.minSize",
-                    new(0f, 2f)),
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-                Color = RitsuShellTheme.Current.Color.Divider,
-            };
+            return RitsuControlFactory.CreateDivider();
         }
 
         private static Control CreateSettingLine<TValue>(ModSettingsUiContext context,
@@ -813,13 +808,7 @@ namespace STS2RitsuLib.Settings
 
         internal static MegaRichTextLabel CreateSectionTitle(string text)
         {
-            var label = CreateHeaderLabel(text, 22, HorizontalAlignment.Left, null,
-                RitsuShellTheme.Current.Text.RichTitle);
-            label.CustomMinimumSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
-                "components.section.layout.title.minSize",
-                new(0f, 34f));
-            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            return label;
+            return RitsuControlFactory.CreateSectionTitle(text);
         }
 
         internal static MegaRichTextLabel CreateRefreshableSectionTitle(ModSettingsUiContext context,
@@ -877,52 +866,10 @@ namespace STS2RitsuLib.Settings
         public static MegaRichTextLabel CreateHeaderLabel(string text, int fontSize, HorizontalAlignment alignment,
             float? scrollViewportHeight = null, Color? textModulate = null)
         {
-            var boundedScroll = scrollViewportHeight is > 0f && float.IsFinite(scrollViewportHeight.Value);
-            var label = new MegaRichTextLabel
-            {
-                BbcodeEnabled = true,
-                AutoSizeEnabled = false,
-                FitContent = !boundedScroll,
-                ScrollActive = boundedScroll,
-                ClipContents = boundedScroll,
-                FocusMode = Control.FocusModeEnum.None,
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-                VerticalAlignment = VerticalAlignment.Top,
-                HorizontalAlignment = alignment,
-                Theme = ModSettingsUiResources.SettingsLineTheme,
-                IsHorizontallyBound = true,
-                Modulate = textModulate ?? Colors.White,
-            };
-            label.AddThemeStyleboxOverride("normal", CreateZeroMarginRichTextStyle());
-
-            if (boundedScroll)
-                label.CustomMinimumSize = new(0f, scrollViewportHeight!.Value);
-
-            label.AddThemeFontOverride("normal_font", RitsuShellTheme.Current.Font.Body);
-            label.AddThemeFontOverride("bold_font", RitsuShellTheme.Current.Font.BodyBold);
-            label.AddThemeFontSizeOverride("normal_font_size", fontSize);
-            label.AddThemeFontSizeOverride("bold_font_size", fontSize);
-            label.AddThemeFontSizeOverride("italics_font_size", fontSize);
-            label.AddThemeFontSizeOverride("bold_italics_font_size", fontSize);
-            label.AddThemeFontSizeOverride("mono_font_size", fontSize);
-            label.MinFontSize = Math.Max(14, fontSize - 3);
-            label.MaxFontSize = fontSize;
-            label.SetTextAutoSize(text);
-            return label;
+            return RitsuControlFactory.CreateHeaderLabel(text, fontSize, alignment,
+                scrollViewportHeight, textModulate);
         }
 
-        private static StyleBoxFlat CreateZeroMarginRichTextStyle()
-        {
-            return new()
-            {
-                BgColor = Colors.Transparent,
-                DrawCenter = false,
-                ContentMarginLeft = 0f,
-                ContentMarginTop = 0f,
-                ContentMarginRight = 0f,
-                ContentMarginBottom = 0f,
-            };
-        }
 
         private static MegaRichTextLabel CreatePageToolbarTitleLabel(string primaryTitle, string fallbackId)
         {
@@ -997,10 +944,7 @@ namespace STS2RitsuLib.Settings
         /// </returns>
         public static MegaRichTextLabel CreateInlineDescription(string text)
         {
-            var label = CreateHeaderLabel(text, 16, HorizontalAlignment.Left, null,
-                RitsuShellTheme.Current.Text.RichSecondary);
-            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            return label;
+            return RitsuControlFactory.CreateInlineDescription(text);
         }
 
         internal static Control CreateBuildErrorPlaceholder(string title, string body)

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using STS2RitsuLib.Search;
 
 namespace STS2RitsuLib.Settings
@@ -152,8 +153,7 @@ namespace STS2RitsuLib.Settings
             IReadOnlyList<ModSettingsSearchResult> index,
             string query,
             int limit,
-            [System.Runtime.CompilerServices.EnumeratorCancellation]
-            CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(index);
             ArgumentNullException.ThrowIfNull(query);

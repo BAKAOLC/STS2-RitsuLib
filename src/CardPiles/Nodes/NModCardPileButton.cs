@@ -1,16 +1,11 @@
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
-using MegaCrit.Sts2.Core.Nodes.Screens;
-using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
-using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.TopBar;
 using STS2RitsuLib.Ui.Shell.Theme;
 
@@ -101,6 +96,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
         private bool _pileVisibilityPredicateFailed;
         private Player? _player;
         private bool _pressed;
+        private ModCardPileHotkeys? _hotkeys;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -223,13 +219,22 @@ namespace STS2RitsuLib.CardPiles.Nodes
         {
             base._EnterTree();
             if (Definition != null)
+            {
                 ModCardPileButtonRegistry.RegisterButton(Definition, this);
+                _hotkeys = new(this, Definition, () => _pile != null && _player != null, TriggerOpen);
+            }
+
+            VisibilityChanged += OnVisibilityChanged;
         }
 
         /// <inheritdoc />
         public override void _ExitTree()
         {
             base._ExitTree();
+            _hotkeys?.Dispose();
+            _hotkeys = null;
+            VisibilityChanged -= OnVisibilityChanged;
+            _pressed = false;
             if (Definition != null)
                 ModCardPileButtonRegistry.UnregisterButton(Definition, this);
             DetachPile();
@@ -242,6 +247,9 @@ namespace STS2RitsuLib.CardPiles.Nodes
         public override void _Process(double delta)
         {
             base._Process(delta);
+            if (_pressed && (!IsVisibleInTree() || !Input.IsMouseButtonPressed(MouseButton.Left)
+                                                || !NGame.IsGameFocusedWindow()))
+                _pressed = false;
             if (ActionDefinition != null)
             {
                 // Action-mode bookkeeping: visibility and count are polled here because there is no pile to
@@ -255,6 +263,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
             RefreshCombatScopedTopBarPile();
             if (Definition?.VisibleWhen != null)
                 RefreshPileButtonVisibility();
+            _hotkeys?.Refresh();
         }
 
         /// <inheritdoc />
@@ -1080,6 +1089,7 @@ namespace STS2RitsuLib.CardPiles.Nodes
 
         private void OnMouseExited()
         {
+            _pressed = false;
             _hovered = false;
             NHoverTipSet.Remove(this);
             _bumpTween?.Kill();
@@ -1124,35 +1134,16 @@ namespace STS2RitsuLib.CardPiles.Nodes
             if (_pile == null || _player == null || Definition == null)
                 return;
 
-            var inCombat = CombatManager.Instance.IsInProgress;
-            if (inCombat && _pile.IsEmpty)
-            {
-                var instance = NCapstoneContainer.Instance;
-                if (instance is { InUse: true })
-                    NCapstoneContainer.Instance?.Close();
+            ModCardPileOpenContext.OpenPile(Definition, _pile, _player, this);
+        }
 
-                var message = Definition.EmptyPileMessage.GetFormattedText();
-                var thought = NThoughtBubbleVfx.Create(message, _player.Creature, 2.0);
-                NCombatRoom.Instance?.CombatVfxContainer.AddChildSafely(thought);
+        private void OnVisibilityChanged()
+        {
+            if (IsVisibleInTree())
                 return;
-            }
-
-            var capstone = NCapstoneContainer.Instance;
-            if (capstone is { CurrentCapstoneScreen: NCardPileScreen screen }
-                && screen.Pile == _pile)
-            {
-                capstone.Close();
-                return;
-            }
-
-            if (Definition.OnOpen is { } onOpen)
-            {
-                var context = new ModCardPileOpenContext(Definition, _pile, _player, this);
-                onOpen(context);
-                return;
-            }
-
-            NCardPileScreen.ShowScreen(_pile, Definition.Hotkeys ?? []);
+            _pressed = false;
+            _hovered = false;
+            NHoverTipSet.Remove(this);
         }
 
         internal void ApplyVisualOffset(Vector2 offset)

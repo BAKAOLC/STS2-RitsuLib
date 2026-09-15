@@ -13,7 +13,9 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Scaffolding.Godot;
 
 namespace STS2RitsuLib.CardPiles.Patches
 {
@@ -78,6 +80,9 @@ namespace STS2RitsuLib.CardPiles.Patches
         private const string TickboxScenePath = "res://scenes/ui/tickbox.tscn";
 
         private readonly List<SortingOrders> _sortingPriority = view.CreateDefaultSorting();
+        private readonly List<NButton> _controls = [backButton];
+        private HBoxContainer? _toolbar;
+        private Control? _toolbarBackground;
         private ModCardPileViewStyleContext StyleContext => new(definition, screen.Pile, screen);
 
         public void Install()
@@ -85,11 +90,17 @@ namespace STS2RitsuLib.CardPiles.Patches
             if (view.EnableCardInspect)
                 InstallCardInspection();
 
-            if (view.EnableSortBar || view.EnableUpgradePreviewToggle)
+            if (view.EnableSortBar)
                 InstallToolbar();
+
+            if (view.EnableUpgradePreviewToggle)
+                InstallUpgradeToggle();
 
             screen.Pile.ContentsChanged += RefreshCards;
             screen.TreeExiting += OnScreenTreeExiting;
+            grid.Resized += LayoutToolbar;
+            ActiveScreenContext.Instance.Updated += UpdateInputState;
+            UpdateInputState();
             RefreshCards();
         }
 
@@ -105,6 +116,22 @@ namespace STS2RitsuLib.CardPiles.Patches
         {
             screen.Pile.ContentsChanged -= RefreshCards;
             screen.TreeExiting -= OnScreenTreeExiting;
+            grid.Resized -= LayoutToolbar;
+            ActiveScreenContext.Instance.Updated -= UpdateInputState;
+        }
+
+        private void UpdateInputState()
+        {
+            var enabled = ActiveScreenContext.Instance.IsCurrent(screen);
+            foreach (var control in _controls)
+            {
+                if (!GodotObject.IsInstanceValid(control))
+                    continue;
+                if (enabled)
+                    control.Enable();
+                else
+                    control.Disable();
+            }
         }
 
         private void InstallCardInspection()
@@ -117,7 +144,7 @@ namespace STS2RitsuLib.CardPiles.Patches
 
         private void ShowCardDetail(CardModel? cardModel)
         {
-            if (cardModel == null)
+            if (cardModel == null || !ActiveScreenContext.Instance.IsCurrent(screen))
                 return;
 
             // ReSharper disable once RedundantEnumerableCastCall
@@ -130,15 +157,8 @@ namespace STS2RitsuLib.CardPiles.Patches
             if (game == null)
                 return;
 
-            backButton.Disable();
-
             var inspectCardScreen = game.GetInspectCardScreen();
             inspectCardScreen.Open(cards, index, grid.IsShowingUpgrades);
-            inspectCardScreen.Connect(CanvasItem.SignalName.VisibilityChanged, Callable.From(delegate
-            {
-                if (!inspectCardScreen.Visible && GodotObject.IsInstanceValid(backButton))
-                    backButton.Enable();
-            }), 4u);
         }
 
         private void InstallToolbar()
@@ -149,14 +169,6 @@ namespace STS2RitsuLib.CardPiles.Patches
             {
                 Name = $"RitsuLibCardPileViewToolbar_{definition.Id}",
                 MouseFilter = Control.MouseFilterEnum.Pass,
-                AnchorLeft = 0.5f,
-                AnchorRight = 0.5f,
-                AnchorTop = 0f,
-                AnchorBottom = 0f,
-                OffsetLeft = -560f,
-                OffsetTop = 92f,
-                OffsetRight = 560f,
-                OffsetBottom = 152f,
                 Alignment = BoxContainer.AlignmentMode.Center,
             };
             toolbar.AddThemeConstantOverride("separation", 30);
@@ -166,12 +178,28 @@ namespace STS2RitsuLib.CardPiles.Patches
                 grid.AddChild(background);
 
             grid.AddChild(toolbar);
+            _toolbar = toolbar;
+            _toolbarBackground = background;
+            InstallSortButtons(toolbar);
+            toolbar.MinimumSizeChanged += LayoutToolbar;
+            LayoutToolbar();
+        }
 
-            if (view.EnableSortBar)
-                InstallSortButtons(toolbar);
+        private void LayoutToolbar()
+        {
+            if (_toolbar == null)
+                return;
 
-            if (view.EnableUpgradePreviewToggle)
-                InstallUpgradeToggle(toolbar);
+            var width = Math.Max(1f, _toolbar.GetCombinedMinimumSize().X);
+            var scale = Math.Clamp((grid.Size.X - 64f) / (width + 48f), 0.01f, 1f);
+            _toolbar.Size = new(width, 60f);
+            _toolbar.Scale = Vector2.One * scale;
+            _toolbar.Position = new((grid.Size.X - width * scale) * 0.5f, 92f);
+            if (_toolbarBackground == null)
+                return;
+
+            _toolbarBackground.Position = _toolbar.Position - new Vector2(24f * scale, 4f);
+            _toolbarBackground.Size = new((width + 48f) * scale, 68f);
         }
 
         private Control? CreateToolbarBackground()
@@ -187,18 +215,10 @@ namespace STS2RitsuLib.CardPiles.Patches
                     Material = ResolveToolbarBackgroundMaterial(),
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                     ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                    AnchorLeft = 0.5f,
-                    AnchorRight = 0.5f,
-                    AnchorTop = 0f,
-                    AnchorBottom = 0f,
-                    OffsetLeft = -620f,
-                    OffsetTop = 88f,
-                    OffsetRight = 620f,
-                    OffsetBottom = 156f,
                 };
                 return background;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 background?.QueueFreeSafely();
                 RitsuLibFramework.Logger.Warn(
@@ -215,12 +235,18 @@ namespace STS2RitsuLib.CardPiles.Patches
                 if (button == null)
                     continue;
 
-                toolbar.AddChild(button);
-                SetSortButtonLabel(button, GetSortLabel(option));
-                ApplySortButtonBackground(button);
-                SetSortButtonHue(button);
+                WhenReady(button, () =>
+                {
+                    button.SetLabel(GetSortLabel(option));
+                    button.IsDescending = _sortingPriority.FirstOrDefault(order =>
+                        order == option.Ascending() || order == option.Descending()) == option.Descending();
+                    ApplySortButtonBackground(button);
+                    SetSortButtonHue(button);
+                });
                 button.Connect(NClickableControl.SignalName.Released,
                     Callable.From<NButton>(_ => OnSortReleased(option, button)));
+                _controls.Add(button);
+                toolbar.AddChild(button);
             }
         }
 
@@ -235,7 +261,7 @@ namespace STS2RitsuLib.CardPiles.Patches
                 button.CustomMinimumSize = new(220f, 42f);
                 return button;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 button?.QueueFreeSafely();
                 RitsuLibFramework.Logger.Warn(
@@ -244,12 +270,12 @@ namespace STS2RitsuLib.CardPiles.Patches
             }
         }
 
-        private static void SetSortButtonLabel(NCardViewSortButton button, string label)
+        private static void WhenReady(Node node, Action action)
         {
-            if (button.IsNodeReady())
-                button.SetLabel(label);
+            if (node.IsNodeReady())
+                action();
             else
-                Callable.From(() => button.SetLabel(label)).CallDeferred();
+                node.Connect(Node.SignalName.Ready, Callable.From(action), (uint)GodotObject.ConnectFlags.OneShot);
         }
 
         private void SetSortButtonHue(NCardViewSortButton button)
@@ -261,10 +287,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             if (material == null)
                 return;
 
-            if (button.IsNodeReady())
-                button.SetHue(material);
-            else
-                Callable.From(() => button.SetHue(material)).CallDeferred();
+            button.SetHue(material);
         }
 
         private void ApplySortButtonBackground(NCardViewSortButton button)
@@ -274,45 +297,38 @@ namespace STS2RitsuLib.CardPiles.Patches
                 view.SortButtonBackgroundMaterialProvider == null)
                 return;
 
-            if (button.IsNodeReady())
-                Apply();
-            else
-                Callable.From(Apply).CallDeferred();
-            return;
+            var background = button.GetNodeOrNull<TextureRect>("%ButtonImage");
+            if (background == null)
+                return;
 
-            void Apply()
-            {
-                var background = button.GetNodeOrNull<TextureRect>("%ButtonImage");
-                if (background == null)
-                    return;
+            if (!string.IsNullOrWhiteSpace(view.SortButtonBackgroundTexturePath))
+                try
+                {
+                    background.Texture =
+                        PreloadManager.Cache.GetAsset<Texture2D>(view.SortButtonBackgroundTexturePath);
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    RitsuLibFramework.Logger.Warn(
+                        $"[CardPiles] Could not load sort button background texture for '{definition.Id}': {ex}");
+                }
 
-                if (!string.IsNullOrWhiteSpace(view.SortButtonBackgroundTexturePath))
-                    try
-                    {
-                        background.Texture =
-                            PreloadManager.Cache.GetAsset<Texture2D>(view.SortButtonBackgroundTexturePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        RitsuLibFramework.Logger.Warn(
-                            $"[CardPiles] Could not load sort button background texture for '{definition.Id}': {ex}");
-                    }
-
-                var material = ResolveSortButtonBackgroundMaterial();
-                if (material != null)
-                    background.Material = material;
-            }
+            var material = ResolveSortButtonBackgroundMaterial();
+            if (material != null)
+                background.Material = material;
         }
 
         private void OnSortReleased(ModCardPileSortOption option, NCardViewSortButton button)
         {
+            if (!ActiveScreenContext.Instance.IsCurrent(screen))
+                return;
             _sortingPriority.Remove(option.Ascending());
             _sortingPriority.Remove(option.Descending());
             _sortingPriority.Insert(0, button.IsDescending ? option.Descending() : option.Ascending());
             RefreshCards();
         }
 
-        private void InstallUpgradeToggle(HBoxContainer toolbar)
+        private void InstallUpgradeToggle()
         {
             NTickbox? toggle = null;
             try
@@ -321,38 +337,62 @@ namespace STS2RitsuLib.CardPiles.Patches
                 {
                     Name = "RitsuLibViewUpgrades",
                     CustomMinimumSize = new(250f, 64f),
+                    AnchorTop = 1f,
+                    AnchorBottom = 1f,
+                    OffsetLeft = 16f,
+                    OffsetTop = -76f,
+                    OffsetRight = 266f,
+                    OffsetBottom = -12f,
+                    GrowVertical = Control.GrowDirection.Begin,
+                    Scale = Vector2.One * 0.75f,
                     FocusMode = Control.FocusModeEnum.All,
                     MouseFilter = Control.MouseFilterEnum.Stop,
                 };
 
                 var visuals = PreloadManager.Cache.GetScene(TickboxScenePath)
                     .Instantiate<Control>();
-                visuals.UniqueNameInOwner = true;
-                toggle.AddChild(visuals);
+                toggle.AddUniqueChild(visuals);
 
                 var label = new MegaLabel
                 {
                     Name = "ViewUpgradesLabel",
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                     CustomMinimumSize = new(170f, 42f),
-                    Position = new(58f, 10f),
+                    Size = new(250f, 64f),
+                    Position = new(64f, 0f),
+                    AutoSizeEnabled = false,
                     HorizontalAlignment = HorizontalAlignment.Left,
                     VerticalAlignment = VerticalAlignment.Center,
                 };
+                label.AddThemeFontOverride("font", PreloadManager.Cache.GetAsset<Font>(
+                    "res://themes/kreon_bold_glyph_space_one.tres"));
+                label.AddThemeFontSizeOverride("font_size", 28);
+                label.AddThemeConstantOverride("outline_size", 12);
+                label.AddThemeColorOverride("font_color",
+                    view.UpgradePreviewLabelColor ?? new Color(0.937255f, 0.784314f, 0.317647f));
+                label.AddThemeColorOverride("font_outline_color",
+                    view.UpgradePreviewLabelOutlineColor ?? new Color(0f, 0f, 0f, 0.5f));
                 label.SetTextAutoSize(new LocString("gameplay_ui", "VIEW_UPGRADES").GetFormattedText());
-                if (view.UpgradePreviewLabelColor is { } labelColor)
-                    label.AddThemeColorOverride("font_color", labelColor);
-                if (view.UpgradePreviewLabelOutlineColor is { } outlineColor)
-                    label.AddThemeColorOverride("font_outline_color", outlineColor);
                 toggle.AddChild(label);
 
-                toolbar.AddChild(toggle);
-                Callable.From(() => toggle.IsTicked = false).CallDeferred();
+                var upgradeToggle = toggle;
+                WhenReady(toggle, () =>
+                {
+                    upgradeToggle.IsTicked = grid.IsShowingUpgrades;
+                    label.Size = new(label.GetMinimumSize().X, 64f);
+                    upgradeToggle.CustomMinimumSize = new(64f + label.Size.X, 64f);
+                });
 
                 toggle.Connect(NTickbox.SignalName.Toggled,
-                    Callable.From<NTickbox>(tickbox => { grid.IsShowingUpgrades = tickbox.IsTicked; }));
+                    Callable.From<NTickbox>(tickbox =>
+                    {
+                        if (ActiveScreenContext.Instance.IsCurrent(screen))
+                            grid.IsShowingUpgrades = tickbox.IsTicked;
+                    }));
+                _controls.Add(toggle);
+                screen.AddChild(toggle);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 toggle?.QueueFreeSafely();
                 RitsuLibFramework.Logger.Warn(
@@ -384,7 +424,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             {
                 return view.ToolbarBackgroundMaterialProvider(StyleContext) ?? view.ToolbarBackgroundMaterial;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[CardPiles] ToolbarBackgroundMaterialProvider for '{definition.Id}' threw: {ex}");
@@ -401,7 +441,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             {
                 return view.SortButtonHueMaterialProvider(StyleContext) ?? view.SortButtonHueMaterial;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[CardPiles] SortButtonHueMaterialProvider for '{definition.Id}' threw: {ex}");
@@ -418,7 +458,7 @@ namespace STS2RitsuLib.CardPiles.Patches
             {
                 return view.SortButtonBackgroundMaterialProvider(StyleContext) ?? view.SortButtonBackgroundMaterial;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.Warn(
                     $"[CardPiles] SortButtonBackgroundMaterialProvider for '{definition.Id}' threw: {ex}");

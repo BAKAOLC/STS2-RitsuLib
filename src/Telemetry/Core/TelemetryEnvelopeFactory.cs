@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using Godot;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Telemetry.Diagnostics;
 using STS2RitsuLib.Telemetry.RunHistory;
 using STS2RitsuLib.Utils;
 using Environment = System.Environment;
@@ -20,6 +21,7 @@ namespace STS2RitsuLib.Telemetry
             JsonNode? applicantPayload,
             IReadOnlyDictionary<string, object?>? properties)
         {
+            using var diagnosticsScope = new TelemetryDiagnosticsScope();
             var mergedProperties = properties == null
                 ? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
                 : new(properties, StringComparer.OrdinalIgnoreCase);

@@ -427,24 +427,6 @@ namespace STS2RitsuLib.Scaffolding.Content
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Retained for compatibility. The existing act always has fixed weight 1.
-        ///         Queues legacy argument and lifecycle validation; the callback is never invoked.
-        ///         Remove this call and configure only candidate weights.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         为兼容旧调用而保留。已有章节始终具有固定权重 1。
-        ///         将旧式参数与生命周期检查加入队列，不执行权重回调。请移除此调用，仅配置候选权重。
-        ///     </para>
-        /// </summary>
-        [Obsolete("The existing act has fixed weight 1. Remove this call and configure only candidate weights.")]
-        public ModContentPackBuilder ActEnterWeightedPoolBaseline(int slotIndex,
-            Func<ActEnterResolveContext, double> weight)
-        {
-            return AddStep(ctx => ctx.Content.RegisterActEnterWeightedPoolBaseline(slotIndex, weight));
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
         ///         Queues <see cref="ModContentRegistry.RegisterActEncounter{TAct,TEncounter}" /> so the encounter
         ///         appears only in that act.
         ///     </para>
@@ -1938,7 +1920,6 @@ namespace STS2RitsuLib.Scaffolding.Content
                     var succeeded = 0;
                     var failed = 0;
                     for (var i = 0; i < steps.Length; i++)
-                    {
                         try
                         {
                             steps[i](ctx);
@@ -1953,7 +1934,6 @@ namespace STS2RitsuLib.Scaffolding.Content
                                 $"[ContentPack] Failed {description} for mod '{_modId}': " +
                                 $"{ex.GetType().Name}: {ex.Message}");
                         }
-                    }
 
                     logger.Info(
                         $"[ContentPack] Applied {succeeded} deferred registration step(s); {failed} failed.");

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -152,7 +153,7 @@ namespace STS2RitsuLib.Settings
                         availableCards,
                         item => _pileCardsByItemId.GetValueOrDefault(item.Id)),
                 ],
-                primaryFilterId: filter.Id,
+                filter.Id,
                 primaryFilterBreakBeforeOptionId: RitsuDebugCardActions.GetPileToken(PileType.Deck),
                 primaryDefaultsToAll: true,
                 primaryAllMatches: IsDefaultPileCardEntry,
@@ -469,8 +470,8 @@ namespace STS2RitsuLib.Settings
                     PlayerLabel(player, index),
                     $"{L("ritsulib.debugTools.player", "Player")} · {PlayerVitals(player)}",
                     $"{player.Character.Id} {player.NetId}",
-                    icon: RitsuDebugToolsIcons.Get(RitsuDebugToolsGlyph.Players, 32, playerAccent),
-                    badge: player.NetId == RunManager.Instance.NetService?.NetId
+                    RitsuDebugToolsIcons.Get(RitsuDebugToolsGlyph.Players, 32, playerAccent),
+                    player.NetId == RunManager.Instance.NetService?.NetId
                         ? L("ritsulib.debugTools.local", "Local")
                         : null,
                     accentColor: playerAccent)),
@@ -487,11 +488,11 @@ namespace STS2RitsuLib.Settings
                         ? $"{creature.ModelId} {creature.LogName} {petOwner.NetId} " +
                           ownerLabels.GetValueOrDefault(petOwner.NetId, petOwner.Character.Id.ToString())
                         : $"{creature.ModelId} {creature.LogName}",
-                    icon: RitsuDebugToolsIcons.Get(
+                    RitsuDebugToolsIcons.Get(
                         creature.IsPet ? RitsuDebugToolsGlyph.Paw : RitsuDebugToolsGlyph.Monsters,
                         32,
                         creature.IsPet ? petAccent : monsterAccent),
-                    badge: CreatureVitals(creature),
+                    CreatureVitals(creature),
                     accentColor: creature.IsPet ? petAccent : monsterAccent)),
             ];
 
@@ -522,9 +523,9 @@ namespace STS2RitsuLib.Settings
                     CreateEncounterTierFilter(tierItemIds),
                     CreateContentSourceFilter(models, byId),
                 ],
-                presentation: RitsuCatalogPresentation.Grid,
-                gridTileMinimumWidth: 240f,
-                gridTileHeight: 88f,
+                RitsuCatalogPresentation.Grid,
+                240f,
+                88f,
                 detailWidth: 460f);
             browser.SetItems([
                 .. models.Select(model =>
@@ -574,9 +575,9 @@ namespace STS2RitsuLib.Settings
                     CreateEncounterTierFilter(tierItemIds),
                     CreateContentSourceFilter(models, byId),
                 ],
-                presentation: RitsuCatalogPresentation.Grid,
-                gridTileMinimumWidth: 220f,
-                gridTileHeight: 84f,
+                RitsuCatalogPresentation.Grid,
+                220f,
+                84f,
                 detailWidth: 440f);
             browser.SetItems([
                 .. models.Select(model => new RitsuCatalogItem(
@@ -751,8 +752,7 @@ namespace STS2RitsuLib.Settings
             float catalogWidth = 260f,
             float detailWidth = 360f,
             float rowHeight = 52f,
-            [System.Runtime.CompilerServices.CallerMemberName]
-            string preferenceId = "")
+            [CallerMemberName] string preferenceId = "")
         {
             return new(new()
             {
