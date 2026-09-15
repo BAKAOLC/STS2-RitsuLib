@@ -52,7 +52,7 @@
         <!-- Loader and hashing are deployment assets, not consumer compile references. Package validation checks their exact locations. -->
         <NoWarn>$(NoWarn);NU5100</NoWarn>
         <IsPackable>true</IsPackable>
-        <Version>0.5.20</Version>
+        <Version>0.6.0</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
