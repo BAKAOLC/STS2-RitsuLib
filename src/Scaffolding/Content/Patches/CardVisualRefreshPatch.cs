@@ -1,13 +1,13 @@
-﻿using System.Runtime.CompilerServices;
-using Godot;
+﻿using Godot;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
     internal sealed class CardVisualRefreshPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<NCard, CardVisualState> States = new();
+        private static readonly AttachedState<NCard, CardVisualState> States = new();
 
         public static string PatchId => "content_asset_override_card_visual_refresh";
 
@@ -33,7 +33,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             __state = null;
             if (!GodotObject.IsInstanceValid(__instance) || !__instance.IsNodeReady())
                 return true;
-            var state = States.GetValue(__instance, static card => new(card));
+            var state = States.GetOrAdd(__instance, static card => new(card));
             if (!state.Enter())
                 return false;
             __state = state;

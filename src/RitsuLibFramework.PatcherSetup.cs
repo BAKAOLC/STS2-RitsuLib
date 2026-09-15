@@ -417,6 +417,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.RunStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.CombatStateHookListenersPatch>();
             patcher.RegisterPatch<ModelCapabilityHookListenerPatches.HookPlayerChoiceContextConstructorPatch>();
+            patcher.RegisterPatch<CombatHistoryClearSecondaryResourcesPatch>();
             patcher.RegisterPatch<CardModelCanPlaySecondaryResourcesPatch>();
             patcher.RegisterPatch<CardModelSpendResourcesSecondaryResourcesPatch>();
             patcher.RegisterPatch<CardCmdAutoPlaySecondaryResourceXCapturePatch>();

@@ -1,7 +1,7 @@
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MegaCrit.Sts2.Core.Saves.Runs;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.Rewards
 {
@@ -9,11 +9,11 @@ namespace STS2RitsuLib.Combat.Rewards
     ///     <para xml:lang="en">
     ///         Stores supplemental reward serialization data. Data is first associated with
     ///         <see cref="SerializableReward" /> instances through a
-    ///         <see cref="ConditionalWeakTable{TKey,TValue}" />, then persisted in
+    ///         <see cref="AttachedState{TKey,TValue}" />, then persisted in
     ///         <see cref="SerializableRoom.EncounterState" /> under keys prefixed by <see cref="KeyPrefix" />.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         存储奖励的补充序列化数据。数据先通过 <see cref="ConditionalWeakTable{TKey,TValue}" />
+    ///         存储奖励的补充序列化数据。数据先通过 <see cref="AttachedState{TKey,TValue}" />
     ///         与 <see cref="SerializableReward" /> 实例关联，再以带有 <see cref="KeyPrefix" /> 前缀的键
     ///         持久化到 <see cref="SerializableRoom.EncounterState" />。
     ///     </para>
@@ -22,11 +22,11 @@ namespace STS2RitsuLib.Combat.Rewards
     {
         internal const string KeyPrefix = "__mod_reward_ext_";
 
-        private static readonly ConditionalWeakTable<SerializableReward, RewardExtData> ExtTable = [];
+        private static readonly AttachedState<SerializableReward, RewardExtData> ExtTable = new();
 
         internal static void SetExtData(SerializableReward reward, RewardExtData data)
         {
-            ExtTable.AddOrUpdate(reward, data);
+            ExtTable.Set(reward, data);
         }
 
         internal static bool TryGetExtData(SerializableReward reward, out RewardExtData? data)

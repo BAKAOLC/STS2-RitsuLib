@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -38,7 +38,7 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         private static readonly object NoOwnerHookCapabilitiesMarker = new();
 
-        private static readonly ConditionalWeakTable<AbstractModel, object> OwnersWithoutHookCapabilities = [];
+        private static readonly AttachedState<AbstractModel, object> OwnersWithoutHookCapabilities = new();
 
         internal static void InvalidateDefaultCapabilitySourceCache()
         {
@@ -145,7 +145,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static void MarkOwnerWithoutHookCapabilities(AbstractModel owner)
         {
-            OwnersWithoutHookCapabilities.GetValue(owner, static _ => NoOwnerHookCapabilitiesMarker);
+            OwnersWithoutHookCapabilities.GetOrAdd(owner, static _ => NoOwnerHookCapabilitiesMarker);
         }
 
         private static bool TryGetStillAttachedModel(

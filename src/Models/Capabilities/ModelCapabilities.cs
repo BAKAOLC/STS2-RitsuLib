@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -12,7 +12,7 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string SavedDataKey = "model_capabilities";
         private static readonly Lock InitializationLock = new();
         private static readonly ModelSavedDataSlotKey SavedDataSlotKey = new(Const.ModId, SavedDataKey);
-        private static readonly ConditionalWeakTable<AbstractModel, ModelCapabilitySet> Collections = [];
+        private static readonly AttachedState<AbstractModel, ModelCapabilitySet> Collections = new();
 
         internal static bool IsInitialized { get; private set; }
 
@@ -48,7 +48,7 @@ namespace STS2RitsuLib.Models.Capabilities
         public static ModelCapabilitySet Get(AbstractModel model)
         {
             ArgumentNullException.ThrowIfNull(model);
-            return Collections.GetValue(model, CreateCollection);
+            return Collections.GetOrAdd(model, CreateCollection);
         }
 
         /// <summary>

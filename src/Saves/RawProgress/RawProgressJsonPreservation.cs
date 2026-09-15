@@ -1,14 +1,14 @@
-﻿using System.Runtime.CompilerServices;
-using System.Text.Encodings.Web;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using MegaCrit.Sts2.Core.Saves;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Saves.RawProgress
 {
     internal static class RawProgressJsonPreservation
     {
-        private static readonly ConditionalWeakTable<ProgressState, PreservationState> States = [];
+        private static readonly AttachedState<ProgressState, PreservationState> States = new();
 
         private static readonly JsonSerializerOptions WriteOptions = new()
         {

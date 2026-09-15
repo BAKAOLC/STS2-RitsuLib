@@ -1,12 +1,12 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Logging;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Interop.AutoRegistration
 {
     internal static class AssemblyTypeScanHelper
     {
-        private static readonly ConditionalWeakTable<Assembly, TypeCache> Cache = new();
+        private static readonly AttachedState<Assembly, TypeCache> Cache = new();
 
         public static IReadOnlyList<Type> GetLoadableTypes(Assembly assembly, Logger logger)
         {
@@ -15,7 +15,7 @@ namespace STS2RitsuLib.Interop.AutoRegistration
 
             if (assembly.IsDynamic)
                 return Scan(assembly, logger, out _);
-            var cache = Cache.GetValue(assembly, static _ => new());
+            var cache = Cache.GetOrAdd(assembly, static _ => new());
             lock (cache.Gate)
             {
                 if (cache.Types != null)

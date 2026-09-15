@@ -1,6 +1,6 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -30,11 +30,11 @@ namespace STS2RitsuLib.CardPiles
     /// </remarks>
     internal static class ModCardPileStorage
     {
-        private static readonly ConditionalWeakTable<PlayerCombatState, Dictionary<PileType, ModCardPile>>
-            CombatPiles = [];
+        private static readonly AttachedState<PlayerCombatState, Dictionary<PileType, ModCardPile>>
+            CombatPiles = new();
 
-        private static readonly ConditionalWeakTable<Player, Dictionary<PileType, ModCardPile>>
-            RunPiles = [];
+        private static readonly AttachedState<Player, Dictionary<PileType, ModCardPile>>
+            RunPiles = new();
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -101,7 +101,7 @@ namespace STS2RitsuLib.CardPiles
             if (definitions.Length == 0)
                 return [];
 
-            var dict = CombatPiles.GetValue(state, static _ => []);
+            var dict = CombatPiles.GetOrAdd(state, static _ => []);
             lock (dict)
             {
                 foreach (var definition in definitions)
@@ -136,7 +136,7 @@ namespace STS2RitsuLib.CardPiles
             if (state == null)
                 return null;
 
-            var dict = CombatPiles.GetValue(state, static _ => []);
+            var dict = CombatPiles.GetOrAdd(state, static _ => []);
             lock (dict)
             {
                 if (dict.TryGetValue(definition.PileType, out var existing))
@@ -150,7 +150,7 @@ namespace STS2RitsuLib.CardPiles
 
         private static ModCardPile ResolveRunPile(Player player, ModCardPileDefinition definition)
         {
-            var dict = RunPiles.GetValue(player, static _ => []);
+            var dict = RunPiles.GetOrAdd(player, static _ => []);
             lock (dict)
             {
                 if (dict.TryGetValue(definition.PileType, out var existing))

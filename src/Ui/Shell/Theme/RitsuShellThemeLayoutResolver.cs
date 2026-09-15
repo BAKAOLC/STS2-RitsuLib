@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using Godot;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Ui.Shell.Theme
 {
@@ -82,11 +82,11 @@ namespace STS2RitsuLib.Ui.Shell.Theme
         /// </summary>
         private const int MaximumCachedBoxes = 4096;
 
-        private static readonly ConditionalWeakTable<RitsuShellTheme, ThemeBoxMemo> BoxMemos = [];
+        private static readonly AttachedState<RitsuShellTheme, ThemeBoxMemo> BoxMemos = new();
 
         private static ThemeBoxMemo MemoFor(RitsuShellTheme theme)
         {
-            return BoxMemos.GetValue(theme, static _ => new());
+            return BoxMemos.GetOrAdd(theme, static _ => new());
         }
 
         /// <summary>

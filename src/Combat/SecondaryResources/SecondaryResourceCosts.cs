@@ -839,8 +839,16 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
             var ledger = builder.Build();
             SecondaryResourcePlayLedgerRuntime.SetPending(plan.Card, ledger);
-            await RunShortfallPayments(plan, ledger, source ?? plan.Card);
-            return ledger;
+            try
+            {
+                await RunShortfallPayments(plan, ledger, source ?? plan.Card);
+                return ledger;
+            }
+            catch
+            {
+                SecondaryResourcePlayLedgerRuntime.TryRemovePending(plan.Card, ledger);
+                throw;
+            }
         }
 
         private static void ValidateCommitPlan(SecondaryResourcePaymentPlan plan)

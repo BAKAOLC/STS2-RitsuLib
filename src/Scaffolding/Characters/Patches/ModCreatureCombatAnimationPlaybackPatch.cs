@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
@@ -7,6 +6,7 @@ using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
@@ -36,17 +36,17 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// <remarks>
     ///     <para xml:lang="en">
     ///         State machines are cached per visuals root via a
-    ///         <see cref="ConditionalWeakTable{TKey,TValue}" /> so factories run at most once per combat lifetime.
+    ///         <see cref="AttachedState{TKey,TValue}" /> so factories run at most once per combat lifetime.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         状态机通过 <see cref="ConditionalWeakTable{TKey,TValue}" /> 按形象根节点缓存，因此每场战斗中每个根节点
+    ///         状态机通过 <see cref="AttachedState{TKey,TValue}" /> 按形象根节点缓存，因此每场战斗中每个根节点
     ///         最多调用一次工厂。
     ///     </para>
     /// </remarks>
     [HarmonyPriority(Priority.First)]
     internal class ModCreatureCombatAnimationPlaybackPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByVisuals = [];
+        private static readonly AttachedState<Node, StateMachineSlot> StateMachinesByVisuals = new();
         public static string PatchId => "mod_creature_combat_animation_playback";
 
         public static string Description =>
@@ -80,7 +80,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (entity == null)
                 return null;
 
-            var slot = StateMachinesByVisuals.GetValue(visuals, _ => new());
+            var slot = StateMachinesByVisuals.GetOrAdd(visuals, _ => new());
             slot.EnsureBuilt(entity.Player?.Character, entity.Monster, visuals);
             return slot.StateMachine;
         }
@@ -124,7 +124,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (entity == null)
                 return false;
 
-            var slot = StateMachinesByVisuals.GetValue(visuals, _ => new());
+            var slot = StateMachinesByVisuals.GetOrAdd(visuals, _ => new());
             slot.EnsureBuilt(entity.Player?.Character, entity.Monster, visuals);
 
             if (slot.StateMachine == null)

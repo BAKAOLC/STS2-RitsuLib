@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
@@ -16,6 +15,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Godot;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.CardPiles.Patches
 {
@@ -29,8 +29,7 @@ namespace STS2RitsuLib.CardPiles.Patches
     /// </summary>
     internal sealed class ModCardPileScreenViewPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<NCardPileScreen, ModCardPileScreenViewController> Controllers =
-            [];
+        private static readonly AttachedState<NCardPileScreen, ModCardPileScreenViewController> Controllers = new();
 
         private static readonly AccessTools.FieldRef<NCardPileScreen, NCardGrid> GridRef =
             AccessTools.FieldRefAccess<NCardPileScreen, NCardGrid>("_grid");

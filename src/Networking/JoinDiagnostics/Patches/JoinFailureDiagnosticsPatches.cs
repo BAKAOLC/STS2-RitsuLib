@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Connection;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
@@ -6,6 +5,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics.Patches
 {
@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics.Patches
 
     internal static class JoinFailureDiagnosticsPopupReports
     {
-        public static readonly ConditionalWeakTable<NErrorPopup, JoinFailureDiagnosticReport> Reports = [];
+        public static readonly AttachedState<NErrorPopup, JoinFailureDiagnosticReport> Reports = new();
     }
 
     internal sealed class JoinFailureDiagnosticsPopupCreatePatch : IPatchMethod

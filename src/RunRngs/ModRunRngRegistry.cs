@@ -1,7 +1,7 @@
+using STS2RitsuLib.Utils;
 #if STS2_AT_LEAST_0_109_0
 using MegaCrit.Sts2.Core.Saves;
 #endif
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.RunData;
@@ -29,7 +29,7 @@ namespace STS2RitsuLib.RunRngs
                 () => new(),
                 new() { WritePolicy = RunSavedDataWritePolicy.WhenNonDefault });
 
-        private static readonly ConditionalWeakTable<RunState, RuntimeState> Runtimes = [];
+        private static readonly AttachedState<RunState, RuntimeState> Runtimes = new();
 
         /// <summary>
         ///     <para xml:lang="en">Gets a persistent independent RNG stream for the specified run, mod ID, and stream ID.</para>
@@ -41,7 +41,7 @@ namespace STS2RitsuLib.RunRngs
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
             ArgumentException.ThrowIfNullOrWhiteSpace(streamId);
 
-            var runtime = Runtimes.GetValue(runState, _ => new());
+            var runtime = Runtimes.GetOrAdd(runState, _ => new());
             return runtime.GetOrCreate(runState, modId, streamId);
         }
 
@@ -58,7 +58,7 @@ namespace STS2RitsuLib.RunRngs
             if (player.RunState is not RunState runState)
                 throw new InvalidOperationException("Player does not belong to a concrete RunState.");
 
-            var runtime = Runtimes.GetValue(runState, _ => new());
+            var runtime = Runtimes.GetOrAdd(runState, _ => new());
             return runtime.GetOrCreate(player, modId, streamId);
         }
 

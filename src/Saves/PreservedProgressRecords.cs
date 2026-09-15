@@ -1,11 +1,11 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using MegaCrit.Sts2.Core.Achievements;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Validation;
 using MegaCrit.Sts2.Core.Timeline;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Saves
 {
@@ -20,7 +20,7 @@ namespace STS2RitsuLib.Saves
     /// </summary>
     public sealed class PreservedProgressRecords
     {
-        private static readonly ConditionalWeakTable<ProgressState, PreservedProgressRecords> RecordsByProgress = [];
+        private static readonly AttachedState<ProgressState, PreservedProgressRecords> RecordsByProgress = new();
         private static readonly HashSet<string> KnownAchievementNames = BuildKnownAchievementNames();
 
         private static readonly FieldInfo? ValidationErrorsField =

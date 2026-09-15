@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.DevConsole;
@@ -8,12 +7,13 @@ using STS2RitsuLib.Data;
 using STS2RitsuLib.Patching;
 using STS2RitsuLib.Patching.Models;
 using GameDevConsole = MegaCrit.Sts2.Core.DevConsole.DevConsole;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Diagnostics.Patches
 {
     internal static class DevConsoleHistoryNavigationState
     {
-        internal static readonly ConditionalWeakTable<NDevConsole, HistoryState> States = [];
+        internal static readonly AttachedState<NDevConsole, HistoryState> States = new();
 
         internal static readonly AccessTools.FieldRef<NDevConsole, GameDevConsole> DevConsoleField =
             AccessTools.FieldRefAccess<NDevConsole, GameDevConsole>("_devConsole");
@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Diagnostics.Patches
 
         internal static HistoryState Get(NDevConsole console)
         {
-            return States.GetValue(console, static _ => new());
+            return States.GetOrAdd(console, static _ => new());
         }
 
         internal static bool TryGetNavigationFields(

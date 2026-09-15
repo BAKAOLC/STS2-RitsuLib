@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.RestSite;
@@ -7,6 +6,7 @@ using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Characters.Visuals;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
@@ -24,7 +24,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     /// </summary>
     internal class NRestSiteRoomProceduralVisualPlaybackPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<NRestSiteCharacter, StateMachineSlot> StateMachinesByRoot = [];
+        private static readonly AttachedState<NRestSiteCharacter, StateMachineSlot> StateMachinesByRoot = new();
 
         public static string PatchId => "n_rest_site_room_procedural_visual_playback";
 
@@ -66,7 +66,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (character is not IModCharacterRestSiteAnimationStateMachineFactory factory)
                 return false;
 
-            var slot = StateMachinesByRoot.GetValue(restSiteCharacter, _ => new());
+            var slot = StateMachinesByRoot.GetOrAdd(restSiteCharacter, _ => new());
             slot.EnsureBuilt(factory, restSiteCharacter, character);
 
             if (slot.StateMachine == null)

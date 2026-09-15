@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
@@ -10,6 +9,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings.Patches
 {
@@ -26,7 +26,7 @@ namespace STS2RitsuLib.Settings.Patches
     [HarmonyPriority(Priority.Last)]
     internal class ModSettingsSubmenuPatch : IPatchMethod
     {
-        internal static readonly ConditionalWeakTable<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = [];
+        internal static readonly AttachedState<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = new();
         public static string PatchId => "ritsulib_mod_settings_submenu";
         public static string Description => "Inject RitsuLib mod settings submenu into the main menu stack";
         public static bool IsCritical => false;
@@ -41,7 +41,7 @@ namespace STS2RitsuLib.Settings.Patches
             if (type != typeof(RitsuModSettingsSubmenu))
                 return true;
 
-            __result = Submenus.GetValue(__instance, CreateSubmenu);
+            __result = Submenus.GetOrAdd(__instance, CreateSubmenu);
             return false;
         }
 
@@ -85,7 +85,7 @@ namespace STS2RitsuLib.Settings.Patches
             if (type != typeof(RitsuModSettingsSubmenu))
                 return true;
 
-            __result = ModSettingsSubmenuPatch.Submenus.GetValue(__instance, ModSettingsSubmenuPatch.CreateSubmenu);
+            __result = ModSettingsSubmenuPatch.Submenus.GetOrAdd(__instance, ModSettingsSubmenuPatch.CreateSubmenu);
             return false;
         }
     }

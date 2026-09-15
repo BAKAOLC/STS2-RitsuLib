@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using Godot;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Ui.Shell
 {
@@ -25,8 +25,8 @@ namespace STS2RitsuLib.Ui.Shell
     /// </summary>
     internal static class RitsuShellStyleCache
     {
-        private static readonly ConditionalWeakTable<RitsuShellTheme, ConcurrentDictionary<string, StyleBoxFlat>>
-            Cache = [];
+        private static readonly AttachedState<RitsuShellTheme, ConcurrentDictionary<string, StyleBoxFlat>>
+            Cache = new();
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -52,7 +52,7 @@ namespace STS2RitsuLib.Ui.Shell
         /// </returns>
         internal static StyleBoxFlat GetOrBuild(string key, Func<StyleBoxFlat> build)
         {
-            var map = Cache.GetValue(RitsuShellTheme.Current,
+            var map = Cache.GetOrAdd(RitsuShellTheme.Current,
                 static _ => new(StringComparer.Ordinal));
             return map.TryGetValue(key, out var cached)
                 ? cached

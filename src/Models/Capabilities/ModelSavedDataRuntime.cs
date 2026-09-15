@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -51,12 +51,12 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         internal const string SavedPropertiesName = "RitsuLib_ModelSavedData";
 
-        private static readonly ConditionalWeakTable<AbstractModel, ModelSavedDataBag> ModelBags = [];
+        private static readonly AttachedState<AbstractModel, ModelSavedDataBag> ModelBags = new();
 
         public static ModelSavedDataBag GetBag(AbstractModel model)
         {
             ArgumentNullException.ThrowIfNull(model);
-            var bag = ModelBags.GetValue(model, _ => new());
+            var bag = ModelBags.GetOrAdd(model, _ => new());
             ModelSavedDataRegistry.EnsureImported(model, bag);
             return bag;
         }
@@ -83,7 +83,7 @@ namespace STS2RitsuLib.Models.Capabilities
         internal static void AttachDocumentImmediate(AbstractModel model, ModelSavedDataDocument? document)
         {
             ArgumentNullException.ThrowIfNull(model);
-            var bag = ModelBags.GetValue(model, _ => new());
+            var bag = ModelBags.GetOrAdd(model, _ => new());
             bag.ResetForDocument(document);
             ModelSavedDataRegistry.EnsureImported(model, bag);
         }

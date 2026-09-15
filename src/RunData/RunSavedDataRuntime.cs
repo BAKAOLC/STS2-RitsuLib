@@ -1,6 +1,6 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.RunData
 {
@@ -45,15 +45,14 @@ namespace STS2RitsuLib.RunData
 
     internal static class RunSavedDataRuntime
     {
-        private static readonly ConditionalWeakTable<RunState, RunSavedDataBag> RunBags = [];
+        private static readonly AttachedState<RunState, RunSavedDataBag> RunBags = new();
 
-        private static readonly ConditionalWeakTable<SerializableRun, RunSavedDataDocumentBox> SerializableDocuments =
-            [];
+        private static readonly AttachedState<SerializableRun, RunSavedDataDocumentBox> SerializableDocuments = new();
 
         public static RunSavedDataBag GetBag(RunState runState)
         {
             ArgumentNullException.ThrowIfNull(runState);
-            return RunBags.GetValue(runState, _ => new());
+            return RunBags.GetOrAdd(runState, _ => new());
         }
 
         public static bool TryGetBag(RunState runState, out RunSavedDataBag bag)

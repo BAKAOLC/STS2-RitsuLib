@@ -1,9 +1,9 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.CardTargeting
 {
@@ -16,7 +16,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
         private const string BaseLibCustomTargetTypeName = "BaseLib.Patches.Features.CustomTargetType";
 
         private static readonly Lock Gate = new();
-        private static readonly ConditionalWeakTable<Assembly, TypeResolution> TypeCache = new();
+        private static readonly AttachedState<Assembly, TypeResolution> TypeCache = new();
 
         private static ITargetPredicateMap? _singleTargeting;
         private static ITargetPredicateMap? _multiTargeting;
@@ -163,7 +163,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
             if (assembly.IsDynamic)
                 return assembly.GetType(BaseLibCustomTargetTypeName, false);
 
-            return TypeCache.GetValue(assembly, static candidate =>
+            return TypeCache.GetOrAdd(assembly, static candidate =>
                 new(candidate.GetType(BaseLibCustomTargetTypeName, false))).Type;
         }
 

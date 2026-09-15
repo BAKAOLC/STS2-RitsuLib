@@ -1,11 +1,11 @@
-using System.Runtime.CompilerServices;
 using Godot;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
     public static partial class ModSettingsUiFactory
     {
-        private static readonly ConditionalWeakTable<Control, ControlEnablementState> ControlEnablementStates = [];
+        private static readonly AttachedState<Control, ControlEnablementState> ControlEnablementStates = new();
 
         internal static Control MaybeWrapDynamicEnabled(ModSettingsUiContext context, Control host,
             Func<bool>? predicate, Func<bool>? canApply = null)
@@ -80,7 +80,7 @@ namespace STS2RitsuLib.Settings
             if (!GodotObject.IsInstanceValid(control))
                 return;
 
-            var state = ControlEnablementStates.GetValue(control, static current => new(current));
+            var state = ControlEnablementStates.GetOrAdd(control, static current => new(current));
             var isEnabled = state.SetGate(gate, enabled);
             if (isEnabled == state.IsEnabledApplied)
                 return;
