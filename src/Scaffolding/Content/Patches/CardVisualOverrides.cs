@@ -2,7 +2,6 @@
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Models;
-using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Content.Patches
 {
@@ -17,44 +16,38 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
                 ApplyStyle(state, model, ancient);
             }
 
-            string portraitPath = null!;
-            if (!CardPortraitPathPatch.TryCardPortraitPath(model, ref portraitPath) &&
-                GodotResourcePath.TryLoad<Texture2D>(portraitPath, out var portrait))
-            {
-                state.SetTexture("%Portrait", portrait);
-                state.SetTexture("%AncientPortrait", portrait);
-            }
-
             ApplyTexture(state, model, "%Frame", static overrides => overrides.CustomFramePath,
                 nameof(IModCardAssetOverrides.CustomFramePath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardFrameTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardFrameTexture, static card => card.Frame);
             ApplyTexture(state, model, "%PortraitBorder", static overrides => overrides.CustomPortraitBorderPath,
                 nameof(IModCardAssetOverrides.CustomPortraitBorderPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardPortraitBorderTexture, static card => card.PortraitBorder);
             ApplyTexture(state, model, "%EnergyIcon", static overrides => overrides.CustomEnergyIconPath,
                 nameof(IModCardAssetOverrides.CustomEnergyIconPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconTexture, () => model.EnergyIcon);
+                ModCharacterOwnedVisualOverrideHelper.TryCardEnergyIconTexture, static card => card.EnergyIcon,
+                () => model.EnergyIcon);
             ApplyTexture(state, model, "%AncientBorder", static overrides => overrides.CustomAncientBorderPath,
                 nameof(IModCardAssetOverrides.CustomAncientBorderPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientBorderTexture, static card => card.AncientBorder);
             ApplyTexture(state, model, "%AncientTextBg", static overrides => overrides.CustomAncientTextBgPath,
                 nameof(IModCardAssetOverrides.CustomAncientTextBgPath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardAncientTextBgTexture, static card => card.AncientTextBg);
             ApplyTexture(state, model, "%AncientBanner", static overrides => overrides.CustomAncientBannerPath,
                 nameof(IModCardAssetOverrides.CustomAncientBannerPath),
                 ModCharacterOwnedVisualOverrideHelper.TryCardAncientBannerTexture);
             ApplyTexture(state, model, "%TitleBanner", static overrides => overrides.CustomBannerTexturePath,
                 nameof(IModCardAssetOverrides.CustomBannerTexturePath),
-                ModCharacterOwnedVisualOverrideHelper.TryCardBannerTexture);
+                ModCharacterOwnedVisualOverrideHelper.TryCardBannerTexture, static card => card.BannerTexture);
 
             if (state.Card.Visibility != ModelVisibility.Visible)
                 return;
 
             Material material = null!;
             if (!CardFrameMaterialPatch.Prefix(model, ref material))
-                state.SetMaterial("%Frame", material, () => model.FrameMaterial);
+                state.SetMaterial("%Frame", model.FrameMaterial, () => model.FrameMaterial);
             if (!CardBannerMaterialPatch.Prefix(model, ref material))
             {
+                material = model.BannerMaterial;
                 state.SetMaterial("%TitleBanner", material);
                 state.SetMaterial("%PortraitBorder", material);
                 state.SetMaterial("%TypePlaque", material, () => model.BannerMaterial);
@@ -126,12 +119,13 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static void ApplyTexture(CardVisualState state, CardModel model, string nodePath,
             Func<IModCardAssetOverrides, string?> selector, string memberName, OwnedTexture owned,
+            Func<CardModel, Texture2D>? resolve = null,
             Func<Texture2D?>? restore = null)
         {
             Texture2D texture = null!;
             if (!owned(model, ref texture) ||
                 !ContentAssetOverridePatchHelper.TryUseTextureOverride(model, ref texture, selector, memberName))
-                state.SetTexture(nodePath, texture, restore);
+                state.SetTexture(nodePath, resolve != null ? resolve(model) : texture, restore);
         }
 
         private static bool TryMaterial<TOverrides>(CardModel model,

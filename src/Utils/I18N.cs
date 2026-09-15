@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Godot;
 using MegaCrit.Sts2.Core.Localization;
@@ -40,12 +41,14 @@ namespace STS2RitsuLib.Utils
         ///     </para>
         ///     <para xml:lang="zh-CN">此重载会让非英语语言回退到 <c>eng</c>，与游戏 <c>LocTable</c> 的回退行为一致。</para>
         /// </remarks>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public I18N(string? instanceName = null,
             string[]? fsFolders = null,
             string[]? resourceFolders = null,
             string[]? pckFolders = null,
             Assembly? resourceAssembly = null)
-            : this(instanceName, fsFolders, resourceFolders, pckFolders, resourceAssembly, null)
+            : this(instanceName, fsFolders, resourceFolders, pckFolders,
+                resourceAssembly ?? Assembly.GetCallingAssembly(), null)
         {
         }
 
@@ -56,6 +59,7 @@ namespace STS2RitsuLib.Utils
         ///     </para>
         ///     <para xml:lang="zh-CN">创建实例；<paramref name="fallbackLanguage" /> 非空白时将其用作显式回退语言。</para>
         /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public I18N(string? instanceName,
             string[]? fsFolders,
             string[]? resourceFolders,
@@ -68,7 +72,7 @@ namespace STS2RitsuLib.Utils
         }
 
         private I18N(string? instanceName, string[]? fsFolders, string[]? resourceFolders,
-            string[]? pckFolders, Assembly? resourceAssembly, string? fallbackLanguage, string? assetFolder,
+            string[]? pckFolders, Assembly resourceAssembly, string? fallbackLanguage, string? assetFolder,
             ResourcePack? resourcePack)
         {
             _assetFolder = assetFolder;
@@ -77,7 +81,7 @@ namespace STS2RitsuLib.Utils
             _resourceFolders = resourceFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
             _fsFolders = fsFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
             _pckFolders = pckFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
-            _resourceAssembly = resourceAssembly ?? Assembly.GetCallingAssembly();
+            _resourceAssembly = resourceAssembly;
             _fallbackLanguage = string.IsNullOrWhiteSpace(fallbackLanguage)
                 ? null
                 : NormalizeLanguageCode(fallbackLanguage);

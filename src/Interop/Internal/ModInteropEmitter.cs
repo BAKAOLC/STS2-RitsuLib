@@ -32,14 +32,17 @@ namespace STS2RitsuLib.Interop.Internal
             IReadOnlyDictionary<string, Assembly> loadedAssembliesByModId,
             Type t)
         {
+            var modInterop = t.GetCustomAttribute<ModInteropAttribute>();
+            var assemblyInterop = t.GetCustomAttribute<AssemblyInteropAttribute>();
+            if (modInterop == null && assemblyInterop == null)
+                return;
+
             if (t.ContainsGenericParameters)
             {
                 RitsuLibFramework.Logger.Warn($"[Interop] Open generic stub type {t.FullName} is not supported.");
                 return;
             }
 
-            var modInterop = t.GetCustomAttribute<ModInteropAttribute>();
-            var assemblyInterop = t.GetCustomAttribute<AssemblyInteropAttribute>();
             if (modInterop != null && assemblyInterop != null)
             {
                 RitsuLibFramework.Logger.Warn(
