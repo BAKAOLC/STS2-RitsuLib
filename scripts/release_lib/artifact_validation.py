@@ -26,7 +26,6 @@ def validate_nuget_viewer(package: Path) -> None:
             "lib/net9.0/STS2-RitsuLib.Ui.dll",
             "lib/net9.0/STS2-RitsuLib.Settings.dll",
             NUGET_CONTENT_ROOT + "loader/STS2-RitsuLib.dll",
-            NUGET_CONTENT_ROOT + "shared/System.IO.Hashing.dll",
         }
         if {name for name in archive.namelist() if name.endswith(".dll")} != expected_dlls:
             raise RuntimeError(f"Unexpected assembly layout in {package.name}.")

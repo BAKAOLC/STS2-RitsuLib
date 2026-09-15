@@ -13,7 +13,7 @@
             <Output TaskParameter="TargetOutputs" ItemName="RitsuLibLoaderOutput"/>
         </MSBuild>
         <ItemGroup>
-            <RitsuLibSharedBinary Include="$(TargetDir)STS2-RitsuLib.Shared.dll;$(TargetDir)STS2-RitsuLib.Ui.dll;$(TargetDir)STS2-RitsuLib.Settings.dll;$(TargetDir)System.IO.Hashing.dll"/>
+            <RitsuLibSharedBinary Include="$(TargetDir)STS2-RitsuLib.Shared.dll;$(TargetDir)STS2-RitsuLib.Ui.dll;$(TargetDir)STS2-RitsuLib.Settings.dll"/>
             <RitsuLibVariantBinary Include="$(TargetPath);$(TargetDir)STS2-RitsuLib.Runtime.dll"/>
             <RitsuLibSharedSidecar Include="$(TargetDir)STS2-RitsuLib.Shared.pdb;$(TargetDir)STS2-RitsuLib.Shared.xml;$(TargetDir)STS2-RitsuLib.Ui.pdb;$(TargetDir)STS2-RitsuLib.Ui.xml;$(TargetDir)STS2-RitsuLib.Settings.pdb;$(TargetDir)STS2-RitsuLib.Settings.xml"/>
             <RitsuLibVariantSidecar Include="$(TargetDir)STS2-RitsuLib.pdb;$(TargetDir)STS2-RitsuLib.xml;$(TargetDir)STS2-RitsuLib.Runtime.pdb;$(TargetDir)STS2-RitsuLib.Runtime.xml"/>
@@ -56,10 +56,6 @@
             </TfmSpecificPackageFile>
             <TfmSpecificPackageFile Include="$(RitsuLibDeploymentDir)STS2-RitsuLib.dll">
                 <PackagePath>contentFiles/any/any/loader/STS2-RitsuLib.dll</PackagePath>
-                <BuildAction>None</BuildAction>
-            </TfmSpecificPackageFile>
-            <TfmSpecificPackageFile Include="$(RitsuLibDeploymentDir)shared/System.IO.Hashing.dll">
-                <PackagePath>contentFiles/any/any/shared/System.IO.Hashing.dll</PackagePath>
                 <BuildAction>None</BuildAction>
             </TfmSpecificPackageFile>
             <TfmSpecificPackageFile Include="$(RitsuLibDeploymentDir)RitsuLib.References.props;$(RitsuLibDeploymentDir)ritsulib-variants.manifest;$(RitsuLibDeploymentDir)compat/$(Sts2ApiCompat)/compat-target.txt">

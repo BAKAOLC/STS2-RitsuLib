@@ -11,7 +11,7 @@ namespace STS2RitsuLib.Loader
         internal const string ManifestName = "ritsulib-variants.manifest";
 
         internal static readonly string[] SharedNames =
-            ["STS2-RitsuLib.Shared", "STS2-RitsuLib.Ui", "STS2-RitsuLib.Settings", "System.IO.Hashing"];
+            ["STS2-RitsuLib.Shared", "STS2-RitsuLib.Ui", "STS2-RitsuLib.Settings"];
 
         internal static readonly string[] VariantNames = ["STS2-RitsuLib.Runtime", "STS2-RitsuLib"];
 

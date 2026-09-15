@@ -8,7 +8,7 @@ from pathlib import Path
 
 from release_lib.repo_layout import MOD_MANIFEST_NAME, VARIANT_MANIFEST_NAME
 
-SHARED_MODULES = ("STS2-RitsuLib.Shared", "STS2-RitsuLib.Ui", "STS2-RitsuLib.Settings", "System.IO.Hashing")
+SHARED_MODULES = ("STS2-RitsuLib.Shared", "STS2-RitsuLib.Ui", "STS2-RitsuLib.Settings")
 VARIANT_MODULES = ("STS2-RitsuLib.Runtime", "STS2-RitsuLib")
 
 
