@@ -12,7 +12,7 @@
         </ReadLinesFromFile>
         <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(RitsuLibPackageCompatTarget)', '^0\.[0-9]+\.[0-9]+$'))" Text="The installed RitsuLib NuGet package has an invalid compatibility target."/>
         <ItemGroup>
-            <RitsuLibPackageSharedFiles Include="$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Shared.*;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Ui.*;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Settings.*;$(RitsuLibPackageContentRoot)shared\System.IO.Hashing.dll"/>
+            <RitsuLibPackageSharedFiles Include="$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Shared.*;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Ui.*;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Settings.*"/>
             <RitsuLibPackageVariantFiles Include="$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.dll;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.xml;$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.Runtime.*"/>
             <RitsuLibPackageVariantFiles Include="$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.pdb" Condition="Exists('$(RitsuLibPackageLibraryRoot)STS2-RitsuLib.pdb')"/>
             <RitsuLibPackageViewerFiles Include="$(RitsuLibPackageContentRoot)viewer\**\*"/>
