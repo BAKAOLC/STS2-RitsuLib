@@ -1,4 +1,5 @@
 using STS2RitsuLib.Utils;
+using STS2RitsuLib.Telemetry.Diagnostics;
 
 namespace STS2RitsuLib.Telemetry
 {
@@ -49,6 +50,7 @@ namespace STS2RitsuLib.Telemetry
 
         public static async Task FlushApplicantAsync(string applicantId, CancellationToken cancellationToken = default)
         {
+            using var diagnosticsScope = new TelemetryDiagnosticsScope();
             TelemetryApplicant applicant;
             TaskCompletionSource ownedFlush;
             while (true)

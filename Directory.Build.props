@@ -12,4 +12,6 @@
       (The props file itself only sets values when the properties are empty.)
     -->
     <Import Project="Sts2PathDiscovery.props" Condition="Exists('Sts2PathDiscovery.props')"/>
+    <Import Project="build/RitsuLib.Compatibility.props"/>
+    <Import Project="build/RitsuLib.Build.props"/>
 </Project>

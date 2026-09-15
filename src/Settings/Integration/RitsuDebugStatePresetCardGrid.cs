@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using Timer = Godot.Timer;
 
 namespace STS2RitsuLib.Settings
 {
@@ -291,8 +292,8 @@ namespace STS2RitsuLib.Settings
             private Control? _ghost;
             private Vector2 _ghostOffset;
             private int _originalIndex = -1;
-            private Control? _pendingTile;
             private Vector2? _pendingGlobalPosition;
+            private Control? _pendingTile;
             private Control? _sourceTile;
             private bool _suppressNextClick;
             private bool _wasMousePressed;
@@ -307,12 +308,14 @@ namespace STS2RitsuLib.Settings
 
             internal bool IsDragging { get; private set; }
 
+            private Vector2 MouseCanvas => _owner._flow.GetGlobalMousePosition();
+
             internal static PresetCardReorderController Attach(
                 Control dragLayer,
                 RitsuDebugStatePresetCardGrid owner)
             {
                 var controller = new PresetCardReorderController(dragLayer, owner);
-                var timer = new Godot.Timer
+                var timer = new Timer
                 {
                     Name = "PresetCardReorderDragPoll",
                     WaitTime = 0.016d,
@@ -338,8 +341,6 @@ namespace STS2RitsuLib.Settings
                 _suppressNextClick = false;
                 return true;
             }
-
-            private Vector2 MouseCanvas => _owner._flow.GetGlobalMousePosition();
 
             private void Poll()
             {
@@ -473,10 +474,8 @@ namespace STS2RitsuLib.Settings
             {
                 _dropSlotCenters.Clear();
                 foreach (var child in _owner._flow.GetChildren())
-                {
                     if (child is Control { Visible: true } tile)
                         _dropSlotCenters.Add(tile.GetGlobalRect().GetCenter());
-                }
             }
 
             private Control? FindTileAt(Vector2 globalMouse)

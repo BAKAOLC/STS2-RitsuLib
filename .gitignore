@@ -4,11 +4,12 @@
 
 .idea/
 *.sln.DotSettings.user
-artifacts/nuget/
-artifacts/github/
-artifacts/bundle-staging/
+artifacts/
 
 .vs/
+
+tools/**/bin/
+tools/**/obj/
 
 local.props
 !local.props.template

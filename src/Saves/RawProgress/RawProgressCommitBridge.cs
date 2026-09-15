@@ -13,6 +13,7 @@ using MegaCrit.Sts2.Core.Saves.Migrations;
 using MegaCrit.Sts2.Core.Saves.Validation;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
+using FileAccess = Godot.FileAccess;
 
 namespace STS2RitsuLib.Saves.RawProgress
 {
@@ -47,9 +48,6 @@ namespace STS2RitsuLib.Saves.RawProgress
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         };
 
-        [field: ThreadStatic] internal static bool IsPreparingCommitProjection { get; private set; }
-        [field: ThreadStatic] internal static bool IsSavingOrdinaryProgress { get; private set; }
-
         private readonly RawProgressBridgeFeature _features;
 
         private RawProgressCommitBridge()
@@ -80,6 +78,9 @@ namespace STS2RitsuLib.Saves.RawProgress
 
             _features = features;
         }
+
+        [field: ThreadStatic] internal static bool IsPreparingCommitProjection { get; private set; }
+        [field: ThreadStatic] internal static bool IsSavingOrdinaryProgress { get; private set; }
 
         internal static RawProgressCommitBridge Instance { get; } = new();
 
@@ -709,8 +710,8 @@ namespace STS2RitsuLib.Saves.RawProgress
                 journal.TryUpdate("local_unverified", localReadBackHash, null, null);
                 return CreateResult(
                     RawProgressCommitOutcome.LocalReplacementUnverified,
-                    localReadBackSha256: localReadBackHash,
-                    cloudStatus: batchFailure ? CloudReadBackStatus.FailureObserved : cloudStatus,
+                    localReadBackHash,
+                    batchFailure ? CloudReadBackStatus.FailureObserved : cloudStatus,
                     destinationMayHaveChanged: destinationMayHaveChanged,
                     verifiedBackupAvailable: gameBackupVerified || journal.Exists,
                     recoveryJournalRetained: journal.Exists);
@@ -729,7 +730,6 @@ namespace STS2RitsuLib.Saves.RawProgress
                 ? RawProgressLiveStateDisposition.Unverified
                 : RawProgressLiveStateDisposition.Isolated;
             if (current.IsActive)
-            {
                 try
                 {
                     saveManager.Progress = proposed.Progress;
@@ -749,7 +749,6 @@ namespace STS2RitsuLib.Saves.RawProgress
                     RitsuLibFramework.Logger.ErrorNoTrace(
                         $"[RawProgress] Failed to synchronize the live progress projection: {ex.Message}");
                 }
-            }
 
             var outcome = (
                     LiveStateDisposition: liveStateDisposition,
@@ -1825,7 +1824,7 @@ namespace STS2RitsuLib.Saves.RawProgress
                 length = 0;
                 try
                 {
-                    using var file = Godot.FileAccess.Open(path, Godot.FileAccess.ModeFlags.Read);
+                    using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
                     if (file == null)
                         return false;
 
@@ -1889,8 +1888,8 @@ namespace STS2RitsuLib.Saves.RawProgress
                     !IsValidOwnerId(data.OwnerId) ||
                     !string.Equals(ComputeOwnerStorageId(data.OwnerId), key.OwnerStorageId,
                         StringComparison.OrdinalIgnoreCase) ||
-                    expectedOwnerId != null &&
-                    !string.Equals(data.OwnerId, expectedOwnerId, StringComparison.Ordinal) ||
+                    (expectedOwnerId != null &&
+                     !string.Equals(data.OwnerId, expectedOwnerId, StringComparison.Ordinal)) ||
                     data.SchemaVersion < 1 ||
                     data.TransactionId != key.TransactionId ||
                     data.ProfileId is < 1 or > 3 ||
@@ -1901,9 +1900,9 @@ namespace STS2RitsuLib.Saves.RawProgress
                     data.OriginalRawJson.Length > MaxDocumentUtf8Bytes ||
                     !IsSha256(data.OriginalSha256) ||
                     !IsSha256(data.ProposedSha256) ||
-                    data.LocalReadBackSha256 != null && !IsSha256(data.LocalReadBackSha256) ||
-                    data.CloudReadBackSha256 != null && !IsSha256(data.CloudReadBackSha256) ||
-                    data.LiveKnownProjectionSha256 != null && !IsSha256(data.LiveKnownProjectionSha256) ||
+                    (data.LocalReadBackSha256 != null && !IsSha256(data.LocalReadBackSha256)) ||
+                    (data.CloudReadBackSha256 != null && !IsSha256(data.CloudReadBackSha256)) ||
+                    (data.LiveKnownProjectionSha256 != null && !IsSha256(data.LiveKnownProjectionSha256)) ||
                     !TryInspectExistingDocument(
                         data.OriginalRawJson,
                         out var schema,

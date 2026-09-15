@@ -12,6 +12,13 @@ namespace STS2RitsuLib.Ui.Shell
     ///         提供由模组设置界面和模态浮层共享的紧凑编辑器、列表及工具栏样式框工厂。
     ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         Returned styles are shared cached resources. Do not modify or free them; duplicate a style
+    ///         before customization. Use these Godot resources on the main thread.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">返回的样式是共享缓存资源。不得修改或释放；定制前请复制样式。请在主线程使用这些 Godot 资源。</para>
+    /// </remarks>
     public static class RitsuShellChromeStyles
     {
         /// <summary>

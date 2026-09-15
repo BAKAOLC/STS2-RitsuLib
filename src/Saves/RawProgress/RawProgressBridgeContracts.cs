@@ -356,7 +356,10 @@
         public required RawProgressReadOutcome Outcome { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the snapshot only when <see cref="Outcome" /> is <see cref="RawProgressReadOutcome.Succeeded" />.</para>
+        ///     <para xml:lang="en">
+        ///         Gets the snapshot only when <see cref="Outcome" /> is
+        ///         <see cref="RawProgressReadOutcome.Succeeded" />.
+        ///     </para>
         ///     <para xml:lang="zh-CN">仅当 <see cref="Outcome" /> 为 <see cref="RawProgressReadOutcome.Succeeded" /> 时获取快照。</para>
         /// </summary>
         public RawProgressSnapshot? Snapshot { get; init; }
@@ -391,7 +394,8 @@
         ///         an authorization boundary against code running in the same process.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         获取用于隔离重复提交抑制与恢复日志的稳定调用方标识。该值不得为空，不得包含首尾空白，且必须符合提供方声明的 UTF-8 大小上限。应使用稳定的 manifest 模组 ID。该值用于协作式命名以避免模组间误操作，并非针对同进程代码的授权边界。
+        ///         获取用于隔离重复提交抑制与恢复日志的稳定调用方标识。该值不得为空，不得包含首尾空白，且必须符合提供方声明的 UTF-8 大小上限。应使用稳定的 manifest 模组
+        ///         ID。该值用于协作式命名以避免模组间误操作，并非针对同进程代码的授权边界。
         ///     </para>
         /// </summary>
         public required string OwnerId { get; init; }
@@ -668,7 +672,10 @@
         public required bool DestinationMayHaveChanged { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets whether the original local content is available from a verified backup or retained journal.</para>
+        ///     <para xml:lang="en">
+        ///         Gets whether the original local content is available from a verified backup or retained
+        ///         journal.
+        ///     </para>
         ///     <para xml:lang="zh-CN">获取原始本地内容是否可从已验证备份或保留日志中恢复。</para>
         /// </summary>
         public required bool VerifiedBackupAvailable { get; init; }

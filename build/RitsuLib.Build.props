@@ -1,0 +1,27 @@
+﻿<Project>
+    <PropertyGroup>
+        <RitsuLibRepositoryRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</RitsuLibRepositoryRoot>
+        <RitsuLibArtifactsRoot>$(RitsuLibRepositoryRoot)artifacts/</RitsuLibArtifactsRoot>
+        <Configurations>Debug;Release</Configurations>
+        <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+        <RitsuLibIsFacade Condition="'$(MSBuildProjectName)' == 'STS2-RitsuLib'">true</RitsuLibIsFacade>
+        <RitsuLibIsRuntime Condition="'$(MSBuildProjectName)' == 'STS2-RitsuLib.Runtime'">true</RitsuLibIsRuntime>
+        <RitsuLibIsSharedModule Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^STS2-RitsuLib\.(Shared|Ui|Settings)$'))">true</RitsuLibIsSharedModule>
+        <RitsuLibIsLoader Condition="'$(MSBuildProjectName)' == 'STS2-RitsuLib-Loader'">true</RitsuLibIsLoader>
+        <RitsuLibUsesGodot Condition="'$(RitsuLibIsFacade)' == 'true' or '$(RitsuLibIsRuntime)' == 'true' or '$(RitsuLibIsSharedModule)' == 'true'">true</RitsuLibUsesGodot>
+        <RitsuLibBuildTarget>$(Sts2ApiCompat)</RitsuLibBuildTarget>
+        <RitsuLibBuildTarget Condition="'$(RitsuLibIsSharedModule)' == 'true' or '$(RitsuLibIsLoader)' == 'true'">$(RitsuLibSharedApiCompat)</RitsuLibBuildTarget>
+        <BaseIntermediateOutputPath>$(RitsuLibArtifactsRoot)obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+        <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)/$(RitsuLibBuildTarget)/</IntermediateOutputPath>
+        <BaseOutputPath>$(RitsuLibArtifactsRoot)tools/</BaseOutputPath>
+        <OutputPath>$(BaseOutputPath)$(Configuration)/$(MSBuildProjectName)/</OutputPath>
+        <OutputPath Condition="'$(RitsuLibIsSharedModule)' == 'true' or '$(RitsuLibIsLoader)' == 'true'">$(RitsuLibArtifactsRoot)modules/$(Configuration)/shared/$(MSBuildProjectName)/</OutputPath>
+        <OutputPath Condition="'$(RitsuLibIsRuntime)' == 'true'">$(RitsuLibArtifactsRoot)modules/$(Configuration)/compat/$(Sts2ApiCompat)/</OutputPath>
+        <OutputPath Condition="'$(RitsuLibIsFacade)' == 'true'">$(RitsuLibArtifactsRoot)bin/$(Configuration)/$(Sts2ApiCompat)/</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <DefaultItemExcludes>$(DefaultItemExcludes);$(RitsuLibArtifactsRoot)**;**/.godot/**;**/bin/**;**/obj/**</DefaultItemExcludes>
+        <GodotProjectDir Condition="'$(RitsuLibUsesGodot)' == 'true'">$(RitsuLibRepositoryRoot)</GodotProjectDir>
+        <GodotProjectDirBase64 Condition="'$(RitsuLibUsesGodot)' == 'true'">$([MSBuild]::ConvertToBase64('$(GodotProjectDir)'))</GodotProjectDirBase64>
+    </PropertyGroup>
+</Project>

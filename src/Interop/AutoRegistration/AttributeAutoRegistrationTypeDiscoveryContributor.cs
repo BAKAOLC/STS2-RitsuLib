@@ -1609,11 +1609,11 @@ namespace STS2RitsuLib.Interop.AutoRegistration
             if (typeOverride != null)
                 return typeOverride.ModId;
 
-            if (Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(type.Assembly, out var loadedOwnerModId))
-                return loadedOwnerModId;
-
             if (ModTypeDiscoveryHub.TryResolveRegisteredModId(type.Assembly, out var registeredOwnerModId))
                 return registeredOwnerModId;
+
+            if (Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(type.Assembly, out var loadedOwnerModId))
+                return loadedOwnerModId;
 
             foreach (var pair in modAssembliesByManifestId)
                 if (pair.Value == type.Assembly)

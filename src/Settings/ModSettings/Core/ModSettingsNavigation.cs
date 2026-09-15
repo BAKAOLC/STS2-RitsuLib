@@ -1,5 +1,4 @@
 using Godot;
-using STS2RitsuLib.Ui.Overlay;
 
 namespace STS2RitsuLib.Settings
 {
@@ -351,9 +350,9 @@ namespace STS2RitsuLib.Settings
 
             try
             {
-                RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
+                Sts2ModManagerCompat.EnsureFrameworkPagesRegistered();
                 ModSettingsMirrorRegistrarBootstrap.TryRegisterMirroredPages();
-                RitsuLibModSettingsBootstrap.RefreshDynamicPages();
+                Sts2ModManagerCompat.RefreshDynamicPages();
             }
             catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
@@ -476,7 +475,7 @@ namespace STS2RitsuLib.Settings
 
         private static bool TryOpenHost(out RitsuModSettingsSubmenu submenu, out string error)
         {
-            return RitsuOverlayHostService.TryOpenSettings(out submenu, out error);
+            return Sts2ModManagerCompat.TryOpenSettings(out submenu, out error);
         }
 
         private static bool IsPageCurrentlyVisible(ModSettingsPage page)

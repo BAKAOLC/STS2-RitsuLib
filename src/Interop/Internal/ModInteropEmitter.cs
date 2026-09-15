@@ -32,6 +32,12 @@ namespace STS2RitsuLib.Interop.Internal
             IReadOnlyDictionary<string, Assembly> loadedAssembliesByModId,
             Type t)
         {
+            if (t.ContainsGenericParameters)
+            {
+                RitsuLibFramework.Logger.Warn($"[Interop] Open generic stub type {t.FullName} is not supported.");
+                return;
+            }
+
             var modInterop = t.GetCustomAttribute<ModInteropAttribute>();
             var assemblyInterop = t.GetCustomAttribute<AssemblyInteropAttribute>();
             if (modInterop != null && assemblyInterop != null)
@@ -69,23 +75,34 @@ namespace STS2RitsuLib.Interop.Internal
             Harmony harmony,
             TargetResolutionContext targetContext,
             string? contextTargetType,
-            bool requireStatic)
+            bool requireStatic,
+            Type? resolvedContextType = null)
         {
+            var propertyAccessors = members.OfType<PropertyInfo>()
+                .SelectMany(property => property.GetAccessors(true)).ToHashSet();
             foreach (var member in members)
+            {
+                if (member.IsDefined(typeof(InteropIgnoreAttribute), false))
+                    continue;
                 switch (member)
                 {
                     case PropertyInfo property:
+                        if (property.GetAccessors(true).Any(accessor =>
+                                accessor.IsDefined(typeof(InteropIgnoreAttribute), false)))
+                            continue;
                         if (requireStatic && !IsStaticProperty(property))
                             continue;
-                        if (!GenInteropPropertyOrField(harmony, targetContext, contextTargetType, property))
+                        if (!GenInteropPropertyOrField(harmony, targetContext, contextTargetType, property,
+                                resolvedContextType))
                             return false;
                         break;
                     case MethodInfo method:
                         if (requireStatic && !method.IsStatic)
                             continue;
-                        if (method.IsConstructor || method.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
+                        if (method.IsConstructor || propertyAccessors.Contains(method) ||
+                            method.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
                             continue;
-                        if (!GenInteropMethod(harmony, targetContext, contextTargetType, method))
+                        if (!GenInteropMethod(harmony, targetContext, contextTargetType, method, resolvedContextType))
                             return false;
                         break;
                     case TypeInfo nested:
@@ -95,6 +112,7 @@ namespace STS2RitsuLib.Interop.Internal
                             return false;
                         break;
                 }
+            }
 
             return true;
         }
@@ -115,7 +133,10 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = ResolveTargetType(targetName, targetContext);
+                if (type.ContainsGenericParameters)
+                    throw new InvalidOperationException($"Open generic wrapper {type.FullName} is not supported.");
+                var targetType = SpecializeTargetType(ResolveTargetType(targetName, targetContext),
+                    targetAttr?.GenericTypes);
                 if (targetType.IsValueType)
                     throw new InvalidOperationException(
                         $"InteropClassWrapper cannot wrap value type {targetType.FullName}.");
@@ -143,7 +164,8 @@ namespace STS2RitsuLib.Interop.Internal
                 }
 
                 RitsuLibFramework.Logger.Info($"[ModInterop] Generated interop type {type.FullName}");
-                return GenInteropMembers(type.GetMembers(ValidMemberFlags), harmony, targetContext, targetName, false);
+                return GenInteropMembers(type.GetMembers(ValidMemberFlags), harmony, targetContext, targetName, false,
+                    targetType);
             }
             catch (Exception e) when (RitsuLibExceptionPolicy.IsRecoverable(e))
             {
@@ -156,7 +178,8 @@ namespace STS2RitsuLib.Interop.Internal
             Harmony harmony,
             TargetResolutionContext targetContext,
             string? contextTargetType,
-            MethodInfo method)
+            MethodInfo method,
+            Type? resolvedContextType)
         {
             var targetAttr = method.GetCustomAttribute<InteropTargetAttribute>();
             var typeName = targetAttr?.Type ?? contextTargetType
@@ -166,7 +189,12 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = ResolveTargetType(typeName, targetContext);
+                if (method.ContainsGenericParameters)
+                    throw new InvalidOperationException($"Open generic stub {FormatMethod(method)} is not supported.");
+                var targetType = targetAttr?.Type == null && resolvedContextType != null
+                    ? resolvedContextType
+                    : SpecializeTargetType(ResolveTargetType(typeName, targetContext), null);
+                var genericTypes = targetAttr?.GenericTypes;
 
                 var methodParamInfos = method.GetParameters();
                 var methodParams = methodParamInfos.Select(p => p.ParameterType).ToArray();
@@ -175,11 +203,14 @@ namespace STS2RitsuLib.Interop.Internal
                 var candidates = new List<MethodInfo>();
                 // Keep AccessTools' concrete enumeration behavior and the ordered candidate filters explicit.
                 // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
-                foreach (var possibleTarget in AccessTools.GetDeclaredMethods(targetType))
+                foreach (var candidate in AccessTools.GetDeclaredMethods(targetType))
                 {
                     // Ordered guard clauses make the candidate rejection reasons explicit.
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
-                    if (possibleTarget.Name != methodName || possibleTarget.ContainsGenericParameters)
+                    if (candidate.Name != methodName)
+                        continue;
+                    var possibleTarget = SpecializeTargetMethod(candidate, genericTypes);
+                    if (possibleTarget == null)
                         continue;
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
                     if (possibleTarget.IsStatic && !method.IsStatic)
@@ -250,7 +281,8 @@ namespace STS2RitsuLib.Interop.Internal
             Harmony harmony,
             TargetResolutionContext targetContext,
             string? contextTargetType,
-            PropertyInfo property)
+            PropertyInfo property,
+            Type? resolvedContextType)
         {
             var targetAttr = property.GetCustomAttribute<InteropTargetAttribute>();
             var typeName = targetAttr?.Type ?? contextTargetType
@@ -259,7 +291,9 @@ namespace STS2RitsuLib.Interop.Internal
 
             try
             {
-                var targetType = ResolveTargetType(typeName, targetContext);
+                var targetType = targetAttr?.Type == null && resolvedContextType != null
+                    ? SpecializeTargetType(resolvedContextType, targetAttr?.GenericTypes)
+                    : SpecializeTargetType(ResolveTargetType(typeName, targetContext), targetAttr?.GenericTypes);
 
                 var targetProperty = AccessTools.DeclaredProperty(targetType, name);
                 if (targetProperty is not null && targetProperty.PropertyType == property.PropertyType)
@@ -378,6 +412,36 @@ namespace STS2RitsuLib.Interop.Internal
             {
                 RitsuLibFramework.Logger.Warn($"[ModInterop] {e}");
                 return false;
+            }
+        }
+
+        private static Type SpecializeTargetType(Type target, Type[]? arguments)
+        {
+            if (arguments is { Length: > 0 })
+            {
+                if (!target.IsGenericTypeDefinition || target.GetGenericArguments().Length != arguments.Length)
+                    throw new ArgumentException($"Generic argument count does not match target type {target}.");
+                target = target.MakeGenericType(arguments);
+            }
+
+            if (target.ContainsGenericParameters)
+                throw new ArgumentException($"Target type {target} requires concrete generic arguments.");
+            return target;
+        }
+
+        private static MethodInfo? SpecializeTargetMethod(MethodInfo candidate, Type[]? arguments)
+        {
+            if (arguments is not { Length: > 0 })
+                return candidate.ContainsGenericParameters ? null : candidate;
+            if (!candidate.IsGenericMethodDefinition || candidate.GetGenericArguments().Length != arguments.Length)
+                return null;
+            try
+            {
+                return candidate.MakeGenericMethod(arguments);
+            }
+            catch (ArgumentException)
+            {
+                return null;
             }
         }
 

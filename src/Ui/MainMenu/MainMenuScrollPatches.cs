@@ -13,11 +13,16 @@ namespace STS2RitsuLib.Ui.MainMenu
         public static string Description => "Keep main-menu options inside a bounded scrolling area";
         public static bool IsCritical => false;
 
-        public static ModPatchTarget[] GetTargets() =>
-            [new(typeof(NMainMenu), nameof(NMainMenu.Create), [typeof(bool)])];
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NMainMenu), nameof(NMainMenu.Create), [typeof(bool)])];
+        }
 
         [HarmonyPriority(Priority.First)]
-        public static void Postfix(NMainMenu __result) => NMainMenuScroller.Install(__result);
+        public static void Postfix(NMainMenu __result)
+        {
+            NMainMenuScroller.Install(__result);
+        }
     }
 
     internal sealed class MainMenuScrollReadyPatch : IPatchMethod
@@ -26,15 +31,24 @@ namespace STS2RitsuLib.Ui.MainMenu
         public static string Description => "Initialize main-menu scrolling after button injection";
         public static bool IsCritical => false;
 
-        public static ModPatchTarget[] GetTargets() => [new(typeof(NMainMenu), nameof(NMainMenu._Ready))];
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NMainMenu), nameof(NMainMenu._Ready))];
+        }
 
         [HarmonyBefore(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.First)]
-        public static void Prefix(NMainMenu __instance) => NMainMenuScroller.Install(__instance);
+        public static void Prefix(NMainMenu __instance)
+        {
+            NMainMenuScroller.Install(__instance);
+        }
 
         [HarmonyAfter(Const.BaseLibHarmonyId)]
         [HarmonyPriority(Priority.Last)]
-        public static void Postfix(NMainMenu __instance) => NMainMenuScroller.Find(__instance)?.Initialize();
+        public static void Postfix(NMainMenu __instance)
+        {
+            NMainMenuScroller.Find(__instance)?.Initialize();
+        }
     }
 
     internal sealed class MainMenuScrollFocusConnectionsPatch : IPatchMethod
@@ -46,9 +60,15 @@ namespace STS2RitsuLib.Ui.MainMenu
 
         public static bool IsCritical => false;
 
-        public static ModPatchTarget[] GetTargets() => [new(typeof(NMainMenu), "ConnectMainMenuTextButtonFocusLogic")];
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NMainMenu), "ConnectMainMenuTextButtonFocusLogic")];
+        }
 
-        public static bool Prefix(NMainMenu __instance) => NMainMenuScroller.Find(__instance) == null;
+        public static bool Prefix(NMainMenu __instance)
+        {
+            return NMainMenuScroller.Find(__instance) == null;
+        }
     }
 
     internal sealed class MainMenuScrollDefaultFocusPatch : IPatchMethod
@@ -57,7 +77,10 @@ namespace STS2RitsuLib.Ui.MainMenu
         public static string Description => "Restore focus to valid original or mod-added menu entries";
         public static bool IsCritical => false;
 
-        public static ModPatchTarget[] GetTargets() => [new(typeof(NMainMenu), "get_DefaultFocusedControl")];
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(NMainMenu), "get_DefaultFocusedControl")];
+        }
 
         public static bool Prefix(NMainMenu __instance, ref Control? __result)
         {
@@ -74,10 +97,13 @@ namespace STS2RitsuLib.Ui.MainMenu
         public static string Description => "Validate menu selection gestures and refresh directional neighbors";
         public static bool IsCritical => false;
 
-        public static ModPatchTarget[] GetTargets() =>
-        [
-            new(typeof(NClickableControl), nameof(NClickableControl._GuiInput), [typeof(InputEvent)]),
-        ];
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(NClickableControl), nameof(NClickableControl._GuiInput), [typeof(InputEvent)]),
+            ];
+        }
 
         public static bool Prefix(NClickableControl __instance, InputEvent inputEvent)
         {
@@ -92,11 +118,14 @@ namespace STS2RitsuLib.Ui.MainMenu
         public static string Description => "Keep continue-run details outside menu clipping and within the screen";
         public static bool IsCritical => false;
 
-        public static ModPatchTarget[] GetTargets() =>
-        [
-            new(typeof(NContinueRunInfo), nameof(NContinueRunInfo.AnimShow)),
-            new(typeof(NContinueRunInfo), nameof(NContinueRunInfo.AnimHide)),
-        ];
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(NContinueRunInfo), nameof(NContinueRunInfo.AnimShow)),
+                new(typeof(NContinueRunInfo), nameof(NContinueRunInfo.AnimHide)),
+            ];
+        }
 
         public static bool Prefix(NContinueRunInfo __instance, MethodBase __originalMethod)
         {

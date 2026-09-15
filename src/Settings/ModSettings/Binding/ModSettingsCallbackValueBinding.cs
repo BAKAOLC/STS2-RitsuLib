@@ -5,12 +5,13 @@ namespace STS2RitsuLib.Settings
     /// <summary>
     ///     <para xml:lang="en">
     ///         Binds a mod setting to custom read, write, and save callbacks instead of
-    ///         <see cref="RitsuLibFramework.GetDataStore" />, for example when using a BaseLib JSON configuration or a
+    ///         <c>RitsuLibFramework.GetDataStore(modId)</c>, for example when using a BaseLib
+    ///         JSON configuration or a
     ///         third-party store.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         通过自定义读取、写入和保存回调绑定模组设置，而不使用
-    ///         <see cref="RitsuLibFramework.GetDataStore" />；例如可用于 BaseLib JSON 配置或第三方存储。
+    ///         <c>RitsuLibFramework.GetDataStore(modId)</c>；例如可用于 BaseLib JSON 配置或第三方存储。
     ///     </para>
     /// </summary>
     /// <typeparam name="T">

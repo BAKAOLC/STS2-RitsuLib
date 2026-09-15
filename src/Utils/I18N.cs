@@ -9,14 +9,16 @@ namespace STS2RitsuLib.Utils
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Loads merged JSON translation dictionaries from the file system, embedded resources, and PCK
+    ///         Loads merged JSON translation dictionaries from resource packs, the file system, embedded resources, and PCK
     ///         paths, reacting to game locale changes when possible.
     ///     </para>
-    ///     <para xml:lang="zh-CN">从文件系统、嵌入资源和 PCK 路径加载并合并 JSON 翻译字典，并在可行时响应游戏语言切换。</para>
+    ///     <para xml:lang="zh-CN">从资源包、文件系统、嵌入资源和 PCK 路径加载并合并 JSON 翻译字典，并在可行时响应游戏语言切换。</para>
     /// </summary>
     public class I18N : IDisposable, IEnumerable<KeyValuePair<string, string>>
     {
         private readonly string? _fallbackLanguage;
+        private readonly string? _assetFolder;
+        private readonly ResourcePack? _resourcePack;
         private readonly string[] _fsFolders;
         private readonly string _instanceName;
         private readonly string[] _pckFolders;
@@ -26,10 +28,6 @@ namespace STS2RitsuLib.Utils
         private bool _disposed;
         private LoadedTranslations _loaded = LoadedTranslations.Empty;
         private bool _subscribed;
-
-        internal bool IsDisposed => Volatile.Read(ref _disposed);
-
-        internal event Action<I18N>? Disposed;
 
         /// <summary>
         ///     <para xml:lang="en">Creates an instance, optionally wiring locale change subscription when sources are configured.</para>
@@ -64,7 +62,17 @@ namespace STS2RitsuLib.Utils
             string[]? pckFolders,
             Assembly? resourceAssembly,
             string? fallbackLanguage)
+            : this(instanceName, fsFolders, resourceFolders, pckFolders,
+                resourceAssembly ?? Assembly.GetCallingAssembly(), fallbackLanguage, null, null)
         {
+        }
+
+        private I18N(string? instanceName, string[]? fsFolders, string[]? resourceFolders,
+            string[]? pckFolders, Assembly? resourceAssembly, string? fallbackLanguage, string? assetFolder,
+            ResourcePack? resourcePack)
+        {
+            _assetFolder = assetFolder;
+            _resourcePack = resourcePack;
             _instanceName = instanceName ?? "I18N";
             _resourceFolders = resourceFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
             _fsFolders = fsFolders?.Where(f => !string.IsNullOrWhiteSpace(f)).ToArray() ?? [];
@@ -74,10 +82,64 @@ namespace STS2RitsuLib.Utils
                 ? null
                 : NormalizeLanguageCode(fallbackLanguage);
 
-            if (_resourceFolders.Length == 0 && _fsFolders.Length == 0 && _pckFolders.Length == 0)
+            if (_resourceFolders.Length == 0 && _fsFolders.Length == 0 && _pckFolders.Length == 0 &&
+                _assetFolder == null)
                 RitsuLibFramework.Logger.Warn($"[{_instanceName}] Initialized with no translation sources");
             else
                 Initialize();
+        }
+
+        internal bool IsDisposed => Volatile.Read(ref _disposed);
+
+        internal static I18N CreateForAssets(string instanceName, string folder)
+        {
+            return FromResourcePack(RitsuAssetStore.Pack, folder, instanceName);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Creates localization backed by language-code JSON files in a resource pack, with normal locale
+        ///         subscription and fallback behavior. Translation read failures are logged and use the usual fallback.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         从资源包内以语言代码命名的 JSON 文件创建本地化实例，使用常规语言订阅与回退行为。
+        ///         翻译读取失败时记录错误并按常规逻辑回退。
+        ///     </para>
+        /// </summary>
+        /// <param name="resourcePack">
+        ///     <para xml:lang="en">Caller-owned pack that must outlive this I18N instance; I18N never disposes it.</para>
+        ///     <para xml:lang="zh-CN">由调用方持有的资源包，其生命周期必须覆盖此 I18N 实例；I18N 不会释放它。</para>
+        /// </param>
+        /// <param name="folder">
+        ///     <para xml:lang="en">Relative directory containing files such as eng.json; empty selects the pack root.</para>
+        ///     <para xml:lang="zh-CN">包含 eng.json 等文件的相对目录；空字符串表示资源包根目录。</para>
+        /// </param>
+        /// <param name="instanceName">
+        ///     <para xml:lang="en">Diagnostic name; null uses I18N.</para>
+        ///     <para xml:lang="zh-CN">日志中的实例名称；null 使用 I18N。</para>
+        /// </param>
+        /// <param name="fallbackLanguage">
+        ///     <para xml:lang="en">Optional fallback language; blank uses the normal English fallback.</para>
+        ///     <para xml:lang="zh-CN">可选回退语言；空白时使用常规英语回退。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A new caller-owned localization instance; cached translations refresh on locale change or ForceReload.</para>
+        ///     <para xml:lang="zh-CN">由调用方持有的新本地化实例；缓存翻译在语言变更或 ForceReload 时刷新。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The resource pack or folder is null.</para>
+        ///     <para xml:lang="zh-CN">资源包或目录为 null。</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">The folder is not a valid resource-relative path.</para>
+        ///     <para xml:lang="zh-CN">目录不是有效的资源相对路径。</para>
+        /// </exception>
+        public static I18N FromResourcePack(ResourcePack resourcePack, string folder = "", string? instanceName = null,
+            string? fallbackLanguage = null)
+        {
+            ArgumentNullException.ThrowIfNull(resourcePack);
+            folder = ResourcePack.NormalizePath(folder, true);
+            return new(instanceName, null, null, null, typeof(I18N).Assembly, fallbackLanguage, folder, resourcePack);
         }
 
         /// <summary>
@@ -120,6 +182,8 @@ namespace STS2RitsuLib.Utils
         {
             return GetEnumerator();
         }
+
+        internal event Action<I18N>? Disposed;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -236,6 +300,11 @@ namespace STS2RitsuLib.Utils
 
             var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+            if (_assetFolder != null)
+                foreach (var path in _resourcePack!.EnumerateFiles(_assetFolder))
+                    if (path.EndsWith(".json", StringComparison.Ordinal))
+                        set.Add(NormalizeLanguageCode(Path.GetFileNameWithoutExtension(path)));
+
             foreach (var folder in _fsFolders)
             foreach (var lang in EnumerateJsonLanguagesInFolder(folder))
                 set.Add(lang);
@@ -285,12 +354,10 @@ namespace STS2RitsuLib.Utils
                 StringComparer.OrdinalIgnoreCase);
 
             foreach (var (key, value) in loaded.Translations)
-            {
                 if (loaded.LocalKeys.Contains(key))
                     local.Add(key, value);
                 else
                     fallback.Add(key, value);
-            }
 
             return (local, fallback);
         }
@@ -398,6 +465,17 @@ namespace STS2RitsuLib.Utils
             {
                 if (!step.IsPrimary)
                     fallbackLanguage = step.Language;
+
+                if (_assetFolder != null)
+                {
+                    var dictionary = TryLoadAssetTranslations(_assetFolder, step.Language);
+                    if (dictionary is { Count: > 0 })
+                    {
+                        MergeTranslations(dictionary, step.IsPrimary);
+                        sourceCount++;
+                        CountSource(step.IsPrimary);
+                    }
+                }
 
                 foreach (var folder in _fsFolders)
                 {
@@ -586,6 +664,21 @@ namespace STS2RitsuLib.Utils
             }
         }
 
+
+        private Dictionary<string, string>? TryLoadAssetTranslations(string folder, string language)
+        {
+            var path = folder.Length == 0 ? $"{language}.json" : $"{folder}/{language}.json";
+            try
+            {
+                return JsonSerializer.Deserialize<Dictionary<string, string>>(_resourcePack!.ReadAllText(path));
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace(
+                    $"[{_instanceName}] Could not load translation asset '{path}': {ex.Message}");
+                return null;
+            }
+        }
 
         private Dictionary<string, string>? TryLoadFromPck(string path)
         {

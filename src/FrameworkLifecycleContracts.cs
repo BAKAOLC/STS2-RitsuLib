@@ -3,9 +3,14 @@ namespace STS2RitsuLib
     /// <summary>
     ///     <para xml:lang="en">
     ///         Defines the base type for framework lifecycle notifications published through
-    ///         <see cref="RitsuLibFramework.SubscribeLifecycle" />.
+    ///         <c>RitsuLibFramework.SubscribeLifecycle</c>
+    ///         .
     ///     </para>
-    ///     <para xml:lang="zh-CN">定义通过 <see cref="RitsuLibFramework.SubscribeLifecycle" /> 发布的框架生命周期通知的基类型。</para>
+    ///     <para xml:lang="zh-CN">
+    ///         定义通过
+    ///         <c>RitsuLibFramework.SubscribeLifecycle</c>
+    ///         发布的框架生命周期通知的基类型。
+    ///     </para>
     /// </summary>
     public interface IFrameworkLifecycleEvent
     {
@@ -101,9 +106,14 @@ namespace STS2RitsuLib
     /// <summary>
     ///     <para xml:lang="en">
     ///         Receives strongly typed lifecycle events from
-    ///         <see cref="RitsuLibFramework.SubscribeLifecycle" />.
+    ///         <c>RitsuLibFramework.SubscribeLifecycle</c>
+    ///         .
     ///     </para>
-    ///     <para xml:lang="zh-CN">接收来自 <see cref="RitsuLibFramework.SubscribeLifecycle" /> 的强类型生命周期事件。</para>
+    ///     <para xml:lang="zh-CN">
+    ///         接收来自
+    ///         <c>RitsuLibFramework.SubscribeLifecycle</c>
+    ///         的强类型生命周期事件。
+    ///     </para>
     /// </summary>
     public interface ILifecycleObserver
     {

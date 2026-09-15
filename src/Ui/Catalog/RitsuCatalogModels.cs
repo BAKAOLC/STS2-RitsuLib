@@ -157,17 +157,6 @@ namespace STS2RitsuLib.Ui.Catalog
     /// </summary>
     public sealed class RitsuCatalogItem
     {
-        private RitsuSearchPreparedText? _preparedSearchText;
-        private RitsuCatalogSearchDocument? _defaultSearchDocument;
-
-        internal RitsuCatalogSearchDocument? SearchDocument { get; init; }
-
-        internal bool Matches(string[] terms, RitsuCatalogSearchFields fields, RitsuSearchOptions options)
-        {
-            var document = SearchDocument ?? (_defaultSearchDocument ??= new());
-            return document.Matches(this, terms, fields, options);
-        }
-
         /// <summary>
         ///     <para xml:lang="en">The maximum supported length of an item ID.</para>
         ///     <para xml:lang="zh-CN">目录项 ID 支持的最大长度。</para>
@@ -179,6 +168,9 @@ namespace STS2RitsuLib.Ui.Catalog
         ///     <para xml:lang="zh-CN">目录项显示文本支持的最大长度。</para>
         /// </summary>
         public const int MaximumTextLength = 2048;
+
+        private RitsuCatalogSearchDocument? _defaultSearchDocument;
+        private RitsuSearchPreparedText? _preparedSearchText;
 
         /// <summary>
         ///     <para xml:lang="en">Creates an immutable catalog item.</para>
@@ -299,6 +291,8 @@ namespace STS2RitsuLib.Ui.Catalog
             IconFactory = iconFactory;
         }
 
+        internal RitsuCatalogSearchDocument? SearchDocument { get; init; }
+
         /// <summary>
         ///     <para xml:lang="en">Gets the stable item ID.</para>
         ///     <para xml:lang="zh-CN">获取稳定的目录项 ID。</para>
@@ -363,6 +357,12 @@ namespace STS2RitsuLib.Ui.Catalog
         ///     <para xml:lang="zh-CN">获取直接显示在目录项上的可选显式图标操作。</para>
         /// </summary>
         public RitsuCatalogItemAction? QuickAction { get; }
+
+        internal bool Matches(string[] terms, RitsuCatalogSearchFields fields, RitsuSearchOptions options)
+        {
+            var document = SearchDocument ?? (_defaultSearchDocument ??= new());
+            return document.Matches(this, terms, fields, options);
+        }
 
         internal bool Matches(string[] terms)
         {

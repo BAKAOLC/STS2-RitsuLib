@@ -1,6 +1,4 @@
-﻿using STS2RitsuLib.Settings;
-
-namespace STS2RitsuLib.Search.Pinyin
+﻿namespace STS2RitsuLib.Search.Pinyin
 {
     internal sealed class PinyinSearchExpansionProvider : IRitsuSearchExpansionProvider
     {
@@ -11,7 +9,7 @@ namespace STS2RitsuLib.Search.Pinyin
         public string Id => ProviderId;
 
         public string DisplayName =>
-            ModSettingsLocalization.Get("ritsulib.searchProviders.pinyin.name", "Mandarin pinyin");
+            RitsuModuleLocalization.Get("ritsulib.searchProviders.pinyin.name", "Mandarin pinyin");
 
         public bool EnabledByDefault => false;
 
@@ -31,7 +29,6 @@ namespace STS2RitsuLib.Search.Pinyin
             var combinedRuns = new List<string[]>();
             var runCount = 0;
             foreach (var rune in text.EnumerateRunes())
-            {
                 if (data.TryGetReadings(rune, out var readings))
                 {
                     run.Add(readings);
@@ -51,7 +48,6 @@ namespace STS2RitsuLib.Search.Pinyin
                         runCount++;
                     FlushRun(run, expansions, seen);
                 }
-            }
 
             if (run.Count > 0)
                 runCount++;

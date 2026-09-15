@@ -4,7 +4,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace STS2RitsuLib.Compat
 {
-    internal static class Sts2InputCompat
+    internal static class Sts2InputRuntime
     {
         public static StringName ConfirmAction
         {

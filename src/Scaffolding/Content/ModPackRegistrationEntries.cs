@@ -149,14 +149,12 @@ namespace STS2RitsuLib.Scaffolding.Content
 
             var snapshot = types.ToArray();
             foreach (var type in snapshot)
-            {
                 if (type == null || type.IsAbstract || type.IsInterface || type.ContainsGenericParameters ||
                     !typeof(TModel).IsAssignableFrom(type))
                     throw new ArgumentException(
                         $"Type '{type?.FullName ?? "<null>"}' must be a closed concrete " +
                         $"{typeof(TModel).Name} subtype.",
                         paramName);
-            }
 
             return Array.AsReadOnly(snapshot);
         }

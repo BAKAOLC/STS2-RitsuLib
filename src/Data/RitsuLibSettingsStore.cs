@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using GodotColor = Godot.Color;
 using STS2RitsuLib.Data.Migrations;
 using STS2RitsuLib.Data.Models;
 using STS2RitsuLib.Diagnostics.DebugTools;
@@ -9,6 +8,7 @@ using STS2RitsuLib.Search;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Ui.Toast;
 using STS2RitsuLib.Utils.Persistence;
+using GodotColor = Godot.Color;
 
 namespace STS2RitsuLib.Data
 {
@@ -348,7 +348,6 @@ namespace STS2RitsuLib.Data
 
             return new(
                 s.DebugLogViewerEnabled,
-                s.DebugLogViewerMirrorGameLogs,
                 s.DebugLogViewerAutoOpen,
                 s.DebugLogViewerLanAccessEnabled,
                 port,

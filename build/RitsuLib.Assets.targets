@@ -1,0 +1,11 @@
+﻿<Project>
+    <PropertyGroup>
+        <RitsuLibAssetSource>$(MSBuildProjectDirectory)/assets/</RitsuLibAssetSource>
+        <RitsuLibAssetOutput>$(RitsuLibArtifactsRoot)assets/$(Configuration)/</RitsuLibAssetOutput>
+        <RitsuLibAssetArchive>$(RitsuLibAssetOutput)assets.zip</RitsuLibAssetArchive>
+    </PropertyGroup>
+    <Target Name="PrepareRitsuLibAssets">
+        <MakeDir Directories="$(RitsuLibAssetOutput)"/>
+        <ZipDirectory SourceDirectory="$(RitsuLibAssetSource)" DestinationFile="$(RitsuLibAssetArchive)" Overwrite="true"/>
+    </Target>
+</Project>

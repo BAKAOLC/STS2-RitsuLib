@@ -342,46 +342,6 @@ namespace STS2RitsuLib.Content
                 $"[Content] Registered act enter weighted pool candidate: slot {slotIndex} -> {typeof(TAct).Name}");
         }
 
-        /// <summary>
-        ///     <para xml:lang="en">
-        ///         Retained for compatibility. The existing act always participates with weight 1.
-        ///         The supplied callback is validated for null, but is neither stored nor invoked.
-        ///         This call does not declare a pool or change its candidates.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">
-        ///         为兼容旧调用而保留。已有章节始终以权重 1 参与抽选。
-        ///         传入的回调仅检查非空，不保存也不执行；此调用不声明池，也不改变候选。
-        ///     </para>
-        /// </summary>
-        /// <param name="slotIndex">
-        ///     <para xml:lang="en">The non-negative, zero-based act slot.</para>
-        ///     <para xml:lang="zh-CN">非负、从零开始的章节槽位。</para>
-        /// </param>
-        /// <param name="weight">
-        ///     <para xml:lang="en">An unused, non-null legacy weight provider.</para>
-        ///     <para xml:lang="zh-CN">不再使用的非空旧式权重提供器。</para>
-        /// </param>
-        /// <exception cref="ArgumentOutOfRangeException">
-        ///     <para xml:lang="en">The slot is negative.</para>
-        ///     <para xml:lang="zh-CN">槽位为负数。</para>
-        /// </exception>
-        /// <exception cref="ArgumentNullException">
-        ///     <para xml:lang="en">The weight provider is null.</para>
-        ///     <para xml:lang="zh-CN">权重提供器为空。</para>
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        ///     <para xml:lang="en">Content registration is frozen.</para>
-        ///     <para xml:lang="zh-CN">内容注册已冻结。</para>
-        /// </exception>
-        [Obsolete("The existing act has fixed weight 1. Remove this call and configure only candidate weights.")]
-        public void RegisterActEnterWeightedPoolBaseline(int slotIndex,
-            Func<ActEnterResolveContext, double> weight)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegative(slotIndex);
-            ArgumentNullException.ThrowIfNull(weight);
-            EnsureMutable($"register act enter weighted pool baseline at slot {slotIndex}");
-        }
-
         internal static void ResolveActEnterForEnterAct(RunManager runManager, RunState runState, int enteringActIndex)
         {
             if (!HasAnyActEnterRegistration)

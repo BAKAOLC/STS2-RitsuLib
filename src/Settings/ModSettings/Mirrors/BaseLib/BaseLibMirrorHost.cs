@@ -1,6 +1,5 @@
 using System.Reflection;
 using MegaCrit.Sts2.Core.Localization;
-using STS2RitsuLib.Compat;
 
 namespace STS2RitsuLib.Settings
 {

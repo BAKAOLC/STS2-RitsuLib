@@ -96,13 +96,6 @@ namespace STS2RitsuLib.Data.Models
         public bool DebugLogViewerEnabled { get; set; } = true;
 
         /// <summary>
-        ///     <para xml:lang="en">Gets or sets whether game logger callbacks are mirrored into the viewer's event stream.</para>
-        ///     <para xml:lang="zh-CN">获取或设置是否将游戏日志记录器的回调镜像到查看器的事件流。</para>
-        /// </summary>
-        [JsonPropertyName("debug_log_viewer_mirror_game_logs")]
-        public bool DebugLogViewerMirrorGameLogs { get; set; } = true;
-
-        /// <summary>
         ///     <para xml:lang="en">
         ///         Gets or sets whether the viewer opens in the system browser when no client connects shortly
         ///         after startup.

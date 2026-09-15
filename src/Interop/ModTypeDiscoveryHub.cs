@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Text;
 using HarmonyLib;
 using STS2RitsuLib.Compat;
 using STS2RitsuLib.Interop.AutoRegistration;
@@ -25,8 +24,7 @@ namespace STS2RitsuLib.Interop
         private static readonly Dictionary<string, List<Assembly>> RegisteredAssembliesByModId =
             new(StringComparer.Ordinal);
 
-        private static readonly Dictionary<string, AssemblyModIdMismatch> AssemblyModIdMismatches =
-            new(StringComparer.Ordinal);
+        private static readonly Dictionary<Assembly, string> RegisteredModIdsByAssembly = [];
 
         private static bool _builtInsRegistered;
 
@@ -52,15 +50,37 @@ namespace STS2RitsuLib.Interop
         /// <summary>
         ///     <para xml:lang="en">
         ///         Associates an assembly with a mod for the one-shot discovery pipeline. Call it from the mod
-        ///         initializer before <see cref="ModTypeDiscoveryPatch" /> runs. On hosts that expose mod-assembly
-        ///         associations, RitsuLib also forwards the association to the game after mod initialization.
+        ///         initializer before <see cref="ModTypeDiscoveryPatch" /> runs. Auto-registration uses this ID before
+        ///         the manifest ID unless the registration's declaring type specifies <see cref="RitsuLibOwnedByAttribute" />.
+        ///         Repeating the same association has no effect. Existing game assembly ownership is preserved.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         为一次性类型发现管线建立程序集与模组的关联。请在模组初始化器中、且在
-        ///         <see cref="ModTypeDiscoveryPatch" /> 运行前调用。若宿主公开模组与程序集关联 API，
-        ///         RitsuLib 还会在模组初始化完成后将该关联同步给游戏。
+        ///         <see cref="ModTypeDiscoveryPatch" /> 运行前调用。自动注册优先使用此 ID，而非清单 ID；
+        ///         注册特性声明类型上的 <see cref="RitsuLibOwnedByAttribute" /> 优先级更高。
+        ///         重复建立相同关联没有效果，游戏已有的程序集归属保持不变。
         ///     </para>
         /// </summary>
+        /// <param name="modId">
+        ///     <para xml:lang="en">Case-sensitive owner ID; surrounding whitespace is removed.</para>
+        ///     <para xml:lang="zh-CN">区分大小写的归属 ID，会移除首尾空白。</para>
+        /// </param>
+        /// <param name="assembly">
+        ///     <para xml:lang="en">Assembly to scan; each assembly can have one registered owner.</para>
+        ///     <para xml:lang="zh-CN">待扫描的程序集；每个程序集只能注册一个归属。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">An argument is null.</para>
+        ///     <para xml:lang="zh-CN">参数为 null。</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en"><paramref name="modId" /> is empty or whitespace.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="modId" /> 为空或仅包含空白。</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        ///     <para xml:lang="en">The assembly is already registered with a different owner ID.</para>
+        ///     <para xml:lang="zh-CN">程序集已注册到其他归属 ID。</para>
+        /// </exception>
         public static void RegisterModAssembly(string modId, Assembly assembly)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -69,17 +89,23 @@ namespace STS2RitsuLib.Interop
 
             lock (Gate)
             {
+                if (RegisteredModIdsByAssembly.TryGetValue(assembly, out var registeredModId))
+                {
+                    if (!string.Equals(registeredModId, modId, StringComparison.Ordinal))
+                        throw new InvalidOperationException(
+                            $"Assembly '{assembly.FullName}' is already registered to mod '{registeredModId}'.");
+                    return;
+                }
+
                 if (!RegisteredAssembliesByModId.TryGetValue(modId, out var assemblies))
                 {
                     assemblies = [];
                     RegisteredAssembliesByModId[modId] = assemblies;
                 }
 
-                if (!assemblies.Contains(assembly))
-                    assemblies.Add(assembly);
+                assemblies.Add(assembly);
+                RegisteredModIdsByAssembly.Add(assembly, modId);
             }
-
-            RecordAssemblyModIdMismatch(modId, assembly);
         }
 
         /// <summary>
@@ -166,12 +192,8 @@ namespace STS2RitsuLib.Interop
 
             lock (Gate)
             {
-                foreach (var (candidateModId, assemblies) in RegisteredAssembliesByModId)
-                    if (assemblies.Contains(assembly))
-                    {
-                        modId = candidateModId;
-                        return true;
-                    }
+                if (RegisteredModIdsByAssembly.TryGetValue(assembly, out modId!))
+                    return true;
             }
 
             modId = "";
@@ -210,59 +232,6 @@ namespace STS2RitsuLib.Interop
             }
         }
 
-        internal static void LogAutoRegistrationModIdMismatchSummary()
-        {
-            AssemblyModIdMismatch[] mismatches;
-            lock (Gate)
-            {
-                mismatches =
-                [
-                    .. AssemblyModIdMismatches.Values
-                        .OrderBy(static mismatch => mismatch.CurrentEntryOwnerModId, StringComparer.Ordinal)
-                        .ThenBy(static mismatch => mismatch.RegisteredModId, StringComparer.Ordinal)
-                        .ThenBy(static mismatch => mismatch.AssemblyName, StringComparer.Ordinal),
-                ];
-            }
-
-            if (mismatches.Length == 0)
-                return;
-
-            var text = new StringBuilder()
-                .AppendLine()
-                .AppendLine("=== RitsuLib Auto-Registration Mod Id Mismatch Summary ===")
-                .AppendLine(
-                    "RitsuLib detected assemblies whose ModManager/mod_manifest.json assembly ownership id differs " +
-                    "from the ModTypeDiscoveryHub.RegisterModAssembly argument.")
-                .AppendLine(
-                    "This issue only affects RitsuLib auto-discovered types and attributes from those assemblies. " +
-                    "Explicit content-pack registrations created with RitsuLibFramework.CreateContentPack or " +
-                    "ModContentPackBuilder.For are not affected; attribute-driven pack helpers on auto-discovered " +
-                    "types are affected.")
-                .AppendLine(
-                    "Current auto-registration owner/registry ids are resolved from ModManager/mod_manifest.json " +
-                    "assembly ownership. This can also determine default public entries for auto-discovered models. " +
-                    "A future major RitsuLib release is expected to use the RegisterModAssembly argument as the " +
-                    "primary owner id instead.")
-                .AppendLine(
-                    "Mod authors should align their manifest id and runtime mod id, or prepare localization/save " +
-                    "compatibility before that update.")
-                .AppendLine(
-                    "If a mod intentionally keeps these ids different, annotate the auto-registration source types " +
-                    "with [RitsuLibOwnedBy(\"...\")] to pin those auto-discovered entries to a fixed owner id. " +
-                    "For inherited auto-registration attributes, place [RitsuLibOwnedBy(\"...\")] on the type that " +
-                    "declares the inherited registration attribute.")
-                .AppendLine("Mismatches:");
-
-            foreach (var mismatch in mismatches)
-                text.AppendLine(
-                    $"  - assembly='{mismatch.AssemblyName}', currentAutoRegistrationOwnerId='" +
-                    $"{mismatch.CurrentEntryOwnerModId}' " +
-                    $"(source: ModManager/mod_manifest.json assembly ownership), registerModAssemblyArgument='" +
-                    $"{mismatch.RegisteredModId}' (source: ModTypeDiscoveryHub.RegisterModAssembly argument)");
-
-            RitsuLibFramework.Logger.Warn(text.ToString().TrimEnd());
-        }
-
         private static IReadOnlyDictionary<string, Assembly> BuildTargetAssemblyMap(
             IReadOnlyDictionary<string, IReadOnlyList<Assembly>> registeredAssembliesByModId)
         {
@@ -282,11 +251,11 @@ namespace STS2RitsuLib.Interop
         {
             var result = new List<ScanAssemblyEntry>();
 
-            foreach (var (modId, assemblies) in Sts2ModManagerCompat.BuildLoadedModAssemblyListsByManifestId())
+            foreach (var (modId, assemblies) in registeredAssembliesByModId)
             foreach (var assembly in assemblies)
                 Add(modId, assembly);
 
-            foreach (var (modId, assemblies) in registeredAssembliesByModId)
+            foreach (var (modId, assemblies) in Sts2ModManagerCompat.BuildLoadedModAssemblyListsByManifestId())
             foreach (var assembly in assemblies)
                 Add(modId, assembly);
 
@@ -305,34 +274,20 @@ namespace STS2RitsuLib.Interop
             IReadOnlyDictionary<string, IReadOnlyList<Assembly>> registeredAssembliesByModId)
         {
             foreach (var (modId, assemblies) in registeredAssembliesByModId)
-            foreach (var assembly in assemblies)
             {
-                RecordAssemblyModIdMismatch(modId, assembly);
-                Sts2ModManagerCompat.TryAssociateAssemblyWithMod(modId, assembly);
+                var hostModId = modId;
+                foreach (var assembly in assemblies)
+                    if (Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(assembly, out var loadedModId))
+                    {
+                        hostModId = loadedModId;
+                        break;
+                    }
+
+                foreach (var assembly in assemblies)
+                    if (!Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(assembly, out _))
+                        Sts2ModManagerCompat.TryAssociateAssemblyWithMod(hostModId, assembly);
             }
         }
-
-        private static void RecordAssemblyModIdMismatch(string registeredModId, Assembly assembly)
-        {
-            if (!Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(assembly, out var manifestModId))
-                return;
-
-            if (string.Equals(manifestModId, registeredModId, StringComparison.Ordinal))
-                return;
-
-            var assemblyName = assembly.GetName().Name ?? assembly.FullName ?? "<unknown>";
-            var warningKey = $"{assembly.FullName}\0{manifestModId}\0{registeredModId}";
-            lock (Gate)
-            {
-                AssemblyModIdMismatches.TryAdd(warningKey,
-                    new(assemblyName, manifestModId, registeredModId));
-            }
-        }
-
-        private readonly record struct AssemblyModIdMismatch(
-            string AssemblyName,
-            string CurrentEntryOwnerModId,
-            string RegisteredModId);
 
         private readonly record struct ScanAssemblyEntry(string ModId, Assembly Assembly);
     }

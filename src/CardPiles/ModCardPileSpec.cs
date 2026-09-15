@@ -20,6 +20,8 @@ namespace STS2RitsuLib.CardPiles
     /// </remarks>
     public sealed record ModCardPileSpec
     {
+        private readonly string[]? _hotkeys;
+
         /// <summary>
         ///     <para xml:lang="en">The localization table used for mod card-pile text.</para>
         ///     <para xml:lang="zh-CN">用于模组卡牌牌堆文本的本地化表。</para>
@@ -81,10 +83,30 @@ namespace STS2RitsuLib.CardPiles
         public string? IconPath { get; init; }
 
         /// <summary>
-        ///     <para xml:lang="en">Gets the optional input-action IDs that open the pile screen.</para>
-        ///     <para xml:lang="zh-CN">获取用于打开牌堆界面的可选输入动作 ID。</para>
+        ///     <para xml:lang="en">
+        ///         Gets optional Godot input-action IDs that open a visible, initialized pile control on key release
+        ///         and close its default screen. Actions must be registered in the game's input map before use.
+        ///         These are action names, not key chords or runtime-hotkey registration IDs. Hidden controls,
+        ///         headless piles, and controls covered by a blocking screen do not open through these actions.
+        ///         Custom screens opened by OnOpen manage their own close actions. Arrays are copied on assignment
+        ///         and access; null or an empty array disables these bindings.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取松开按键时打开已初始化且可见的牌堆控件、并关闭其默认界面的可选 Godot 输入动作 ID。
+        ///         使用前须在游戏输入映射中注册动作；这里填写动作名，而非组合键文本或运行时快捷键注册 ID。
+        ///         隐藏控件、无界面牌堆及被阻挡界面覆盖的控件不会通过这些动作打开。
+        ///         OnOpen 打开的自定义界面自行管理关闭动作。赋值及读取时均复制数组；null 或空数组禁用绑定。
+        ///     </para>
         /// </summary>
-        public string[]? Hotkeys { get; init; }
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">An action ID is blank, has surrounding whitespace, or occurs more than once.</para>
+        ///     <para xml:lang="zh-CN">动作 ID 为空白、含首尾空白或重复出现。</para>
+        /// </exception>
+        public string[]? Hotkeys
+        {
+            get => _hotkeys == null ? null : [.. _hotkeys];
+            init => _hotkeys = ModCardPileDefinition.CopyHotkeys(value);
+        }
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -163,9 +185,12 @@ namespace STS2RitsuLib.CardPiles
         /// </summary>
         /// <remarks>
         ///     <para xml:lang="en">
-        ///         Empty piles show the registered empty-pile message instead of invoking the callback.
+        ///         Empty piles never invoke the callback. During combat they show the registered empty-pile
+        ///         message; outside combat they open the empty default pile screen.
         ///     </para>
-        ///     <para xml:lang="zh-CN">空牌堆会显示已注册的空牌堆提示，而不会调用该回调。</para>
+        ///     <para xml:lang="zh-CN">
+        ///         空牌堆不会调用该回调。战斗中显示已注册的空牌堆提示；战斗外打开空的默认牌堆界面。
+        ///     </para>
         /// </remarks>
         public Action<ModCardPileOpenContext>? OnOpen { get; init; }
 

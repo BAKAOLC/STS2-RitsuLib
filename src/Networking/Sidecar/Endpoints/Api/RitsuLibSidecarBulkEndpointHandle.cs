@@ -38,6 +38,15 @@
         public bool IsDisposed => _registration.IsDisposed;
 
         /// <summary>
+        ///     <para xml:lang="en">Cancels active transfers and withdraws this registration. Repeated calls are safe.</para>
+        ///     <para xml:lang="zh-CN">取消活动传输并撤回此注册；重复调用是安全的。</para>
+        /// </summary>
+        public void Dispose()
+        {
+            _registration.Dispose();
+        }
+
+        /// <summary>
         ///     <para xml:lang="en">
         ///         Raised after the negotiated protocol version or compatible participant set changes. Handlers follow
         ///         the descriptor dispatch mode and exceptions are isolated.
@@ -199,15 +208,6 @@
                 metadata,
                 progress,
                 cancellationToken);
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">Cancels active transfers and withdraws this registration. Repeated calls are safe.</para>
-        ///     <para xml:lang="zh-CN">取消活动传输并撤回此注册；重复调用是安全的。</para>
-        /// </summary>
-        public void Dispose()
-        {
-            _registration.Dispose();
         }
     }
 }

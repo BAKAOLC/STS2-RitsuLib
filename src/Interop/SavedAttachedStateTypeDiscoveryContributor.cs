@@ -75,8 +75,8 @@ namespace STS2RitsuLib.Interop
             Assembly assembly,
             IReadOnlyDictionary<string, Assembly> modAssembliesByManifestId)
         {
-            if (Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(assembly, out var modId) ||
-                ModTypeDiscoveryHub.TryResolveRegisteredModId(assembly, out modId))
+            if (ModTypeDiscoveryHub.TryResolveRegisteredModId(assembly, out var modId) ||
+                Sts2ModManagerCompat.TryGetLoadedModIdForAssembly(assembly, out modId))
                 return modId;
 
             foreach (var (candidateModId, candidateAssembly) in modAssembliesByManifestId)

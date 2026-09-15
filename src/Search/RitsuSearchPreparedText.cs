@@ -5,17 +5,17 @@ namespace STS2RitsuLib.Search
     internal sealed class RitsuSearchPreparedText
     {
         private readonly Lock _lock = new();
-        private readonly string _text;
         private readonly RitsuSearchOptions _options;
+        private readonly Dictionary<string, int> _pinyinScores = new(StringComparer.OrdinalIgnoreCase);
+        private readonly string _text;
         private readonly bool _useProviderExpansions;
-        private IReadOnlyList<RitsuSearchExpansion> _expansions = [];
         private Task<IReadOnlyList<RitsuSearchExpansion>>? _expansionTask;
         private long _expansionTaskGeneration = -1;
         private string _expansionTaskLanguageCode = string.Empty;
-        private readonly Dictionary<string, int> _pinyinScores = new(StringComparer.OrdinalIgnoreCase);
-        private long _pinyinGeneration = -1;
+        private IReadOnlyList<RitsuSearchExpansion> _expansions = [];
         private long _generation = -1;
         private string _languageCode = string.Empty;
+        private long _pinyinGeneration = -1;
 
         internal RitsuSearchPreparedText(string text, RitsuSearchOptions? options = null)
         {

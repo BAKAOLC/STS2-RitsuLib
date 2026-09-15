@@ -1,3 +1,5 @@
+using STS2RitsuLib.Telemetry.Diagnostics;
+
 namespace STS2RitsuLib.Telemetry
 {
     internal static class TelemetryCaptureFilter
@@ -7,6 +9,7 @@ namespace STS2RitsuLib.Telemetry
             TelemetryCaptureContext context,
             string applicantId)
         {
+            using var diagnosticsScope = new TelemetryDiagnosticsScope();
             var captureFilter = request.CaptureFilter;
             if (captureFilter == null)
                 return true;

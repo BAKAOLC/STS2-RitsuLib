@@ -28,19 +28,6 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static Theme SettingsLineTheme => SettingsLineThemeCache.Value;
 
-        private static Theme CreateSettingsLineTheme()
-        {
-            var nativeTheme = PreloadManager.Cache.GetAsset<Theme>("res://themes/settings_screen_line_header.tres");
-            var theme = (Theme)nativeTheme.Duplicate();
-            theme.SetColor("font_shadow_color", "RichTextLabel", Colors.Transparent);
-            theme.SetColor("font_outline_color", "RichTextLabel", Colors.Transparent);
-            theme.SetConstant("shadow_offset_x", "RichTextLabel", 0);
-            theme.SetConstant("shadow_offset_y", "RichTextLabel", 0);
-            theme.SetConstant("shadow_outline_size", "RichTextLabel", 0);
-            theme.SetConstant("outline_size", "RichTextLabel", 0);
-            return theme;
-        }
-
         /// <summary>
         ///     <para xml:lang="en">
         ///         Gets the regular Kreon font used by settings text.
@@ -84,6 +71,19 @@ namespace STS2RitsuLib.Settings
         /// </summary>
         public static Texture2D SettingsButtonTexture =>
             PreloadManager.Cache.GetAsset<Texture2D>("res://images/ui/reward_screen/reward_skip_button.png");
+
+        private static Theme CreateSettingsLineTheme()
+        {
+            var nativeTheme = PreloadManager.Cache.GetAsset<Theme>("res://themes/settings_screen_line_header.tres");
+            var theme = (Theme)nativeTheme.Duplicate();
+            theme.SetColor("font_shadow_color", "RichTextLabel", Colors.Transparent);
+            theme.SetColor("font_outline_color", "RichTextLabel", Colors.Transparent);
+            theme.SetConstant("shadow_offset_x", "RichTextLabel", 0);
+            theme.SetConstant("shadow_offset_y", "RichTextLabel", 0);
+            theme.SetConstant("shadow_outline_size", "RichTextLabel", 0);
+            theme.SetConstant("outline_size", "RichTextLabel", 0);
+            return theme;
+        }
 
         /// <summary>
         ///     <para xml:lang="en">

@@ -55,30 +55,18 @@ namespace STS2RitsuLib
             var resourceName = asset.ResolveEmbeddedResourceName();
             try
             {
-                using var stream = typeof(RitsuLibEmbeddedPngResourceLoader)
-                    .Assembly
-                    .GetManifestResourceStream(resourceName);
-                if (stream == null)
-                {
-                    RitsuLibFramework.Logger.Warn($"[EmbeddedPng] Resource not found: {resourceName}");
-                    return default;
-                }
-
-                using var memory = new MemoryStream();
-                stream.CopyTo(memory);
-
                 var image = new Image();
-                var error = image.LoadPngFromBuffer(memory.ToArray());
+                var error = image.LoadPngFromBuffer(RitsuAssetStore.ReadBytes(resourceName));
                 if (error == Error.Ok)
                     return ImageTexture.CreateFromImage(image);
 
-                RitsuLibFramework.Logger.Warn($"[EmbeddedPng] Failed to decode '{resourceName}': {error}");
+                RitsuLibFramework.Logger.Warn($"[Assets] Failed to decode '{resourceName}': {error}");
                 return default;
             }
             catch (Exception exception) when (RitsuLibExceptionPolicy.IsRecoverable(exception))
             {
                 RitsuLibFramework.Logger.Warn(
-                    $"[EmbeddedPng] Failed to load '{resourceName}': {exception.Message}");
+                    $"[Assets] Failed to load '{resourceName}': {exception.Message}");
                 return default;
             }
         }

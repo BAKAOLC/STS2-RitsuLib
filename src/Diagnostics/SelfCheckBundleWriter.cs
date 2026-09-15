@@ -11,6 +11,7 @@ using STS2RitsuLib.Keywords;
 using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Utils;
 using STS2RitsuLib.Utils.Persistence;
+using FileAccess = System.IO.FileAccess;
 
 namespace STS2RitsuLib.Diagnostics
 {
@@ -120,10 +121,12 @@ namespace STS2RitsuLib.Diagnostics
 
         internal static byte[] ReadPublishedBundle(string sourcePath)
         {
-            using var stream = new FileStream(sourcePath, FileMode.Open, System.IO.FileAccess.Read,
+            using var stream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read,
                 FileShare.ReadWrite);
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, true))
+            {
                 ValidateBundleEntries(archive);
+            }
 
             stream.Position = 0;
             using var output = new MemoryStream();

@@ -11,10 +11,10 @@ namespace STS2RitsuLib.Settings
 {
     internal sealed partial class RitsuDebugToolsPanel
     {
-        private RelicCatalogMode _relicCatalogMode = RelicCatalogMode.Library;
+        private OrbCatalogMode _orbCatalogMode = OrbCatalogMode.Library;
         private PotionCatalogMode _potionCatalogMode = PotionCatalogMode.Library;
         private PowerCatalogMode _powerCatalogMode = PowerCatalogMode.Library;
-        private OrbCatalogMode _orbCatalogMode = OrbCatalogMode.Library;
+        private RelicCatalogMode _relicCatalogMode = RelicCatalogMode.Library;
 
         private Control CreateRelicWorkspace(
             IReadOnlyList<RelicModel> models,
@@ -271,9 +271,9 @@ namespace STS2RitsuLib.Settings
                         availablePowers,
                         item => powersByItemId.TryGetValue(item.Id, out var entry) ? entry.Power : null),
                 ],
-                presentation: RitsuCatalogPresentation.Grid,
-                gridTileMinimumWidth: 260f,
-                gridTileHeight: 132f,
+                RitsuCatalogPresentation.Grid,
+                260f,
+                132f,
                 detailWidth: 540f);
             var root = new RitsuDebugLiveDetailContainer
             {
@@ -448,9 +448,9 @@ namespace STS2RitsuLib.Settings
                         models,
                         item => orbsByItemId.TryGetValue(item.Id, out var entry) ? entry.Orb : null),
                 ],
-                presentation: RitsuCatalogPresentation.Grid,
-                gridTileMinimumWidth: 260f,
-                gridTileHeight: 132f,
+                RitsuCatalogPresentation.Grid,
+                260f,
+                132f,
                 detailWidth: 540f);
             var root = new RitsuDebugLiveDetailContainer
             {

@@ -1,15 +1,12 @@
 using System.Globalization;
-using System.Reflection;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Networking.JoinDiagnostics
 {
     internal static class JoinFailureDiagnosticsLocalization
     {
-        private static readonly Lazy<I18N> InstanceFactory = new(() => new(
-            "RitsuLib-JoinDiagnostics",
-            resourceFolders: ["STS2RitsuLib.Settings.Localization.JoinDiagnostics"],
-            resourceAssembly: Assembly.GetExecutingAssembly()));
+        private static readonly Lazy<I18N> InstanceFactory = new(() => I18N.CreateForAssets(
+            "RitsuLib-JoinDiagnostics", "localization/join-diagnostics"));
 
         public static string Get(string key, string fallback)
         {

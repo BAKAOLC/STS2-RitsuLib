@@ -15,7 +15,7 @@ from release_lib import workshop as workshop_ops
 from release_lib.bundle import compose_bundle_zip
 from release_lib.msbuild_eval import get_csproj_property
 from release_lib.repo_layout import (
-    ARTIFACTS_BUNDLE_STAGING,
+    bundle_staging,
     CONST_CS_REL,
     DEFAULT_GIT_REMOTE,
     GIT_DEFAULT_DEV_BRANCH,
@@ -51,13 +51,15 @@ def _resolve_release_tag_message_file(repo: Path) -> Path | None:
                 return p
         except OSError:
             pass
-    workspace = (repo.parent / RITSLIB_RELEASE_TAG_MESSAGE_BASENAME).resolve()
-    internal = (repo / RITSLIB_RELEASE_TAG_MESSAGE_BASENAME).resolve()
+    common_dir_result = subprocess.run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        cwd=repo, capture_output=True, text=True, check=True,
+    )
+    common_dir = Path(common_dir_result.stdout.strip()).resolve()
+    workspace = common_dir.parent.parent / RITSLIB_RELEASE_TAG_MESSAGE_BASENAME
     try:
         if workspace.is_file():
             return workspace
-        if internal.is_file():
-            return internal
     except OSError:
         pass
     return None
@@ -123,7 +125,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Build nupkg + GitHub zip artifacts only; no version/git/push/NuGet changes.",
     )
-    p.add_argument("--configuration", default="Release")
+    p.add_argument("--configuration", choices=("Debug", "Release"), default="Release")
     p.add_argument(
         "--compat-targets",
         default="all",
@@ -510,7 +512,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.version_override:
             print(f"[release] pack version override: {args.version_override}", flush=True)
         print(f"[release] nuget targets: {', '.join(compat_targets)}", flush=True)
-        bundle_root = ritsulib / ARTIFACTS_BUNDLE_STAGING
+        bundle_root = ritsulib / bundle_staging(args.configuration)
         packages, zips = nuget_ops.build_artifacts(
             ritsulib,
             configuration=args.configuration,
@@ -738,7 +740,7 @@ def main(argv: list[str] | None = None) -> int:
     subprocess.run(tag_push, cwd=repo, check=True)
 
     if args.push_nuget:
-        bundle_root = ritsulib / ARTIFACTS_BUNDLE_STAGING
+        bundle_root = ritsulib / bundle_staging(args.configuration)
         published, github_zips = nuget_ops.publish_nugets(
             ritsulib,
             configuration=args.configuration,
@@ -767,7 +769,7 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "[release] Skipping local NuGet push (default); packages are published by the tag release workflow.",
         )
-        bundle_root = ritsulib / ARTIFACTS_BUNDLE_STAGING
+        bundle_root = ritsulib / bundle_staging(args.configuration)
         if _workshop_requested(args):
             packages, github_zips = nuget_ops.build_artifacts(
                 ritsulib,

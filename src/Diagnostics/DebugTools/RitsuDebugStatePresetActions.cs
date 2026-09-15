@@ -513,7 +513,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     "The capability state exceeds the supported preset limits.");
             var uniqueTargets = new HashSet<RitsuDebugCapabilityTarget>();
             foreach (var target in targets)
-            {
                 if (target == null ||
                     !IsStableCapabilityTargetKind(target.Target.Kind) ||
                     !RitsuDebugCapabilityActions.IsValidTargetReference(target.Target) ||
@@ -528,7 +527,6 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                     return RitsuDebugActionCheck.Fail(
                         "statePreset.capabilityInvalid",
                         "A saved model-capability target or entry is invalid.");
-            }
 
             return RitsuDebugActionCheck.Ok;
         }

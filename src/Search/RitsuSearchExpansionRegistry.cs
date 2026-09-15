@@ -1,4 +1,6 @@
-﻿namespace STS2RitsuLib.Search
+﻿using STS2RitsuLib.Search.Pinyin;
+
+namespace STS2RitsuLib.Search
 {
     /// <summary>
     ///     <para xml:lang="en">Registers optional transliteration and search-text expansion providers.</para>
@@ -15,6 +17,17 @@
         private static readonly Dictionary<string, ProviderEntry> Providers = new(StringComparer.OrdinalIgnoreCase);
         private static long _generation;
         private static long _nextToken;
+
+        internal static long Generation
+        {
+            get
+            {
+                lock (SyncRoot)
+                {
+                    return _generation;
+                }
+            }
+        }
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -78,17 +91,6 @@
             }
         }
 
-        internal static long Generation
-        {
-            get
-            {
-                lock (SyncRoot)
-                {
-                    return _generation;
-                }
-            }
-        }
-
         internal static IReadOnlyList<RitsuSearchExpansion> Expand(string text, string languageCode,
             RitsuSearchOptions? options = null)
         {
@@ -105,9 +107,9 @@
             var totalCharacters = 0;
             foreach (var entry in providers)
             {
-                if (entry.Provider is Pinyin.PinyinSearchExpansionProvider)
+                if (entry.Provider is PinyinSearchExpansionProvider)
                     continue;
-                var isPinyin = string.Equals(entry.Id, Pinyin.PinyinSearchExpansionProvider.ProviderId,
+                var isPinyin = string.Equals(entry.Id, PinyinSearchExpansionProvider.ProviderId,
                     StringComparison.OrdinalIgnoreCase);
                 var enabled = options.ProviderOverrides.TryGetValue(entry.Id, out var requested)
                     ? requested
@@ -165,15 +167,15 @@
             ProviderEntry? entry;
             lock (SyncRoot)
             {
-                if (!Providers.TryGetValue(Pinyin.PinyinSearchExpansionProvider.ProviderId, out entry) ||
-                    entry.Provider is not Pinyin.PinyinSearchExpansionProvider)
+                if (!Providers.TryGetValue(PinyinSearchExpansionProvider.ProviderId, out entry) ||
+                    entry.Provider is not PinyinSearchExpansionProvider)
                     return -1;
             }
 
             var enabled = options.ProviderOverrides.TryGetValue(entry.Id, out var requested)
                 ? requested
                 : RitsuSearchSettingsStore.IsProviderEnabled(entry.Id, entry.EnabledByDefault);
-            return Pinyin.PinyinSearchMatcher.Score(text, term, options.Pinyin ?? enabled,
+            return PinyinSearchMatcher.Score(text, term, options.Pinyin ?? enabled,
                 options.PinyinInitials ?? enabled, cancellationToken);
         }
 

@@ -67,9 +67,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                               scope.HasFlag(RitsuDebugStatePresetCaptureScope.Powers) ||
                               scope.HasFlag(RitsuDebugStatePresetCaptureScope.CombatValues) ||
                               scope.HasFlag(RitsuDebugStatePresetCaptureScope.SecondaryResources) ||
-                              scope.HasFlag(RitsuDebugStatePresetCaptureScope.CustomPiles) &&
-                              ModCardPileRegistry.GetDefinitionsSnapshot()
-                                  .Any(static definition => definition.Scope == ModCardPileScope.CombatOnly);
+                              (scope.HasFlag(RitsuDebugStatePresetCaptureScope.CustomPiles) &&
+                               ModCardPileRegistry.GetDefinitionsSnapshot()
+                                   .Any(static definition => definition.Scope == ModCardPileScope.CombatOnly));
             if (needsCombat && !HasActiveCombat(player))
             {
                 result = default;
@@ -312,7 +312,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             if (!RitsuDebugCardActions.TryParseMutablePileType(
                     RitsuDebugCardActions.GetPileToken(pileType),
                     out _) ||
-                !RitsuDebugCardActions.IsRunStatePile(pileType) && !HasActiveCombat(player))
+                (!RitsuDebugCardActions.IsRunStatePile(pileType) && !HasActiveCombat(player)))
             {
                 result = default;
                 feedback = RitsuDebugActionFeedback.Create(

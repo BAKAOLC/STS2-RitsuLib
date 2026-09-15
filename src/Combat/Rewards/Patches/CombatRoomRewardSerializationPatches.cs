@@ -76,7 +76,6 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
         public static void Prefix(SerializableRoom serializableRoom)
         {
             if (serializableRoom.EncounterState != null)
-            {
                 foreach (var (key, json) in serializableRoom.EncounterState)
                 {
                     if (!RewardSerializationExt.TryParseKey(key, out var netId, out var index))
@@ -93,7 +92,6 @@ namespace STS2RitsuLib.Combat.Rewards.Patches
                         continue;
                     RewardSerializationExt.SetExtData(rewards[index], ext);
                 }
-            }
 
             foreach (var (_, rewards) in serializableRoom.ExtraRewards)
             {

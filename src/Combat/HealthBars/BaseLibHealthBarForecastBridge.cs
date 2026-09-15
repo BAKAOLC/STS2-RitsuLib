@@ -45,6 +45,7 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool _loggedLegacyImportFailure;
         private static Action<string, string, Func<Creature, IEnumerable<object>>>? _registerForeign;
         private static MethodInfo? _getSegmentsMethod;
+        private static object[]? _exportDirections;
 
         private static readonly ConcurrentDictionary<Type, LegacyImportReader> LegacyImportReaders = new();
 
@@ -214,7 +215,9 @@ namespace STS2RitsuLib.Combat.HealthBars
             return
             [
                 .. HealthBarForecastRegistry.GetSegments(creature)
-                    .Select(registered => (object)registered.Segment),
+                    .Where(registered => Enum.IsDefined(registered.Segment.Direction))
+                    .Select(registered => (object)new ExportedSegment(registered.Segment,
+                        _exportDirections![(int)registered.Segment.Direction])),
             ];
         }
 
@@ -292,6 +295,22 @@ namespace STS2RitsuLib.Combat.HealthBars
                 HasPublicInstanceProperty(segmentType, "LeftExclusiveZGroup") &&
                 HasPublicInstanceProperty(segmentType, "AffectsHpLabel");
 
+            if (!_baselibSupportsRitsuRenderProtocol ||
+                segmentType?.GetProperty("Direction")?.PropertyType is not { IsEnum: true } directionType)
+                return false;
+
+            var directions = Enum.GetValues<HealthBarForecastGrowthDirection>();
+            var converted = new object[directions.Length];
+            foreach (var direction in directions)
+            {
+                if (!Enum.TryParse(directionType, direction.ToString(), out var value) ||
+                    value == null || !Enum.IsDefined(directionType, value))
+                    return false;
+                converted[(int)direction] = value;
+            }
+
+            _exportDirections = converted;
+
             return _baselibSupportsRitsuRenderProtocol;
         }
 
@@ -353,13 +372,14 @@ namespace STS2RitsuLib.Combat.HealthBars
             {
                 var segment = readSegment(entry);
                 var amount = segmentReader.ReadAmount(segment);
-                if (amount <= 0)
+                var direction = (HealthBarForecastGrowthDirection)segmentReader.ReadDirection(segment);
+                if (amount <= 0 || !Enum.IsDefined(direction))
                     return;
 
                 segments.Add(new(
                     amount,
                     segmentReader.ReadColor(segment),
-                    ToGrowthDirection(segmentReader.ReadDirection(segment)),
+                    direction,
                     segmentReader.ReadOrder(segment),
                     readSequenceOrder(entry),
                     segmentReader.ReadOverlayMaterial(segment),
@@ -443,13 +463,6 @@ namespace STS2RitsuLib.Combat.HealthBars
             return property.PropertyType.IsEnum || property.PropertyType == typeof(int);
         }
 
-        private static HealthBarForecastGrowthDirection ToGrowthDirection(int value)
-        {
-            return value == 1
-                ? HealthBarForecastGrowthDirection.FromLeft
-                : HealthBarForecastGrowthDirection.FromRight;
-        }
-
         private static HealthBarForecastLeftOriginLayout ToLeftOriginLayout(int value)
         {
             return value == 1
@@ -473,6 +486,18 @@ namespace STS2RitsuLib.Combat.HealthBars
             HealthBarForecastLeftOriginLayout LeftOriginLayout,
             int LeftExclusiveZGroup,
             bool AffectsHpLabel);
+
+        private readonly record struct ExportedSegment(HealthBarForecastSegment Segment, object Direction)
+        {
+            public int Amount => Segment.Amount;
+            public Color Color => Segment.Color;
+            public int Order => Segment.Order;
+            public Material? OverlayMaterial => Segment.OverlayMaterial;
+            public Color? OverlaySelfModulate => Segment.OverlaySelfModulate;
+            public HealthBarForecastLeftOriginLayout LeftOriginLayout => Segment.LeftOriginLayout;
+            public int LeftExclusiveZGroup => Segment.LeftExclusiveZGroup;
+            public bool AffectsHpLabel => Segment.AffectsHpLabel;
+        }
 
         private sealed class LegacyImportReader(
             Func<object, IReadOnlyList<BaseLibImportedHealthBarForecastSegment>>? read)
