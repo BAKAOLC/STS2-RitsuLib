@@ -1722,6 +1722,7 @@ namespace STS2RitsuLib
         ///         翻译根。
         ///     </para>
         /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static I18N CreateLocalization(
             string instanceName,
             IEnumerable<string>? fileSystemFolders = null,
@@ -1743,6 +1744,7 @@ namespace STS2RitsuLib
         ///         使用显式回退语言创建 <see cref="STS2RitsuLib.Utils.I18N" /> 实例。
         ///     </para>
         /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static I18N CreateLocalizationWithFallback(
             string instanceName,
             IEnumerable<string>? fileSystemFolders = null,
@@ -1787,6 +1789,7 @@ namespace STS2RitsuLib
         ///         <c>user://&lt;platform&gt;/&lt;userId&gt;/mod_data/{modId}/localization</c>。
         ///     </para>
         /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static I18N CreateModLocalization(
             string modId,
             string instanceName,
@@ -1808,6 +1811,7 @@ namespace STS2RitsuLib
         ///         使用显式回退语言为模组创建 <see cref="STS2RitsuLib.Utils.I18N" /> 实例。
         ///     </para>
         /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static I18N CreateModLocalizationWithFallback(
             string modId,
             string instanceName,

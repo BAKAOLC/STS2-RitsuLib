@@ -52,7 +52,7 @@
         <!-- The loader is a deployment asset, not a consumer compile reference. -->
         <NoWarn>$(NoWarn);NU5100</NoWarn>
         <IsPackable>true</IsPackable>
-        <Version>0.6.1</Version>
+        <Version>0.6.2</Version>
         <Authors>OLC</Authors>
         <Description>Shared framework library for Slay the Spire 2 mods.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>

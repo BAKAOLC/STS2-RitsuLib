@@ -25,7 +25,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (ancient)
             {
                 state.SetTexture("%AncientBorder", model.AncientBorder);
-                state.SetTexture("%AncientTextBg", ResourceLoader.Load<Texture2D>(AncientTextBgPath(model.Type)));
+                state.SetTexture("%AncientTextBg", model.Rarity == CardRarity.Ancient
+                    ? model.AncientTextBg
+                    : ResourceLoader.Load<Texture2D>(AncientTextBgPath(model.Type)));
                 state.SetTexture("%AncientPortrait", model.Portrait);
                 state.SetTexture("%AncientBanner",
                     ResourceLoader.Load<Texture2D>(
@@ -35,13 +37,19 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             }
 
             state.SetTexture("%Portrait", model.Portrait);
-            state.SetTexture("%PortraitBorder", ResourceLoader.Load<Texture2D>(StandardPortraitBorderPath(model.Type)));
-            state.SetTexture("%Frame", ResourceLoader.Load<Texture2D>(StandardFramePath(model.Type)));
+            state.SetTexture("%PortraitBorder", model.PortraitBorder);
+            state.SetTexture("%Frame", model.Rarity == CardRarity.Ancient
+                ? ResourceLoader.Load<Texture2D>(StandardFramePath(model.Type))
+                : model.Frame);
             state.SetMaterial("%Frame", model.FrameMaterial, () => model.FrameMaterial);
             state.SetTexture("%TitleBanner",
-                ResourceLoader.Load<Texture2D>(
-                    ImageHelper.GetImagePath("atlases/ui_atlas.sprites/card/card_banner.tres")));
-            var bannerMaterial = PreloadManager.Cache.GetMaterial(StandardBannerMaterialPath(model.Rarity));
+                model.Rarity == CardRarity.Ancient
+                    ? ResourceLoader.Load<Texture2D>(
+                        ImageHelper.GetImagePath("atlases/ui_atlas.sprites/card/card_banner.tres"))
+                    : model.BannerTexture);
+            var bannerMaterial = model.Rarity == CardRarity.Ancient
+                ? PreloadManager.Cache.GetMaterial(StandardBannerMaterialPath(model.Rarity))
+                : model.BannerMaterial;
             state.SetMaterial("%PortraitBorder", bannerMaterial);
             state.SetMaterial("%TitleBanner", bannerMaterial);
             state.SetMaterial("%TypePlaque", bannerMaterial, () => model.BannerMaterial);
@@ -73,13 +81,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return ImageHelper.GetImagePath($"atlases/ui_atlas.sprites/card/card_frame_{normalizedType}_s.tres");
         }
 
-        private static string StandardPortraitBorderPath(CardType type)
-        {
-            var normalizedType = Normalize(StandardPortraitBorderCardType(type));
-            return ImageHelper.GetImagePath(
-                $"atlases/ui_atlas.sprites/card/card_portrait_border_{normalizedType}_s.tres");
-        }
-
         private static string AncientTextBgPath(CardType type)
         {
             var normalizedType = Normalize(AncientTextBgCardType(type));
@@ -106,15 +107,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return type switch
             {
                 CardType.Attack or CardType.Skill or CardType.Power or CardType.Quest => type,
-                _ => CardType.Skill,
-            };
-        }
-
-        private static CardType StandardPortraitBorderCardType(CardType type)
-        {
-            return type switch
-            {
-                CardType.Attack or CardType.Skill or CardType.Power => type,
                 _ => CardType.Skill,
             };
         }
