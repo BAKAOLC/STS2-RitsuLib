@@ -97,20 +97,6 @@ namespace STS2RitsuLib.Data.Models
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Always returns true. Setting a value has no effect; this member is excluded from saved settings.
-        ///     </para>
-        ///     <para xml:lang="zh-CN">始终返回 true；设置值没有效果，此成员不会写入设置文件。</para>
-        /// </summary>
-        [Obsolete("Game logs are always captured; this property has no effect.")]
-        [JsonIgnore]
-        public bool DebugLogViewerMirrorGameLogs
-        {
-            get => true;
-            set => _ = value;
-        }
-
-        /// <summary>
-        ///     <para xml:lang="en">
         ///         Gets or sets whether the viewer opens in the system browser when no client connects shortly
         ///         after startup.
         ///     </para>

@@ -507,7 +507,6 @@ namespace STS2RitsuLib
                     SubscribeLifecycleOnce<MainMenuReadyEvent>(_ =>
                     {
                         RitsuLibStartupAudit.LogReport("launch to main menu");
-                        ModTypeDiscoveryHub.LogAutoRegistrationModIdMismatchSummary();
                         Callable.From(PrewarmModSettingsMirrorsForMainMenu).CallDeferred();
                         HarmonyPatchDumpCoordinator.TryAutoDumpOnFirstMainMenu();
                         SelfCheckBundleCoordinator.TryAutoRunOnFirstMainMenu();
