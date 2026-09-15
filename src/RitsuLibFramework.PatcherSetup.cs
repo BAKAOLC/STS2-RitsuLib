@@ -711,6 +711,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterCastSfxPatch>();
             patcher.RegisterPatch<CharacterDeathSfxPatch>();
             patcher.RegisterPatch<ColorfulPhilosophersCardPoolColorOrderPatch>();
+            patcher.RegisterPatch<CrystalSphereCardPoolCardBackPatch>();
             patcher.RegisterPatch<CharacterArmPointingTexturePathPatch>();
             patcher.RegisterPatch<CharacterArmRockTexturePathPatch>();
             patcher.RegisterPatch<CharacterArmPaperTexturePathPatch>();
