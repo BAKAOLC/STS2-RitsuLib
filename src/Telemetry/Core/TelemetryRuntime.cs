@@ -105,18 +105,27 @@ namespace STS2RitsuLib.Telemetry
             if (!TelemetryRegistry.TryGetApplicant(applicantId, out var applicant))
                 return;
 
-            TryReplayStartupEvent(
-                applicant,
-                "basic_usage",
-                "session_start",
-                snapshot.BuildSessionStartPayload,
-                snapshot.BuildSessionStartProperties);
-            TryReplayStartupEvent(
-                applicant,
-                "mod_inventory",
-                "mod_inventory",
-                snapshot.BuildModInventoryPayload,
-                snapshot.BuildModInventoryProperties);
+            var queued = false;
+            try
+            {
+                queued |= TryReplayStartupEvent(
+                    applicant,
+                    "basic_usage",
+                    "session_start",
+                    snapshot.BuildSessionStartPayload,
+                    snapshot.BuildSessionStartProperties);
+                queued |= TryReplayStartupEvent(
+                    applicant,
+                    "mod_inventory",
+                    "mod_inventory",
+                    snapshot.BuildModInventoryPayload,
+                    snapshot.BuildModInventoryProperties);
+            }
+            finally
+            {
+                if (queued)
+                    TelemetryQueue.ScheduleFlushApplicant(applicant.ApplicantId);
+            }
         }
 
         /// <summary>
@@ -171,7 +180,7 @@ namespace STS2RitsuLib.Telemetry
             }
         }
 
-        private static void TryReplayStartupEvent(
+        private static bool TryReplayStartupEvent(
             TelemetryApplicant applicant,
             string requestId,
             string eventName,
@@ -179,10 +188,10 @@ namespace STS2RitsuLib.Telemetry
             Func<IReadOnlyDictionary<string, object?>?> buildProperties)
         {
             if (!TelemetryRegistry.TryGetRequest(applicant, requestId, out var request))
-                return;
+                return false;
 
             if (!TelemetryConsentStore.IsRequestGranted(applicant, request))
-                return;
+                return false;
 
             var context = new TelemetryCaptureContext(
                 eventName,
@@ -190,13 +199,13 @@ namespace STS2RitsuLib.Telemetry
                 request.Category,
                 "startup_snapshot");
             if (!TelemetryCaptureFilter.ShouldCapture(request, context, applicant.ApplicantId))
-                return;
+                return false;
 
             var deliveryKey = BuildStartupDeliveryKey(applicant.ApplicantId, requestId, eventName);
             lock (Sync)
             {
                 if (!DeliveredStartupKeys.Add(deliveryKey))
-                    return;
+                    return false;
             }
 
             RitsuLibFramework.Logger.Debug(
@@ -208,8 +217,9 @@ namespace STS2RitsuLib.Telemetry
                     buildPayload(),
                     buildProperties(),
                     context,
-                    true))
-                return;
+                    true,
+                    false))
+                return true;
 
             lock (Sync)
             {
@@ -218,6 +228,7 @@ namespace STS2RitsuLib.Telemetry
 
             RitsuLibFramework.Logger.Warn(
                 $"[Telemetry] Failed to queue startup event '{eventName}' for applicant '{applicant.ApplicantId}'.");
+            return false;
         }
 
         private static string? BuildStartupDeliveryKey(TelemetryEnvelope envelope)

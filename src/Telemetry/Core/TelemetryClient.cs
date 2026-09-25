@@ -44,7 +44,8 @@ namespace STS2RitsuLib.Telemetry
             JsonNode payload,
             IReadOnlyDictionary<string, object?>? properties = null,
             TelemetryCaptureContext? captureContext = null,
-            bool filterAlreadyApplied = false)
+            bool filterAlreadyApplied = false,
+            bool scheduleDelivery = true)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(eventName);
             ArgumentException.ThrowIfNullOrWhiteSpace(requestId);
@@ -82,9 +83,8 @@ namespace STS2RitsuLib.Telemetry
                     payload,
                     properties);
                 TelemetryQueue.Enqueue(envelope);
-                TelemetryTaskRunner.Forget(
-                    TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId),
-                    "flush_applicant");
+                if (scheduleDelivery)
+                    TelemetryQueue.ScheduleFlushApplicant(applicant.ApplicantId);
                 return true;
             }
             catch (Exception ex)
@@ -144,11 +144,11 @@ namespace STS2RitsuLib.Telemetry
                         cancellationToken)
                     .ConfigureAwait(false);
                 await TelemetryQueue.EnqueueAsync(envelope!, cancellationToken).ConfigureAwait(false);
-                var delivery = TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId, cancellationToken);
                 if (waitForDelivery)
-                    await delivery.ConfigureAwait(false);
+                    await TelemetryQueue.FlushApplicantAsync(applicant.ApplicantId, cancellationToken)
+                        .ConfigureAwait(false);
                 else
-                    TelemetryTaskRunner.Forget(delivery, "flush_applicant");
+                    TelemetryQueue.ScheduleFlushApplicant(applicant.ApplicantId);
                 return true;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
