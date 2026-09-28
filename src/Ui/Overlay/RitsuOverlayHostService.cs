@@ -395,7 +395,7 @@ namespace STS2RitsuLib.Ui.Overlay
         public override void _UnhandledInput(InputEvent @event)
         {
             if (Files.RitsuFileDialog.ActiveDialog != null || @event.IsEcho() ||
-                !(@event.IsActionPressed(MegaInput.cancel) || @event.IsActionPressed(MegaInput.pauseAndBack)))
+                !(@event.IsActionReleased(MegaInput.cancel) || @event.IsActionReleased(MegaInput.pauseAndBack)))
                 return;
 
             if (_fixedStack.SubmenusOpen)
