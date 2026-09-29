@@ -20,6 +20,24 @@ namespace STS2RitsuLib.Settings
         private Color _unsetPreviewColor = RitsuShellTheme.Current.Color.UnsetPreview;
 
         /// <summary>
+        ///     <para xml:lang="en">Creates a color editor with alpha editing enabled and HDR intensity editing disabled.</para>
+        ///     <para xml:lang="zh-CN">创建启用 Alpha 编辑、禁用 HDR 强度编辑的颜色编辑器。</para>
+        /// </summary>
+        /// <param name="initialValue">
+        ///     <para xml:lang="en">The initial serialized color; null or empty leaves the value unset.</para>
+        ///     <para xml:lang="zh-CN">初始序列化颜色；为 <see langword="null" /> 或空时保持未设置状态。</para>
+        /// </param>
+        /// <param name="onChanged">
+        ///     <para xml:lang="en">The callback invoked after the user commits a color or clears the value.</para>
+        ///     <para xml:lang="zh-CN">用户提交颜色或清除值后调用的回调。</para>
+        /// </param>
+        public ModSettingsColorControl(string? initialValue, Action<string?> onChanged)
+            // ReSharper disable once RedundantArgumentDefaultValue
+            : this(initialValue, onChanged, true, false)
+        {
+        }
+
+        /// <summary>
         ///     <para xml:lang="en">Creates a color editor with configurable alpha and HDR intensity editing.</para>
         ///     <para xml:lang="zh-CN">创建可配置 Alpha 和 HDR 强度编辑的颜色编辑器。</para>
         /// </summary>
