@@ -1,17 +1,17 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Checksums;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Telemetry.Diagnostics;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Networking.StateDivergence.Patches
 {
     internal static class StateDivergenceDiagnosticsReports
     {
-        public static readonly ConditionalWeakTable<NErrorPopup, StateDivergenceDiagnosticReport> PopupReports = [];
+        public static readonly AttachedState<NErrorPopup, StateDivergenceDiagnosticReport> PopupReports = new();
         private static StateDivergenceDiagnosticReport? _latestReport;
         private static StateDivergenceDiagnosticReport? _latestLogReport;
         private static string? _latestBundlePath;

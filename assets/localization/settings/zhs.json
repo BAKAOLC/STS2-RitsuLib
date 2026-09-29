@@ -53,6 +53,7 @@
   "button.cancel": "取消",
   "button.restoreDefaults": "还原默认值",
   "entry.title": "Mod设置（RitsuLib）",
+  "baselib.shortcut.title": "RitsuLib 设置",
   "entry.openLogs.title": "打开日志文件夹",
   "entry.openLogs.button": "打开日志",
   "entry.openLogs.toastTitle": "日志",

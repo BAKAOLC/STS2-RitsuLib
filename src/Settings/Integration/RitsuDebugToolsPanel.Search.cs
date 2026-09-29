@@ -1,18 +1,18 @@
-﻿using System.Runtime.CompilerServices;
-using MegaCrit.Sts2.Core.Entities.Cards;
+﻿using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Models;
 using STS2RitsuLib.Ui.Catalog;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
     internal sealed partial class RitsuDebugToolsPanel
     {
-        private static readonly ConditionalWeakTable<AbstractModel, RitsuCatalogSearchDocument> SearchDocuments = new();
+        private static readonly AttachedState<AbstractModel, RitsuCatalogSearchDocument> SearchDocuments = new();
 
         private static RitsuCatalogSearchDocument CreateSearchDocument(AbstractModel model)
         {
-            return model.IsMutable ? Create(model) : SearchDocuments.GetValue(model, Create);
+            return model.IsMutable ? Create(model) : SearchDocuments.GetOrAdd(model, Create);
 
             static RitsuCatalogSearchDocument Create(AbstractModel value)
             {

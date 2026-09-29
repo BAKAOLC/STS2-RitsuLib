@@ -1,5 +1,4 @@
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
@@ -18,6 +17,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Settings;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Content.Patches
 {
@@ -35,8 +35,8 @@ namespace STS2RitsuLib.Content.Patches
         private const float EventTipHotZoneMinHeight = 112f;
         private const double EventTipSlideDuration = 0.28;
 
-        private static readonly ConditionalWeakTable<NEventLayout, EventSourceBadgeState> EventSourceBadgeStates =
-            new();
+        private static readonly AttachedState<NEventLayout, EventSourceBadgeState> EventSourceBadgeStates =
+            new(() => new());
 
         internal static void Append(ContentSourceHoverTipFactory.ContentSourceInfo source, ref HoverTip tip)
         {
@@ -103,7 +103,7 @@ namespace STS2RitsuLib.Content.Patches
 
         internal static void TrackAndUpdateEventSourceBadge(NEventLayout layout, EventModel eventModel)
         {
-            var state = EventSourceBadgeStates.GetOrCreateValue(layout);
+            var state = EventSourceBadgeStates.GetOrCreate(layout);
             state.EventModel = eventModel;
             state.Settings = EventSourceSettings.Capture();
             EnsureEventSourceSettingsSubscription(layout, state);

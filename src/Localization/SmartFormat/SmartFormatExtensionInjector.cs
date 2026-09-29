@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+using STS2RitsuLib.Utils;
 using SmartFormat;
 using SmartFormat.Core.Extensions;
 
@@ -10,8 +10,8 @@ namespace STS2RitsuLib.Localization.SmartFormat
     /// </summary>
     public static class SmartFormatExtensionInjector
     {
-        private static readonly ConditionalWeakTable<SmartFormatter, InjectedFormatterNames>
-            InjectedFormatterNamesByFormatter = [];
+        private static readonly AttachedState<SmartFormatter, InjectedFormatterNames>
+            InjectedFormatterNamesByFormatter = new();
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -104,7 +104,7 @@ namespace STS2RitsuLib.Localization.SmartFormat
                 return;
             }
 
-            var injectedNames = InjectedFormatterNamesByFormatter.GetValue(
+            var injectedNames = InjectedFormatterNamesByFormatter.GetOrAdd(
                 smartFormatter,
                 static currentFormatter => new(currentFormatter));
 

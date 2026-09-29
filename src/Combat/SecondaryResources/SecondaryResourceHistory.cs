@@ -20,8 +20,8 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         private static readonly AttachedState<CombatHistory, SecondaryResourceHistoryBag> Bags = new(() => new());
 
         /// <summary>
-        ///     <para xml:lang="en">Returns all attached entries without allocating storage when none exist.</para>
-        ///     <para xml:lang="zh-CN">返回所有附加条目；不存在条目时不会创建存储。</para>
+        ///     <para xml:lang="en">Returns all attached entries without allocating storage when none exist. Entries are cleared with the game's history.</para>
+        ///     <para xml:lang="zh-CN">返回所有附加条目；不存在条目时不会创建存储。条目随游戏战斗历史同步清空。</para>
         /// </summary>
         public static IReadOnlyList<SecondaryResourceHistoryEntry> Entries(CombatHistory history)
         {
@@ -80,8 +80,19 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             Add(combatState, new SecondaryResourceResetEntry(combatState, context));
         }
 
+        internal static void Clear(CombatHistory history)
+        {
+            if (Bags.TryGetValue(history, out var bag))
+                bag.Clear();
+        }
+
         private static void Add(CombatStateLike combatState, SecondaryResourceHistoryEntry entry)
         {
+#if STS2_AT_LEAST_0_104_0
+            if (!combatState.IsLiveCombat())
+                return;
+#endif
+
             var history = CombatManager.Instance?.History;
             if (history == null)
                 return;
@@ -96,6 +107,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
     /// </summary>
     public abstract class SecondaryResourceHistoryEntry
     {
+        private readonly CombatStateLike _combatState;
         private readonly Dictionary<ulong, int> _playerTurnNumbers = [];
 
         /// <summary>
@@ -108,6 +120,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             SecondaryResourceDefinition definition,
             AbstractModel? source)
         {
+            _combatState = combatState;
             Player = player;
             Definition = definition;
             Source = source;
@@ -158,12 +171,13 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public abstract string Description { get; }
 
         /// <summary>
-        ///     <para xml:lang="en">Determines whether the entry occurred during the current player turn.</para>
-        ///     <para xml:lang="zh-CN">判断条目是否发生在当前玩家回合。</para>
+        ///     <para xml:lang="en">Determines whether the entry occurred during the current player turn in the same combat.</para>
+        ///     <para xml:lang="zh-CN">判断条目是否发生在同一场战斗的当前玩家回合。</para>
         /// </summary>
         public bool HappenedThisTurn(CombatStateLike? state)
         {
-            if (state == null || RoundNumber != state.RoundNumber || CurrentSide != state.CurrentSide)
+            if (state == null || !ReferenceEquals(_combatState, state) ||
+                RoundNumber != state.RoundNumber || CurrentSide != state.CurrentSide)
                 return false;
 
             foreach (var (playerId, turnNumber) in _playerTurnNumbers)
@@ -183,17 +197,18 @@ namespace STS2RitsuLib.Combat.SecondaryResources
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Determines whether the entry occurred during <paramref name="player" />'s previous turn.
+        ///         Determines whether the entry occurred during <paramref name="player" />'s previous turn in the same combat.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         判断条目是否发生在 <paramref name="player" /> 的上一回合。
+        ///         判断条目是否发生在同一场战斗中 <paramref name="player" /> 的上一回合。
         ///     </para>
         /// </summary>
         public bool HappenedLastPlayerTurn(Player player)
         {
             ArgumentNullException.ThrowIfNull(player);
 #if STS2_AT_LEAST_0_104_0
-            return _playerTurnNumbers.TryGetValue(player.NetId, out var turnNumber) &&
+            return ReferenceEquals(_combatState, player.Creature.CombatState) &&
+                   _playerTurnNumbers.TryGetValue(player.NetId, out var turnNumber) &&
                    player.PlayerCombatState?.TurnNumber - 1 == turnNumber;
 #else
             return false;
@@ -321,6 +336,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
         public void Add(SecondaryResourceHistoryEntry entry)
         {
             _entries.Add(entry);
+        }
+
+        public void Clear()
+        {
+            _entries.Clear();
         }
     }
 }

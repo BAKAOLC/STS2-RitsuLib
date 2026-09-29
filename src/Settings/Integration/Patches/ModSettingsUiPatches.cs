@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings.Patches
 {
@@ -26,7 +27,13 @@ namespace STS2RitsuLib.Settings.Patches
     [HarmonyPriority(Priority.Last)]
     internal class ModSettingsSubmenuPatch : IPatchMethod
     {
-        internal static readonly ConditionalWeakTable<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = [];
+        private const string BaseLibSubmenuTypeName = "BaseLib.Config.UI.NModConfigSubmenu";
+        private const string BaseLibListButtonTypeName = "BaseLib.Config.UI.NModListButton";
+        private const string BaseLibShortcutName = "RitsuLibModSettingsShortcut";
+        private const string BaseLibShortcutHeaderName = "RitsuLibModSettingsShortcutHeader";
+        private const string BaseLibShortcutDirectivePrefix = "RitsuLib.BaseLibShortcut.Mod.";
+
+        internal static readonly AttachedState<NSubmenuStack, RitsuModSettingsSubmenu> Submenus = new();
         public static string PatchId => "ritsulib_mod_settings_submenu";
         public static string Description => "Inject RitsuLib mod settings submenu into the main menu stack";
         public static bool IsCritical => false;
@@ -41,8 +48,263 @@ namespace STS2RitsuLib.Settings.Patches
             if (type != typeof(RitsuModSettingsSubmenu))
                 return true;
 
-            __result = Submenus.GetValue(__instance, CreateSubmenu);
+            __result = Submenus.GetOrAdd(__instance, CreateSubmenu);
             return false;
+        }
+
+        public static void Postfix(Type type, NSubmenu __result)
+        {
+            if (type.FullName != BaseLibSubmenuTypeName || !GodotObject.IsInstanceValid(__result))
+                return;
+
+            if (__result.IsNodeReady())
+                TryAddBaseLibShortcut(__result);
+            else
+                __result.Ready += () => TryAddBaseLibShortcut(__result);
+        }
+
+        private static void TryAddBaseLibShortcut(NSubmenu submenu)
+        {
+            try
+            {
+                if (!GodotObject.IsInstanceValid(submenu))
+                    return;
+
+                if (AccessTools.Field(submenu.GetType(), "_modListVbox")?.GetValue(submenu) is not VBoxContainer
+                        list || list.GetNodeOrNull<Control>(BaseLibShortcutName) != null)
+                    return;
+
+                var buttonType = submenu.GetType().Assembly.GetType(BaseLibListButtonTypeName);
+                if (buttonType == null)
+                    return;
+
+                RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
+                var modButtons = list.GetChildren().OfType<NButton>().ToArray();
+                var header = new HBoxContainer
+                {
+                    Name = BaseLibShortcutHeaderName,
+                    CustomMinimumSize = new(0f, 34f),
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                };
+                var headerTitle = new Label
+                {
+                    Text = ModSettingsLocalization.Get("baselib.shortcut.title", "RitsuLib Settings"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                };
+                headerTitle.AddThemeColorOverride("font_color", new(0.36f, 0.83f, 0.85f));
+                headerTitle.AddThemeFontSizeOverride("font_size", 20);
+                header.AddChild(CreateHeaderLine());
+                header.AddChild(headerTitle);
+                header.AddChild(CreateHeaderLine());
+                list.AddChild(header);
+                list.MoveChild(header, list.GetChildCount() - 2);
+
+                var localization = ModSettingsLocalization.Instance;
+                var headerSubscribed = false;
+                header.TreeEntered += SubscribeHeaderTitle;
+                header.TreeExiting += UnsubscribeHeaderTitle;
+                SubscribeHeaderTitle();
+
+                void SubscribeHeaderTitle()
+                {
+                    if (headerSubscribed)
+                        return;
+
+                    localization.Changed += RefreshHeaderTitle;
+                    headerSubscribed = true;
+                    RefreshHeaderTitle();
+                }
+
+                void UnsubscribeHeaderTitle()
+                {
+                    if (!headerSubscribed)
+                        return;
+
+                    localization.Changed -= RefreshHeaderTitle;
+                    headerSubscribed = false;
+                }
+
+                void RefreshHeaderTitle()
+                {
+                    if (GodotObject.IsInstanceValid(headerTitle))
+                        headerTitle.Text = ModSettingsLocalization.Get("baselib.shortcut.title", "RitsuLib Settings");
+                }
+
+                static HSeparator CreateHeaderLine()
+                {
+                    return new()
+                    {
+                        SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                        MouseFilter = Control.MouseFilterEnum.Ignore,
+                    };
+                }
+
+                var previous = modButtons.LastOrDefault();
+                var shortcuts = new List<NButton>();
+                AddShortcut(BaseLibShortcutName, Const.ModId, null,
+                    () => ModSettingsLocalization.ResolveModName(Const.ModId, "RitsuLib"));
+
+                var pages = ModSettingsRegistry.GetPages()
+                    .Where(page => !string.Equals(page.ModId, Const.ModId, StringComparison.OrdinalIgnoreCase) &&
+                                   string.IsNullOrWhiteSpace(page.ParentPageId) &&
+                                   ModSettingsVisibility.IsPageVisible(page) &&
+                                   !page.SidebarVisibleOnlyWhenActive)
+                    .OrderBy(page => ModSettingsRegistry.GetModSidebarOrder(page.ModId))
+                    .ThenBy(page => ModSettingsLocalization.ResolveModName(page.ModId, page.ModId),
+                        StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(ModSettingsRegistry.GetEffectivePageSortOrder)
+                    .ThenBy(page => page.Id, StringComparer.OrdinalIgnoreCase)
+                    .GroupBy(page => page.ModId, StringComparer.OrdinalIgnoreCase)
+                    .Select(group =>
+                    {
+                        var enabled = GetBaseLibShortcutOverride(group.Key);
+                        if (enabled == false)
+                            return null;
+
+                        return group.FirstOrDefault(page => !IsBaseLibMirror(page)) ??
+                               (enabled == true ? group.First() : null);
+                    })
+                    .OfType<ModSettingsPage>()
+                    .ToArray();
+                var pageIndex = 0;
+                foreach (var page in pages)
+                    AddShortcut($"{BaseLibShortcutName}_{pageIndex++}", page.ModId, page.Id,
+                        () => ModSettingsLocalization.ResolveModName(page.ModId, page.ModId));
+
+                if (previous == null || shortcuts.Count == 0)
+                    return;
+
+                var first = modButtons[0];
+                var last = shortcuts[^1];
+                last.FocusNeighborBottom = last.GetPathTo(first);
+                first.FocusNeighborTop = first.GetPathTo(last);
+
+                void AddShortcut(string name, string modId, string? pageId, Func<string> resolveTitle)
+                {
+                    if (Activator.CreateInstance(buttonType, name) is not NButton button)
+                        return;
+
+                    button.Name = name;
+                    if (button.GetChildren().OfType<Label>().FirstOrDefault() is { } label)
+                        label.Text = resolveTitle();
+                    button.Connect(NClickableControl.SignalName.Released,
+                        Callable.From<NClickableControl>(_ => OpenRitsuLibSettings(modId, pageId)));
+                    button.AddChild(new ColorRect
+                    {
+                        Name = "RitsuLibAccent",
+                        Color = new(0.36f, 0.83f, 0.85f),
+                        AnchorBottom = 1f,
+                        OffsetRight = 5f,
+                        MouseFilter = Control.MouseFilterEnum.Ignore,
+                    });
+                    list.AddChild(button);
+                    list.MoveChild(button, list.GetChildCount() - 2);
+                    SubscribeToShortcutTitleChanges(button, resolveTitle);
+                    shortcuts.Add(button);
+
+                    if (previous != null)
+                    {
+                        previous.FocusNeighborBottom = previous.GetPathTo(button);
+                        button.FocusNeighborTop = button.GetPathTo(previous);
+                    }
+
+                    button.FocusNeighborLeft = new(".");
+                    button.FocusNeighborRight = new(".");
+                    previous = button;
+                }
+            }
+            catch (Exception ex)
+            {
+                RitsuLibFramework.Logger.Warn($"[Settings] Failed to add BaseLib shortcut: {ex.Message}");
+            }
+        }
+
+        private static bool IsBaseLibMirror(ModSettingsPage page)
+        {
+            return ModSettingsMirrorSyncPolicyRegistry.TryGetPolicy(page.ModId, page.Id, out var policy) &&
+                   policy.Source is ModSettingsMirrorSource.BaseLib or
+                       ModSettingsMirrorSource.BaseLibToRitsuGenerated;
+        }
+
+        private static bool? GetBaseLibShortcutOverride(string modId)
+        {
+            var key = $"{BaseLibShortcutDirectivePrefix}{modId}.Enabled";
+            var enabled = false;
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                object[] attributes;
+                try
+                {
+                    attributes = assembly.GetCustomAttributes(typeof(AssemblyMetadataAttribute), false);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                foreach (var attribute in attributes)
+                {
+                    if (attribute is not AssemblyMetadataAttribute metadata ||
+                        !string.Equals(metadata.Key, key, StringComparison.OrdinalIgnoreCase) ||
+                        !bool.TryParse(metadata.Value, out var value))
+                        continue;
+
+                    if (!value)
+                        return false;
+
+                    enabled = true;
+                }
+            }
+
+            return enabled ? true : null;
+        }
+
+        private static void OpenRitsuLibSettings(string modId, string? pageId)
+        {
+            RitsuLibModSettingsBootstrap.EnsureFrameworkPagesRegistered();
+            var result = ModSettingsNavigator.RequestOpenByIds(modId, pageId, null, null);
+            if (!result.Success)
+                RitsuLibFramework.Logger.Warn($"[Settings] BaseLib shortcut failed: {result.Message}");
+        }
+
+        private static void SubscribeToShortcutTitleChanges(NButton button, Func<string> resolveTitle)
+        {
+            if (button.GetChildren().OfType<Label>().FirstOrDefault() is not { } label)
+                return;
+
+            var localization = ModSettingsLocalization.Instance;
+            var subscribed = false;
+            button.TreeEntered += Subscribe;
+            button.TreeExiting += Unsubscribe;
+            Subscribe();
+            return;
+
+            void Subscribe()
+            {
+                if (subscribed)
+                    return;
+
+                localization.Changed += RefreshTitle;
+                subscribed = true;
+                RefreshTitle();
+            }
+
+            void Unsubscribe()
+            {
+                if (!subscribed)
+                    return;
+
+                localization.Changed -= RefreshTitle;
+                subscribed = false;
+            }
+
+            void RefreshTitle()
+            {
+                if (GodotObject.IsInstanceValid(label))
+                    label.Text = resolveTitle();
+            }
         }
 
         internal static RitsuModSettingsSubmenu CreateSubmenu(NSubmenuStack stack)
@@ -85,7 +347,7 @@ namespace STS2RitsuLib.Settings.Patches
             if (type != typeof(RitsuModSettingsSubmenu))
                 return true;
 
-            __result = ModSettingsSubmenuPatch.Submenus.GetValue(__instance, ModSettingsSubmenuPatch.CreateSubmenu);
+            __result = ModSettingsSubmenuPatch.Submenus.GetOrAdd(__instance, ModSettingsSubmenuPatch.CreateSubmenu);
             return false;
         }
     }

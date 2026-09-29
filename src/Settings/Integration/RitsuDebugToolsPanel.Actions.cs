@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Combat;
@@ -13,6 +12,7 @@ using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Ui.Overlay;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Settings
 {
@@ -35,7 +35,8 @@ namespace STS2RitsuLib.Settings
 
     internal sealed partial class RitsuDebugToolsPanel
     {
-        private readonly ConditionalWeakTable<CardModel, Dictionary<string, bool>> _pileCardSectionExpansion = new();
+        private readonly AttachedState<CardModel, Dictionary<string, bool>>
+            _pileCardSectionExpansion = new(() => new());
 
         private Control CreateCardDetail(CardModel card)
         {
@@ -619,7 +620,7 @@ namespace STS2RitsuLib.Settings
             Control content,
             RitsuDebugToolsGlyph glyph = RitsuDebugToolsGlyph.Sliders)
         {
-            var expansion = _pileCardSectionExpansion.GetOrCreateValue(card);
+            var expansion = _pileCardSectionExpansion.GetOrCreate(card);
             return AdjustmentSection(
                 title,
                 content,

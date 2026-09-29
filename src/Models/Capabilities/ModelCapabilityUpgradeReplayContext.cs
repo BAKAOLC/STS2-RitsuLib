@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -7,11 +7,10 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         private static readonly AsyncLocal<int> CardDeserializeReplayDepth = new();
 
-        private static readonly ConditionalWeakTable<CardModel, DeferredCapabilityImport> DeferredImports = [];
+        private static readonly AttachedState<CardModel, DeferredCapabilityImport> DeferredImports = new();
 
-        private static readonly ConditionalWeakTable<CardModel, DeferredModelSavedDataImport>
-            DeferredModelSavedDataImports =
-                [];
+        private static readonly AttachedState<CardModel, DeferredModelSavedDataImport>
+            DeferredModelSavedDataImports = new();
 
         public static IDisposable BeginCardDeserializeReplay()
         {

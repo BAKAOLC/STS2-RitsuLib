@@ -240,6 +240,8 @@ namespace STS2RitsuLib.Settings
             UpdateStructuralBaseline(items);
             _rows?.ResetSize();
             _rows?.QueueSort();
+            UpdateMinimumSize();
+            FastVerticalStack.RequestAncestorLayouts(this);
         }
 
         private void UpdateListHeaderChrome(List<TItem> items)
@@ -1017,7 +1019,16 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyCollapsedState()
         {
-            _editorSurface?.SetDeferred(CanvasItem.PropertyName.Visible, !_collapsed);
+            if (_editorSurface != null)
+            {
+                _editorSurface.Visible = !_collapsed;
+                if (IsInsideTree())
+                {
+                    UpdateMinimumSize();
+                    FastVerticalStack.RequestAncestorLayouts(this);
+                }
+            }
+
             _toggleButton?.SetSelected(!_collapsed);
         }
 

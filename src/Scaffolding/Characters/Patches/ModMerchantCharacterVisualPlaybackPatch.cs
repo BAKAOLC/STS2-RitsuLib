@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Bindings.MegaSpine;
@@ -9,6 +8,7 @@ using STS2RitsuLib.Scaffolding.Characters.Visuals;
 using STS2RitsuLib.Scaffolding.Content;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
 using STS2RitsuLib.Scaffolding.Visuals.StateMachine;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
@@ -27,11 +27,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
     [HarmonyPriority(Priority.First)]
     internal class ModMerchantCharacterVisualPlaybackPatch : IPatchMethod
     {
-        private static readonly ConditionalWeakTable<Node, StateMachineSlot> StateMachinesByRoot = [];
+        private static readonly AttachedState<Node, StateMachineSlot> StateMachinesByRoot = new();
 
-        private static readonly ConditionalWeakTable<NMerchantCharacter, RegisteredMerchantVisual>
-            RitsuMerchantVisuals =
-                [];
+        private static readonly AttachedState<NMerchantCharacter, RegisteredMerchantVisual>
+            RitsuMerchantVisuals = new();
 
         public static string PatchId => "mod_merchant_character_visual_playback";
 
@@ -92,7 +91,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             if (character is not IModCharacterMerchantAnimationStateMachineFactory factory)
                 return false;
 
-            var slot = StateMachinesByRoot.GetValue(merchant, _ => new());
+            var slot = StateMachinesByRoot.GetOrAdd(merchant, _ => new());
             slot.EnsureBuilt(factory, merchant, character);
 
             if (slot.StateMachine == null)

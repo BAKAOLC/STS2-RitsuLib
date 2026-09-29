@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves.Runs;
@@ -21,8 +20,7 @@ namespace STS2RitsuLib.Utils
     /// </summary>
     public sealed class SavedAttachedState<TKey, TValue> where TKey : class
     {
-        private readonly ConditionalWeakTable<TKey, Box> _table = [];
-        private readonly Func<TKey, TValue> _valueFactory;
+        private readonly AttachedState<TKey, TValue> _table;
 
         /// <summary>
         ///     <para xml:lang="en">Creates persisted attached state using an optional parameterless factory for default values.</para>
@@ -42,7 +40,7 @@ namespace STS2RitsuLib.Utils
             ArgumentException.ThrowIfNullOrWhiteSpace(name);
             SavedAttachedStateRegistry.ValidateSupportedType(typeof(TValue));
 
-            _valueFactory = valueFactory ?? (_ => default!);
+            _table = new(valueFactory);
             var registration = new SavedAttachedStateRegistration<TKey, TValue>(typeof(TKey).Name + "_" + name, order,
                 this);
             SavedAttachedStateRegistry.Register(registration);
@@ -64,8 +62,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public bool ContainsKey(TKey key)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            return _table.TryGetValue(key, out _);
+            return _table.ContainsKey(key);
         }
 
         /// <summary>
@@ -78,8 +75,7 @@ namespace STS2RitsuLib.Utils
         /// </returns>
         public bool TryAdd(TKey key, TValue value)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            return _table.TryAdd(key, new(value));
+            return _table.TryAdd(key, value);
         }
 
         /// <summary>
@@ -92,9 +88,7 @@ namespace STS2RitsuLib.Utils
         /// </exception>
         public void Add(TKey key, TValue value)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            if (!_table.TryAdd(key, new(value)))
-                throw new ArgumentException("An item with the same key has already been added.", nameof(key));
+            _table.Add(key, value);
         }
 
         /// <summary>
@@ -106,8 +100,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public TValue GetOrAdd(TKey key, TValue value)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            return _table.GetValue(key, _ => new(value)).Value;
+            return _table.GetOrAdd(key, value);
         }
 
         /// <summary>
@@ -119,9 +112,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            ArgumentNullException.ThrowIfNull(valueFactory);
-            return _table.GetValue(key, k => new(valueFactory(k))).Value;
+            return _table.GetOrAdd(key, valueFactory);
         }
 
         /// <summary>
@@ -130,8 +121,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public TValue GetOrCreate(TKey key)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            return _table.GetValue(key, k => new(_valueFactory(k))).Value;
+            return _table.GetOrCreate(key);
         }
 
         /// <summary>
@@ -140,8 +130,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public TValue? GetValueOrDefault(TKey key)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            return TryGetValue(key, out var value) ? value : default;
+            return _table.GetValueOrDefault(key);
         }
 
         /// <summary>
@@ -153,8 +142,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public TValue GetValueOrDefault(TKey key, TValue defaultValue)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            return TryGetValue(key, out var value) ? value : defaultValue;
+            return _table.GetValueOrDefault(key, defaultValue);
         }
 
         /// <summary>
@@ -163,16 +151,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
-            ArgumentNullException.ThrowIfNull(key);
-
-            if (_table.TryGetValue(key, out var box))
-            {
-                value = box.Value;
-                return true;
-            }
-
-            value = default!;
-            return false;
+            return _table.TryGetValue(key, out value);
         }
 
         /// <summary>
@@ -184,10 +163,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public TValue Set(TKey key, TValue value)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            _table.Remove(key);
-            _table.Add(key, new(value));
-            return value;
+            return _table.Set(key, value);
         }
 
         /// <summary>
@@ -199,9 +175,7 @@ namespace STS2RitsuLib.Utils
         /// </summary>
         public TValue Update(TKey key, Func<TValue, TValue> updater)
         {
-            ArgumentNullException.ThrowIfNull(updater);
-            var updated = updater(GetOrCreate(key));
-            return Set(key, updated);
+            return _table.Update(key, updater);
         }
 
         /// <summary>
@@ -214,8 +188,7 @@ namespace STS2RitsuLib.Utils
         /// </returns>
         public bool Remove(TKey key)
         {
-            ArgumentNullException.ThrowIfNull(key);
-            return TryRemove(key, out _);
+            return _table.Remove(key);
         }
 
         /// <summary>
@@ -228,23 +201,7 @@ namespace STS2RitsuLib.Utils
         /// </returns>
         public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
-            ArgumentNullException.ThrowIfNull(key);
-
-            if (!_table.TryGetValue(key, out var box))
-            {
-                value = default!;
-                return false;
-            }
-
-            var extracted = box.Value;
-            if (!_table.Remove(key))
-            {
-                value = default!;
-                return false;
-            }
-
-            value = extracted;
-            return true;
+            return _table.TryRemove(key, out value);
         }
 
         /// <summary>
@@ -254,11 +211,6 @@ namespace STS2RitsuLib.Utils
         public void Clear()
         {
             _table.Clear();
-        }
-
-        private sealed class Box(TValue value)
-        {
-            public TValue Value { get; } = value;
         }
 
         private sealed class SavedAttachedStateRegistration<TSavedKey, TSavedValue>(

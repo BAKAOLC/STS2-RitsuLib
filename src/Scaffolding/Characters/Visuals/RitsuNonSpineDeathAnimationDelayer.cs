@@ -1,8 +1,8 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 {
@@ -10,7 +10,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
     {
         private const float MaxDelaySeconds = 30f;
         private const string NodeName = "RitsuNonSpineDeathAnimationDelayer";
-        private static readonly ConditionalWeakTable<NCreature, DelaySlot> Delays = [];
+        private static readonly AttachedState<NCreature, DelaySlot> Delays = new();
         private readonly Task _delayTask;
 
         private RitsuNonSpineDeathAnimationDelayer(float seconds)
@@ -35,7 +35,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
                 return;
 
             seconds = Math.Clamp(seconds, 0f, MaxDelaySeconds);
-            Delays.GetValue(creature, _ => new()).Seconds = seconds;
+            Delays.GetOrAdd(creature, _ => new()).Seconds = seconds;
 
             if (creature.GetNodeOrNull(NodeName) is RitsuNonSpineDeathAnimationDelayer)
                 return;

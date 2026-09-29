@@ -250,7 +250,7 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                 ["run_history"] = runHistory,
             };
 
-            var capturedApplicants = new List<string>();
+            var capturedCount = 0;
             // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
             foreach (var applicantId in applicantIds)
                 if (new TelemetryClient(applicantId).TryCapturePayload(
@@ -260,14 +260,10 @@ namespace STS2RitsuLib.Telemetry.RunHistory
                         properties,
                         context,
                         true))
-                    capturedApplicants.Add(applicantId);
+                    capturedCount++;
 
             RitsuLibFramework.Logger.Info(
-                $"[Telemetry] Captured ended run history for {capturedApplicants.Count} authorized applicant(s); abandoned={evt.IsAbandoned}, victory={evt.IsVictory}.");
-            foreach (var applicantId in capturedApplicants)
-                TelemetryTaskRunner.Forget(
-                    TelemetryQueue.FlushApplicantAsync(applicantId),
-                    "flush_applicant_after_run_history");
+                $"[Telemetry] Captured ended run history for {capturedCount} authorized applicant(s); abandoned={evt.IsAbandoned}, victory={evt.IsVictory}.");
         }
     }
 }

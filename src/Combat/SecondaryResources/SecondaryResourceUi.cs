@@ -320,8 +320,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             where TNode : Node
         {
             SecondaryResourceCombatUiStateTracker.Ensure(parent);
-            CombatHiders.GetOrCreate(parent).Add(() => HideNode(node));
-            CombatUpdaters.GetOrCreate(parent).Add(player =>
+            HideNode(node);
+            RegisterNodeCallback(parent, node, CombatHiders, () => HideNode(node));
+            RegisterNodeCallback(parent, node, CombatUpdaters, player =>
             {
                 if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
                     return;
@@ -339,7 +340,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             if (changed == null)
                 return;
 
-            CombatChangeHandlers.GetOrCreate(parent).Add(change =>
+            RegisterNodeCallback(parent, node, CombatChangeHandlers, change =>
             {
                 if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
                     return;
@@ -362,7 +363,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             where TParent : Node
             where TNode : Node
         {
-            CardUpdaters.GetOrCreate(parent).Add((card, pileType, previewMode) =>
+            RegisterNodeCallback(parent, node, CardUpdaters, (card, pileType, previewMode) =>
             {
                 if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
                     return;
@@ -391,8 +392,9 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             Action<SecondaryResourceMultiplayerPlayerStateUiContext<TNode>> update)
             where TNode : Node
         {
-            MultiplayerPlayerStateHiders.GetOrCreate(parent).Add(() => HideNode(node));
-            MultiplayerPlayerStateUpdaters.GetOrCreate(parent).Add(() =>
+            HideNode(node);
+            RegisterNodeCallback(parent, node, MultiplayerPlayerStateHiders, () => HideNode(node));
+            RegisterNodeCallback(parent, node, MultiplayerPlayerStateUpdaters, () =>
             {
                 if (!GodotObject.IsInstanceValid(parent) || !GodotObject.IsInstanceValid(node))
                     return;
@@ -406,6 +408,45 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     SecondaryResourceVisibility.GetCombatUiDefinitions(parent.Player));
                 InvokeCallback(update, "multiplayer player-state UI update", () => update(context));
             });
+        }
+
+        private static void RegisterNodeCallback<TCallback>(
+            Node parent,
+            Node node,
+            AttachedState<Node, List<TCallback>> callbacks,
+            TCallback callback)
+            where TCallback : Delegate
+        {
+            var registered = false;
+            node.TreeEntered += Register;
+            node.TreeExiting += Unregister;
+            if (node.IsInsideTree())
+                Register();
+
+            return;
+
+            void Register()
+            {
+                if (registered)
+                    return;
+
+                callbacks.GetOrCreate(parent).Add(callback);
+                registered = true;
+            }
+
+            void Unregister()
+            {
+                if (!registered)
+                    return;
+
+                registered = false;
+                if (!callbacks.TryGetValue(parent, out var registeredCallbacks))
+                    return;
+
+                registeredCallbacks.Remove(callback);
+                if (registeredCallbacks.Count == 0)
+                    callbacks.Remove(parent);
+            }
         }
 
         private static void HideNode(Node node)

@@ -10,10 +10,15 @@ namespace STS2RitsuLib.Utils
     ///     </para>
     ///     <para xml:lang="zh-CN">在任意引用对象上存储模组附加状态，无需子类化，也无需通过 object API 装箱。</para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">Entries follow the key object's lifetime. Callers must explicitly clear state when a live key is reused for a new combat, run, or UI binding.</para>
+    ///     <para xml:lang="zh-CN">条目随键对象的生命周期保留。仍存活的键被复用于新战斗、新游戏或新界面绑定时，调用方必须显式清理状态。</para>
+    /// </remarks>
     /// <param name="valueFactory">
     ///     <para xml:lang="en">Optional per-key factory; when null, lazily created values use <c>default(TValue)</c>.</para>
     ///     <para xml:lang="zh-CN">可选的按键工厂；为 null 时，惰性创建的值使用 <c>default(TValue)</c>。</para>
     /// </param>
+    [TypeForwardedFrom("STS2-RitsuLib.Runtime, Version=0.6.2.0, Culture=neutral, PublicKeyToken=null")]
     public sealed class AttachedState<TKey, TValue>(Func<TKey, TValue>? valueFactory)
         where TKey : class
     {
@@ -166,8 +171,7 @@ namespace STS2RitsuLib.Utils
         public TValue Set(TKey key, TValue value)
         {
             ArgumentNullException.ThrowIfNull(key);
-            _table.Remove(key);
-            _table.Add(key, new(value));
+            _table.AddOrUpdate(key, new(value));
             return value;
         }
 
@@ -196,7 +200,7 @@ namespace STS2RitsuLib.Utils
         public bool Remove(TKey key)
         {
             ArgumentNullException.ThrowIfNull(key);
-            return TryRemove(key, out _);
+            return _table.Remove(key);
         }
 
         /// <summary>

@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Animation;
@@ -11,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Scaffolding.Visuals;
 using STS2RitsuLib.Scaffolding.Visuals.Definition;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Scaffolding.Characters.Visuals
 {
@@ -38,20 +38,18 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
     /// </summary>
     public static class ModCreatureVisualPlayback
     {
-        private static readonly ConditionalWeakTable<Node, Func<string[], bool>> GodotAnimHandlers = [];
+        private static readonly AttachedState<Node, Func<string[], bool>> GodotAnimHandlers = new();
 
-        private static readonly ConditionalWeakTable<Node, RitsuCreatureVisualRegistration>
-            RitsuCreatureVisuals = [];
+        private static readonly AttachedState<Node, RitsuCreatureVisualRegistration>
+            RitsuCreatureVisuals = new();
 
         private static readonly AccessTools.FieldRef<NMerchantRoom, List<Player>> MerchantRoomPlayersRef =
             AccessTools.FieldRefAccess<NMerchantRoom, List<Player>>("_players");
 
-        private static readonly ConditionalWeakTable<NFakeMerchant, FakeMerchantPlayerVisualSlot>
-            FakeMerchantVisualSlots =
-                [];
+        private static readonly AttachedState<NFakeMerchant, FakeMerchantPlayerVisualSlot>
+            FakeMerchantVisualSlots = new();
 
-        private static readonly ConditionalWeakTable<NMerchantCharacter, CharacterModel> FakeMerchantBoothCharacter =
-            [];
+        private static readonly AttachedState<NMerchantCharacter, CharacterModel> FakeMerchantBoothCharacter = new();
 
         private static readonly string[] DieCueNames = ["die", "death", "dead", "Dead"];
 
@@ -293,7 +291,7 @@ namespace STS2RitsuLib.Scaffolding.Characters.Visuals
         internal static void RegisterFakeMerchantPlayerVisuals(NFakeMerchant screen, List<NMerchantCharacter> ordered,
             IReadOnlyList<Player> players)
         {
-            var slot = FakeMerchantVisualSlots.GetValue(screen, _ => new());
+            var slot = FakeMerchantVisualSlots.GetOrAdd(screen, _ => new());
             slot.Visuals.Clear();
             slot.Visuals.AddRange(ordered);
 

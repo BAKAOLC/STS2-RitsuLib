@@ -8,8 +8,12 @@ namespace STS2RitsuLib.Telemetry
         private const int MaxEventsPerApplicant = 2000;
         private const int MaxEventsPerFlush = 1000;
         private static readonly Lock Sync = new();
+        private static readonly TimeSpan FlushDelay = TimeSpan.FromMilliseconds(250);
 
         private static readonly Dictionary<string, TaskCompletionSource> ActiveFlushes =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly Dictionary<string, object> ScheduledFlushes =
             new(StringComparer.OrdinalIgnoreCase);
 
         internal static void Enqueue(TelemetryEnvelope envelope)
@@ -48,6 +52,36 @@ namespace STS2RitsuLib.Telemetry
             return Task.Run(() => Enqueue(envelope), cancellationToken);
         }
 
+        internal static void ScheduleFlushApplicant(string applicantId)
+        {
+            object marker;
+            lock (Sync)
+            {
+                if (ScheduledFlushes.ContainsKey(applicantId))
+                    return;
+
+                marker = new();
+                ScheduledFlushes.Add(applicantId, marker);
+            }
+
+            TelemetryTaskRunner.Forget(FlushScheduledAsync(applicantId, marker), "flush_applicant_scheduled");
+        }
+
+        private static async Task FlushScheduledAsync(string applicantId, object marker)
+        {
+            await Task.Delay(FlushDelay).ConfigureAwait(false);
+            lock (Sync)
+            {
+                if (!ScheduledFlushes.TryGetValue(applicantId, out var current) ||
+                    !ReferenceEquals(current, marker))
+                    return;
+
+                ScheduledFlushes.Remove(applicantId);
+            }
+
+            await FlushApplicantAsync(applicantId).ConfigureAwait(false);
+        }
+
         public static async Task FlushApplicantAsync(string applicantId, CancellationToken cancellationToken = default)
         {
             using var diagnosticsScope = new TelemetryDiagnosticsScope();
@@ -58,6 +92,7 @@ namespace STS2RitsuLib.Telemetry
                 Task activeFlush;
                 lock (Sync)
                 {
+                    ScheduledFlushes.Remove(applicantId);
                     if (!TelemetryRegistry.TryGetApplicant(applicantId, out applicant))
                     {
                         RitsuLibFramework.Logger.Warn(

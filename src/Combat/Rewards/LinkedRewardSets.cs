@@ -1,6 +1,6 @@
-﻿using System.Runtime.CompilerServices;
-using MegaCrit.Sts2.Core.Entities.Players;
+﻿using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Rewards;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.Rewards
 {
@@ -227,11 +227,11 @@ namespace STS2RitsuLib.Combat.Rewards
 
     internal static class LinkedRewardSetRuntime
     {
-        private static readonly ConditionalWeakTable<LinkedRewardSet, RuntimeState> States = [];
+        private static readonly AttachedState<LinkedRewardSet, RuntimeState> States = new();
 
         internal static void Configure(LinkedRewardSet linkedRewardSet, LinkedRewardSelectionMode mode)
         {
-            var state = States.GetValue(linkedRewardSet, static _ => new());
+            var state = States.GetOrAdd(linkedRewardSet, static _ => new());
             lock (state)
             {
                 if (state.IsResolving || state.IsCompleted)
@@ -254,7 +254,7 @@ namespace STS2RitsuLib.Combat.Rewards
             if (!linkedRewardSet.Rewards.Any(reward => ReferenceEquals(reward, selectedReward)))
                 return false;
 
-            var state = States.GetValue(linkedRewardSet, static _ => new());
+            var state = States.GetOrAdd(linkedRewardSet, static _ => new());
             lock (state)
             {
                 if (state.IsResolving || state.IsCompleted)
@@ -272,7 +272,7 @@ namespace STS2RitsuLib.Combat.Rewards
 
         internal static async Task<bool> ResolveSelection(LinkedRewardSet linkedRewardSet)
         {
-            var state = States.GetValue(linkedRewardSet, static _ => new());
+            var state = States.GetOrAdd(linkedRewardSet, static _ => new());
             Reward selectedReward;
             LinkedRewardSelectionMode mode;
             lock (state)

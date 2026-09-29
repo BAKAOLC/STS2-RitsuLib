@@ -1,16 +1,16 @@
-using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.RunData
 {
     internal static class RunSavedDataLobbyRuntime
     {
-        private static readonly ConditionalWeakTable<StartRunLobby, RunSavedDataLobbySession> Sessions = [];
+        private static readonly AttachedState<StartRunLobby, RunSavedDataLobbySession> Sessions = new();
 
         public static RunSavedDataLobbySession GetSession(StartRunLobby lobby)
         {
             ArgumentNullException.ThrowIfNull(lobby);
-            return Sessions.GetValue(lobby, _ => new());
+            return Sessions.GetOrAdd(lobby, _ => new());
         }
 
         public static bool TryGetSession(StartRunLobby lobby, out RunSavedDataLobbySession session)

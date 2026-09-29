@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Combat.CardTargeting.Patches
 {
@@ -20,8 +21,8 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
         ///     <para xml:lang="en">Stores custom targets for each command instance.</para>
         ///     <para xml:lang="zh-CN">按命令实例保存自定义目标集合。</para>
         /// </summary>
-        internal static readonly ConditionalWeakTable<AttackCommand, StrongBox<IReadOnlyList<Creature>>>
-            CustomTargets = [];
+        internal static readonly AttachedState<AttackCommand, StrongBox<IReadOnlyList<Creature>>>
+            CustomTargets = new();
 
         public static string PatchId => "card_target_custom_attack_command_get_possible_targets";
 

@@ -20,7 +20,8 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
 
         private static readonly CancellationTokenSource EngineCancellation = new();
         private static readonly CancellationToken EngineToken = EngineCancellation.Token;
-        private static readonly Dictionary<string, long> RecentEngineErrors = new(StringComparer.Ordinal);
+        private static readonly HashSet<string> RecentEngineErrors = new(StringComparer.Ordinal);
+        private static readonly Queue<string> RecentEngineErrorOrder = new();
         private static readonly Queue<long> EngineErrorTimes = new();
 
         private static readonly Dictionary<string, int> EngineTextLimits = new()
@@ -33,7 +34,7 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
         };
 
         private static readonly string[] EngineFingerprintFields =
-            ["type", "message", "code", "function", "file", "line", "script_backtrace"];
+            ["type", "message", "code", "function", "file", "line"];
 
         private static Task? _engineWorker;
         private static bool _engineStopping;
@@ -160,6 +161,7 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
                 }
 
                 RecentEngineErrors.Clear();
+                RecentEngineErrorOrder.Clear();
                 EngineErrorTimes.Clear();
             }
         }
@@ -197,12 +199,11 @@ namespace STS2RitsuLib.Telemetry.Diagnostics
                 return false;
             var fingerprint = string.Join('\n', EngineFingerprintFields
                 .Select(field => error[field]?.ToString() ?? ""));
-            if (RecentEngineErrors.TryGetValue(fingerprint, out var last) &&
-                Stopwatch.GetElapsedTime(last, now) < TimeSpan.FromSeconds(30))
+            if (!RecentEngineErrors.Add(fingerprint))
                 return false;
-            if (RecentEngineErrors.Count >= MaxRecentFingerprints)
-                RecentEngineErrors.Remove(RecentEngineErrors.MinBy(pair => pair.Value).Key);
-            RecentEngineErrors[fingerprint] = now;
+            RecentEngineErrorOrder.Enqueue(fingerprint);
+            while (RecentEngineErrorOrder.Count > MaxRecentFingerprints)
+                RecentEngineErrors.Remove(RecentEngineErrorOrder.Dequeue());
             EngineErrorTimes.Enqueue(now);
             return true;
         }

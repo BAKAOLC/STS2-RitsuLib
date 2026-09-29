@@ -53,6 +53,7 @@
   "button.cancel": "Cancel",
   "button.restoreDefaults": "Restore defaults",
   "entry.title": "Mod Settings (RitsuLib)",
+  "baselib.shortcut.title": "RitsuLib Settings",
   "entry.openLogs.title": "Open Logs Folder",
   "entry.openLogs.button": "Open Logs",
   "entry.openLogs.toastTitle": "Logs",

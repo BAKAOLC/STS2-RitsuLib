@@ -1,3 +1,4 @@
+using STS2RitsuLib.Utils;
 #if STS2_AT_LEAST_0_110_0
 using LobbyPlayerCompat = MegaCrit.Sts2.Core.Entities.Multiplayer.StartRunLobbyPlayer;
 #else
@@ -271,7 +272,7 @@ namespace STS2RitsuLib.RunData.Patches
 
     internal static class RunSavedDataStartRunLobbyAccess
     {
-        private static readonly ConditionalWeakTable<INetGameService, StartRunLobby> LobbyByNetService = [];
+        private static readonly AttachedState<INetGameService, StartRunLobby> LobbyByNetService = new();
         private static readonly Lock ActiveLobbySync = new();
         private static readonly List<WeakReference<StartRunLobby>> ActiveLobbies = [];
 

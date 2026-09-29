@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Text;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
@@ -62,7 +61,7 @@ namespace STS2RitsuLib.Settings
         private static readonly StringName PaneSidebarHotkey = MegaInput.viewDeckAndTabLeft;
         private static readonly StringName PaneContentHotkey = MegaInput.viewExhaustPileAndTabRight;
         private static readonly ModSettingsReusableEntryNodePool SharedReusableEntryNodePool = new();
-        private static readonly ConditionalWeakTable<Control, PulseHighlightState> PulseHighlightStates = [];
+        private static readonly AttachedState<Control, PulseHighlightState> PulseHighlightStates = new();
 
         private readonly Action<IModSettingsBinding> _bindingWriteListener;
 
