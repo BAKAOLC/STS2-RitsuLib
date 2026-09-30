@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Settings
     {
         private bool _initialValue;
         private bool _isOn;
+        private bool _switchOnly;
         private Action<bool>? _onChanged;
 
         /// <summary>
@@ -53,6 +54,11 @@ namespace STS2RitsuLib.Settings
                 11,
                 RitsuShellTheme.Current.Metric.FontSize.Button);
             Pressed += ToggleValue;
+            Resized += RefreshLayout;
+            MouseEntered += QueueRedraw;
+            MouseExited += QueueRedraw;
+            FocusEntered += QueueRedraw;
+            FocusExited += QueueRedraw;
         }
 
         /// <summary>
@@ -112,7 +118,8 @@ namespace STS2RitsuLib.Settings
             var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.padding", 14);
             var rightPadding = RitsuShellThemeLayoutResolver.ResolveInt(
                 "components.toggle.layout.padding.right", padding.Right);
-            var trackRect = new Rect2(Size.X - rightPadding - switchSize.X,
+            var trackRect = new Rect2(
+                _switchOnly ? (Size.X - switchSize.X) * 0.5f : Size.X - rightPadding - switchSize.X,
                 (Size.Y - switchSize.Y) * 0.5f, switchSize.X, switchSize.Y);
             var trackRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
                 "components.toggle.switch.track.layout.cornerRadius", 0);
@@ -121,7 +128,9 @@ namespace STS2RitsuLib.Settings
             var track = new StyleBoxFlat
             {
                 BgColor = trackColor,
-                BorderColor = ResolveSwitchColor($"track.{state}.border", theme.Text.LabelSecondary),
+                BorderColor = _switchOnly && !Disabled && (IsHovered() || HasFocus())
+                    ? theme.Text.HoverHighlight
+                    : ResolveSwitchColor($"track.{state}.border", theme.Text.LabelSecondary),
                 BorderWidthLeft = trackBorder.Left,
                 BorderWidthTop = trackBorder.Top,
                 BorderWidthRight = trackBorder.Right,
@@ -171,6 +180,32 @@ namespace STS2RitsuLib.Settings
             return Mathf.Max(size.X, 2f) + Mathf.Max(gap, 0f);
         }
 
+        private void RefreshLayout()
+        {
+            if (_switchOnly != ShouldUseSwitchOnly())
+                ApplyVisualState();
+            else
+                QueueRedraw();
+        }
+
+        private bool ShouldUseSwitchOnly()
+        {
+            var width = SizeFlagsHorizontal == SizeFlags.ShrinkEnd && CustomMinimumSize.X > 0f
+                ? CustomMinimumSize.X
+                : Size.X;
+            if (width <= 0f)
+                return false;
+
+            var font = GetThemeFont("font");
+            var fontSize = RitsuShellTheme.Current.Metric.FontSize.Button;
+            var onWidth = font.GetStringSize(RitsuModuleLocalization.Get("toggle.on", "On"),
+                HorizontalAlignment.Left, -1f, fontSize).X;
+            var offWidth = font.GetStringSize(RitsuModuleLocalization.Get("toggle.off", "Off"),
+                HorizontalAlignment.Left, -1f, fontSize).X;
+            var style = CreateStyle(_isOn, false);
+            return width < Mathf.Max(onWidth, offWidth) + style.ContentMarginLeft + style.ContentMarginRight;
+        }
+
         /// <summary>
         ///     <para xml:lang="en">Updates the displayed value without invoking the user-change callback.</para>
         ///     <para xml:lang="zh-CN">更新显示值而不调用用户变更回调。</para>
@@ -199,14 +234,30 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyVisualState()
         {
-            Text = _isOn
+            _switchOnly = ShouldUseSwitchOnly();
+            var stateText = _isOn
                 ? RitsuModuleLocalization.Get("toggle.on", "On")
                 : RitsuModuleLocalization.Get("toggle.off", "Off");
-            AddThemeStyleboxOverride("normal", CreateStyle(_isOn, false));
-            AddThemeStyleboxOverride("hover", CreateStyle(_isOn, true));
-            AddThemeStyleboxOverride("pressed", CreateStyle(_isOn, true));
-            AddThemeStyleboxOverride("focus", CreateFocusStyle(_isOn));
-            AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
+            Text = _switchOnly ? string.Empty : stateText;
+            TooltipText = _switchOnly ? stateText : string.Empty;
+            if (_switchOnly)
+            {
+                var empty = new StyleBoxEmpty();
+                AddThemeStyleboxOverride("normal", empty);
+                AddThemeStyleboxOverride("hover", empty);
+                AddThemeStyleboxOverride("pressed", empty);
+                AddThemeStyleboxOverride("focus", empty);
+                AddThemeStyleboxOverride("disabled", empty);
+            }
+            else
+            {
+                AddThemeStyleboxOverride("normal", CreateStyle(_isOn, false));
+                AddThemeStyleboxOverride("hover", CreateStyle(_isOn, true));
+                AddThemeStyleboxOverride("pressed", CreateStyle(_isOn, true));
+                AddThemeStyleboxOverride("focus", CreateFocusStyle(_isOn));
+                AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
+            }
+
             ModSettingsUiControlTheming.RefreshAdaptiveButtonText(this);
             QueueRedraw();
         }
