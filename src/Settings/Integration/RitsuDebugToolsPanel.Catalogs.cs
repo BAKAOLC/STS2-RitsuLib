@@ -23,6 +23,7 @@ namespace STS2RitsuLib.Settings
     internal sealed partial class RitsuDebugToolsPanel
     {
         private readonly Dictionary<string, CardModel> _pileCardsByItemId = new(StringComparer.Ordinal);
+        private bool _showCardHistory;
 
         private Control CreateCardCatalog()
         {
@@ -46,24 +47,97 @@ namespace STS2RitsuLib.Settings
                     (item, value) => byId[item.Id].Rarity == value),
                 CreateContentSourceFilter(cards, byId),
             };
-            return new RitsuDebugCardCatalog(
+            var historyEntriesById = new Dictionary<string, RitsuDebugCardCatalogEntry>(StringComparer.Ordinal);
+            var library = new RitsuDebugCardCatalog(
                 L("ritsulib.debugTools.search.cards", "Search cards by name or ID"),
-                [
-                    .. cards.Select(card => new RitsuDebugCardCatalogEntry(
-                        new(
-                            card.Id.ToString(),
-                            SafeTitle(card),
-                            $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · " +
-                            $"{ContentSourceDisplayLabel(ContentSourceResolver.Resolve(card))} · {card.Id}",
-                            $"{card.Type} {card.Rarity} {ContentSourceSearchText(card)}",
-                            badge: CardCost(card)) { SearchDocument = CreateSearchDocument(card) },
-                        CreateCardPreviewModel(card),
-                        card,
-                        () => CreateCardDetail(card))),
-                ],
+                [.. cards.Select(CreateEntry)],
                 filters,
                 defaultFilterId: defaultPoolOptionId == null ? null : poolFilter.Id,
                 defaultFilterOptionId: defaultPoolOptionId);
+            var historyIds = RitsuDebugToolsInterfaceStateStore.GetCardHistory();
+            var history = new RitsuDebugCardCatalog(
+                L("ritsulib.debugTools.search.cardHistory", "Search previously added cards"),
+                HistoryEntries(),
+                filters,
+                preserveSourceOrder: true,
+                emptyText: L("ritsulib.debugTools.cards.historyEmpty",
+                    "No previously added cards are available. Successfully added cards appear here."),
+                // ReSharper disable once ExplicitCallerInfoArgument
+                preferenceId: "CreateCardHistoryCatalog");
+            var root = new RitsuDebugLiveDetailContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill,
+            };
+            root.AddThemeConstantOverride("separation", 10);
+            var libraryButton = ModeButton(
+                RitsuDebugToolsGlyph.Library,
+                L("ritsulib.debugTools.cards.library", "All cards"),
+                static () => { });
+            var historyButton = ModeButton(
+                RitsuDebugToolsGlyph.Cards,
+                L("ritsulib.debugTools.cards.history", "Previously added"),
+                static () => { });
+            libraryButton.Pressed += () => SetMode(false);
+            historyButton.Pressed += () => SetMode(true);
+            root.AddChild(CreateWorkspaceToolbar(
+                libraryButton,
+                historyButton,
+                string.Format(
+                    L("ritsulib.debugTools.cards.historyHint",
+                        "History keeps the last {0} distinct cards, newest first."),
+                    RitsuDebugToolsInterfaceStateStore.MaxCardHistoryCount)));
+            root.AddChild(library);
+            root.AddChild(history);
+            root.RegisterRefresh(RefreshHistory);
+            SetMode(_showCardHistory);
+            return root;
+
+            RitsuDebugCardCatalogEntry CreateEntry(CardModel card)
+            {
+                return new(
+                    new(
+                        card.Id.ToString(),
+                        SafeTitle(card),
+                        $"{EnumLabel(card.Type)} · {EnumLabel(card.Rarity)} · " +
+                        $"{ContentSourceDisplayLabel(ContentSourceResolver.Resolve(card))} · {card.Id}",
+                        $"{card.Type} {card.Rarity} {ContentSourceSearchText(card)}",
+                        badge: CardCost(card)) { SearchDocument = CreateSearchDocument(card) },
+                    CreateCardPreviewModel(card),
+                    card,
+                    () => CreateCardDetail(card));
+            }
+
+            RitsuDebugCardCatalogEntry[] HistoryEntries()
+            {
+                return
+                [
+                    .. historyIds.Where(byId.ContainsKey).Select(id =>
+                    {
+                        if (!historyEntriesById.TryGetValue(id, out var entry))
+                            historyEntriesById[id] = entry = CreateEntry(byId[id]);
+                        return entry;
+                    }),
+                ];
+            }
+
+            void RefreshHistory()
+            {
+                var currentIds = RitsuDebugToolsInterfaceStateStore.GetCardHistory();
+                if (historyIds.SequenceEqual(currentIds, StringComparer.Ordinal))
+                    return;
+                historyIds = currentIds;
+                history.UpdateEntries(HistoryEntries());
+            }
+
+            void SetMode(bool showHistory)
+            {
+                _showCardHistory = showHistory;
+                library.Visible = !showHistory;
+                history.Visible = showHistory;
+                libraryButton.SetSelected(!showHistory);
+                historyButton.SetSelected(showHistory);
+            }
         }
 
         private RitsuCatalogFilter CreateCardPoolFilter(

@@ -418,10 +418,11 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             where TCallback : Delegate
         {
             var registered = false;
-            node.TreeEntered += Register;
-            node.TreeExiting += Unregister;
-            if (node.IsInsideTree())
-                Register();
+            node.AddChild(new SecondaryResourceUiCallbackRegistration
+            {
+                RegisterCallback = Register,
+                UnregisterCallback = Unregister,
+            });
 
             return;
 
@@ -684,6 +685,24 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                    playerState.GetNodeOrNull<HBoxContainer>("TopInfoContainer") is { } topInfoContainer
                 ? topInfoContainer
                 : parent;
+        }
+    }
+
+    internal sealed partial class SecondaryResourceUiCallbackRegistration : Node
+    {
+        internal Action RegisterCallback { private get; init; } = null!;
+        internal Action UnregisterCallback { private get; init; } = null!;
+
+        public override void _EnterTree()
+        {
+            base._EnterTree();
+            RegisterCallback();
+        }
+
+        public override void _ExitTree()
+        {
+            UnregisterCallback();
+            base._ExitTree();
         }
     }
 

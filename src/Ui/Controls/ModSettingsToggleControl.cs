@@ -11,6 +11,7 @@ namespace STS2RitsuLib.Settings
     {
         private bool _initialValue;
         private bool _isOn;
+        private bool _switchOnly;
         private Action<bool>? _onChanged;
 
         /// <summary>
@@ -39,6 +40,7 @@ namespace STS2RitsuLib.Settings
             FocusMode = FocusModeEnum.All;
             MouseFilter = MouseFilterEnum.Stop;
             Flat = false;
+            Alignment = HorizontalAlignment.Center;
             AddThemeFontOverride("font", RitsuShellTheme.Current.Font.BodyBold);
             AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Button);
             AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelPrimary);
@@ -52,6 +54,11 @@ namespace STS2RitsuLib.Settings
                 11,
                 RitsuShellTheme.Current.Metric.FontSize.Button);
             Pressed += ToggleValue;
+            Resized += RefreshLayout;
+            MouseEntered += QueueRedraw;
+            MouseExited += QueueRedraw;
+            FocusEntered += QueueRedraw;
+            FocusExited += QueueRedraw;
         }
 
         /// <summary>
@@ -88,6 +95,117 @@ namespace STS2RitsuLib.Settings
             ApplyVisualState();
         }
 
+        /// <inheritdoc />
+        public override void _Draw()
+        {
+            var theme = RitsuShellTheme.Current;
+            var foregroundFallback = Disabled
+                ? ModSettingsUiControlTheming.ResolveDisabledForeground(theme.Text.LabelPrimary)
+                : theme.Text.LabelPrimary;
+            var state = Disabled ? "disabled" : _isOn ? "on" : "off";
+            var foreground = ResolveSwitchColor($"thumb.{state}.bg", foregroundFallback);
+            var trackColorFallback = Disabled
+                ? theme.Component.Toggle.Disabled.Border
+                : _isOn
+                    ? theme.Component.Toggle.On.Border
+                    : theme.Component.Toggle.Off.Border;
+            var trackColor = ResolveSwitchColor($"track.{state}.bg", trackColorFallback);
+            var switchSize = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.toggle.switch.layout.size", new(52f, 26f));
+            switchSize = new(Mathf.Max(switchSize.X, 2f), Mathf.Max(switchSize.Y, 2f));
+            var inset = Mathf.Clamp(RitsuShellThemeLayoutResolver.ResolveFloat(
+                "components.toggle.switch.layout.inset", 3f), 0f, (Mathf.Min(switchSize.X, switchSize.Y) - 1f) * 0.5f);
+            var padding = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.padding", 14);
+            var rightPadding = RitsuShellThemeLayoutResolver.ResolveInt(
+                "components.toggle.layout.padding.right", padding.Right);
+            var trackRect = new Rect2(
+                _switchOnly ? (Size.X - switchSize.X) * 0.5f : Size.X - rightPadding - switchSize.X,
+                (Size.Y - switchSize.Y) * 0.5f, switchSize.X, switchSize.Y);
+            var trackRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.toggle.switch.track.layout.cornerRadius", 0);
+            var trackBorder = RitsuShellThemeLayoutResolver.ResolveEdges(
+                "components.toggle.switch.track.layout.borderWidth", 1);
+            var track = new StyleBoxFlat
+            {
+                BgColor = trackColor,
+                BorderColor = _switchOnly && !Disabled && (IsHovered() || HasFocus())
+                    ? theme.Text.HoverHighlight
+                    : ResolveSwitchColor($"track.{state}.border", theme.Text.LabelSecondary),
+                BorderWidthLeft = trackBorder.Left,
+                BorderWidthTop = trackBorder.Top,
+                BorderWidthRight = trackBorder.Right,
+                BorderWidthBottom = trackBorder.Bottom,
+                CornerRadiusTopLeft = trackRadii.TopLeft,
+                CornerRadiusTopRight = trackRadii.TopRight,
+                CornerRadiusBottomLeft = trackRadii.BottomLeft,
+                CornerRadiusBottomRight = trackRadii.BottomRight,
+            };
+            track.Draw(GetCanvasItem(), trackRect);
+            var thumbSize = Mathf.Min(switchSize.X, switchSize.Y) - inset * 2f;
+            var thumbRect = new Rect2(
+                _isOn ? trackRect.End.X - inset - thumbSize : trackRect.Position.X + inset,
+                trackRect.Position.Y + (switchSize.Y - thumbSize) * 0.5f, thumbSize, thumbSize);
+            var thumbRadii = RitsuShellThemeLayoutResolver.ResolveCornerRadii(
+                "components.toggle.switch.thumb.layout.cornerRadius", 0);
+            var thumbBorder = RitsuShellThemeLayoutResolver.ResolveEdges(
+                "components.toggle.switch.thumb.layout.borderWidth", 1);
+            var thumb = new StyleBoxFlat
+            {
+                BgColor = foreground,
+                BorderColor = ResolveSwitchColor($"thumb.{state}.border", theme.Component.Toggle.Off.Bg),
+                BorderWidthLeft = thumbBorder.Left,
+                BorderWidthTop = thumbBorder.Top,
+                BorderWidthRight = thumbBorder.Right,
+                BorderWidthBottom = thumbBorder.Bottom,
+                CornerRadiusTopLeft = thumbRadii.TopLeft,
+                CornerRadiusTopRight = thumbRadii.TopRight,
+                CornerRadiusBottomLeft = thumbRadii.BottomLeft,
+                CornerRadiusBottomRight = thumbRadii.BottomRight,
+            };
+            thumb.Draw(GetCanvasItem(), thumbRect);
+        }
+
+        private static Color ResolveSwitchColor(string path, Color fallback)
+        {
+            return RitsuShellTheme.Current.TryGetColor($"components.toggle.switch.{path}", out var color)
+                ? color
+                : fallback;
+        }
+
+        private static float ResolveSwitchContentWidth()
+        {
+            var size = RitsuShellThemeLayoutResolver.ResolveMinSize(
+                "components.toggle.switch.layout.size", new(52f, 26f));
+            var gap = RitsuShellThemeLayoutResolver.ResolveFloat("components.toggle.switch.layout.textGap", 12f);
+            return Mathf.Max(size.X, 2f) + Mathf.Max(gap, 0f);
+        }
+
+        private void RefreshLayout()
+        {
+            if (_switchOnly != ShouldUseSwitchOnly())
+                ApplyVisualState();
+            else
+                QueueRedraw();
+        }
+
+        private bool ShouldUseSwitchOnly()
+        {
+            var width = SizeFlagsHorizontal == SizeFlags.ShrinkEnd && CustomMinimumSize.X > 0f
+                ? CustomMinimumSize.X
+                : Size.X;
+            if (width <= 0f)
+                return false;
+
+            var font = GetThemeFont("font");
+            var fontSize = RitsuShellTheme.Current.Metric.FontSize.Button;
+            var onWidth = font.GetStringSize(RitsuModuleLocalization.Get("toggle.on", "On"),
+                HorizontalAlignment.Left, -1f, fontSize).X;
+            var offWidth = font.GetStringSize(RitsuModuleLocalization.Get("toggle.off", "Off"),
+                HorizontalAlignment.Left, -1f, fontSize).X;
+            var style = CreateStyle(_isOn, false);
+            return width < Mathf.Max(onWidth, offWidth) + style.ContentMarginLeft + style.ContentMarginRight;
+        }
+
         /// <summary>
         ///     <para xml:lang="en">Updates the displayed value without invoking the user-change callback.</para>
         ///     <para xml:lang="zh-CN">更新显示值而不调用用户变更回调。</para>
@@ -116,20 +234,38 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyVisualState()
         {
-            Text = _isOn
+            _switchOnly = ShouldUseSwitchOnly();
+            var stateText = _isOn
                 ? RitsuModuleLocalization.Get("toggle.on", "On")
                 : RitsuModuleLocalization.Get("toggle.off", "Off");
-            AddThemeStyleboxOverride("normal", CreateStyle(_isOn, false));
-            AddThemeStyleboxOverride("hover", CreateStyle(_isOn, true));
-            AddThemeStyleboxOverride("pressed", CreateStyle(true, true));
-            AddThemeStyleboxOverride("focus", CreateFocusStyle(_isOn));
-            AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
+            Text = _switchOnly ? string.Empty : stateText;
+            TooltipText = _switchOnly ? stateText : string.Empty;
+            if (_switchOnly)
+            {
+                var empty = new StyleBoxEmpty();
+                AddThemeStyleboxOverride("normal", empty);
+                AddThemeStyleboxOverride("hover", empty);
+                AddThemeStyleboxOverride("pressed", empty);
+                AddThemeStyleboxOverride("focus", empty);
+                AddThemeStyleboxOverride("disabled", empty);
+            }
+            else
+            {
+                AddThemeStyleboxOverride("normal", CreateStyle(_isOn, false));
+                AddThemeStyleboxOverride("hover", CreateStyle(_isOn, true));
+                AddThemeStyleboxOverride("pressed", CreateStyle(_isOn, true));
+                AddThemeStyleboxOverride("focus", CreateFocusStyle(_isOn));
+                AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
+            }
+
             ModSettingsUiControlTheming.RefreshAdaptiveButtonText(this);
+            QueueRedraw();
         }
 
         private static StyleBoxFlat CreateFocusStyle(bool on)
         {
             var style = (StyleBoxFlat)CreateStyle(on, true).Duplicate();
+            style.DrawCenter = false;
             var border = RitsuShellThemeLayoutResolver.ResolveEdges("components.toggle.layout.borderWidthFocus", 4);
             var focusColor = on
                 ? RitsuShellTheme.Current.Component.Toggle.On.Border
@@ -169,9 +305,7 @@ namespace STS2RitsuLib.Settings
             {
                 BgColor = on
                     ? RitsuShellTheme.Current.Component.Toggle.On.Bg
-                    : hovered
-                        ? RitsuShellTheme.Current.Component.Toggle.OffHover.Bg
-                        : RitsuShellTheme.Current.Component.Toggle.Off.Bg,
+                    : RitsuShellTheme.Current.Component.Toggle.Off.Bg,
                 BorderColor = borderColor,
                 BorderWidthLeft = border.Left,
                 BorderWidthTop = border.Top,
@@ -187,7 +321,7 @@ namespace STS2RitsuLib.Settings
                 ShadowSize = shadowSize,
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
-                ContentMarginRight = padding.Right,
+                ContentMarginRight = padding.Right + ResolveSwitchContentWidth(),
                 ContentMarginBottom = padding.Bottom,
             };
         }
@@ -217,7 +351,7 @@ namespace STS2RitsuLib.Settings
                 CornerRadiusBottomLeft = cornerRadii.BottomLeft,
                 ContentMarginLeft = padding.Left,
                 ContentMarginTop = padding.Top,
-                ContentMarginRight = padding.Right,
+                ContentMarginRight = padding.Right + ResolveSwitchContentWidth(),
                 ContentMarginBottom = padding.Bottom,
             };
         }

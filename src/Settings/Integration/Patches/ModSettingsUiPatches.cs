@@ -2,6 +2,7 @@ using System.Reflection;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.addons.mega_text;
+using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -92,6 +93,8 @@ namespace STS2RitsuLib.Settings.Patches
                     HorizontalAlignment = HorizontalAlignment.Center,
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                 };
+                headerTitle.AddThemeFontOverride("font",
+                    PreloadManager.Cache.GetAsset<Font>("res://themes/kreon_regular_glyph_space_one.tres"));
                 headerTitle.AddThemeColorOverride("font_color", new(0.36f, 0.83f, 0.85f));
                 headerTitle.AddThemeFontSizeOverride("font_size", 20);
                 header.AddChild(CreateHeaderLine());
@@ -432,7 +435,7 @@ namespace STS2RitsuLib.Settings.Patches
 
             RemoveStaleEntryNodes(content);
 
-            var divider = ModSettingsUiFactory.CreateDivider();
+            var divider = CreateNativeSettingsDivider(content);
             divider.Name = EntryDividerNodeName;
 
             var line = ModSettingsGameSettingsEntryLine.Create(OpenSubmenu);
@@ -467,7 +470,7 @@ namespace STS2RitsuLib.Settings.Patches
 
             RemoveStaleLogsNodes(content);
 
-            var divider = ModSettingsUiFactory.CreateDivider();
+            var divider = CreateNativeSettingsDivider(content);
             divider.Name = LogsDividerNodeName;
 
             var line = ModSettingsGameSettingsEntryLine.CreateOpenLogs(OpenLogsFolder);
@@ -485,6 +488,18 @@ namespace STS2RitsuLib.Settings.Patches
                     ModSettingsLocalization.Get("entry.openLogs.toastTitle", "Logs"),
                     "[Settings][OpenLogs]");
             }
+        }
+
+        private static ColorRect CreateNativeSettingsDivider(VBoxContainer content)
+        {
+            var nativeDivider = content.GetNodeOrNull<ColorRect>("SendFeedbackDivider") ??
+                                content.GetNodeOrNull<ColorRect>("CreditsDivider");
+            return new()
+            {
+                CustomMinimumSize = nativeDivider?.CustomMinimumSize ?? new Vector2(0f, 2f),
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                Color = nativeDivider?.Color ?? new Color(0.909804f, 0.862745f, 0.745098f, 0.25098f),
+            };
         }
 
         private static void MoveEntryAboveNativeModSettings(

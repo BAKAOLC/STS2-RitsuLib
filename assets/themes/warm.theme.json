@@ -1,7 +1,7 @@
 ﻿{
   "$schema": "https://raw.githubusercontent.com/BAKAOLC/STS2-RitsuLib/main/schemas/ui/shell/v1/schema.json",
   "themeFormatVersion": 1,
-  "themeVersion": 10,
+  "themeVersion": 11,
   "id": "warm",
   "displayName": "Warm (Square)",
   "inherits": "warm-rounded",
@@ -81,6 +81,18 @@
       }
     },
     "toggle": {
+      "switch": {
+        "track": {
+          "layout": {
+            "cornerRadius": { "$value": 0, "$type": "dimension" }
+          }
+        },
+        "thumb": {
+          "layout": {
+            "cornerRadius": { "$value": 0, "$type": "dimension" }
+          }
+        }
+      },
       "layout": {
         "cornerRadius": {
           "$value": 0,

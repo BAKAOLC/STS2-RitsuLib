@@ -55,6 +55,7 @@ namespace STS2RitsuLib.Settings
         private uint? _selectedCreatureCombatId;
         private string? _selectedCreaturePresetId;
         private bool _stateRefreshScheduled;
+        private bool _cardHistoryRefreshScheduled;
         private Label? _status;
         private bool _statusIsError;
         private ModSettingsDropdownChoiceControl<ulong>? _targetDropdown;
@@ -83,6 +84,7 @@ namespace STS2RitsuLib.Settings
         public override void _Ready()
         {
             RitsuDebugActionProtocol.ActionExecuted += OnDebugActionExecuted;
+            RitsuDebugToolsInterfaceStateStore.CardHistoryChanged += OnCardHistoryChanged;
             RitsuDebugToolsPageRegistry.Changed += OnPageRegistryChanged;
             RitsuShellThemeRuntime.ThemeChanged += OnShellThemeChanged;
             _modelRegistryInitializedSubscription =
@@ -114,6 +116,7 @@ namespace STS2RitsuLib.Settings
         {
             FinishCreaturePicking(false);
             RitsuDebugActionProtocol.ActionExecuted -= OnDebugActionExecuted;
+            RitsuDebugToolsInterfaceStateStore.CardHistoryChanged -= OnCardHistoryChanged;
             RitsuDebugToolsPageRegistry.Changed -= OnPageRegistryChanged;
             RitsuShellThemeRuntime.ThemeChanged -= OnShellThemeChanged;
             _modelRegistryInitializedSubscription?.Dispose();
@@ -327,6 +330,13 @@ namespace STS2RitsuLib.Settings
 
         private bool ResetBuiltInCatalogMode(string pageId)
         {
+            if (pageId.Equals($"{Const.ModId}:cards", StringComparison.OrdinalIgnoreCase))
+            {
+                var changed = _showCardHistory;
+                _showCardHistory = false;
+                return changed;
+            }
+
             if (pageId.Equals($"{Const.ModId}:relics", StringComparison.OrdinalIgnoreCase))
             {
                 var changed = _relicCatalogMode != RelicCatalogMode.Library;
@@ -674,6 +684,25 @@ namespace STS2RitsuLib.Settings
         {
             FinishCreaturePicking(false);
             ScheduleStateRefresh();
+        }
+
+        private void OnCardHistoryChanged()
+        {
+            if (_cardHistoryRefreshScheduled || !IsInsideTree() || !IsCardLibraryPage())
+                return;
+            _cardHistoryRefreshScheduled = true;
+            Callable.From(() =>
+            {
+                _cardHistoryRefreshScheduled = false;
+                if (!_stateRefreshScheduled && IsInsideTree() && IsCardLibraryPage() &&
+                    _currentBrowser != null && IsInstanceValid(_currentBrowser))
+                    RefreshLiveDetails(_currentBrowser);
+            }).CallDeferred();
+        }
+
+        private bool IsCardLibraryPage()
+        {
+            return CurrentPageId.Equals($"{Const.ModId}:cards", StringComparison.OrdinalIgnoreCase);
         }
 
         private void ScheduleStateRefresh()
