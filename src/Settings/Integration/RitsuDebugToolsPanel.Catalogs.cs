@@ -62,6 +62,7 @@ namespace STS2RitsuLib.Settings
                 preserveSourceOrder: true,
                 emptyText: L("ritsulib.debugTools.cards.historyEmpty",
                     "No previously added cards are available. Successfully added cards appear here."),
+                // ReSharper disable once ExplicitCallerInfoArgument
                 preferenceId: "CreateCardHistoryCatalog");
             var root = new RitsuDebugLiveDetailContainer
             {
@@ -94,7 +95,7 @@ namespace STS2RitsuLib.Settings
 
             RitsuDebugCardCatalogEntry CreateEntry(CardModel card)
             {
-                return new RitsuDebugCardCatalogEntry(
+                return new(
                     new(
                         card.Id.ToString(),
                         SafeTitle(card),

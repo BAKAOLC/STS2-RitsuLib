@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Search;
@@ -52,14 +53,18 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         {
             return history == null
                 ? []
-                : history.Where(static id => !string.IsNullOrWhiteSpace(id))
-                    .Distinct(StringComparer.Ordinal).Take(MaxCardHistoryCount).ToArray();
+                :
+                [
+                    .. history.Where(static id => !string.IsNullOrWhiteSpace(id))
+                        .Distinct(StringComparer.Ordinal).Take(MaxCardHistoryCount),
+                ];
         }
 
         private static void OnActionExecuted(RitsuDebugActionExecutionResult result)
         {
             if (!result.Success || result.ActionId != RitsuDebugCardActions.CreateCardActionId ||
-                RunManager.Instance?.NetService?.NetId != result.RequestedByNetId)
+                RunManager.Instance?.NetService is not { Type: not NetGameType.Replay } netService ||
+                netService.NetId != result.RequestedByNetId)
                 return;
 
             try
