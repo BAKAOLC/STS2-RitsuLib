@@ -257,7 +257,8 @@ namespace STS2RitsuLib.Settings
                     selectedPile,
                     cardCount,
                     upgradeLevels,
-                    initialState));
+                    initialState,
+                    rememberInHistory: true));
             }
         }
 

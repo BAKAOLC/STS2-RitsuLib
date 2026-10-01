@@ -61,6 +61,7 @@ namespace STS2RitsuLib.Settings
         private readonly Dictionary<NGridCardHolder, string> _holderItemIds = [];
         private readonly List<NGridCardHolder> _holders = [];
         private readonly bool _preserveSourceOrder;
+        private readonly string? _emptyText;
         private readonly Func<RitsuCatalogItem, bool>? _primaryAllMatches;
         private readonly string? _primaryFilterBreakBeforeOptionId;
         private readonly Dictionary<int, Button> _primaryFilterButtons = [];
@@ -114,6 +115,7 @@ namespace STS2RitsuLib.Settings
             bool preserveSourceOrder = false,
             Action<RitsuDebugCardCatalogEntry, int>? reorderRequested = null,
             string? reorderHint = null,
+            string? emptyText = null,
             [CallerMemberName] string preferenceId = "")
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(searchPlaceholder);
@@ -122,6 +124,7 @@ namespace STS2RitsuLib.Settings
             SearchPlaceholder = searchPlaceholder;
             _searchPreferenceId = preferenceId;
             _preserveSourceOrder = preserveSourceOrder;
+            _emptyText = emptyText;
             _reorderRequested = reorderRequested;
             _reorderHint = reorderHint;
             if (reorderRequested != null && !preserveSourceOrder)
@@ -351,7 +354,7 @@ namespace STS2RitsuLib.Settings
 
         public override void _UnhandledInput(InputEvent @event)
         {
-            if (!_detailSlideHost.Visible ||
+            if (!IsVisibleInTree() || !_detailSlideHost.Visible ||
                 @event.IsEcho() ||
                 !(@event.IsActionPressed(MegaInput.cancel) || @event.IsActionPressed(MegaInput.pauseAndBack)))
                 return;
@@ -815,6 +818,7 @@ namespace STS2RitsuLib.Settings
                 : $"{_filtered.Length} / {_entries.Length}";
             _emptyLabel.Visible = _filtered.Length == 0;
             _emptyLabel.Text = _searchMenu.QueryError ??
+                               (_entries.Length == 0 ? _emptyText : null) ??
                                ModSettingsLocalization.Get("ritsulib.debugTools.noMatches", "No matching items");
             _emptyLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
 

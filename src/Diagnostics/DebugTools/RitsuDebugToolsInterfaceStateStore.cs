@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Search;
 using STS2RitsuLib.Ui.Catalog;
@@ -10,10 +12,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     {
         private const string DataKey = "debug_tools_interface_state";
         private const string FileName = "debug_tools_interface_state.json";
+        internal const int MaxCardHistoryCount = 200;
         private static ModDataStore? _store;
         private static IDisposable? _profileServicesSubscription;
 
         internal static event Action<bool>? StateRestored;
+        internal static event Action? CardHistoryChanged;
 
         internal static void Register(ModDataStore store)
         {
@@ -29,6 +33,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                 static () => new(),
                 true);
             store.EntryReloaded += OnEntryReloaded;
+            RitsuDebugActionProtocol.ActionExecuted += OnActionExecuted;
             _profileServicesSubscription =
                 RitsuLibFramework.SubscribeLifecycle<ProfileServicesInitializedEvent>(_ => PublishRestoredState());
         }
@@ -36,6 +41,51 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         internal static bool IsVisible()
         {
             return TryGetState(out var state) && state.IsVisible;
+        }
+
+        internal static string[] GetCardHistory()
+        {
+            return TryGetState(out var state) ? NormalizeCardHistory(state.CardHistory) : [];
+        }
+
+        private static string[] NormalizeCardHistory(IEnumerable<string>? history)
+        {
+            return history == null
+                ? []
+                : history.Where(static id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct(StringComparer.Ordinal).Take(MaxCardHistoryCount).ToArray();
+        }
+
+        private static void OnActionExecuted(RitsuDebugActionExecutionResult result)
+        {
+            if (!result.Success || result.ActionId != RitsuDebugCardActions.CreateCardActionId ||
+                RunManager.Instance?.NetService?.NetId != result.RequestedByNetId)
+                return;
+
+            try
+            {
+                var payload = JsonSerializer.Deserialize<RitsuDebugCardActions.CreateCardPayload>(result.PayloadJson);
+                if (!payload.RememberInHistory || string.IsNullOrWhiteSpace(payload.CardId) ||
+                    _store is not { IsProfileInitialized: true } store || !TryGetState(out var state))
+                    return;
+
+                // Keep unresolved mod IDs: their cards may be available again on a later launch.
+                var history = NormalizeCardHistory(new[] { payload.CardId }.Concat(state.CardHistory ?? []));
+                // Save again even when the order is unchanged: a previous write may have failed.
+                state.CardHistory = [.. history];
+                try
+                {
+                    store.Save(DataKey);
+                }
+                finally
+                {
+                    CardHistoryChanged?.Invoke();
+                }
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.Warn($"[DebugTools] Failed to save card history: {ex.Message}");
+            }
         }
 
         internal static void RememberVisibility(bool isVisible)
@@ -96,6 +146,7 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
         private static void PublishRestoredState()
         {
             StateRestored?.Invoke(IsVisible());
+            CardHistoryChanged?.Invoke();
         }
 
         private static bool TryGetState(out RitsuDebugToolsInterfaceState state)
@@ -121,6 +172,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
     internal sealed class RitsuDebugToolsInterfaceState
     {
         [JsonPropertyName("is_visible")] public bool IsVisible { get; set; }
+
+        [JsonPropertyName("card_history")] public List<string> CardHistory { get; set; } = [];
 
         [JsonPropertyName("catalogs")]
         public Dictionary<string, RitsuDebugSearchPreferences> Catalogs { get; set; } = new(StringComparer.Ordinal);

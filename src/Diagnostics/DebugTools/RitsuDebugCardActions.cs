@@ -201,13 +201,14 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             PileType pileType,
             int count,
             int upgradeLevels,
-            CardStatePayload state)
+            CardStatePayload state,
+            bool rememberInHistory = false)
         {
             var envelope = RitsuDebugActionProtocol.CreateEnvelope(
                 CreateCardActionId,
                 requester,
                 target,
-                new CreateCardPayload(cardId, GetPileToken(pileType), count, upgradeLevels, state));
+                new CreateCardPayload(cardId, GetPileToken(pileType), count, upgradeLevels, state, rememberInHistory));
             return RitsuDebugActionProtocol.Submit(requester, envelope);
         }
 
@@ -1583,7 +1584,8 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string Pile,
             int Count,
             int UpgradeLevels,
-            CardStatePayload State);
+            CardStatePayload State,
+            bool RememberInHistory = false);
 
         internal readonly record struct CardStatePayload(
             int? BaseCost,
