@@ -16,11 +16,14 @@ namespace STS2RitsuLib.Audio
     ///     <para xml:lang="en">
     ///         Accepted inputs are existing absolute paths, globalized <c>user://</c> paths, and <c>res://</c>
     ///         files visible to <see cref="FileAccess" />. Packed or imported Godot audio resources must use a
-    ///         resource-specific method, which materializes WAV, Ogg Vorbis, or MP3 data into a private cache.
+    ///         resource-specific method, which passes raw <c>res://</c> files through and materializes other WAV,
+    ///         Ogg Vorbis, or MP3 data into a private cache. Paths containing non-ASCII characters are rejected
+    ///         because the FMOD add-on cannot open them; on Windows the 8.3 short path is used when available.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         可接受的输入包括现有绝对路径、全局化后的 <c>user://</c> 路径，以及 <see cref="FileAccess" /> 可见的 <c>res://</c>
-    ///         文件。打包或导入的 Godot 音频资源必须使用资源专用方法，将 WAV、Ogg Vorbis 或 MP3 数据写入私有缓存。
+    ///         文件。打包或导入的 Godot 音频资源必须使用资源专用方法：原始 <c>res://</c> 文件直接使用，其余 WAV、Ogg Vorbis 或
+    ///         MP3 数据写入私有缓存。FMOD 插件无法打开含非 ASCII 字符的路径，此类路径会被拒绝；Windows 上可用时改用 8.3 短路径。
     ///     </para>
     /// </remarks>
     public static class FmodStudioStreamingFiles
@@ -524,6 +527,25 @@ namespace STS2RitsuLib.Audio
         }
 
         private static bool TryResolveSupportedPath(string path, out string resolvedPath)
+        {
+            if (!TryResolveExistingPath(path, out var existingPath))
+            {
+                resolvedPath = string.Empty;
+                return false;
+            }
+
+            // The resolved form is also the tracking key and the name passed to create_sound_instance / unload_file,
+            // so every caller must see the same substitute; the short form of an existing file is stable.
+            if (FmodNativeFilePath.TryMakeOpenable(existingPath, out resolvedPath))
+                return true;
+
+            RitsuLibFramework.Logger.ErrorNoTrace(
+                "[Audio] FMOD file playback cannot open paths with non-ASCII characters; the FMOD add-on fails " +
+                $"inside native code on them. Use an ASCII-only file name or location: {existingPath}");
+            return false;
+        }
+
+        private static bool TryResolveExistingPath(string path, out string resolvedPath)
         {
             resolvedPath = string.Empty;
             if (string.IsNullOrWhiteSpace(path))
