@@ -97,6 +97,26 @@ loop?.TryStop();
 
 :::
 
+## Audio Files{lang="en"}
+
+::: en
+
+`AudioSource.File(...)` and `AudioSource.StreamingMusic(...)` take an absolute path, a `user://` path, or a raw `res://` file. Set the file's import mode to "Keep File (No Import)" so it is packed as-is. `AudioSource.ResourceFile(...)` and `AudioSource.StreamingResourceMusic(...)` also accept imported audio: raw `res://` files are used directly, other data is written to a private cache first.
+
+The game's FMOD add-on cannot open paths that contain non-ASCII characters, so such paths are rejected with an error instead of being loaded. On Windows the 8.3 short path is used when the volume provides one. Keep audio file names and mod folders ASCII-only.
+
+:::
+
+## 音频文件{lang="zh-CN"}
+
+::: zh-CN
+
+`AudioSource.File(...)` 和 `AudioSource.StreamingMusic(...)` 接受绝对路径、`user://` 路径或原始 `res://` 文件。音频文件的导入方式要设为“Keep File (No Import)”，这样才会原样打进包。`AudioSource.ResourceFile(...)` 和 `AudioSource.StreamingResourceMusic(...)` 也接受导入后的音频：原始 `res://` 文件直接使用，其余数据先写入私有缓存。
+
+游戏自带的 FMOD 插件打不开含非 ASCII 字符的路径，这类路径会被拒绝并报错，不会加载。Windows 上如果所在卷提供 8.3 短路径，会改用短路径。音频文件名和 Mod 目录请只用 ASCII 字符。
+
+:::
+
 ## Banks And GUID Mappings{lang="en"}
 
 ::: en
