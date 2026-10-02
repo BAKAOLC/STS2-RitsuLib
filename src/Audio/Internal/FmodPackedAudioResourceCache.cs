@@ -13,9 +13,9 @@ namespace STS2RitsuLib.Audio.Internal
         private static readonly Lock Gate = new();
         private static readonly uint[] OggCrcTable = BuildOggCrcTable();
 
-        public static bool TryMaterialize(string resourcePath, out string absolutePath)
+        public static bool TryMaterialize(string resourcePath, out string filePath)
         {
-            absolutePath = string.Empty;
+            filePath = string.Empty;
             if (string.IsNullOrWhiteSpace(resourcePath))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace("[Audio] FMOD resource playback requires a non-empty path.");
@@ -31,7 +31,17 @@ namespace STS2RitsuLib.Audio.Internal
             }
 
             if (TryReadRawPlayableBytes(resourcePath, out var rawBytes, out var rawExtension))
-                return TryWriteCached(resourcePath, rawBytes, rawExtension, out absolutePath);
+            {
+                // The FMOD add-on reads raw res:// files through FileAccess, so they are passed through instead of
+                // copied. The copy would live under the user profile, whose path the add-on may be unable to open.
+                if (resourcePath.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                {
+                    filePath = resourcePath;
+                    return true;
+                }
+
+                return TryWriteCached(resourcePath, rawBytes, rawExtension, out filePath);
+            }
 
             AudioStream? stream;
             try
@@ -53,7 +63,7 @@ namespace STS2RitsuLib.Audio.Internal
                 return false;
             }
 
-            return TryExtractImportedStream(resourcePath, stream, out absolutePath);
+            return TryExtractImportedStream(resourcePath, stream, out filePath);
         }
 
         private static bool TryReadRawPlayableBytes(string resourcePath, out byte[] bytes, out string extension)
