@@ -12,6 +12,7 @@ namespace STS2RitsuLib.Settings
         private bool _initialValue;
         private bool _isOn;
         private bool _switchOnly;
+        private bool _applyingVisualState;
         private Action<bool>? _onChanged;
 
         /// <summary>
@@ -182,6 +183,9 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshLayout()
         {
+            if (_applyingVisualState)
+                return;
+
             if (_switchOnly != ShouldUseSwitchOnly())
                 ApplyVisualState();
             else
@@ -234,32 +238,45 @@ namespace STS2RitsuLib.Settings
 
         private void ApplyVisualState()
         {
-            _switchOnly = ShouldUseSwitchOnly();
-            var stateText = _isOn
-                ? RitsuModuleLocalization.Get("toggle.on", "On")
-                : RitsuModuleLocalization.Get("toggle.off", "Off");
-            Text = _switchOnly ? string.Empty : stateText;
-            TooltipText = _switchOnly ? stateText : string.Empty;
-            if (_switchOnly)
-            {
-                var empty = new StyleBoxEmpty();
-                AddThemeStyleboxOverride("normal", empty);
-                AddThemeStyleboxOverride("hover", empty);
-                AddThemeStyleboxOverride("pressed", empty);
-                AddThemeStyleboxOverride("focus", empty);
-                AddThemeStyleboxOverride("disabled", empty);
-            }
-            else
-            {
-                AddThemeStyleboxOverride("normal", CreateStyle(_isOn, false));
-                AddThemeStyleboxOverride("hover", CreateStyle(_isOn, true));
-                AddThemeStyleboxOverride("pressed", CreateStyle(_isOn, true));
-                AddThemeStyleboxOverride("focus", CreateFocusStyle(_isOn));
-                AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
-            }
+            if (_applyingVisualState)
+                return;
 
-            ModSettingsUiControlTheming.RefreshAdaptiveButtonText(this);
-            QueueRedraw();
+            _applyingVisualState = true;
+            BeginBulkThemeOverride();
+            try
+            {
+                _switchOnly = ShouldUseSwitchOnly();
+                var stateText = _isOn
+                    ? RitsuModuleLocalization.Get("toggle.on", "On")
+                    : RitsuModuleLocalization.Get("toggle.off", "Off");
+                Text = _switchOnly ? string.Empty : stateText;
+                TooltipText = _switchOnly ? stateText : string.Empty;
+                if (_switchOnly)
+                {
+                    var empty = new StyleBoxEmpty();
+                    AddThemeStyleboxOverride("normal", empty);
+                    AddThemeStyleboxOverride("hover", empty);
+                    AddThemeStyleboxOverride("pressed", empty);
+                    AddThemeStyleboxOverride("focus", empty);
+                    AddThemeStyleboxOverride("disabled", empty);
+                }
+                else
+                {
+                    AddThemeStyleboxOverride("normal", CreateStyle(_isOn, false));
+                    AddThemeStyleboxOverride("hover", CreateStyle(_isOn, true));
+                    AddThemeStyleboxOverride("pressed", CreateStyle(_isOn, true));
+                    AddThemeStyleboxOverride("focus", CreateFocusStyle(_isOn));
+                    AddThemeStyleboxOverride("disabled", CreateDisabledStyle());
+                }
+
+                ModSettingsUiControlTheming.RefreshAdaptiveButtonText(this);
+                QueueRedraw();
+            }
+            finally
+            {
+                EndBulkThemeOverride();
+                _applyingVisualState = false;
+            }
         }
 
         private static StyleBoxFlat CreateFocusStyle(bool on)
