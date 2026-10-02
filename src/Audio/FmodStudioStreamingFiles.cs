@@ -16,14 +16,16 @@ namespace STS2RitsuLib.Audio
     ///     <para xml:lang="en">
     ///         Accepted inputs are existing absolute paths, globalized <c>user://</c> paths, and <c>res://</c>
     ///         files visible to <see cref="FileAccess" />. Packed or imported Godot audio resources must use a
-    ///         resource-specific method, which passes raw <c>res://</c> files through and materializes other WAV,
-    ///         Ogg Vorbis, or MP3 data into a private cache. Paths containing non-ASCII characters are rejected
-    ///         because the FMOD add-on cannot open them; on Windows the 8.3 short path is used when available.
+    ///         resource-specific method, which materializes standard WAV, Ogg Vorbis, or MP3 data into a private
+    ///         cache with ASCII virtual paths. Compressed WAV resources are decoded to PCM. Raw files and decoded
+    ///         output are limited to 256 MiB; WAV decoding is limited to 600 seconds. Dynamic audio streams are unsupported.
+    ///         Non-ASCII loose-file paths are localized or copied into this cache before FMOD receives them.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         可接受的输入包括现有绝对路径、全局化后的 <c>user://</c> 路径，以及 <see cref="FileAccess" /> 可见的 <c>res://</c>
-    ///         文件。打包或导入的 Godot 音频资源必须使用资源专用方法：原始 <c>res://</c> 文件直接使用，其余 WAV、Ogg Vorbis 或
-    ///         MP3 数据写入私有缓存。FMOD 插件无法打开含非 ASCII 字符的路径，此类路径会被拒绝；Windows 上可用时改用 8.3 短路径。
+    ///         文件。打包或导入的 Godot 音频资源必须使用资源专用方法，将标准 WAV、Ogg Vorbis 或 MP3 数据写入具有 ASCII 虚拟路径的私有缓存。
+    ///         压缩 WAV 资源解码为 PCM。原始文件与解码结果上限为 256 MiB，WAV 解码时长上限为 600 秒，不支持动态音频流。
+    ///         含非 ASCII 字符的松散文件路径会先转换为虚拟路径或复制到缓存，再传给 FMOD。
     ///     </para>
     /// </remarks>
     public static class FmodStudioStreamingFiles
@@ -534,14 +536,11 @@ namespace STS2RitsuLib.Audio
                 return false;
             }
 
-            // The resolved form is also the tracking key and the name passed to create_sound_instance / unload_file,
-            // so every caller must see the same substitute; the short form of an existing file is stable.
             if (FmodNativeFilePath.TryMakeOpenable(existingPath, out resolvedPath))
                 return true;
 
             RitsuLibFramework.Logger.ErrorNoTrace(
-                "[Audio] FMOD file playback cannot open paths with non-ASCII characters; the FMOD add-on fails " +
-                $"inside native code on them. Use an ASCII-only file name or location: {existingPath}");
+                $"[Audio] FMOD file playback could not prepare a supported ASCII audio path: {existingPath}");
             return false;
         }
 
@@ -556,16 +555,9 @@ namespace STS2RitsuLib.Audio
 
             if (path.StartsWith("user://", StringComparison.OrdinalIgnoreCase))
             {
-                resolvedPath = ProjectSettings.GlobalizePath(path);
-                if (!Path.IsPathRooted(resolvedPath))
-                {
-                    RitsuLibFramework.Logger.ErrorNoTrace(
-                        $"[Audio] FMOD file playback requires an absolute path: {path}");
-                    return false;
-                }
-
-                if (File.Exists(resolvedPath)) return true;
-                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD file playback file not found: {resolvedPath}");
+                resolvedPath = path;
+                if (FileAccess.FileExists(path)) return true;
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD file playback file not found: {path}");
                 return false;
             }
 
