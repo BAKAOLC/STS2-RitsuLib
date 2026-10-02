@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using Godot;
-using STS2RitsuLib.Utils.Persistence;
 using FileAccess = Godot.FileAccess;
 using GArray = Godot.Collections.Array;
 
@@ -10,12 +9,15 @@ namespace STS2RitsuLib.Audio.Internal
     internal static class FmodPackedAudioResourceCache
     {
         private const uint OggCrcPolynomial = 0x04c11db7;
+        private const int MaximumAudioBytes = 256 * 1024 * 1024;
+        private const double MaximumDecodeSeconds = 600;
+        private const string AudioCacheDirectory = "user://ritsulib/fmod-cache/audio";
         private static readonly Lock Gate = new();
         private static readonly uint[] OggCrcTable = BuildOggCrcTable();
 
-        public static bool TryMaterialize(string resourcePath, out string absolutePath)
+        public static bool TryMaterialize(string resourcePath, out string filePath)
         {
-            absolutePath = string.Empty;
+            filePath = string.Empty;
             if (string.IsNullOrWhiteSpace(resourcePath))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace("[Audio] FMOD resource playback requires a non-empty path.");
@@ -31,14 +33,14 @@ namespace STS2RitsuLib.Audio.Internal
             }
 
             if (TryReadRawPlayableBytes(resourcePath, out var rawBytes, out var rawExtension))
-                return TryWriteCached(resourcePath, rawBytes, rawExtension, out absolutePath);
+                return TryWriteCached(resourcePath, rawBytes, rawExtension, out filePath);
 
             AudioStream? stream;
             try
             {
                 stream = ResourceLoader.Load<AudioStream>(resourcePath);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[Audio] FMOD resource playback failed to load imported audio resource: {resourcePath}; {ex}");
@@ -53,7 +55,7 @@ namespace STS2RitsuLib.Audio.Internal
                 return false;
             }
 
-            return TryExtractImportedStream(resourcePath, stream, out absolutePath);
+            return TryExtractImportedStream(resourcePath, stream, out filePath);
         }
 
         private static bool TryReadRawPlayableBytes(string resourcePath, out byte[] bytes, out string extension)
@@ -66,14 +68,37 @@ namespace STS2RitsuLib.Audio.Internal
 
             try
             {
+                using var file = FileAccess.Open(resourcePath, FileAccess.ModeFlags.Read);
+                if (file is null || file.GetLength() > MaximumAudioBytes)
+                    return false;
                 bytes = FileAccess.GetFileAsBytes(resourcePath);
             }
-            catch
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 return false;
             }
 
             return bytes.Length != 0 && TryGetPlayableExtension(bytes, resourcePath, out extension);
+        }
+
+        internal static bool TryMaterializeFile(string path, out string filePath)
+        {
+            filePath = string.Empty;
+            try
+            {
+                using var input = File.OpenRead(path);
+                if (input.Length is <= 0 or > MaximumAudioBytes)
+                    return false;
+                var bytes = new byte[(int)input.Length];
+                input.ReadExactly(bytes);
+                return TryGetPlayableExtension(bytes, path, out var extension) &&
+                       TryWriteCached(path, bytes, extension, out filePath);
+            }
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+            {
+                RitsuLibFramework.Logger.ErrorNoTrace($"[Audio] FMOD audio file conversion failed: {path}; {ex}");
+                return false;
+            }
         }
 
         private static bool TryGetPlayableExtension(byte[] bytes, string resourcePath, out string extension)
@@ -121,7 +146,11 @@ namespace STS2RitsuLib.Audio.Internal
                     case AudioStreamMP3 mp3:
                         return TryWriteCached(resourcePath, mp3.GetData(), ".mp3", out absolutePath);
                     case AudioStreamWav wav:
-                        return TryWriteCached(resourcePath, BuildWavFile(wav), ".wav", out absolutePath);
+                        return TryWriteCached(resourcePath,
+                            wav.GetFormat() is AudioStreamWav.FormatEnum.Format8Bits
+                                or AudioStreamWav.FormatEnum.Format16Bits
+                                ? BuildWavFile(wav)
+                                : BuildDecodedWavFile(wav), ".wav", out absolutePath);
                     case AudioStreamOggVorbis ogg:
                         return TryWriteCached(resourcePath, BuildOggFile(ogg), ".ogg", out absolutePath);
                     default:
@@ -130,7 +159,7 @@ namespace STS2RitsuLib.Audio.Internal
                         return false;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 RitsuLibFramework.Logger.ErrorNoTrace(
                     $"[Audio] FMOD resource playback extraction failed: {resourcePath}; {stream.GetClass()}; {ex}");
@@ -141,13 +170,14 @@ namespace STS2RitsuLib.Audio.Internal
         private static bool TryWriteCached(string resourcePath, byte[] bytes, string extension, out string absolutePath)
         {
             absolutePath = string.Empty;
-            if (bytes.Length == 0)
+            if (bytes.Length is 0 or > MaximumAudioBytes)
                 return false;
 
             var digest = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
-            var cacheDir = RitsuLibDataPaths.EnsureSharedCacheDirectory();
-            var fileName =
-                $"fmod-audio-{SanitizeFileName(Path.GetFileNameWithoutExtension(resourcePath))}-{digest[..16]}{extension}";
+            var sourceDigest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(resourcePath)))
+                .ToLowerInvariant();
+            var cacheDir = ProjectSettings.GlobalizePath(AudioCacheDirectory);
+            var fileName = $"{sourceDigest}-{digest}{extension}";
             var path = Path.Combine(cacheDir, fileName);
             string? temporaryPath = null;
 
@@ -155,7 +185,11 @@ namespace STS2RitsuLib.Audio.Internal
             {
                 lock (Gate)
                 {
-                    Directory.CreateDirectory(cacheDir);
+                    if (OperatingSystem.IsWindows())
+                        Directory.CreateDirectory(cacheDir);
+                    else
+                        Directory.CreateDirectory(cacheDir,
+                            UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
                     if (!IsValidCachedFile(path, bytes.Length, digest))
                     {
                         temporaryPath = Path.Combine(cacheDir, $"{fileName}.{Guid.NewGuid():N}.tmp");
@@ -165,14 +199,14 @@ namespace STS2RitsuLib.Audio.Internal
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
             {
                 if (temporaryPath != null)
                     try
                     {
                         File.Delete(temporaryPath);
                     }
-                    catch (Exception cleanupEx)
+                    catch (Exception cleanupEx) when (RitsuLibExceptionPolicy.IsRecoverable(cleanupEx))
                     {
                         RitsuLibFramework.Logger.Warn(
                             $"[Audio] Could not remove failed FMOD cache write '{temporaryPath}': {cleanupEx}");
@@ -183,8 +217,64 @@ namespace STS2RitsuLib.Audio.Internal
                 return false;
             }
 
-            absolutePath = path;
+            absolutePath = $"{AudioCacheDirectory}/{fileName}";
             return true;
+        }
+
+        private static byte[] BuildDecodedWavFile(AudioStreamWav source)
+        {
+            var duration = source.GetLength();
+            var sampleRate = (int)AudioServer.GetMixRate();
+            if (!double.IsFinite(duration) || duration is <= 0 or > MaximumDecodeSeconds || sampleRate <= 0)
+                throw new NotSupportedException("Audio decoding requires a finite duration of at most 600 seconds.");
+            var frameCount = Math.Ceiling(duration * sampleRate);
+            if (frameCount > (MaximumAudioBytes - 44) / 4d)
+                throw new NotSupportedException("Decoded audio exceeds the 256 MiB limit.");
+
+            using var stream = (AudioStreamWav)source.Duplicate();
+            stream.SetLoopMode(AudioStreamWav.LoopModeEnum.Disabled);
+            using var playback = stream.InstantiatePlayback();
+            using var pcm = new MemoryStream();
+            using var writer = new BinaryWriter(pcm);
+            playback.Start();
+            try
+            {
+                var remaining = (int)frameCount;
+                while (remaining > 0)
+                {
+                    var frames = playback.MixAudio(1f, Math.Min(4096, remaining));
+                    if (frames.Length == 0)
+                        break;
+                    foreach (var frame in frames)
+                    {
+                        writer.Write(ToPcm(frame.X));
+                        writer.Write(ToPcm(frame.Y));
+                    }
+
+                    remaining -= frames.Length;
+                }
+            }
+            finally
+            {
+                playback.Stop();
+            }
+
+            if (pcm.Length == 0)
+                throw new InvalidDataException("Audio decoding returned no samples.");
+
+            using var decoded = new AudioStreamWav();
+            decoded.SetFormat(AudioStreamWav.FormatEnum.Format16Bits);
+            decoded.SetStereo(true);
+            decoded.SetMixRate(sampleRate);
+            decoded.SetData(pcm.ToArray());
+            return BuildWavFile(decoded);
+
+            static short ToPcm(float sample)
+            {
+                if (!float.IsFinite(sample))
+                    throw new InvalidDataException("Audio decoding returned a non-finite sample.");
+                return (short)(Math.Clamp(sample, -1f, 1f) * short.MaxValue);
+            }
         }
 
         private static bool IsValidCachedFile(string path, int expectedLength, string expectedDigest)
@@ -327,16 +417,6 @@ namespace STS2RitsuLib.Audio.Internal
             }
 
             return table;
-        }
-
-        private static string SanitizeFileName(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return "audio";
-
-            var invalid = Path.GetInvalidFileNameChars();
-            var chars = value.Select(c => invalid.Contains(c) ? '_' : c).ToArray();
-            return new(chars);
         }
     }
 }

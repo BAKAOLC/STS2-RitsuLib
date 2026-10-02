@@ -97,6 +97,26 @@ loop?.TryStop();
 
 :::
 
+## Audio Files{lang="en"}
+
+::: en
+
+`AudioSource.File(...)` and `AudioSource.StreamingMusic(...)` take an absolute path, a `user://` path, or a raw `res://` file. Set the file's import mode to "Keep File (No Import)" so it is packed as-is. `AudioSource.ResourceFile(...)` and `AudioSource.StreamingResourceMusic(...)` also accept imported audio: WAV, MP3, and Ogg Vorbis data is extracted into a private cache. Imported IMA ADPCM and QOA WAV resources are decoded to PCM WAV.
+
+The cache uses ASCII virtual paths, so non-ASCII user names and resource names do not prevent playback. Loose files with non-ASCII paths are localized or copied into the cache before loading. Each source file and cached result is limited to 256 MiB. Compressed WAV decoding is limited to 600 seconds. Dynamic and interactive streams are not supported by these file APIs.
+
+:::
+
+## 音频文件{lang="zh-CN"}
+
+::: zh-CN
+
+`AudioSource.File(...)` 和 `AudioSource.StreamingMusic(...)` 接受绝对路径、`user://` 路径或原始 `res://` 文件。音频文件的导入方式要设为“Keep File (No Import)”，这样才会原样打进包。`AudioSource.ResourceFile(...)` 和 `AudioSource.StreamingResourceMusic(...)` 也接受导入后的音频：WAV、MP3 和 Ogg Vorbis 数据会提取到私有缓存，导入后的 IMA ADPCM 和 QOA WAV 资源会解码为 PCM WAV。
+
+缓存使用 ASCII 虚拟路径，用户名和资源名称含非 ASCII 字符也能播放。含非 ASCII 字符的松散文件路径会先转换为虚拟路径或复制到缓存，再加载。每个源文件和缓存结果上限为 256 MiB，压缩 WAV 解码时长上限为 600 秒。这些文件接口不支持动态或交互式音频流。
+
+:::
+
 ## Banks And GUID Mappings{lang="en"}
 
 ::: en
