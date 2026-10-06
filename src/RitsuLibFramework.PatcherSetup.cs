@@ -769,6 +769,8 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<AllRelicsPatch>();
             patcher.RegisterPatch<AllPotionPoolsPatch>();
             patcher.RegisterPatch<ModelDbModdedEntryPatch>();
+            patcher.RegisterPatch<StartupPoolCachePatch>();
+            patcher.RegisterPatch<StartupPoolRegistrationPatch>();
 #if !STS2_AT_LEAST_0_108_0
             patcher.RegisterPatch<ModelIdSerializationCacheDynamicContentPatch>();
             patcher.RegisterPatch<LocalOnlyModelIdSortingPatch>();

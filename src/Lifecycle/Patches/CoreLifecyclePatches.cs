@@ -231,6 +231,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         private static readonly FieldInfo? ModTypesField =
             typeof(ReflectionHelper).GetField("_modTypes", BindingFlags.Static | BindingFlags.NonPublic);
 
+        private static readonly FieldInfo? ModelTypesField =
+            typeof(ModelDb).GetField("_allAbstractModelSubtypes", BindingFlags.Static | BindingFlags.NonPublic);
+
         private static readonly Lock Gate = new();
         private static Assembly[]? _assemblies;
 
@@ -249,6 +252,7 @@ namespace STS2RitsuLib.Lifecycle.Patches
                     !assemblies.Any(static assembly => assembly.IsDynamic))
                     return;
                 _assemblies = assemblies;
+                ModelTypesField?.SetValue(null, null);
                 if (ModTypesField.GetValue(null) is not Type[] cachedTypes)
                     return;
                 if (warnIfCached)

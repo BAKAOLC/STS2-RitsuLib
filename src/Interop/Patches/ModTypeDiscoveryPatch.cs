@@ -19,6 +19,8 @@ namespace STS2RitsuLib.Interop.Patches
     {
         private static readonly Lock RunGate = new();
         private static bool _completed;
+        private static bool _running;
+        private static bool _discoveryCompleted;
         public static string PatchId => "ritsulib_mod_type_discovery";
 
         public static string Description =>
@@ -35,16 +37,35 @@ namespace STS2RitsuLib.Interop.Patches
         {
             lock (RunGate)
             {
-                if (_completed)
+                if (_completed || _running)
                     return;
-                _completed = true;
+                _running = true;
             }
 
-            var harmony = new Harmony($"{Const.ModId}.mod_type_discovery");
-            RitsuLibStartupAudit.Measure("modTypeDiscovery.runOnce",
-                () => ModTypeDiscoveryHub.RunOnce(harmony));
-            RitsuLibStartupAudit.Measure("flushDeferredContentPacks",
-                RitsuLibFramework.FlushDeferredContentPacks);
+            try
+            {
+                if (!_discoveryCompleted)
+                {
+                    var harmony = new Harmony($"{Const.ModId}.mod_type_discovery");
+                    RitsuLibStartupAudit.Measure("modTypeDiscovery.runOnce",
+                        () => ModTypeDiscoveryHub.RunOnce(harmony));
+                    _discoveryCompleted = true;
+                }
+
+                RitsuLibStartupAudit.Measure("flushDeferredContentPacks",
+                    RitsuLibFramework.FlushDeferredContentPacks);
+                lock (RunGate)
+                {
+                    _completed = true;
+                }
+            }
+            finally
+            {
+                lock (RunGate)
+                {
+                    _running = false;
+                }
+            }
         }
     }
 }

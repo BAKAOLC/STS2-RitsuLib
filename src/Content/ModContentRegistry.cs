@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Models.Capabilities;
 using STS2RitsuLib.Scaffolding.Content;
@@ -1419,6 +1420,7 @@ namespace STS2RitsuLib.Content
                 if (IsFrozen)
                     return;
 
+                StartupContentCache.FinishRegistration();
                 IsFrozen = true;
                 foreach (var registry in Registries.Values)
                     registry._freezeReason = reason;
@@ -1916,17 +1918,18 @@ namespace STS2RitsuLib.Content
 
             lock (SyncRoot)
             {
-                if (!RegisteredPoolContent.Add((poolType, modelType)))
+                if (RegisteredPoolContent.Contains((poolType, modelType)))
                 {
                     _logger.Debug(
                         $"[Content] Skipping duplicate {contentKind} registration: {modelLabel} -> {poolType.Name}");
                     return;
                 }
 
+                ModHelper.AddModelToPool(poolType, modelType);
+                RegisteredPoolContent.Add((poolType, modelType));
                 RememberOwner(modelType);
             }
 
-            ModHelper.AddModelToPool(poolType, modelType);
             _logger.Info($"[Content] Registered {contentKind}: {modelLabel} -> {poolType.Name}");
         }
 
