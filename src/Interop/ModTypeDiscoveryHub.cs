@@ -1,8 +1,10 @@
 using System.Reflection;
 using HarmonyLib;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Interop.AutoRegistration;
 using STS2RitsuLib.Interop.Patches;
+using STS2RitsuLib.Lifecycle.Patches;
 
 namespace STS2RitsuLib.Interop
 {
@@ -32,10 +34,14 @@ namespace STS2RitsuLib.Interop
         ///     <para xml:lang="en">
         ///         Registers a discovery contributor. Custom contributors must be registered from the mod initializer
         ///         before the discovery pipeline runs; <see cref="RitsuLibFramework" /> registers built-ins.
+        ///         Built-in interop binding completes across all assemblies before saved-state initialization and
+        ///         attribute registration. Custom contributors then run in registration order, each over all types.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         注册类型发现贡献器。自定义贡献器必须在类型发现管线运行前由模组初始化器注册；
         ///         内置贡献器由 <see cref="RitsuLibFramework" /> 注册。
+        ///         内置互操作绑定会先覆盖所有程序集，再进行持久化状态初始化与特性注册。
+        ///         随后按注册顺序运行自定义贡献器，每个贡献器遍历全部类型。
         ///     </para>
         /// </summary>
         public static void RegisterContributor(IModTypeDiscoveryContributor contributor)
@@ -165,6 +171,7 @@ namespace STS2RitsuLib.Interop
             }
 
             AlignRegisteredAssembliesWithGame(registeredAssemblies);
+            ReflectionHelperModTypeCache.Refresh("ModTypeDiscoveryHub.RunOnce");
 
             var targetMap = BuildTargetAssemblyMap(registeredAssemblies);
             var orderedAssemblies = BuildScanAssemblyMap(registeredAssemblies)
@@ -174,16 +181,34 @@ namespace STS2RitsuLib.Interop
                 .Distinct()
                 .ToArray();
 
-            foreach (var assembly in orderedAssemblies)
-            {
-                var modTypes = AssemblyTypeScanHelper.GetLoadableTypes(assembly, RitsuLibFramework.Logger)
-                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal)
-                    .ToArray();
+            var modTypes = orderedAssemblies
+                .SelectMany(static assembly => AssemblyTypeScanHelper
+                    .GetLoadableTypes(assembly, RitsuLibFramework.Logger)
+                    .OrderBy(static t => t.FullName ?? t.Name, StringComparer.Ordinal))
+                .ToArray();
 
-                foreach (var modType in modTypes)
-                foreach (var contributor in snapshot)
+            foreach (var contributor in snapshot.OrderBy(static contributor => contributor switch
+                     {
+                         ModInteropTypeDiscoveryContributor => 0,
+                         SavedAttachedStateTypeDiscoveryContributor => 1,
+                         AttributeAutoRegistrationTypeDiscoveryContributor => 2,
+                         _ => 3,
+                     }))
+            foreach (var modType in modTypes)
+                try
+                {
                     contributor.Contribute(harmony, targetMap, modType);
-            }
+                }
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
+                {
+                    var modId = TryResolveRegisteredModId(modType.Assembly, out var registeredModId)
+                        ? registeredModId
+                        : modType.Assembly.GetName().Name ?? "<unknown>";
+                    RegistrationFreezeDiagnostics.RecordFailure("TypeDiscovery", modId,
+                        $"{contributor.GetType().Name} for '{modType.FullName}'", ex);
+                    RitsuLibFramework.Logger.ErrorNoTrace(
+                        $"[TypeDiscovery] {contributor.GetType().Name} failed for '{modType.FullName}': {ex}");
+                }
         }
 
         internal static bool TryResolveRegisteredModId(Assembly assembly, out string modId)
