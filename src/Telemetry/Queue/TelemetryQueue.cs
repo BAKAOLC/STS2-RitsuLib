@@ -119,10 +119,12 @@ namespace STS2RitsuLib.Telemetry
 
             try
             {
+                var maxBatchEvents = MaxEventsPerFlush;
                 while (true)
                 {
+                    var batchLimit = maxBatchEvents;
                     var batch = await Task.Run(
-                            () => PrepareBatch(applicantId, applicant),
+                            () => PrepareBatch(applicantId, applicant, batchLimit),
                             cancellationToken)
                         .ConfigureAwait(false);
                     if (batch.Length == 0)
@@ -132,10 +134,16 @@ namespace STS2RitsuLib.Telemetry
                         $"[Telemetry] Sending {batch.Length} queued event(s) for applicant '{applicantId}' via {applicant.Adapter.AdapterId}.");
 
                     TelemetrySendResult result;
+                    var payloadTooLarge = false;
                     try
                     {
-                        result = await applicant.Adapter.SendAsync(applicant, batch, cancellationToken)
-                            .ConfigureAwait(false);
+                        if (applicant.Adapter is HttpJsonTelemetryAdapter httpAdapter)
+                            (result, payloadTooLarge) = await httpAdapter
+                                .SendBatchAsync(applicant, batch, cancellationToken)
+                                .ConfigureAwait(false);
+                        else
+                            result = await applicant.Adapter.SendAsync(applicant, batch, cancellationToken)
+                                .ConfigureAwait(false);
                     }
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                     {
@@ -146,8 +154,14 @@ namespace STS2RitsuLib.Telemetry
                         result = TelemetrySendResult.Fail(ex.Message);
                     }
 
+                    if (payloadTooLarge && batch.Length > 1)
+                    {
+                        maxBatchEvents = batch.Length / 2;
+                        continue;
+                    }
+
                     var shouldContinue = await Task.Run(
-                            () => CommitBatchResult(applicantId, batch, result),
+                            () => CommitBatchResult(applicantId, batch, result, payloadTooLarge),
                             CancellationToken.None)
                         .ConfigureAwait(false);
                     if (!shouldContinue)
@@ -207,7 +221,8 @@ namespace STS2RitsuLib.Telemetry
             }
         }
 
-        private static TelemetryEnvelope[] PrepareBatch(string applicantId, TelemetryApplicant applicant)
+        private static TelemetryEnvelope[] PrepareBatch(string applicantId, TelemetryApplicant applicant,
+            int maxBatchEvents)
         {
             lock (Sync)
             {
@@ -225,7 +240,16 @@ namespace STS2RitsuLib.Telemetry
                         $"[Telemetry] Dropped {dropped.Count} unauthorized queued event(s) for applicant '{applicantId}'.");
                 }
 
-                if (doc.Events.Count != 0) return [.. doc.Events.Take(MaxEventsPerFlush)];
+                var state = ReadState(applicantId);
+                if (state is { FailureCount: > 0, LastSendUtc: { } lastSend })
+                {
+                    var retryDelay =
+                        TimeSpan.FromSeconds(Math.Min(300, 5 * Math.Pow(2, Math.Min(state.FailureCount - 1, 6))));
+                    if (DateTimeOffset.UtcNow - lastSend < retryDelay)
+                        return [];
+                }
+
+                if (doc.Events.Count != 0) return [.. doc.Events.Take(maxBatchEvents)];
                 RitsuLibFramework.Logger.Debug(
                     $"[Telemetry] Flush skipped for '{applicantId}': queue is empty.");
                 return [];
@@ -235,20 +259,22 @@ namespace STS2RitsuLib.Telemetry
         private static bool CommitBatchResult(
             string applicantId,
             IReadOnlyList<TelemetryEnvelope> batch,
-            TelemetrySendResult result)
+            TelemetrySendResult result,
+            bool discardOversized)
         {
             lock (Sync)
             {
                 var state = ReadState(applicantId);
                 state.LastSendUtc = DateTimeOffset.UtcNow;
 
-                if (result.Success)
+                if (result.Success || discardOversized)
                 {
+                    var outcome = discardOversized ? "Rejected oversized" : "Sent";
                     var queue = ReadQueue(applicantId);
                     if (!TryRemoveSentPrefix(queue, batch))
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}', but queue changed unexpectedly. Keeping queued events to avoid data loss.");
+                            $"[Telemetry] {outcome} {batch.Count} event(s) for applicant '{applicantId}', but queue changed unexpectedly. Keeping queued events to avoid data loss.");
                         return false;
                     }
 
@@ -256,24 +282,32 @@ namespace STS2RitsuLib.Telemetry
                     if (!queueWrite.Success)
                     {
                         RitsuLibFramework.Logger.Warn(
-                            $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}', but failed to persist queue removal: {queueWrite.ErrorMessage}");
+                            $"[Telemetry] {outcome} {batch.Count} event(s) for applicant '{applicantId}', but failed to persist queue removal: {queueWrite.ErrorMessage}");
                         state.LastError = queueWrite.ErrorMessage;
-                        state.FailureCount++;
+                        state.FailureCount = Math.Min(state.FailureCount, 6) + 1;
                         WriteStateWithWarning(applicantId, state);
                         return false;
                     }
 
-                    TelemetryRuntime.MarkStartupDeliveryConfirmed(batch);
+                    if (discardOversized)
+                    {
+                        TelemetryRuntime.ResetStartupDeliveryForDiscardedEvents(batch);
+                        RitsuLibFramework.Logger.Warn(
+                            $"[Telemetry] Discarded an oversized event for applicant '{applicantId}': {result.ErrorMessage}");
+                    }
+                    else
+                        TelemetryRuntime.MarkStartupDeliveryConfirmed(batch);
+
                     state.LastError = null;
                     state.FailureCount = 0;
                     RitsuLibFramework.Logger.Debug(
-                        $"[Telemetry] Sent {batch.Count} event(s) for applicant '{applicantId}'. Remaining queue size: {queue.Events.Count}.");
+                        $"[Telemetry] {outcome} {batch.Count} event(s) for applicant '{applicantId}'. Remaining queue size: {queue.Events.Count}.");
                     WriteStateWithWarning(applicantId, state);
                     return true;
                 }
 
                 state.LastError = result.ErrorMessage;
-                state.FailureCount++;
+                state.FailureCount = Math.Min(state.FailureCount, 6) + 1;
                 WriteStateWithWarning(applicantId, state);
                 RitsuLibFramework.Logger.Warn(
                     $"[Telemetry] Send failed for applicant '{applicantId}': {result.ErrorMessage}");
@@ -351,7 +385,7 @@ namespace STS2RitsuLib.Telemetry
             }
 
             var state = result is { Success: true, Data: not null } ? result.Data : new();
-            state.FailureCount = Math.Max(0, state.FailureCount);
+            state.FailureCount = Math.Clamp(state.FailureCount, 0, 7);
             if (migrated)
                 WriteStateWithWarning(applicantId, state);
 
@@ -384,7 +418,7 @@ namespace STS2RitsuLib.Telemetry
                     var state = ReadState(applicantId);
                     state.LastSendUtc = DateTimeOffset.UtcNow;
                     state.LastError = exception.Message;
-                    state.FailureCount++;
+                    state.FailureCount = Math.Min(state.FailureCount, 6) + 1;
                     WriteStateWithWarning(applicantId, state);
                 }
             }
