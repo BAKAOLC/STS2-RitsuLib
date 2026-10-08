@@ -93,12 +93,6 @@ namespace STS2RitsuLib.Telemetry
                         T(
                             "ritsulib.telemetry.request.basicUsage.description",
                             "Session start time, framework and game versions, build channel, platform, language, and anonymous install ID.")),
-                    TelemetryRequest.ModInventory(T(
-                        "ritsulib.telemetry.request.modInventory.description",
-                        "Registered mod inventory, load states, versions, and gameplay flags for compatibility analysis.")),
-                    TelemetryRequest.Diagnostics(T(
-                        "ritsulib.telemetry.request.diagnostics.description",
-                        "Exception reports, Godot engine errors and framework runtime diagnostics.")),
                 ],
             });
         }
