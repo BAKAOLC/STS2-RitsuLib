@@ -746,6 +746,8 @@ namespace STS2RitsuLib.CardPiles.Nodes
             for (var i = 0; i < ordered.Length; i++)
             {
                 var (card, holder) = ordered[i];
+                if (holder.GetParent() == _cardLayer && holder.GetIndex() != i)
+                    _cardLayer.MoveChild(holder, i);
                 holder.SetIndexLabel(0);
                 var focused = ReferenceEquals(holder, _focusedHolder);
                 var defaultTransform = extra.Direction == ModExtraHandLayoutDirection.VanillaHand
