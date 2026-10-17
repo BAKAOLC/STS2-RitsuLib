@@ -5,6 +5,7 @@ using CombatStateLike = MegaCrit.Sts2.Core.Combat.ICombatState;
 #endif
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Models;
 using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Cards.FreePlay
@@ -42,6 +43,26 @@ namespace STS2RitsuLib.Cards.FreePlay
         private static readonly Dictionary<string, Func<CardPlay, bool>> RegisteredDetectors = [];
         private static readonly AttachedState<CardModel, CardFreeBindingState> CardStates = new(() => new());
         private static readonly AttachedState<CardPlay, PlayFreeBindingState> PlayStates = new(() => new());
+
+        internal static void Initialize()
+        {
+            ModelCloneRegistry.For(Const.ModId)
+                .Register<CardModel>("free_play_bindings", CopyCardBindings);
+        }
+
+        private static void CopyCardBindings(CardModel prototype, CardModel clone)
+        {
+            if (!CardStates.TryGetValue(prototype, out var state))
+                return;
+
+            CardStates.Set(clone, new()
+            {
+                BaseCostsFreeNextPlayCharges = state.BaseCostsFreeNextPlayCharges,
+                BaseCostsFreeThisTurnCharges = state.BaseCostsFreeThisTurnCharges,
+                BaseCostsFreeForRestOfTurnCharges = state.BaseCostsFreeForRestOfTurnCharges,
+                BaseCostsFreeThisCombatState = state.BaseCostsFreeThisCombatState,
+            });
+        }
 
         /// <summary>
         ///     <para xml:lang="en">
