@@ -206,9 +206,8 @@ namespace STS2RitsuLib.Ui.MainMenu
             _restorePending = false;
             _keyboardNavigating = false;
             ClearGodotFocus();
-            var pos = GetGlobalMousePosition();
             if (_buttons.LastOrDefault(button =>
-                    IsNavigable(button) && button.GetGlobalRect().HasPoint(pos)) is { } hovered)
+                    IsNavigable(button) && IsPointerOverButton(button)) is { } hovered)
                 ShowReticles(hovered);
         }
 
@@ -337,13 +336,20 @@ namespace STS2RitsuLib.Ui.MainMenu
             if (!isMouseClick && !isSelect)
                 return IsActive;
 
-            var valid = IsActive && !button.IsQueuedForDeletion() && button.IsVisibleInTree() &&
+            // Mouse clicks fail open: the vanilla buttons already work without this scroller, so the
+            // scroller may only add behavior (scroll clipping), never silently swallow a click.
+            // ActiveScreenContext / transition gating is intentionally limited to controller-style
+            // "select" input here, because a menu that stays flagged inactive (stale transition flag,
+            // screen-context race, hours-long session) must not take the whole main menu hostage.
+            var active = isMouseClick
+                ? Initialized && IsVisibleInTree() && _mainMenu.IsVisibleInTree()
+                : IsActive;
+            var valid = active && !button.IsQueuedForDeletion() && button.IsVisibleInTree() &&
                         button.IsEnabled && button.GetParent() == this;
             if (valid && isSelect && FollowsFocus)
                 EnsureVisible(button);
             valid &= isMouseClick
-                ? (!ScrollEngaged || GetGlobalRect().HasPoint(GetGlobalMousePosition())) &&
-                  button.GetGlobalRect().HasPoint(GetGlobalMousePosition())
+                ? IsPointerInsideMenu(button, mouse!)
                 : FollowsFocus && IsNavigable(button) && button.HasFocus() && IsRowFullyVisible(button);
             if (!valid)
             {
@@ -354,7 +360,20 @@ namespace STS2RitsuLib.Ui.MainMenu
 
             if (inputEvent.IsPressed())
             {
-                if (inputEvent.IsEcho() || _pressedButton != null)
+                if (inputEvent.IsEcho())
+                {
+                    GetViewport().SetInputAsHandled();
+                    return false;
+                }
+
+                // A gesture that never received its release (focus loss, hidden button, layout rebuild,
+                // ...) must not swallow every following press for the rest of the session.
+                if (_pressedButton != null && !IsInstanceValid(_pressedButton))
+                    CancelPress();
+                if (_pressedButton != null && _pressedButton != button)
+                    CancelPress();
+
+                if (_pressedButton != null)
                 {
                     GetViewport().SetInputAsHandled();
                     return false;
@@ -373,6 +392,36 @@ namespace STS2RitsuLib.Ui.MainMenu
 
             _pressedButton = null;
             return true;
+        }
+
+        /// <summary>
+        ///     Hit-tests the event against the scroller and the button using the position that Godot
+        ///     localized for this control. Do not use <see cref="CanvasItem.GetGlobalMousePosition" />
+        ///     here: it reports the DisplayServer pointer position, which can disagree with the event
+        ///     the engine actually routed (unfocused window, pointer warp, moved or rescaled window,
+        ///     viewport content-scale changes). That mismatch used to reject every click on the main
+        ///     menu while hover kept working.
+        /// </summary>
+        private bool IsPointerInsideMenu(NMainMenuTextButton button, InputEventMouse mouseEvent)
+        {
+            if (!new Rect2(Vector2.Zero, button.Size).HasPoint(mouseEvent.Position))
+                return false;
+
+            // The button is a direct child of this scroller (validated by the caller), so its local
+            // transform maps the localized position into the scroller's coordinate space.
+            return !ScrollEngaged ||
+                   new Rect2(Vector2.Zero, Size).HasPoint(button.GetTransform() * mouseEvent.Position);
+        }
+
+        /// <summary>
+        ///     Transform-aware hit test for code paths that have no input event at hand (e.g. the mouse
+        ///     mode switch). <c>GetLocalMousePosition()</c> is resolved in the button's local space, so
+        ///     scaled or rotated buttons behave the same way Godot itself hit-tests them. Pairing the
+        ///     canvas-space pointer with <c>GetGlobalRect()</c> instead ignores the button's own scale.
+        /// </summary>
+        private static bool IsPointerOverButton(NMainMenuTextButton button)
+        {
+            return new Rect2(Vector2.Zero, button.Size).HasPoint(button.GetLocalMousePosition());
         }
 
         private void CancelPress(NMainMenuTextButton? button = null)
