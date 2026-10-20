@@ -44,6 +44,14 @@ namespace STS2RitsuLib.Models.Capabilities
         /// <summary>
         ///     <para xml:lang="en">Gets the capability set for <paramref name="model" />.</para>
         ///     <para xml:lang="zh-CN">获取 <paramref name="model" /> 的能力集合。</para>
+        ///     <para xml:lang="en">
+        ///         Reading an empty capability set does not register persistence or enable save extensions.
+        ///         Mutating the set requires persistence registration before saved-data registration is finalized.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         读取空能力集合不会注册持久化或启用存档扩展。
+        ///         修改能力集合时必须完成持久化注册，且注册应在保存数据注册定稿前进行。
+        ///     </para>
         /// </summary>
         public static ModelCapabilitySet Get(AbstractModel model)
         {
@@ -71,9 +79,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static void MarkSavedDataDirty(AbstractModel model)
         {
-            if (!IsInitialized)
-                throw new InvalidOperationException(
-                    "ModelCapabilities persistence has not been registered. Register a model capability or default capability modifier during mod initialization before mutating model capabilities.");
+            EnsureInitialized();
 
             ModelSavedDataRuntime.GetBag(model).Set(SavedDataSlotKey, new ModelCapabilitySaveDocument());
         }
