@@ -46,6 +46,13 @@ namespace STS2RitsuLib.Compat
         };
 
         private static readonly Dictionary<string, bool> PresenceCache = new(StringComparer.OrdinalIgnoreCase);
+        private static int _assemblyVersion;
+        private static int _cacheAssemblyVersion;
+
+        static ExternalFrameworkRegistry()
+        {
+            AppDomain.CurrentDomain.AssemblyLoad += (_, _) => Interlocked.Increment(ref _assemblyVersion);
+        }
 
         /// <summary>
         ///     <para xml:lang="en">Registers a custom detector, replacing any detector with the same framework ID.</para>
@@ -73,6 +80,7 @@ namespace STS2RitsuLib.Compat
 
             lock (Gate)
             {
+                InvalidateStaleCaches();
                 if (PresenceCache.TryGetValue(frameworkId, out var cached))
                     return cached;
 
@@ -88,9 +96,10 @@ namespace STS2RitsuLib.Compat
         /// </summary>
         public static void RefreshKnownFrameworkPresence(string reason)
         {
-            TypeCache.Clear();
             lock (Gate)
             {
+                InvalidateStaleCaches();
+                TypeCache.Clear();
                 PresenceCache.Clear();
                 foreach (var frameworkId in BuiltInProbes.Keys)
                     PresenceCache[frameworkId] = DetectFrameworkCore(frameworkId);
@@ -109,11 +118,27 @@ namespace STS2RitsuLib.Compat
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(fullTypeName);
 
-            if (TypeCache.TryGetValue(fullTypeName, out var cached))
-                return cached.Type;
+            lock (Gate)
+            {
+                InvalidateStaleCaches();
+                if (TypeCache.TryGetValue(fullTypeName, out var cached))
+                    return cached.Type;
 
-            var resolved = ResolveTypeCore(fullTypeName);
-            return TypeCache.GetOrAdd(fullTypeName, new TypeResolution(resolved)).Type;
+                var resolved = ResolveTypeCore(fullTypeName);
+                TypeCache[fullTypeName] = new(resolved);
+                return resolved;
+            }
+        }
+
+        private static void InvalidateStaleCaches()
+        {
+            var assemblyVersion = Volatile.Read(ref _assemblyVersion);
+            if (_cacheAssemblyVersion == assemblyVersion)
+                return;
+
+            TypeCache.Clear();
+            PresenceCache.Clear();
+            _cacheAssemblyVersion = assemblyVersion;
         }
 
         private static Type? ResolveTypeCore(string fullTypeName)

@@ -156,13 +156,15 @@ namespace STS2RitsuLib.Localization
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Appends localization-defined dialogues for <paramref name="characters" /> to
-        ///         <paramref name="dialogueSet" /> for <paramref name="ancientEntry" />. Existing dialogues are retained; this
-        ///         method does not remove duplicates.
+        ///         Fills missing dialogue indices for <paramref name="characters" /> in
+        ///         <paramref name="dialogueSet" /> for <paramref name="ancientEntry" /> from localization.
+        ///         Existing entries retain their indices and instances; only the localized suffix beyond the current
+        ///         list count is appended. Repeated calls and repeated characters do not append the same indices again.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         将 <paramref name="characters" /> 在 <paramref name="ancientEntry" /> 下由本地化定义的对话追加到
-        ///         <paramref name="dialogueSet" />。已有对话会被保留，且此方法不会移除重复项。
+        ///         使用本地化数据补齐 <paramref name="dialogueSet" /> 中 <paramref name="characters" /> 在
+        ///         <paramref name="ancientEntry" /> 下缺失的对话索引。保留已有条目的索引和实例，仅追加超出当前列表长度的
+        ///         本地化对话；重复调用或重复传入角色不会再次追加相同索引。
         ///     </para>
         /// </summary>
         /// <returns>
@@ -191,8 +193,12 @@ namespace STS2RitsuLib.Localization
 
                 var characterEntry = character.Id.Entry;
                 var currentDialogues = dialogueSet.CharacterDialogues.GetValueOrDefault(characterEntry, []);
-                dialogueSet.CharacterDialogues[characterEntry] = [.. currentDialogues, .. newDialogues];
-                added += newDialogues.Count;
+                if (currentDialogues.Count >= newDialogues.Count)
+                    continue;
+
+                dialogueSet.CharacterDialogues[characterEntry] =
+                    [.. currentDialogues, .. newDialogues.Skip(currentDialogues.Count)];
+                added += newDialogues.Count - currentDialogues.Count;
             }
 
             return added;

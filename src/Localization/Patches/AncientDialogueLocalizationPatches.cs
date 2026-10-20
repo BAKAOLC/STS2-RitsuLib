@@ -1,7 +1,7 @@
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Ancients;
 using STS2RitsuLib.Content;
 using STS2RitsuLib.Patching.Models;
-using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Localization.Patches
 {
@@ -14,7 +14,6 @@ namespace STS2RitsuLib.Localization.Patches
     /// </summary>
     internal class AncientDialoguePopulateLocKeysPatch : IPatchMethod
     {
-        private static readonly AttachedState<AncientDialogueSet, HashSet<string>> ProcessedAncients = new(() => []);
         public static string PatchId => "ancient_dialogue_localization_mod_character_append";
 
         public static string Description =>
@@ -30,12 +29,9 @@ namespace STS2RitsuLib.Localization.Patches
             ];
         }
 
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
         public static void Prefix(AncientDialogueSet __instance, string ancientEntry)
         {
-            var processedAncients = ProcessedAncients.GetOrCreate(__instance);
-            if (!processedAncients.Add(ancientEntry))
-                return;
-
             AncientDialogueLocalization.AppendCharacterDialogues(
                 __instance,
                 ancientEntry,
