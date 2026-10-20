@@ -276,6 +276,7 @@ namespace STS2RitsuLib.Data
             if (scope == SaveScope.InMemory)
             {
                 var memory = new InMemoryDataEntry<T>(key, scope, defaultFactory ?? (() => new()));
+                memory.Initialize(_jsonOptions);
                 _entries[key] = memory;
                 return;
             }
@@ -653,7 +654,7 @@ namespace STS2RitsuLib.Data
         private sealed class InMemoryDataEntry<T>(string key, SaveScope scope, Func<T> defaultFactory)
             : IRegisteredDataEntry where T : class, new()
         {
-            private T _data = defaultFactory();
+            private T _data = null!;
 
             public T Data => IsInitialized
                 ? _data

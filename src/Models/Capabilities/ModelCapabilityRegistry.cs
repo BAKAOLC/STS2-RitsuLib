@@ -23,6 +23,13 @@ namespace STS2RitsuLib.Models.Capabilities
         /// <summary>
         ///     <para xml:lang="en">Registers or replaces a capability factory.</para>
         ///     <para xml:lang="zh-CN">注册或替换能力工厂。</para>
+        ///     <para xml:lang="en">
+        ///         Also registers capability persistence on first use. Register factories during mod initialization,
+        ///         before model saved-data registration is finalized.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         首次注册工厂时同时注册能力持久化。请在模组初始化期间、模型保存数据注册定稿之前注册工厂。
+        ///     </para>
         /// </summary>
         public static void Register(string capabilityId, Type capabilityType, Func<IModelCapability> factory)
         {
@@ -47,6 +54,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     !string.Equals(existingId, capabilityId, StringComparison.Ordinal))
                     throw new InvalidOperationException($"Model capability id is already registered: {capabilityId}");
 
+                ModelCapabilities.EnsureInitialized();
                 Factories[capabilityId] = factory;
                 TypesById[capabilityId] = capabilityType;
                 TypeIds[capabilityType] = capabilityId;

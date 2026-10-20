@@ -6,6 +6,7 @@ on:
     branches: [dev]
 
 permissions:
+  actions: read
   contents: write
 
 concurrency:
@@ -14,13 +15,34 @@ concurrency:
 
 jobs:
   dev-build:
+    concurrency:
+      group: ritsulib-build-commit-${{ github.sha }}
+      cancel-in-progress: false
+      queue: max
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 1
 
+      - name: Check for a version release build
+        id: priority
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              ...context.repo,
+              workflow_id: "release.yml",
+              head_sha: context.sha,
+              event: "push",
+              per_page: 100,
+            });
+            const releaseExists = runs.some(run => run.head_sha === context.sha && run.event === "push");
+            if (releaseExists) core.notice("Skipping dev build: this commit has a version release workflow.");
+            return !releaseExists;
+
       - name: Checkout API signatures (shallow)
+        if: steps.priority.outputs.result == 'true'
         uses: actions/checkout@v6.0.2
         with:
           repository: BAKAOLC/STS2-API-Signatures
@@ -29,11 +51,13 @@ jobs:
           token: ${{ secrets.STS2_SIGNATURES_TOKEN || github.token }}
 
       - uses: ./.github/actions/ritsulib-build
+        if: steps.priority.outputs.result == 'true'
         with:
           signatures-root: ${{ github.workspace }}/sts2-api-signatures
           use-dev-version: "true"
 
       - name: Publish dev prerelease (scripted)
+        if: steps.priority.outputs.result == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash

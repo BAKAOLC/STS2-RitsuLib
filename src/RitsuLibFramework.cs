@@ -457,6 +457,7 @@ namespace STS2RitsuLib
                         SecondaryResourceLocalizationBootstrap.Initialize);
                     RitsuLibStartupAudit.Measure("secondaryResourceCloneBridge",
                         SecondaryResourceCloneBridge.Initialize);
+                    RitsuLibStartupAudit.Measure("freePlayBindings", FreePlayBindingRegistry.Initialize);
                 });
 
                 PublishLifecycleEvent(

@@ -98,8 +98,27 @@ namespace STS2RitsuLib.Settings
         bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
-        public override void _Ready()
+        public override void _Notification(int what)
         {
+            switch ((long)what)
+            {
+                case NotificationEnterTree:
+                    GetViewport().GuiFocusChanged += OnCaptureFocusChanged;
+                    break;
+                case NotificationExitTree:
+                    GetViewport().GuiFocusChanged -= OnCaptureFocusChanged;
+                    CancelCapture(false);
+                    break;
+                case NotificationVisibilityChanged:
+                    if (!IsVisibleInTree())
+                        CancelCapture();
+                    else if (!_capturing)
+                        RefreshPresentation();
+                    break;
+                case NotificationDisabled:
+                    CancelCapture();
+                    break;
+            }
         }
 
         /// <summary>
@@ -202,23 +221,32 @@ namespace STS2RitsuLib.Settings
             _capturingNewBinding = false;
             _pendingModifierBindings.Clear();
             RefreshPresentation();
-            FocusCaptureRow(index);
         }
 
         private void FocusCaptureRow(int index)
         {
             if (index < 0 || !(_bindingsList?.GetChildCount() > index)) return;
-            if (_bindingsList.GetChild(index) is Control row)
-                row.GrabFocus();
+            if (_bindingsList.GetChild(index) is HBoxContainer row && row.GetChild(0) is Button button)
+                button.GrabFocus();
         }
 
-        private void CancelCapture()
+        private void OnCaptureFocusChanged(Control control)
         {
+            if (_capturing && control != this && !IsAncestorOf(control))
+                CancelCapture();
+        }
+
+        private void CancelCapture(bool refreshPresentation = true)
+        {
+            if (!_capturing)
+                return;
+
             _capturing = false;
             _capturingIndex = -1;
             _capturingNewBinding = false;
             _pendingModifierBindings.Clear();
-            RefreshPresentation();
+            if (refreshPresentation)
+                RefreshPresentation();
         }
 
         private void AddBinding(string value, bool notify)
@@ -379,6 +407,8 @@ namespace STS2RitsuLib.Settings
             UpdateMinimumSize();
             QueueSort();
             RitsuVerticalStack.RequestAncestorLayouts(this);
+            if (_capturing)
+                FocusCaptureRow(_capturingNewBinding ? _values.Count : _capturingIndex);
         }
 
         private HBoxContainer CreateBindingRow(string primaryText, Action primaryAction, string secondaryText,

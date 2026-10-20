@@ -211,9 +211,7 @@ namespace STS2RitsuLib.Telemetry.RunHistory
             JsonNode? runHistory;
             try
             {
-                runHistory = JsonSerializer.SerializeToNode(
-                    evt.Run,
-                    JsonSerializationUtility.GetTypeInfo<SerializableRun>());
+                runHistory = BuildAnonymizedRunHistory(evt.Run);
             }
             catch (Exception ex)
             {
@@ -264,6 +262,14 @@ namespace STS2RitsuLib.Telemetry.RunHistory
 
             RitsuLibFramework.Logger.Info(
                 $"[Telemetry] Captured ended run history for {capturedCount} authorized applicant(s); abandoned={evt.IsAbandoned}, victory={evt.IsVictory}.");
+        }
+
+        internal static JsonNode? BuildAnonymizedRunHistory(SerializableRun run)
+        {
+            var anonymized = run.Anonymized();
+            anonymized.NumReloads = run.NumReloads;
+
+            return JsonSerializer.SerializeToNode(anonymized, JsonSerializationUtility.GetTypeInfo<SerializableRun>());
         }
     }
 }
