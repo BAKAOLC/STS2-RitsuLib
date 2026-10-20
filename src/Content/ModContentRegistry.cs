@@ -1058,17 +1058,15 @@ namespace STS2RitsuLib.Content
         {
             EnsureBadgeType(badgeType, nameof(badgeType));
             EnsureMutable($"register badge '{badgeType.Name}'");
-            PrimeOwnedType(badgeType);
 
             lock (SyncRoot)
             {
+                RememberOwner(badgeType);
                 if (!RegisteredBadges.Add(badgeType))
                 {
                     _logger.Debug($"[Content] Skipping duplicate badge registration: {badgeType.Name}");
                     return;
                 }
-
-                RememberOwner(badgeType);
             }
 
             _logger.Info($"[Content] Registered badge: {badgeType.Name}");
@@ -1587,6 +1585,9 @@ namespace STS2RitsuLib.Content
 
             static ModelId? TryGetModelDbId(Type modelType)
             {
+                if (!typeof(AbstractModel).IsAssignableFrom(modelType))
+                    return null;
+
                 try
                 {
                     return ModelDb.GetId(modelType);
@@ -1599,6 +1600,10 @@ namespace STS2RitsuLib.Content
 
             static string? TryGetExpectedPublicEntry(Type modelType, string modId, out bool hasExplicitOverride)
             {
+                hasExplicitOverride = false;
+                if (!typeof(AbstractModel).IsAssignableFrom(modelType))
+                    return null;
+
                 if (FixedPublicEntryOverrides.TryGetValue(modelType, out var entry))
                 {
                     hasExplicitOverride = true;
@@ -1619,6 +1624,9 @@ namespace STS2RitsuLib.Content
 
             static string? TryGetTypeNamePublicEntry(Type modelType)
             {
+                if (!typeof(AbstractModel).IsAssignableFrom(modelType))
+                    return null;
+
                 try
                 {
                     var typeStem = NormalizePublicStem(modelType.Name);
