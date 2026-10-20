@@ -16,7 +16,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  prioritize-release:
+    # Reserve the commit before building. Keep the release build itself
+    # outside this group so another reservation cannot cancel publishing.
+    concurrency:
+      group: ritsulib-build-commit-${{ github.sha }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Reserve this commit for the version release
+        run: echo "Version release takes priority over dev builds for this commit."
+
   release:
+    needs: prioritize-release
     runs-on: ubuntu-latest
     permissions:
       contents: write
