@@ -178,6 +178,30 @@ namespace STS2RitsuLib.Settings
         bool IModSettingsDirectionalInputClaimant.ClaimsDirectionalInput => _capturing;
 
         /// <inheritdoc />
+        public override void _Notification(int what)
+        {
+            switch ((long)what)
+            {
+                case NotificationEnterTree:
+                    GetViewport().GuiFocusChanged += OnCaptureFocusChanged;
+                    break;
+                case NotificationExitTree:
+                    GetViewport().GuiFocusChanged -= OnCaptureFocusChanged;
+                    CancelCapture(false);
+                    break;
+                case NotificationVisibilityChanged:
+                    if (!IsVisibleInTree())
+                        CancelCapture();
+                    else if (!_capturing)
+                        RefreshText();
+                    break;
+                case NotificationDisabled:
+                    CancelCapture();
+                    break;
+            }
+        }
+
+        /// <inheritdoc />
         public override void _Ready()
         {
             if (_captureButton != null)
@@ -215,9 +239,7 @@ namespace STS2RitsuLib.Settings
                 switch (keyEvent.Keycode)
                 {
                     case Key.Escape:
-                        _capturing = false;
-                        _pendingModifierBindings.Clear();
-                        RefreshText();
+                        CancelCapture();
                         return;
                     case Key.Backspace or Key.Delete:
                         ApplyBinding(string.Empty, true);
@@ -281,6 +303,23 @@ namespace STS2RitsuLib.Settings
             _pendingModifierBindings.Clear();
             RefreshText();
             _captureButton?.GrabFocus();
+        }
+
+        private void OnCaptureFocusChanged(Control control)
+        {
+            if (_capturing && control != this && !IsAncestorOf(control))
+                CancelCapture();
+        }
+
+        private void CancelCapture(bool refreshPresentation = true)
+        {
+            if (!_capturing)
+                return;
+
+            _capturing = false;
+            _pendingModifierBindings.Clear();
+            if (refreshPresentation)
+                RefreshText();
         }
 
         private void ApplyBinding(string value, bool notify)
