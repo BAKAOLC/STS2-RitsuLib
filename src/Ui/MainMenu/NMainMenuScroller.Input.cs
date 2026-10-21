@@ -336,15 +336,7 @@ namespace STS2RitsuLib.Ui.MainMenu
             if (!isMouseClick && !isSelect)
                 return IsActive;
 
-            // Mouse clicks fail open: the vanilla buttons already work without this scroller, so the
-            // scroller may only add behavior (scroll clipping), never silently swallow a click.
-            // ActiveScreenContext / transition gating is intentionally limited to controller-style
-            // "select" input here, because a menu that stays flagged inactive (stale transition flag,
-            // screen-context race, hours-long session) must not take the whole main menu hostage.
-            var active = isMouseClick
-                ? Initialized && IsVisibleInTree() && _mainMenu.IsVisibleInTree()
-                : IsActive;
-            var valid = active && !button.IsQueuedForDeletion() && button.IsVisibleInTree() &&
+            var valid = IsActive && !button.IsQueuedForDeletion() && button.IsVisibleInTree() &&
                         button.IsEnabled && button.GetParent() == this;
             if (valid && isSelect && FollowsFocus)
                 EnsureVisible(button);
@@ -366,11 +358,9 @@ namespace STS2RitsuLib.Ui.MainMenu
                     return false;
                 }
 
-                // A gesture that never received its release (focus loss, hidden button, layout rebuild,
-                // ...) must not swallow every following press for the rest of the session.
-                if (_pressedButton != null && !IsInstanceValid(_pressedButton))
-                    CancelPress();
-                if (_pressedButton != null && _pressedButton != button)
+                // A new mouse press starts a new gesture even if the previous release was lost.
+                if (_pressedButton != null && (isMouseClick || !IsInstanceValid(_pressedButton) ||
+                                               _pressedButton != button))
                     CancelPress();
 
                 if (_pressedButton != null)
@@ -395,12 +385,7 @@ namespace STS2RitsuLib.Ui.MainMenu
         }
 
         /// <summary>
-        ///     Hit-tests the event against the scroller and the button using the position that Godot
-        ///     localized for this control. Do not use <see cref="CanvasItem.GetGlobalMousePosition" />
-        ///     here: it reports the DisplayServer pointer position, which can disagree with the event
-        ///     the engine actually routed (unfocused window, pointer warp, moved or rescaled window,
-        ///     viewport content-scale changes). That mismatch used to reject every click on the main
-        ///     menu while hover kept working.
+        ///     Hit-tests the routed event in button and scroller coordinates.
         /// </summary>
         private bool IsPointerInsideMenu(NMainMenuTextButton button, InputEventMouse mouseEvent)
         {
