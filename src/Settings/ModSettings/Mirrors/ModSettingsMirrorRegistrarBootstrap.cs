@@ -9,11 +9,8 @@ namespace STS2RitsuLib.Settings
         {
             lock (Gate)
             {
-                if (_mainMenuPrewarmCompleted)
-                    return 0;
+                return TryRegisterMirroredPagesCore();
             }
-
-            return TryRegisterMirroredPagesCore();
         }
 
         public static int PrewarmMirroredPagesForMainMenu()
@@ -22,15 +19,11 @@ namespace STS2RitsuLib.Settings
             {
                 if (_mainMenuPrewarmCompleted)
                     return 0;
-            }
 
-            var added = TryRegisterMirroredPagesCore();
-            lock (Gate)
-            {
+                var added = TryRegisterMirroredPagesCore();
                 _mainMenuPrewarmCompleted = true;
+                return added;
             }
-
-            return added;
         }
 
         private static int TryRegisterMirroredPagesCore()

@@ -26,7 +26,6 @@ namespace STS2RitsuLib.Settings
         private const string ConfigVisibleIfAttributeName = "BaseLib.Config.ConfigVisibleIfAttribute";
 
         private static readonly Lock Gate = new();
-        private static bool _pagesRegistered;
 
         public static bool IsBaseLibPresent =>
             ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib);
@@ -38,23 +37,14 @@ namespace STS2RitsuLib.Settings
 
             lock (Gate)
             {
-                if (_pagesRegistered)
-                    return 0;
-
                 var registryType = ResolveType(RegistryTypeName);
                 var modConfigType = ResolveType(ModConfigTypeName);
                 if (registryType == null || modConfigType == null)
-                {
-                    _pagesRegistered = true;
                     return 0;
-                }
 
                 var configsField = registryType.GetField("ModConfigs", BindingFlags.Static | BindingFlags.NonPublic);
                 if (configsField?.GetValue(null) is not IDictionary rawMap)
-                {
-                    _pagesRegistered = true;
                     return 0;
-                }
 
                 var configPropsField =
                     modConfigType.GetField("ConfigProperties", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -68,10 +58,7 @@ namespace STS2RitsuLib.Settings
                     BindingFlags.Static | BindingFlags.NonPublic,
                     null, [typeof(string)], null);
                 if (configPropsField == null || getLabel == null || changed == null || save == null || restore == null)
-                {
-                    _pagesRegistered = true;
                     return 0;
-                }
 
                 var sectionAttrType = ResolveType(ConfigSectionAttributeName);
                 var hideUiAttrType = ResolveType(ConfigHideInUiAttributeName);
@@ -100,6 +87,9 @@ namespace STS2RitsuLib.Settings
                     if (string.IsNullOrWhiteSpace(modId) || config == null)
                         continue;
 
+                    if (ModSettingsRegistry.TryGetPage(modId, pageId, out _))
+                        continue;
+
                     var configConcreteType = config.GetType();
                     if (!ModSettingsMirrorInteropPolicy.ShouldMirror(ModSettingsMirrorSource.BaseLib, modId,
                             configConcreteType))
@@ -125,9 +115,6 @@ namespace STS2RitsuLib.Settings
 
                     count++;
                 }
-
-                if (count > 0)
-                    _pagesRegistered = true;
 
                 return count;
             }
