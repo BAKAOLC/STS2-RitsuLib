@@ -3,13 +3,14 @@ namespace STS2RitsuLib.Settings
     internal static class ModSettingsMirrorRegistrarBootstrap
     {
         private static readonly Lock Gate = new();
+        private static readonly ModSettingsMirrorRegistrationRunner Registration = new();
         private static bool _mainMenuPrewarmCompleted;
 
         public static int TryRegisterMirroredPages()
         {
             lock (Gate)
             {
-                return TryRegisterMirroredPagesCore();
+                return Registration.Run(null, _ => TryRegisterMirroredPagesCore());
             }
         }
 
@@ -20,9 +21,12 @@ namespace STS2RitsuLib.Settings
                 if (_mainMenuPrewarmCompleted)
                     return 0;
 
-                var added = TryRegisterMirroredPagesCore();
-                _mainMenuPrewarmCompleted = true;
-                return added;
+                return Registration.Run(null, _ =>
+                {
+                    var added = TryRegisterMirroredPagesCore();
+                    _mainMenuPrewarmCompleted = true;
+                    return added;
+                });
             }
         }
 
