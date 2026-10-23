@@ -1,8 +1,10 @@
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.ControllerInput;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
@@ -35,10 +37,11 @@ namespace STS2RitsuLib.Settings
         private const int DetailMetadataFontSize = 15;
         private const int DetailIdentifierFontSize = 14;
         private const int DetailSectionFontSize = 16;
-        private const double PileCardPollIntervalSeconds = 0.35d;
         private const float HeaderTargetWidth = 320f;
         private readonly Dictionary<Control, GuiInputEventHandler> _creaturePickHandlers = [];
         private readonly HashSet<string> _pageFailures = new(StringComparer.Ordinal);
+        private readonly HashSet<CardPile> _observedCardPiles = [];
+        private readonly HashSet<CardModel> _observedCards = [];
         private Control? _browserHost;
         private bool _contextualPageSelection;
         private Button? _creaturePickButton;
@@ -49,13 +52,11 @@ namespace STS2RitsuLib.Settings
         private PanelContainer? _header;
         private IDisposable? _modelRegistryInitializedSubscription;
         private RitsuDebugToolsPageView[] _pages = [];
-        private double _pileCardPollElapsed;
-        private int? _pileCardSnapshotHash;
         private bool _refreshScheduled;
+        private bool _fullRefreshPending;
+        private bool _themeRefreshPending;
         private uint? _selectedCreatureCombatId;
         private string? _selectedCreaturePresetId;
-        private bool _stateRefreshScheduled;
-        private bool _cardHistoryRefreshScheduled;
         private Label? _status;
         private bool _statusIsError;
         private ModSettingsDropdownChoiceControl<ulong>? _targetDropdown;
@@ -109,11 +110,14 @@ namespace STS2RitsuLib.Settings
             _status.AddThemeColorOverride("font_color", RitsuShellTheme.Current.Text.LabelSecondary);
             AddChild(_status);
             RefreshPages();
-            RebuildBrowser();
+            VisibilityChanged += OnPanelVisibilityChanged;
+            ScheduleRefresh();
         }
 
         public override void _ExitTree()
         {
+            VisibilityChanged -= OnPanelVisibilityChanged;
+            ClearCardSubscriptions();
             FinishCreaturePicking(false);
             RitsuDebugActionProtocol.ActionExecuted -= OnDebugActionExecuted;
             RitsuDebugToolsInterfaceStateStore.CardHistoryChanged -= OnCardHistoryChanged;
@@ -124,31 +128,6 @@ namespace STS2RitsuLib.Settings
             CombatManager.Instance.StateTracker.CombatStateChanged -= OnCombatStateChanged;
             CombatManager.Instance.CombatEnded -= OnCombatEnded;
             base._ExitTree();
-        }
-
-        public override void _Process(double delta)
-        {
-            if (!CurrentPageId.Equals($"{Const.ModId}:pile-cards", StringComparison.OrdinalIgnoreCase) ||
-                !TryGetTargetPlayer(out var target))
-            {
-                _pileCardPollElapsed = 0d;
-                return;
-            }
-
-            _pileCardPollElapsed += delta;
-            if (_pileCardPollElapsed < PileCardPollIntervalSeconds)
-                return;
-            _pileCardPollElapsed = 0d;
-
-            var entries = GetPileCardEntries(target);
-            var snapshotHash = GetPileCardSnapshotHash(entries);
-            if (_pileCardSnapshotHash == snapshotHash)
-                return;
-            _pileCardSnapshotHash = snapshotHash;
-            if (_currentBrowser is RitsuDebugCardCatalog pileCatalog)
-                pileCatalog.UpdateEntries(CreatePileCardCatalogEntries(entries));
-            else
-                RebuildBrowser();
         }
 
         public override void _UnhandledInput(InputEvent @event)
@@ -165,9 +144,7 @@ namespace STS2RitsuLib.Settings
 
         internal void Refresh()
         {
-            if (!IsInsideTree())
-                return;
-            RefreshAll();
+            ScheduleRefresh();
         }
 
         internal void CancelCreaturePicking()
@@ -278,27 +255,93 @@ namespace STS2RitsuLib.Settings
 
         private void OnShellThemeChanged()
         {
-            Callable.From(() =>
+            _themeRefreshPending = true;
+            ScheduleRefresh();
+        }
+
+        private void RefreshTheme()
+        {
+            if (_header != null)
             {
-                if (!IsInstanceValid(this) || !IsInsideTree())
-                    return;
-                if (_header != null)
-                {
-                    RemoveChild(_header);
-                    _header.QueueFree();
-                }
+                RemoveChild(_header);
+                _header.QueueFree();
+            }
 
-                BuildHeader();
-                MoveChild(_header!, 0);
-                if (_status != null)
-                {
-                    _status.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
-                    _status.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
-                    SetStatus(_status.Text, _statusIsError);
-                }
+            BuildHeader();
+            MoveChild(_header!, 0);
+            if (_status == null)
+                return;
+            _status.AddThemeFontOverride("font", RitsuShellTheme.Current.Font.Body);
+            _status.AddThemeFontSizeOverride("font_size", RitsuShellTheme.Current.Metric.FontSize.Secondary);
+            SetStatus(_status.Text, _statusIsError);
+        }
 
-                RefreshPages();
-            }).CallDeferred();
+        private void OnPanelVisibilityChanged()
+        {
+            if (IsVisibleInTree())
+                ScheduleRefresh();
+            else
+                ClearCardSubscriptions();
+        }
+
+        private void UpdateCardSubscriptions()
+        {
+            var piles = IsVisibleInTree() &&
+                        CurrentPageId.Equals($"{Const.ModId}:pile-cards", StringComparison.OrdinalIgnoreCase) &&
+                        TryGetTargetPlayer(out var target)
+                ? RitsuDebugCardActions.GetMutablePileTypes()
+                    .Select(type => RitsuDebugCardActions.GetExistingPile(target, type))
+                    .OfType<CardPile>().ToHashSet()
+                : [];
+            foreach (var pile in _observedCardPiles.Except(piles))
+                pile.ContentsChanged -= ScheduleStateRefresh;
+            foreach (var pile in piles.Except(_observedCardPiles))
+                pile.ContentsChanged += ScheduleStateRefresh;
+            _observedCardPiles.Clear();
+            _observedCardPiles.UnionWith(piles);
+
+            var cards = piles.SelectMany(static pile => pile.Cards).ToHashSet();
+            foreach (var card in _observedCards.Except(cards))
+                SetCardSubscription(card, false);
+            foreach (var card in cards.Except(_observedCards))
+                SetCardSubscription(card, true);
+            _observedCards.Clear();
+            _observedCards.UnionWith(cards);
+        }
+
+        private void ClearCardSubscriptions()
+        {
+            foreach (var pile in _observedCardPiles)
+                pile.ContentsChanged -= ScheduleStateRefresh;
+            _observedCardPiles.Clear();
+            foreach (var card in _observedCards)
+                SetCardSubscription(card, false);
+            _observedCards.Clear();
+        }
+
+        private void SetCardSubscription(CardModel card, bool subscribe)
+        {
+            if (subscribe)
+            {
+                card.AfflictionChanged += ScheduleStateRefresh;
+                card.EnchantmentChanged += ScheduleStateRefresh;
+                card.EnergyCostChanged += ScheduleStateRefresh;
+                card.KeywordsChanged += ScheduleStateRefresh;
+                card.ReplayCountChanged += ScheduleStateRefresh;
+                card.StarCostChanged += ScheduleStateRefresh;
+                card.Upgraded += ScheduleStateRefresh;
+                card.Forged += ScheduleStateRefresh;
+                return;
+            }
+
+            card.AfflictionChanged -= ScheduleStateRefresh;
+            card.EnchantmentChanged -= ScheduleStateRefresh;
+            card.EnergyCostChanged -= ScheduleStateRefresh;
+            card.KeywordsChanged -= ScheduleStateRefresh;
+            card.ReplayCountChanged -= ScheduleStateRefresh;
+            card.StarCostChanged -= ScheduleStateRefresh;
+            card.Upgraded -= ScheduleStateRefresh;
+            card.Forged -= ScheduleStateRefresh;
         }
 
         internal IReadOnlyList<RitsuDebugToolsPageView> GetPages()
@@ -322,7 +365,8 @@ namespace STS2RitsuLib.Settings
             }
 
             CurrentPageId = selected.Id;
-            RefreshHeaderTarget();
+            if (IsVisibleInTree())
+                RefreshHeaderTarget();
             RebuildBrowser();
             PageChanged?.Invoke(selected);
             return true;
@@ -360,6 +404,12 @@ namespace STS2RitsuLib.Settings
 
         private void RefreshAll()
         {
+            if (_themeRefreshPending)
+            {
+                _themeRefreshPending = false;
+                RefreshTheme();
+            }
+
             var players = GetPlayers();
             if (players.All(player => player.NetId != _targetPlayerNetId))
                 _targetPlayerNetId = players.FirstOrDefault()?.NetId;
@@ -545,19 +595,14 @@ namespace STS2RitsuLib.Settings
 
         private void OnPageRegistryChanged()
         {
-            _ = RitsuMainThread.InvokeAsync(() =>
-            {
-                if (!IsInsideTree())
-                    return;
-                RefreshPages();
-                RebuildBrowser();
-            });
+            _ = RitsuMainThread.InvokeAsync(ScheduleRefresh);
         }
 
         private void RebuildBrowser()
         {
-            if (_browserHost == null)
+            if (_browserHost == null || !IsVisibleInTree())
                 return;
+            UpdateCardSubscriptions();
             if (_currentBrowser != null && IsInstanceValid(_currentBrowser))
             {
                 if (ReferenceEquals(_currentBrowser.GetParent(), _browserHost))
@@ -663,7 +708,7 @@ namespace STS2RitsuLib.Settings
 
         private void OnDebugActionExecuted(RitsuDebugActionExecutionResult result)
         {
-            if (!IsInsideTree())
+            if (!IsInsideTree() || !IsVisibleInTree())
                 return;
 
             SetStatus(
@@ -688,16 +733,8 @@ namespace STS2RitsuLib.Settings
 
         private void OnCardHistoryChanged()
         {
-            if (_cardHistoryRefreshScheduled || !IsInsideTree() || !IsCardLibraryPage())
-                return;
-            _cardHistoryRefreshScheduled = true;
-            Callable.From(() =>
-            {
-                _cardHistoryRefreshScheduled = false;
-                if (!_stateRefreshScheduled && IsInsideTree() && IsCardLibraryPage() &&
-                    _currentBrowser != null && IsInstanceValid(_currentBrowser))
-                    RefreshLiveDetails(_currentBrowser);
-            }).CallDeferred();
+            if (IsCardLibraryPage())
+                ScheduleStateRefresh();
         }
 
         private bool IsCardLibraryPage()
@@ -707,15 +744,7 @@ namespace STS2RitsuLib.Settings
 
         private void ScheduleStateRefresh()
         {
-            if (_stateRefreshScheduled || !IsInsideTree())
-                return;
-            _stateRefreshScheduled = true;
-            Callable.From(() =>
-            {
-                _stateRefreshScheduled = false;
-                if (IsInsideTree())
-                    RefreshCurrentState();
-            }).CallDeferred();
+            QueueRefresh(false);
         }
 
         private void RefreshCurrentState()
@@ -736,6 +765,7 @@ namespace STS2RitsuLib.Settings
 
             if (_currentBrowser == null || !IsInstanceValid(_currentBrowser))
                 return;
+            UpdateCardSubscriptions();
 
             switch (CurrentPageId)
             {
@@ -744,7 +774,6 @@ namespace STS2RitsuLib.Settings
                         TryGetTargetPlayer(out var target))
                     {
                         var entries = GetPileCardEntries(target);
-                        _pileCardSnapshotHash = GetPileCardSnapshotHash(entries);
                         pileCatalog.UpdateEntries(CreatePileCardCatalogEntries(entries));
                     }
                     else
@@ -873,14 +902,28 @@ namespace STS2RitsuLib.Settings
 
         private void ScheduleRefresh()
         {
-            if (_refreshScheduled || !IsInsideTree())
+            QueueRefresh(true);
+        }
+
+        private void QueueRefresh(bool full)
+        {
+            if (!IsInsideTree() || !IsVisibleInTree())
+                return;
+            _fullRefreshPending |= full;
+            if (_refreshScheduled)
                 return;
             _refreshScheduled = true;
             Callable.From(() =>
             {
                 _refreshScheduled = false;
-                if (IsInsideTree())
+                if (!IsInsideTree() || !IsVisibleInTree())
+                    return;
+                var refreshAll = _fullRefreshPending;
+                _fullRefreshPending = false;
+                if (refreshAll)
                     RefreshAll();
+                else
+                    RefreshCurrentState();
             }).CallDeferred();
         }
 
