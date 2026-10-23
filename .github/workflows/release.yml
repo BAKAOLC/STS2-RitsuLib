@@ -17,16 +17,16 @@ concurrency:
 
 jobs:
   prioritize-release:
-    # Reserve the commit before building. Keep the release build itself
-    # outside this group so another reservation cannot cancel publishing.
+    # Reserve the source tree before building, including dev before a release merge.
+    # Keep the release build outside this group so another reservation cannot cancel publishing.
     concurrency:
-      group: ritsulib-build-commit-${{ github.sha }}
+      group: ritsulib-build-tree-${{ github.event.head_commit.tree_id || github.sha }}
       cancel-in-progress: true
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Reserve this commit for the version release
-        run: echo "Version release takes priority over dev builds for this commit."
+      - name: Reserve this source tree for the version release
+        run: echo "Version release takes priority over dev builds for this source tree."
 
   release:
     needs: prioritize-release

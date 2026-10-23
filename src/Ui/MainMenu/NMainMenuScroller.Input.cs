@@ -206,9 +206,8 @@ namespace STS2RitsuLib.Ui.MainMenu
             _restorePending = false;
             _keyboardNavigating = false;
             ClearGodotFocus();
-            var pos = GetGlobalMousePosition();
             if (_buttons.LastOrDefault(button =>
-                    IsNavigable(button) && button.GetGlobalRect().HasPoint(pos)) is { } hovered)
+                    IsNavigable(button) && IsPointerOverButton(button)) is { } hovered)
                 ShowReticles(hovered);
         }
 
@@ -342,8 +341,7 @@ namespace STS2RitsuLib.Ui.MainMenu
             if (valid && isSelect && FollowsFocus)
                 EnsureVisible(button);
             valid &= isMouseClick
-                ? (!ScrollEngaged || GetGlobalRect().HasPoint(GetGlobalMousePosition())) &&
-                  button.GetGlobalRect().HasPoint(GetGlobalMousePosition())
+                ? IsPointerInsideMenu(button, mouse!)
                 : FollowsFocus && IsNavigable(button) && button.HasFocus() && IsRowFullyVisible(button);
             if (!valid)
             {
@@ -354,7 +352,18 @@ namespace STS2RitsuLib.Ui.MainMenu
 
             if (inputEvent.IsPressed())
             {
-                if (inputEvent.IsEcho() || _pressedButton != null)
+                if (inputEvent.IsEcho())
+                {
+                    GetViewport().SetInputAsHandled();
+                    return false;
+                }
+
+                // A new mouse press starts a new gesture even if the previous release was lost.
+                if (_pressedButton != null && (isMouseClick || !IsInstanceValid(_pressedButton) ||
+                                               _pressedButton != button))
+                    CancelPress();
+
+                if (_pressedButton != null)
                 {
                     GetViewport().SetInputAsHandled();
                     return false;
@@ -373,6 +382,31 @@ namespace STS2RitsuLib.Ui.MainMenu
 
             _pressedButton = null;
             return true;
+        }
+
+        /// <summary>
+        ///     Hit-tests the routed event in button and scroller coordinates.
+        /// </summary>
+        private bool IsPointerInsideMenu(NMainMenuTextButton button, InputEventMouse mouseEvent)
+        {
+            if (!new Rect2(Vector2.Zero, button.Size).HasPoint(mouseEvent.Position))
+                return false;
+
+            // The button is a direct child of this scroller (validated by the caller), so its local
+            // transform maps the localized position into the scroller's coordinate space.
+            return !ScrollEngaged ||
+                   new Rect2(Vector2.Zero, Size).HasPoint(button.GetTransform() * mouseEvent.Position);
+        }
+
+        /// <summary>
+        ///     Transform-aware hit test for code paths that have no input event at hand (e.g. the mouse
+        ///     mode switch). <c>GetLocalMousePosition()</c> is resolved in the button's local space, so
+        ///     scaled or rotated buttons behave the same way Godot itself hit-tests them. Pairing the
+        ///     canvas-space pointer with <c>GetGlobalRect()</c> instead ignores the button's own scale.
+        /// </summary>
+        private static bool IsPointerOverButton(NMainMenuTextButton button)
+        {
+            return new Rect2(Vector2.Zero, button.Size).HasPoint(button.GetLocalMousePosition());
         }
 
         private void CancelPress(NMainMenuTextButton? button = null)

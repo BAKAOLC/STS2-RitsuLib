@@ -194,7 +194,6 @@ namespace STS2RitsuLib.Settings
             if (!TryGetTargetPlayer(out var player))
                 return EmptyBrowser(L("ritsulib.debugTools.noRun", "Start a run to use state tools."));
             var entries = GetPileCardEntries(player);
-            _pileCardSnapshotHash = GetPileCardSnapshotHash(entries);
 
             if (entries.Length == 0)
                 return EmptyBrowser(L("ritsulib.debugTools.empty.pileCards",
@@ -466,18 +465,6 @@ namespace STS2RitsuLib.Settings
             foreach (var entry in result)
                 _pileCardsByItemId[entry.Item.Id] = entry.SourceCard;
             return result;
-        }
-
-        private static int GetPileCardSnapshotHash(IReadOnlyList<PileCardEntry> entries)
-        {
-            var hash = new HashCode();
-            foreach (var entry in entries)
-            {
-                hash.Add(entry.StableId, StringComparer.Ordinal);
-                hash.Add(GetCardStateHash(entry.Card));
-            }
-
-            return hash.ToHashCode();
         }
 
         private static bool IsDefaultPileCardEntry(RitsuCatalogItem item)
@@ -1114,9 +1101,7 @@ namespace STS2RitsuLib.Settings
 
         private static CardModel CreateCardPreviewModel(CardModel card)
         {
-            var preview = card.IsMutable
-                ? (CardModel)card.ClonePreservingMutability()
-                : card.ToMutable();
+            var preview = RitsuDebugCardPreviewCloner.Clone(card);
             if (preview is MadScience { TinkerTimeType: CardType.None } madScience)
                 madScience.TinkerTimeType = CardType.Attack;
             return preview;

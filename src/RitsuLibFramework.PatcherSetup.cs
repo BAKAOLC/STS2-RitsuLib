@@ -15,6 +15,7 @@ using STS2RitsuLib.Combat.SecondaryResources.Patches;
 using STS2RitsuLib.Combat.Ui.Patches;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics;
+using STS2RitsuLib.Diagnostics.DebugTools;
 using STS2RitsuLib.Diagnostics.Patches;
 using STS2RitsuLib.Interop.Patches;
 using STS2RitsuLib.Keywords.Patches;
@@ -682,6 +683,7 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuOverlayHoverTipLayerPatch>();
             patcher.RegisterPatch<RitsuDebugCardHolderSmallScalePatch>();
             patcher.RegisterPatch<RitsuDebugCardHolderHoverScalePatch>();
+            patcher.RegisterPatch<RitsuDebugCardPreviewClonePatch>();
             RegisterFrameworkPatcher(FrameworkPatcherArea.SettingsUi, patcher);
         }
 

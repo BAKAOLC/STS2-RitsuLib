@@ -25,6 +25,7 @@ namespace STS2RitsuLib.Settings
         private const string TypedSetStringMethodName = "SetRitsuLibSettingString";
 
         private static readonly Lock Gate = new();
+        private static readonly ModSettingsMirrorRegistrationRunner Registration = new();
         private static readonly HashSet<string> SchemaPayloadWarningDedup = new(StringComparer.Ordinal);
         private static readonly HashSet<string> InteropMethodWarningDedup = new(StringComparer.Ordinal);
         private static readonly Lock DefaultWriteGate = new();
@@ -35,6 +36,8 @@ namespace STS2RitsuLib.Settings
 
         private static List<InteropProvider>? _cachedDiscoveredProviders;
         private static int _cachedDiscoveryAssemblyCount = -1;
+        private static int _providerVersion;
+        private static int _cachedDiscoveryProviderVersion = -1;
         private static readonly HashSet<string> ProcessedProviderNames = new(StringComparer.Ordinal);
 
         public static bool RegisterProviderType(string providerTypeFullName, string? assemblyName = null)
@@ -46,6 +49,7 @@ namespace STS2RitsuLib.Settings
             {
                 RuntimeRegisteredProviderTypes[providerTypeFullName.Trim()] =
                     string.IsNullOrWhiteSpace(assemblyName) ? null : assemblyName.Trim();
+                _providerVersion++;
                 _cachedDiscoveredProviders = null;
                 _cachedDiscoveryAssemblyCount = -1;
                 return true;
@@ -66,12 +70,20 @@ namespace STS2RitsuLib.Settings
 
         public static int RegisterProviderTypeAndTryRegister(string providerTypeFullName, string? assemblyName = null)
         {
-            return !RegisterProviderType(providerTypeFullName, assemblyName) ? 0 : TryRegisterMirroredPages();
+            if (!RegisterProviderType(providerTypeFullName, assemblyName))
+                return 0;
+            lock (Gate)
+            {
+                return Registration.Run(providerTypeFullName.Trim(), TryRegisterMirroredPagesCore);
+            }
         }
 
         public static int RegisterProviderTypeAndTryRegister(Type providerType)
         {
-            return !RegisterProviderType(providerType) ? 0 : TryRegisterMirroredPages();
+            ArgumentNullException.ThrowIfNull(providerType);
+            return string.IsNullOrWhiteSpace(providerType.FullName)
+                ? 0
+                : RegisterProviderTypeAndTryRegister(providerType.FullName, providerType.Assembly.GetName().Name);
         }
 
         public static int RegisterProviderTypeAndTryRegister<TProvider>()
@@ -83,15 +95,27 @@ namespace STS2RitsuLib.Settings
         {
             lock (Gate)
             {
-                var providers = DiscoverProviders();
-                return providers.Count == 0 ? 0 : providers.Sum(TryRegisterProvider);
+                return Registration.Run(null, TryRegisterMirroredPagesCore);
             }
+        }
+
+        private static int TryRegisterMirroredPagesCore(string? providerName)
+        {
+            if (providerName == null)
+                return DiscoverProviders().Sum(TryRegisterProvider);
+            if (!RuntimeRegisteredProviderTypes.TryGetValue(providerName, out var assemblyName))
+                return 0;
+            var providers = new List<InteropProvider>();
+            AddRuntimeRegisteredProvider(providerName, assemblyName, providers, new(StringComparer.Ordinal));
+            return providers.Sum(TryRegisterProvider);
         }
 
         private static List<InteropProvider> DiscoverProviders()
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            if (_cachedDiscoveredProviders != null && _cachedDiscoveryAssemblyCount == assemblies.Length)
+            var providerVersion = _providerVersion;
+            if (_cachedDiscoveredProviders != null && _cachedDiscoveryAssemblyCount == assemblies.Length &&
+                _cachedDiscoveryProviderVersion == providerVersion)
                 return [.. _cachedDiscoveredProviders];
 
             var providers = new List<InteropProvider>();
@@ -99,10 +123,10 @@ namespace STS2RitsuLib.Settings
             foreach (var asm in assemblies)
                 DiscoverAssemblyProviders(asm, providers, seen);
 
-            foreach (var (providerTypeName, assemblyName) in RuntimeRegisteredProviderTypes)
+            foreach (var (providerTypeName, assemblyName) in RuntimeRegisteredProviderTypes.ToArray())
                 AddRuntimeRegisteredProvider(providerTypeName, assemblyName, providers, seen);
 
-            CacheDiscoveredProviders(providers, assemblies.Length);
+            CacheDiscoveredProviders(providers, assemblies.Length, providerVersion);
             return providers;
         }
 
@@ -159,10 +183,12 @@ namespace STS2RitsuLib.Settings
             providers.Add(new(providerType, schemaMethod));
         }
 
-        private static void CacheDiscoveredProviders(List<InteropProvider> providers, int assemblyCount)
+        private static void CacheDiscoveredProviders(List<InteropProvider> providers, int assemblyCount,
+            int providerVersion)
         {
             _cachedDiscoveredProviders = [.. providers];
             _cachedDiscoveryAssemblyCount = assemblyCount;
+            _cachedDiscoveryProviderVersion = providerVersion;
         }
 
         private static int TryRegisterProvider(InteropProvider provider)

@@ -11,6 +11,17 @@ namespace STS2RitsuLib.Settings
     ///         RitsuLib 无需在编译期依赖提供器程序集。
     ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         Explicit registration evaluates only the requested provider. Reentrant registration requests return zero;
+    ///         the outer attempt processes queued explicit providers before it completes normally. Failed providers may
+    ///         be retried by a later registration attempt. Global discovery is performed by TryRegisterMirroredPages.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         显式注册仅执行指定提供器。重入的注册请求返回零，由外层尝试在正常完成前处理排队的显式提供器；
+    ///         失败的提供器可在后续注册尝试中重试。TryRegisterMirroredPages 执行全局发现。
+    ///     </para>
+    /// </remarks>
     public static class ModSettingsRuntimeReflectionInteropMirror
     {
         /// <inheritdoc cref="RuntimeInteropMirrorSource.RegisterProviderType(string, string?)" />
