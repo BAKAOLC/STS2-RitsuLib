@@ -181,8 +181,11 @@ namespace STS2RitsuLib.RuntimeInput
                 return true;
 
             var control = root.GetViewport()?.GuiGetFocusOwner();
-            return control == null || !((control is LineEdit lineEdit && lineEdit.IsEditing()) ||
-                                        (control is NMegaTextEdit nMegaTextEdit && nMegaTextEdit.IsEditing()));
+            if (control is LineEdit lineEdit && lineEdit.IsEditing())
+                return false;
+
+            var editor = control as NMegaTextEdit ?? control?.GetParent() as NMegaTextEdit;
+            return editor?.IsEditing() != true;
         }
     }
 

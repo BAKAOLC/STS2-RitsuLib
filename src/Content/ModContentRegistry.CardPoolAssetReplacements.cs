@@ -8,9 +8,8 @@ namespace STS2RitsuLib.Content
     {
         private static long _cardPoolAssetReplacementWriteOrder;
 
-        private static readonly Dictionary<string, Dictionary<string, CardPoolAssetReplacementLayer>>
-            RegisteredCardPoolAssetReplacementsByEntry =
-                new(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<CardPoolAssetTarget, Dictionary<string, CardPoolAssetReplacementLayer>>
+            RegisteredCardPoolAssetReplacements = [];
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -24,29 +23,50 @@ namespace STS2RitsuLib.Content
         public void RegisterCardPoolAssetReplacement(string cardPoolEntry, CardPoolAssetProfile assetProfile)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(cardPoolEntry);
+            RegisterCardPoolAssetReplacement(new CardPoolAssetTarget(NormalizeOwnedModelIdEntry(cardPoolEntry), null),
+                assetProfile);
+        }
+
+        private void RegisterCardPoolAssetReplacement(CardPoolAssetTarget target, CardPoolAssetProfile assetProfile)
+        {
             ArgumentNullException.ThrowIfNull(assetProfile);
-            var normalizedEntry = NormalizeOwnedModelIdEntry(cardPoolEntry);
 
             lock (SyncRoot)
             {
-                if (!RegisteredCardPoolAssetReplacementsByEntry.TryGetValue(normalizedEntry, out var perMod))
+                if (!RegisteredCardPoolAssetReplacements.TryGetValue(target, out var perMod))
                 {
                     perMod = new(StringComparer.OrdinalIgnoreCase);
-                    RegisteredCardPoolAssetReplacementsByEntry[normalizedEntry] = perMod;
+                    RegisteredCardPoolAssetReplacements[target] = perMod;
                 }
 
                 perMod[ModId] = new(assetProfile, NextCardPoolAssetReplacementWriteOrder());
             }
 
             RuntimeAssetRefreshCoordinator.Request();
-            _logger.Info($"[Content] Registered card-pool asset replacement for '{normalizedEntry}'.");
+            _logger.Info($"[Content] Registered card-pool asset replacement for '{target.GetEntry()}'.");
         }
 
-        /// <inheritdoc cref="RegisterCardPoolAssetReplacement(string,CardPoolAssetProfile)" />
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Registers asset replacements for <typeparamref name="TPool" />. The registration follows the
+        ///         pool type when character or shared-pool registration assigns its model ID.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         为 <typeparamref name="TPool" /> 注册资源替换。角色或共享池注册分配模型 ID 时，此注册会跟随池类型。
+        ///     </para>
+        /// </summary>
+        /// <typeparam name="TPool">
+        ///     <para xml:lang="en">The target card-pool model type.</para>
+        ///     <para xml:lang="zh-CN">目标卡牌池模型类型。</para>
+        /// </typeparam>
+        /// <param name="assetProfile">
+        ///     <para xml:lang="en">The assets to override. Non-null fields from later registrations take precedence.</para>
+        ///     <para xml:lang="zh-CN">要替换的资源。后注册的非空字段优先。</para>
+        /// </param>
         public void RegisterCardPoolAssetReplacement<TPool>(CardPoolAssetProfile assetProfile)
             where TPool : CardPoolModel
         {
-            RegisterCardPoolAssetReplacement(ModelDb.GetId<TPool>().Entry, assetProfile);
+            RegisterCardPoolAssetReplacement(new CardPoolAssetTarget(null, typeof(TPool)), assetProfile);
         }
 
         /// <summary>
@@ -68,14 +88,20 @@ namespace STS2RitsuLib.Content
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(cardPoolEntry);
             var canonical = NormalizeOwnedModelIdEntry(cardPoolEntry);
-            bool removed;
+            var removed = false;
 
             lock (SyncRoot)
             {
-                removed = RegisteredCardPoolAssetReplacementsByEntry.TryGetValue(canonical, out var perMod) &&
-                          perMod.Remove(ModId);
-                if (removed && perMod!.Count == 0)
-                    RegisteredCardPoolAssetReplacementsByEntry.Remove(canonical);
+                var targets = RegisteredCardPoolAssetReplacements.Keys
+                    .Where(target => target.GetEntry() == canonical)
+                    .ToArray();
+                foreach (var target in targets)
+                {
+                    var perMod = RegisteredCardPoolAssetReplacements[target];
+                    removed |= perMod.Remove(ModId);
+                    if (perMod.Count == 0)
+                        RegisteredCardPoolAssetReplacements.Remove(target);
+                }
             }
 
             if (!removed) return removed;
@@ -93,29 +119,34 @@ namespace STS2RitsuLib.Content
         }
 
         internal static bool TryGetEffectiveCardPoolAssetReplacement(
-            string cardPoolEntry,
+            CardPoolModel pool,
             out CardPoolAssetProfile assetProfile)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(cardPoolEntry);
-            var canonical = NormalizeOwnedModelIdEntry(cardPoolEntry);
+            var canonical = NormalizeOwnedModelIdEntry(pool.Id.Entry);
 
             lock (SyncRoot)
             {
-                if (RegisteredCardPoolAssetReplacementsByEntry.TryGetValue(canonical, out var layersByMod) &&
-                    layersByMod.Count != 0)
-                    return TryMergeCardPoolAssetReplacementLayers(layersByMod.Values, out assetProfile);
+                RegisteredCardPoolAssetReplacements.TryGetValue(new(canonical, null), out var entryLayers);
+                RegisteredCardPoolAssetReplacements.TryGetValue(new(null, pool.GetType()), out var typeLayers);
+                if (entryLayers == null || typeLayers == null)
+                    return TryMergeCardPoolAssetReplacementLayers(entryLayers?.Values ?? typeLayers?.Values,
+                        out assetProfile);
 
-                assetProfile = CardPoolAssetProfile.Empty;
-                return false;
+                var combined = new Dictionary<string, CardPoolAssetReplacementLayer>(entryLayers,
+                    StringComparer.OrdinalIgnoreCase);
+                foreach (var (modId, layer) in typeLayers)
+                    if (!combined.TryGetValue(modId, out var existing) || layer.WriteOrder > existing.WriteOrder)
+                        combined[modId] = layer;
+                return TryMergeCardPoolAssetReplacementLayers(combined.Values, out assetProfile);
             }
         }
 
         private static bool TryMergeCardPoolAssetReplacementLayers(
-            IEnumerable<CardPoolAssetReplacementLayer> layers,
+            IEnumerable<CardPoolAssetReplacementLayer>? layers,
             out CardPoolAssetProfile mergedProfile)
         {
-            var ordered = layers.ToList();
-            if (ordered.Count == 0)
+            var ordered = layers?.ToList();
+            if (ordered is not { Count: > 0 })
             {
                 mergedProfile = CardPoolAssetProfile.Empty;
                 return false;
@@ -140,5 +171,13 @@ namespace STS2RitsuLib.Content
         private sealed record CardPoolAssetReplacementLayer(
             CardPoolAssetProfile Profile,
             long WriteOrder);
+
+        private readonly record struct CardPoolAssetTarget(string? Entry, Type? PoolType)
+        {
+            internal string GetEntry()
+            {
+                return Entry ?? NormalizeOwnedModelIdEntry(ModelDb.GetId(PoolType!).Entry);
+            }
+        }
     }
 }

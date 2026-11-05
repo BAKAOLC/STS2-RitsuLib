@@ -78,6 +78,9 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         public static bool TryOverridePath(string prefix, ref string result)
         {
+            if (ResolvedModelCache.Phase < ContentRegistryPhase.Resolved)
+                return true;
+
             _cache ??= BuildCache();
 
             if (!_cache.TryGetValue(prefix, out var path))

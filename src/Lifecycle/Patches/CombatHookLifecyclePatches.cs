@@ -403,7 +403,13 @@ namespace STS2RitsuLib.Lifecycle.Patches
             return
             [
                 new(typeof(Hook), nameof(Hook.AfterDeath),
-                    [typeof(IRunState), typeof(CombatStateCompat), typeof(Creature), typeof(bool), typeof(float)]),
+                [
+                    typeof(IRunState), typeof(CombatStateCompat), typeof(Creature),
+#if STS2_AT_LEAST_0_113_0
+                    typeof(CardModel),
+#endif
+                    typeof(bool), typeof(float),
+                ]),
             ];
         }
 
@@ -412,13 +418,13 @@ namespace STS2RitsuLib.Lifecycle.Patches
             IRunState __0,
             CombatStateCompat __1,
             Creature __2,
-            bool __3,
-            float __4,
+            bool wasRemovalPrevented,
+            float deathAnimLength,
             ref Task __result)
         {
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
-                    new CreatureDiedEvent(__0, __1, __2, __3, __4, DateTimeOffset.UtcNow),
+                    new CreatureDiedEvent(__0, __1, __2, wasRemovalPrevented, deathAnimLength, DateTimeOffset.UtcNow),
                     nameof(CreatureDiedEvent)));
         }
     }

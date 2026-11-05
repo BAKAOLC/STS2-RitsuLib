@@ -5,6 +5,9 @@ using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+#if STS2_AT_LEAST_0_113_0
+using MegaCrit.Sts2.Core.Hooks;
+#endif
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.ValueProps;
 using STS2RitsuLib.Patching.Models;
@@ -50,13 +53,20 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
                     nameof(CreatureCmd.Damage),
                     [
                         typeof(PlayerChoiceContext),
+#if STS2_AT_LEAST_0_113_0
+                        typeof(IEnumerable<DamageTargetData>),
+#else
                         typeof(IEnumerable<Creature>),
+#endif
                         typeof(decimal),
                         typeof(ValueProp),
                         typeof(Creature),
                         typeof(CardModel),
 #if STS2_AT_LEAST_0_108_0
                         typeof(CardPlay),
+#endif
+#if STS2_AT_LEAST_0_113_0
+                        typeof(ModifyDamageHookType),
 #endif
                     ]),
                 operation);
@@ -66,13 +76,20 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
                     nameof(AttackHitHook.DamageWithAttackHitHooks),
                     [
                         typeof(PlayerChoiceContext),
+#if STS2_AT_LEAST_0_113_0
+                        typeof(IEnumerable<DamageTargetData>),
+#else
                         typeof(IEnumerable<Creature>),
+#endif
                         typeof(decimal),
                         typeof(ValueProp),
                         typeof(Creature),
                         typeof(CardModel),
 #if STS2_AT_LEAST_0_108_0
                         typeof(CardPlay),
+#endif
+#if STS2_AT_LEAST_0_113_0
+                        typeof(ModifyDamageHookType),
 #endif
                         typeof(AttackCommand),
                         typeof(int),

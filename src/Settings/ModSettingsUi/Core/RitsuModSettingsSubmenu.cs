@@ -109,6 +109,8 @@ namespace STS2RitsuLib.Settings
         private HBoxContainer? _paneHotkeyHintRow;
         private bool _paneHotkeySignalsConnected;
         private bool _paneHotkeysPushed;
+        private long _paneSidebarHotkeySequence;
+        private long _paneContentHotkeySequence;
         private AcceptDialog? _pasteErrorDialog;
         private bool _pendingRefreshFlush;
         private bool _pendingScrollResetToTop;
@@ -332,6 +334,8 @@ namespace STS2RitsuLib.Settings
             ModSettingsBindingWriteEvents.ValueWritten -= _bindingWriteListener;
             CloseQuickSearch(false);
             PopPaneHotkeys();
+            _paneSidebarHotkeySequence = 0L;
+            _paneContentHotkeySequence = 0L;
             FlushDirtyBindings();
             ProcessMode = ProcessModeEnum.Disabled;
             _lastVisibleMirrorRefreshPageKey = null;
@@ -1145,8 +1149,10 @@ namespace STS2RitsuLib.Settings
 
             _hotkeyPaneSidebar = OnHotkeyPressedFocusSidebar;
             _hotkeyPaneContent = OnHotkeyPressedFocusContent;
-            NHotkeyManager.Instance.PushHotkeyPressedBinding(PaneSidebarHotkey, _hotkeyPaneSidebar);
-            NHotkeyManager.Instance.PushHotkeyPressedBinding(PaneContentHotkey, _hotkeyPaneContent);
+            NativeSettingsApiCompat.PushHotkeyPressedBinding(NHotkeyManager.Instance, PaneSidebarHotkey,
+                _hotkeyPaneSidebar, _paneSidebarHotkeySequence);
+            NativeSettingsApiCompat.PushHotkeyPressedBinding(NHotkeyManager.Instance, PaneContentHotkey,
+                _hotkeyPaneContent, _paneContentHotkeySequence);
             _paneHotkeysPushed = true;
         }
 
@@ -1156,9 +1162,13 @@ namespace STS2RitsuLib.Settings
                 return;
 
             if (_hotkeyPaneSidebar != null)
-                NHotkeyManager.Instance.RemoveHotkeyPressedBinding(PaneSidebarHotkey, _hotkeyPaneSidebar);
+                _paneSidebarHotkeySequence = NativeSettingsApiCompat.RemoveHotkeyPressedBinding(NHotkeyManager.Instance,
+                    PaneSidebarHotkey,
+                    _hotkeyPaneSidebar);
             if (_hotkeyPaneContent != null)
-                NHotkeyManager.Instance.RemoveHotkeyPressedBinding(PaneContentHotkey, _hotkeyPaneContent);
+                _paneContentHotkeySequence = NativeSettingsApiCompat.RemoveHotkeyPressedBinding(NHotkeyManager.Instance,
+                    PaneContentHotkey,
+                    _hotkeyPaneContent);
 
             _hotkeyPaneSidebar = null;
             _hotkeyPaneContent = null;

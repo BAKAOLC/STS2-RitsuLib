@@ -60,7 +60,7 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         internal static bool TryGetStyle(CardPoolModel pool, out CardPoolDeckViewStyle style)
         {
-            if (ModContentRegistry.TryGetEffectiveCardPoolAssetReplacement(pool.Id.Entry, out var registered) &&
+            if (ModContentRegistry.TryGetEffectiveCardPoolAssetReplacement(pool, out var registered) &&
                 registered.DeckViewStyle != null)
             {
                 style = registered.DeckViewStyle;

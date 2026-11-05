@@ -9,6 +9,17 @@ namespace STS2RitsuLib.Cards.DynamicVars
     ///     <para xml:lang="en">Represents a <see cref="StarsVar" /> whose displayed icon count is computed by delegates.</para>
     ///     <para xml:lang="zh-CN">表示显示图标数量由委托计算的 <see cref="StarsVar" />。</para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         On STS2 0.113.0 and later, string and numeric conversions use the current preview value truncated to a whole
+    ///         number, following the game. <see cref="Calculate(Creature)" /> retains the full computed decimal value.
+    ///         On STS2 0.111.0, conversions evaluate the current value without a target.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 STS2 0.113.0 及更高版本中，字符串与数值转换遵循游戏规则，使用当前预览值截去小数部分后的整数。
+    ///         <see cref="Calculate(Creature)" /> 保留完整的计算小数值。在 STS2 0.111.0 中，转换会在没有目标时计算当前值。
+    ///     </para>
+    /// </remarks>
     public sealed class ComputedStarsVar : StarsVar, IComputedDynamicVar
     {
         private readonly ComputedDynamicVarEvaluator _evaluator;
@@ -104,6 +115,7 @@ namespace STS2RitsuLib.Cards.DynamicVars
                 runGlobalHooks);
         }
 
+#if !STS2_AT_LEAST_0_113_0
         /// <inheritdoc />
         protected override decimal GetBaseValueForIConvertible()
         {
@@ -116,5 +128,6 @@ namespace STS2RitsuLib.Cards.DynamicVars
             // ReSharper disable once SpecifyACultureInStringConversionExplicitly
             return Calculate(null).ToString();
         }
+#endif
     }
 }

@@ -1,3 +1,4 @@
+using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Localization.Formatters;
 using MegaCrit.Sts2.Core.Models;
@@ -104,14 +105,22 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     internal static class ModTextEnergyIconHelper
     {
+        private static readonly Lock CacheGate = new();
+        private static readonly Dictionary<(string Path, Vector2I Size), AtlasTexture> SizedIcons = [];
         private static Dictionary<string, string>? _cache;
 
         public static string OverrideTextIconTag(string prefix, string defaultTag)
         {
-            _cache ??= BuildCache();
-            return _cache.TryGetValue(prefix, out var path)
-                ? $"[img]{path}[/img]"
-                : defaultTag;
+            if (ResolvedModelCache.Phase < ContentRegistryPhase.Resolved)
+                return defaultTag;
+
+            lock (CacheGate)
+            {
+                _cache ??= BuildCache();
+                return _cache.TryGetValue(prefix, out var path)
+                    ? $"[img]{path}[/img]"
+                    : defaultTag;
+            }
         }
 
         private static Dictionary<string, string> BuildCache()
@@ -138,14 +147,51 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             if (pool is not IModTextEnergyIconPool mapped)
                 return;
 
-            if (string.IsNullOrWhiteSpace(mapped.TextEnergyIconPath))
+            var path = mapped.TextEnergyIconPath;
+            if (string.IsNullOrWhiteSpace(path) || dict.ContainsKey(pool.EnergyColorName))
                 return;
 
-            if (!AssetPathDiagnostics.Exists(mapped.TextEnergyIconPath!, pool,
+            if (!AssetPathDiagnostics.Exists(path, pool,
                     nameof(IModTextEnergyIconPool.TextEnergyIconPath)))
                 return;
 
-            dict.TryAdd(pool.EnergyColorName, mapped.TextEnergyIconPath!);
+            var size = mapped.TextEnergyIconSize;
+            dict.Add(pool.EnergyColorName, size is { } value ? GetSizedIconPath(path, value, pool) : path);
+        }
+
+        private static string GetSizedIconPath(string path, Vector2I size, IPoolModel pool)
+        {
+            if (size.X is < 1 or > 16384 || size.Y is < 1 or > 16384)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[EnergyIconFormatter] Invalid text energy icon size {size} for {pool.GetType().FullName}; keeping the imported size.");
+                return path;
+            }
+
+            if (SizedIcons.TryGetValue((path, size), out var cached))
+                return cached.ResourcePath;
+
+            try
+            {
+                var source = ResourceLoader.Load<Texture2D>(path);
+                var image = source?.GetImage();
+                if (image == null || image.IsEmpty())
+                    throw new InvalidOperationException($"Texture '{path}' has no readable image.");
+
+                var imageTexture = ImageTexture.CreateFromImage(image);
+                imageTexture.SetSizeOverride(size);
+                var texture = new AtlasTexture { Atlas = imageTexture };
+                var alias = $"res://STS2-RitsuLib/text-energy-icons/{SizedIcons.Count}.tres";
+                texture.TakeOverPath(alias);
+                SizedIcons.Add((path, size), texture);
+                return alias;
+            }
+            catch (Exception exception) when (RitsuLibExceptionPolicy.IsRecoverable(exception))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[EnergyIconFormatter] Cannot size text energy icon '{path}' for {pool.GetType().FullName}; keeping the imported size: {exception.Message}");
+                return path;
+            }
         }
     }
 }

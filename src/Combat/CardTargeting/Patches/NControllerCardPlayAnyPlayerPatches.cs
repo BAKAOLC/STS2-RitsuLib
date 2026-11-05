@@ -183,6 +183,9 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             var nodes = list
                 .Select(room.GetCreatureNode)
                 .OfType<NCreature>()
+#if STS2_AT_LEAST_0_113_0
+                .Where(n => n.IsVisible())
+#endif
                 .ToList();
 
             if (nodes.Count == 0)

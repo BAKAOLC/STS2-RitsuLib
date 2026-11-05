@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Vfx.Utilities;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Utils;
 
@@ -1656,8 +1657,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
                     descriptionLoc.GetFormattedText(), icon),
                 _ => CreateRaw(definition.Id, ResolveTitle(definition), ResolveDescription(definition), icon),
             };
-            tip.Id = definition.Id;
-            return tip;
+            return HoverTipCompat.WithId(tip, definition.Id);
         }
 
         /// <summary>
@@ -1721,9 +1721,7 @@ namespace STS2RitsuLib.Combat.SecondaryResources
             DescriptionProperty.SetValue(boxed, description);
             IconProperty.SetValue(boxed, icon);
 
-            var tip = (HoverTip)boxed;
-            tip.Id = id;
-            return tip;
+            return HoverTipCompat.WithId((HoverTip)boxed, id);
         }
     }
 }

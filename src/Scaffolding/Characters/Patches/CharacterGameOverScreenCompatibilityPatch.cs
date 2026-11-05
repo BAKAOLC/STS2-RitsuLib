@@ -164,7 +164,11 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             foreach (var creatureNode in creatureNodes)
             {
                 creatureNode.AnimHideIntent();
+#if STS2_AT_LEAST_0_113_0
+                creatureNode.AnimateOutStateDisplay();
+#else
                 creatureNode.AnimDisableUi();
+#endif
             }
 
             foreach (var creatureVisual in visuals.Where(creatureVisual =>

@@ -19,6 +19,12 @@ using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.TopBar;
 using STS2RitsuLib.Unlocks;
 using STS2RitsuLib.Utils;
+#if STS2_AT_LEAST_0_113_0
+using RegisteredSingletonModel = MegaCrit.Sts2.Core.Models.RunModel;
+
+#else
+using RegisteredSingletonModel = MegaCrit.Sts2.Core.Models.SingletonModel;
+#endif
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
@@ -724,7 +730,15 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     <para xml:lang="en">Queues <see cref="ModContentRegistry.RegisterSingleton{TSingleton}" />.</para>
         ///     <para xml:lang="zh-CN">将 <see cref="ModContentRegistry.RegisterSingleton{TSingleton}" /> 加入队列。</para>
         /// </summary>
-        public ModContentPackBuilder Singleton<TSingleton>() where TSingleton : SingletonModel
+        /// <typeparam name="TSingleton">
+        ///     <para xml:lang="en">The concrete <see cref="RegisteredSingletonModel" /> type for the active game target.</para>
+        ///     <para xml:lang="zh-CN">当前游戏目标对应的具体 <see cref="RegisteredSingletonModel" /> 类型。</para>
+        /// </typeparam>
+        /// <returns>
+        ///     <para xml:lang="en">This builder for further registration steps.</para>
+        ///     <para xml:lang="zh-CN">当前构建器，可继续添加注册步骤。</para>
+        /// </returns>
+        public ModContentPackBuilder Singleton<TSingleton>() where TSingleton : RegisteredSingletonModel
         {
             return AddStep(ctx => ctx.Content.RegisterSingleton<TSingleton>());
         }

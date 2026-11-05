@@ -15,6 +15,11 @@ namespace STS2RitsuLib.Diagnostics
         private static Dictionary<ModelId, List<Type>>? _gameModelIdIndex;
         private static bool _baseLibDynamicEnumCollisionCheckCompleted;
 
+        internal static Lock.Scope EnterModelIdIndexScope()
+        {
+            return IndexGate.EnterScope();
+        }
+
         private static Dictionary<ModelId, List<Type>> GetGameModelIdIndex()
         {
             lock (IndexGate)

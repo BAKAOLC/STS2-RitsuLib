@@ -3,12 +3,16 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.CustomRun;
 using STS2RitsuLib.Patching.Models;
+#if STS2_AT_LEAST_0_113_0
+using MegaCrit.Sts2.Core.Nodes.Screens.Blitz;
+using MegaCrit.Sts2.Core.Nodes.Screens.Dread;
+#endif
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
     internal sealed class CharacterSelectButtonScrollPatch : IPatchMethod
     {
-        private static readonly CharacterButtonStripScrollOptions Options = new(
+        internal static readonly CharacterButtonStripScrollOptions Options = new(
             8,
             928f,
             200f,
@@ -32,6 +36,32 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             NCharacterButtonStripScroller.Install(root, Options);
         }
     }
+
+#if STS2_AT_LEAST_0_113_0
+    internal sealed class SpecialModeCharacterSelectButtonScrollPatch : IPatchMethod
+    {
+        public static string PatchId => "special_mode_character_select_button_scroll";
+        public static string Description => "Enable character button scrolling in special run modes";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return
+            [
+                new(typeof(NBlitzScreen), nameof(NBlitzScreen._Ready)),
+                new(typeof(NDreadScreen), nameof(NDreadScreen._Ready)),
+            ];
+        }
+
+        [HarmonyAfter(Const.BaseLibHarmonyId)]
+        [HarmonyPriority(Priority.Last)]
+        public static void Postfix(Control __instance)
+        {
+            var root = __instance.GetNodeOrNull<Control>("CharSelectButtons");
+            NCharacterButtonStripScroller.Install(root, CharacterSelectButtonScrollPatch.Options);
+        }
+    }
+#endif
 
     internal sealed class CustomRunCharacterSelectButtonScrollPatch : IPatchMethod
     {

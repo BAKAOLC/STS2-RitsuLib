@@ -189,7 +189,7 @@ namespace STS2RitsuLib.Settings
                 if (!hovered || !owner.IsInsideTree())
                     return;
                 NHoverTipSet.CreateAndShow(owner, hoverTip)
-                    ?.SetGlobalPosition(owner.GlobalPosition + NSettingsScreen.settingTipsOffset);
+                    ?.SetGlobalPosition(NativeSettingsApiCompat.GetSettingTipPosition(owner));
             }
 
             void OnUnhovered()

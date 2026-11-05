@@ -134,7 +134,12 @@ namespace STS2RitsuLib.Unlocks.Patches
         {
             return
             [
+#if STS2_AT_LEAST_0_113_0
+                new(typeof(ActModel), nameof(ActModel.GenerateRooms),
+                    [typeof(Rng), typeof(UnlockState), typeof(bool), typeof(bool)]),
+#else
                 new(typeof(ActModel), nameof(ActModel.GenerateRooms), [typeof(Rng), typeof(UnlockState), typeof(bool)]),
+#endif
             ];
         }
 

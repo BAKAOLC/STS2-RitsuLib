@@ -8,6 +8,9 @@ using MegaCrit.Sts2.Core.Commands.Builders;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+#if STS2_AT_LEAST_0_113_0
+using MegaCrit.Sts2.Core.Hooks;
+#endif
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.ValueProps;
 using STS2RitsuLib.Models.Capabilities;
@@ -38,7 +41,33 @@ namespace STS2RitsuLib.Combat.AttackHits
             int hitIndex,
             decimal totalHitCount)
         {
+#if STS2_AT_LEAST_0_113_0
+            return DamageWithAttackHitHooks(
+                choiceContext, targets.Select(static target => new DamageTargetData(target)), amount, props, dealer,
+                cardSource, cardPlay,
+                ModifyDamageHookType.All, attack, hitIndex, totalHitCount);
+        }
+
+        internal static Task<IEnumerable<DamageResult>> DamageWithAttackHitHooks(
+            PlayerChoiceContext choiceContext,
+            IEnumerable<DamageTargetData> targets,
+            decimal amount,
+            ValueProp props,
+            Creature? dealer,
+            CardModel? cardSource,
+            CardPlay? cardPlay,
+            ModifyDamageHookType modifyDamageHookType,
+            AttackCommand attack,
+            int hitIndex,
+            decimal totalHitCount)
+        {
+#endif
+#if STS2_AT_LEAST_0_113_0
+            var targetData = targets as IReadOnlyList<DamageTargetData> ?? [.. targets];
+            IReadOnlyList<Creature> targetList = [.. targetData.Select(static data => data.target)];
+#else
             var targetList = targets as IReadOnlyList<Creature> ?? [.. targets];
+#endif
             var context = TryCreateContext(
                 choiceContext,
                 targetList,
@@ -53,7 +82,11 @@ namespace STS2RitsuLib.Combat.AttackHits
                 hitIndex,
                 totalHitCount);
             return context == null
-#if STS2_AT_LEAST_0_108_0
+#if STS2_AT_LEAST_0_113_0
+                ? CreatureCmd.Damage(choiceContext, targetData, amount, props, dealer, cardSource, cardPlay,
+                    modifyDamageHookType)
+                : DamageAndAfterAttackHit(context, modifyDamageHookType, targetData);
+#elif STS2_AT_LEAST_0_108_0
                 ? CreatureCmd.Damage(choiceContext, targetList, amount, props, dealer, cardSource, cardPlay)
                 : DamageAndAfterAttackHit(context);
 #else
@@ -62,20 +95,56 @@ namespace STS2RitsuLib.Combat.AttackHits
 #endif
         }
 
+#if STS2_AT_LEAST_0_113_0
+        private static IEnumerable<DamageTargetData> RetargetDamage(
+            IReadOnlyList<Creature> targets,
+            IReadOnlyList<DamageTargetData> originalTargets)
+        {
+            for (var index = 0; index < targets.Count; index++)
+            {
+                var target = targets[index];
+                var data = originalTargets.Count == 0
+                    ? new(target)
+                    : originalTargets[Math.Min(index, originalTargets.Count - 1)];
+                if (!ReferenceEquals(data.target, target))
+                    foreach (var original in originalTargets)
+                        if (ReferenceEquals(original.target, target))
+                        {
+                            data = original;
+                            break;
+                        }
+
+                yield return data with { target = target };
+            }
+        }
+#endif
+
         private static async Task<IEnumerable<DamageResult>> DamageAndAfterAttackHit(
-            AttackHitContext context)
+            AttackHitContext context
+#if STS2_AT_LEAST_0_113_0
+            , ModifyDamageHookType modifyDamageHookType, IReadOnlyList<DamageTargetData> targetData
+#endif
+        )
         {
             await BeforeAttackHit(context);
 
 #if STS2_AT_LEAST_0_108_0
             var results = (await CreatureCmd.Damage(
                 context.ChoiceContext,
+#if STS2_AT_LEAST_0_113_0
+                RetargetDamage(context.Targets, targetData),
+#else
                 context.Targets,
+#endif
                 context.Damage,
                 context.DamageProps,
                 context.Dealer,
                 context.CardSource,
-                context.CardPlay)).ToArray();
+                context.CardPlay
+#if STS2_AT_LEAST_0_113_0
+                , modifyDamageHookType
+#endif
+            )).ToArray();
 #else
             var results = (await CreatureCmd.Damage(
                 context.ChoiceContext,

@@ -95,8 +95,8 @@ namespace STS2RitsuLib.Interop.AutoRegistration
     public sealed class RegisterAchievementAttribute : ContentRegistrationAttribute;
 
     /// <summary>
-    ///     <para xml:lang="en">Registers the annotated type as a singleton model.</para>
-    ///     <para xml:lang="zh-CN">将标注类型注册为单例模型。</para>
+    ///     <para xml:lang="en">Registers a native run model on STS2 0.113, or a singleton model on older hosts.</para>
+    ///     <para xml:lang="zh-CN">注册 STS2 0.113 的原生局内模型，或旧版游戏的单例模型。</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public sealed class RegisterSingletonAttribute : ContentRegistrationAttribute;

@@ -655,6 +655,18 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             {
                 const string fromOperation = "[ModelCapabilities] Card transform-from lifecycle injection";
                 const string toOperation = "[ModelCapabilities] Card transform-to lifecycle injection";
+#if STS2_AT_LEAST_0_113_0
+                var transformedFromMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(CardModel), nameof(CardModel.AfterThisWasTransformedInto),
+                        [typeof(CardModel)]), fromOperation);
+                var transformedToMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(CardModel), nameof(CardModel.AfterThisWasTransformedFrom),
+                        [typeof(CardModel)]), toOperation);
+                var notifyFromMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(TransformPatch), nameof(NotifyOriginalTransformed)), fromOperation);
+                var notifyToMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(TransformPatch), nameof(NotifyReplacementTransformed)), toOperation);
+#else
                 var transformedFromMethod = HarmonyIl.RequireMethod(
                     AccessTools.Method(
                         typeof(CardModel),
@@ -675,14 +687,17 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                         typeof(CardModelCapabilityHost),
                         nameof(CardModelCapabilityHost.AfterOwnerCardTransformedTo)),
                     toOperation);
+#endif
 
                 var rewriter = HarmonyIlRewriter.From(instructions);
                 var fromReport = rewriter.TryReplaceFirst(
                     fromOperation,
                     HarmonyIlPattern.Sequence(HarmonyIl.IsCall(transformedFromMethod)),
                     [
+#if !STS2_AT_LEAST_0_113_0
                         new(OpCodes.Dup),
                         new(OpCodes.Callvirt, transformedFromMethod),
+#endif
                         HarmonyIl.Call(notifyFromMethod),
                     ],
                     code => code.Any(HarmonyIl.IsCall(notifyFromMethod)));
@@ -690,13 +705,29 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                     toOperation,
                     HarmonyIlPattern.Sequence(HarmonyIl.IsCall(transformedToMethod)),
                     [
+#if !STS2_AT_LEAST_0_113_0
                         new(OpCodes.Dup),
                         new(OpCodes.Callvirt, transformedToMethod),
+#endif
                         HarmonyIl.Call(notifyToMethod),
                     ],
                     code => code.Any(HarmonyIl.IsCall(notifyToMethod)));
                 return rewriter.InstructionsChecked([fromReport, toReport]);
             }
+
+#if STS2_AT_LEAST_0_113_0
+            private static void NotifyOriginalTransformed(CardModel original, CardModel replacement)
+            {
+                original.AfterThisWasTransformedInto(replacement);
+                CardModelCapabilityHost.AfterOwnerCardTransformedFrom(original);
+            }
+
+            private static void NotifyReplacementTransformed(CardModel replacement, CardModel original)
+            {
+                replacement.AfterThisWasTransformedFrom(original);
+                CardModelCapabilityHost.AfterOwnerCardTransformedTo(replacement);
+            }
+#endif
         }
 
         /// <summary>

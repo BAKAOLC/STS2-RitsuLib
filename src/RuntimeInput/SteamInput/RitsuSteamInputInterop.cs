@@ -1,20 +1,26 @@
 using System.Reflection;
+using MegaCrit.Sts2.Core.ControllerInput;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Platform.Steam;
 
 namespace STS2RitsuLib.RuntimeInput
 {
     internal static class RitsuSteamInputInterop
     {
-        private const int MaxControllers = 16;
+        private static readonly FieldInfo? InputStrategyField = typeof(NControllerManager)
+            .GetField("_inputStrategy", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly FieldInfo? ActiveControllerField = typeof(SteamControllerInputStrategy)
+                                                                       .GetField("_currentActiveController",
+                                                                           BindingFlags.Instance |
+                                                                           BindingFlags.NonPublic)
+                                                                   ?? typeof(SteamControllerInputStrategy)
+                                                                       .GetField("_currentControllerHandle",
+                                                                           BindingFlags.Instance |
+                                                                           BindingFlags.NonPublic);
 
         private static readonly Lazy<Type?> SteamInputType = new(() =>
             Type.GetType("Steamworks.SteamInput, Steamworks.NET", false));
-
-        private static readonly Lazy<Type?> InputHandleType = new(() =>
-            Type.GetType("Steamworks.InputHandle_t, Steamworks.NET", false));
-
-        private static readonly Lazy<Type?> InputDigitalActionHandleType = new(() =>
-            Type.GetType("Steamworks.InputDigitalActionHandle_t, Steamworks.NET", false));
 
         public static bool IsSteamAvailable => SteamInitializer.Initialized && SteamInputType.Value != null;
 
@@ -23,19 +29,19 @@ namespace STS2RitsuLib.RuntimeInput
             return InvokeStatic<bool>("SetInputActionManifestFilePath", [path]);
         }
 
-        public static bool TryGetFirstController(out object controllerHandle)
+        public static bool TryGetActiveController(out object controllerHandle)
         {
             controllerHandle = null!;
-            if (!IsSteamAvailable || InputHandleType.Value == null)
+            if (!IsSteamAvailable)
                 return false;
 
-            var controllers = Array.CreateInstance(InputHandleType.Value, MaxControllers);
-            var count = InvokeStatic<int>("GetConnectedControllers", [controllers]);
-            if (count <= 0)
+            var manager = NControllerManager.Instance;
+            var strategy = manager != null ? InputStrategyField?.GetValue(manager) : null;
+            if (strategy is not SteamControllerInputStrategy)
                 return false;
 
-            controllerHandle = controllers.GetValue(0)!;
-            return !IsDefaultStruct(controllerHandle);
+            controllerHandle = ActiveControllerField?.GetValue(strategy)!;
+            return controllerHandle != null && !IsDefaultStruct(controllerHandle);
         }
 
         public static bool TryGetDigitalActionHandle(string actionId, out object actionHandle)

@@ -754,6 +754,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
             var store = ModDataStore.For(schema.ModId);
             var registeredAny = false;
+            var allRegistered = true;
             using (RitsuLibFramework.BeginModDataRegistration(schema.ModId))
             {
                 foreach (var entry in schema.Entries)
@@ -784,6 +785,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                             var dataType = ResolveExternalType(entry.DataTypeName);
                             if (dataType == null)
                             {
+                                allRegistered = false;
                                 RitsuLibFramework.Logger.Warn(
                                     $"[RuntimeModDataInteropSource] dataType not found: {entry.DataTypeName}");
                                 continue;
@@ -802,18 +804,20 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
                     }
                     catch (Exception ex)
                     {
+                        allRegistered = false;
                         RitsuLibFramework.Logger.Warn(
                             $"[RuntimeModDataInteropSource] Register failed for '{schema.ModId}'::{entry.Key}: {ex.Message}");
                     }
                 }
             }
 
-            if (!registeredAny)
-                return false;
+            if (registeredAny)
+            {
+                PushLoadedForMod(schema.ModId, providerKey);
+                ApplyLoadedForMod(schema.ModId, providerKey);
+            }
 
-            PushLoadedForMod(schema.ModId, providerKey);
-            ApplyLoadedForMod(schema.ModId, providerKey);
-            return true;
+            return allRegistered;
         }
 
         private static bool TryBindChannel(Type providerType, out ReflectionStaticChannel channel)
@@ -902,34 +906,31 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
 
             var defaultFactory = BuildDefaultFactory(providerType, dataType, entry.DefaultFactoryMethodName);
 
-            typedRegister.Invoke(store,
-            [
-                entry.Key,
-                entry.FileName,
-                entry.Scope,
-                entry.SyncToCloud,
-                defaultFactory,
-                entry.AutoCreateIfMissing,
-                entry.MigrationConfig,
-                entry.Migrations,
-            ]);
-
             if (patchStubs)
             {
-                var patched = RuntimeModDataStubPatcher.TryPatchEntry(
-                    providerType,
-                    modId,
-                    entry.Key,
-                    dataType,
-                    entry.GetMethodName,
-                    entry.ModifyMethodName,
-                    entry.SaveMethodName);
+                if (!RuntimeModDataStubPatcher.TryPatchEntry(
+                        providerType,
+                        modId,
+                        entry.Key,
+                        dataType,
+                        entry.GetMethodName,
+                        entry.ModifyMethodName,
+                        entry.SaveMethodName,
+                        RegisterStorage,
+                        out var patched))
+                    throw new InvalidOperationException(
+                        $"ModData stub routing failed for '{modId}'::{entry.Key} on {providerType.FullName}.");
+
                 if (patched == 0)
                     RitsuLibFramework.Logger.Warn(
                         $"[RuntimeModDataInteropSource] No ModData stub methods were patched for '{modId}'::{entry.Key} on {providerType.FullName}.");
                 else
                     RitsuLibFramework.Logger.Debug(
                         $"[RuntimeModDataInteropSource] Patched {patched} ModData stub method(s) for '{modId}'::{entry.Key} on {providerType.FullName}.");
+            }
+            else
+            {
+                RegisterStorage();
             }
 
             RegisterApplyHook(modId, providerKey, entry, providerType);
@@ -940,6 +941,23 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
             lock (Gate)
             {
                 Slots.Add(new(modId, entry.Key, providerKey, dataType, false, entry.Scope, null, null, null));
+            }
+
+            return;
+
+            void RegisterStorage()
+            {
+                typedRegister.Invoke(store,
+                [
+                    entry.Key,
+                    entry.FileName,
+                    entry.Scope,
+                    entry.SyncToCloud,
+                    defaultFactory,
+                    entry.AutoCreateIfMissing,
+                    entry.MigrationConfig,
+                    entry.Migrations,
+                ]);
             }
         }
 

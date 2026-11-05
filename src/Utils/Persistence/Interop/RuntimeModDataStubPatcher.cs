@@ -1,6 +1,8 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using HarmonyLib;
 using STS2RitsuLib.Data;
+using STS2RitsuLib.Patching.Core;
 
 namespace STS2RitsuLib.Utils.Persistence.Interop
 {
@@ -20,6 +22,10 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
         private static readonly Harmony Harmony = new($"{Const.ModId}.mod-data-interop");
         private static readonly HashSet<MethodBase> PatchedMethods = [];
         private static readonly Dictionary<MethodBase, StubRoute> Routes = [];
+        private static readonly ConcurrentDictionary<MethodBase, MethodInfo> PrefixImplementations = new();
+
+        private static readonly MethodInfo PrefixFactoryMethod =
+            typeof(RuntimeModDataStubPatcher).GetMethod(nameof(CreatePrefix), StaticMethodFlags)!;
 
         private static readonly MethodInfo GetPrefixOpen =
             typeof(RuntimeModDataStubPatcher).GetMethod(nameof(GetPrefix), StaticMethodFlags)!;
@@ -30,61 +36,111 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
         private static readonly MethodInfo SavePrefixMethod =
             typeof(RuntimeModDataStubPatcher).GetMethod(nameof(SavePrefix), StaticMethodFlags)!;
 
-        public static int TryPatchEntry(
+        public static bool TryPatchEntry(
             Type providerType,
             string modId,
             string key,
             Type dataType,
             string? getMethodName,
             string? modifyMethodName,
-            string? saveMethodName)
+            string? saveMethodName,
+            Action registerStorage,
+            out int patched)
         {
             var suffix = ToPascalIdentifier(key);
-            var patched = 0;
+            patched = 0;
+            var plans = new List<StubPatchPlan>();
 
             if (TryResolveGetMethod(providerType, dataType, getMethodName ?? $"Get{suffix}", getMethodName != null,
                     out var getMethod))
-                patched += PatchOnce(
-                    getMethod,
-                    GetPrefixOpen.MakeGenericMethod(dataType, getMethod.ReturnType),
-                    new(modId, key, dataType));
+                plans.Add(new(getMethod, GetPrefixOpen.MakeGenericMethod(dataType, getMethod.ReturnType)));
+            else if (getMethodName != null)
+                return false;
 
             if (TryResolveModifyMethod(providerType, dataType, modifyMethodName ?? $"Modify{suffix}",
                     modifyMethodName != null, out var modifyMethod))
-                patched += PatchOnce(
-                    modifyMethod,
-                    ModifyPrefixOpen.MakeGenericMethod(dataType),
-                    new(modId, key, dataType));
+                plans.Add(new(modifyMethod, ModifyPrefixOpen.MakeGenericMethod(dataType)));
+            else if (modifyMethodName != null)
+                return false;
 
             if (TryResolveSaveMethod(providerType, saveMethodName ?? $"Save{suffix}", saveMethodName != null,
                     out var saveMethod))
-                patched += PatchOnce(saveMethod, SavePrefixMethod, new(modId, key, dataType));
+                plans.Add(new(saveMethod, SavePrefixMethod));
+            else if (saveMethodName != null)
+                return false;
 
-            return patched;
-        }
-
-        private static int PatchOnce(MethodInfo original, MethodInfo prefix, StubRoute route)
-        {
+            var route = new StubRoute(modId, key, dataType);
             lock (Gate)
             {
-                if (!PatchedMethods.Add(original))
-                    return 0;
+                foreach (var plan in plans)
+                    if (Routes.TryGetValue(plan.Original, out var existingRoute) && existingRoute != route)
+                        throw new InvalidOperationException(
+                            $"ModData stub method '{FormatMethod(plan.Original)}' already routes to another entry.");
 
-                Routes[original] = route;
+                var installed = new List<StubPatchPlan>();
+                var committed = false;
                 try
                 {
-                    Harmony.Patch(original, new(prefix));
-                    return 1;
+                    foreach (var plan in plans)
+                        PatchInliningGuard.Prepare(plan.Original);
+
+                    foreach (var plan in plans)
+                    {
+                        if (PatchedMethods.Contains(plan.Original))
+                            continue;
+
+                        PrefixImplementations[plan.Original] = plan.Prefix;
+                        try
+                        {
+                            Harmony.Patch(plan.Original, new(PrefixFactoryMethod));
+                        }
+                        catch
+                        {
+                            PrefixImplementations.TryRemove(plan.Original, out _);
+                            throw;
+                        }
+
+                        installed.Add(plan);
+                    }
+
+                    registerStorage();
+                    foreach (var plan in installed)
+                    {
+                        Routes.Add(plan.Original, route);
+                        PatchedMethods.Add(plan.Original);
+                    }
+
+                    committed = true;
+                    patched = installed.Count;
+                    return true;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (RitsuLibExceptionPolicy.IsRecoverable(ex))
                 {
-                    PatchedMethods.Remove(original);
-                    Routes.Remove(original);
                     RitsuLibFramework.Logger.Warn(
-                        $"[RuntimeModDataInteropSource] Failed to patch ModData stub method {FormatMethod(original)}: {ex.Message}");
-                    return 0;
+                        $"[RuntimeModDataInteropSource] Failed to route ModData entry '{modId}'::{key} on {providerType.FullName}: {ex.Message}");
+                    return false;
+                }
+                finally
+                {
+                    if (!committed)
+                        for (var index = installed.Count - 1; index >= 0; index--)
+                        {
+                            var plan = installed[index];
+                            Harmony.Unpatch(plan.Original, PrefixFactoryMethod);
+                            PrefixImplementations.TryRemove(plan.Original, out _);
+                            Routes.Remove(plan.Original);
+                            PatchedMethods.Remove(plan.Original);
+                        }
                 }
             }
+        }
+
+        private static MethodInfo CreatePrefix(MethodBase original)
+        {
+            return PrefixImplementations.TryGetValue(original, out var prefix)
+                ? prefix
+                : throw new InvalidOperationException(
+                    $"No ModData prefix was prepared for '{FormatMethod(original)}'.");
         }
 
         private static bool TryResolveGetMethod(
@@ -242,5 +298,7 @@ namespace STS2RitsuLib.Utils.Persistence.Interop
         }
 
         private readonly record struct StubRoute(string ModId, string Key, Type DataType);
+
+        private readonly record struct StubPatchPlan(MethodInfo Original, MethodInfo Prefix);
     }
 }

@@ -6,6 +6,12 @@ using STS2RitsuLib.Scaffolding.Ancients.Options;
 using STS2RitsuLib.Scaffolding.Cards.HandGlow;
 using STS2RitsuLib.Scaffolding.Cards.HandOutline;
 using STS2RitsuLib.Scaffolding.Characters;
+#if STS2_AT_LEAST_0_113_0
+using RegisteredSingletonModel = MegaCrit.Sts2.Core.Models.RunModel;
+
+#else
+using RegisteredSingletonModel = MegaCrit.Sts2.Core.Models.SingletonModel;
+#endif
 
 namespace STS2RitsuLib.Scaffolding.Content
 {
@@ -524,15 +530,15 @@ namespace STS2RitsuLib.Scaffolding.Content
     }
 
     /// <summary>
-    ///     <para xml:lang="en">Registers a mod singleton model type.</para>
-    ///     <para xml:lang="zh-CN">注册模组单例模型类型。</para>
+    ///     <para xml:lang="en">Registers a native run model on STS2 0.113, or a singleton model on older hosts.</para>
+    ///     <para xml:lang="zh-CN">注册 STS2 0.113 的原生局内模型，或旧版游戏的单例模型。</para>
     /// </summary>
     /// <typeparam name="TSingleton">
-    ///     <para xml:lang="en">The concrete <see cref="SingletonModel" /> type.</para>
-    ///     <para xml:lang="zh-CN">具体 <see cref="SingletonModel" /> 类型。</para>
+    ///     <para xml:lang="en">The concrete <see cref="RegisteredSingletonModel" /> type for the active game target.</para>
+    ///     <para xml:lang="zh-CN">当前游戏目标对应的具体 <see cref="RegisteredSingletonModel" /> 类型。</para>
     /// </typeparam>
     public sealed class SingletonRegistrationEntry<TSingleton> : IContentRegistrationEntry
-        where TSingleton : SingletonModel
+        where TSingleton : RegisteredSingletonModel
     {
         /// <inheritdoc />
         public void Register(ModContentRegistry registry)

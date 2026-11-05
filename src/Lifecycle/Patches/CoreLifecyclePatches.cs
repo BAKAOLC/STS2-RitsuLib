@@ -18,6 +18,9 @@ using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Relics;
 using STS2RitsuLib.Timeline;
 using STS2RitsuLib.Unlocks;
+#if STS2_AT_LEAST_0_113_0
+using MegaCrit.Sts2.Core.Entities.Save;
+#endif
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
@@ -368,8 +371,10 @@ namespace STS2RitsuLib.Lifecycle.Patches
     /// </summary>
     internal class RunEndedLifecyclePatch : IPatchMethod
     {
+#if !STS2_AT_LEAST_0_113_0
         private static readonly FieldInfo? RunHistoryWasUploadedField =
             typeof(RunManager).GetField("_runHistoryWasUploaded", BindingFlags.Instance | BindingFlags.NonPublic);
+#endif
 
         public static string PatchId => "run_ended_lifecycle";
         public static string Description => "Publish lifecycle events when a run ends";
@@ -385,17 +390,38 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         public static void Prefix(RunManager __instance, out bool __state)
         {
+#if STS2_AT_LEAST_0_113_0
+            __state = __instance.HasRunEnded;
+#else
             __state = RunHistoryWasUploadedField?.GetValue(__instance) is true;
+#endif
         }
 
+#if STS2_AT_LEAST_0_113_0
+        public static void Postfix(RunManager __instance, bool isVictory, PostRunProgressUpdateResult __result,
+            bool __state)
+#else
         public static void Postfix(RunManager __instance, bool isVictory, SerializableRun __result, bool __state)
+#endif
         {
             if (__state)
                 return;
 
-            ModUnlockRegistry.ProcessRunEnded(__instance, __result, isVictory, __instance.IsAbandoned);
+#if STS2_AT_LEAST_0_113_0
+            var run = __result.run;
+            if (run == null)
+                return;
+            PublishRunEnded(__instance, run, isVictory);
+#else
+            PublishRunEnded(__instance, __result, isVictory);
+#endif
+        }
+
+        private static void PublishRunEnded(RunManager runManager, SerializableRun run, bool isVictory)
+        {
+            ModUnlockRegistry.ProcessRunEnded(runManager, run, isVictory, runManager.IsAbandoned);
             RitsuLibFramework.PublishLifecycleEvent(
-                new RunEndedEvent(__result, isVictory, __instance.IsAbandoned, DateTimeOffset.UtcNow),
+                new RunEndedEvent(run, isVictory, runManager.IsAbandoned, DateTimeOffset.UtcNow),
                 nameof(RunEndedEvent)
             );
         }

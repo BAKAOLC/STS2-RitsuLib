@@ -49,6 +49,16 @@ namespace STS2RitsuLib.Scaffolding.Content
     ///         <see cref="ModContentRegistry.RegisterPlaceholderRelic{TPool}(string, PlaceholderRelicDescriptor)" />。
     ///     </para>
     /// </summary>
+    /// <remarks>
+    ///     <para xml:lang="en">
+    ///         On STS2 0.113.0 and later, the configured run eligibility is evaluated after the game's mode and late-act
+    ///         restrictions; allowing a placeholder does not bypass those restrictions.
+    ///     </para>
+    ///     <para xml:lang="zh-CN">
+    ///         在 STS2 0.113.0 及更高版本中，配置的局内可用性会在游戏的模式及后期章节限制之后判断；
+    ///         允许占位遗物出现并不会绕过这些限制。
+    ///     </para>
+    /// </remarks>
     public abstract class ModPlaceholderRelicTemplate(
         RelicRarity rarity,
         bool isUsedUp = false,
@@ -102,7 +112,11 @@ namespace STS2RitsuLib.Scaffolding.Content
         public override bool ShouldFlashOnPlayer => shouldFlashOnPlayer;
 
         /// <inheritdoc />
+#if STS2_AT_LEAST_0_113_0
+        protected override bool IsAllowedInternal(IRunState runState)
+#else
         public override bool IsAllowed(IRunState runState)
+#endif
         {
             return alwaysAllowedInRun;
         }

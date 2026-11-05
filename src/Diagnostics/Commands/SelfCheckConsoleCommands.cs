@@ -37,6 +37,20 @@ namespace STS2RitsuLib.Diagnostics.Commands
         /// <inheritdoc />
         public override bool IsNetworked => false;
 
+#if STS2_AT_LEAST_0_113_0
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Keeps settings navigation and read-only diagnostics from marking a run as edited.
+        ///         State-changing developer actions mark the run when their synchronized execution begins.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         不因设置导航或只读诊断而将对局标记为已编辑。
+        ///         改变状态的开发工具操作会在开始同步执行时标记对局。
+        ///     </para>
+        /// </summary>
+        public override bool DebugOnly => false;
+#endif
+
         /// <inheritdoc />
         public override CompletionResult GetArgumentCompletions(Player? player, string[] args)
         {

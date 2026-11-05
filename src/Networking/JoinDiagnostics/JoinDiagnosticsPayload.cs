@@ -106,7 +106,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
                 var payload = new JoinDiagnosticsPayloadV5(
                     local.GameVersion,
                     local.ModelDbHash,
-                    message.gameMode.ToString(),
+                    GetGameMode(message),
                     message.sessionState.ToString(),
                     local.GameplayMods,
                     ContentModInventoryPayloadCodec.Compact(local.ContentMods),
@@ -227,7 +227,7 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return new(
                 payload?.GameVersion ?? versionInfo?.GameVersion ?? GetGameVersion(message),
                 payload?.ModelDbHash ?? versionInfo?.ModelDbHash ?? GetModelDbHash(message),
-                message.gameMode.ToString(),
+                payload?.GameMode ?? GetGameMode(message),
                 message.sessionState.ToString(),
                 payload?.GameplayMods.Count > 0
                     ? payload.GameplayMods
@@ -320,6 +320,15 @@ namespace STS2RitsuLib.Networking.JoinDiagnostics
             return message.versionInfo.version;
 #else
             return message.version;
+#endif
+        }
+
+        private static string GetGameMode(InitialGameInfoMessage message)
+        {
+#if STS2_AT_LEAST_0_113_0
+            return "UNKNOWN";
+#else
+            return message.gameMode.ToString();
 #endif
         }
 

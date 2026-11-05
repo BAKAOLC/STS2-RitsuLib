@@ -35,7 +35,7 @@ namespace STS2RitsuLib.RuntimeInput
 
             try
             {
-                if (!RitsuSteamInputInterop.TryGetFirstController(out var controllerHandle))
+                if (!RitsuSteamInputInterop.TryGetActiveController(out var controllerHandle))
                 {
                     ReleaseAll();
                     return;

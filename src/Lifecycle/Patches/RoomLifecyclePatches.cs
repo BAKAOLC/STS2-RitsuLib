@@ -158,7 +158,11 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
+#if STS2_AT_LEAST_0_113_0
+            return [new(typeof(RunManager), nameof(RunManager.ProceedFromTerminalRewardsScreenAsync), Type.EmptyTypes)];
+#else
             return [new(typeof(RunManager), nameof(RunManager.ProceedFromTerminalRewardsScreen), Type.EmptyTypes)];
+#endif
         }
 
         public static void Postfix(RunManager __instance, ref Task __result)
