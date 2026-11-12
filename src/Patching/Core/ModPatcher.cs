@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
@@ -16,10 +17,12 @@ namespace STS2RitsuLib.Patching.Core
     ///     <para xml:lang="en">
     ///         Static patches merge class and method Harmony annotations using Harmony's native rules while keeping
     ///         their registered targets. Dynamic patches use the supplied HarmonyMethod instances directly.
+    ///         Batch targets are protected from inlining before any wrapper in that batch is compiled.
     ///     </para>
     ///     <para xml:lang="zh-CN">
     ///         静态补丁按 Harmony 原生规则合并类级和方法级标注，并保留注册的目标。
     ///         动态补丁直接使用传入的 HarmonyMethod 实例。
+    ///         批次中的目标会在编译任何补丁包装器前禁用内联。
     ///     </para>
     /// </summary>
     /// <param name="patcherId">
@@ -45,6 +48,7 @@ namespace STS2RitsuLib.Patching.Core
         private readonly Dictionary<string, bool> _patchedStatus = [];
         private readonly List<DynamicPatchInfo> _registeredDynamicPatches = [];
         private readonly List<ModPatchInfo> _registeredPatches = [];
+        private readonly Dictionary<string, Exception> _targetPreparationFailures = [];
 
         /// <summary>
         ///     <para xml:lang="en">Gets the Harmony ID supplied to the constructor.</para>
@@ -202,6 +206,9 @@ namespace STS2RitsuLib.Patching.Core
 
             logger.Info($"{_logPrefix}Applying {patches.Length} dynamic patch(es)...");
 
+            foreach (var patch in patches)
+                PreparePatchTarget(patch.Id, () => patch.OriginalMethod);
+
             var successCount = 0;
             var failureCount = 0;
             var criticalFailureCount = 0;
@@ -271,6 +278,7 @@ namespace STS2RitsuLib.Patching.Core
                 return true;
             }
 
+            PrepareRegisteredPatchTargets();
             logger.Info($"{_logPrefix}Applying {_registeredPatches.Count} patches...");
             var results = new ModPatchResult[_registeredPatches.Count];
             for (var i = 0; i < _registeredPatches.Count; i++)
@@ -316,6 +324,9 @@ namespace STS2RitsuLib.Patching.Core
             if (!IsApplied)
                 throw new InvalidOperationException(
                     $"{nameof(PatchAll)} must complete before applying late static patches.");
+
+            foreach (var modPatchInfo in patches)
+                PreparePatchTarget(modPatchInfo.Id, () => GetOriginalMethod(modPatchInfo));
 
             foreach (var modPatchInfo in patches)
             {
@@ -507,12 +518,42 @@ namespace STS2RitsuLib.Patching.Core
                     $"{_logPrefix}Patch removal incomplete: {failureCount} patch(es) remain available for retry");
         }
 
+        internal void PrepareRegisteredPatchTargets()
+        {
+            foreach (var patch in _registeredPatches)
+                PreparePatchTarget(patch.Id, () => GetOriginalMethod(patch));
+
+            foreach (var patch in _registeredDynamicPatches)
+                PreparePatchTarget(patch.Id, () => patch.OriginalMethod);
+        }
+
+        private void PreparePatchTarget(string id, Func<MethodBase?> resolveTarget)
+        {
+            try
+            {
+                if (resolveTarget() is { } target)
+                    PatchInliningGuard.Prepare(target);
+                _targetPreparationFailures.Remove(id);
+            }
+            catch (Exception exception) when (RitsuLibExceptionPolicy.IsRecoverable(exception))
+            {
+                _targetPreparationFailures[id] = exception;
+            }
+        }
+
+        private void ThrowIfTargetPreparationFailed(string id)
+        {
+            if (_targetPreparationFailures.TryGetValue(id, out var exception))
+                ExceptionDispatchInfo.Capture(exception).Throw();
+        }
+
         private ModPatchResult ApplyPatch(ModPatchInfo modPatchInfo)
         {
             logger.Debug(
                 $"{_logPrefix}[{(modPatchInfo.IsCritical ? "Critical" : "Optional")}] {modPatchInfo.Id} - Begin");
             try
             {
+                ThrowIfTargetPreparationFailed(modPatchInfo.Id);
                 var originalMethod = GetOriginalMethod(modPatchInfo);
                 if (originalMethod == null)
                 {
@@ -570,6 +611,8 @@ namespace STS2RitsuLib.Patching.Core
             var lifetimeStored = false;
             try
             {
+                ThrowIfTargetPreparationFailed(dynamicPatchInfo.Id);
+                PatchInliningGuard.Prepare(dynamicPatchInfo.OriginalMethod);
                 if (!dynamicPatchInfo.HasPatchMethods)
                 {
                     _patchedStatus[dynamicPatchInfo.Id] = false;

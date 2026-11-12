@@ -30,6 +30,9 @@ using STS2RitsuLib.Networking.MessageExtensions;
 using STS2RitsuLib.Networking.Sidecar;
 using STS2RitsuLib.Patching.Models;
 using GameMode = MegaCrit.Sts2.Core.Runs.GameMode;
+#if STS2_AT_LEAST_0_113_0
+using MegaCrit.Sts2.Core.Entities.Players;
+#endif
 
 namespace STS2RitsuLib.RunData.Patches
 {
@@ -363,13 +366,22 @@ namespace STS2RitsuLib.RunData.Patches
                 new(
                     typeof(StartRunLobby),
                     ".ctor",
-                    [typeof(GameMode), typeof(INetGameService), typeof(IStartRunLobbyListener), typeof(int)],
+                    [
+                        typeof(GameMode),
+#if STS2_AT_LEAST_0_113_0
+                        typeof(bool),
+#endif
+                        typeof(INetGameService), typeof(IStartRunLobbyListener), typeof(int),
+                    ],
                     MethodType.Constructor),
                 new(
                     typeof(StartRunLobby),
                     ".ctor",
                     [
                         typeof(GameMode),
+#if STS2_AT_LEAST_0_113_0
+                        typeof(bool),
+#endif
                         typeof(INetGameService),
                         typeof(IStartRunLobbyListener),
                         typeof(TimeServerResult),
@@ -792,7 +804,10 @@ namespace STS2RitsuLib.RunData.Patches
         {
             return
             [
-#if STS2_AT_LEAST_0_111_0
+#if STS2_AT_LEAST_0_113_0
+                new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
+                    [typeof(SerializableUnlockState), typeof(int), typeof(int), typeof(bool), typeof(ulong)]),
+#elif STS2_AT_LEAST_0_111_0
                 new(typeof(StartRunLobby), "TryAddPlayerInFirstAvailableSlot",
                     [typeof(SerializableUnlockState), typeof(int), typeof(bool), typeof(ulong)]),
 #elif STS2_AT_LEAST_0_110_0
@@ -908,20 +923,34 @@ namespace STS2RitsuLib.RunData.Patches
                     typeof(NGame),
                     nameof(NGame.StartNewSingleplayerRun),
                     [
+#if STS2_AT_LEAST_0_113_0
+                        typeof(Player),
+#else
                         typeof(CharacterModel),
+#endif
                         typeof(bool),
                         typeof(IReadOnlyList<ActModel>),
                         typeof(IReadOnlyList<ModifierModel>),
                         typeof(string),
                         typeof(GameMode),
+#if STS2_AT_LEAST_0_113_0
+                        typeof(bool),
+#endif
                         typeof(int),
                         typeof(DateTimeOffset?),
                     ]),
             ];
         }
 
+#if STS2_AT_LEAST_0_113_0
+        public static void Prefix(Player __0, string seed, IReadOnlyList<ModifierModel> modifiers)
+#else
         public static void Prefix(CharacterModel character, string seed, IReadOnlyList<ModifierModel> modifiers)
+#endif
         {
+#if STS2_AT_LEAST_0_113_0
+            var character = __0.Character;
+#endif
             var lobby = RunSavedDataStartRunLobbyAccess.TryFindSingleplayerLobby(character);
             RunSavedDataLobbyBeginRunMessageState.PreparedNewRunPayload = lobby == null
                 ? null

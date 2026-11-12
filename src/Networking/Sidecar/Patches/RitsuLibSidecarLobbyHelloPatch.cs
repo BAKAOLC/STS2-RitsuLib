@@ -34,13 +34,22 @@ namespace STS2RitsuLib.Networking.Sidecar.Patches
                 new(
                     typeof(StartRunLobby),
                     ".ctor",
-                    [typeof(GameMode), typeof(INetGameService), typeof(IStartRunLobbyListener), typeof(int)],
+                    [
+                        typeof(GameMode),
+#if STS2_AT_LEAST_0_113_0
+                        typeof(bool),
+#endif
+                        typeof(INetGameService), typeof(IStartRunLobbyListener), typeof(int),
+                    ],
                     MethodType.Constructor),
                 new(
                     typeof(StartRunLobby),
                     ".ctor",
                     [
                         typeof(GameMode),
+#if STS2_AT_LEAST_0_113_0
+                        typeof(bool),
+#endif
                         typeof(INetGameService),
                         typeof(IStartRunLobbyListener),
                         typeof(TimeServerResult),

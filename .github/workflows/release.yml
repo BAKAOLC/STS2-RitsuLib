@@ -33,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6.0.2
         with:
@@ -57,9 +58,15 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: uv run python scripts/ci/gh_publish.py --repo-root "${{ github.workspace }}" tag-release
 
+      - name: NuGet login
+        uses: NuGet/login@v1.2.0
+        id: nuget-login
+        with:
+          user: OLC
+
       - name: NuGet.org push (scripted)
         env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         shell: bash
         working-directory: ${{ github.workspace }}
         run: uv run python scripts/ci/gh_publish.py --repo-root "${{ github.workspace }}" nuget-push

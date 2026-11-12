@@ -89,13 +89,20 @@ namespace STS2RitsuLib.RunData
         {
             try
             {
-                var character = lobby.LocalPlayer.character;
+                var localPlayer = lobby.LocalPlayer;
+                var character = localPlayer.character;
                 if (character == null)
                     return false;
 
                 using (PushOutboundPayload(payload))
                 {
-                    lobby.NetService.SendMessage(new LobbyPlayerChangedCharacterMessage { character = character });
+                    lobby.NetService.SendMessage(new LobbyPlayerChangedCharacterMessage
+                    {
+                        character = character,
+#if STS2_AT_LEAST_0_113_0
+                        isRotatingDread = localPlayer.isRotatingDread,
+#endif
+                    });
                 }
 
                 return true;

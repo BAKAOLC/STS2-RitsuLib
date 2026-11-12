@@ -39,6 +39,9 @@ namespace STS2RitsuLib.Saves
         private readonly List<EnemyStats> _enemyStats = [];
         private readonly List<SerializableEpoch> _epochs = [];
         private readonly List<SerializableUnlockedAchievement> _unlockedAchievements = [];
+#if STS2_AT_LEAST_0_113_0
+        private readonly Dictionary<string, ModelId> _preferredCharacters = new(StringComparer.Ordinal);
+#endif
 
         private ModelId? _pendingCharacterUnlock;
 
@@ -55,6 +58,9 @@ namespace STS2RitsuLib.Saves
             _discoveredActs.Count > 0 ||
             _epochs.Count > 0 ||
             _unlockedAchievements.Count > 0 ||
+#if STS2_AT_LEAST_0_113_0
+            _preferredCharacters.Count > 0 ||
+#endif
             IsSavableModelId(_pendingCharacterUnlock);
 
         internal static PreservedProgressRecords? Capture(SerializableProgress save)
@@ -77,6 +83,17 @@ namespace STS2RitsuLib.Saves
 
             if (IsUnknownModel<CharacterModel>(save.PendingCharacterUnlock))
                 records._pendingCharacterUnlock = save.PendingCharacterUnlock;
+#if STS2_AT_LEAST_0_113_0
+            records.CapturePreferredCharacter(nameof(save.PreferredStandardCharacter), save.PreferredStandardCharacter);
+            records.CapturePreferredCharacter(nameof(save.PreferredMultiplayerStandardCharacter),
+                save.PreferredMultiplayerStandardCharacter);
+            records.CapturePreferredCharacter(nameof(save.PreferredBlitzCharacter), save.PreferredBlitzCharacter);
+            records.CapturePreferredCharacter(nameof(save.PreferredMultiplayerBlitzCharacter),
+                save.PreferredMultiplayerBlitzCharacter);
+            records.CapturePreferredCharacter(nameof(save.PreferredDreadCharacter), save.PreferredDreadCharacter);
+            records.CapturePreferredCharacter(nameof(save.PreferredMultiplayerDreadCharacter),
+                save.PreferredMultiplayerDreadCharacter);
+#endif
 
             return records.HasAny ? records : null;
         }
@@ -101,7 +118,11 @@ namespace STS2RitsuLib.Saves
                 .Select(static item => item.Achievement)
                 .ToHashSet(StringComparer.Ordinal);
             var removed = errors.RemoveAll(error =>
-                IsExpectedPreservedWarning(error, preservedIdentifiers, preservedAchievements));
+                    IsExpectedPreservedWarning(error, preservedIdentifiers, preservedAchievements)
+#if STS2_AT_LEAST_0_113_0
+                    || IsExpectedPreferredCharacterWarning(error)
+#endif
+            );
             if (removed > 0)
                 RitsuLibFramework.Logger.Info(
                     $"[Saves] Suppressed {removed} expected progress validation warning(s) for unavailable preserved records");
@@ -277,7 +298,43 @@ namespace STS2RitsuLib.Saves
                 pendingCharacterUnlock != null &&
                 pendingCharacterUnlock != ModelId.none)
                 save.PendingCharacterUnlock = pendingCharacterUnlock;
+#if STS2_AT_LEAST_0_113_0
+            save.PreferredStandardCharacter = RestorePreferredCharacter(
+                nameof(save.PreferredStandardCharacter), save.PreferredStandardCharacter);
+            save.PreferredMultiplayerStandardCharacter = RestorePreferredCharacter(
+                nameof(save.PreferredMultiplayerStandardCharacter), save.PreferredMultiplayerStandardCharacter);
+            save.PreferredBlitzCharacter = RestorePreferredCharacter(
+                nameof(save.PreferredBlitzCharacter), save.PreferredBlitzCharacter);
+            save.PreferredMultiplayerBlitzCharacter = RestorePreferredCharacter(
+                nameof(save.PreferredMultiplayerBlitzCharacter), save.PreferredMultiplayerBlitzCharacter);
+            save.PreferredDreadCharacter = RestorePreferredCharacter(
+                nameof(save.PreferredDreadCharacter), save.PreferredDreadCharacter);
+            save.PreferredMultiplayerDreadCharacter = RestorePreferredCharacter(
+                nameof(save.PreferredMultiplayerDreadCharacter), save.PreferredMultiplayerDreadCharacter);
+#endif
         }
+
+#if STS2_AT_LEAST_0_113_0
+        private void CapturePreferredCharacter(string propertyName, ModelId character)
+        {
+            if (IsUnknownModel<CharacterModel>(character))
+                _preferredCharacters.Add(propertyName, character);
+        }
+
+        private ModelId RestorePreferredCharacter(string propertyName, ModelId current)
+        {
+            return current == ModelId.none && _preferredCharacters.TryGetValue(propertyName, out var preserved)
+                ? preserved
+                : current;
+        }
+
+        private bool IsExpectedPreferredCharacterWarning(ValidationError error)
+        {
+            return !error.IsFatal && _preferredCharacters.Any(preferred =>
+                (error.Path == preferred.Key || error.Path.EndsWith("." + preferred.Key, StringComparison.Ordinal)) &&
+                error.Message == $"Unknown ID: {preferred.Value}, resetting to none");
+        }
+#endif
 
         private void MergeEncounterStats(List<EncounterStats> target)
         {
@@ -333,6 +390,9 @@ namespace STS2RitsuLib.Saves
                 FormatCount("epochs", _epochs.Count),
                 FormatCount("achievements", _unlockedAchievements.Count),
                 FormatCount("pendingUnlock", IsSavableModelId(_pendingCharacterUnlock) ? 1 : 0),
+#if STS2_AT_LEAST_0_113_0
+                FormatCount("preferredCharacters", _preferredCharacters.Count),
+#endif
             }.Where(static part => part.Length > 0));
         }
 
@@ -465,6 +525,18 @@ namespace STS2RitsuLib.Saves
                 FastestWinTime = stats.FastestWinTime,
                 BestWinStreak = stats.BestWinStreak,
                 CurrentWinStreak = stats.CurrentWinStreak,
+#if STS2_AT_LEAST_0_113_0
+                BestSingleplayerDreadWinStreakThisVersion = stats.BestSingleplayerDreadWinStreakThisVersion,
+                BestSingleplayerDreadWinStreakThisVersionTag = stats.BestSingleplayerDreadWinStreakThisVersionTag,
+                BestSingleplayerDreadWinStreakOldVersion = stats.BestSingleplayerDreadWinStreakOldVersion,
+                BestSingleplayerDreadWinStreakOldVersionTag = stats.BestSingleplayerDreadWinStreakOldVersionTag,
+                CurrentSingleplayerDreadWinStreak = stats.CurrentSingleplayerDreadWinStreak,
+                BestMultiplayerDreadWinStreakThisVersion = stats.BestMultiplayerDreadWinStreakThisVersion,
+                BestMultiplayerDreadWinStreakThisVersionTag = stats.BestMultiplayerDreadWinStreakThisVersionTag,
+                BestMultiplayerDreadWinStreakOldVersion = stats.BestMultiplayerDreadWinStreakOldVersion,
+                BestMultiplayerDreadWinStreakOldVersionTag = stats.BestMultiplayerDreadWinStreakOldVersionTag,
+                CurrentMultiplayerDreadWinStreak = stats.CurrentMultiplayerDreadWinStreak,
+#endif
                 Playtime = stats.Playtime,
                 Badges = [.. stats.Badges.Select(Clone)],
             };

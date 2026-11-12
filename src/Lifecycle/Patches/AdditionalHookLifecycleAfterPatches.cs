@@ -470,7 +470,16 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(Hook), nameof(Hook.AfterTakingExtraTurn), [typeof(CombatStateCompat), typeof(Player)])];
+            return
+            [
+                new(typeof(Hook), nameof(Hook.AfterTakingExtraTurn),
+                [
+                    typeof(CombatStateCompat), typeof(Player),
+#if STS2_AT_LEAST_0_113_0
+                    typeof(AbstractModel),
+#endif
+                ]),
+            ];
         }
 
         [HarmonyPriority(Priority.Last)]

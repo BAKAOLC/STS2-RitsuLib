@@ -18,12 +18,12 @@ namespace STS2RitsuLib.Scaffolding.Content
         ///     <para xml:lang="en">
         ///         Returns whether this Ancient is valid for <paramref name="act" />. A value of
         ///         <see langword="false" /> excludes it from <see cref="ActModel.GetUnlockedAncients" /> and the
-        ///         shared-Ancient subset used by <see cref="ActModel.GenerateRooms" />.
+        ///         shared-Ancient subset used during room generation.
         ///     </para>
         ///     <para xml:lang="zh-CN">
         ///         返回此先古之民是否适用于 <paramref name="act" />。返回 <see langword="false" /> 时，它会从
         ///         <see cref="ActModel.GetUnlockedAncients" /> 的结果以及
-        ///         <see cref="ActModel.GenerateRooms" /> 使用的共享先古之民子集中排除。
+        ///         房间生成时使用的共享先古之民子集中排除。
         ///     </para>
         /// </summary>
         bool IsValidForAct(ActModel act);

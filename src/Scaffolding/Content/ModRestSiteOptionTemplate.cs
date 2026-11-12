@@ -77,6 +77,21 @@ namespace STS2RitsuLib.Scaffolding.Content
     public abstract class ModRestSiteOptionTemplate(Player owner)
         : RestSiteOption(owner), IModRestSiteOptionAssetOverrides, IModRestSiteOptionCustomTitle
     {
+#if STS2_AT_LEAST_0_113_0
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Uses the disabled description when provided; otherwise uses the regular description.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         禁用时使用已提供的禁用说明；没有该文本时使用普通说明。
+        ///     </para>
+        /// </summary>
+        public override LocString Description =>
+            !IsEnabled && !LocString.Exists("rest_site_ui", $"OPTION_{OptionId}.descriptionDisabled")
+                ? new("rest_site_ui", $"OPTION_{OptionId}.description")
+                : base.Description;
+#endif
+
         /// <inheritdoc />
         public override IEnumerable<string> AssetPaths
         {

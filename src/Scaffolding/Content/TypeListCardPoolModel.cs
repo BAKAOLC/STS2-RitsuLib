@@ -74,6 +74,9 @@ namespace STS2RitsuLib.Scaffolding.Content
         /// <inheritdoc cref="IModTextEnergyIconPool.TextEnergyIconPath" />
         public virtual string? TextEnergyIconPath => null;
 
+        /// <inheritdoc cref="IModTextEnergyIconPool.TextEnergyIconSize" />
+        public virtual Vector2I? TextEnergyIconSize => null;
+
         /// <inheritdoc />
         protected sealed override CardModel[] GenerateAllCards()
         {

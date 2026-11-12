@@ -150,6 +150,7 @@ namespace STS2RitsuLib.Combat.HandSize
                     return false;
                 }
 
+                _ = TryResolveBaseLibGetMaxHandSizeWithBaseMethod();
                 _baseLibGetMaxHandSize = method.CreateDelegate<Func<Player, int>>();
                 getter = _baseLibGetMaxHandSize;
                 return true;
@@ -214,6 +215,8 @@ namespace STS2RitsuLib.Combat.HandSize
                     [typeof(Player), typeof(int)],
                     null);
 
+                if (resolved != null)
+                    PatchInliningGuard.Prepare(resolved);
                 _baseLibGetMaxHandSizeWithBaseMethod = resolved;
                 return resolved;
             }

@@ -14,6 +14,7 @@ using MegaCrit.Sts2.Core.Nodes.Events;
 using MegaCrit.Sts2.Core.Nodes.HoverTips;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.InspectScreens;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Data;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Settings;
@@ -95,10 +96,8 @@ namespace STS2RitsuLib.Content.Patches
 
         private static HoverTip CreateSourceTip(ContentSourceHoverTipFactory.ContentSourceInfo source)
         {
-            return new(ContentSourceHoverTipFactory.GetTitle(), source.FormatLineForBbCode())
-            {
-                Id = "ritsulib:content_source:" + source.Id,
-            };
+            return HoverTipCompat.WithId(new(ContentSourceHoverTipFactory.GetTitle(), source.FormatLineForBbCode()),
+                "ritsulib:content_source:" + source.Id);
         }
 
         internal static void TrackAndUpdateEventSourceBadge(NEventLayout layout, EventModel eventModel)
@@ -168,10 +167,9 @@ namespace STS2RitsuLib.Content.Patches
             if (!IsNodeUsable(tipSet._textHoverTipContainer))
                 return;
 
-            AddHoverTipControl(tipSet, new(ContentSourceHoverTipFactory.GetTitle(), source.FormatLineForBbCode())
-            {
-                Id = "ritsulib:event_content_source:" + source.Id,
-            });
+            AddHoverTipControl(tipSet, HoverTipCompat.WithId(
+                new(ContentSourceHoverTipFactory.GetTitle(), source.FormatLineForBbCode()),
+                "ritsulib:event_content_source:" + source.Id));
             ConfigureEventSourceTipDrawer(layout, tipSet, hotZone);
             PositionEventSourceTipSet(layout, tipSet, false, false);
             PositionEventSourceHotZone(layout, tipSet, hotZone);
@@ -442,7 +440,14 @@ namespace STS2RitsuLib.Content.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
-            return [new(typeof(HoverTipFactory), "Static", [typeof(StaticHoverTip), typeof(DynamicVar[])])];
+            return
+            [
+                new(typeof(HoverTipFactory), "Static", [typeof(StaticHoverTip), typeof(DynamicVar[])]),
+#if STS2_AT_LEAST_0_113_0
+                new(typeof(HoverTipFactory), nameof(HoverTipFactory.ForArrow),
+                    [typeof(MegaCrit.Sts2.Core.Entities.Players.Player), typeof(bool)]),
+#endif
+            ];
         }
 
         public static void Postfix(ref IHoverTip __result)

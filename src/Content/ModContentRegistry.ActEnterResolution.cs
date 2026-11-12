@@ -445,7 +445,11 @@ namespace STS2RitsuLib.Content
             RequestActEnterPostMapUiMapSyncBump();
 
             act.AssertMutable();
+#if STS2_AT_LEAST_0_113_0
+            act.GenerateRooms(runState);
+#else
             act.GenerateRooms(runState.Rng.UpFront, runState.UnlockState, runState.Players.Count > 1);
+#endif
             if (runManager.ShouldApplyTutorialModifications())
                 act.ApplyDiscoveryOrderModifications(runState.UnlockState);
 

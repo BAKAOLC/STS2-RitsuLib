@@ -62,7 +62,12 @@ namespace STS2RitsuLib.Unlocks.Patches
             return
             [
                 new(typeof(StartRunLobby), nameof(StartRunLobby.AddLocalHostPlayer),
-                    [typeof(UnlockState), typeof(int)]),
+                [
+                    typeof(UnlockState), typeof(int),
+#if STS2_AT_LEAST_0_113_0
+                    typeof(int),
+#endif
+                ]),
             ];
         }
 

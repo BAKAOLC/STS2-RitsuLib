@@ -1,4 +1,6 @@
+#if !STS2_AT_LEAST_0_113_0
 using MegaCrit.Sts2.Core.Entities.Cards;
+#endif
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Relics;
@@ -38,6 +40,9 @@ namespace STS2RitsuLib.Relics.Patches
                     return false;
                 }
 
+#if STS2_AT_LEAST_0_113_0
+            return true;
+#else
             var transcendenceCardIds = ArchaicTooth.TranscendenceCards
                 .Select(static card => card.Id)
                 .ToHashSet();
@@ -67,6 +72,7 @@ namespace STS2RitsuLib.Relics.Patches
 
             __instance.AncientCard = lockedCardId;
             return false;
+#endif
         }
 
         private static ModelId? SelectCardId(Player player, IReadOnlyList<CardModel> candidates)

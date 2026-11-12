@@ -80,10 +80,7 @@ namespace STS2RitsuLib.Content
 
         private static HoverTip CreateTip(ContentSourceInfo source)
         {
-            return new(GetTitle(), source.FormatLineForBbCode())
-            {
-                Id = TipIdPrefix + source.Id,
-            };
+            return HoverTipCompat.WithId(new(GetTitle(), source.FormatLineForBbCode()), TipIdPrefix + source.Id);
         }
 
         internal static LocString GetTitle()

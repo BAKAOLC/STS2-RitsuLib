@@ -2610,5 +2610,32 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
         ///     <para xml:lang="zh-CN">获取自定义富文本能量图标的图像路径。</para>
         /// </summary>
         string? TextEnergyIconPath { get; }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets the optional logical width and height of the custom text energy icon, in unscaled UI pixels.
+        ///         The default is null, preserving the imported texture size. Both dimensions must be between 1 and
+        ///         16384; invalid values are logged and ignored. Only a non-empty <see cref="TextEnergyIconPath" />
+        ///         is affected. Source pixels and large energy icons remain unchanged; both drawing and text measurement
+        ///         use the configured size, which is then scaled normally with its parent UI.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         获取自定义文字能量图标的可选逻辑宽高，单位为未缩放的界面像素。默认为 null，沿用导入纹理尺寸。
+        ///         宽高均须为 1 至 16384；非法值会记录日志并被忽略。仅对非空的 <see cref="TextEnergyIconPath" /> 生效。
+        ///         原始像素和大型能量图标保持不变；绘制和文本测量均采用配置尺寸，并随父界面正常缩放。
+        ///     </para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Read with the icon path after model initialization and cached for the process lifetime.
+        ///         Supply stable values. Pools sharing an energy-color name retain the existing first-mapping rule.
+        ///         Existing implementations need not implement this member.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在模型初始化后与图标路径一同读取，并缓存至进程结束；应返回稳定值。
+        ///         共用能量颜色名称的池沿用现有的首个映射规则。已有实现无需补充此成员。
+        ///     </para>
+        /// </remarks>
+        Vector2I? TextEnergyIconSize => null;
     }
 }

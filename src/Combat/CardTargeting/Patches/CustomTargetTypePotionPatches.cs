@@ -129,6 +129,9 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
                             CustomTargetContext.ForPotion(n.Entity, potion),
                             out var allowed) &&
                         allowed)
+#if STS2_AT_LEAST_0_113_0
+                    .Where(n => n.IsVisible())
+#endif
                     .ToList()
                 : [];
 
@@ -159,8 +162,13 @@ namespace STS2RitsuLib.Combat.CardTargeting.Patches
             try
             {
                 var selected = await targetManager.SelectionFinished();
-                if (selected is NCreature creature)
-                    potion.EnqueueManualUse(creature.Entity);
+                if (selected is not NCreature creature)
+                    return;
+#if STS2_AT_LEAST_0_113_0
+                if (RunManager.Instance.IsPotionUseLocked)
+                    return;
+#endif
+                potion.EnqueueManualUse(creature.Entity);
             }
             finally
             {

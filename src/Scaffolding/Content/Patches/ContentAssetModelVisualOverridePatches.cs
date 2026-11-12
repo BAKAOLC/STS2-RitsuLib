@@ -3,6 +3,10 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Timeline;
 using STS2RitsuLib.Patching.Models;
+#if STS2_AT_LEAST_0_113_0
+using STS2RitsuLib.Utils;
+#endif
+
 #if !STS2_AT_LEAST_0_108_0
 using STS2RitsuLib.Timeline.Scaffolding;
 using STS2RitsuLib.Utils;
@@ -175,6 +179,31 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
             return CardPortraitPathPatch.TryCardBetaPortraitPath(__instance, ref __result);
         }
     }
+
+#if STS2_AT_LEAST_0_113_0
+    internal sealed class CardBigPortraitPatch : IPatchMethod
+    {
+        public static string PatchId => "content_asset_override_card_big_portrait";
+        public static string Description => "Honor custom card portraits on the card inspect screen";
+        public static bool IsCritical => false;
+
+        public static ModPatchTarget[] GetTargets()
+        {
+            return [new(typeof(CardModel), nameof(CardModel.BigPortrait), MethodType.Getter)];
+        }
+
+        public static bool Prefix(CardModel __instance, ref Texture2D __result)
+        {
+            string portraitPath = null!;
+            if (CardPortraitPathPatch.TryCardPortraitPath(__instance, ref portraitPath) ||
+                !GodotResourcePath.TryLoad<Texture2D>(portraitPath, out var portrait))
+                return true;
+
+            __result = portrait;
+            return false;
+        }
+    }
+#endif
 
     /// <summary>
     ///     <para xml:lang="en">Makes card portrait availability checks honor custom portrait paths.</para>

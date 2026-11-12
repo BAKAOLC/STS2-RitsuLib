@@ -70,6 +70,9 @@ namespace STS2RitsuLib
 
         private static bool PatchAllRequired()
         {
+            foreach (var patcher in FrameworkPatchersByArea.Values)
+                patcher.PrepareRegisteredPatchTargets();
+
             foreach (var area in Enum.GetValues<FrameworkPatcherArea>())
             {
                 if (!FrameworkPatchersByArea.TryGetValue(area, out var patcher))
@@ -241,6 +244,14 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.ReplayEventSerialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.ReplayEventDeserialize>();
             patcher.RegisterPatch<ModModelIdentityPlayerRunStatePatch>();
+            patcher.RegisterPatch<Models.HookedSingletonCreatePatch>();
+            patcher.RegisterPatch<Models.HookedSingletonCombatResetPatch>();
+            patcher.RegisterPatch<Models.HookedSingletonReleasePatch>();
+#if !STS2_AT_LEAST_0_113_0
+            patcher.RegisterPatch<Models.HookedSingletonCombatContextPatch>();
+            patcher.RegisterPatch<Models.HookedSingletonInitializePatch>();
+            patcher.RegisterPatch<Models.HookedSingletonCombatEndPatch>();
+#endif
             patcher.RegisterPatch<ModModelIdentityRunStateAddCardPatch>();
             patcher.RegisterPatch<ModModelIdentityCombatStateAddCardPatch>();
             patcher.RegisterPatch<CardCmdTransformPatch>();
@@ -546,6 +557,9 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<EpochArtPlaceholderPatch>();
 #endif
             patcher.RegisterPatch<CardPortraitPathPatch>();
+#if STS2_AT_LEAST_0_113_0
+            patcher.RegisterPatch<CardBigPortraitPatch>();
+#endif
             patcher.RegisterPatch<CardBetaPortraitPathPatch>();
             patcher.RegisterPatch<CardPortraitAvailabilityPatch>();
             patcher.RegisterPatch<CardBetaPortraitAvailabilityPatch>();
@@ -724,6 +738,10 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyPatches>();
             patcher.RegisterPatch<CharacterVanillaSelectionPolicyAllCharactersPatch>();
             patcher.RegisterPatch<CharacterSelectButtonScrollPatch>();
+#if STS2_AT_LEAST_0_113_0
+            patcher.RegisterPatch<CharacterShortTitlePatch>();
+            patcher.RegisterPatch<SpecialModeCharacterSelectButtonScrollPatch>();
+#endif
             patcher.RegisterPatch<CustomRunCharacterSelectButtonScrollPatch>();
             patcher.RegisterPatch<ModCreatureCombatAnimationPlaybackPatch>();
             patcher.RegisterPatch<NCreatureCombatAnimationInitialBootstrapPatch>();

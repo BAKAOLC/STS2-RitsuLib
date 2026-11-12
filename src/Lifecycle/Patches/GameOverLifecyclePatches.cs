@@ -1,7 +1,12 @@
 using MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;
 using MegaCrit.Sts2.Core.Runs;
-using MegaCrit.Sts2.Core.Saves;
 using STS2RitsuLib.Patching.Models;
+#if STS2_AT_LEAST_0_113_0
+using MegaCrit.Sts2.Core.Entities.Save;
+
+#else
+using MegaCrit.Sts2.Core.Saves;
+#endif
 
 namespace STS2RitsuLib.Lifecycle.Patches
 {
@@ -23,15 +28,28 @@ namespace STS2RitsuLib.Lifecycle.Patches
             return
             [
                 new(typeof(NGameOverScreen), nameof(NGameOverScreen.Create),
+#if STS2_AT_LEAST_0_113_0
+                    [typeof(RunState), typeof(PostRunProgressUpdateResult)]),
+#else
                     [typeof(RunState), typeof(SerializableRun)]),
+#endif
             ];
         }
 
+#if STS2_AT_LEAST_0_113_0
+        public static void Postfix(RunState runState, PostRunProgressUpdateResult __1, NGameOverScreen? __result)
+#else
         public static void Postfix(RunState runState, SerializableRun serializableRun, NGameOverScreen? __result)
+#endif
         {
             if (__result == null)
                 return;
 
+#if STS2_AT_LEAST_0_113_0
+            var serializableRun = __1.run;
+            if (serializableRun == null)
+                return;
+#endif
             RitsuLibFramework.PublishLifecycleEvent(
                 new GameOverScreenCreatedEvent(runState, serializableRun, __result, DateTimeOffset.UtcNow),
                 nameof(GameOverScreenCreatedEvent)

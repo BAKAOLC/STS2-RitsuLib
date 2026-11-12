@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
+using STS2RitsuLib.Patching.Core;
 using STS2RitsuLib.Patching.Models;
 
 namespace STS2RitsuLib.Utils.HarmonyIl
@@ -188,6 +189,7 @@ namespace STS2RitsuLib.Utils.HarmonyIl
                 validateOutput);
             try
             {
+                PatchInliningGuard.Prepare(originalMethod);
                 harmony.Patch(originalMethod, transpiler: handle.HarmonyMethod);
                 return handle;
             }

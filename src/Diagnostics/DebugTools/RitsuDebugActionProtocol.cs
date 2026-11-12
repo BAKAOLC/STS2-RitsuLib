@@ -506,6 +506,9 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
             string result;
             try
             {
+#if STS2_AT_LEAST_0_113_0
+                RunManager.Instance?.DebugOnlyGetState()?.ExtraFields.MarkDebugToolUsed();
+#endif
                 result = await prepared.Registration.Execute(prepared.Context, managedContext.Message.PayloadJson);
             }
             catch (RitsuDebugActionExecutionException ex)
@@ -525,6 +528,12 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
                         "The requested change could not be completed. See the game log for details."));
                 throw;
             }
+#if STS2_AT_LEAST_0_113_0
+            finally
+            {
+                RunManager.Instance?.DebugOnlyGetState()?.ExtraFields.MarkDebugToolUsed();
+            }
+#endif
 
             RitsuLibFramework.Logger.Info(
                 $"[DebugTools] Executed '{managedContext.Message.ActionId}' requestedBy=" +

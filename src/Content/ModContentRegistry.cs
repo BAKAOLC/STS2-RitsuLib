@@ -3,10 +3,18 @@ using System.Text.RegularExpressions;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
+using STS2RitsuLib.Compat;
 using STS2RitsuLib.Content.Patches;
 using STS2RitsuLib.Diagnostics;
 using STS2RitsuLib.Models.Capabilities;
+using STS2RitsuLib.Scaffolding.Characters;
 using STS2RitsuLib.Scaffolding.Content;
+#if STS2_AT_LEAST_0_113_0
+using RegisteredSingletonModel = MegaCrit.Sts2.Core.Models.RunModel;
+
+#else
+using RegisteredSingletonModel = MegaCrit.Sts2.Core.Models.SingletonModel;
+#endif
 
 namespace STS2RitsuLib.Content
 {
@@ -562,8 +570,14 @@ namespace STS2RitsuLib.Content
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers a mod character model for inclusion in <see cref="ModelDb.AllCharacters" />.</para>
-        ///     <para xml:lang="zh-CN">注册模组角色模型，使其纳入 <see cref="ModelDb.AllCharacters" />。</para>
+        ///     <para xml:lang="en">
+        ///         Registers a mod character for inclusion in <see cref="ModelDb.AllCharacters" /> and assigns ownership
+        ///         to its template-declared custom pools belonging to this mod. Existing pool ownership is retained.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册模组角色，使其纳入 <see cref="ModelDb.AllCharacters" />，并为角色模板声明的、属于本模组的
+        ///         自定义池登记归属。已有池归属会被保留。
+        ///     </para>
         /// </summary>
         public void RegisterCharacter<TCharacter>() where TCharacter : CharacterModel
         {
@@ -573,13 +587,54 @@ namespace STS2RitsuLib.Content
         /// <summary>
         ///     <para xml:lang="en">
         ///         Registers <paramref name="characterType" /> for inclusion in
-        ///         <see cref="ModelDb.AllCharacters" />.
+        ///         <see cref="ModelDb.AllCharacters" />. Custom pools declared by its closed
+        ///         <c>ModCharacterTemplate&lt;TCardPool, TRelicPool, TPotionPool&gt;</c> base are assigned stable IDs
+        ///         during registration when they belong to this mod and have no existing owner. This does not add them
+        ///         to shared pools. Registration does not construct models or evaluate their pool getters.
         ///     </para>
-        ///     <para xml:lang="zh-CN">注册 <paramref name="characterType" />，使其纳入 <see cref="ModelDb.AllCharacters" />。</para>
+        ///     <para xml:lang="zh-CN">
+        ///         注册 <paramref name="characterType" />，使其纳入 <see cref="ModelDb.AllCharacters" />。
+        ///         对闭合的 <c>ModCharacterTemplate&lt;TCardPool, TRelicPool, TPotionPool&gt;</c> 基类声明的自定义池，
+        ///         若其属于本模组且尚无归属，则在注册阶段分配稳定 ID。此操作不会将它们加入共享池，
+        ///         也不会构造模型或执行池属性的 getter。
+        ///     </para>
         /// </summary>
         public void RegisterCharacter(Type characterType)
         {
-            RegisterStandaloneModel(RegisteredCharacters, characterType, typeof(CharacterModel), "character");
+            EnsureModelType(characterType, typeof(CharacterModel), nameof(characterType));
+            EnsureMutable($"register character '{characterType.Name}'");
+            using var indexScope = RegistrationConflictDetector.EnterModelIdIndexScope();
+            lock (SyncRoot)
+            {
+                var poolTypes = GetCharacterPoolTypes(characterType)
+                    .Where(poolType => IsOwnedCharacterPool(poolType, characterType))
+                    .ToArray();
+                var newOwners = poolTypes.Append(characterType)
+                    .Where(type => !RegisteredTypeOwners.ContainsKey(type))
+                    .ToDictionary(static type => type, ModelDb.GetId);
+                var wasRegistered = RegisteredCharacters.Contains(characterType);
+                try
+                {
+                    foreach (var type in newOwners.Keys)
+                        PrimeOwnedType(type);
+                    foreach (var poolType in poolTypes)
+                        RegistrationConflictDetector.ThrowIfModelIdConflicts(poolType);
+                    RegisterStandaloneModel(RegisteredCharacters, characterType, typeof(CharacterModel), "character");
+                }
+                catch (Exception exception) when (RitsuLibExceptionPolicy.IsRecoverable(exception))
+                {
+                    if (!wasRegistered)
+                        RegisteredCharacters.Remove(characterType);
+                    foreach (var (type, previousId) in newOwners)
+                    {
+                        var currentId = ModelDb.GetId(type);
+                        RegisteredTypeOwners.Remove(type);
+                        RegistrationConflictDetector.UpdateModelIdIndex(type, currentId, previousId);
+                    }
+
+                    throw;
+                }
+            }
         }
 
         /// <summary>
@@ -1020,25 +1075,80 @@ namespace STS2RitsuLib.Content
 
         /// <summary>
         ///     <para xml:lang="en">
-        ///         Registers a mod singleton model for fixed identity and dynamic injection through
-        ///         <see cref="ModelDb.Singleton{T}" />.
+        ///         Registers a model definition for fixed identity and per-run hook instances.
+        ///         Retrieve it through <c>ModelDb.GetById</c> with its <c>ModelDb.GetId</c> identity.
+        ///         STS2 0.113 accepts native run models and uses native lifecycle and hook dispatch.
+        ///         Each registered run model gets a new mutable clone per run, including loaded runs.
+        ///         Canonical queries return definitions, not the active instance.
+        ///         Persistent data must be stored separately and restored explicitly when loading.
         ///     </para>
         ///     <para xml:lang="zh-CN">
-        ///         注册模组单例模型，用于固定身份，并通过 <see cref="ModelDb.Singleton{T}" /> 动态注入。
+        ///         注册模型定义，用于固定身份和每局独立的钩子实例。
+        ///         可通过 <c>ModelDb.GetId</c> 取得身份后使用 <c>ModelDb.GetById</c> 查询。
+        ///         STS2 0.113 接受原生局内模型，并使用原生生命周期与钩子分发。
+        ///         已注册的局内模型在每局（包括读档）创建新的可变克隆。
+        ///         规范查询返回定义而非当前局实例；持久数据应单独存储，并在读档时显式恢复。
         ///     </para>
         /// </summary>
-        public void RegisterSingleton<TSingleton>() where TSingleton : SingletonModel
+        /// <typeparam name="TSingleton">
+        ///     <para xml:lang="en">A closed concrete <see cref="RegisteredSingletonModel" /> type owned by this mod.</para>
+        ///     <para xml:lang="zh-CN">由当前模组拥有的封闭具体 <see cref="RegisteredSingletonModel" /> 类型。</para>
+        /// </typeparam>
+        public void RegisterSingleton<TSingleton>() where TSingleton : RegisteredSingletonModel
         {
             RegisterSingleton(typeof(TSingleton));
         }
 
         /// <summary>
-        ///     <para xml:lang="en">Registers <paramref name="singletonType" /> for dynamic singleton injection.</para>
-        ///     <para xml:lang="zh-CN">注册 <paramref name="singletonType" />，用于动态单例注入。</para>
+        ///     <para xml:lang="en">
+        ///         Registers a canonical singleton before content registration freezes. Repeated registration by the same
+        ///         owner is ignored; conflicting ownership or identity is rejected. STS2 0.113 and later require
+        ///         native run models. Hook listeners are isolated by run;
+        ///         registering a definition does not subscribe its canonical instance.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在内容注册冻结前注册规范单例。同一拥有者的重复注册会被忽略；拥有者或身份冲突会被拒绝。
+        ///         STS2 0.113 及以上要求原生局内模型。
+        ///         钩子实例按局隔离，注册定义不会将其规范实例订阅到钩子。
+        ///     </para>
         /// </summary>
+        /// <param name="singletonType">
+        ///     <para xml:lang="en">A closed concrete <see cref="RegisteredSingletonModel" /> type owned by this mod.</para>
+        ///     <para xml:lang="zh-CN">由当前模组拥有的封闭具体 <see cref="RegisteredSingletonModel" /> 类型。</para>
+        /// </param>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en"><paramref name="singletonType" /> is null.</para>
+        ///     <para xml:lang="zh-CN"><paramref name="singletonType" /> 为 null。</para>
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">The type is not a closed concrete subtype of the required singleton family.</para>
+        ///     <para xml:lang="zh-CN">类型不是所需单例类型族的封闭具体派生类型。</para>
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        ///     <para xml:lang="en">Registration is frozen, or ownership or model identity conflicts.</para>
+        ///     <para xml:lang="zh-CN">注册已冻结，或拥有者、模型身份存在冲突。</para>
+        /// </exception>
         public void RegisterSingleton(Type singletonType)
         {
-            RegisterStandaloneModel(RegisteredSingletons, singletonType, typeof(SingletonModel), "singleton");
+#if STS2_AT_LEAST_0_113_0
+            RegisterStandaloneModel(RegisteredSingletons, singletonType, typeof(RegisteredSingletonModel), "run model");
+#else
+            RegisterStandaloneModel(RegisteredSingletons, singletonType, typeof(RegisteredSingletonModel), "singleton");
+#endif
+        }
+
+        internal static Type[] GetRunModelTypes()
+        {
+            lock (SyncRoot)
+                return
+                [
+#if STS2_AT_LEAST_0_113_0
+                    .. RegisteredSingletons
+#else
+                    .. RegisteredSingletons.Where(typeof(Models.HookedSingletonModel).IsAssignableFrom)
+#endif
+                        .OrderBy(static type => type.FullName, StringComparer.Ordinal),
+                ];
         }
 
         /// <summary>
@@ -1473,7 +1583,7 @@ namespace STS2RitsuLib.Content
                 AddMany(list, RegisteredAchievements.Select(static type =>
                     new ContentModelReference(type, typeof(AchievementModel), "registered achievement")));
                 AddMany(list, RegisteredSingletons.Select(static type =>
-                    new ContentModelReference(type, typeof(SingletonModel), "registered singleton")));
+                    new ContentModelReference(type, typeof(RegisteredSingletonModel), "registered singleton")));
                 AddMany(list, RegisteredSharedCardPools.Select(static type =>
                     new ContentModelReference(type, typeof(CardPoolModel), "registered shared card pool")));
                 AddMany(list, RegisteredSharedRelicPools.Select(static type =>
@@ -1545,6 +1655,14 @@ namespace STS2RitsuLib.Content
         internal static IEnumerable<CharacterModel> GetModCharacters()
         {
             return ResolvedModelCache.GetGlobal<CharacterModel>(ContentCatalogId.Characters);
+        }
+
+        internal static bool IsRegisteredCharacter(Type characterType)
+        {
+            lock (SyncRoot)
+            {
+                return RegisteredCharacters.Contains(characterType);
+            }
         }
 
         /// <summary>
@@ -1905,6 +2023,25 @@ namespace STS2RitsuLib.Content
 
             foreach (var type in typesToInject)
                 ModelDb.Inject(type);
+        }
+
+        private static Type[] GetCharacterPoolTypes(Type characterType)
+        {
+            for (var type = characterType; type != null; type = type.BaseType)
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ModCharacterTemplate<,,>))
+                    return type.GetGenericArguments();
+            return [];
+        }
+
+        private bool IsOwnedCharacterPool(Type poolType, Type characterType)
+        {
+            if (poolType.Assembly == typeof(CharacterModel).Assembly || RegisteredTypeOwners.ContainsKey(poolType))
+                return false;
+            if (poolType.Assembly == characterType.Assembly)
+                return true;
+            return Sts2ModManagerCompat.EnumerateModsForManifestLookup().Any(mod =>
+                string.Equals(mod.manifest?.id, ModId, StringComparison.OrdinalIgnoreCase) &&
+                Sts2ModManagerCompat.GetAssemblies(mod).Contains(poolType.Assembly));
         }
 
         private void RegisterPoolModel(

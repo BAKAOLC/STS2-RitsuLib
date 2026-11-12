@@ -3,12 +3,17 @@ using System.Reflection.Emit;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using STS2RitsuLib.Patching.Models;
 using STS2RitsuLib.Scaffolding.Content.Patches;
 using STS2RitsuLib.Scaffolding.Godot;
 using STS2RitsuLib.Utils.HarmonyIl;
+#if STS2_AT_LEAST_0_113_0
+using MegaCrit.Sts2.Core.Nodes.Screens.Blitz;
+using MegaCrit.Sts2.Core.Nodes.Screens.Dread;
+#endif
 
 namespace STS2RitsuLib.Scaffolding.Characters.Patches
 {
@@ -38,6 +43,9 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         private static readonly MethodInfo? CharacterSelectBgGetter =
             AccessTools.DeclaredPropertyGetter(typeof(CharacterModel), nameof(CharacterModel.CharacterSelectBg));
 
+        private static readonly MethodInfo? PlayerCharacterGetter =
+            AccessTools.DeclaredPropertyGetter(typeof(Player), nameof(Player.Character));
+
         private static readonly MethodInfo CreateControlFromCharacterSelectBgPathMethod =
             AccessTools.DeclaredMethod(typeof(CharacterSelectBackgroundRuntimeFactoryPatch),
                 nameof(CreateControlFromCharacterSelectBgPath));
@@ -53,9 +61,18 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         {
             return
             [
+#if STS2_AT_LEAST_0_113_0
+                new(typeof(NCharacterSelectScreen), "DoRandomCharacterChange", [typeof(Player)], MethodType.Async),
+                new(typeof(NCharacterSelectScreen), nameof(NCharacterSelectScreen.SelectCharacter),
+                    [typeof(NCharacterSelectButton)]),
+                new(typeof(NBlitzScreen), "DoRandomCharacterChange", [typeof(Player)], MethodType.Async),
+                new(typeof(NBlitzScreen), nameof(NBlitzScreen.SelectCharacter), [typeof(NCharacterSelectButton)]),
+                new(typeof(NDreadScreen), "SetSelectedCharacterVisuals", [typeof(CharacterModel)]),
+#else
                 new(typeof(NCharacterSelectScreen), "OnLocalCharacterChangedForRandom", [typeof(CharacterModel)]),
                 new(typeof(NCharacterSelectScreen), nameof(NCharacterSelectScreen.SelectCharacter),
                     [typeof(NCharacterSelectButton), typeof(CharacterModel)]),
+#endif
                 new(typeof(NMultiplayerLoadGameScreen), "AfterMultiplayerStarted"),
             ];
         }
@@ -97,19 +114,25 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
             var matches = new List<HarmonyIlMatch>();
             matches.AddRange(CharacterSelectBgSceneLoadPattern(true).FindAll(code));
             matches.AddRange(CharacterSelectBgSceneLoadPattern(false).FindAll(code));
+            matches.AddRange(CharacterSelectBgSceneLoadPattern(true, true).FindAll(code));
+            matches.AddRange(CharacterSelectBgSceneLoadPattern(false, true).FindAll(code));
             return [.. matches.OrderBy(static match => match.Index)];
         }
 
-        private static HarmonyIlPattern CharacterSelectBgSceneLoadPattern(bool includeConvI8)
+        private static HarmonyIlPattern CharacterSelectBgSceneLoadPattern(bool includeConvI8,
+            bool throughPlayer = false)
         {
-            var sharedPrefix = new[]
-            {
+            Func<CodeInstruction, bool>[] characterLoad = throughPlayer
+                ? [HarmonyIl.IsLdarg(), HarmonyIl.IsLdfld(), HarmonyIl.IsCall(PlayerCharacterGetter)]
+                : [HarmonyIl.OneOf(HarmonyIl.IsLdarg(), HarmonyIl.IsLdloc())];
+            Func<CodeInstruction, bool>[] sharedPrefix =
+            [
                 HarmonyIl.IsCall(PreloadManagerCacheGetter),
-                HarmonyIl.OneOf(HarmonyIl.IsLdarg(), HarmonyIl.IsLdloc()),
+                .. characterLoad,
                 HarmonyIl.IsCall(CharacterSelectBgGetter),
                 HarmonyIl.IsCall(GetSceneMethod),
                 HarmonyIl.IsLdcI4((int)PackedScene.GenEditState.Disabled),
-            };
+            ];
 
             return includeConvI8
                 ? HarmonyIlPattern.Sequence(
@@ -123,8 +146,10 @@ namespace STS2RitsuLib.Scaffolding.Characters.Patches
         {
             return
             [
-                code[match.Index + 1].Clone(),
-                code[match.Index + 2].Clone(),
+                .. code.Skip(match.Index + 1)
+                    .Take(match.Length - 1)
+                    .TakeWhile(instruction => !HarmonyIl.IsCallTo(instruction, GetSceneMethod))
+                    .Select(static instruction => instruction.Clone()),
                 HarmonyIl.Call(CreateControlFromCharacterSelectBgPathMethod),
             ];
         }
