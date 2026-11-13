@@ -235,8 +235,6 @@ namespace STS2RitsuLib
             patcher.RegisterPatch<RitsuLibSidecarSyncNetBufferPatch>();
 #endif
             patcher.RegisterPatch<RitsuLibSidecarSyncLocationChangedPatch>();
-            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestEnqueueManagedAction>();
-            patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.EnqueueManagedAction>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestSerialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.RequestDeserialize>();
             patcher.RegisterPatch<RitsuLibManagedNetActionMessagePatches.AnnouncementSerialize>();
