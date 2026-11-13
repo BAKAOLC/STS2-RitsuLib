@@ -19,20 +19,6 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
     /// </summary>
     internal class AncientEventInitialOptionsRegistryPatch : IPatchMethod
     {
-        private static readonly MethodInfo RelicOptionMethod = typeof(AncientEventModel)
-            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
-            .Single(static method =>
-            {
-                if (method.Name != "RelicOption" || method.IsGenericMethodDefinition)
-                    return false;
-
-                var parameters = method.GetParameters();
-                return parameters.Length == 3
-                       && parameters[0].ParameterType == typeof(RelicModel)
-                       && parameters[1].ParameterType == typeof(string)
-                       && parameters[2].ParameterType == typeof(string);
-            });
-
         public static string PatchId => "ancient_event_initial_options_registry";
 
         public static string Description =>
@@ -146,8 +132,20 @@ namespace STS2RitsuLib.Scaffolding.Content.Patches
 
         private static EventOption CreateRelicOption(AncientEventModel ancient, RelicModel relic)
         {
-            return (EventOption)RelicOptionMethod.Invoke(ancient, [relic, "INITIAL", null])!;
+#if STS2_AT_LEAST_0_113_0
+            return RelicOption(ancient, relic, "INITIAL");
+#else
+            return RelicOption(ancient, relic, "INITIAL", null);
+#endif
         }
+
+        [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "RelicOption")]
+#if STS2_AT_LEAST_0_113_0
+        private static extern EventOption RelicOption(AncientEventModel ancient, RelicModel relic, string pageName);
+#else
+        private static extern EventOption RelicOption(
+            AncientEventModel ancient, RelicModel relic, string pageName, string? customDonePage);
+#endif
 
         [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_generatedOptions")]
         private static extern ref List<EventOption>? GeneratedOptions(AncientEventModel instance);
