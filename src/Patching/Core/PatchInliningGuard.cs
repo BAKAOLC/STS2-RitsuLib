@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.Loader;
 using HarmonyLib;
 
 namespace STS2RitsuLib.Patching.Core
@@ -20,7 +21,16 @@ namespace STS2RitsuLib.Patching.Core
 
         private static Func<MethodBase, bool> CreateInliningDisabler()
         {
-            var platformType = typeof(Harmony).Assembly.GetType("MonoMod.Core.Platforms.PlatformTriple", true)!;
+            const string platformTypeName = "MonoMod.Core.Platforms.PlatformTriple";
+            var harmonyAssembly = typeof(Harmony).Assembly;
+            var platformType = harmonyAssembly.GetType(platformTypeName);
+            if (platformType == null)
+            {
+                var loadContext = AssemblyLoadContext.GetLoadContext(harmonyAssembly) ?? AssemblyLoadContext.Default;
+                var monoModAssembly = loadContext.LoadFromAssemblyName(new("MonoMod.Core"));
+                platformType = monoModAssembly.GetType(platformTypeName, throwOnError: true)!;
+            }
+
             var platform = platformType.GetProperty("Current", BindingFlags.Public | BindingFlags.Static)!
                 .GetValue(null);
             var method = platformType.GetMethod("TryDisableInlining", [typeof(MethodBase)])
