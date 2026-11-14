@@ -251,7 +251,6 @@ namespace STS2RitsuLib.Networking.Sidecar
             SetNetBusBuffering(bus, false);
 
             var sidecarIndex = InitialIndex;
-            sidecar.Sort((a, b) => a.VanillaCountBefore.CompareTo(b.VanillaCountBefore));
             for (var vanillaIndex = InitialIndex; vanillaIndex < vanillaMessages.Length; vanillaIndex++)
             {
                 while (sidecarIndex < sidecar.Count &&
@@ -319,7 +318,7 @@ namespace STS2RitsuLib.Networking.Sidecar
             lock (Gate)
             {
                 VisitedLocations.Add(location);
-                if (!HasReleasableLocationSidecar(location))
+                if (WaitingForLocation.Count == 0)
                     return true;
 
                 sidecar = [.. WaitingForLocation];
@@ -328,25 +327,23 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             LocationCurrentLocationRef!(buffer) = location;
             visitedLocations.Add(location);
-            sidecar.Sort((a, b) => a.VanillaCountBefore.CompareTo(b.VanillaCountBefore));
-
             var sidecarIndex = InitialIndex;
             var releasedVanilla = InitialIndex;
             for (var i = InitialIndex; i < vanillaWaiting.Count; i++)
             {
+                while (sidecarIndex < sidecar.Count &&
+                       sidecar[sidecarIndex].VanillaCountBefore <= i + releasedVanilla)
+                {
+                    ReleaseLocationSidecar(sidecar[sidecarIndex], visitedLocations, releasedVanilla);
+                    sidecarIndex++;
+                }
+
                 var blocked = vanillaWaiting[i];
                 if (blocked == null || !TryReadBlockedLocationMessage(blocked, out var blockedMessage))
                     continue;
 
                 if (!visitedLocations.Contains(blockedMessage.Location))
                     continue;
-
-                while (sidecarIndex < sidecar.Count &&
-                       sidecar[sidecarIndex].VanillaCountBefore <= releasedVanilla)
-                {
-                    ReleaseLocationSidecar(sidecar[sidecarIndex], location);
-                    sidecarIndex++;
-                }
 
                 InvokeLocationHandlers(
                     callHandlers,
@@ -361,7 +358,7 @@ namespace STS2RitsuLib.Networking.Sidecar
 
             while (sidecarIndex < sidecar.Count)
             {
-                ReleaseLocationSidecar(sidecar[sidecarIndex], location);
+                ReleaseLocationSidecar(sidecar[sidecarIndex], visitedLocations, releasedVanilla);
                 sidecarIndex++;
             }
 
@@ -556,29 +553,25 @@ namespace STS2RitsuLib.Networking.Sidecar
                    LocationCallHandlers != null;
         }
 
-        private static void ReleaseLocationSidecar(LocationBufferedSyncContext pending, RunLocation releasedLocation)
+        private static void ReleaseLocationSidecar(
+            LocationBufferedSyncContext pending,
+            HashSet<RunLocation> visitedLocations,
+            int releasedVanillaBefore)
         {
-            if (pending.Location != releasedLocation && !VisitedLocations.Contains(pending.Location))
+            if (!visitedLocations.Contains(pending.Location))
             {
                 lock (Gate)
                 {
-                    WaitingForLocation.Add(pending);
+                    WaitingForLocation.Add(pending with
+                    {
+                        VanillaCountBefore = pending.VanillaCountBefore - releasedVanillaBefore,
+                    });
                 }
 
                 return;
             }
 
             DispatchReleased(pending.Context);
-        }
-
-        private static bool HasReleasableLocationSidecar(RunLocation releasedLocation)
-        {
-            for (var i = InitialIndex; i < WaitingForLocation.Count; i++)
-                if (WaitingForLocation[i].Location == releasedLocation ||
-                    VisitedLocations.Contains(WaitingForLocation[i].Location))
-                    return true;
-
-            return false;
         }
 
         private static void InvokeLocationHandlers(

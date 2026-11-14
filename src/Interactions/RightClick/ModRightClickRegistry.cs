@@ -1,11 +1,8 @@
 using System.Globalization;
 using System.Text;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
-using MegaCrit.Sts2.Core.GameActions;
-using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
@@ -262,32 +259,31 @@ namespace STS2RitsuLib.Interactions.RightClick
         {
             if (!TryCreatePayload(context, out var payload))
                 return false;
-            if (!CanRequestRightClickAction(payload))
-                return false;
-
-            RegisterBuiltInSyncDescriptors();
-            payload = payload with { BindingIds = [.. bindingIds] };
-            var descriptor = CombatManager.Instance.IsInProgress
-                ? CombatActionDescriptor
-                : NonCombatActionDescriptor;
-            return RitsuLibManagedNetActions.Request(
-                RunManager.Instance,
-                descriptor,
-                payload,
-                context.Player.NetId);
-        }
-
-        private static bool CanRequestRightClickAction(ModRightClickSyncPayload payload)
-        {
             var runManager = RunManager.Instance;
             var net = runManager?.NetService;
             if (runManager == null || net == null)
                 return false;
 
-            if (CombatManager.Instance.IsInProgress &&
-                runManager.ActionQueueSynchronizer.CombatState != ActionSynchronizerCombatState.PlayPhase)
+            var combatState = runManager.ActionQueueSynchronizer.CombatState;
+            var descriptor = combatState switch
+            {
+                ActionSynchronizerCombatState.PlayPhase => CombatActionDescriptor,
+                ActionSynchronizerCombatState.NotInCombat => NonCombatActionDescriptor,
+                _ => null,
+            };
+            if (descriptor == null || !CanRequestRightClickAction(net, payload))
                 return false;
 
+            payload = payload with { BindingIds = [.. bindingIds] };
+            return RitsuLibManagedNetActions.Request(
+                runManager,
+                descriptor,
+                payload,
+                context.Player.NetId);
+        }
+
+        private static bool CanRequestRightClickAction(INetGameService net, ModRightClickSyncPayload payload)
+        {
             if (!RequiresRightClickV2(payload))
                 return true;
 
@@ -454,27 +450,30 @@ namespace STS2RitsuLib.Interactions.RightClick
         private static async Task ExecuteManaged(
             RitsuLibManagedNetActionContext<ModRightClickSyncPayload> context)
         {
-            if (context.Message.OwnerNetId != context.Player.NetId)
+            var payload = context.Message;
+            var player = context.Player;
+            var action = context.Action;
+            if (payload.OwnerNetId != player.NetId)
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RightClick] Action '{action.Id}' has mismatched player and payload owners.");
                 return;
+            }
 
-            await ExecutePayload(context.Message, context.PlayerChoiceContext, context.Action);
-        }
-
-        private static async Task ExecutePayload(
-            ModRightClickSyncPayload payload,
-            GameActionPlayerChoiceContext? playerChoiceContext,
-            GameAction? action)
-        {
-            if (!TryGetPlayer(payload.OwnerNetId, out var player))
-                return;
             if (!TryResolveModel(player, payload, out var model))
+            {
+                RitsuLibFramework.Logger.Debug(
+                    $"[RightClick] Action '{action.Id}' target is unavailable. " +
+                    $"Kind='{payload.Kind}' ModelId='{payload.Token.ModelId}' Identity='{payload.Token.Identity.Value}' " +
+                    $"Source='{payload.Trigger.Source}' ExpectedPile='{payload.Trigger.ExpectedCardPile}'");
                 return;
+            }
 
             var executionContext = new ModRightClickExecutionContext(
                 player,
                 model,
                 payload.Trigger,
-                playerChoiceContext,
+                context.PlayerChoiceContext,
                 action);
             var completed = false;
             foreach (var bindingId in payload.BindingIds)
@@ -487,7 +486,7 @@ namespace STS2RitsuLib.Interactions.RightClick
                 catch (Exception ex)
                 {
                     RitsuLibFramework.Logger.Warn(
-                        $"[RightClick] Binding execution failed. BindingId='{bindingId}' " +
+                        $"[RightClick] Binding execution failed. ActionId='{action.Id}' BindingId='{bindingId}' " +
                         $"ModelId='{model.Id}' OwnerType='{model.GetType().FullName}' Error='{ex.Message}'");
                 }
 
@@ -520,14 +519,6 @@ namespace STS2RitsuLib.Interactions.RightClick
                     $"ModelId='{model.Id}' OwnerType='{model.GetType().FullName}' Error='{ex.Message}'");
                 return false;
             }
-        }
-
-        private static bool TryGetPlayer(ulong ownerNetId, out Player player)
-        {
-            player = RunManager.Instance.DebugOnlyGetState()
-                ?.Players
-                .FirstOrDefault(p => p.NetId == ownerNetId)!;
-            return player != null;
         }
 
         private static bool TryResolveModel(
@@ -622,7 +613,13 @@ namespace STS2RitsuLib.Interactions.RightClick
 
             var binding = TryGetBinding(bindingId);
             if (binding == null || !binding.ModelType.IsInstanceOfType(model))
+            {
+                RitsuLibFramework.Logger.Warn(
+                    $"[RightClick] Binding is unavailable. ActionId='{context.Action?.Id}' " +
+                    $"BindingId='{bindingId}' ModelId='{model.Id}'");
                 return false;
+            }
+
             if (!TryCanExecute(binding, context, out var canExecute))
                 return false;
             if (!canExecute)
@@ -683,7 +680,7 @@ namespace STS2RitsuLib.Interactions.RightClick
             IReadOnlyList<SelectedRightClickCapability>? selectedCapabilities)
         {
             var completed = false;
-            foreach (var capability in GetRightClickCapabilities(model, selectedCapabilities))
+            foreach (var capability in GetRightClickCapabilities(context, selectedCapabilities))
             {
                 if (!TryCanExecuteCapability(capability, context, out var canExecute))
                     continue;
@@ -709,19 +706,37 @@ namespace STS2RitsuLib.Interactions.RightClick
         }
 
         private static IReadOnlyList<IModelRightClickCapability> GetRightClickCapabilities(
-            AbstractModel model,
-            IReadOnlyList<SelectedRightClickCapability>? selectedCapabilities = null)
+            ModRightClickExecutionContext context,
+            IReadOnlyList<SelectedRightClickCapability>? selectedCapabilities)
         {
-            var capabilities = GetAllRightClickCapabilities(model);
+            var capabilities = GetAllRightClickCapabilities(context.Model);
             if (selectedCapabilities == null)
                 return capabilities;
 
             var selected = new List<IModelRightClickCapability>(selectedCapabilities.Count);
-            selected.AddRange(from selectedCapability in selectedCapabilities
-                where selectedCapability.Index >= 0 && selectedCapability.Index < capabilities.Count &&
-                      string.Equals(GetCapabilityId(capabilities[selectedCapability.Index]),
-                          selectedCapability.CapabilityId, StringComparison.Ordinal)
-                select capabilities[selectedCapability.Index]);
+            foreach (var (index, capabilityId) in selectedCapabilities)
+            {
+                if (index >= 0 && index < capabilities.Count &&
+                    string.Equals(GetCapabilityId(capabilities[index]), capabilityId, StringComparison.Ordinal))
+                {
+                    selected.Add(capabilities[index]);
+                    continue;
+                }
+
+                var matches = capabilities.Where(capability =>
+                        string.Equals(GetCapabilityId(capability), capabilityId, StringComparison.Ordinal)).Take(2)
+                    .ToArray();
+                if (matches.Length == 1 && !selected.Contains(matches[0]))
+                {
+                    selected.Add(matches[0]);
+                    continue;
+                }
+
+                RitsuLibFramework.Logger.Warn(
+                    $"[RightClick] Cannot resolve selected capability. ActionId='{context.Action?.Id}' " +
+                    $"CapabilityId='{capabilityId}' Index={index} ModelId='{context.Model.Id}'");
+                return [];
+            }
 
             return selected;
         }
