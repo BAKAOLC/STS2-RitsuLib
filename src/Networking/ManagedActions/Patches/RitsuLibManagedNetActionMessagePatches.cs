@@ -1,6 +1,15 @@
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using HarmonyLib;
+using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Multiplayer;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Replay;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
+using MegaCrit.Sts2.Core.Multiplayer.Transport;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Patching.Models;
 
@@ -11,6 +20,149 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
         private const int ReplayEventTypeBits = 3;
         private const int ReplayGameActionPlayerIdBits = 64;
         private const int ReplayGameActionPayloadOffsetBits = ReplayEventTypeBits + ReplayGameActionPlayerIdBits;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void SendRequest(INetGameService service, RequestEnqueueActionMessage message)
+        {
+            if (message.action is not RitsuLibManagedNetAction ||
+                service is not NetClientGameService { IsConnected: true, NetClient: { } client })
+            {
+                service.SendMessage(message);
+                return;
+            }
+
+            var writer = new PacketWriter();
+            writer.WriteByte((byte)message.ToId());
+            writer.WriteULong(service.NetId);
+            RequestSerialize.Prefix(message, writer);
+            client.SendMessageToHost(writer.Buffer, writer.BytePosition, message.Mode, message.Mode.ToChannelId());
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void SendAnnouncement(INetGameService service, ActionEnqueuedMessage message)
+        {
+            if (message.action is not RitsuLibManagedNetAction ||
+                service is not NetHostGameService { IsConnected: true, NetHost: { } transport } host)
+            {
+                service.SendMessage(message);
+                return;
+            }
+
+            var writer = new PacketWriter();
+            writer.WriteByte((byte)message.ToId());
+            writer.WriteULong(service.NetId);
+            AnnouncementSerialize.Prefix(message, writer);
+            foreach (var peer in host.ConnectedPeers)
+                if (peer.readyForBroadcasting)
+                    transport.SendMessageToClient(peer.peerId, writer.Buffer, writer.BytePosition,
+                        message.Mode, message.Mode.ToChannelId());
+        }
+
+        internal sealed class QueueSend : IPatchMethod
+        {
+            public static string PatchId => "ritsulib_managed_net_action_queue_send";
+            public static bool IsCritical => true;
+
+            public static string Description =>
+                "Send managed queue actions through a non-inlined serialization boundary";
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return
+                [
+                    new(typeof(ActionQueueSynchronizer), nameof(ActionQueueSynchronizer.RequestEnqueue),
+                        [typeof(GameAction)]),
+                    new(typeof(ActionQueueSynchronizer), "EnqueueAction", [typeof(GameAction), typeof(ulong)]),
+                ];
+            }
+
+            private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                var replacements = 0;
+                foreach (var instruction in instructions)
+                {
+                    if (instruction.operand is MethodInfo
+                        {
+                            DeclaringType: { } declaringType,
+                            Name: nameof(INetGameService.SendMessage),
+                            IsGenericMethod: true,
+                        } method && declaringType == typeof(INetGameService) && method.GetParameters().Length == 1)
+                    {
+                        var messageType = method.GetGenericArguments()[0];
+                        var replacement = messageType == typeof(RequestEnqueueActionMessage)
+                            ? nameof(SendRequest)
+                            : messageType == typeof(ActionEnqueuedMessage)
+                                ? nameof(SendAnnouncement)
+                                : null;
+                        if (replacement != null)
+                        {
+                            instruction.opcode = OpCodes.Call;
+                            instruction.operand = AccessTools.DeclaredMethod(
+                                typeof(RitsuLibManagedNetActionMessagePatches), replacement);
+                            replacements++;
+                        }
+                    }
+
+                    yield return instruction;
+                }
+
+                if (replacements != 1)
+                    throw new InvalidOperationException(
+                        $"Expected one action-message send call, found {replacements}.");
+            }
+        }
+
+        internal sealed class BusDeserialize : IPatchMethod
+        {
+            private static readonly AccessTools.FieldRef<NetMessageBus, PacketReader> ReaderRef =
+                AccessTools.FieldRefAccess<NetMessageBus, PacketReader>("_reader");
+
+            public static string PatchId => "ritsulib_managed_net_action_bus_deserialize";
+            public static bool IsCritical => true;
+
+            public static string Description =>
+                "Read managed actions before vanilla message deserializers can be inlined";
+
+            public static ModPatchTarget[] GetTargets()
+            {
+                return
+                [
+                    new(typeof(NetMessageBus), nameof(NetMessageBus.TryDeserializeMessage),
+                        [typeof(byte[]), typeof(INetMessage).MakeByRefType(), typeof(ulong?).MakeByRefType()]),
+                ];
+            }
+
+            private static bool Prefix(NetMessageBus __instance, byte[] packetBytes, ref INetMessage? message,
+                ref ulong? overrideSenderId, ref bool __result)
+            {
+                if (packetBytes.Length < 9)
+                    return true;
+                var reader = ReaderRef(__instance);
+                reader.Reset(packetBytes);
+                if (!MessageTypes.TryGetMessageType(reader.ReadByte(), out var type) ||
+                    (type != typeof(RequestEnqueueActionMessage) && type != typeof(ActionEnqueuedMessage)))
+                    return true;
+                var sender = reader.ReadULong();
+                if (type == typeof(RequestEnqueueActionMessage))
+                {
+                    var request = new RequestEnqueueActionMessage();
+                    if (RequestDeserialize.Prefix(ref request, reader))
+                        return true;
+                    message = request;
+                }
+                else
+                {
+                    var announcement = new ActionEnqueuedMessage();
+                    if (AnnouncementDeserialize.Prefix(ref announcement, reader))
+                        return true;
+                    message = announcement;
+                }
+
+                overrideSenderId = sender;
+                __result = true;
+                return false;
+            }
+        }
 
         private static PacketReader CreateProbeReader(PacketReader reader)
         {

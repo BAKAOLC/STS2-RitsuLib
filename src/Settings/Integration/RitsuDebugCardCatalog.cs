@@ -1331,7 +1331,7 @@ namespace STS2RitsuLib.Settings
                 if (!IsInstanceValid(_owner) || !IsInstanceValid(_host))
                     return;
                 var mousePressed = Input.IsMouseButtonPressed(MouseButton.Left);
-                if (!_owner.CanReorderCurrentView)
+                if (!_owner.IsVisibleInTree() || !_host.IsVisibleInTree() || !_owner.CanReorderCurrentView)
                 {
                     if (IsDragging)
                         Cancel();
@@ -1354,7 +1354,7 @@ namespace STS2RitsuLib.Settings
 
                 if (mousePressed)
                 {
-                    if (!_wasMousePressed)
+                    if (!_wasMousePressed && _owner._scroll.GetGlobalRect().HasPoint(mouse))
                     {
                         _pendingHolder = FindHolderAt(mouse);
                         _pendingGlobalPosition = _pendingHolder == null ? null : mouse;
@@ -1478,7 +1478,7 @@ namespace STS2RitsuLib.Settings
                 _dropSlots.Clear();
                 foreach (var holder in _owner._holders)
                 {
-                    if (!holder.Visible ||
+                    if (!holder.IsVisibleInTree() ||
                         !IsInstanceValid(holder) ||
                         !_owner._holderItemIds.TryGetValue(holder, out var itemId))
                         continue;
@@ -1501,7 +1501,7 @@ namespace STS2RitsuLib.Settings
                 var fallbackDistanceSquared = float.MaxValue;
                 foreach (var holder in _owner._holders)
                 {
-                    if (!holder.Visible || !IsInstanceValid(holder))
+                    if (!IsInstanceValid(holder) || !holder.IsVisibleInTree())
                         continue;
                     if (holder.CardNode is Control cardNode &&
                         cardNode.GetGlobalRect() is { Size: { X: > 1f, Y: > 1f } } cardRect &&
@@ -1533,7 +1533,7 @@ namespace STS2RitsuLib.Settings
             private void FinishVisuals()
             {
                 if (_ghost != null && IsInstanceValid(_ghost))
-                    _ghost.QueueFreeSafely();
+                    _ghost.QueueFreeSafelyNoPool();
                 _ghost = null;
                 IsDragging = false;
                 _sourceItemId = null;
