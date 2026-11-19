@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using STS2RitsuLib.Compat;
+using STS2RitsuLib.Ui.Controls;
 using STS2RitsuLib.Ui.Shell;
 using STS2RitsuLib.Ui.Shell.Theme;
 using STS2RitsuLib.Utils;
@@ -1144,30 +1145,28 @@ namespace STS2RitsuLib.Settings
 
         private void PushPaneHotkeys()
         {
-            if (_paneHotkeysPushed || NHotkeyManager.Instance == null)
+            if (_paneHotkeysPushed || NHotkeyManager.Instance is not { } manager)
                 return;
 
             _hotkeyPaneSidebar = OnHotkeyPressedFocusSidebar;
             _hotkeyPaneContent = OnHotkeyPressedFocusContent;
-            NativeSettingsApiCompat.PushHotkeyPressedBinding(NHotkeyManager.Instance, PaneSidebarHotkey,
+            Sts2HotkeyBindings.PushPressed(manager, PaneSidebarHotkey, this,
                 _hotkeyPaneSidebar, _paneSidebarHotkeySequence);
-            NativeSettingsApiCompat.PushHotkeyPressedBinding(NHotkeyManager.Instance, PaneContentHotkey,
+            Sts2HotkeyBindings.PushPressed(manager, PaneContentHotkey, this,
                 _hotkeyPaneContent, _paneContentHotkeySequence);
             _paneHotkeysPushed = true;
         }
 
         private void PopPaneHotkeys()
         {
-            if (!_paneHotkeysPushed || NHotkeyManager.Instance == null)
+            if (!_paneHotkeysPushed || NHotkeyManager.Instance is not { } manager)
                 return;
 
             if (_hotkeyPaneSidebar != null)
-                _paneSidebarHotkeySequence = NativeSettingsApiCompat.RemoveHotkeyPressedBinding(NHotkeyManager.Instance,
-                    PaneSidebarHotkey,
+                _paneSidebarHotkeySequence = Sts2HotkeyBindings.RemovePressed(manager, PaneSidebarHotkey, this,
                     _hotkeyPaneSidebar);
             if (_hotkeyPaneContent != null)
-                _paneContentHotkeySequence = NativeSettingsApiCompat.RemoveHotkeyPressedBinding(NHotkeyManager.Instance,
-                    PaneContentHotkey,
+                _paneContentHotkeySequence = Sts2HotkeyBindings.RemovePressed(manager, PaneContentHotkey, this,
                     _hotkeyPaneContent);
 
             _hotkeyPaneSidebar = null;

@@ -530,7 +530,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
+#if STS2_AT_LEAST_0_114_0
+                return [new(typeof(CardModel), nameof(CardModel.UpgradeInternal), [typeof(bool)])];
+#else
                 return [new(typeof(CardModel), nameof(CardModel.UpgradeInternal), Type.EmptyTypes)];
+#endif
             }
 
             public static void Prefix(CardModel __instance)
@@ -596,7 +600,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static ModPatchTarget[] GetTargets()
             {
+#if STS2_AT_LEAST_0_114_0
+                return [new(typeof(CardModel), nameof(CardModel.DowngradeInternal), [typeof(int)])];
+#else
                 return [new(typeof(CardModel), nameof(CardModel.DowngradeInternal), Type.EmptyTypes)];
+#endif
             }
 
             public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -617,12 +625,36 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                     operation);
 
                 var rewriter = HarmonyIlRewriter.From(instructions);
+#if STS2_AT_LEAST_0_114_0
+                var resetEnergyCostMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(typeof(CardEnergyCost), nameof(CardEnergyCost.ResetForDowngrade)),
+                    operation);
+                var resetCapabilityVarsMethod = HarmonyIl.RequireMethod(
+                    AccessTools.Method(
+                        typeof(CardModelCapabilityHost),
+                        nameof(CardModelCapabilityHost.ResetOwnerCardDynamicVarsForDowngrade)),
+                    operation);
+                var resetReport = rewriter.InsertAfterCall(
+                    operation,
+                    resetEnergyCostMethod,
+                    [
+                        CodeInstruction.LoadArgument(0),
+                        HarmonyIl.Call(resetSecondaryResourcesMethod),
+                        CodeInstruction.LoadArgument(0),
+                        HarmonyIl.Call(resetCapabilityVarsMethod),
+                    ],
+                    code => code.Any(HarmonyIl.IsCall(resetSecondaryResourcesMethod)) &&
+                            code.Any(HarmonyIl.IsCall(resetCapabilityVarsMethod)));
+                rewriter.InstructionsChecked(resetReport);
+#endif
                 var report = rewriter.TryReplaceFirst(
                     operation,
                     HarmonyIlPattern.Sequence(HarmonyIl.IsCall(afterDowngradedMethod)),
                     [
+#if !STS2_AT_LEAST_0_114_0
                         CodeInstruction.LoadArgument(0),
                         HarmonyIl.Call(resetSecondaryResourcesMethod),
+#endif
                         new(OpCodes.Callvirt, afterDowngradedMethod),
                         CodeInstruction.LoadArgument(0),
                         HarmonyIl.Call(notifyMethod),

@@ -4,6 +4,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.Capstones;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
+using STS2RitsuLib.Ui.Controls;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -48,8 +49,8 @@ namespace STS2RitsuLib.CardPiles
 
             foreach (var (action, binding) in _bindings)
             {
-                _manager.PushHotkeyPressedBinding(action, binding.Pressed);
-                _manager.PushHotkeyReleasedBinding(action, binding.Released);
+                Sts2HotkeyBindings.PushPressed(_manager, action, _owner, binding.Pressed);
+                Sts2HotkeyBindings.PushReleased(_manager, action, _owner, binding.Released);
             }
         }
 
@@ -94,8 +95,8 @@ namespace STS2RitsuLib.CardPiles
             if (_manager != null && GodotObject.IsInstanceValid(_manager))
                 foreach (var (action, binding) in _bindings)
                 {
-                    _manager.RemoveHotkeyPressedBinding(action, binding.Pressed);
-                    _manager.RemoveHotkeyReleasedBinding(action, binding.Released);
+                    Sts2HotkeyBindings.RemovePressed(_manager, action, _owner, binding.Pressed);
+                    Sts2HotkeyBindings.RemoveReleased(_manager, action, _owner, binding.Released);
                 }
 
             _manager = null;

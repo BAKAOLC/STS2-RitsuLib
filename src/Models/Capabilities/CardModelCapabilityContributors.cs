@@ -943,6 +943,13 @@ namespace STS2RitsuLib.Models.Capabilities
             lines.InsertRange(Math.Min(afterBaseIndex, lines.Count), afterText);
         }
 
+        internal static void ResetOwnerCardDynamicVarsForDowngrade(CardModel card)
+        {
+            foreach (var capability in GetCapabilities<CardCapability>(card))
+                if (IsStillAttachedToCard(capability, card))
+                    capability.ResetDynamicVarsForDowngrade();
+        }
+
         internal static void AfterOwnerCardUpgraded(CardModel card)
         {
             foreach (var capability in GetCapabilities<CardCapability>(card))

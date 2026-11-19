@@ -17,8 +17,8 @@
     -->
 
     <PropertyGroup>
-        <_RitsuLibSupportedApiVersions>0.107.1;0.111.0;0.113.0</_RitsuLibSupportedApiVersions>
-        <_RitsuLibSupportedApiList>|0.107.1|0.111.0|0.113.0|</_RitsuLibSupportedApiList>
+        <_RitsuLibSupportedApiVersions>0.107.1;0.111.0;0.113.0;0.114.0</_RitsuLibSupportedApiVersions>
+        <_RitsuLibSupportedApiList>|0.107.1|0.111.0|0.113.0|0.114.0|</_RitsuLibSupportedApiList>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -35,6 +35,7 @@
         <DefineConstants Condition="$([MSBuild]::VersionGreaterThanOrEquals('$(Sts2ApiCompat)', '0.110.0'))">$(DefineConstants);STS2_AT_LEAST_0_110_0</DefineConstants>
         <DefineConstants Condition="$([MSBuild]::VersionGreaterThanOrEquals('$(Sts2ApiCompat)', '0.111.0'))">$(DefineConstants);STS2_AT_LEAST_0_111_0</DefineConstants>
         <DefineConstants Condition="$([MSBuild]::VersionGreaterThanOrEquals('$(Sts2ApiCompat)', '0.113.0'))">$(DefineConstants);STS2_AT_LEAST_0_113_0</DefineConstants>
+        <DefineConstants Condition="$([MSBuild]::VersionGreaterThanOrEquals('$(Sts2ApiCompat)', '0.114.0'))">$(DefineConstants);STS2_AT_LEAST_0_114_0</DefineConstants>
     </PropertyGroup>
 
     <Target Name="ValidateRitsuLibCompatTarget" BeforeTargets="CoreCompile">

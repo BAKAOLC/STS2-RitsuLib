@@ -25,6 +25,7 @@ from release_lib.repo_layout import (
     RITSULIB_CSPROJ_NAME,
     RITSLIB_RELEASE_TAG_MESSAGE_BASENAME,
 )
+from release_lib.runtime_layout import validate_runtime_directory
 from release_lib.version_sync import (
     read_csproj_version,
     read_paths,
@@ -91,7 +92,7 @@ def _git_tag_command(
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="STS2-RitsuLib release: dev → version bump → merge main → tag → push → local latest build (NuGet.org optional via --push-nuget; tag CI publishes by default).",
+        description="STS2-RitsuLib release: dev → version bump → merge main → tag → push → install the local variant bundle (NuGet.org optional via --push-nuget; tag CI publishes by default).",
     )
     p.add_argument(
         "--bump",
@@ -257,19 +258,6 @@ def _read_default_compat_targets(csproj_path: Path) -> list[str]:
     return [v.strip() for v in raw.split(";") if v.strip()]
 
 
-def _read_latest_compat_target(csproj_path: Path) -> str:
-    try:
-        raw = get_csproj_property(csproj_path, "RitsuLibLatestApiCompat")
-    except (OSError, RuntimeError) as e:
-        msg = f"Could not evaluate MSBuild property RitsuLibLatestApiCompat: {e}"
-        raise RuntimeError(msg) from e
-    latest = raw.strip()
-    if not latest:
-        msg = "RitsuLibLatestApiCompat evaluated empty (dotnet msbuild -getProperty)."
-        raise RuntimeError(msg)
-    return latest
-
-
 def _resolve_compat_targets(raw: str, defaults: list[str]) -> list[str]:
     if raw.strip().lower() == "all":
         return defaults
@@ -288,33 +276,25 @@ def _tag_name(v: str) -> str:
     return f"v{v}"
 
 
-def _run_post_push_local_build(
-    ritsulib: Path,
-    args: argparse.Namespace,
-    *,
-    latest_compat_target: str,
-    sts2_api_signature_root: Path | None,
-    sts2_dir: Path | None,
-) -> None:
-    build_args = [
-        "dotnet",
-        "build",
-        str(ritsulib / RITSULIB_CSPROJ_NAME),
-        "-c",
-        args.configuration,
-        f"/p:Sts2ApiCompat={latest_compat_target}",
-        "/p:RitsuLibTelemetryBuildChannel=release",
-    ]
-    if sts2_api_signature_root is not None:
-        build_args.append(f"/p:Sts2ApiSignatureRoot={sts2_api_signature_root}")
-    if sts2_dir is not None:
-        build_args.append(f"/p:Sts2Dir={sts2_dir}")
-
-    print(
-        f"[release] Building latest local mod copy ({latest_compat_target})...",
-        flush=True,
-    )
-    subprocess.run(build_args, cwd=ritsulib, check=True)
+def _install_local_bundle(bundle_root: Path, game_dir: Path) -> None:
+    validate_runtime_directory(bundle_root)
+    destination = game_dir / "mods" / "STS2-RitsuLib"
+    if destination.resolve() != destination:
+        raise RuntimeError(f"Cannot install RitsuLib through a redirected mod path: {destination}")
+    print(f"[release] Installing variant bundle to {destination}...", flush=True)
+    destination.mkdir(parents=True, exist_ok=True)
+    for name in ("lib", "compat", "shared", "viewer"):
+        target = destination / name
+        if target.resolve() != target:
+            raise RuntimeError(f"Cannot replace a redirected RitsuLib directory: {target}")
+    for name in ("lib", "compat", "shared", "viewer"):
+        target = destination / name
+        if target.exists():
+            shutil.rmtree(target)
+    for name in ("compat-target.txt", "ritsulib-variants.json", "STS2-RitsuLib.Loader.pdb"):
+        (destination / name).unlink(missing_ok=True)
+    workshop_ops.copy_tree_contents(bundle_root, destination)
+    validate_runtime_directory(destination)
 
 
 def _workshop_requested(args: argparse.Namespace) -> bool:
@@ -549,7 +529,15 @@ def main(argv: list[str] | None = None) -> int:
         print("[release] done (artifacts-only).")
         return 0
 
-    latest_compat_target = _read_latest_compat_target(csproj)
+    try:
+        configured_game_dir = sts2_dir or _existing_dir_arg(
+            get_csproj_property(csproj, "Sts2Dir"), base=ritsulib, label="Sts2Dir"
+        )
+        if configured_game_dir is None:
+            raise RuntimeError("Cannot install RitsuLib without an existing game directory. Set Sts2Dir or pass --sts2-dir.")
+    except (OSError, RuntimeError) as e:
+        print(f"[release] {e}", file=sys.stderr)
+        return 1
     current_v = VersionTriple.parse(current_text)
     next_v = resolve_next_version(
         current_v,
@@ -596,7 +584,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"[release] DRY-RUN warning: remote {args.remote!r} is not configured.",
                 file=sys.stderr,
             )
-        print("[release] DRY-RUN: no file writes, git mutations, push, NuGet push, or local build")
+        print("[release] DRY-RUN: no file writes, git mutations, push, NuGet push, or local installation")
         plan_marks: frozenset[str] | None = None
         if repo_is_git:
             try:
@@ -636,7 +624,7 @@ def main(argv: list[str] | None = None) -> int:
             compat_targets,
             tag_message_file=tag_msg_file,
             conflict_marks=plan_marks,
-            latest_compat_target=latest_compat_target,
+            game_dir=configured_game_dir,
             suggest_plan_fetch=bool(
                 plan_marks is not None
                 and not args.plan_fetch
@@ -739,8 +727,8 @@ def main(argv: list[str] | None = None) -> int:
         tag_push.insert(2, "--force")
     subprocess.run(tag_push, cwd=repo, check=True)
 
+    bundle_root = ritsulib / bundle_staging(args.configuration)
     if args.push_nuget:
-        bundle_root = ritsulib / bundle_staging(args.configuration)
         published, github_zips = nuget_ops.publish_nugets(
             ritsulib,
             configuration=args.configuration,
@@ -769,18 +757,17 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "[release] Skipping local NuGet push (default); packages are published by the tag release workflow.",
         )
-        bundle_root = ritsulib / bundle_staging(args.configuration)
+        packages, github_zips = nuget_ops.build_artifacts(
+            ritsulib,
+            configuration=args.configuration,
+            skip_build=args.skip_build,
+            compat_targets=compat_targets,
+            version_override=args.version_override,
+            sts2_api_signature_root=sts2_api_signature_root,
+            sts2_dir=sts2_dir,
+            bundle_staging_root=bundle_root,
+        )
         if _workshop_requested(args):
-            packages, github_zips = nuget_ops.build_artifacts(
-                ritsulib,
-                configuration=args.configuration,
-                skip_build=args.skip_build,
-                compat_targets=compat_targets,
-                version_override=args.version_override,
-                sts2_api_signature_root=sts2_api_signature_root,
-                sts2_dir=sts2_dir,
-                bundle_staging_root=bundle_root,
-            )
             eff_ver = (args.version_override or "").strip() or str(next_text)
             bundle_zip = compose_bundle_zip(
                 ritsulib,
@@ -802,17 +789,10 @@ def main(argv: list[str] | None = None) -> int:
             release_notes_file=release_notes_file,
             effective_version=(args.version_override or "").strip() or str(next_text),
         )
-    except RuntimeError as e:
+        _install_local_bundle(bundle_root, configured_game_dir)
+    except (OSError, RuntimeError) as e:
         print(f"[release] {e}", file=sys.stderr)
         return 1
-
-    _run_post_push_local_build(
-        ritsulib,
-        args,
-        latest_compat_target=latest_compat_target,
-        sts2_api_signature_root=sts2_api_signature_root,
-        sts2_dir=sts2_dir,
-    )
 
     print("[release] done.")
     return 0
@@ -843,7 +823,7 @@ def _print_git_plan(
     *,
     tag_message_file: Path | None = None,
     conflict_marks: frozenset[str] | None = None,
-    latest_compat_target: str,
+    game_dir: Path,
     suggest_plan_fetch: bool = False,
     sign_tag: bool = True,
 ) -> None:
@@ -939,11 +919,10 @@ def _print_git_plan(
         )
     else:
         step("(skip local NuGet; tag workflow publishes packages)", step_id="")
-        if _workshop_requested(args):
-            step(
-                f"dotnet pack + github zip + bundle staging for Workshop (targets: {', '.join(compat_targets)})",
-                step_id="",
-            )
+        step(
+            f"dotnet pack + github zip + bundle staging (targets: {', '.join(compat_targets)})",
+            step_id="",
+        )
     if _workshop_requested(args):
         workspace = args.workshop_workspace or "<missing --workshop-workspace>"
         step(f"prepare Steam Workshop workspace: {workspace}", step_id="")
@@ -952,13 +931,7 @@ def _print_git_plan(
         item_arg = f" -i {args.workshop_item_id}" if args.workshop_item_id else " (using mod_id.txt)"
         create = " create allowed" if args.workshop_create else ""
         step(f"{uploader} upload -w {args.workshop_workspace or '<workspace>'}{item_arg}{create}", step_id="")
-    step(
-        (
-            f"dotnet build {RITSULIB_CSPROJ_NAME} -c {args.configuration} "
-            f"/p:Sts2ApiCompat={latest_compat_target} /p:RitsuLibTelemetryBuildChannel=release"
-        ),
-        step_id="",
-    )
+    step(f"install staged variant bundle into {game_dir / 'mods' / 'STS2-RitsuLib'}", step_id="")
 
 
 _PESSIMISTIC_CONFLICT_STEPS = frozenset(

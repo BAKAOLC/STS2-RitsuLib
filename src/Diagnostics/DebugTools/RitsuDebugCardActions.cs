@@ -1381,7 +1381,11 @@ namespace STS2RitsuLib.Diagnostics.DebugTools
 
         private static void ResetCardToUpgradeLevel(CardModel card, int upgradeLevel)
         {
+#if STS2_AT_LEAST_0_114_0
+            card.RemoveAllUpgradesInternal();
+#else
             card.DowngradeInternal();
+#endif
             for (var level = 0; level < upgradeLevel && card.IsUpgradable; level++)
                 CardCmd.Upgrade(card, CardPreviewStyle.None);
         }

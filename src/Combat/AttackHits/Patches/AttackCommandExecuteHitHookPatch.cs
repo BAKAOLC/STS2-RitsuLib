@@ -17,10 +17,10 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
 {
     /// <summary>
     ///     <para xml:lang="en">
-    ///         Redirects each damage call in <see cref="AttackCommand.Execute" /> through <see cref="AttackHitHook" />.
+    ///         Redirects each per-hit damage call from <see cref="AttackCommand" /> through <see cref="AttackHitHook" />.
     ///     </para>
     ///     <para xml:lang="zh-CN">
-    ///         将 <see cref="AttackCommand.Execute" /> 中每次命中的伤害调用重定向到
+    ///         将 <see cref="AttackCommand" /> 中每次命中的伤害调用重定向到
     ///         <see cref="AttackHitHook" />。
     ///     </para>
     /// </summary>
@@ -34,7 +34,13 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
 
         public static ModPatchTarget[] GetTargets()
         {
-            return [PatchTarget.AsyncMethod<AttackCommand>(nameof(AttackCommand.Execute), typeof(PlayerChoiceContext))];
+            var implementation = AccessTools.DeclaredMethod(typeof(AttackCommand), "ExecuteInternal",
+                [typeof(PlayerChoiceContext)]);
+            return
+            [
+                PatchTarget.AsyncMethod<AttackCommand>(implementation?.Name ?? nameof(AttackCommand.Execute),
+                    typeof(PlayerChoiceContext)),
+            ];
         }
 
         [HarmonyAfter(Const.BaseLibHarmonyId)]
@@ -101,7 +107,7 @@ namespace STS2RitsuLib.Combat.AttackHits.Patches
             if (!TryResolveStateFields(stateMachineType, out var attackField, out var hitIndexField,
                     out var totalHitCountField))
                 throw new InvalidOperationException(
-                    $"{operation}: AttackCommand.Execute state fields could not be resolved on {stateMachineType.FullName}.");
+                    $"{operation}: AttackCommand state fields could not be resolved on {stateMachineType.FullName}.");
 
             var report = HarmonyAsyncIl.ReplaceAwaitedCalls(
                 rewriter,
