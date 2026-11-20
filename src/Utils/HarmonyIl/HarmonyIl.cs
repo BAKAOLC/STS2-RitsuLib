@@ -61,6 +61,34 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
+        ///     <para xml:lang="en">Declares a typed local and returns a reference for emitting its loads and stores.</para>
+        ///     <para xml:lang="zh-CN">声明带类型的本地变量并返回可生成读写指令的引用。</para>
+        /// </summary>
+        /// <param name="generator">
+        ///     <para xml:lang="en">The IL generator for the method being rewritten.</para>
+        ///     <para xml:lang="zh-CN">正在改写的方法所用的 IL 生成器。</para>
+        /// </param>
+        /// <param name="localType">
+        ///     <para xml:lang="en">The type stored in the local.</para>
+        ///     <para xml:lang="zh-CN">本地变量存储的类型。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The local reference, which belongs to the supplied generator.</para>
+        ///     <para xml:lang="zh-CN">归属所传生成器的本地变量引用。</para>
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///     <para xml:lang="en">The generator or local type is null.</para>
+        ///     <para xml:lang="zh-CN">生成器或本地变量类型为空。</para>
+        /// </exception>
+        public static HarmonyIlLocalRef DeclareLocal(ILGenerator generator, Type localType)
+        {
+            ArgumentNullException.ThrowIfNull(generator);
+            ArgumentNullException.ThrowIfNull(localType);
+            var local = generator.DeclareLocal(localType);
+            return new(local.LocalIndex, local, localType);
+        }
+
+        /// <summary>
         ///     <para xml:lang="en">Creates a local-load instruction using the short opcode where possible.</para>
         ///     <para xml:lang="zh-CN">创建本地变量加载指令；可用时使用短操作码。</para>
         /// </summary>
@@ -304,7 +332,9 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public static CodeInstruction LoadLocal(HarmonyIlLocalRef local)
         {
-            return local.Builder != null ? new(OpCodes.Ldloc_S, local.Builder) : Ldloc(local.Index);
+            return local.Builder != null
+                ? new(local.Builder.LocalIndex <= byte.MaxValue ? OpCodes.Ldloc_S : OpCodes.Ldloc, local.Builder)
+                : Ldloc(local.Index);
         }
 
         /// <summary>
@@ -313,7 +343,9 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         /// </summary>
         public static CodeInstruction StoreLocal(HarmonyIlLocalRef local)
         {
-            return local.Builder != null ? new(OpCodes.Stloc_S, local.Builder) : Stloc(local.Index);
+            return local.Builder != null
+                ? new(local.Builder.LocalIndex <= byte.MaxValue ? OpCodes.Stloc_S : OpCodes.Stloc, local.Builder)
+                : Stloc(local.Index);
         }
 
         /// <summary>

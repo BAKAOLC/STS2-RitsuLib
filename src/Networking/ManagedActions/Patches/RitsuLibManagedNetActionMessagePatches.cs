@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Multiplayer.Transport;
 using MegaCrit.Sts2.Core.Runs;
 using STS2RitsuLib.Patching.Models;
+using STS2RitsuLib.Utils.HarmonyIl;
 
 namespace STS2RitsuLib.Networking.ManagedActions.Patches
 {
@@ -22,31 +23,26 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
         private const int ReplayGameActionPayloadOffsetBits = ReplayEventTypeBits + ReplayGameActionPlayerIdBits;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void SendRequest(INetGameService service, RequestEnqueueActionMessage message)
+        private static bool TrySendRequest(INetGameService service, RequestEnqueueActionMessage message)
         {
             if (message.action is not RitsuLibManagedNetAction ||
                 service is not NetClientGameService { IsConnected: true, NetClient: { } client })
-            {
-                service.SendMessage(message);
-                return;
-            }
+                return false;
 
             var writer = new PacketWriter();
             writer.WriteByte((byte)message.ToId());
             writer.WriteULong(service.NetId);
             RequestSerialize.Prefix(message, writer);
             client.SendMessageToHost(writer.Buffer, writer.BytePosition, message.Mode, message.Mode.ToChannelId());
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void SendAnnouncement(INetGameService service, ActionEnqueuedMessage message)
+        private static bool TrySendAnnouncement(INetGameService service, ActionEnqueuedMessage message)
         {
             if (message.action is not RitsuLibManagedNetAction ||
                 service is not NetHostGameService { IsConnected: true, NetHost: { } transport } host)
-            {
-                service.SendMessage(message);
-                return;
-            }
+                return false;
 
             var writer = new PacketWriter();
             writer.WriteByte((byte)message.ToId());
@@ -56,10 +52,16 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 if (peer.readyForBroadcasting)
                     transport.SendMessageToClient(peer.peerId, writer.Buffer, writer.BytePosition,
                         message.Mode, message.Mode.ToChannelId());
+            return true;
         }
 
         internal sealed class QueueSend : IPatchMethod
         {
+            private static readonly MethodInfo SendMessage =
+                AccessTools.GetDeclaredMethods(typeof(INetGameService)).Single(static method =>
+                    method is { Name: nameof(INetGameService.SendMessage), IsGenericMethodDefinition: true } &&
+                    method.GetParameters().Length == 1);
+
             public static string PatchId => "ritsulib_managed_net_action_queue_send";
             public static bool IsCritical => true;
 
@@ -76,39 +78,19 @@ namespace STS2RitsuLib.Networking.ManagedActions.Patches
                 ];
             }
 
-            private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            private static IEnumerable<CodeInstruction> Transpiler(
+                IEnumerable<CodeInstruction> instructions, ILGenerator generator, MethodBase original)
             {
-                var replacements = 0;
-                foreach (var instruction in instructions)
-                {
-                    if (instruction.operand is MethodInfo
-                        {
-                            DeclaringType: { } declaringType,
-                            Name: nameof(INetGameService.SendMessage),
-                            IsGenericMethod: true,
-                        } method && declaringType == typeof(INetGameService) && method.GetParameters().Length == 1)
-                    {
-                        var messageType = method.GetGenericArguments()[0];
-                        var replacement = messageType == typeof(RequestEnqueueActionMessage)
-                            ? nameof(SendRequest)
-                            : messageType == typeof(ActionEnqueuedMessage)
-                                ? nameof(SendAnnouncement)
-                                : null;
-                        if (replacement != null)
-                        {
-                            instruction.opcode = OpCodes.Call;
-                            instruction.operand = AccessTools.DeclaredMethod(
-                                typeof(RitsuLibManagedNetActionMessagePatches), replacement);
-                            replacements++;
-                        }
-                    }
-
-                    yield return instruction;
-                }
-
-                if (replacements != 1)
-                    throw new InvalidOperationException(
-                        $"Expected one action-message send call, found {replacements}.");
+                var (messageType, handlerName) = original.Name == nameof(ActionQueueSynchronizer.RequestEnqueue)
+                    ? (typeof(RequestEnqueueActionMessage), nameof(TrySendRequest))
+                    : (typeof(ActionEnqueuedMessage), nameof(TrySendAnnouncement));
+                const string operation = "Managed action queue send";
+                var rewrite = HarmonyIlRewriter.From(instructions, original);
+                var handler = HarmonyIl.RequireMethod(
+                    AccessTools.DeclaredMethod(typeof(RitsuLibManagedNetActionMessagePatches), handlerName), operation);
+                var report = rewrite.GuardVoidCall(operation, generator, SendMessage.MakeGenericMethod(messageType),
+                    handler);
+                return rewrite.InstructionsChecked(report);
             }
         }
 
