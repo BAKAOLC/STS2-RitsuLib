@@ -443,6 +443,234 @@ namespace STS2RitsuLib.Utils.HarmonyIl
         }
 
         /// <summary>
+        ///     <para xml:lang="en">Finds a logical void call, including stack-compatible static replacements.</para>
+        ///     <para xml:lang="zh-CN">查找逻辑上的无返回值调用，包括堆栈兼容的静态替代调用。</para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Direct calls take precedence. When there are several compatible replacements, direct forwarding
+        ///         to the target distinguishes candidates. Unresolved ambiguity is returned to the caller.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         优先匹配直接调用。有多个兼容的替代调用时，用是否直接转发至目标区分候选，并返回仍存在的歧义。
+        ///     </para>
+        /// </remarks>
+        /// <param name="target">
+        ///     <para xml:lang="en">The closed void method to find. Instance receivers must be reference types.</para>
+        ///     <para xml:lang="zh-CN">要查找的封闭无返回值方法。实例接收者必须是引用类型。</para>
+        /// </param>
+        /// <param name="description">
+        ///     <para xml:lang="en">The description used in match diagnostics.</para>
+        ///     <para xml:lang="zh-CN">匹配诊断中使用的描述。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">The best available matches, possibly empty or ambiguous.</para>
+        ///     <para xml:lang="zh-CN">最符合条件的匹配结果，可能为空或存在多处匹配。</para>
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">The target or description is invalid, or the call has unsupported operands.</para>
+        ///     <para xml:lang="zh-CN">目标或描述无效，或调用包含不受支持的操作数。</para>
+        /// </exception>
+        public HarmonyIlMatches FindCompatibleVoidCalls(MethodInfo target, string description = "IL void call")
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(description);
+            var targets = GetVoidCallInputs(target);
+            var direct = FindCalls(target.Equals, description);
+            if (direct.Any)
+                return direct;
+
+            var compatible = FindCalls(IsCompatibleReplacement, description);
+            if (compatible.Count < 2)
+                return compatible;
+
+            var forwarding = new HarmonyIlMatches(description, compatible.Items.Where(ForwardsToTarget));
+            return forwarding.Any ? forwarding : compatible;
+
+            bool IsCompatibleReplacement(MethodInfo candidate)
+            {
+                if (!candidate.IsStatic || candidate.ReturnType != typeof(void) ||
+                    candidate.ContainsGenericParameters ||
+                    candidate.CallingConvention.HasFlag(CallingConventions.VarArgs))
+                    return false;
+
+                var parameters = candidate.GetParameters();
+                return parameters.Length == targets.Length &&
+                       parameters.Select(static parameter => parameter.ParameterType)
+                           .Zip(targets, static (parameter, source) => CanPass(source, parameter))
+                           .All(static matches => matches);
+            }
+
+            bool ForwardsToTarget(HarmonyIlMatch match)
+            {
+                var candidate = match.GetMethodOperand(_code, 0);
+                return candidate is not DynamicMethod && candidate.GetMethodBody() != null &&
+                       candidate.HasOriginalIlCall(target.Equals, resolveAsync: false);
+            }
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">
+        ///         Tries a handler before the selected void call and runs the existing call when the handler returns false.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">先尝试处理选中的无返回值调用，处理函数返回 false 时执行现有调用。</para>
+        /// </summary>
+        /// <remarks>
+        ///     <para xml:lang="en">
+        ///         Arguments are evaluated once. References incompatible with a narrower handler flow to the existing call.
+        ///         The handler's own method attributes govern inlining.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         实参只求值一次。遇到无法传给更窄处理函数的引用时继续执行现有调用。内联由处理函数自身的方法属性控制。
+        ///     </para>
+        /// </remarks>
+        /// <param name="match">
+        ///     <para xml:lang="en">A one-instruction match for a closed, unprefixed void call.</para>
+        ///     <para xml:lang="zh-CN">对封闭、无 IL 前缀的无返回值调用的单指令匹配。</para>
+        /// </param>
+        /// <param name="generator">
+        ///     <para xml:lang="en">The IL generator for the method being rewritten.</para>
+        ///     <para xml:lang="zh-CN">正在改写的方法所用的 IL 生成器。</para>
+        /// </param>
+        /// <param name="tryHandle">
+        ///     <para xml:lang="en">
+        ///         A closed static bool method accepting the receiver, when present, followed by the call parameters.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">封闭的静态 bool 方法，依次接收调用接收者（若存在）及调用参数。</para>
+        /// </param>
+        /// <exception cref="ArgumentException">
+        ///     <para xml:lang="en">The match or handler has an unsupported or incompatible signature.</para>
+        ///     <para xml:lang="zh-CN">匹配或处理函数的签名不受支持或不兼容。</para>
+        /// </exception>
+        public void InsertCallGuard(HarmonyIlMatch match, ILGenerator generator, MethodInfo tryHandle)
+        {
+            ValidateMatch(match);
+            ArgumentNullException.ThrowIfNull(generator);
+            ArgumentNullException.ThrowIfNull(tryHandle);
+
+            var call = _code[match.Index];
+            if (match.Length != 1 || !HarmonyIl.TryGetCalledMethod(call, out var called) ||
+                (match.Index > 0 && _code[match.Index - 1].opcode.OpCodeType == OpCodeType.Prefix))
+                throw new ArgumentException("Expected one unprefixed void call.", nameof(match));
+
+            var inputs = GetVoidCallInputs(called);
+            var parameters = tryHandle.GetParameters();
+            if (!tryHandle.IsStatic || tryHandle.ReturnType != typeof(bool) || tryHandle.ContainsGenericParameters ||
+                tryHandle.CallingConvention.HasFlag(CallingConventions.VarArgs) || parameters.Length != inputs.Length ||
+                !parameters.Select(static parameter => parameter.ParameterType)
+                    .Zip(inputs, static (parameter, input) => CanPass(input, parameter) || CanPass(parameter, input))
+                    .All(static compatible => compatible))
+                throw new ArgumentException("Expected a static bool handler with compatible call inputs.",
+                    nameof(tryHandle));
+
+            var locals = inputs.Select(type => HarmonyIl.DeclareLocal(generator, type)).ToArray();
+            var preparation = locals.Reverse().Select(static local => local.Store()).ToList();
+            var handlerInputs = (HarmonyIlLocalRef[])locals.Clone();
+            var fallback = generator.DefineLabel();
+            var handled = generator.DefineLabel();
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var parameter = parameters[i].ParameterType;
+                if (CanPass(inputs[i], parameter))
+                    continue;
+
+                var available = generator.DefineLabel();
+                var typed = HarmonyIl.DeclareLocal(generator, parameter);
+                var local = locals[i];
+                preparation.AddRange(
+                [
+                    local.Load(),
+                    new(OpCodes.Isinst, parameter),
+                    typed.Store(),
+                    local.Load(),
+                    new(OpCodes.Brfalse, available),
+                    typed.Load(),
+                    new(OpCodes.Brfalse, fallback),
+                    new CodeInstruction(OpCodes.Nop).WithLabels(available),
+                ]);
+                handlerInputs[i] = typed;
+            }
+
+            preparation.AddRange(handlerInputs.Select(static local => local.Load()));
+            preparation.Add(HarmonyIl.Call(tryHandle));
+            preparation.Add(new(OpCodes.Brtrue, handled));
+            var loads = locals.Select(static local => local.Load()).ToArray();
+            if (loads.Length > 0)
+            {
+                loads[0].labels.Add(fallback);
+                preparation.AddRange(loads);
+            }
+
+            var resume = new CodeInstruction(OpCodes.Nop).WithLabels(handled);
+            resume.blocks.AddRange(call.blocks.Where(static block =>
+                block.blockType == ExceptionBlockType.EndExceptionBlock));
+            call.blocks.RemoveAll(static block => block.blockType == ExceptionBlockType.EndExceptionBlock);
+            InsertAfter(match, [resume]);
+            InsertBefore(match, preparation, moveLabelsAndBlocksToInserted: true);
+        }
+
+        /// <summary>
+        ///     <para xml:lang="en">Finds one compatible void call and adds a handler with the original call as fallback.</para>
+        ///     <para xml:lang="zh-CN">查找唯一兼容的无返回值调用并添加处理函数，保留现有调用作为回退。</para>
+        /// </summary>
+        /// <param name="operation">
+        ///     <para xml:lang="en">The operation used in match diagnostics.</para>
+        ///     <para xml:lang="zh-CN">匹配诊断中使用的操作名称。</para>
+        /// </param>
+        /// <param name="generator">
+        ///     <para xml:lang="en">The IL generator for the method being rewritten.</para>
+        ///     <para xml:lang="zh-CN">正在改写的方法所用的 IL 生成器。</para>
+        /// </param>
+        /// <param name="target">
+        ///     <para xml:lang="en">The logical void call to match.</para>
+        ///     <para xml:lang="zh-CN">要匹配的逻辑无返回值调用。</para>
+        /// </param>
+        /// <param name="tryHandle">
+        ///     <para xml:lang="en">The static bool handler called before the original call.</para>
+        ///     <para xml:lang="zh-CN">在现有调用之前调用的静态 bool 处理函数。</para>
+        /// </param>
+        /// <returns>
+        ///     <para xml:lang="en">A report describing the match and insertion, or a report with no insertion on ambiguity.</para>
+        ///     <para xml:lang="zh-CN">描述匹配与插入结果的报告。匹配有歧义时，报告中没有插入结果。</para>
+        /// </returns>
+        public HarmonyIlRewriteReport GuardVoidCall(
+            string operation, ILGenerator generator, MethodInfo target, MethodInfo tryHandle)
+        {
+            ArgumentNullException.ThrowIfNull(generator);
+            ArgumentNullException.ThrowIfNull(tryHandle);
+            var before = _code.Count;
+            var matches = FindCompatibleVoidCalls(target, operation);
+            var indexes = matches.Items.Select(static match => match.Index).ToArray();
+            if (matches.Count != 1)
+                return new(operation, matches.Count, 0, before, before, MatchedIndexes: indexes);
+
+            InsertCallGuard(matches.First(), generator, tryHandle);
+            return new(operation, 1, 1, before, _code.Count, MatchedIndexes: indexes, AppliedIndexes: indexes);
+        }
+
+        private static Type[] GetVoidCallInputs(MethodInfo method)
+        {
+            ArgumentNullException.ThrowIfNull(method);
+            var parameters = method.GetParameters().Select(static parameter => parameter.ParameterType).ToArray();
+            if (method.ReturnType != typeof(void) || method.ContainsGenericParameters ||
+                method.CallingConvention.HasFlag(CallingConventions.VarArgs) ||
+                method is { IsStatic: false, DeclaringType: not { IsValueType: false } } ||
+                parameters.Any(static type => type.IsByRef || type.IsPointer || type.IsFunctionPointer))
+                throw new ArgumentException("Expected a closed void call with by-value managed inputs.",
+                    nameof(method));
+
+            return method.IsStatic ? parameters : [method.DeclaringType!, .. parameters];
+        }
+
+        private static bool CanPass(Type source, Type destination)
+        {
+            return source == destination ||
+                   (!source.IsValueType && !destination.IsValueType && !source.IsByRef && !destination.IsByRef &&
+                    !source.IsPointer && !destination.IsPointer &&
+                    !source.IsFunctionPointer && !destination.IsFunctionPointer &&
+                    destination.IsAssignableFrom(source));
+        }
+
+        /// <summary>
         ///     <para xml:lang="en">Finds the first field access instruction for a field.</para>
         ///     <para xml:lang="zh-CN">查找指定字段的第一条字段访问指令。</para>
         /// </summary>
