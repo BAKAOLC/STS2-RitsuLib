@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using STS2RitsuLib.CardPiles.Nodes;
 using STS2RitsuLib.Screens;
+using STS2RitsuLib.Ui.Controls;
 
 namespace STS2RitsuLib.CardPiles
 {
@@ -125,7 +126,7 @@ namespace STS2RitsuLib.CardPiles
                 return;
 
             foreach (var action in actions)
-                manager.PushHotkeyReleasedBinding(action, Close);
+                Sts2HotkeyBindings.PushReleased(manager, action, screen, Close);
             screen.TreeExiting += Unregister;
             return;
 
@@ -141,7 +142,7 @@ namespace STS2RitsuLib.CardPiles
                 if (!GodotObject.IsInstanceValid(manager))
                     return;
                 foreach (var action in actions)
-                    manager.RemoveHotkeyReleasedBinding(action, Close);
+                    Sts2HotkeyBindings.RemoveReleased(manager, action, screen, Close);
             }
         }
 

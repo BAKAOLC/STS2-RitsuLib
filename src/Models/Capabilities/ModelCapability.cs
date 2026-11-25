@@ -202,6 +202,11 @@ namespace STS2RitsuLib.Models.Capabilities
             MarkDirty();
         }
 
+        internal void ResetDynamicVarsForDowngrade()
+        {
+            ResetDynamicVarsToCanonical();
+        }
+
         internal void RecalculateDynamicVarsForUpgradeOrEnchant()
         {
             DynamicVars.RecalculateForUpgradeOrEnchant();

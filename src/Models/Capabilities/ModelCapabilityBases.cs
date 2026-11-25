@@ -37,6 +37,8 @@ namespace STS2RitsuLib.Models.Capabilities
         /// <summary>
         ///     <para xml:lang="en">Called after the owning card's vanilla upgrade body has run.</para>
         ///     <para xml:lang="zh-CN">所属卡牌的原版升级主体执行后调用。</para>
+        ///     <para xml:lang="en">Also runs for each silent upgrade replayed during a downgrade on STS2 0.114 or later.</para>
+        ///     <para xml:lang="zh-CN">在 STS2 0.114 及之后版本的降级过程中，每次静默重放升级时也会调用。</para>
         /// </summary>
         protected virtual void OnOwnerCardUpgraded(CardModel card)
         {
@@ -53,6 +55,15 @@ namespace STS2RitsuLib.Models.Capabilities
         /// <summary>
         ///     <para xml:lang="en">Called after the owning card's vanilla downgrade hook has run.</para>
         ///     <para xml:lang="zh-CN">所属卡牌的原版降级钩子执行后调用。</para>
+        ///     <para xml:lang="en">
+        ///         On STS2 0.114 or later, capability dynamic variables reset to their canonical definitions before the
+        ///         remaining upgrades are replayed. This callback observes the final upgrade level and rebuilt variables.
+        ///         Other capability state is not reset automatically.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">
+        ///         在 STS2 0.114 及之后版本中，能力动态变量先重置为规范定义，再重放保留的升级。
+        ///         此回调观察到最终升级等级和重建后的变量；能力的其他状态不会自动重置。
+        ///     </para>
         /// </summary>
         protected virtual void OnOwnerCardDowngraded(CardModel card)
         {
