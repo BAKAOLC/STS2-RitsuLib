@@ -1,5 +1,5 @@
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
-using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -38,7 +38,7 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         private static readonly object NoOwnerHookCapabilitiesMarker = new();
 
-        private static readonly AttachedState<AbstractModel, object> OwnersWithoutHookCapabilities = new();
+        private static readonly ConditionalWeakTable<AbstractModel, object> OwnersWithoutHookCapabilities = [];
 
         internal static void InvalidateDefaultCapabilitySourceCache()
         {
@@ -52,6 +52,10 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static IEnumerable<AbstractModel> ExpandOwnerHookListeners(IEnumerable<AbstractModel> owners)
         {
+            var canFastSkipPlainModels =
+                !ModelCapabilities.HasEverAttached(ModelCapabilityInterfaceFlags.OwnerHookListener) &&
+                !ModelCapabilityDefaults.HasAnyModifiers;
+
             foreach (var owner in owners)
             {
                 if (owner is IModelCapability capability)
@@ -61,13 +65,20 @@ namespace STS2RitsuLib.Models.Capabilities
                     continue;
                 }
 
-                if (OwnersWithoutHookCapabilities.TryGetValue(owner, out _))
+                if ((canFastSkipPlainModels && owner is not IModelCapabilitySource) ||
+                    OwnersWithoutHookCapabilities.TryGetValue(owner, out _))
                 {
                     yield return owner;
                     continue;
                 }
 
                 var capabilities = GetOwnerHookCapabilities(owner);
+                if (capabilities.Count == 0)
+                {
+                    yield return owner;
+                    continue;
+                }
+
                 var index = 0;
 
                 for (; index < capabilities.Count && capabilities[index].OwnerHookOrder < 0; index++)
@@ -99,6 +110,13 @@ namespace STS2RitsuLib.Models.Capabilities
                 }
 
                 collection = ModelCapabilities.Get(owner);
+            }
+
+            if (collection.Count == 0 ||
+                (collection.InterfaceMask & ModelCapabilityInterfaceFlags.OwnerHookListener) == 0)
+            {
+                MarkOwnerWithoutHookCapabilities(owner);
+                return default;
             }
 
             var capabilities = collection.GetOwnerHookCandidateSnapshot();
@@ -145,7 +163,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static void MarkOwnerWithoutHookCapabilities(AbstractModel owner)
         {
-            OwnersWithoutHookCapabilities.GetOrAdd(owner, static _ => NoOwnerHookCapabilitiesMarker);
+            OwnersWithoutHookCapabilities.TryAdd(owner, NoOwnerHookCapabilitiesMarker);
         }
 
         private static bool TryGetStillAttachedModel(

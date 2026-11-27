@@ -421,7 +421,10 @@ namespace STS2RitsuLib.Models.Capabilities
         private static readonly Lock SyncRoot = new();
         private static readonly List<ModelDefaultCapabilityModifierEntry> Modifiers = [];
         private static Dictionary<Type, ModelDefaultCapabilityModifierEntry[]> _modifiersByOwnerType = [];
+        private static bool _hasAnyModifiers;
         private static long _nextOrder;
+
+        internal static bool HasAnyModifiers => Volatile.Read(ref _hasAnyModifiers);
 
         public static void Modify<TModel>(
             string modId,
@@ -473,6 +476,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     order,
                     _nextOrder++,
                     modifier));
+                Volatile.Write(ref _hasAnyModifiers, true);
                 Volatile.Write(ref _modifiersByOwnerType, []);
             }
 
@@ -484,6 +488,8 @@ namespace STS2RitsuLib.Models.Capabilities
             ArgumentNullException.ThrowIfNull(owner);
             if (owner is IModelCapabilitySource)
                 return true;
+            if (!Volatile.Read(ref _hasAnyModifiers))
+                return false;
 
             return GetModifiers(owner.GetType()).Length > 0;
         }

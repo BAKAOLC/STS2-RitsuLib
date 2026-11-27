@@ -55,6 +55,15 @@ namespace STS2RitsuLib.Compat
         }
 
         /// <summary>
+        ///     <para xml:lang="en">
+        ///         Gets a monotonically increasing version number that changes whenever an assembly loads or
+        ///         framework presence caches are explicitly refreshed.
+        ///     </para>
+        ///     <para xml:lang="zh-CN">获取随程序集加载或显式刷新框架缓存而单调递增的版本号。</para>
+        /// </summary>
+        public static int AssemblyVersion => Volatile.Read(ref _assemblyVersion);
+
+        /// <summary>
         ///     <para xml:lang="en">Registers a custom detector, replacing any detector with the same framework ID.</para>
         ///     <para xml:lang="zh-CN">注册自定义检测器，并替换框架 ID 相同的现有检测器。</para>
         /// </summary>
@@ -67,6 +76,7 @@ namespace STS2RitsuLib.Compat
             {
                 CustomDetectors[frameworkId] = detector;
                 PresenceCache.Remove(frameworkId);
+                Interlocked.Increment(ref _assemblyVersion);
             }
         }
 
@@ -98,6 +108,7 @@ namespace STS2RitsuLib.Compat
         {
             lock (Gate)
             {
+                Interlocked.Increment(ref _assemblyVersion);
                 InvalidateStaleCaches();
                 TypeCache.Clear();
                 PresenceCache.Clear();

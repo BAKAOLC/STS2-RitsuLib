@@ -38,13 +38,41 @@ namespace STS2RitsuLib.Combat.HandSize
         {
             ArgumentNullException.ThrowIfNull(player);
 
-            var amount = currentMaxHandSize;
-            var hookModifiers = GetHookListenerModifiers(player);
-            amount = hookModifiers.Aggregate(amount,
-                (current, modifier) => modifier.ModifyMaxHandSize(player, current));
+            if (player.Creature?.CombatState is not { } combatState)
+                return Math.Max(0, currentMaxHandSize);
 
-            amount = hookModifiers.Aggregate(amount,
-                (current, modifier) => modifier.ModifyMaxHandSizeLate(player, current));
+            IMaxHandSizeModifier? singleModifier = null;
+            List<IMaxHandSizeModifier>? modifiers = null;
+            foreach (var entry in ModelHookListenerDispatcher.FromCombat<IMaxHandSizeModifier>(combatState))
+            {
+                if (singleModifier == null)
+                {
+                    singleModifier = entry.Listener;
+                    continue;
+                }
+
+                modifiers ??= [singleModifier];
+                modifiers.Add(entry.Listener);
+            }
+
+            if (singleModifier == null)
+                return Math.Max(0, currentMaxHandSize);
+
+            var amount = currentMaxHandSize;
+            if (modifiers == null)
+            {
+                amount = singleModifier.ModifyMaxHandSize(player, amount);
+                amount = singleModifier.ModifyMaxHandSizeLate(player, amount);
+                return Math.Max(0, amount);
+            }
+
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var modifier in modifiers)
+                amount = modifier.ModifyMaxHandSize(player, amount);
+
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var modifier in modifiers)
+                amount = modifier.ModifyMaxHandSizeLate(player, amount);
 
             return Math.Max(0, amount);
         }
@@ -52,18 +80,6 @@ namespace STS2RitsuLib.Combat.HandSize
         internal static int CalculateFromCardOwner(CardModel? card)
         {
             return card?.Owner is { } player ? Calculate(player) : DefaultMaxHandSize;
-        }
-
-        private static IMaxHandSizeModifier[] GetHookListenerModifiers(Player player)
-        {
-            if (player.Creature?.CombatState is not { } combatState)
-                return [];
-
-            return
-            [
-                .. ModelHookListenerDispatcher.FromCombat<IMaxHandSizeModifier>(combatState)
-                    .Select(static entry => entry.Listener),
-            ];
         }
     }
 }

@@ -20,6 +20,7 @@ namespace STS2RitsuLib.Combat.CardTargeting
 
         private static ITargetPredicateMap? _singleTargeting;
         private static ITargetPredicateMap? _multiTargeting;
+        private static int _failedResolveVersion = -1;
         private static bool _loggedMissingType;
         private static bool _loggedMissingFields;
 
@@ -86,40 +87,54 @@ namespace STS2RitsuLib.Combat.CardTargeting
         private static bool TryGetSingleTargeting(out ITargetPredicateMap singleTargeting)
         {
             EnsureResolved();
-            singleTargeting = _singleTargeting!;
+            singleTargeting = Volatile.Read(ref _singleTargeting)!;
             return singleTargeting != null;
         }
 
         private static bool TryGetMultiTargeting(out ITargetPredicateMap multiTargeting)
         {
             EnsureResolved();
-            multiTargeting = _multiTargeting!;
+            multiTargeting = Volatile.Read(ref _multiTargeting)!;
             return multiTargeting != null;
         }
 
         private static void EnsureResolved()
         {
-            if (_singleTargeting != null && _multiTargeting != null)
+            if (Volatile.Read(ref _singleTargeting) != null && Volatile.Read(ref _multiTargeting) != null)
+                return;
+
+            var assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+            if (Volatile.Read(ref _failedResolveVersion) == assemblyVersion)
                 return;
 
             lock (Gate)
             {
-                if (_singleTargeting != null && _multiTargeting != null)
+                if (Volatile.Read(ref _singleTargeting) != null && Volatile.Read(ref _multiTargeting) != null)
+                    return;
+
+                assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+                if (Volatile.Read(ref _failedResolveVersion) == assemblyVersion)
                     return;
 
                 var type = ResolveBaseLibCustomTargetType();
                 if (type == null)
+                {
+                    Volatile.Write(ref _failedResolveVersion, assemblyVersion);
                     return;
+                }
 
-                _singleTargeting = ReadPredicateMap(type, "SingleTargeting");
-                _multiTargeting = ReadPredicateMap(type, "MultiTargeting");
+                var singleTargeting = ReadPredicateMap(type, "SingleTargeting");
+                var multiTargeting = ReadPredicateMap(type, "MultiTargeting");
+                Volatile.Write(ref _singleTargeting, singleTargeting);
+                Volatile.Write(ref _multiTargeting, multiTargeting);
 
-                if (_singleTargeting != null && _multiTargeting != null)
+                if (singleTargeting != null && multiTargeting != null)
                 {
                     RitsuLibFramework.Logger.Info("[CardTargeting] BaseLib custom TargetType bridge resolved.");
                     return;
                 }
 
+                Volatile.Write(ref _failedResolveVersion, assemblyVersion);
                 if (_loggedMissingFields)
                     return;
                 _loggedMissingFields = true;
@@ -141,13 +156,6 @@ namespace STS2RitsuLib.Combat.CardTargeting
                 if (type != null)
                     return type;
             }
-
-            var fallback = AppDomain.CurrentDomain.GetAssemblies()
-                .Select(ResolveAssemblyType)
-                .OfType<Type>()
-                .FirstOrDefault();
-            if (fallback != null)
-                return fallback;
 
             if (_loggedMissingType)
                 return null;

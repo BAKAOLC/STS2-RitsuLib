@@ -35,6 +35,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, Creature __1, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<CreatureAddedToCombatEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new CreatureAddedToCombatEvent(__0, __1, DateTimeOffset.UtcNow),
@@ -60,6 +63,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(IRunState __0, CombatStateCompat __1, Creature __2, decimal __3, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<CurrentHpChangedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new CurrentHpChangedEvent(__0, __1, __2, __3, DateTimeOffset.UtcNow),
@@ -85,6 +91,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
 
         public static void Postfix(PlayerCombatState __instance, Player ____player, int __state)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<EnergyGainedEvent>())
+                return;
+
             var amount = __instance.Energy - __state;
             if (amount <= 0 || ____player.Creature?.CombatState is not { } combatState)
                 return;
@@ -109,6 +118,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, Player __1, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<EnergyResetEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new EnergyResetEvent(__0, __1, DateTimeOffset.UtcNow),
@@ -134,6 +146,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, CardModel __1, int __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<EnergySpentEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new EnergySpentEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -159,6 +174,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.First)]
         public static void Prefix(CombatStateCompat __0, Player __1, PlayerChoiceContext __2)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<HandDrawingEvent>())
+                return;
+
             RitsuLibFramework.PublishLifecycleEvent(
                 new HandDrawingEvent(__0, __1, __2, DateTimeOffset.UtcNow),
                 nameof(HandDrawingEvent));
@@ -183,6 +201,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, PlayerChoiceContext __1, Player __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<HandEmptiedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new HandEmptiedEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -208,6 +229,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(IRunState __0, Player __1, MerchantEntry __2, int __3, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<ItemPurchasedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new ItemPurchasedEvent(__0, __1, __2, __3, DateTimeOffset.UtcNow),
@@ -230,6 +254,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(IRunState __0, ActMap __1, int __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<MapGeneratedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new MapGeneratedEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -255,6 +282,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, PlayerChoiceContext __1, Player __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<PlayerTurnStartedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new PlayerTurnStartedEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -280,6 +310,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.First)]
         public static void Prefix(IRunState __0, CombatStateCompat __1, PotionModel __2, Creature? __3)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<PotionUsingEvent>())
+                return;
+
             RitsuLibFramework.PublishLifecycleEvent(
                 new PotionUsingEvent(__0, __1, __2, __3, DateTimeOffset.UtcNow),
                 nameof(PotionUsingEvent));
@@ -305,6 +338,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         public static void Postfix(IRunState __0, CombatStateCompat __1, PotionModel __2, Creature? __3,
             ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<PotionUsedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new PotionUsedEvent(__0, __1, __2, __3, DateTimeOffset.UtcNow),
@@ -329,6 +365,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(IRunState __0, Player __1, bool __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<RestSiteHealedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new RestSiteHealedEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -350,6 +389,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(IRunState __0, Player __1, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<RestSiteSmithedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new RestSiteSmithedEvent(__0, __1, DateTimeOffset.UtcNow),
@@ -375,6 +417,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, PlayerChoiceContext __1, Player __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<ShuffledEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new ShuffledEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -400,6 +445,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, int __1, Player __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<StarsGainedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new StarsGainedEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -425,6 +473,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, int __1, Player __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<StarsSpentEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new StarsSpentEvent(__0, __1, __2, DateTimeOffset.UtcNow),
@@ -455,6 +506,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
             decimal __3,
             ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<SummonedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new SummonedEvent(__0, __1, __2, __3, DateTimeOffset.UtcNow),
@@ -485,6 +539,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
         [HarmonyPriority(Priority.Last)]
         public static void Postfix(CombatStateCompat __0, Player __1, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<ExtraTurnTakenEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new ExtraTurnTakenEvent(__0, __1, DateTimeOffset.UtcNow),
@@ -518,6 +575,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
 #if !STS2_AT_LEAST_0_106_0
         public static void Prefix(CombatStateCompat __0, CombatSide __1)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<SideTurnEndingEvent>())
+                return;
+
             RitsuLibFramework.PublishLifecycleEvent(
                 new SideTurnEndingEvent(__0, __1, null, DateTimeOffset.UtcNow),
                 nameof(SideTurnEndingEvent));
@@ -525,6 +585,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
 #else
         public static void Prefix(CombatStateCompat __0, CombatSide __1, IEnumerable<Creature> __2)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<SideTurnEndingEvent>())
+                return;
+
             RitsuLibFramework.PublishLifecycleEvent(
                 new SideTurnEndingEvent(
                     __0,
@@ -562,6 +625,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
 #if !STS2_AT_LEAST_0_106_0
         public static void Postfix(CombatStateCompat __0, CombatSide __1, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<SideTurnEndedEvent>())
+                return;
+
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(
                     new SideTurnEndedEvent(__0, __1, null, DateTimeOffset.UtcNow),
@@ -570,6 +636,9 @@ namespace STS2RitsuLib.Lifecycle.Patches
 #else
         public static void Postfix(CombatStateCompat __0, CombatSide __1, IEnumerable<Creature> __2, ref Task __result)
         {
+            if (!RitsuLibFramework.HasLifecycleListeners<SideTurnEndedEvent>())
+                return;
+
             var participants = AdditionalHookLifecycleEvents.GetParticipants(__2);
             __result = LifecyclePatchTaskBridge.After(__result, () =>
                 RitsuLibFramework.PublishLifecycleEvent(

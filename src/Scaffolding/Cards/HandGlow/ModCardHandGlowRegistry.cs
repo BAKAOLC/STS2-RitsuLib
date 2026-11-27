@@ -18,13 +18,8 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
     {
         private static readonly ConcurrentDictionary<string, byte> LoggedRuleFailures = new(StringComparer.Ordinal);
         private static readonly ConcurrentDictionary<Type, List<RegisteredRules>> RulesByCardType = new();
+        private static readonly ConcurrentDictionary<Type, ResolvedChannelRules> ResolvedByCardType = new();
         private static int _sequence;
-
-        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> GoldSelector =
-            static rules => rules.GoldWhenBonusActive;
-
-        private static readonly Func<ModCardHandGlowRules, Func<CardModel, bool>?> RedSelector =
-            static rules => rules.RedWhenHandWarning;
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -66,6 +61,7 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
                 cardType,
                 _ => [registered],
                 (_, existing) => [.. existing, registered]);
+            ResolvedByCardType.Clear();
         }
 
         /// <summary>
@@ -75,25 +71,59 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
         public static void ClearForTests()
         {
             RulesByCardType.Clear();
+            ResolvedByCardType.Clear();
             LoggedRuleFailures.Clear();
         }
 
         internal static bool EvaluateRegistryGold(CardModel card)
         {
-            return EvaluateChannel(card, GoldSelector, "gold");
+            if (RulesByCardType.IsEmpty)
+                return false;
+
+            var resolved = ResolvedByCardType.GetOrAdd(card.GetType(), BuildResolvedRules);
+            return EvaluateChannel(card, resolved.GoldRules, "gold");
         }
 
         internal static bool EvaluateRegistryRed(CardModel card)
         {
-            return EvaluateChannel(card, RedSelector, "red");
+            if (RulesByCardType.IsEmpty)
+                return false;
+
+            var resolved = ResolvedByCardType.GetOrAdd(card.GetType(), BuildResolvedRules);
+            return EvaluateChannel(card, resolved.RedRules, "red");
         }
 
         private static bool EvaluateChannel(
             CardModel card,
-            Func<ModCardHandGlowRules, Func<CardModel, bool>?> selector,
+            ResolvedRule[] rules,
             string channel)
         {
-            for (var t = card.GetType();
+            foreach (var rule in rules)
+            {
+                try
+                {
+                    if (rule.Predicate(card))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    var warningKey = $"{rule.Sequence}|{channel}";
+                    if (LoggedRuleFailures.TryAdd(warningKey, 0))
+                        RitsuLibFramework.Logger.Warn(
+                            $"[CardHandGlow] {channel} rule {rule.Sequence} for {rule.OwnerType.FullName} threw " +
+                            $"and was ignored: {ex}");
+                }
+            }
+
+            return false;
+        }
+
+        private static ResolvedChannelRules BuildResolvedRules(Type cardType)
+        {
+            List<ResolvedRule>? gold = null;
+            List<ResolvedRule>? red = null;
+
+            for (var t = cardType;
                  t != null && typeof(CardModel).IsAssignableFrom(t);
                  t = t.BaseType)
             {
@@ -102,29 +132,27 @@ namespace STS2RitsuLib.Scaffolding.Cards.HandGlow
 
                 foreach (var registration in registrations)
                 {
-                    var pred = selector(registration.Rules);
-                    if (pred == null)
-                        continue;
-
-                    try
+                    if (registration.Rules.GoldWhenBonusActive is { } goldPredicate)
                     {
-                        if (pred(card))
-                            return true;
+                        gold ??= [];
+                        gold.Add(new(goldPredicate, registration.Sequence, t));
                     }
-                    catch (Exception ex)
+
+                    if (registration.Rules.RedWhenHandWarning is { } redPredicate)
                     {
-                        var warningKey = $"{registration.Sequence}|{channel}";
-                        if (LoggedRuleFailures.TryAdd(warningKey, 0))
-                            RitsuLibFramework.Logger.Warn(
-                                $"[CardHandGlow] {channel} rule {registration.Sequence} for {t.FullName} threw " +
-                                $"and was ignored: {ex}");
+                        red ??= [];
+                        red.Add(new(redPredicate, registration.Sequence, t));
                     }
                 }
             }
 
-            return false;
+            return new(gold?.ToArray() ?? [], red?.ToArray() ?? []);
         }
 
         private readonly record struct RegisteredRules(ModCardHandGlowRules Rules, int Sequence);
+
+        private readonly record struct ResolvedRule(Func<CardModel, bool> Predicate, int Sequence, Type OwnerType);
+
+        private readonly record struct ResolvedChannelRules(ResolvedRule[] GoldRules, ResolvedRule[] RedRules);
     }
 }

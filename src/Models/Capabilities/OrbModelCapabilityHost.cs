@@ -11,15 +11,23 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string OrbAfterTurnStartTriggerSurface = "orb lifecycle/after-turn-start-triggered";
         private const string OrbEvokeSurface = "orb lifecycle/evoked";
 
+        internal static bool HasOrbCapabilities(OrbModel orb)
+        {
+            return HasCapabilities(orb, ModelCapabilityInterfaceFlags.OrbCapability);
+        }
+
         internal static async Task AfterOwnerOrbPassiveTriggered(
             OrbModel orb,
             PlayerChoiceContext choiceContext,
             Creature? target)
         {
+            if (!TryGetCapabilitySnapshot(orb, ModelCapabilityInterfaceFlags.OrbCapability, out var snapshot))
+                return;
+
             var context = new OrbPassiveTriggerContext(orb, choiceContext, target);
-            foreach (var capability in GetCapabilities<OrbCapability>(orb))
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToOrb(capability, orb))
+                if (item is not OrbCapability capability || !IsStillAttachedToOrb(capability, orb))
                     continue;
 
                 await TryRunAsync(capability, orb, OrbPassiveTriggerSurface, async () =>
@@ -34,10 +42,13 @@ namespace STS2RitsuLib.Models.Capabilities
             OrbModel orb,
             PlayerChoiceContext choiceContext)
         {
+            if (!TryGetCapabilitySnapshot(orb, ModelCapabilityInterfaceFlags.OrbCapability, out var snapshot))
+                return;
+
             var context = new OrbBeforeTurnEndTriggerContext(orb, choiceContext);
-            foreach (var capability in GetCapabilities<OrbCapability>(orb))
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToOrb(capability, orb))
+                if (item is not OrbCapability capability || !IsStillAttachedToOrb(capability, orb))
                     continue;
 
                 await TryRunAsync(capability, orb, OrbBeforeTurnEndTriggerSurface, async () =>
@@ -52,10 +63,13 @@ namespace STS2RitsuLib.Models.Capabilities
             OrbModel orb,
             PlayerChoiceContext choiceContext)
         {
+            if (!TryGetCapabilitySnapshot(orb, ModelCapabilityInterfaceFlags.OrbCapability, out var snapshot))
+                return;
+
             var context = new OrbAfterTurnStartTriggerContext(orb, choiceContext);
-            foreach (var capability in GetCapabilities<OrbCapability>(orb))
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToOrb(capability, orb))
+                if (item is not OrbCapability capability || !IsStillAttachedToOrb(capability, orb))
                     continue;
 
                 await TryRunAsync(capability, orb, OrbAfterTurnStartTriggerSurface, async () =>
@@ -71,10 +85,13 @@ namespace STS2RitsuLib.Models.Capabilities
             PlayerChoiceContext choiceContext,
             IEnumerable<Creature> targets)
         {
+            if (!TryGetCapabilitySnapshot(orb, ModelCapabilityInterfaceFlags.OrbCapability, out var snapshot))
+                return;
+
             var context = new OrbEvokeContext(orb, choiceContext, [.. targets]);
-            foreach (var capability in GetCapabilities<OrbCapability>(orb))
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToOrb(capability, orb))
+                if (item is not OrbCapability capability || !IsStillAttachedToOrb(capability, orb))
                     continue;
 
                 await TryRunAsync(capability, orb, OrbEvokeSurface, async () =>

@@ -117,16 +117,19 @@ namespace STS2RitsuLib.Models.Capabilities
         internal static OrbValueDisplayState ApplyOrbValueDisplay(OrbValueDisplayContext context)
         {
             var state = new OrbValueDisplayState(context.DisplayMode, context.PassiveText, context.EvokeText);
+            if (!TryGetCapabilitySnapshot(context.Orb, ModelCapabilityInterfaceFlags.OrbValueDisplay, out var snapshot))
+                return state;
+
             var currentContext = context;
 
-            foreach (var capability in GetCapabilities<IOrbValueDisplayContributor>(context.Orb))
+            foreach (var item in snapshot)
             {
-                if (capability is not IModelCapability modelCapability)
+                if (item is not IOrbValueDisplayContributor capability)
                     continue;
 
                 // TryRun invokes the callback synchronously before currentContext advances to the next contributor.
                 // ReSharper disable AccessToModifiedClosure
-                TryRun(modelCapability, context.Orb, OrbValueDisplaySurface, () =>
+                TryRun(item, context.Orb, OrbValueDisplaySurface, () =>
                 {
                     if (capability.GetValueDisplayMode(currentContext) is { } mode)
                         state = state with { DisplayMode = mode };
@@ -154,6 +157,9 @@ namespace STS2RitsuLib.Models.Capabilities
             OrbModel orb,
             ref IEnumerable<IHoverTip> result)
         {
+            if (!TryGetCapabilitySnapshot(orb, ModelCapabilityInterfaceFlags.OrbHoverTipDescription, out var snapshot))
+                return;
+
             var tips = result.ToList();
             var index = tips.FindIndex(tip => string.Equals(tip.Id, orb.Id.ToString(), StringComparison.Ordinal));
             if (index < 0 || tips[index] is not HoverTip hoverTip)
@@ -164,13 +170,13 @@ namespace STS2RitsuLib.Models.Capabilities
             List<OrderedOrbHoverTipDescriptionFragment> afterFragments = [];
             var capabilityIndex = 0;
 
-            foreach (var capability in GetCapabilities<IOrbHoverTipDescriptionContributor>(orb))
+            foreach (var item in snapshot)
             {
-                if (capability is not IModelCapability modelCapability)
+                if (item is not IOrbHoverTipDescriptionContributor capability)
                     continue;
 
                 var sourceIndex = capabilityIndex++;
-                TryRun(modelCapability, orb, OrbHoverTipDescriptionSurface, () =>
+                TryRun(item, orb, OrbHoverTipDescriptionSurface, () =>
                 {
                     foreach (var fragment in capability.GetHoverTipDescriptionFragments(context) ?? [])
                     {

@@ -135,18 +135,22 @@ namespace STS2RitsuLib.Models.Capabilities
             params AbstractModel?[] extraModels)
             where TListener : class
         {
-            HashSet<TListener> seen = new(ReferenceEqualityComparer.Instance);
+            TListener? firstSeen = null;
+            HashSet<TListener>? seen = null;
             HashSet<AbstractModel>? adaptedModels = null;
+            var hasAnyAttachedCapabilities = ModelCapabilities.HasAnyAttachedCapabilities;
 
             foreach (var model in models)
             {
-                if (model is TListener modelListener && seen.Add(modelListener))
+                if (model is TListener modelListener && TryMarkSeen(modelListener))
                     yield return new(modelListener, model);
 
                 if (TryResolveAdapter(model, out var adapter))
                     yield return new(adapter, model);
 
-                if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
+                if (!hasAnyAttachedCapabilities ||
+                    !ModelCapabilities.TryGet(model, out var capabilities) ||
+                    capabilities.Count == 0)
                     continue;
 
                 var candidates = capabilities.GetAttachedSnapshot();
@@ -155,7 +159,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     if (!ReferenceEquals(capability.Owner, model))
                         continue;
 
-                    if (capability is TListener listener && seen.Add(listener))
+                    if (capability is TListener listener && TryMarkSeen(listener))
                         yield return new(listener, capability as AbstractModel);
 
                     if (capability is AbstractModel capabilityModel &&
@@ -170,7 +174,7 @@ namespace STS2RitsuLib.Models.Capabilities
                 {
                     case null:
                         continue;
-                    case TListener modelListener when seen.Add(modelListener):
+                    case TListener modelListener when TryMarkSeen(modelListener):
                         yield return new(modelListener, model);
                         break;
                 }
@@ -178,7 +182,9 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (TryResolveAdapter(model, out var adapter))
                     yield return new(adapter, model);
 
-                if (!ModelCapabilities.TryGet(model, out var capabilities) || capabilities.Count == 0)
+                if (!hasAnyAttachedCapabilities ||
+                    !ModelCapabilities.TryGet(model, out var capabilities) ||
+                    capabilities.Count == 0)
                     continue;
 
                 var candidates = capabilities.GetAttachedSnapshot();
@@ -187,7 +193,7 @@ namespace STS2RitsuLib.Models.Capabilities
                     if (!ReferenceEquals(capability.Owner, model))
                         continue;
 
-                    if (capability is TListener listener && seen.Add(listener))
+                    if (capability is TListener listener && TryMarkSeen(listener))
                         yield return new(listener, capability as AbstractModel);
 
                     if (capability is AbstractModel capabilityModel &&
@@ -200,9 +206,27 @@ namespace STS2RitsuLib.Models.Capabilities
                 yield break;
 
             foreach (var listener in globalListeners.Snapshot())
-                if (seen.Add(listener))
+                if (TryMarkSeen(listener))
                     yield return new(listener, null);
             yield break;
+
+            bool TryMarkSeen(TListener listener)
+            {
+                if (seen != null)
+                    return seen.Add(listener);
+
+                if (firstSeen == null)
+                {
+                    firstSeen = listener;
+                    return true;
+                }
+
+                if (ReferenceEquals(firstSeen, listener))
+                    return false;
+
+                seen = new(ReferenceEqualityComparer.Instance) { firstSeen, listener };
+                return true;
+            }
 
             bool TryResolveAdapter(AbstractModel model, out TListener adapter)
             {
@@ -216,7 +240,7 @@ namespace STS2RitsuLib.Models.Capabilities
 
                 adaptedModels ??= new(ReferenceEqualityComparer.Instance);
                 adaptedModels.Add(model);
-                if (!seen.Add(resolved))
+                if (!TryMarkSeen(resolved))
                     return false;
 
                 adapter = resolved;

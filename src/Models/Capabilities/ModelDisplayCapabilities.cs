@@ -201,7 +201,10 @@ namespace STS2RitsuLib.Models.Capabilities
         internal static IEnumerable<IHoverTip> GetHoverTips<TModel>(TModel model)
             where TModel : AbstractModel
         {
-            foreach (var capability in GetCapabilitySnapshot(model))
+            if (!TryGetCapabilitySnapshot(model, ModelCapabilityInterfaceFlags.ModelHoverTip, out var snapshot))
+                yield break;
+
+            foreach (var capability in snapshot)
                 switch (capability)
                 {
                     case IModelHoverTipContributor general:
@@ -230,7 +233,10 @@ namespace STS2RitsuLib.Models.Capabilities
         internal static IEnumerable<string> GetAssetPaths<TModel>(TModel model, ModelAssetPathContext context)
             where TModel : AbstractModel
         {
-            foreach (var capability in GetCapabilitySnapshot(model))
+            if (!TryGetCapabilitySnapshot(model, ModelCapabilityInterfaceFlags.ModelAssetPath, out var snapshot))
+                yield break;
+
+            foreach (var capability in snapshot)
                 switch (capability)
                 {
                     case IModelAssetPathContributor general:
@@ -256,10 +262,65 @@ namespace STS2RitsuLib.Models.Capabilities
                 }
         }
 
+        internal static bool HasCapabilities(AbstractModel model, ModelCapabilityInterfaceFlags requiredMask)
+        {
+            return TryGetCapabilitySnapshot(model, requiredMask, out _);
+        }
+
+        internal static bool TryGetCapabilitySnapshot(
+            AbstractModel model,
+            ModelCapabilityInterfaceFlags requiredMask,
+            out IModelCapability[] snapshot)
+        {
+            if (!ModelCapabilities.HasEverAttached(requiredMask) &&
+                !ModelCapabilityDefaults.HasAnyModifiers &&
+                model is not IModelCapabilitySource)
+            {
+                snapshot = [];
+                return false;
+            }
+
+            if (!ModelCapabilities.TryGet(model, out var collection))
+            {
+                if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(model))
+                {
+                    snapshot = [];
+                    return false;
+                }
+
+                collection = ModelCapabilities.Get(model);
+            }
+
+            if (collection.Count == 0 || (collection.InterfaceMask & requiredMask) == 0)
+            {
+                snapshot = [];
+                return false;
+            }
+
+            snapshot = collection.GetAttachedSnapshot();
+            return snapshot.Length > 0;
+        }
+
         internal static IEnumerable<TCapability> GetCapabilities<TCapability>(AbstractModel model)
             where TCapability : class
         {
-            foreach (var capability in GetCapabilitySnapshot(model))
+            if (!ModelCapabilities.HasAnyAttachedCapabilities &&
+                !ModelCapabilityDefaults.HasAnyModifiers &&
+                model is not IModelCapabilitySource)
+                yield break;
+
+            if (!ModelCapabilities.TryGet(model, out var collection))
+            {
+                if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(model))
+                    yield break;
+
+                collection = ModelCapabilities.Get(model);
+            }
+
+            if (collection.Count == 0)
+                yield break;
+
+            foreach (var capability in collection.GetAttachedSnapshot())
                 if (capability is TCapability typed)
                     yield return typed;
         }
@@ -269,14 +330,24 @@ namespace STS2RitsuLib.Models.Capabilities
             ArgumentNullException.ThrowIfNull(model);
             ArgumentNullException.ThrowIfNull(locString);
 
-            foreach (var capability in GetCapabilitySnapshot(model))
+            if (!TryGetCapabilitySnapshot(model, ModelCapabilityInterfaceFlags.ModelDynamicVar, out var snapshot))
+                return;
+
+            foreach (var capability in snapshot)
             {
                 if (capability is not IModelDynamicVarContributor dynamicVarCapability)
                     continue;
 
                 DynamicVarSet? dynamicVars = null;
-                TryRun(capability, model, ModelDynamicVarsSurface,
-                    () => dynamicVars = dynamicVarCapability.GetDynamicVars(model));
+                try
+                {
+                    dynamicVars = dynamicVarCapability.GetDynamicVars(model);
+                }
+                catch (Exception ex)
+                {
+                    ModelCapabilityDiagnostics.WarnFailure(ModelDynamicVarsSurface, model, capability, ex);
+                }
+
                 if (dynamicVars != null)
                     AddDynamicVarsTo(
                         model,
@@ -371,18 +442,6 @@ namespace STS2RitsuLib.Models.Capabilities
             {
                 ModelCapabilityDiagnostics.WarnFailure(surface, model, capability, ex);
             }
-        }
-
-        private static IReadOnlyList<IModelCapability> GetCapabilitySnapshot(AbstractModel model)
-        {
-            if (ModelCapabilities.TryGet(model, out var collection))
-                return collection.Count == 0 ? [] : collection.GetAttachedSnapshot();
-            if (!ModelCapabilityDefaults.HasDefaultCapabilitySource(model))
-                return [];
-
-            collection = ModelCapabilities.Get(model);
-
-            return collection.Count == 0 ? [] : collection.GetAttachedSnapshot();
         }
     }
 }

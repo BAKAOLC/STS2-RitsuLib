@@ -38,6 +38,9 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool _legacyImportMode;
         private static bool _baselibSupportsForecastInterop;
         private static bool _baselibSupportsRitsuRenderProtocol;
+        private static bool _standDown;
+        private static int _failedRegisterAssemblyVersion = -1;
+        private static int _failedLegacyResolveAssemblyVersion = -1;
         private static bool _loggedMissingInterop;
         private static bool _loggedMissingRegisterForeign;
         private static bool _loggedLegacyImportMode;
@@ -60,29 +63,41 @@ namespace STS2RitsuLib.Combat.HealthBars
         /// </summary>
         public static bool ShouldRitsuRendererStandDown()
         {
-            lock (Gate)
-            {
-                return _registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol;
-            }
+            return Volatile.Read(ref _standDown);
         }
 
         public static bool ShouldSuppressBaseLibRenderer()
         {
+            if (Volatile.Read(ref _standDown))
+                return false;
+            if (Volatile.Read(ref _legacyImportMode))
+                return true;
+            if (Volatile.Read(ref _failedLegacyResolveAssemblyVersion) == ExternalFrameworkRegistry.AssemblyVersion)
+                return false;
+
             lock (Gate)
             {
-                return !(_registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol)
-                       && (_legacyImportMode || TryResolveLegacyImportApi(out _));
+                return !Volatile.Read(ref _standDown)
+                       && (Volatile.Read(ref _legacyImportMode) || TryResolveLegacyImportApi(out _));
             }
         }
 
         internal static IReadOnlyList<BaseLibImportedHealthBarForecastSegment> GetImportedSegments(Creature creature)
         {
-            MethodInfo getSegments;
-            lock (Gate)
+            if (Volatile.Read(ref _standDown))
+                return [];
+
+            var getSegments = Volatile.Read(ref _getSegmentsMethod);
+            if (getSegments == null)
             {
-                if ((_registered && _baselibSupportsForecastInterop && _baselibSupportsRitsuRenderProtocol)
-                    || !TryResolveLegacyImportApi(out getSegments))
+                if (Volatile.Read(ref _failedLegacyResolveAssemblyVersion) == ExternalFrameworkRegistry.AssemblyVersion)
                     return [];
+
+                lock (Gate)
+                {
+                    if (Volatile.Read(ref _standDown) || !TryResolveLegacyImportApi(out getSegments))
+                        return [];
+                }
             }
 
             try
@@ -146,18 +161,36 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static void TryRegisterCore()
         {
+            if (Volatile.Read(ref _registered) || Volatile.Read(ref _legacyImportMode))
+                return;
+
+            var assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+            if (Volatile.Read(ref _failedRegisterAssemblyVersion) == assemblyVersion)
+                return;
+
             lock (Gate)
             {
-                if (_registered || _legacyImportMode)
+                if (Volatile.Read(ref _registered) || Volatile.Read(ref _legacyImportMode))
                     return;
+
+                assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+                if (Volatile.Read(ref _failedRegisterAssemblyVersion) == assemblyVersion)
+                    return;
+
                 if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
+                {
+                    Volatile.Write(ref _failedRegisterAssemblyVersion, assemblyVersion);
                     return;
+                }
 
                 try
                 {
                     var registryType = ResolveBaseLibRegistryType();
                     if (registryType == null)
+                    {
+                        Volatile.Write(ref _failedRegisterAssemblyVersion, assemblyVersion);
                         return;
+                    }
 
                     var registerForeign = registryType.GetMethod(
                         "RegisterForeign",
@@ -169,7 +202,10 @@ namespace STS2RitsuLib.Combat.HealthBars
                     if (registerForeign == null)
                     {
                         _baselibSupportsForecastInterop = false;
-                        _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        var legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        Volatile.Write(ref _legacyImportMode, legacyImportMode);
+                        if (!legacyImportMode)
+                            Volatile.Write(ref _failedRegisterAssemblyVersion, assemblyVersion);
                         if (_loggedMissingRegisterForeign) return;
                         _loggedMissingRegisterForeign = true;
                         RitsuLibFramework.Logger.Warn(
@@ -183,7 +219,10 @@ namespace STS2RitsuLib.Combat.HealthBars
                     {
                         _baselibSupportsForecastInterop = true;
                         _baselibSupportsRitsuRenderProtocol = false;
-                        _legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        var legacyImportMode = TryResolveLegacyImportApi(registryType, out _);
+                        Volatile.Write(ref _legacyImportMode, legacyImportMode);
+                        if (!legacyImportMode)
+                            Volatile.Write(ref _failedRegisterAssemblyVersion, assemblyVersion);
                         if (_loggedLegacyImportMode) return;
                         _loggedLegacyImportMode = true;
                         RitsuLibFramework.Logger.Info(
@@ -197,9 +236,10 @@ namespace STS2RitsuLib.Combat.HealthBars
                     _registerForeign ??=
                         registerForeign.CreateDelegate<Action<string, string, Func<Creature, IEnumerable<object>>>>();
                     _registerForeign(Const.ModId, SourceId, provider);
-                    _registered = true;
                     _baselibSupportsForecastInterop = true;
                     _baselibSupportsRitsuRenderProtocol = true;
+                    Volatile.Write(ref _registered, true);
+                    Volatile.Write(ref _standDown, true);
                     RitsuLibFramework.Logger.Info("[HealthBarForecast] Registered BaseLib bridge provider.");
                 }
                 catch (Exception ex)
@@ -244,22 +284,32 @@ namespace STS2RitsuLib.Combat.HealthBars
         private static bool TryResolveLegacyImportApi(out MethodInfo getSegments)
         {
             getSegments = null!;
-            if (_getSegmentsMethod != null)
+            var cached = Volatile.Read(ref _getSegmentsMethod);
+            if (cached != null)
             {
-                getSegments = _getSegmentsMethod;
+                getSegments = cached;
                 return true;
             }
 
+            var assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+            if (Volatile.Read(ref _failedLegacyResolveAssemblyVersion) == assemblyVersion)
+                return false;
+
             var registryType = ResolveRegistryType();
-            return registryType != null && TryResolveLegacyImportApi(registryType, out getSegments);
+            if (registryType != null && TryResolveLegacyImportApi(registryType, out getSegments))
+                return true;
+
+            Volatile.Write(ref _failedLegacyResolveAssemblyVersion, assemblyVersion);
+            return false;
         }
 
         private static bool TryResolveLegacyImportApi(Type registryType, out MethodInfo getSegments)
         {
             getSegments = null!;
-            if (_getSegmentsMethod != null)
+            var cached = Volatile.Read(ref _getSegmentsMethod);
+            if (cached != null)
             {
-                getSegments = _getSegmentsMethod;
+                getSegments = cached;
                 return true;
             }
 
@@ -279,7 +329,7 @@ namespace STS2RitsuLib.Combat.HealthBars
                 return false;
             }
 
-            _getSegmentsMethod = method;
+            Volatile.Write(ref _getSegmentsMethod, method);
             getSegments = method;
             return true;
         }

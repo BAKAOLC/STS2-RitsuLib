@@ -2076,9 +2076,29 @@ namespace STS2RitsuLib
             return false;
         }
 
+        internal static bool HasLifecycleListeners<TEvent>()
+            where TEvent : IFrameworkLifecycleEvent
+        {
+            if (LifecycleEventTypeCache<TEvent>.IsReplayable ||
+                LifecycleEventTypeCache<TEvent>.InvalidatesProfileDataReady)
+                return true;
+
+            if (Volatile.Read(ref _lifecycleObservers).Length > 0)
+                return true;
+
+            if (!LifecycleEventTypeCache<TEvent>.SupportsTypedDispatch)
+                return false;
+
+            return LifecycleTopics.TryGetValue(LifecycleEventTypeCache<TEvent>.EventType, out var rawTopic) &&
+                   ((LifecycleTopic<TEvent>)rawTopic).ReadSnapshot().Length > 0;
+        }
+
         internal static void PublishLifecycleEvent<TEvent>(TEvent evt, string phase)
             where TEvent : IFrameworkLifecycleEvent
         {
+            if (!HasLifecycleListeners<TEvent>())
+                return;
+
             var typedHandlers = Array.Empty<Action<TEvent>>();
             ILifecycleObserver[] observers;
 

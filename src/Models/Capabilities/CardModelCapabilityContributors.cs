@@ -620,16 +620,30 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string GoldGlowSurface = "card display/gold-glow";
         private const string RedGlowSurface = "card display/red-glow";
 
+        internal static bool HasTitleContributors(CardModel card)
+        {
+            return ModelCapabilityHost.HasCapabilities(card, ModelCapabilityInterfaceFlags.CardTitle);
+        }
+
         internal static void ApplyTitleFragments(CardTitleContext context, ref string title)
         {
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    context.Card,
+                    ModelCapabilityInterfaceFlags.CardTitle,
+                    out var snapshot))
+                return;
+
             List<OrderedTitleFragment> beforeFragments = [];
             List<OrderedTitleFragment> afterBaseFragments = [];
             List<OrderedTitleFragment> afterTitleFragments = [];
             OrderedTitleFragment? replacementFragment = null;
             ICardTitleContributor? replacementSource = null;
             var capabilityIndex = 0;
-            foreach (var capability in GetCapabilities<ICardTitleContributor>(context.Card))
+            foreach (var item in snapshot)
             {
+                if (item is not ICardTitleContributor capability)
+                    continue;
+
                 var currentSourceIndex = capabilityIndex++;
                 IReadOnlyList<CardTitleFragment> fragments;
                 try
@@ -713,39 +727,187 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static CardType ApplyCardType(CardModel card, CardType current)
         {
-            return ApplyFirstOverride<CardType, ICardPropertyContributor>(
-                card,
-                CardTypeSurface,
-                current,
-                capability => capability.GetCardType(card));
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardProperty,
+                    out var snapshot))
+                return current;
+
+            var hasWinner = false;
+            var winnerValue = default(CardType);
+            ICardPropertyContributor? winner = null;
+
+            foreach (var item in snapshot)
+            {
+                if (item is not ICardPropertyContributor capability)
+                    continue;
+
+                CardType? value;
+                try
+                {
+                    value = capability.GetCardType(card);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, CardTypeSurface, ex);
+                    continue;
+                }
+
+                if (!value.HasValue)
+                    continue;
+
+                if (!hasWinner)
+                {
+                    hasWinner = true;
+                    winnerValue = value.Value;
+                    winner = capability;
+                    if (!ModelCapabilityDiagnostics.ShouldInspectConflicts)
+                        return winnerValue;
+                    continue;
+                }
+
+                ModelCapabilityDiagnostics.WarnSurfaceConflict(
+                    CardTypeSurface,
+                    card,
+                    winner!,
+                    winnerValue,
+                    capability,
+                    value.Value);
+            }
+
+            return hasWinner ? winnerValue : current;
         }
 
         internal static CardRarity ApplyCardRarity(CardModel card, CardRarity current)
         {
-            return ApplyFirstOverride<CardRarity, ICardPropertyContributor>(
-                card,
-                CardRaritySurface,
-                current,
-                capability => capability.GetCardRarity(card));
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardProperty,
+                    out var snapshot))
+                return current;
+
+            var hasWinner = false;
+            var winnerValue = default(CardRarity);
+            ICardPropertyContributor? winner = null;
+
+            foreach (var item in snapshot)
+            {
+                if (item is not ICardPropertyContributor capability)
+                    continue;
+
+                CardRarity? value;
+                try
+                {
+                    value = capability.GetCardRarity(card);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, CardRaritySurface, ex);
+                    continue;
+                }
+
+                if (!value.HasValue)
+                    continue;
+
+                if (!hasWinner)
+                {
+                    hasWinner = true;
+                    winnerValue = value.Value;
+                    winner = capability;
+                    if (!ModelCapabilityDiagnostics.ShouldInspectConflicts)
+                        return winnerValue;
+                    continue;
+                }
+
+                ModelCapabilityDiagnostics.WarnSurfaceConflict(
+                    CardRaritySurface,
+                    card,
+                    winner!,
+                    winnerValue,
+                    capability,
+                    value.Value);
+            }
+
+            return hasWinner ? winnerValue : current;
         }
 
         internal static TargetType ApplyTargetType(CardModel card, TargetType current)
         {
-            return ApplyFirstOverride<TargetType, ICardPropertyContributor>(
-                card,
-                TargetTypeSurface,
-                current,
-                capability => capability.GetTargetType(card));
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardProperty,
+                    out var snapshot))
+                return current;
+
+            var hasWinner = false;
+            var winnerValue = default(TargetType);
+            ICardPropertyContributor? winner = null;
+
+            foreach (var item in snapshot)
+            {
+                if (item is not ICardPropertyContributor capability)
+                    continue;
+
+                TargetType? value;
+                try
+                {
+                    value = capability.GetTargetType(card);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, TargetTypeSurface, ex);
+                    continue;
+                }
+
+                if (!value.HasValue)
+                    continue;
+
+                if (!hasWinner)
+                {
+                    hasWinner = true;
+                    winnerValue = value.Value;
+                    winner = capability;
+                    if (!ModelCapabilityDiagnostics.ShouldInspectConflicts)
+                        return winnerValue;
+                    continue;
+                }
+
+                ModelCapabilityDiagnostics.WarnSurfaceConflict(
+                    TargetTypeSurface,
+                    card,
+                    winner!,
+                    winnerValue,
+                    capability,
+                    value.Value);
+            }
+
+            return hasWinner ? winnerValue : current;
         }
 
         internal static IEnumerable<CardTag> ApplyTags(CardModel card, IEnumerable<CardTag> current)
         {
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardProperty,
+                    out var snapshot))
+                return current;
+
             List<CardTag>? extraTags = null;
-            foreach (var capability in GetCapabilities<ICardPropertyContributor>(card))
+            foreach (var item in snapshot)
             {
+                if (item is not ICardPropertyContributor capability)
+                    continue;
+
                 IReadOnlyList<CardTag> tags = [];
-                TryRun(capability, card, TagsSurface,
-                    () => tags = capability.GetTags(card)?.ToArray() ?? []);
+                try
+                {
+                    tags = capability.GetTags(card)?.ToArray() ?? [];
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, TagsSurface, ex);
+                }
+
                 foreach (var tag in tags)
                 {
                     extraTags ??= [];
@@ -758,59 +920,144 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static bool HasEnergyCostContributors(CardModel card)
         {
-            return GetCapabilities<ICardEnergyCostContributor>(card).Any();
+            return ModelCapabilityHost.HasCapabilities(card, ModelCapabilityInterfaceFlags.CardEnergyCost);
         }
 
         internal static bool HasStarCostContributors(CardModel card)
         {
-            return GetCapabilities<ICardStarCostContributor>(card).Any();
+            return ModelCapabilityHost.HasCapabilities(card, ModelCapabilityInterfaceFlags.CardStarCost);
         }
 
         internal static int ApplyEnergyCost(CardModel card, CostModifiers modifiers, int current)
         {
             if (!modifiers.HasFlag(CostModifiers.Local) ||
                 card.EnergyCost.CostsX ||
-                current < 0)
+                current < 0 ||
+                !ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardEnergyCost,
+                    out var snapshot))
                 return current;
 
             var result = current;
-            foreach (var capability in GetCapabilities<ICardEnergyCostContributor>(card))
-                TryRun(capability, card, EnergyCostSurface,
-                    () => result = capability.ModifyEnergyCost(card, result, modifiers));
+            foreach (var item in snapshot)
+            {
+                if (item is not ICardEnergyCostContributor capability)
+                    continue;
+
+                try
+                {
+                    result = capability.ModifyEnergyCost(card, result, modifiers);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, EnergyCostSurface, ex);
+                }
+            }
 
             return Math.Max(0, result);
         }
 
         internal static int ApplyStarCost(CardModel card, int current)
         {
-            if (card.HasStarCostX)
+            if (card.HasStarCostX ||
+                !ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardStarCost,
+                    out var snapshot))
                 return current;
 
             var result = current;
-            foreach (var capability in GetCapabilities<ICardStarCostContributor>(card))
-                TryRun(capability, card, StarCostSurface,
-                    () => result = capability.ModifyStarCost(card, result));
+            foreach (var item in snapshot)
+            {
+                if (item is not ICardStarCostContributor capability)
+                    continue;
+
+                try
+                {
+                    result = capability.ModifyStarCost(card, result);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, StarCostSurface, ex);
+                }
+            }
 
             return result < 0 ? result : Math.Max(0, result);
         }
 
         internal static bool ApplyCanPlay(CardModel card, bool current)
         {
-            return ApplyLastOverride<bool, ICardPlayStateContributor>(
-                card,
-                CanPlaySurface,
-                current,
-                capability => capability.CanPlay(card));
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardPlayState,
+                    out var snapshot))
+                return current;
+
+            var result = current;
+            var hasPrevious = false;
+            var previousValue = false;
+            ICardPlayStateContributor? previous = null;
+
+            foreach (var item in snapshot)
+            {
+                if (item is not ICardPlayStateContributor capability)
+                    continue;
+
+                bool? value;
+                try
+                {
+                    value = capability.CanPlay(card);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, CanPlaySurface, ex);
+                    continue;
+                }
+
+                if (!value.HasValue)
+                    continue;
+
+                if (hasPrevious)
+                    ModelCapabilityDiagnostics.WarnSurfaceConflict(
+                        CanPlaySurface,
+                        card,
+                        previous!,
+                        previousValue,
+                        capability,
+                        value.Value);
+
+                result = value.Value;
+                previousValue = result;
+                previous = capability;
+                hasPrevious = true;
+            }
+
+            return result;
         }
 
         internal static bool HasTurnEndInHandEffect(CardModel card)
         {
-            foreach (var capability in GetCapabilities<ICardPlayStateContributor>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardPlayState,
+                    out var snapshot))
+                return false;
+
+            foreach (var item in snapshot)
             {
-                var value = false;
-                TryRun(capability, card, TurnEndInHandSurface, () => value = capability.HasTurnEndInHandEffect(card));
-                if (value)
-                    return true;
+                if (item is not ICardPlayStateContributor capability)
+                    continue;
+
+                try
+                {
+                    if (capability.HasTurnEndInHandEffect(card))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, TurnEndInHandSurface, ex);
+                }
             }
 
             return false;
@@ -818,11 +1065,55 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static PileType ApplyResultPileTypeForCardPlay(CardModel card, PileType current)
         {
-            return ApplyFirstOverride<PileType, ICardPlayResultContributor>(
-                card,
-                ResultPileSurface,
-                current,
-                capability => capability.GetResultPileTypeForCardPlay(card));
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardPlayResult,
+                    out var snapshot))
+                return current;
+
+            var hasWinner = false;
+            var winnerValue = default(PileType);
+            ICardPlayResultContributor? winner = null;
+
+            foreach (var item in snapshot)
+            {
+                if (item is not ICardPlayResultContributor capability)
+                    continue;
+
+                PileType? value;
+                try
+                {
+                    value = capability.GetResultPileTypeForCardPlay(card);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, ResultPileSurface, ex);
+                    continue;
+                }
+
+                if (!value.HasValue)
+                    continue;
+
+                if (!hasWinner)
+                {
+                    hasWinner = true;
+                    winnerValue = value.Value;
+                    winner = capability;
+                    if (!ModelCapabilityDiagnostics.ShouldInspectConflicts)
+                        return winnerValue;
+                    continue;
+                }
+
+                ModelCapabilityDiagnostics.WarnSurfaceConflict(
+                    ResultPileSurface,
+                    card,
+                    winner!,
+                    winnerValue,
+                    capability,
+                    value.Value);
+            }
+
+            return hasWinner ? winnerValue : current;
         }
 
         internal static void CarryOverTransformCapabilities(CardModel original, CardModel? replacement)
@@ -830,8 +1121,17 @@ namespace STS2RitsuLib.Models.Capabilities
             if (replacement == null || ReferenceEquals(original, replacement))
                 return;
 
-            foreach (var capability in GetCapabilities<ICardTransformCarryOverCapability>(original))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    original,
+                    ModelCapabilityInterfaceFlags.CardTransformCarryOver,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
             {
+                if (item is not ICardTransformCarryOverCapability capability)
+                    continue;
+
                 if (!capability.ShouldCarryOverToTransformResult(original, replacement))
                     continue;
 
@@ -855,10 +1155,27 @@ namespace STS2RitsuLib.Models.Capabilities
             CardPreviewMode previewMode,
             Creature? target)
         {
-            foreach (var capability in GetCapabilities<IModelDynamicVarContributor>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.ModelDynamicVar,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
             {
+                if (item is not IModelDynamicVarContributor capability)
+                    continue;
+
                 DynamicVarSet? dynamicVars = null;
-                TryRun(capability, card, DynamicVarPreviewSurface, () => dynamicVars = capability.GetDynamicVars(card));
+                try
+                {
+                    dynamicVars = capability.GetDynamicVars(card);
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, DynamicVarPreviewSurface, ex);
+                }
+
                 if (dynamicVars == null)
                     continue;
 
@@ -874,6 +1191,12 @@ namespace STS2RitsuLib.Models.Capabilities
             Creature? target,
             List<string> lines)
         {
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardDescription,
+                    out var snapshot))
+                return;
+
             var context = new CardDescriptionContext(
                 card,
                 pileType,
@@ -883,8 +1206,11 @@ namespace STS2RitsuLib.Models.Capabilities
             List<OrderedDescriptionFragment> beforeFragments = [];
             List<OrderedDescriptionFragment> afterFragments = [];
             var capabilityIndex = 0;
-            foreach (var capability in GetCapabilities<ICardDescriptionContributor>(context.Card))
+            foreach (var item in snapshot)
             {
+                if (item is not ICardDescriptionContributor capability)
+                    continue;
+
                 var currentSourceIndex = capabilityIndex++;
                 IReadOnlyList<CardDescriptionFragment> fragments;
                 try
@@ -945,16 +1271,28 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static void ResetOwnerCardDynamicVarsForDowngrade(CardModel card)
         {
-            foreach (var capability in GetCapabilities<CardCapability>(card))
-                if (IsStillAttachedToCard(capability, card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardCapability,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
+                if (item is CardCapability capability && IsStillAttachedToCard(capability, card))
                     capability.ResetDynamicVarsForDowngrade();
         }
 
         internal static void AfterOwnerCardUpgraded(CardModel card)
         {
-            foreach (var capability in GetCapabilities<CardCapability>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardCapability,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToCard(capability, card))
+                if (item is not CardCapability capability || !IsStillAttachedToCard(capability, card))
                     continue;
 
                 capability.NotifyOwnerCardUpgraded(card);
@@ -967,9 +1305,15 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static void AfterOwnerCardUpgradeFinalized(CardModel card)
         {
-            foreach (var capability in GetCapabilities<CardCapability>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardCapability,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToCard(capability, card))
+                if (item is not CardCapability capability || !IsStillAttachedToCard(capability, card))
                     continue;
 
                 capability.FinalizeDynamicVarUpgrade();
@@ -982,9 +1326,15 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static void AfterOwnerCardDowngraded(CardModel card)
         {
-            foreach (var capability in GetCapabilities<CardCapability>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardCapability,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToCard(capability, card))
+                if (item is not CardCapability capability || !IsStillAttachedToCard(capability, card))
                     continue;
 
                 capability.NotifyOwnerCardDowngraded(card);
@@ -993,9 +1343,15 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static void AfterOwnerCardTransformedFrom(CardModel card)
         {
-            foreach (var capability in GetCapabilities<CardCapability>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardCapability,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToCard(capability, card))
+                if (item is not CardCapability capability || !IsStillAttachedToCard(capability, card))
                     continue;
 
                 capability.NotifyOwnerCardTransformedFrom(card);
@@ -1004,9 +1360,15 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static void AfterOwnerCardTransformedTo(CardModel card)
         {
-            foreach (var capability in GetCapabilities<CardCapability>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardCapability,
+                    out var snapshot))
+                return;
+
+            foreach (var item in snapshot)
             {
-                if (!IsStillAttachedToCard(capability, card))
+                if (item is not CardCapability capability || !IsStillAttachedToCard(capability, card))
                     continue;
 
                 capability.NotifyOwnerCardTransformedTo(card);
@@ -1079,18 +1441,45 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static IEnumerable<IHoverTip> GetHoverTips(CardModel card)
         {
+            if (!ModelCapabilityHost.HasCapabilities(
+                    card,
+                    ModelCapabilityInterfaceFlags.ModelHoverTip | ModelCapabilityInterfaceFlags.CardHoverTip))
+                yield break;
+
             foreach (var tip in ModelCapabilityHost.GetHoverTips(card))
                 yield return tip;
 
-            foreach (var capability in GetCapabilities<ICardHoverTipContributor>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardHoverTip,
+                    out var snapshot))
+                yield break;
+
+            foreach (var item in snapshot)
             {
+                if (item is not ICardHoverTipContributor capability)
+                    continue;
+
                 IReadOnlyList<IHoverTip> tips = [];
-                TryRun(capability, card, HoverTipsSurface,
-                    () => tips = capability.GetHoverTips(card)?.ToArray() ?? []);
+                try
+                {
+                    tips = capability.GetHoverTips(card)?.ToArray() ?? [];
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, HoverTipsSurface, ex);
+                }
 
                 foreach (var tip in tips)
                     yield return tip;
             }
+        }
+
+        internal static bool HasHoverTipContributors(CardModel card)
+        {
+            return ModelCapabilityHost.HasCapabilities(
+                card,
+                ModelCapabilityInterfaceFlags.ModelHoverTip | ModelCapabilityInterfaceFlags.CardHoverTip);
         }
 
         internal static IEnumerable<OrderedCardOverlayContribution> GetOverlayContributions(
@@ -1101,9 +1490,16 @@ namespace STS2RitsuLib.Models.Capabilities
                 foreach (var contribution in GetOverlayContributions(context, cardContributor, sourceIndex++))
                     yield return contribution;
 
-            foreach (var capability in GetCapabilities<ICardOverlayContributor>(context.Card))
-            foreach (var contribution in GetOverlayContributions(context, capability, sourceIndex++))
-                yield return contribution;
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    context.Card,
+                    ModelCapabilityInterfaceFlags.CardOverlay,
+                    out var snapshot))
+                yield break;
+
+            foreach (var item in snapshot)
+                if (item is ICardOverlayContributor capability)
+                    foreach (var contribution in GetOverlayContributions(context, capability, sourceIndex++))
+                        yield return contribution;
         }
 
         private static IEnumerable<OrderedCardOverlayContribution> GetOverlayContributions(
@@ -1133,11 +1529,26 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static IEnumerable<string> GetOverlayAssetPaths(CardModel card)
         {
-            foreach (var capability in GetCapabilities<ICardOverlayAssetPathContributor>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardOverlayAssetPath,
+                    out var snapshot))
+                yield break;
+
+            foreach (var item in snapshot)
             {
+                if (item is not ICardOverlayAssetPathContributor capability)
+                    continue;
+
                 IReadOnlyList<string> paths = [];
-                TryRun(capability, card, OverlayAssetPathsSurface,
-                    () => paths = capability.GetCardOverlayAssetPaths(card)?.ToArray() ?? []);
+                try
+                {
+                    paths = capability.GetCardOverlayAssetPaths(card)?.ToArray() ?? [];
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, OverlayAssetPathsSurface, ex);
+                }
 
                 foreach (var path in paths)
                     yield return path;
@@ -1146,12 +1557,26 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static bool ShouldGlowGold(CardModel card)
         {
-            foreach (var capability in GetCapabilities<ICardGlowContributor>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardGlow,
+                    out var snapshot))
+                return false;
+
+            foreach (var item in snapshot)
             {
-                var shouldGlow = false;
-                TryRun(capability, card, GoldGlowSurface, () => shouldGlow = capability.ShouldGlowGold(card));
-                if (shouldGlow)
-                    return true;
+                if (item is not ICardGlowContributor capability)
+                    continue;
+
+                try
+                {
+                    if (capability.ShouldGlowGold(card))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, GoldGlowSurface, ex);
+                }
             }
 
             return false;
@@ -1159,100 +1584,29 @@ namespace STS2RitsuLib.Models.Capabilities
 
         internal static bool ShouldGlowRed(CardModel card)
         {
-            foreach (var capability in GetCapabilities<ICardGlowContributor>(card))
+            if (!ModelCapabilityHost.TryGetCapabilitySnapshot(
+                    card,
+                    ModelCapabilityInterfaceFlags.CardGlow,
+                    out var snapshot))
+                return false;
+
+            foreach (var item in snapshot)
             {
-                var shouldGlow = false;
-                TryRun(capability, card, RedGlowSurface, () => shouldGlow = capability.ShouldGlowRed(card));
-                if (shouldGlow)
-                    return true;
+                if (item is not ICardGlowContributor capability)
+                    continue;
+
+                try
+                {
+                    if (capability.ShouldGlowRed(card))
+                        return true;
+                }
+                catch (Exception ex)
+                {
+                    LogFailure(capability, card, RedGlowSurface, ex);
+                }
             }
 
             return false;
-        }
-
-        private static T ApplyFirstOverride<T, TCapability>(
-            CardModel card,
-            string surface,
-            T current,
-            Func<TCapability, T?> getValue)
-            where T : struct
-            where TCapability : class
-        {
-            var hasWinner = false;
-            var winnerValue = default(T);
-            TCapability? winner = null;
-
-            foreach (var capability in GetCapabilities<TCapability>(card))
-            {
-                T? value = null;
-                TryRun(capability, card, surface, () => value = getValue(capability));
-                if (!value.HasValue)
-                    continue;
-
-                if (!hasWinner)
-                {
-                    hasWinner = true;
-                    winnerValue = value.Value;
-                    winner = capability;
-                    if (!ModelCapabilityDiagnostics.ShouldInspectConflicts)
-                        return winnerValue;
-                    continue;
-                }
-
-                ModelCapabilityDiagnostics.WarnSurfaceConflict(
-                    surface,
-                    card,
-                    winner!,
-                    winnerValue,
-                    capability,
-                    value.Value);
-            }
-
-            return hasWinner ? winnerValue : current;
-        }
-
-        private static T ApplyLastOverride<T, TCapability>(
-            CardModel card,
-            string surface,
-            T current,
-            Func<TCapability, T?> getValue)
-            where T : struct
-            where TCapability : class
-        {
-            var result = current;
-            var hasPrevious = false;
-            var previousValue = default(T);
-            TCapability? previous = null;
-
-            foreach (var capability in GetCapabilities<TCapability>(card))
-            {
-                T? value = null;
-                TryRun(capability, card, surface, () => value = getValue(capability));
-                if (!value.HasValue)
-                    continue;
-
-                if (hasPrevious)
-                    ModelCapabilityDiagnostics.WarnSurfaceConflict(
-                        surface,
-                        card,
-                        previous!,
-                        previousValue,
-                        capability,
-                        value.Value);
-
-                result = value.Value;
-                previousValue = result;
-                previous = capability;
-                hasPrevious = true;
-            }
-
-            return result;
-        }
-
-        private static IEnumerable<TCapability> GetCapabilities<TCapability>(CardModel card)
-            where TCapability : class
-        {
-            return ModelCapabilityHost.GetCapabilities<TCapability>(card);
         }
 
         private static IEnumerable<CardTag> MergeTags(

@@ -1,8 +1,104 @@
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using MegaCrit.Sts2.Core.Models;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
+    [Flags]
+    internal enum ModelCapabilityInterfaceFlags : ulong
+    {
+        None = 0,
+        CardTitle = 1UL << 0,
+        CardProperty = 1UL << 1,
+        CardEnergyCost = 1UL << 2,
+        CardStarCost = 1UL << 3,
+        CardPlayState = 1UL << 4,
+        CardPlayResult = 1UL << 5,
+        CardTransformCarryOver = 1UL << 6,
+        CardDescription = 1UL << 7,
+        CardHoverTip = 1UL << 8,
+        CardOverlay = 1UL << 9,
+        CardOverlayAssetPath = 1UL << 10,
+        CardGlow = 1UL << 11,
+        CardCapability = 1UL << 12,
+        ModelDynamicVar = 1UL << 13,
+        ModelHoverTip = 1UL << 14,
+        ModelAssetPath = 1UL << 15,
+        OrbCapability = 1UL << 16,
+        OrbValueDisplay = 1UL << 17,
+        OrbHoverTipDescription = 1UL << 18,
+        OwnerHookListener = 1UL << 19,
+    }
+
+    internal static class ModelCapabilityInterfaceMaskCache
+    {
+        private static readonly ConcurrentDictionary<Type, ModelCapabilityInterfaceFlags> Cache = new();
+
+        internal static ModelCapabilityInterfaceFlags GetFlags(Type capabilityType)
+        {
+            return Cache.GetOrAdd(capabilityType, ComputeFlags);
+        }
+
+        private static ModelCapabilityInterfaceFlags ComputeFlags(Type type)
+        {
+            var flags = ModelCapabilityInterfaceFlags.None;
+            if (typeof(ICardTitleContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardTitle;
+            if (typeof(ICardPropertyContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardProperty;
+            if (typeof(ICardEnergyCostContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardEnergyCost;
+            if (typeof(ICardStarCostContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardStarCost;
+            if (typeof(ICardPlayStateContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardPlayState;
+            if (typeof(ICardPlayResultContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardPlayResult;
+            if (typeof(ICardTransformCarryOverCapability).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardTransformCarryOver;
+            if (typeof(ICardDescriptionContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardDescription;
+            if (typeof(ICardHoverTipContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardHoverTip;
+            if (typeof(ICardOverlayContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardOverlay;
+            if (typeof(ICardOverlayAssetPathContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardOverlayAssetPath;
+            if (typeof(ICardGlowContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardGlow;
+            if (typeof(CardCapability).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.CardCapability;
+            if (typeof(IModelDynamicVarContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.ModelDynamicVar;
+            if (typeof(IModelHoverTipContributor).IsAssignableFrom(type) ||
+                ImplementsGenericInterface(type, typeof(IModelHoverTipContributor<>)))
+                flags |= ModelCapabilityInterfaceFlags.ModelHoverTip;
+            if (typeof(IModelAssetPathContributor).IsAssignableFrom(type) ||
+                ImplementsGenericInterface(type, typeof(IModelAssetPathContributor<>)))
+                flags |= ModelCapabilityInterfaceFlags.ModelAssetPath;
+            if (typeof(OrbCapability).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.OrbCapability;
+            if (typeof(IOrbValueDisplayContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.OrbValueDisplay;
+            if (typeof(IOrbHoverTipDescriptionContributor).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.OrbHoverTipDescription;
+            if (typeof(IModelCapabilityHookListener).IsAssignableFrom(type) &&
+                typeof(AbstractModel).IsAssignableFrom(type))
+                flags |= ModelCapabilityInterfaceFlags.OwnerHookListener;
+
+            return flags;
+        }
+
+        private static bool ImplementsGenericInterface(Type type, Type genericInterfaceDefinition)
+        {
+            foreach (var iface in type.GetInterfaces())
+                if (iface.IsGenericType && iface.GetGenericTypeDefinition() == genericInterfaceDefinition)
+                    return true;
+
+            return false;
+        }
+    }
+
     /// <summary>
     ///     <para xml:lang="en">Represents the mutable capability set attached to one model instance.</para>
     ///     <para xml:lang="zh-CN">表示附加到单个模型实例的可变能力集合。</para>
@@ -15,6 +111,8 @@ namespace STS2RitsuLib.Models.Capabilities
         private readonly ReadOnlyCollection<IModelCapability> _readOnlyCapabilities;
         private readonly List<ModelCapabilitySaveEntry> _unknownEntries = [];
         private IModelCapability[]? _attachedSnapshot;
+        private ModelCapabilityInterfaceFlags _interfaceMask;
+        private bool _interfaceMaskComputed;
         private IModelCapability[]? _ownerHookCandidateSnapshot;
 
         internal ModelCapabilitySet(AbstractModel owner)
@@ -48,6 +146,24 @@ namespace STS2RitsuLib.Models.Capabilities
         ///     <para xml:lang="zh-CN">获取当前已附加能力的数量。</para>
         /// </summary>
         public int Count => _capabilities.Count;
+
+        internal ModelCapabilityInterfaceFlags InterfaceMask
+        {
+            get
+            {
+                if (_interfaceMaskComputed)
+                    return _interfaceMask;
+
+                var mask = ModelCapabilityInterfaceFlags.None;
+                // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+                foreach (var capability in _capabilities)
+                    mask |= ModelCapabilityInterfaceMaskCache.GetFlags(capability.GetType());
+
+                _interfaceMask = mask;
+                _interfaceMaskComputed = true;
+                return mask;
+            }
+        }
 
         internal IModelCapability[] GetAttachedSnapshot()
         {
@@ -927,6 +1043,13 @@ namespace STS2RitsuLib.Models.Capabilities
         {
             _attachedSnapshot = null;
             _ownerHookCandidateSnapshot = null;
+            _interfaceMaskComputed = false;
+            if (_capabilities.Count > 0)
+            {
+                var mask = InterfaceMask;
+                ModelCapabilities.RecordAttachedCapabilities(mask);
+            }
+
             ModelCapabilityHookListeners.InvalidateOwnerHookCapabilityCache(Owner);
         }
 

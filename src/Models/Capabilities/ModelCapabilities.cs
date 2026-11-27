@@ -1,5 +1,5 @@
+using System.Runtime.CompilerServices;
 using MegaCrit.Sts2.Core.Models;
-using STS2RitsuLib.Utils;
 
 namespace STS2RitsuLib.Models.Capabilities
 {
@@ -12,9 +12,27 @@ namespace STS2RitsuLib.Models.Capabilities
         private const string SavedDataKey = "model_capabilities";
         private static readonly Lock InitializationLock = new();
         private static readonly ModelSavedDataSlotKey SavedDataSlotKey = new(Const.ModId, SavedDataKey);
-        private static readonly AttachedState<AbstractModel, ModelCapabilitySet> Collections = new();
+        private static readonly ConditionalWeakTable<AbstractModel, ModelCapabilitySet> Collections = [];
+        private static ulong _everAttachedInterfaceMask;
+        private static int _anyCapabilityEverAttached;
 
         internal static bool IsInitialized { get; private set; }
+
+        internal static bool HasAnyAttachedCapabilities => Volatile.Read(ref _anyCapabilityEverAttached) != 0;
+
+        internal static bool HasEverAttached(ModelCapabilityInterfaceFlags mask)
+        {
+            return (Volatile.Read(ref _everAttachedInterfaceMask) & (ulong)mask) != 0;
+        }
+
+        internal static void RecordAttachedCapabilities(ModelCapabilityInterfaceFlags mask)
+        {
+            if (Volatile.Read(ref _anyCapabilityEverAttached) == 0)
+                Volatile.Write(ref _anyCapabilityEverAttached, 1);
+
+            if (mask != ModelCapabilityInterfaceFlags.None)
+                Interlocked.Or(ref _everAttachedInterfaceMask, (ulong)mask);
+        }
 
         /// <summary>
         ///     <para xml:lang="en">Initializes the built-in persistence slot for model capabilities.</para>
@@ -56,7 +74,7 @@ namespace STS2RitsuLib.Models.Capabilities
         public static ModelCapabilitySet Get(AbstractModel model)
         {
             ArgumentNullException.ThrowIfNull(model);
-            return Collections.GetOrAdd(model, CreateCollection);
+            return Collections.GetValue(model, CreateCollection);
         }
 
         /// <summary>

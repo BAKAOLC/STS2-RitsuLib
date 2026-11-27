@@ -182,7 +182,7 @@ namespace STS2RitsuLib.Combat.AttackHits
 
         private static async Task Invoke(
             AttackHitContext context,
-            ListenerEntry entry,
+            ModelHookListener<IAttackHitHookListener> entry,
             Func<IAttackHitHookListener, AttackHitContext, Task> callback)
         {
             if (entry.Model == null)
@@ -203,13 +203,11 @@ namespace STS2RitsuLib.Combat.AttackHits
             }
         }
 
-        private static IEnumerable<ListenerEntry> IterateListeners(
+        private static IEnumerable<ModelHookListener<IAttackHitHookListener>> IterateListeners(
             CombatStateLike combatState,
             params AbstractModel?[] extraModels)
         {
-            return ModelHookListenerDispatcher.FromCombat<IAttackHitHookListener>(
-                combatState,
-                extraModels).Select(entry => new ListenerEntry(entry.Listener, entry.Model));
+            return ModelHookListenerDispatcher.FromCombat<IAttackHitHookListener>(combatState, extraModels);
         }
 
         private static AttackHitContext? TryCreateContext(
@@ -247,7 +245,5 @@ namespace STS2RitsuLib.Combat.AttackHits
 #endif
             );
         }
-
-        private readonly record struct ListenerEntry(IAttackHitHookListener Listener, AbstractModel? Model);
     }
 }

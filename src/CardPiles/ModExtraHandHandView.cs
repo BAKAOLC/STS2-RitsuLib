@@ -27,6 +27,9 @@ namespace STS2RitsuLib.CardPiles
 
         internal static IReadOnlyList<CardModel> GetCardsForQueries(CardPile pile)
         {
+            if (!ModCardPileRegistry.HasAnyExtraHandPiles)
+                return pile.Cards;
+
             var player = FindHandOwner(pile);
             return player == null
                 ? pile.Cards
@@ -45,6 +48,9 @@ namespace STS2RitsuLib.CardPiles
 
         internal static CardModel[] GetExtraCards(Player player, ModExtraHandBehavior behavior)
         {
+            if (!ModCardPileRegistry.HasAnyExtraHandPiles)
+                return [];
+
             return
             [
                 .. GetExistingPiles(player)
@@ -64,7 +70,7 @@ namespace STS2RitsuLib.CardPiles
         private static CardPile Get(PileType pileType, Player player, Func<ModCardPile, bool> includePile)
         {
             var pile = pileType.GetPile(player);
-            if (pileType != PileType.Hand)
+            if (pileType != PileType.Hand || !ModCardPileRegistry.HasAnyExtraHandPiles)
                 return pile;
 
             var extraCards = GetExistingPiles(player)

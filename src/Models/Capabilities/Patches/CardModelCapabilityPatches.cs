@@ -86,6 +86,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static void Postfix(CardModel __instance, ref string __result)
             {
+                if (!CardModelCapabilityHost.HasTitleContributors(__instance))
+                    return;
+
                 var baseTitleLocString = __instance.TitleLocString;
                 var baseTitle = baseTitleLocString.GetFormattedText();
                 var upgradeSuffix = GetUpgradeSuffix(__instance);
@@ -837,6 +840,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
             public static void Postfix(CardModel __instance, ref IEnumerable<IHoverTip> __result)
             {
+                if (!CardModelCapabilityHost.HasHoverTipContributors(__instance))
+                    return;
+
                 var tips = CardModelCapabilityHost.GetHoverTips(__instance).ToArray();
                 if (tips.Length == 0)
                     return;

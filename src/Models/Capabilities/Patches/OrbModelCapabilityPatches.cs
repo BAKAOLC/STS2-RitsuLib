@@ -232,8 +232,11 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 ];
             }
 
-            public static void Prefix(ref IEnumerable<Creature> targets)
+            public static void Prefix(OrbModel orb, ref IEnumerable<Creature> targets)
             {
+                if (!ModelCapabilityHost.HasOrbCapabilities(orb))
+                    return;
+
                 targets = [.. targets];
             }
 
@@ -243,6 +246,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
                 IEnumerable<Creature> targets,
                 ref Task __result)
             {
+                if (!ModelCapabilityHost.HasOrbCapabilities(orb))
+                    return;
+
                 __result = AfterEvokeHook(__result, orb, choiceContext, targets);
             }
         }

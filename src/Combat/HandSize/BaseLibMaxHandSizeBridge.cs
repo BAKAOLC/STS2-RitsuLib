@@ -32,6 +32,9 @@ namespace STS2RitsuLib.Combat.HandSize
         private static MethodInfo? _baseLibGetMaxHandSizeWithBaseMethod;
         private static MethodInfo? _baseLibGetMaxHandSizeFromCardMethod;
         private static Func<Player, int>? _baseLibGetMaxHandSize;
+        private static int _failedMethodResolveVersion = -1;
+        private static int _failedWithBaseResolveVersion = -1;
+        private static int _failedFromCardResolveVersion = -1;
         private static bool _postfixPatched;
         private static bool _loggedResolveFailure;
 
@@ -114,9 +117,12 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static void EnsureBaseLibPostfixPatched()
         {
+            if (Volatile.Read(ref _postfixPatched))
+                return;
+
             lock (Gate)
             {
-                if (_postfixPatched)
+                if (Volatile.Read(ref _postfixPatched))
                     return;
                 var getMaxMethod = TryResolveBaseLibGetMaxHandSizeWithBaseMethod();
                 if (getMaxMethod == null)
@@ -129,18 +135,32 @@ namespace STS2RitsuLib.Combat.HandSize
                         nameof(BaseLibGetMaxHandSizePostfix));
 
                 Harmony.Patch(getMaxMethod, postfix: new(postfix));
-                _postfixPatched = true;
+                Volatile.Write(ref _postfixPatched, true);
                 RitsuLibFramework.Logger.Info("[MaxHandSize] BaseLib hand-size bridge postfix installed.");
             }
         }
 
         private static bool TryGetBaseLibGetMaxHandSizeDelegate(out Func<Player, int> getter)
         {
+            var cached = Volatile.Read(ref _baseLibGetMaxHandSize);
+            if (cached != null)
+            {
+                getter = cached;
+                return true;
+            }
+
+            if (Volatile.Read(ref _failedMethodResolveVersion) == ExternalFrameworkRegistry.AssemblyVersion)
+            {
+                getter = null!;
+                return false;
+            }
+
             lock (Gate)
             {
-                if (_baseLibGetMaxHandSize != null)
+                cached = Volatile.Read(ref _baseLibGetMaxHandSize);
+                if (cached != null)
                 {
-                    getter = _baseLibGetMaxHandSize;
+                    getter = cached;
                     return true;
                 }
 
@@ -151,25 +171,49 @@ namespace STS2RitsuLib.Combat.HandSize
                 }
 
                 _ = TryResolveBaseLibGetMaxHandSizeWithBaseMethod();
-                _baseLibGetMaxHandSize = method.CreateDelegate<Func<Player, int>>();
-                getter = _baseLibGetMaxHandSize;
+                var created = method.CreateDelegate<Func<Player, int>>();
+                Volatile.Write(ref _baseLibGetMaxHandSize, created);
+                getter = created;
                 return true;
             }
         }
 
         private static bool TryResolveBaseLibGetMaxHandSizeMethod(out MethodInfo method)
         {
+            var cached = Volatile.Read(ref _baseLibGetMaxHandSizeMethod);
+            if (cached != null)
+            {
+                method = cached;
+                return true;
+            }
+
+            var assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+            if (Volatile.Read(ref _failedMethodResolveVersion) == assemblyVersion)
+            {
+                method = null!;
+                return false;
+            }
+
             lock (Gate)
             {
-                if (_baseLibGetMaxHandSizeMethod != null)
+                cached = Volatile.Read(ref _baseLibGetMaxHandSizeMethod);
+                if (cached != null)
                 {
-                    method = _baseLibGetMaxHandSizeMethod;
+                    method = cached;
                     return true;
+                }
+
+                assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+                if (Volatile.Read(ref _failedMethodResolveVersion) == assemblyVersion)
+                {
+                    method = null!;
+                    return false;
                 }
 
                 var type = ResolveBaseLibMaxHandSizePatchType();
                 if (type == null && !ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
                 {
+                    Volatile.Write(ref _failedMethodResolveVersion, assemblyVersion);
                     method = null!;
                     return false;
                 }
@@ -183,6 +227,7 @@ namespace STS2RitsuLib.Combat.HandSize
 
                 if (resolved == null)
                 {
+                    Volatile.Write(ref _failedMethodResolveVersion, assemblyVersion);
                     if (!_loggedResolveFailure)
                     {
                         _loggedResolveFailure = true;
@@ -194,7 +239,7 @@ namespace STS2RitsuLib.Combat.HandSize
                     return false;
                 }
 
-                _baseLibGetMaxHandSizeMethod = resolved;
+                Volatile.Write(ref _baseLibGetMaxHandSizeMethod, resolved);
                 method = resolved;
                 return true;
             }
@@ -202,10 +247,23 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static MethodInfo? TryResolveBaseLibGetMaxHandSizeWithBaseMethod()
         {
+            var cached = Volatile.Read(ref _baseLibGetMaxHandSizeWithBaseMethod);
+            if (cached != null)
+                return cached;
+
+            var assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+            if (Volatile.Read(ref _failedWithBaseResolveVersion) == assemblyVersion)
+                return null;
+
             lock (Gate)
             {
-                if (_baseLibGetMaxHandSizeWithBaseMethod != null)
-                    return _baseLibGetMaxHandSizeWithBaseMethod;
+                cached = Volatile.Read(ref _baseLibGetMaxHandSizeWithBaseMethod);
+                if (cached != null)
+                    return cached;
+
+                assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+                if (Volatile.Read(ref _failedWithBaseResolveVersion) == assemblyVersion)
+                    return null;
 
                 var type = ResolveBaseLibMaxHandSizePatchType();
                 var resolved = type?.GetMethod(
@@ -215,19 +273,37 @@ namespace STS2RitsuLib.Combat.HandSize
                     [typeof(Player), typeof(int)],
                     null);
 
-                if (resolved != null)
-                    PatchInliningGuard.Prepare(resolved);
-                _baseLibGetMaxHandSizeWithBaseMethod = resolved;
+                if (resolved == null)
+                {
+                    Volatile.Write(ref _failedWithBaseResolveVersion, assemblyVersion);
+                    return null;
+                }
+
+                PatchInliningGuard.Prepare(resolved);
+                Volatile.Write(ref _baseLibGetMaxHandSizeWithBaseMethod, resolved);
                 return resolved;
             }
         }
 
         private static MethodInfo? TryResolveBaseLibGetMaxHandSizeFromCardMethod()
         {
+            var cached = Volatile.Read(ref _baseLibGetMaxHandSizeFromCardMethod);
+            if (cached != null)
+                return cached;
+
+            var assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+            if (Volatile.Read(ref _failedFromCardResolveVersion) == assemblyVersion)
+                return null;
+
             lock (Gate)
             {
-                if (_baseLibGetMaxHandSizeFromCardMethod != null)
-                    return _baseLibGetMaxHandSizeFromCardMethod;
+                cached = Volatile.Read(ref _baseLibGetMaxHandSizeFromCardMethod);
+                if (cached != null)
+                    return cached;
+
+                assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+                if (Volatile.Read(ref _failedFromCardResolveVersion) == assemblyVersion)
+                    return null;
 
                 var type = ResolveBaseLibMaxHandSizePatchType();
                 var resolved = type?.GetMethod(
@@ -237,7 +313,13 @@ namespace STS2RitsuLib.Combat.HandSize
                     [typeof(CardModel), typeof(int)],
                     null);
 
-                _baseLibGetMaxHandSizeFromCardMethod = resolved;
+                if (resolved == null)
+                {
+                    Volatile.Write(ref _failedFromCardResolveVersion, assemblyVersion);
+                    return null;
+                }
+
+                Volatile.Write(ref _baseLibGetMaxHandSizeFromCardMethod, resolved);
                 return resolved;
             }
         }
@@ -251,14 +333,7 @@ namespace STS2RitsuLib.Combat.HandSize
 
         private static Type? ResolveBaseLibMaxHandSizePatchType()
         {
-            var byQualifiedName = ExternalFrameworkRegistry.ResolveType("BaseLib.Patches.Hooks.MaxHandSizePatch");
-            if (byQualifiedName != null)
-                return byQualifiedName;
-
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .Select(assembly => assembly.GetType("BaseLib.Patches.Hooks.MaxHandSizePatch"))
-                .OfType<Type>()
-                .FirstOrDefault();
+            return ExternalFrameworkRegistry.ResolveType("BaseLib.Patches.Hooks.MaxHandSizePatch");
         }
 
         private static void BaseLibGetMaxHandSizePostfix(Player player, ref int __result)

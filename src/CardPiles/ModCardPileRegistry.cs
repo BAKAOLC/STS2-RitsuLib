@@ -47,6 +47,7 @@ namespace STS2RitsuLib.CardPiles
 
         private static ModCardPileDefinition[] _combatDefinitionsSnapshot = [];
         private static ModCardPileDefinition[] _definitionsSnapshot = [];
+        private static bool _hasAnyExtraHandPiles;
 
         private readonly Logger _logger;
         private readonly string _modId;
@@ -63,6 +64,8 @@ namespace STS2RitsuLib.CardPiles
         ///     <para xml:lang="zh-CN">获取卡牌牌堆注册是否已冻结。</para>
         /// </summary>
         public static bool IsFrozen { get; private set; }
+
+        internal static bool HasAnyExtraHandPiles => Volatile.Read(ref _hasAnyExtraHandPiles);
 
         /// <summary>
         ///     <para xml:lang="en">
@@ -500,6 +503,8 @@ namespace STS2RitsuLib.CardPiles
             Volatile.Write(ref _definitionsSnapshot, definitions);
             Volatile.Write(ref _combatDefinitionsSnapshot,
                 [.. definitions.Where(definition => definition.Scope == ModCardPileScope.CombatOnly)]);
+            Volatile.Write(ref _hasAnyExtraHandPiles,
+                definitions.Any(static definition => definition.Style == ModCardPileUiStyle.ExtraHand));
         }
 
         private void EnsureMutable(string operation)

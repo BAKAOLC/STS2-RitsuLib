@@ -7,6 +7,8 @@ namespace STS2RitsuLib.Models.Capabilities
     {
         private static readonly Lock SyncRoot = new();
         private static readonly Dictionary<ModelSavedDataSlotKey, IModelSavedDataSlot> Slots = [];
+        private static Dictionary<Type, IModelSavedDataSlot[]> _slotsByModelType = [];
+        private static bool _hasAnySlots;
         private static bool _propertyNameRegistered;
         private static bool _registrationFinalized;
 
@@ -43,6 +45,9 @@ namespace STS2RitsuLib.Models.Capabilities
                 if (!Slots.TryAdd(slot.SlotKey, slot))
                     throw new InvalidOperationException(
                         $"ModelSavedData slot is already registered: {slot.ModId}::{slot.Key}");
+
+                Volatile.Write(ref _hasAnySlots, true);
+                Volatile.Write(ref _slotsByModelType, []);
             }
         }
 
@@ -113,13 +118,31 @@ namespace STS2RitsuLib.Models.Capabilities
 
         private static IModelSavedDataSlot[] GetSlotsSnapshot(AbstractModel model)
         {
+            if (!Volatile.Read(ref _hasAnySlots))
+                return [];
+
+            var modelType = model.GetType();
+            var cache = Volatile.Read(ref _slotsByModelType);
+            if (cache.TryGetValue(modelType, out var slots))
+                return slots;
+
             lock (SyncRoot)
             {
-                return
+                cache = Volatile.Read(ref _slotsByModelType);
+                if (cache.TryGetValue(modelType, out slots))
+                    return slots;
+
+                slots =
                 [
                     .. Slots.Values
-                        .Where(slot => slot.TargetType.IsInstanceOfType(model)),
+                        .Where(slot => slot.TargetType.IsAssignableFrom(modelType)),
                 ];
+                var updatedCache = new Dictionary<Type, IModelSavedDataSlot[]>(cache)
+                {
+                    [modelType] = slots,
+                };
+                Volatile.Write(ref _slotsByModelType, updatedCache);
+                return slots;
             }
         }
     }

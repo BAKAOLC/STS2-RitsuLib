@@ -21,17 +21,15 @@ namespace STS2RitsuLib.Combat.HealthBars
         private const string SourceId = "ritsulib.visual_graft_registry";
         private static readonly Lock Gate = new();
         private static bool _registered;
-        private static bool _interopOk;
+        private static bool _standDown;
+        private static int _failedRegisterAssemblyVersion = -1;
         private static bool _loggedMissingRegistry;
         private static bool _loggedMissingRegisterForeign;
         private static Action<string, string, Func<Creature, object>>? _registerForeign;
 
         public static bool ShouldRitsuGraftStandDown()
         {
-            lock (Gate)
-            {
-                return _registered && _interopOk;
-            }
+            return Volatile.Read(ref _standDown);
         }
 
         public static void TryRegisterPrimary()
@@ -51,18 +49,36 @@ namespace STS2RitsuLib.Combat.HealthBars
 
         private static void TryRegisterCore()
         {
+            if (Volatile.Read(ref _registered))
+                return;
+
+            var assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+            if (Volatile.Read(ref _failedRegisterAssemblyVersion) == assemblyVersion)
+                return;
+
             lock (Gate)
             {
-                if (_registered)
+                if (Volatile.Read(ref _registered))
                     return;
+
+                assemblyVersion = ExternalFrameworkRegistry.AssemblyVersion;
+                if (Volatile.Read(ref _failedRegisterAssemblyVersion) == assemblyVersion)
+                    return;
+
                 if (!ExternalFrameworkRegistry.IsFrameworkPresent(ExternalFrameworkIds.BaseLib))
+                {
+                    Volatile.Write(ref _failedRegisterAssemblyVersion, assemblyVersion);
                     return;
+                }
 
                 try
                 {
                     var registryType = ResolveBaseLibRegistryType();
                     if (registryType == null)
+                    {
+                        Volatile.Write(ref _failedRegisterAssemblyVersion, assemblyVersion);
                         return;
+                    }
 
                     var registerForeign = registryType.GetMethod(
                         "RegisterForeign",
@@ -73,7 +89,7 @@ namespace STS2RitsuLib.Combat.HealthBars
 
                     if (registerForeign == null)
                     {
-                        _interopOk = false;
+                        Volatile.Write(ref _failedRegisterAssemblyVersion, assemblyVersion);
                         if (_loggedMissingRegisterForeign)
                             return;
                         _loggedMissingRegisterForeign = true;
@@ -91,8 +107,8 @@ namespace STS2RitsuLib.Combat.HealthBars
                     _registerForeign ??=
                         registerForeign.CreateDelegate<Action<string, string, Func<Creature, object>>>();
                     _registerForeign(Const.ModId, SourceId, Handler);
-                    _registered = true;
-                    _interopOk = true;
+                    Volatile.Write(ref _registered, true);
+                    Volatile.Write(ref _standDown, true);
                     RitsuLibFramework.Logger.Info("[HealthBarGraft] Registered BaseLib visual graft bridge.");
                 }
                 catch (Exception ex)
@@ -114,7 +130,6 @@ namespace STS2RitsuLib.Combat.HealthBars
                 RitsuLibFramework.Logger.Info("[HealthBarGraft] BaseLib graft registry type not found.");
             }
 
-            _interopOk = false;
             return null;
         }
     }

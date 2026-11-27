@@ -16,6 +16,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
         private static void AppendHoverTips<TModel>(TModel model, ref IEnumerable<IHoverTip> result)
             where TModel : AbstractModel
         {
+            if (!ModelCapabilityHost.HasCapabilities(model, ModelCapabilityInterfaceFlags.ModelHoverTip))
+                return;
+
             var tips = ModelCapabilityHost.GetHoverTips(model).ToArray();
             if (tips.Length == 0)
                 return;
@@ -29,6 +32,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
             ref IEnumerable<string> result)
             where TModel : AbstractModel
         {
+            if (!ModelCapabilityHost.HasCapabilities(model, ModelCapabilityInterfaceFlags.ModelAssetPath))
+                return;
+
             var paths = ModelCapabilityHost.GetAssetPaths(model, context)
                 .Where(static path => !string.IsNullOrWhiteSpace(path))
                 .ToArray();
@@ -41,6 +47,9 @@ namespace STS2RitsuLib.Models.Capabilities.Patches
 
         private static void AppendCardOverlayAssetPaths(CardModel model, ref IEnumerable<string> result)
         {
+            if (!ModelCapabilityHost.HasCapabilities(model, ModelCapabilityInterfaceFlags.CardOverlayAssetPath))
+                return;
+
             var paths = CardModelCapabilityHost.GetOverlayAssetPaths(model)
                 .Where(static path => !string.IsNullOrWhiteSpace(path))
                 .ToArray();

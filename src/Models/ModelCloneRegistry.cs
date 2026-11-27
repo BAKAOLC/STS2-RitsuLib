@@ -14,6 +14,7 @@ namespace STS2RitsuLib.Models
             new(StringComparer.OrdinalIgnoreCase);
 
         private static readonly Dictionary<(string ModId, string ListenerId), ListenerEntry> Listeners = [];
+        private static ListenerEntry[] _orderedSnapshot = [];
         private static long _nextRegistrationOrder;
 
         private readonly string _modId;
@@ -101,6 +102,7 @@ namespace STS2RitsuLib.Models
                     : _nextRegistrationOrder++;
 
                 Listeners[key] = new(_modId, listenerId, predicate, listener, registrationOrder);
+                RebuildOrderedSnapshotLocked();
             }
         }
 
@@ -162,7 +164,11 @@ namespace STS2RitsuLib.Models
 
             lock (SyncRoot)
             {
-                return Listeners.Remove((_modId, listenerId));
+                if (!Listeners.Remove((_modId, listenerId)))
+                    return false;
+
+                RebuildOrderedSnapshotLocked();
+                return true;
             }
         }
 
@@ -171,13 +177,11 @@ namespace STS2RitsuLib.Models
             ArgumentNullException.ThrowIfNull(prototype);
             ArgumentNullException.ThrowIfNull(clone);
 
-            var context = new ModelCloneContext(prototype, clone);
-            ListenerEntry[] listeners;
-            lock (SyncRoot)
-            {
-                listeners = [.. Listeners.Values.OrderBy(static entry => entry.RegistrationOrder)];
-            }
+            var listeners = Volatile.Read(ref _orderedSnapshot);
+            if (listeners.Length == 0)
+                return;
 
+            var context = new ModelCloneContext(prototype, clone);
             foreach (var entry in listeners)
                 try
                 {
@@ -189,6 +193,13 @@ namespace STS2RitsuLib.Models
                     RitsuLibFramework.Logger.Warn(
                         $"[ModelCloneRegistry] Listener '{entry.ModId}/{entry.ListenerId}' failed for {prototype.Id}: {ex.Message}");
                 }
+        }
+
+        private static void RebuildOrderedSnapshotLocked()
+        {
+            Volatile.Write(
+                ref _orderedSnapshot,
+                [.. Listeners.Values.OrderBy(static entry => entry.RegistrationOrder)]);
         }
 
         private sealed record ListenerEntry(
